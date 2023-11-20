@@ -953,8 +953,6 @@ public:
     /// @brief Returns existing IPv6 leases with a given relay-id.
     ///
     /// @param relay_id DUID for relay_id of interest.
-    /// @param link_addr limit results to leases on this link (prefix).
-    /// @param link_len limit results to leases on this link (length).
     /// @param lower_bound_address IPv6 address used as lower bound for the
     /// returned range.
     /// @param page_size maximum size of the page returned.
@@ -962,16 +960,12 @@ public:
     /// @return collection of IPv6 leases
     virtual Lease6Collection
     getLeases6ByRelayId(const DUID& relay_id,
-                        const asiolink::IOAddress& link_addr,
-                        uint8_t link_len,
                         const asiolink::IOAddress& lower_bound_address,
                         const LeasePageSize& page_size) = 0;
 
     /// @brief Returns existing IPv6 leases with a given remote-id.
     ///
     /// @param remote_id remote-id option data of interest.
-    /// @param link_addr limit results to leases on this link (prefix).
-    /// @param link_len limit results to leases on this link (length).
     /// @param lower_bound_address IPv6 address used as lower bound for the
     /// returned range.
     /// @param page_size maximum size of the page returned.
@@ -979,8 +973,6 @@ public:
     /// @return collection of IPv6 leases
     virtual Lease6Collection
     getLeases6ByRemoteId(const OptionBuffer& remote_id,
-                         const asiolink::IOAddress& link_addr,
-                         uint8_t link_len,
                          const asiolink::IOAddress& lower_bound_address,
                          const LeasePageSize& page_size) = 0;
 

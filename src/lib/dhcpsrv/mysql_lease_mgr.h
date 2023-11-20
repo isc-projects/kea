@@ -776,8 +776,6 @@ public:
         ADD_REMOTE_ID6,              // Add a lease6_remote_id entry
         GET_RELAY_ID6,               // Get lease6_relay_id entries
         GET_REMOTE_ID6,              // Get lease6_remote_id entries
-        GET_RELAY_ID6_LINK,          // Get lease6_relay_id entries by link
-        GET_REMOTE_ID6_LINK,         // Get lease6_remote_id entries by link
         COUNT_RELAY_ID6,             // Count the lease6_relay_id number of entries
         COUNT_REMOTE_ID6,            // Count the lease6_remote_id number of entries
         NUM_STATEMENTS               // Number of statements
@@ -1117,8 +1115,6 @@ public:
     /// @brief Returns existing IPv6 leases with a given relay-id.
     ///
     /// @param relay_id DUID for relay_id of interest.
-    /// @param link_addr limit results to leases on this link (prefix).
-    /// @param link_len limit results to leases on this link (length).
     /// @param lower_bound_address IPv4 address used as lower bound for the
     /// returned range.
     /// @param page_size maximum size of the page returned.
@@ -1126,16 +1122,12 @@ public:
     /// @return collection of IPv6 leases
     virtual Lease6Collection
     getLeases6ByRelayId(const DUID& relay_id,
-                        const asiolink::IOAddress& link_addr,
-                        uint8_t link_len,
                         const asiolink::IOAddress& lower_bound_address,
                         const LeasePageSize& page_size) override;
 
     /// @brief Returns existing IPv6 leases with a given remote-id.
     ///
     /// @param remote_id remote-id option data of interest.
-    /// @param link_addr limit results to leases on this link (prefix).
-    /// @param link_len limit results to leases on this link (length).
     /// @param lower_bound_address IPv4 address used as lower bound for the
     /// returned range.
     /// @param page_size maximum size of the page returned.
@@ -1143,8 +1135,6 @@ public:
     /// @return collection of IPv6 leases
     virtual Lease6Collection
     getLeases6ByRemoteId(const OptionBuffer& remote_id,
-                         const asiolink::IOAddress& link_addr,
-                         uint8_t link_len,
                          const asiolink::IOAddress& lower_bound_address,
                          const LeasePageSize& page_size) override;
 

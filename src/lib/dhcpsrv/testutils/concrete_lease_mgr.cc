@@ -267,8 +267,6 @@ ConcreteLeaseMgr::getLeases4ByRemoteId(const OptionBuffer& /* remote_id */,
 
 Lease6Collection
 ConcreteLeaseMgr::getLeases6ByRelayId(const DUID& /* relay_id */,
-                                      const IOAddress& /* link_addr */,
-                                      uint8_t /* link_len */,
                                       const IOAddress& /* lower_bound_address */,
                                       const LeasePageSize& /* page_size */) {
     isc_throw(NotImplemented, "ConcreteLeaseMgr::getLeases6ByRelayId not implemented");
@@ -276,9 +274,7 @@ ConcreteLeaseMgr::getLeases6ByRelayId(const DUID& /* relay_id */,
 
 Lease6Collection
 ConcreteLeaseMgr::getLeases6ByRemoteId(const OptionBuffer& /* remote_id */,
-                                       const IOAddress& /* link_addr */,
-                                       uint8_t /* link_len */,
-                         const IOAddress& /* lower_bound_address */,
+                                       const IOAddress& /* lower_bound_address */,
                                        const LeasePageSize& /* page_size*/) {
     isc_throw(NotImplemented, "ConcreteLeaseMgr::getLeases6ByRemoteId not implemented");
 }

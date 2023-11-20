@@ -1140,15 +1140,11 @@ void Lease6CmdsTest::testLease6AddExtendedInfo() {
     vector<uint8_t> remote_id = { 1, 2, 3, 4, 5, 6 };
     leases = lmptr_->getLeases6ByRemoteId(remote_id,
                                           IOAddress::IPV6_ZERO_ADDRESS(),
-                                          0,
-                                          IOAddress::IPV6_ZERO_ADDRESS(),
                                           LeasePageSize(10));
     EXPECT_TRUE(leases.empty());
     vector<uint8_t> relay_bin(8, 0x64);
     DuidPtr relay_id(new DUID(relay_bin));
     leases = lmptr_->getLeases6ByRelayId(*relay_id,
-                                         IOAddress::IPV6_ZERO_ADDRESS(),
-                                         0,
                                          IOAddress::IPV6_ZERO_ADDRESS(),
                                          LeasePageSize(10));
     EXPECT_TRUE(leases.empty());
@@ -1196,8 +1192,6 @@ void Lease6CmdsTest::testLease6AddExtendedInfo() {
     // Check that BLQ tables were updated.
     leases = lmptr_->getLeases6ByRemoteId(remote_id,
                                           IOAddress::IPV6_ZERO_ADDRESS(),
-                                          0,
-                                          IOAddress::IPV6_ZERO_ADDRESS(),
                                           LeasePageSize(10));
     // The lease must be retrieved from the remote id table.
     ASSERT_EQ(1, leases.size());
@@ -1208,8 +1202,6 @@ void Lease6CmdsTest::testLease6AddExtendedInfo() {
 
     // The lease must be retrieved from the relay id table.
     leases = lmptr_->getLeases6ByRelayId(*relay_id,
-                                         IOAddress::IPV6_ZERO_ADDRESS(),
-                                         0,
                                          IOAddress::IPV6_ZERO_ADDRESS(),
                                          LeasePageSize(10));
     ASSERT_EQ(1, leases.size());
@@ -2584,15 +2576,11 @@ void Lease6CmdsTest::testLease6UpdateExtendedInfo() {
     vector<uint8_t> remote_id = { 1, 2, 3, 4, 5, 6 };
     leases = lmptr_->getLeases6ByRemoteId(remote_id,
                                           IOAddress::IPV6_ZERO_ADDRESS(),
-                                          0,
-                                          IOAddress::IPV6_ZERO_ADDRESS(),
                                           LeasePageSize(10));
     EXPECT_TRUE(leases.empty());
     vector<uint8_t> relay_bin(8, 0x64);
     DuidPtr relay_id(new DUID(relay_bin));
     leases = lmptr_->getLeases6ByRelayId(*relay_id,
-                                         IOAddress::IPV6_ZERO_ADDRESS(),
-                                         0,
                                          IOAddress::IPV6_ZERO_ADDRESS(),
                                          LeasePageSize(10));
     EXPECT_TRUE(leases.empty());
@@ -2640,8 +2628,6 @@ void Lease6CmdsTest::testLease6UpdateExtendedInfo() {
     // Check that BLQ tables were updated.
     leases = lmptr_->getLeases6ByRemoteId(remote_id,
                                           IOAddress::IPV6_ZERO_ADDRESS(),
-                                          0,
-                                          IOAddress::IPV6_ZERO_ADDRESS(),
                                           LeasePageSize(10));
     // The lease must be retrieved from the remote id table.
     ASSERT_EQ(1, leases.size());
@@ -2652,8 +2638,6 @@ void Lease6CmdsTest::testLease6UpdateExtendedInfo() {
 
     // The lease must be retrieved from the relay id table.
     leases = lmptr_->getLeases6ByRelayId(*relay_id,
-                                         IOAddress::IPV6_ZERO_ADDRESS(),
-                                         0,
                                          IOAddress::IPV6_ZERO_ADDRESS(),
                                          LeasePageSize(10));
     ASSERT_EQ(1, leases.size());
@@ -3411,16 +3395,12 @@ void Lease6CmdsTest::testLease6BulkApplyUpdatesOnlyExtendedInfo() {
     Lease6Collection leases;
     vector<uint8_t> remote_id = { 1, 2, 3, 4, 5, 6 };
     leases = lmptr_->getLeases6ByRemoteId(remote_id,
-                                          IOAddress::IPV6_ZERO_ADDRESS(),
-                                         0,
                                          IOAddress::IPV6_ZERO_ADDRESS(),
                                          LeasePageSize(10));
     EXPECT_TRUE(leases.empty());
     vector<uint8_t> relay_bin(8, 0x64);
     DuidPtr relay_id(new DUID(relay_bin));
     leases = lmptr_->getLeases6ByRelayId(*relay_id,
-                                         IOAddress::IPV6_ZERO_ADDRESS(),
-                                         0,
                                          IOAddress::IPV6_ZERO_ADDRESS(),
                                          LeasePageSize(10));
     EXPECT_TRUE(leases.empty());
@@ -3480,8 +3460,6 @@ void Lease6CmdsTest::testLease6BulkApplyUpdatesOnlyExtendedInfo() {
     // Check that BLQ tables were updated.
     leases = lmptr_->getLeases6ByRemoteId(remote_id,
                                           IOAddress::IPV6_ZERO_ADDRESS(),
-                                          0,
-                                          IOAddress::IPV6_ZERO_ADDRESS(),
                                           LeasePageSize(10));
     ASSERT_EQ(1, leases.size());
     Lease6Ptr lx = leases[0];
@@ -3489,8 +3467,6 @@ void Lease6CmdsTest::testLease6BulkApplyUpdatesOnlyExtendedInfo() {
     EXPECT_EQ(IOAddress("2001:db8:1::2"), lx->addr_);
     EXPECT_EQ(*lease2, *lx);
     leases = lmptr_->getLeases6ByRelayId(*relay_id,
-                                         IOAddress::IPV6_ZERO_ADDRESS(),
-                                         0,
                                          IOAddress::IPV6_ZERO_ADDRESS(),
                                          LeasePageSize(10));
     ASSERT_EQ(1, leases.size());

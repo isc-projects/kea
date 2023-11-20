@@ -1083,8 +1083,6 @@ GenericExtendedInfoTest<NakedLeaseMgrType>::testGetLeases6ByRelayId() {
     asiolink::IOAddress lease_addr0(ADDRESS6[0]);
     asiolink::IOAddress lease_addr1(ADDRESS6[1]);
     asiolink::IOAddress lease_addr2(ADDRESS6[2]);
-    asiolink::IOAddress link_addr(ADDRESS6[4]);
-    asiolink::IOAddress other_link_addr("2001:db8:1::4");
     asiolink::IOAddress zero = asiolink::IOAddress::IPV6_ZERO_ADDRESS();
     std::vector<uint8_t> relay_id_data0 = createFromString(DUIDS[0]);
     DUID relay_id0(relay_id_data0);
@@ -1103,34 +1101,14 @@ GenericExtendedInfoTest<NakedLeaseMgrType>::testGetLeases6ByRelayId() {
     EXPECT_EQ(6, lease_mgr_->byRelayId6size());
 
     Lease6Collection got;
-    // Unknown relay id #2, no link: nothing.
+    // Unknown relay id #2: nothing.
     EXPECT_NO_THROW(got = lease_mgr_->getLeases6ByRelayId(relay_id2,
                                                           zero,
-                                                          0,
-                                                          zero,
                                                           LeasePageSize(100)));
     EXPECT_EQ(0, got.size());
 
-    // Unknown relay id #2, link: nothing.
-    EXPECT_NO_THROW(got = lease_mgr_->getLeases6ByRelayId(relay_id2,
-                                                          link_addr,
-                                                          64,
-                                                          zero,
-                                                          LeasePageSize(100)));
-    EXPECT_EQ(0, got.size());
-
-    // Relay id #0, other link: nothing.
+    // Relay id #0: 3 entries but 2 addresses.
     EXPECT_NO_THROW(got = lease_mgr_->getLeases6ByRelayId(relay_id0,
-                                                          other_link_addr,
-                                                          64,
-                                                          zero,
-                                                          LeasePageSize(100)));
-    EXPECT_EQ(0, got.size());
-
-    // Relay id #0, no link: 3 entries but 2 addresses.
-    EXPECT_NO_THROW(got = lease_mgr_->getLeases6ByRelayId(relay_id0,
-                                                          zero,
-                                                          0,
                                                           zero,
                                                           LeasePageSize(100)));
     ASSERT_EQ(2, got.size());
@@ -1141,10 +1119,8 @@ GenericExtendedInfoTest<NakedLeaseMgrType>::testGetLeases6ByRelayId() {
     ASSERT_TRUE(lease);
     EXPECT_EQ(lease_addr1, lease->addr_);
 
-    // Relay id #1, no link, partial: 2 entries.
+    // Relay id #1, partial: 2 entries.
     EXPECT_NO_THROW(got = lease_mgr_->getLeases6ByRelayId(relay_id1,
-                                                          zero,
-                                                          0,
                                                           zero,
                                                           LeasePageSize(2)));
     ASSERT_EQ(2, got.size());
@@ -1155,78 +1131,14 @@ GenericExtendedInfoTest<NakedLeaseMgrType>::testGetLeases6ByRelayId() {
     ASSERT_TRUE(lease);
     EXPECT_EQ(lease_addr1, lease->addr_);
 
-    // Relay id #1, no link, partial from previous: 1 entry.
+    // Relay id #1, partial from previous: 1 entry.
     EXPECT_NO_THROW(got = lease_mgr_->getLeases6ByRelayId(relay_id1,
-                                                          zero,
-                                                          0,
                                                           lease->addr_,
                                                           LeasePageSize(2)));
     ASSERT_EQ(1, got.size());
     lease = got[0];
     ASSERT_TRUE(lease);
     EXPECT_EQ(lease_addr2, lease->addr_);
-
-    // Add another entry for last tests.
-    EXPECT_NO_THROW(lease_mgr_->addRelayId6(lease_addr0, relay_id_data1));
-    EXPECT_EQ(7, lease_mgr_->byRelayId6size());
-
-    // Relay id #1, link: 3 entries.
-    EXPECT_NO_THROW(got = lease_mgr_->getLeases6ByRelayId(relay_id1,
-                                                          link_addr,
-                                                          64,
-                                                          zero,
-                                                          LeasePageSize(100)));
-    ASSERT_EQ(3, got.size());
-    lease = got[0];
-    ASSERT_TRUE(lease);
-    EXPECT_EQ(lease_addr0, lease->addr_);
-    lease = got[1];
-    ASSERT_TRUE(lease);
-    EXPECT_EQ(lease_addr1, lease->addr_);
-    lease = got[2];
-    ASSERT_TRUE(lease);
-    EXPECT_EQ(lease_addr2, lease->addr_);
-
-    // Relay id #1, link, initial partial: 1 entry.
-    EXPECT_NO_THROW(got = lease_mgr_->getLeases6ByRelayId(relay_id1,
-                                                          link_addr,
-                                                          64,
-                                                          zero,
-                                                          LeasePageSize(1)));
-    ASSERT_EQ(1, got.size());
-    lease = got[0];
-    ASSERT_TRUE(lease);
-    EXPECT_EQ(lease_addr0, lease->addr_);
-
-    // Relay id #1, link, next partial: 1 entry.
-    EXPECT_NO_THROW(got = lease_mgr_->getLeases6ByRelayId(relay_id1,
-                                                          link_addr,
-                                                          64,
-                                                          lease->addr_,
-                                                          LeasePageSize(1)));
-    ASSERT_EQ(1, got.size());
-    lease = got[0];
-    ASSERT_TRUE(lease);
-    EXPECT_EQ(lease_addr1, lease->addr_);
-
-    // Relay id #1, link, next partial: 1 entry.
-    EXPECT_NO_THROW(got = lease_mgr_->getLeases6ByRelayId(relay_id1,
-                                                          link_addr,
-                                                          64,
-                                                          lease->addr_,
-                                                          LeasePageSize(1)));
-    ASSERT_EQ(1, got.size());
-    lease = got[0];
-    ASSERT_TRUE(lease);
-    EXPECT_EQ(lease_addr2, lease->addr_);
-
-    // Relay id #1, link, final partial: nothing.
-    EXPECT_NO_THROW(got = lease_mgr_->getLeases6ByRelayId(relay_id1,
-                                                          link_addr,
-                                                          64,
-                                                          lease->addr_,
-                                                          LeasePageSize(1)));
-    EXPECT_EQ(0, got.size());
 }
 
 /// @brief Verifies that getLeases6ByRemoteId works as expected.
@@ -1241,8 +1153,6 @@ GenericExtendedInfoTest<NakedLeaseMgrType>::testGetLeases6ByRemoteId() {
     asiolink::IOAddress lease_addr0(ADDRESS6[0]);
     asiolink::IOAddress lease_addr1(ADDRESS6[1]);
     asiolink::IOAddress lease_addr2(ADDRESS6[2]);
-    asiolink::IOAddress link_addr(ADDRESS6[4]);
-    asiolink::IOAddress other_link_addr("2001:db8:1::4");
     asiolink::IOAddress zero = asiolink::IOAddress::IPV6_ZERO_ADDRESS();
     std::vector<uint8_t> remote_id0 = createFromString(DUIDS[0]);
     std::vector<uint8_t> remote_id1 = createFromString(DUIDS[1]);
@@ -1258,34 +1168,14 @@ GenericExtendedInfoTest<NakedLeaseMgrType>::testGetLeases6ByRemoteId() {
     EXPECT_EQ(6, lease_mgr_->byRemoteId6size());
 
     Lease6Collection got;
-    // Unknown remote id #2, no link: nothing.
+    // Unknown remote id #2: nothing.
     EXPECT_NO_THROW(got = lease_mgr_->getLeases6ByRemoteId(remote_id2,
                                                            zero,
-                                                           0,
-                                                           zero,
                                                            LeasePageSize(10)));
     EXPECT_EQ(0, got.size());
 
-    // Unknown remote id #2, link: nothing.
-    EXPECT_NO_THROW(got = lease_mgr_->getLeases6ByRemoteId(remote_id2,
-                                                           link_addr,
-                                                           64,
-                                                           zero,
-                                                           LeasePageSize(10)));
-    EXPECT_EQ(0, got.size());
-
-    // Remote id #0, other link: nothing.
+    // Remote id #0: 3 entries but 2 addresses.
     EXPECT_NO_THROW(got = lease_mgr_->getLeases6ByRemoteId(remote_id0,
-                                                           other_link_addr,
-                                                           64,
-                                                           zero,
-                                                           LeasePageSize(10)));
-    EXPECT_EQ(0, got.size());
-
-    // Remote id #0, no link: 3 entries but 2 addresses.
-    EXPECT_NO_THROW(got = lease_mgr_->getLeases6ByRemoteId(remote_id0,
-                                                           zero,
-                                                           0,
                                                            zero,
                                                            LeasePageSize(10)));
     ASSERT_EQ(2, got.size());
@@ -1296,10 +1186,8 @@ GenericExtendedInfoTest<NakedLeaseMgrType>::testGetLeases6ByRemoteId() {
     ASSERT_TRUE(lease);
     EXPECT_EQ(lease_addr1, lease->addr_);
 
-    // Remote id #1, no link, partial: 2 entries.
+    // Remote id #1, partial: 2 entries.
     EXPECT_NO_THROW(got = lease_mgr_->getLeases6ByRemoteId(remote_id1,
-                                                           zero,
-                                                           0,
                                                            zero,
                                                            LeasePageSize(2)));
     ASSERT_EQ(2, got.size());
@@ -1310,78 +1198,14 @@ GenericExtendedInfoTest<NakedLeaseMgrType>::testGetLeases6ByRemoteId() {
     ASSERT_TRUE(lease);
     EXPECT_EQ(lease_addr1, lease->addr_);
 
-    // Remote id #1, no link, partial from previous: 1 entry.
+    // Remote id #1, partial from previous: 1 entry.
     EXPECT_NO_THROW(got = lease_mgr_->getLeases6ByRemoteId(remote_id1,
-                                                           zero,
-                                                           0,
                                                            lease->addr_,
                                                            LeasePageSize(2)));
     ASSERT_EQ(1, got.size());
     lease = got[0];
     ASSERT_TRUE(lease);
     EXPECT_EQ(lease_addr2, lease->addr_);
-
-    // Add another entry for last tests.
-    EXPECT_NO_THROW(lease_mgr_->addRemoteId6(lease_addr0, remote_id1));
-    EXPECT_EQ(7, lease_mgr_->byRemoteId6size());
-
-    // Remote id #1, link: 3 entries.
-    EXPECT_NO_THROW(got = lease_mgr_->getLeases6ByRemoteId(remote_id1,
-                                                           link_addr,
-                                                           64,
-                                                           zero,
-                                                           LeasePageSize(10)));
-    ASSERT_EQ(3, got.size());
-    lease = got[0];
-    ASSERT_TRUE(lease);
-    EXPECT_EQ(lease_addr0, lease->addr_);
-    lease = got[1];
-    ASSERT_TRUE(lease);
-    EXPECT_EQ(lease_addr1, lease->addr_);
-    lease = got[2];
-    ASSERT_TRUE(lease);
-    EXPECT_EQ(lease_addr2, lease->addr_);
-
-    // Remote id #1, link, initial partial: 1 entry.
-    EXPECT_NO_THROW(got = lease_mgr_->getLeases6ByRemoteId(remote_id1,
-                                                           link_addr,
-                                                           64,
-                                                           zero,
-                                                           LeasePageSize(1)));
-    ASSERT_EQ(1, got.size());
-    lease = got[0];
-    ASSERT_TRUE(lease);
-    EXPECT_EQ(lease_addr0, lease->addr_);
-
-    // Remote id #1, link, next partial: 1 entry.
-    EXPECT_NO_THROW(got = lease_mgr_->getLeases6ByRemoteId(remote_id1,
-                                                           link_addr,
-                                                           64,
-                                                           lease->addr_,
-                                                           LeasePageSize(1)));
-    ASSERT_EQ(1, got.size());
-    lease = got[0];
-    ASSERT_TRUE(lease);
-    EXPECT_EQ(lease_addr1, lease->addr_);
-
-    // Remote id #1, link, next partial: 1 entry.
-    EXPECT_NO_THROW(got = lease_mgr_->getLeases6ByRemoteId(remote_id1,
-                                                           link_addr,
-                                                           64,
-                                                           lease->addr_,
-                                                           LeasePageSize(1)));
-    ASSERT_EQ(1, got.size());
-    lease = got[0];
-    ASSERT_TRUE(lease);
-    EXPECT_EQ(lease_addr2, lease->addr_);
-
-    // Remote id #1, link, final partial: nothing.
-    EXPECT_NO_THROW(got = lease_mgr_->getLeases6ByRemoteId(remote_id1,
-                                                           link_addr,
-                                                           64,
-                                                           lease->addr_,
-                                                           LeasePageSize(1)));
-    EXPECT_EQ(0, got.size());
 }
 
 /// @brief Verifies that getLeases6ByLink works as expected.
@@ -1533,8 +1357,6 @@ GenericExtendedInfoTest<NakedLeaseMgrType>::testUpgradeExtendedInfo6(
         DUID relay_id(relay_id_data);
         EXPECT_NO_THROW(got = lease_mgr_->getLeases6ByRelayId(relay_id,
                                                               zero,
-                                                              0,
-                                                              zero,
                                                               ps100));
         ASSERT_EQ(1, got.size());
         EXPECT_EQ(asiolink::IOAddress(ADDRESS6[4]), got[0]->addr_);
@@ -1542,8 +1364,6 @@ GenericExtendedInfoTest<NakedLeaseMgrType>::testUpgradeExtendedInfo6(
         // Check remote id.
         std::vector<uint8_t> remote_id = createFromString(DUIDS[5]);
         EXPECT_NO_THROW(got = lease_mgr_->getLeases6ByRemoteId(remote_id,
-                                                               zero,
-                                                               0,
                                                                zero,
                                                                ps100));
         ASSERT_EQ(1, got.size());
@@ -1563,8 +1383,6 @@ GenericExtendedInfoTest<NakedLeaseMgrType>::testUpgradeExtendedInfo6(
             DUID relay_id(std::vector<uint8_t>(8, 0x64));
             EXPECT_NO_THROW(got = lease_mgr_->getLeases6ByRelayId(relay_id,
                                                                   zero,
-                                                                  0,
-                                                                  zero,
                                                                   ps100));
             ASSERT_EQ(1, got.size());
             data::ConstElementPtr expected2 = leases6[2]->toElement();
@@ -1576,8 +1394,6 @@ GenericExtendedInfoTest<NakedLeaseMgrType>::testUpgradeExtendedInfo6(
 
             std::vector<uint8_t> remote_id = { 1, 2, 3, 4, 5, 6 };
             EXPECT_NO_THROW(got = lease_mgr_->getLeases6ByRemoteId(remote_id,
-                                                                   zero,
-                                                                   0,
                                                                    zero,
                                                                    ps100));
             ASSERT_EQ(1, got.size());
@@ -1601,8 +1417,6 @@ GenericExtendedInfoTest<NakedLeaseMgrType>::testUpgradeExtendedInfo6(
             DUID relay_id(std::vector<uint8_t>(8, 0x64));
             EXPECT_NO_THROW(got = lease_mgr_->getLeases6ByRelayId(relay_id,
                                                                   zero,
-                                                                  0,
-                                                                  zero,
                                                                   ps100));
             ASSERT_EQ(2, got.size());
             data::ConstElementPtr expected1 = leases6[1]->toElement();
@@ -1620,8 +1434,6 @@ GenericExtendedInfoTest<NakedLeaseMgrType>::testUpgradeExtendedInfo6(
 
             std::vector<uint8_t> remote_id = { 1, 2, 3, 4, 5, 6 };
             EXPECT_NO_THROW(got = lease_mgr_->getLeases6ByRemoteId(remote_id,
-                                                                   zero,
-                                                                   0,
                                                                    zero,
                                                                    ps100));
             ASSERT_EQ(2, got.size());

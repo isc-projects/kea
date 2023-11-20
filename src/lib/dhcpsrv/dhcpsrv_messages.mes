@@ -597,18 +597,18 @@ A debug message issued when the server is attempting to obtain a page of
 IPv4 leases beginning with the specified address with a relay id and client
 transaction time between start and end dates.
 
-% DHCPSRV_MEMFILE_GET_RELAYID6 obtaining at most %1 IPv6 leases starting from address %2 with relay id %3 and link %4/%5
+% DHCPSRV_MEMFILE_GET_RELAYID6 obtaining at most %1 IPv6 leases starting from address %2 with relay id %3
 A debug message issued when the server is attempting to obtain a page of
-IPv6 leases beginning with the specified address with a relay id and a link.
+IPv6 leases beginning with the specified address with a relay id.
 
 % DHCPSRV_MEMFILE_GET_REMOTEID4 obtaining at most %1 IPv4 leases starting from address %2 with remote id %3 and cltt between %4 and %5
 A debug message issued when the server is attempting to obtain a page of
 IPv4 leases beginning with the specified address with a remote id and
 client transaction time between start and end dates.
 
-% DHCPSRV_MEMFILE_GET_REMOTEID6 obtaining at most %1 IPv6 leases starting from address %2 with remote id %3 and link %4/%5
+% DHCPSRV_MEMFILE_GET_REMOTEID6 obtaining at most %1 IPv6 leases starting from address %2 with remote id %3
 A debug message issued when the server is attempting to obtain a page of
-IPv6 leases beginning with the specified address with a remote id and a link.
+IPv6 leases beginning with the specified address with a remote id.
 
 % DHCPSRV_MEMFILE_GET_SUBID4 obtaining IPv4 leases for subnet ID %1
 A debug message issued when the server is attempting to obtain all IPv4
@@ -885,18 +885,18 @@ A debug message issued when the server is attempting to obtain a page of
 IPv4 leases beginning with the specified address with a relay id and client
 transaction time between start and end dates.
 
-% DHCPSRV_MYSQL_GET_RELAYID6 obtaining at most %1 IPv6 leases starting from address %2 with relay id %3 and link %4/%5
+% DHCPSRV_MYSQL_GET_RELAYID6 obtaining at most %1 IPv6 leases starting from address %2 with relay id %3
 A debug message issued when the server is attempting to obtain a page of
-IPv6 leases beginning with the specified address with a relay id and a link.
+IPv6 leases beginning with the specified address with a relay id.
 
 % DHCPSRV_MYSQL_GET_REMOTEID4 obtaining at most %1 IPv4 leases starting from address %2 with remote id %3 and cltt between %4 and %5
 A debug message issued when the server is attempting to obtain a page of
 IPv4 leases beginning with the specified address with a remote id and client
 transaction time between start and end dates.
 
-% DHCPSRV_MYSQL_GET_REMOTEID6 obtaining at most %1 IPv6 leases starting from address %2 with remote id %3 and link %4/%5
+% DHCPSRV_MYSQL_GET_REMOTEID6 obtaining at most %1 IPv6 leases starting from address %2 with remote id %3
 A debug message issued when the server is attempting to obtain a page of
-IPv6 leases beginning with the specified address with a remote id and a link.
+IPv6 leases beginning with the specified address with a remote id.
 
 % DHCPSRV_MYSQL_GET_SUBID4 obtaining IPv4 leases for subnet ID %1
 A debug message issued when the server is attempting to obtain all IPv4
@@ -1165,18 +1165,18 @@ A debug message issued when the server is attempting to obtain a page of
 IPv4 leases beginning with the specified address with a relay id and client
 transaction time between start and end dates.
 
-% DHCPSRV_PGSQL_GET_RELAYID6 obtaining at most %1 IPv6 leases starting from address %2 with relay id %3 and link %4/%5
+% DHCPSRV_PGSQL_GET_RELAYID6 obtaining at most %1 IPv6 leases starting from address %2 with relay id %3
 A debug message issued when the server is attempting to obtain a page of
-IPv6 leases beginning with the specified address with a relay id and a link.
+IPv6 leases beginning with the specified address with a relay id.
 
 % DHCPSRV_PGSQL_GET_REMOTEID4 obtaining at most %1 IPv4 leases starting from address %2 with remote id %3 and cltt between %4 and %5
 A debug message issued when the server is attempting to obtain a page of
 IPv4 leases beginning with the specified address with a remote id and client
 transaction time between start and end dates.
 
-% DHCPSRV_PGSQL_GET_REMOTEID6 obtaining at most %1 IPv6 leases starting from address %2 with remote id %3 and link %4/%5
+% DHCPSRV_PGSQL_GET_REMOTEID6 obtaining at most %1 IPv6 leases starting from address %2 with remote id %3
 A debug message issued when the server is attempting to obtain a page of
-IPv6 leases beginning with the specified address with a remote id and a link.
+IPv6 leases beginning with the specified address with a remote id.
 
 % DHCPSRV_PGSQL_GET_SUBID4 obtaining IPv4 leases for subnet ID %1
 A debug message issued when the server is attempting to obtain all IPv4

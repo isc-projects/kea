@@ -357,16 +357,12 @@ public:
     /// @brief Stub implementation.
     Lease6Collection
     getLeases6ByRelayId(const DUID& /* relay_id */,
-                        const asiolink::IOAddress& /* link_addr */,
-                        uint8_t /* link_len */,
                         const asiolink::IOAddress& /* lower_bound_address */,
                         const LeasePageSize& /* page_size */) override;
 
     /// @brief Stub implementation.
     Lease6Collection
     getLeases6ByRemoteId(const OptionBuffer& /* remote_id */,
-                         const asiolink::IOAddress& /* link_addr */,
-                         uint8_t /* link_len */,
                          const asiolink::IOAddress& /* lower_bound_address */,
                          const LeasePageSize& /* page_size*/) override;
 
