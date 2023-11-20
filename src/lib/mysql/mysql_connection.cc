@@ -407,6 +407,17 @@ MySqlConnection::ensureSchemaVersion(const ParameterMap& parameters,
 
 void
 MySqlConnection::initializeSchema(const ParameterMap& parameters) {
+    if (parameters.count("readonly") && parameters.at("readonly") == "true") {
+        // The readonly flag is historically used for host backends. Still, if
+        // enabled, it is a strong indication that we should not meDDLe with it.
+        return;
+    }
+
+    // Convert parameters.
+    vector<string> kea_admin_parameters(toKeaAdminParameters(parameters));
+    kea_admin_parameters.insert(kea_admin_parameters.begin(), "db-init");
+
+    // Run.
     IOServicePtr io_service(new IOService());
     ProcessSpawn kea_admin(io_service, KEA_ADMIN, kea_admin_parameters);
     DB_LOG_INFO(MYSQL_INITIALIZE_SCHEMA).arg(kea_admin.getCommandLine());
@@ -424,7 +435,8 @@ MySqlConnection::initializeSchema(const ParameterMap& parameters) {
     }
 }
 
-vector<string> MySqlConnection::toKeaAdminParameters(ParameterMap const& params) {
+vector<string>
+MySqlConnection::toKeaAdminParameters(ParameterMap const& params) {
     vector<string> result{"mysql"};
     for (auto const& p : params) {
         string const& keyword(p.first);
@@ -435,8 +447,7 @@ vector<string> MySqlConnection::toKeaAdminParameters(ParameterMap const& params)
             keyword == "password" ||
             keyword == "host" ||
             keyword == "port" ||
-            keyword == "name"||
-            keyword == "connect-timeout") {
+            keyword == "name") {
             result.push_back("--" + keyword);
             result.push_back(value);
             continue;
@@ -446,10 +457,13 @@ vector<string> MySqlConnection::toKeaAdminParameters(ParameterMap const& params)
         // But they do have a mariadb client flag equivalent.
         // We pass them to kea-admin using the --extra flag.
         static unordered_map<string, string> conversions{
-            {"cihper-list", "ssl-cipher"},
+            {"connect-timeout", "connect_timeout"},
+            {"cipher-list", "ssl-cipher"},
             {"cert-file", "ssl-cert"},
             {"key-file", "ssl-key"},
             {"trust-anchor", "ssl-ca"},
+            // {"read-timeout", "--net-read-timeout"},  // available in docs, but client says unknown variable?
+            // {"write-timeout", "--net-write-timeout"},  // available in docs, but client says unknown variable?
         };
         bool extra_flag_added(false);
         if (conversions.count(keyword)) {
@@ -517,7 +531,7 @@ MySqlConnection::~MySqlConnection() {
     // Free up the prepared statements, ignoring errors. (What would we do
     // about them? We're destroying this object and are not really concerned
     // with errors on a database connection that is about to go away.)
-    for (int i = 0; i < statements_.size(); ++i) {
+    for (size_t i = 0; i < statements_.size(); ++i) {
         if (statements_[i] != NULL) {
             (void) mysql_stmt_close(statements_[i]);
             statements_[i] = NULL;

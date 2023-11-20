@@ -256,6 +256,9 @@ public:
     /// @brief Destructor
     virtual ~MySqlConnection();
 
+    static std::vector<std::string>
+    toKeaAdminParameters(ParameterMap const& params);
+
     /// @brief Get the schema version.
     ///
     /// @param parameters A data structure relating keywords and values

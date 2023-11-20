@@ -11,6 +11,7 @@ namespace db {
 extern const isc::log::MessageID DATABASE_INVALID_ACCESS;
 extern const isc::log::MessageID DATABASE_MYSQL_COMMIT;
 extern const isc::log::MessageID DATABASE_MYSQL_FATAL_ERROR;
+extern const isc::log::MessageID DATABASE_MYSQL_INITIALIZE_SCHEMA;
 extern const isc::log::MessageID DATABASE_MYSQL_ROLLBACK;
 extern const isc::log::MessageID DATABASE_MYSQL_START_TRANSACTION;
 extern const isc::log::MessageID DATABASE_PGSQL_COMMIT;
