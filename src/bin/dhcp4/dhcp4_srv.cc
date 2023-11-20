@@ -1515,10 +1515,9 @@ Dhcpv4Srv::processDhcp4Query(Pkt4Ptr& query, Pkt4Ptr& rsp,
                         if (hook_idx == Hooks.hook_index_lease4_offer_) {
                             bool offer_address_in_use = false;
                             try {
-                                callout_handle->getArgument("offer-address-in-use", offer_address_in_use);
+                                callout_handle->getArgument("offer_address_in_use", offer_address_in_use);
                             } catch (const NoSuchArgument& ex) {
-                                LOG_DEBUG(hooks_logger, DBG_DHCP4_HOOKS,
-                                          DHCP4_HOOK_LEASE4_OFFER_ARGUMENT_MISSING)
+                                LOG_ERROR(hooks_logger, DHCP4_HOOK_LEASE4_OFFER_ARGUMENT_MISSING)
                                           .arg(query->getLabel())
                                           .arg(ex.what());
                             }
@@ -4020,7 +4019,7 @@ Dhcpv4Srv::serverDecline(hooks::CalloutHandlePtr& /* callout_handle */, Pkt4Ptr&
     // Let's check if there are hooks installed for server decline hook point.
     // If they are, let's pass the lease and client's packet.  Note this code
     // has never been compiled, it is just an initial draft.
-    if (HooksManager::calloutsPresent(Hooks.hook_index_lease4_server_decline)) {
+    if (HooksManager::calloutsPresent(Hooks.hook_index_lease4_server_decline_)) {
         CalloutHandlePtr callout_handle = getCalloutHandle(decline);
 
         // Use the RAII wrapper to make sure that the callout handle state is

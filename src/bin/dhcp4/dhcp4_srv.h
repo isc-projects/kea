@@ -816,14 +816,14 @@ protected:
     ///
     /// This function is invoked during the unpark callback for the lease4-offer
     /// hook point, if a hook callout has set the handle status to NEXT_STEP_DROP.
-    /// It will create/update the lease to DECLINED state in the lease database,
+    /// It will create/update the lease to DECLINED state in the lease store,
     /// update the appropriate stats, and @todo implement a new hook point,
     /// lease4-server-declined-lease (name subject to change).
     ///
     /// @param callout_handle - current callout handle
     /// @param query - DHCPDISCOVER which instigated the declination.
-    /// @param lease - lease to decline (i.e lease that would have offered)
-    /// @param lease_exists - true if the lease already exists in the database
+    /// @param lease - lease to decline (i.e lease that would have been offered)
+    /// @param lease_exists - true if the lease already exists in the lease store
     /// (as is the case when offer-lifetime is > 0)
     void serverDecline(hooks::CalloutHandlePtr& callout_handle, Pkt4Ptr& query,
                        Lease4Ptr lease, bool lease_exists);
@@ -835,8 +835,8 @@ protected:
     ///
     /// @param callout_handle - current callout handle
     /// @param query - DHCPDISCOVER which instigated the declination.
-    /// @param lease - lease to decline (i.e lease that would have offered)
-    /// @param lease_exists - true if the lease already exists in the database
+    /// @param lease - lease to decline (i.e lease that would have been offered)
+    /// @param lease_exists - true if the lease already exists in the lease store
     /// (as is the case when offer-lifetime is > 0)
     void serverDeclineNoThrow(hooks::CalloutHandlePtr& callout_handle, Pkt4Ptr& query,
                               Lease4Ptr lease, bool lease_exists);
