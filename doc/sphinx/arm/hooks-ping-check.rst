@@ -5,9 +5,9 @@
 =====================================
 
 This hook library adds the ability to perform a "ping check" of a candidate
-IPv4 address prior to offering it to a DHCP client.  This feature is similar
+IPv4 address prior to offering it to a DHCP client. This feature is similar
 to a behavior available in ISC DHCP and one suggested in `RFC
-2131 <https://tools.ietf.org/html/rfc2131>`__ , see section 3.2, item 2.
+2131 <https://tools.ietf.org/html/rfc2131>`__ , see section 3.1, item 2.
 
 .. note::
 
@@ -51,7 +51,7 @@ offering a lease to client if all of the following conditions are true
 
     a. This is the first offer of this lease to this client. This check
     can only be done if `offer-lifetime` is greater than zero (i.e. temporary
-    allocation on DHCPDISCOVER is enabled).  If `offer-lifetime` is zero
+    allocation on DHCPDISCOVER is enabled). If `offer-lifetime` is zero
     ping checks are done for every DHCPOFFER as the server has no way to
     know it has made prior offers.
 
@@ -102,9 +102,9 @@ return to step 1.
 
 .. note::
 
-    Socket buffer full errors indicate that the OS rate limits on ICMP are being
-    been exceeded.  The server will not retry them as this would likely only
-    exacerbate the situation.  If this occurs continuously then the client load
+    Socket buffer full of errors indicates that the OS rate limits on ICMP are
+    being exceeded. The server will not retry them as this would likely only
+    exacerbate the situation. If this occurs continuously then the client load
     on the server may be too high to accommodate ping checking. Ping checking is
     not recommended for systems with high throughput demands.
 
@@ -112,19 +112,19 @@ Configuration
 ~~~~~~~~~~~~~
 
 The ping-check hook library currently supports the following configuration parameters
-that may be set the global and subnet levels.  Subnet values override global values.
+that may be set at the global and subnet levels. Subnet values override global values.
 
 - `enable-ping-check` - Enables or disables ping checking at a given scope.
 
 - `min-ping-requests` - The minimum number of ECHO REQUESTs sent without receiving a reply needed to declare an address available. The default is 1, it must be greater than zero.
 
-- `reply-timeout` The maximum amount of time to wait for a reply to a single ECHO REQUEST. Specified in milliseconds, it must be greater than zero, it defaults to 100.
+- `reply-timeout` - The maximum amount of time to wait for a reply to a single ECHO REQUEST. Specified in milliseconds, it must be greater than zero, it defaults to 100.
 
-- `ping-cltt-secs` The number of seconds that must elapse after the lease's CLTT before a ping check will be conducted when the client is the lease's previous owner. The default value is sixty seconds.
+- `ping-cltt-secs` - The number of seconds that must elapse after the lease's CLTT before a ping check will be conducted when the client is the lease's previous owner. The default value is sixty seconds.
 
-The following parameter is only supported the global level:
+The following parameter is only supported at the global level:
 
-- `ping-channel-threads` In multi-threaded mode, this is the number of threads in the channel's thread pool.  The default is 0 which instructs the code to use the same number of threads as Kea core.
+- `ping-channel-threads` - In multi-threaded mode, this is the number of threads in the channel's thread pool. The default is 0 which instructs the library to use the same number of threads as Kea core.
 
 The following configuration excerpt illustrates global level configuration:
 
@@ -174,6 +174,6 @@ The following excerpt demonstrates subnet level configuration:
 
 .. note::
 
-    Ping checking is not yet fully integrated with High Availability (HA).  When ping checking
+    Ping checking is not yet fully integrated with High Availability (HA). When ping checking
     concludes that an address is not available and a declined lease is created, no corresponding
     lease update is sent to HA peer(s).
