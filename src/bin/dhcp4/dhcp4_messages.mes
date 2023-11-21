@@ -465,7 +465,7 @@ This debug message occurs when the parking lot used to hold client queries
 while hook library work for them completes has reached or exceeded the
 limit set by the parked-packet-limit global parameter. This can occur when
 kea-dhcp4 is using hook libraries (e.g. ping-check) that implement the
-"lease4-offer" callout and client queries are arriving faster than
+"lease4_offer" callout and client queries are arriving faster than
 those callouts can fulfill them.
 
 % DHCP4_HOOK_LEASE4_RELEASE_SKIP %1: lease was not released because a callout set the next step to SKIP
@@ -1082,19 +1082,18 @@ address may be declined again in the future.
 
 % DHCP4_SERVER_INITIATED_DECLINE_UPDATE_FAILED %1: error updating lease for address %2
 This error message indicates that the server failed to update a lease in the
-lease store to the DECLINED state  The first argument includes the client and
+lease store to the DECLINED state. The first argument includes the client and
 the transaction identification information. The second argument holds the IPv4
 address for which the decline was attempted.
 
 % DHCP4_SERVER_INITIATED_DECLINE_ADD_FAILED %1: error adding a lease for address %2
 This error message indicates that the server failed to add a DECLINED lease to
-the lease store  The first argument includes the client and the transaction
+the lease store. The first argument includes the client and the transaction
 identification information. The second argument holds the IPv4 address for which
 the decline was attempted.
 
 % DHCP4_SERVER_INITIATED_DECLINE_RESOURCE_BUSY %1: error declining a lease for address %2
-This error message indicates that the while one server thread was attempting
-to mark a lease as DECLINED, it was already locked by another thread.
-The first argument includes the client and the transaction identification
-information.  The second argument holds the IPv4 address for which the decline
-was attempted.
+This error message indicates that while one server thread was attempting to mark
+a lease as DECLINED, it was already locked by another thread. The first argument
+includes the client and the transaction identification information.  The second
+argument holds the IPv4 address for which the decline was attempted.

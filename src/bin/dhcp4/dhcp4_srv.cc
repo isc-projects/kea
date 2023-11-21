@@ -3951,46 +3951,48 @@ void
 Dhcpv4Srv::serverDecline(hooks::CalloutHandlePtr& /* callout_handle */, Pkt4Ptr& query,
                          Lease4Ptr lease, bool lease_exists) {
 
-    // Check if the resource is busy i.e. can be modified by another thread
-    // for another client. Highly unlikely.
-    ResourceHandler4 resource_handler;
-    if (MultiThreadingMgr::instance().getMode() && !resource_handler.tryLock4(lease->addr_)) {
-        LOG_ERROR(lease4_logger, DHCP4_SERVER_INITIATED_DECLINE_RESOURCE_BUSY)
-            .arg(query->getLabel())
-            .arg(lease->addr_.toText());
-        return;
-    }
-
-    // We need to disassociate the lease from the client. Once we move a lease
-    // to declined state, it is no longer associated with the client in any
-    // way.
-    lease->decline(CfgMgr::instance().getCurrentCfg()->getDeclinePeriod());
-
-    // If the lease already exists, update it in the database.
-    if (lease_exists) {
-        try {
-            LeaseMgrFactory::instance().updateLease4(lease);
-        } catch (const NoSuchLease& ex) {
-            // We expected the lease to exist but it doesn't so let's add
-            // try to add it.
-            lease_exists = false;
-        } catch (const Exception& ex) {
-            // Update failed.
-            LOG_ERROR(lease4_logger, DHCP4_SERVER_INITIATED_DECLINE_UPDATE_FAILED)
+    {
+        // Check if the resource is busy i.e. can be modified by another thread
+        // for another client. Highly unlikely.
+        ResourceHandler4 resource_handler;
+        if (MultiThreadingMgr::instance().getMode() && !resource_handler.tryLock4(lease->addr_)) {
+            LOG_ERROR(lease4_logger, DHCP4_SERVER_INITIATED_DECLINE_RESOURCE_BUSY)
                 .arg(query->getLabel())
                 .arg(lease->addr_.toText());
             return;
         }
-    }
 
-    if (!lease_exists) {
-        try {
-            LeaseMgrFactory::instance().addLease(lease);
-        } catch (const Exception& ex) {
-            LOG_ERROR(lease4_logger, DHCP4_SERVER_INITIATED_DECLINE_ADD_FAILED)
-                .arg(query->getLabel())
-                .arg(lease->addr_.toText());
-            return;
+        // We need to disassociate the lease from the client. Once we move a lease
+        // to declined state, it is no longer associated with the client in any
+        // way.
+        lease->decline(CfgMgr::instance().getCurrentCfg()->getDeclinePeriod());
+
+        // If the lease already exists, update it in the database.
+        if (lease_exists) {
+            try {
+                LeaseMgrFactory::instance().updateLease4(lease);
+            } catch (const NoSuchLease& ex) {
+                // We expected the lease to exist but it doesn't so let's try
+                // to add it.
+                lease_exists = false;
+            } catch (const Exception& ex) {
+                // Update failed.
+                LOG_ERROR(lease4_logger, DHCP4_SERVER_INITIATED_DECLINE_UPDATE_FAILED)
+                    .arg(query->getLabel())
+                    .arg(lease->addr_.toText());
+                return;
+            }
+        }
+
+        if (!lease_exists) {
+            try {
+                LeaseMgrFactory::instance().addLease(lease);
+            } catch (const Exception& ex) {
+                LOG_ERROR(lease4_logger, DHCP4_SERVER_INITIATED_DECLINE_ADD_FAILED)
+                    .arg(query->getLabel())
+                    .arg(lease->addr_.toText());
+                return;
+            }
         }
     }
 

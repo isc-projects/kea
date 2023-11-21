@@ -37,15 +37,15 @@ by adding it to the ``hooks-libraries`` element of the server's configuration:
     }
 
 When the library is loaded :iscman:`kea-dhcp4` will conduct ping-check prior to
-offering a lease to client if all of the following conditions are true
+offering a lease to client if all of the following conditions are true:
 
-1. Ping check hook library is loaded
+1. Ping check hook library is loaded.
 
-2. Ping checking is enabled
+2. Ping checking is enabled.
 
 3. The server is responding to a DHCPDISCOVER.
 
-4. The candidate lease is neither active nor reserved
+4. The candidate lease is neither active nor reserved.
 
 5. Any of the following are true:
 
@@ -55,7 +55,7 @@ offering a lease to client if all of the following conditions are true
     ping checks are done for every DHCPOFFER as the server has no way to
     know it has made prior offers.
 
-    b. The lease is being offered to a client other than its previous owner
+    b. The lease is being offered to a client other than its previous owner.
 
     c. The lease is being offered to its previous owner and more than a
     configurable number of seconds, `ping-cltt-secs`, have elapsed since
@@ -65,10 +65,10 @@ When the ping check library is loaded, in response to a DHCPDISCOVER the
 :iscman:`kea-dhcp4` will:
 
 1. Select a candidate IPv4 address through normal processes and use it to
-construct a DHCPOFFER
+construct a DHCPOFFER.
 
 2. Park the DHCPOFFER and request a ping-check from the ping-check hook
-library via its `lease4-offer` callout
+library via its `lease4_offer` callout.
 
 3. The callout will test conditions described above. If they are not
 satisfied it will return without conducting a check, and the server
@@ -93,9 +93,9 @@ return to step 1.
 4. Any of the following occur:
 
     a. Receipt of an ICMP DESTINATION UNREACHABLE message
-    b. ICMP ECHO REQUEST send fails due to a network error (e.g. network is unreachable)
-    c. ICMP ECHO REQUEST send fails due to a permissions error (e.g. lease address is a broadcast address)
-    d. ICMP ECHO REQUEST send fails with socket buffer full error
+    b. Send fail of an ICMP ECHO REQUEST due to a network error (e.g. network is unreachable)
+    c. Send fail of an ICMP ECHO REQUEST due to a permissions error (e.g. lease address is a broadcast address)
+    d. Send fail of an ICMP ECHO REQUEST with socket buffer full error
 
     In each of these instances the address could not be checked and is treated as
     available.
