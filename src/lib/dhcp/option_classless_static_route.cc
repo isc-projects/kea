@@ -18,8 +18,10 @@ namespace isc {
 namespace dhcp {
 
 OptionClasslessStaticRoute::OptionClasslessStaticRoute(OptionBufferConstIter begin,
-                                                       OptionBufferConstIter end)
-    : Option(V4, DHO_CLASSLESS_STATIC_ROUTE), static_routes_(), data_len_(0) {
+                                                       OptionBufferConstIter end,
+                                                       bool convenient_notation)
+    : Option(V4, DHO_CLASSLESS_STATIC_ROUTE), static_routes_(), data_len_(0),
+      convenient_notation_(convenient_notation) {
     unpack(begin, end);
 }
 
@@ -51,30 +53,17 @@ OptionClasslessStaticRoute::unpack(OptionBufferConstIter begin, OptionBufferCons
                                   << ", must be at least 5.");
     }
 
-    // As an alternative to the binary format,
-    // we provide convenience option definition as a string in format:
-    // subnet1 - router1 IP addr, subnet2 - router2 IP addr, ...
-    // e.g.:
-    // 10.0.0.0/8 - 10.2.3.1, 10.229.0.128/25 - 10.1.0.3, ...
-    // where destination descriptors will be encoded as per RFC3442.
-    // We need to determine if OptionBuffer contains dash `-` separator (0x2d).
-    // If not, we assume this is binary format.
-    auto begin_copy = begin;
-    while (begin_copy != end) {
-        if (*begin_copy == '-') {
-            break;
-        }
-
-        ++begin_copy;
-    }
-
-    if (begin_copy == end) {
-        // no separator found, assuming this is a hex on-wire data
-        parseWireData(begin, end);
-    } else {
-        // separator was found, assuming this is option data string from config
+    if (convenient_notation_) {
+        // As an alternative to the binary format,
+        // we provide convenience option definition as a string in format:
+        // subnet1 - router1 IP addr, subnet2 - router2 IP addr, ...
+        // e.g.:
+        // 10.0.0.0/8 - 10.2.3.1, 10.229.0.128/25 - 10.1.0.3, ...
+        // where destination descriptors will be encoded as per RFC3442.
         std::string config_txt = std::string(begin, end);
         parseConfigData(config_txt);
+    } else {
+        parseWireData(begin, end);
     }
 
     calcDataLen();

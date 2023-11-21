@@ -33,6 +33,7 @@
 #include <dns/name.h>
 #include <util/strutil.h>
 #include <boost/algorithm/string/classification.hpp>
+#include <boost/algorithm/string/join.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/dynamic_bitset.hpp>
 #include <boost/make_shared.hpp>
@@ -182,9 +183,11 @@ OptionDefinition::addRecordField(const OptionDataType data_type) {
 }
 
 OptionPtr
-OptionDefinition::optionFactory(Option::Universe u, uint16_t type,
+OptionDefinition::optionFactory(Option::Universe u,
+                                uint16_t type,
                                 OptionBufferConstIter begin,
-                                OptionBufferConstIter end) const {
+                                OptionBufferConstIter end,
+                                bool custom_data) const {
 
     try {
         // Some of the options are represented by the specialized classes derived
@@ -193,7 +196,7 @@ OptionDefinition::optionFactory(Option::Universe u, uint16_t type,
         // type to be returned. Therefore, we first check that if we are dealing
         // with such an option. If the instance is returned we just exit at this
         // point. If not, we will search for a generic option type to return.
-        OptionPtr option = factorySpecialFormatOption(u, begin, end);
+        OptionPtr option = factorySpecialFormatOption(u, begin, end, custom_data);
         if (option) {
             return (option);
         }
@@ -207,6 +210,7 @@ OptionDefinition::optionFactory(Option::Universe u, uint16_t type,
             }
 
         case OPT_BINARY_TYPE:
+        case OPT_CUSTOM_TYPE:
             return (factoryGeneric(u, type, begin, end));
 
         case OPT_UINT8_TYPE:
@@ -306,6 +310,8 @@ OptionDefinition::optionFactory(Option::Universe u, uint16_t type,
             if (type_ != OPT_EMPTY_TYPE) {
                 isc_throw(InvalidOptionValue, "no option value specified");
             }
+        } else if (type_ == OPT_CUSTOM_TYPE) {
+            writeToBuffer(u, boost::algorithm::join(values, ","), OPT_STRING_TYPE, buf);
         } else {
             writeToBuffer(u, util::str::trim(values[0]), type_, buf);
         }
@@ -330,7 +336,7 @@ OptionDefinition::optionFactory(Option::Universe u, uint16_t type,
             }
         }
     }
-    return (optionFactory(u, type, buf.begin(), buf.end()));
+    return (optionFactory(u, type, buf.begin(), buf.end(), (type_ == OPT_CUSTOM_TYPE)));
 }
 
 void
@@ -824,7 +830,8 @@ OptionDefinition::factoryFqdnList(Option::Universe u,
 OptionPtr
 OptionDefinition::factorySpecialFormatOption(Option::Universe u,
                                              OptionBufferConstIter begin,
-                                             OptionBufferConstIter end) const {
+                                             OptionBufferConstIter end,
+                                             bool custom_data) const {
     if ((u == Option::V6) && haveSpace(DHCP6_OPTION_SPACE)) {
         switch (getCode()) {
         case D6O_IA_NA:
@@ -886,7 +893,7 @@ OptionDefinition::factorySpecialFormatOption(Option::Universe u,
             return (OptionPtr(new Option4ClientFqdn(begin, end)));
 
         case DHO_CLASSLESS_STATIC_ROUTE:
-            return (OptionPtr(new OptionClasslessStaticRoute(begin, end)));
+            return (OptionPtr(new OptionClasslessStaticRoute(begin, end, custom_data)));
 
         case DHO_VIVCO_SUBOPTIONS:
             // Record of uint32 followed by binary.

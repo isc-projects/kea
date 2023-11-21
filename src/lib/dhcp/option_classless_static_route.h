@@ -22,7 +22,8 @@ class OptionClasslessStaticRoute : public Option {
 public:
     /// @brief Empty Constructor
     OptionClasslessStaticRoute()
-        : Option(V4, DHO_CLASSLESS_STATIC_ROUTE), static_routes_(), data_len_(0) {
+        : Option(V4, DHO_CLASSLESS_STATIC_ROUTE), static_routes_(), data_len_(0),
+          convenient_notation_(false) {
     }
 
     /// @brief Constructor of the %Option from on-wire data.
@@ -33,7 +34,10 @@ public:
     /// @param begin Iterator pointing to the beginning of the buffer holding an
     /// option.
     /// @param end Iterator pointing to the end of the buffer holding an option.
-    OptionClasslessStaticRoute(OptionBufferConstIter begin, OptionBufferConstIter end);
+    /// @param convenient_notation
+    OptionClasslessStaticRoute(OptionBufferConstIter begin,
+                               OptionBufferConstIter end,
+                               bool convenient_notation = false);
 
     /// @brief Copies this option and returns a pointer to the copy.
     ///
@@ -82,6 +86,9 @@ private:
 
     /// @brief Length in octets of all encoded static routes.
     uint16_t data_len_;
+
+    /// @brief
+    bool convenient_notation_;
 
     /// @brief Encodes destination descriptor as per RFC3442.
     /// @param route static route tuple

@@ -332,7 +332,7 @@ const OptionDefParams STANDARD_V4_OPTION_DEFINITIONS[] = {
       OPT_IPV4_ADDRESS_TYPE, false, NO_RECORD_DEF, "" },
     { "domain-search", DHO_DOMAIN_SEARCH, DHCP4_OPTION_SPACE, OPT_FQDN_TYPE,
       true, NO_RECORD_DEF, "" },
-    { "classless-static-route", DHO_CLASSLESS_STATIC_ROUTE, DHCP4_OPTION_SPACE, OPT_BINARY_TYPE,
+    { "classless-static-route", DHO_CLASSLESS_STATIC_ROUTE, DHCP4_OPTION_SPACE, OPT_CUSTOM_TYPE,
       false, NO_RECORD_DEF, "" },
     { "vivco-suboptions", DHO_VIVCO_SUBOPTIONS, DHCP4_OPTION_SPACE,
       OPT_RECORD_TYPE, false, RECORD_DEF(VIVCO_RECORDS), "" },

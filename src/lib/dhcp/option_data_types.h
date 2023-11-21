@@ -59,6 +59,7 @@ enum OptionDataType {
     OPT_STRING_TYPE,
     OPT_TUPLE_TYPE,
     OPT_FQDN_TYPE,
+    OPT_CUSTOM_TYPE,
     OPT_RECORD_TYPE,
     OPT_UNKNOWN_TYPE
 };

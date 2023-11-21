@@ -433,12 +433,15 @@ public:
     /// @param type option type.
     /// @param begin beginning of the option buffer.
     /// @param end end of the option buffer.
+    /// @param custom_data
     ///
     /// @return instance of the DHCP option.
     /// @throw InvalidOptionValue if data for the option is invalid.
-    OptionPtr optionFactory(Option::Universe u, uint16_t type,
+    OptionPtr optionFactory(Option::Universe u,
+                            uint16_t type,
                             OptionBufferConstIter begin,
-                            OptionBufferConstIter end) const;
+                            OptionBufferConstIter end,
+                            bool custom_data = false) const;
 
     /// @brief Option factory.
     ///
@@ -670,13 +673,15 @@ private:
     /// @param u A universe (V4 or V6).
     /// @param begin beginning of the option buffer.
     /// @param end end of the option buffer.
+    /// @param custom_data
     ///
     /// @return An instance of the option having special format or NULL if
     /// such an option can't be created because an option with the given
     /// option code hasn't got the special format.
     OptionPtr factorySpecialFormatOption(Option::Universe u,
                                          OptionBufferConstIter begin,
-                                         OptionBufferConstIter end) const;
+                                         OptionBufferConstIter end,
+                                         bool custom_data = false) const;
 
     /// @brief Check if specified type matches option definition type.
     ///

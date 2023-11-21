@@ -79,12 +79,13 @@ TEST(OptionClasslessStaticRouteTest, emptyCtorAddMoreRoutes) {
 // Only one static route is defined.
 TEST(OptionClasslessStaticRouteTest, bufferFromStrCtorWithOneRoute) {
     // Prepare data to decode - one route with mask width = 8.
-    const std::string config = "'10.0.0.0/8 - 10.198.122.1'";
-    OptionBuffer buf = isc::util::str::quotedStringToBinary(config);
+    const std::string config = "10.0.0.0/8 - 10.198.122.1";
+    OptionBuffer buf;
+    buf.assign(config.begin(), config.end());
 
     // Create option instance. Check that constructor doesn't throw. Unpack is also tested here.
     OptionClasslessStaticRoutePtr option;
-    EXPECT_NO_THROW(option.reset(new OptionClasslessStaticRoute(buf.begin(), buf.end())));
+    EXPECT_NO_THROW(option.reset(new OptionClasslessStaticRoute(buf.begin(), buf.end(), true)));
     ASSERT_TRUE(option);
 
     // Expected len: 2 (option code + option len headers) + 6 (2 dest descriptor + 4 router addr).
@@ -100,13 +101,14 @@ TEST(OptionClasslessStaticRouteTest, bufferFromStrCtorWithOneRoute) {
 // 3 static routes are defined.
 TEST(OptionClasslessStaticRouteTest, bufferFromStrCtorWithMoreRoutes) {
     // Prepare data to decode - 3 static routes
-    const std::string config = "'0.0.0.0/0 - 10.17.0.1,10.229.0.128/25-10.229.0.1, "
-                               "10.27.129.0/24 - 10.27.129.1'";
-    OptionBuffer buf = isc::util::str::quotedStringToBinary(config);
+    const std::string config = "0.0.0.0/0 - 10.17.0.1,10.229.0.128/25-10.229.0.1, "
+                               "10.27.129.0/24 - 10.27.129.1";
+    OptionBuffer buf;
+    buf.assign(config.begin(), config.end());
 
     // Create option instance. Check that constructor doesn't throw. Unpack is also tested here.
     OptionClasslessStaticRoutePtr option;
-    EXPECT_NO_THROW(option.reset(new OptionClasslessStaticRoute(buf.begin(), buf.end())));
+    EXPECT_NO_THROW(option.reset(new OptionClasslessStaticRoute(buf.begin(), buf.end(), true)));
     ASSERT_TRUE(option);
 
     // Expected len: 2 (option code + option len headers) + 5 (1 dest descriptor + 4 router addr)
@@ -125,13 +127,14 @@ TEST(OptionClasslessStaticRouteTest, bufferFromStrCtorWithMoreRoutes) {
 // when data in the buffer has wrong format.
 TEST(OptionClasslessStaticRouteTest, bufferFromStrCtorMissingDash) {
     // Prepare data to decode - second route has missing dash separator
-    const std::string config = "'0.0.0.0/0 - 10.17.0.1,10.229.0.128/25 10.229.0.1, "
-                               "10.27.129.0/24 - 10.27.129.1'";
-    OptionBuffer buf = isc::util::str::quotedStringToBinary(config);
+    const std::string config = "0.0.0.0/0 - 10.17.0.1,10.229.0.128/25 10.229.0.1, "
+                               "10.27.129.0/24 - 10.27.129.1";
+    OptionBuffer buf;
+    buf.assign(config.begin(), config.end());
 
     // Create option instance. Check that constructor throws BadValue during Unpack.
     OptionClasslessStaticRoutePtr option;
-    EXPECT_THROW(option.reset(new OptionClasslessStaticRoute(buf.begin(), buf.end())),
+    EXPECT_THROW(option.reset(new OptionClasslessStaticRoute(buf.begin(), buf.end(), true)),
                  isc::BadValue);
     ASSERT_FALSE(option);
 }
@@ -140,13 +143,14 @@ TEST(OptionClasslessStaticRouteTest, bufferFromStrCtorMissingDash) {
 // when data in the buffer has wrong format.
 TEST(OptionClasslessStaticRouteTest, bufferFromStrCtorMissingPrefixLen) {
     // Prepare data to decode - second route has missing "/prefix len"
-    const std::string config = "'0.0.0.0/0 - 10.17.0.1,10.229.0.128 - 10.229.0.1, "
-                               "10.27.129.0/24 - 10.27.129.1'";
-    OptionBuffer buf = isc::util::str::quotedStringToBinary(config);
+    const std::string config = "0.0.0.0/0 - 10.17.0.1,10.229.0.128 - 10.229.0.1, "
+                               "10.27.129.0/24 - 10.27.129.1";
+    OptionBuffer buf;
+    buf.assign(config.begin(), config.end());
 
     // Create option instance. Check that constructor throws BadValue during Unpack.
     OptionClasslessStaticRoutePtr option;
-    EXPECT_THROW(option.reset(new OptionClasslessStaticRoute(buf.begin(), buf.end())),
+    EXPECT_THROW(option.reset(new OptionClasslessStaticRoute(buf.begin(), buf.end(), true)),
                  isc::BadValue);
     ASSERT_FALSE(option);
 }
@@ -155,13 +159,14 @@ TEST(OptionClasslessStaticRouteTest, bufferFromStrCtorMissingPrefixLen) {
 // when data in the buffer has wrong format.
 TEST(OptionClasslessStaticRouteTest, bufferFromStrCtorDestIpV6Given) {
     // Prepare data to decode - second route has IPv6 prefix
-    const std::string config = "'0.0.0.0/0 - 10.17.0.1,3001::5/64 - 10.229.0.1, "
-                               "10.27.129.0/24 - 10.27.129.1'";
-    OptionBuffer buf = isc::util::str::quotedStringToBinary(config);
+    const std::string config = "0.0.0.0/0 - 10.17.0.1,3001::5/64 - 10.229.0.1, "
+                               "10.27.129.0/24 - 10.27.129.1";
+    OptionBuffer buf;
+    buf.assign(config.begin(), config.end());
 
     // Create option instance. Check that constructor throws BadValue during Unpack.
     OptionClasslessStaticRoutePtr option;
-    EXPECT_THROW(option.reset(new OptionClasslessStaticRoute(buf.begin(), buf.end())),
+    EXPECT_THROW(option.reset(new OptionClasslessStaticRoute(buf.begin(), buf.end(), true)),
                  isc::BadValue);
     ASSERT_FALSE(option);
 }
@@ -170,13 +175,14 @@ TEST(OptionClasslessStaticRouteTest, bufferFromStrCtorDestIpV6Given) {
 // when data in the buffer has wrong format.
 TEST(OptionClasslessStaticRouteTest, bufferFromStrCtorDestInvalidAddr) {
     // Prepare data to decode - second route has invalid IP address
-    const std::string config = "'0.0.0.0/0 - 10.17.0.1,1.2.3.a/32 - 10.229.0.1, "
-                               "10.27.129.0/24 - 10.27.129.1'";
-    OptionBuffer buf = isc::util::str::quotedStringToBinary(config);
+    const std::string config = "0.0.0.0/0 - 10.17.0.1,1.2.3.a/32 - 10.229.0.1, "
+                               "10.27.129.0/24 - 10.27.129.1";
+    OptionBuffer buf;
+    buf.assign(config.begin(), config.end());
 
     // Create option instance. Check that constructor throws BadValue during Unpack.
     OptionClasslessStaticRoutePtr option;
-    EXPECT_THROW(option.reset(new OptionClasslessStaticRoute(buf.begin(), buf.end())),
+    EXPECT_THROW(option.reset(new OptionClasslessStaticRoute(buf.begin(), buf.end(), true)),
                  isc::BadValue);
     ASSERT_FALSE(option);
 }
@@ -185,13 +191,14 @@ TEST(OptionClasslessStaticRouteTest, bufferFromStrCtorDestInvalidAddr) {
 // when data in the buffer has wrong format.
 TEST(OptionClasslessStaticRouteTest, bufferFromStrCtorInvalidPrefixLen) {
     // Prepare data to decode - second route has invalid prefix len
-    const std::string config = "'0.0.0.0/0 - 10.17.0.1,1.2.3.4/a - 10.229.0.1, "
-                               "10.27.129.0/24 - 10.27.129.1'";
-    OptionBuffer buf = isc::util::str::quotedStringToBinary(config);
+    const std::string config = "0.0.0.0/0 - 10.17.0.1,1.2.3.4/a - 10.229.0.1, "
+                               "10.27.129.0/24 - 10.27.129.1";
+    OptionBuffer buf;
+    buf.assign(config.begin(), config.end());
 
     // Create option instance. Check that constructor throws BadValue during Unpack.
     OptionClasslessStaticRoutePtr option;
-    EXPECT_THROW(option.reset(new OptionClasslessStaticRoute(buf.begin(), buf.end())),
+    EXPECT_THROW(option.reset(new OptionClasslessStaticRoute(buf.begin(), buf.end(), true)),
                  isc::BadValue);
     ASSERT_FALSE(option);
 }
@@ -200,13 +207,14 @@ TEST(OptionClasslessStaticRouteTest, bufferFromStrCtorInvalidPrefixLen) {
 // when data in the buffer has wrong format.
 TEST(OptionClasslessStaticRouteTest, bufferFromStrCtorPrefixLenTooBig) {
     // Prepare data to decode - second route has prefix len too big for IPv4
-    const std::string config = "'0.0.0.0/0 - 10.17.0.1,1.2.3.4/64 - 10.229.0.1, "
-                               "10.27.129.0/24 - 10.27.129.1'";
-    OptionBuffer buf = isc::util::str::quotedStringToBinary(config);
+    const std::string config = "0.0.0.0/0 - 10.17.0.1,1.2.3.4/64 - 10.229.0.1, "
+                               "10.27.129.0/24 - 10.27.129.1";
+    OptionBuffer buf;
+    buf.assign(config.begin(), config.end());
 
     // Create option instance. Check that constructor throws BadValue during Unpack.
     OptionClasslessStaticRoutePtr option;
-    EXPECT_THROW(option.reset(new OptionClasslessStaticRoute(buf.begin(), buf.end())),
+    EXPECT_THROW(option.reset(new OptionClasslessStaticRoute(buf.begin(), buf.end(), true)),
                  isc::BadValue);
     ASSERT_FALSE(option);
 }
@@ -215,13 +223,14 @@ TEST(OptionClasslessStaticRouteTest, bufferFromStrCtorPrefixLenTooBig) {
 // when data in the buffer has wrong format.
 TEST(OptionClasslessStaticRouteTest, bufferFromStrCtorRouterInvalidAddr) {
     // Prepare data to decode - second route has invalid router IP address
-    const std::string config = "'0.0.0.0/0 - 10.17.0.1,1.2.3.4/31 - 10.229.0.a, "
-                               "10.27.129.0/24 - 10.27.129.1'";
-    OptionBuffer buf = isc::util::str::quotedStringToBinary(config);
+    const std::string config = "0.0.0.0/0 - 10.17.0.1,1.2.3.4/31 - 10.229.0.a, "
+                               "10.27.129.0/24 - 10.27.129.1";
+    OptionBuffer buf;
+    buf.assign(config.begin(), config.end());
 
     // Create option instance. Check that constructor throws BadValue during Unpack.
     OptionClasslessStaticRoutePtr option;
-    EXPECT_THROW(option.reset(new OptionClasslessStaticRoute(buf.begin(), buf.end())),
+    EXPECT_THROW(option.reset(new OptionClasslessStaticRoute(buf.begin(), buf.end(), true)),
                  isc::BadValue);
     ASSERT_FALSE(option);
 }
@@ -230,13 +239,14 @@ TEST(OptionClasslessStaticRouteTest, bufferFromStrCtorRouterInvalidAddr) {
 // when data in the buffer has wrong format.
 TEST(OptionClasslessStaticRouteTest, bufferFromStrCtorRouterIpV6Given) {
     // Prepare data to decode - second route has IPv6 router address
-    const std::string config = "'0.0.0.0/0 - 10.17.0.1,1.2.3.4/31 - 3001::5, "
-                               "10.27.129.0/24 - 10.27.129.1'";
-    OptionBuffer buf = isc::util::str::quotedStringToBinary(config);
+    const std::string config = "0.0.0.0/0 - 10.17.0.1,1.2.3.4/31 - 3001::5, "
+                               "10.27.129.0/24 - 10.27.129.1";
+    OptionBuffer buf;
+    buf.assign(config.begin(), config.end());
 
     // Create option instance. Check that constructor throws BadValue during Unpack.
     OptionClasslessStaticRoutePtr option;
-    EXPECT_THROW(option.reset(new OptionClasslessStaticRoute(buf.begin(), buf.end())),
+    EXPECT_THROW(option.reset(new OptionClasslessStaticRoute(buf.begin(), buf.end(), true)),
                  isc::BadValue);
     ASSERT_FALSE(option);
 }
@@ -245,13 +255,14 @@ TEST(OptionClasslessStaticRouteTest, bufferFromStrCtorRouterIpV6Given) {
 // when data in the buffer has wrong format.
 TEST(OptionClasslessStaticRouteTest, bufferFromStrCtorCommaMissing) {
     // Prepare data to decode - comma separators are missing
-    const std::string config = "'0.0.0.0/0 - 10.17.0.1 1.2.3.4/31 - 1.2.3.4 "
-                               "10.27.129.0/24 - 10.27.129.1'";
-    OptionBuffer buf = isc::util::str::quotedStringToBinary(config);
+    const std::string config = "0.0.0.0/0 - 10.17.0.1 1.2.3.4/31 - 1.2.3.4 "
+                               "10.27.129.0/24 - 10.27.129.1";
+    OptionBuffer buf;
+    buf.assign(config.begin(), config.end());
 
     // Create option instance. Check that constructor throws BadValue during Unpack.
     OptionClasslessStaticRoutePtr option;
-    EXPECT_THROW(option.reset(new OptionClasslessStaticRoute(buf.begin(), buf.end())),
+    EXPECT_THROW(option.reset(new OptionClasslessStaticRoute(buf.begin(), buf.end(), true)),
                  isc::BadValue);
     ASSERT_FALSE(option);
 }
@@ -260,12 +271,13 @@ TEST(OptionClasslessStaticRouteTest, bufferFromStrCtorCommaMissing) {
 // when data in the buffer is truncated.
 TEST(OptionClasslessStaticRouteTest, bufferFromStrCtorDataTruncated) {
     // Prepare data to decode - truncated data
-    const std::string config = "'0.0.'";
-    OptionBuffer buf = isc::util::str::quotedStringToBinary(config);
+    const std::string config = "0.0.";
+    OptionBuffer buf;
+    buf.assign(config.begin(), config.end());
 
     // Create option instance. Check that constructor throws OutOfRange during Unpack.
     OptionClasslessStaticRoutePtr option;
-    EXPECT_THROW(option.reset(new OptionClasslessStaticRoute(buf.begin(), buf.end())),
+    EXPECT_THROW(option.reset(new OptionClasslessStaticRoute(buf.begin(), buf.end(), true)),
                  isc::OutOfRange);
     ASSERT_FALSE(option);
 }
@@ -420,9 +432,10 @@ TEST(OptionClasslessStaticRouteTest, toText) {
 // This test verifies pack() method
 TEST(OptionClasslessStaticRouteTest, pack) {
     // Prepare data to decode - 3 static routes
-    const std::string config = "'0.0.0.0/0 - 10.17.0.1,10.229.0.128/25-10.229.0.1, "
-                               "10.27.129.0/24 - 10.27.129.1'";
-    OptionBuffer buf = isc::util::str::quotedStringToBinary(config);
+    const std::string config = "0.0.0.0/0 - 10.17.0.1,10.229.0.128/25-10.229.0.1, "
+                               "10.27.129.0/24 - 10.27.129.1";
+    OptionBuffer buf;
+    buf.assign(config.begin(), config.end());
 
     // Prepare expected packed data
     const uint8_t ref_data[] = {
@@ -442,7 +455,7 @@ TEST(OptionClasslessStaticRouteTest, pack) {
 
     // Create option instance. Check that constructor doesn't throw. Unpack is also tested here.
     OptionClasslessStaticRoutePtr option;
-    EXPECT_NO_THROW(option.reset(new OptionClasslessStaticRoute(buf.begin(), buf.end())));
+    EXPECT_NO_THROW(option.reset(new OptionClasslessStaticRoute(buf.begin(), buf.end(), true)));
     ASSERT_TRUE(option);
 
     // Prepare on-wire format of the option.
