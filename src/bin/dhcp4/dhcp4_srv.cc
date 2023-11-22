@@ -33,6 +33,7 @@
 #include <dhcpsrv/cfg_iface.h>
 #include <dhcpsrv/cfg_shared_networks.h>
 #include <dhcpsrv/cfg_subnets4.h>
+#include <dhcpsrv/dhcpsrv_exceptions.h>
 #include <dhcpsrv/fuzz.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
