@@ -20,21 +20,29 @@ typedef std::tuple<asiolink::IOAddress, uint8_t, asiolink::IOAddress> StaticRout
 /// @brief Represents DHCPv4 Classless Static Route %Option (code 121).
 class OptionClasslessStaticRoute : public Option {
 public:
-    /// @brief Empty Constructor
+    /// @brief Constructor of the %Option with no static routes.
+    ///
+    /// This constructor creates an instance of the option with no static routes.
+    /// Any static routes must be added after. Intended use of this ctor are unit tests.
     OptionClasslessStaticRoute()
         : Option(V4, DHO_CLASSLESS_STATIC_ROUTE), static_routes_(), data_len_(0),
           convenient_notation_(false) {
     }
 
-    /// @brief Constructor of the %Option from on-wire data.
+    /// @brief Constructor of the %Option from data in the buffer.
     ///
     /// This constructor creates an instance of the option using a buffer with
-    /// on-wire data. It may throw an exception if the @c unpack method throws.
+    /// the data. This %Option allows constructing from on-wire binary data
+    /// and also from convenient string notation which can be used in config.
+    /// To determine what is the nature of the data in buffer, @c convenient_notation
+    /// flag is used. It may throw an exception if the @c unpack method throws.
     ///
     /// @param begin Iterator pointing to the beginning of the buffer holding an
     /// option.
     /// @param end Iterator pointing to the end of the buffer holding an option.
-    /// @param convenient_notation
+    /// @param convenient_notation Flag stating whether data in buffer is a convenient
+    ///                            notation string that needs custom parsing or binary
+    ///                            data. Defaults to @c false.
     OptionClasslessStaticRoute(OptionBufferConstIter begin,
                                OptionBufferConstIter end,
                                bool convenient_notation = false);
@@ -77,6 +85,7 @@ public:
     uint16_t len() const override;
 
     /// @brief Adds static route to collection of all static routes.
+    ///
     /// @param route A tuple defining new static route
     void addRoute(const StaticRouteTuple& route);
 
@@ -87,11 +96,14 @@ private:
     /// @brief Length in octets of all encoded static routes.
     uint16_t data_len_;
 
-    /// @brief
+    /// @brief Flag stating whether the %Option was constructed with a convenient notation string,
+    /// that needs custom parsing, or binary data.
     bool convenient_notation_;
 
     /// @brief Encodes destination descriptor as per RFC3442.
+    ///
     /// @param route static route tuple
+    ///
     /// @return Contents of the destination descriptor as a vector
     /// of bytes in network-byte order.
     static std::vector<uint8_t> encodeDestinationDescriptor(const StaticRouteTuple& route);
@@ -104,6 +116,7 @@ private:
     /// width of the subnet mask divided by eight, rounding up.
     ///
     /// @param mask_width width of subnet mask
+    ///
     /// @return number of significant octets
     static uint8_t calcSignificantOctets(const uint8_t& mask_width);
 

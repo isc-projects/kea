@@ -433,7 +433,9 @@ public:
     /// @param type option type.
     /// @param begin beginning of the option buffer.
     /// @param end end of the option buffer.
-    /// @param custom_data
+    /// @param custom_data flag letting know the factory that the buffer contains custom data.
+    ///                    Intended use case is @c OPT_CUSTOM_TYPE option def and csv-format=true.
+    ///                    Defaults to false.
     ///
     /// @return instance of the DHCP option.
     /// @throw InvalidOptionValue if data for the option is invalid.
@@ -673,7 +675,10 @@ private:
     /// @param u A universe (V4 or V6).
     /// @param begin beginning of the option buffer.
     /// @param end end of the option buffer.
-    /// @param custom_data
+    /// @param custom_data flag letting know the factory that the buffer contains custom data.
+    ///                    Intended use case is @c OPT_CUSTOM_TYPE option def and csv-format=true.
+    ///                    Defaults to false.
+    ///
     ///
     /// @return An instance of the option having special format or NULL if
     /// such an option can't be created because an option with the given

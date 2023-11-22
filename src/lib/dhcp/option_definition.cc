@@ -210,6 +210,8 @@ OptionDefinition::optionFactory(Option::Universe u,
             }
 
         case OPT_BINARY_TYPE:
+        // If this is Custom type, and it wasn't handled by factorySpecialFormatOption() before,
+        // let's treat it like normal Binary type.
         case OPT_CUSTOM_TYPE:
             return (factoryGeneric(u, type, begin, end));
 
@@ -311,6 +313,9 @@ OptionDefinition::optionFactory(Option::Universe u, uint16_t type,
                 isc_throw(InvalidOptionValue, "no option value specified");
             }
         } else if (type_ == OPT_CUSTOM_TYPE) {
+            // If Custom type is used together with csv-format=true, let's treat it
+            // like String type. optionFactory() will be called with custom_data flag set to true,
+            // so that the factory will have a chance to handle it in a custom way.
             writeToBuffer(u, boost::algorithm::join(values, ","), OPT_STRING_TYPE, buf);
         } else {
             writeToBuffer(u, util::str::trim(values[0]), type_, buf);
