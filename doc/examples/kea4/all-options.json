@@ -1318,14 +1318,12 @@
       Router 1...N          The IP address of the router that should
                             be used to reach that destination.
       */
-      // Type: binary
+      // Type: custom
       {
         "code": 121,
-        // please mind the "single quotes inside of double quotes" syntax, as well as "csv-format" set to false,
-        // when below convenience notation is used:
+        // please mind the convenience notation used:
         // subnet1 - router1 IP addr, subnet2 - router2 IP addr, ..., subnetN - routerN IP addr
-        "data": "'10.229.0.128/25 - 10.229.0.1, 10.198.122.47/32 - 10.198.122.1'",
-        "csv-format": false,
+        "data": "10.229.0.128/25 - 10.229.0.1, 10.198.122.47/32 - 10.198.122.1",
         "name": "classless-static-route"
       },
 
