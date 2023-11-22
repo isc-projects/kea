@@ -15,6 +15,7 @@
 #include <dhcp/option6_iaaddr.h>
 #include <dhcp/option4_dnr.h>
 #include <dhcp/option6_dnr.h>
+#include <dhcp/option_classless_static_route.h>
 #include <dhcp/option_custom.h>
 #include <dhcp/option_definition.h>
 #include <dhcp/option_int.h>
@@ -2103,6 +2104,93 @@ TEST_F(OptionDefinitionTest, tuple6ArrayTokenized) {
 
     OpaqueDataTuple tuple2 = option_cast->getTuple(2);
     EXPECT_EQ("world", tuple2.getText());
+}
+
+// The purpose of this test is to verify creation of OPT_CUSTOM_TYPE option
+// definition. OptionFactory is used which takes vector of string values as
+// data for the option. This is special case for OPT_CUSTOM_TYPE because it means
+// that custom data is provided in string values. Custom parsing is verified in this test.
+TEST_F(OptionDefinitionTest, customOptionTypeString) {
+    OptionDefinition opt_def("classless-static-route", DHO_CLASSLESS_STATIC_ROUTE,
+                             DHCP4_OPTION_SPACE, "custom", false);
+
+    OptionPtr option;
+
+    // Specify option's static routes.
+    std::vector<std::string> values;
+    values.push_back("0.0.0.0/0-10.17.0.1");
+    values.push_back("10.229.0.128/25-10.229.0.1");
+    values.push_back("10.27.129.0/24-10.27.129.1");
+
+    // Create an instance of this option using the definition.
+    ASSERT_NO_THROW(option = opt_def.optionFactory(Option::V4, DHO_CLASSLESS_STATIC_ROUTE, values););
+
+    // Make sure that the returned option class is correct.
+    const Option* optptr = option.get();
+    ASSERT_TRUE(optptr);
+    ASSERT_TRUE(typeid(*optptr) == typeid(OptionClasslessStaticRoute));
+
+    // Validate that option's fields were correctly parsed from strings.
+    OptionClasslessStaticRoutePtr option_cast = boost::dynamic_pointer_cast<OptionClasslessStaticRoute>(option);
+
+    // Expected len: 2 (option code + option len headers) + 5 (1 dest descriptor + 4 router addr)
+    // + 9 (5 dest descriptor + 4 router addr) + 8 (4 dest descriptor + 4 router addr).
+    EXPECT_EQ(24, option_cast->len());
+
+    // Verify toText() is working fine.
+    EXPECT_EQ("type=121(CLASSLESS_STATIC_ROUTE), len=22, "
+              "Route 1 (subnet 0.0.0.0/0, router IP 10.17.0.1), "
+              "Route 2 (subnet 10.229.0.128/25, router IP 10.229.0.1), "
+              "Route 3 (subnet 10.27.129.0/24, router IP 10.27.129.1)",
+              option_cast->toText());
+}
+
+// The purpose of this test is to verify creation of OPT_CUSTOM_TYPE option
+// definition. OptionFactory is used which takes OptionBuffer as
+// data for the option. Binary data unpack is verified in this test.
+TEST_F(OptionDefinitionTest, customOptionTypeBinary) {
+    OptionDefinition opt_def("classless-static-route", DHO_CLASSLESS_STATIC_ROUTE,
+                             DHCP4_OPTION_SPACE, "custom", false);
+
+    OptionPtr option;
+
+    // Create a buffer holding static routes on-wire data
+    const OptionBuffer buf = {
+        0,                  // mask width
+        10, 17,  0,   1,    // router IP address
+        25,                 // mask width
+        10, 229, 0,   128,  // significant subnet octets for 10.229.0.128/25
+        10, 229, 0,   1,    // router IP address
+        24,                 // mask width
+        10, 27,  129,       // significant subnet octets for 10.27.129.0/24
+        10, 27,  129, 1     // router IP address
+    };
+
+    // Create an instance of this option using the definition.
+    ASSERT_NO_THROW(option = opt_def.optionFactory(Option::V4, DHO_CLASSLESS_STATIC_ROUTE, buf););
+
+    // Make sure that the returned option class is correct.
+    const Option* optptr = option.get();
+    ASSERT_TRUE(optptr);
+    ASSERT_TRUE(typeid(*optptr) == typeid(OptionClasslessStaticRoute));
+
+    // Sanity check on universe and header length.
+    EXPECT_EQ(Option::V4, option->getUniverse());
+    EXPECT_EQ(2, option->getHeaderLen());
+
+    // Validate parsed values.
+    OptionClasslessStaticRoutePtr option_cast = boost::dynamic_pointer_cast<OptionClasslessStaticRoute>(option);
+
+    // Expected len: 2 (option code + option len headers) + 5 (1 dest descriptor + 4 router addr)
+    // + 9 (5 dest descriptor + 4 router addr) + 8 (4 dest descriptor + 4 router addr).
+    EXPECT_EQ(24, option_cast->len());
+
+    // Verify toText() is working fine.
+    EXPECT_EQ("type=121(CLASSLESS_STATIC_ROUTE), len=22, "
+              "Route 1 (subnet 0.0.0.0/0, router IP 10.17.0.1), "
+              "Route 2 (subnet 10.229.0.128/25, router IP 10.229.0.1), "
+              "Route 3 (subnet 10.27.129.0/24, router IP 10.27.129.1)",
+              option_cast->toText());
 }
 
 } // anonymous namespace

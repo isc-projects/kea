@@ -287,12 +287,11 @@ TEST(OptionClasslessStaticRouteTest, bufferFromStrCtorDataTruncated) {
 // Only one static route is defined.
 TEST(OptionClasslessStaticRouteTest, wireDatabufferCtorWithOneRoute) {
     // Prepare data to decode - one route with mask width = 8.
-    const uint8_t buf_data[] = {
+    const OptionBuffer buf = {
         8,               // mask width
         10,              // significant subnet octet for 10.0.0.0/8
-        10, 198, 122, 1  // router IP address
+        10, 45, 122, 1   // router IP address
     };
-    OptionBuffer buf(buf_data, buf_data + sizeof(buf_data));
 
     // Create option instance. Check that constructor doesn't throw. Unpack is also tested here.
     OptionClasslessStaticRoutePtr option;
@@ -304,7 +303,7 @@ TEST(OptionClasslessStaticRouteTest, wireDatabufferCtorWithOneRoute) {
 
     // Verify toText() is working fine.
     EXPECT_EQ("type=121(CLASSLESS_STATIC_ROUTE), len=6, Route 1 (subnet 10.0.0.0/8,"
-              " router IP 10.198.122.1)",
+              " router IP 10.45.122.1)",
               option->toText());
 }
 
@@ -313,7 +312,7 @@ TEST(OptionClasslessStaticRouteTest, wireDatabufferCtorWithOneRoute) {
 // 3 static routes are defined.
 TEST(OptionClasslessStaticRouteTest, wireDatabufferCtorWithMoreRoutes) {
     // Prepare data to decode - 3 static routes
-    const uint8_t buf_data[] = {
+    const OptionBuffer buf = {
         0,                  // mask width
         10, 17,  0,   1,    // router IP address
         25,                 // mask width
@@ -323,7 +322,6 @@ TEST(OptionClasslessStaticRouteTest, wireDatabufferCtorWithMoreRoutes) {
         10, 27,  129,       // significant subnet octets for 10.27.129.0/24
         10, 27,  129, 1     // router IP address
     };
-    OptionBuffer buf(buf_data, buf_data + sizeof(buf_data));
 
     // Create option instance. Check that constructor doesn't throw. Unpack is also tested here.
     OptionClasslessStaticRoutePtr option;
@@ -346,12 +344,11 @@ TEST(OptionClasslessStaticRouteTest, wireDatabufferCtorWithMoreRoutes) {
 // when data in the buffer is truncated.
 TEST(OptionClasslessStaticRouteTest, wireDatabufferCtorDataTruncated) {
     // Prepare data to decode - truncated data
-    const uint8_t buf_data[] = {
+    const OptionBuffer buf = {
         8,   // mask width
         10,  // significant subnet octet for 10.0.0.0/8
         10,  // router IP address truncated
     };
-    OptionBuffer buf(buf_data, buf_data + sizeof(buf_data));
 
     // Create option instance. Check that constructor throws OutOfRange during Unpack.
     OptionClasslessStaticRoutePtr option;
@@ -364,13 +361,12 @@ TEST(OptionClasslessStaticRouteTest, wireDatabufferCtorDataTruncated) {
 // when data of the second static route in the buffer is truncated.
 TEST(OptionClasslessStaticRouteTest, wireDatabufferCtorSecondRouteDataTruncated) {
     // Prepare data to decode - truncated data
-    const uint8_t buf_data[] = {
+    const OptionBuffer buf = {
         0,             // mask width
         10, 17, 0, 1,  // router IP address
         25,            // mask width
         10, 229        // significant subnet octets truncated
     };
-    OptionBuffer buf(buf_data, buf_data + sizeof(buf_data));
 
     // Create option instance. Check that constructor throws OutOfRange during Unpack.
     OptionClasslessStaticRoutePtr option;
@@ -383,14 +379,13 @@ TEST(OptionClasslessStaticRouteTest, wireDatabufferCtorSecondRouteDataTruncated)
 // when data of the second static route in the buffer contains bad subnet width.
 TEST(OptionClasslessStaticRouteTest, wireDatabufferCtorSecondRouteBadSubnetWidth) {
     // Prepare data to decode - truncated data
-    const uint8_t buf_data[] = {
+    const OptionBuffer buf = {
         0,                 // mask width
         10,  17,  0, 1,    // router IP address
         125,               // bad mask width
         10,  229, 0, 128,  // significant subnet octets for 10.229.0.128/25
         10,  229, 0, 1     // router IP address
     };
-    OptionBuffer buf(buf_data, buf_data + sizeof(buf_data));
 
     // Create option instance. Check that constructor throws BadValue during Unpack.
     OptionClasslessStaticRoutePtr option;
@@ -402,7 +397,7 @@ TEST(OptionClasslessStaticRouteTest, wireDatabufferCtorSecondRouteBadSubnetWidth
 // This test verifies toText() method
 TEST(OptionClasslessStaticRouteTest, toText) {
     // Prepare data to decode - 3 static routes
-    const uint8_t buf_data[] = {
+    const OptionBuffer buf = {
         0,                  // mask width
         10, 17,  0,   1,    // router IP address
         25,                 // mask width
@@ -412,7 +407,6 @@ TEST(OptionClasslessStaticRouteTest, toText) {
         10, 27,  129,       // significant subnet octets for 10.27.129.0/24
         10, 27,  129, 1     // router IP address
     };
-    OptionBuffer buf(buf_data, buf_data + sizeof(buf_data));
 
     // Create option instance. Check that constructor doesn't throw. Unpack is also tested here.
     OptionClasslessStaticRoutePtr option;

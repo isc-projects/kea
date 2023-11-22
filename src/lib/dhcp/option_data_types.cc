@@ -50,6 +50,7 @@ OptionDataTypeUtil::OptionDataTypeUtil() {
     data_types_["string"] = OPT_STRING_TYPE;
     data_types_["tuple"] = OPT_TUPLE_TYPE;
     data_types_["fqdn"] = OPT_FQDN_TYPE;
+    data_types_["custom"] = OPT_CUSTOM_TYPE;
     data_types_["record"] = OPT_RECORD_TYPE;
 
     data_type_names_[OPT_EMPTY_TYPE] = "empty";
@@ -68,6 +69,7 @@ OptionDataTypeUtil::OptionDataTypeUtil() {
     data_type_names_[OPT_STRING_TYPE] = "string";
     data_type_names_[OPT_TUPLE_TYPE] = "tuple";
     data_type_names_[OPT_FQDN_TYPE] = "fqdn";
+    data_type_names_[OPT_CUSTOM_TYPE] = "custom";
     data_type_names_[OPT_RECORD_TYPE] = "record";
     // The "unknown" data type is declared here so as
     // it can be returned by reference by a getDataTypeName
