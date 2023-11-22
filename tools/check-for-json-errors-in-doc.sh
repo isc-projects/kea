@@ -27,14 +27,15 @@ fi
 exit_code=0
 
 # Get the files.
-files=$(find ${files} -type f \( -name '*.rst' -or -name '*.json' \) -and -not -path '*/_build/*' -and -not -path '*/man/*' | sort)
+files=$(find $(echo $files) -type f \( -name '*.rst' -or -name '*.json' \) -and -not -path '*/_build/*' -and -not -path '*/man/*' | sort -uV)
 work_file=$(mktemp)
-for file in $files; do
+for file in $(echo $files); do
 	json=0
 	comment=0
 	line_num=0
 	echo "processing: $file"
-	while IFS= read -r line; do
+	IFS=
+	while read -r line; do
 		line_num=$((line_num+1))
 		if [ $comment -eq 0 -a $json -eq 0 -a $(echo "$line" | grep "^[A-Za-z]+\|^\s*\`" | wc -l) -eq 1 ]; then
 			# ignore line if it starts with 'A-Za-z' or spaces followed by '`'
@@ -76,7 +77,7 @@ for file in $files; do
 					# 1. delete everything after '#'
 					# 2. delete everything after //
 					# 3. ignore <?include?>
-					# 4. replace all '[ <DATA> ]' with '[ "<DATA>"]' where DATA contains: '-' and 'A-Za-z0-9' and ' '
+					# 4. replace all '[ <DATA> ]' with '[ "<DATA>" ]' where DATA contains: '-' and 'A-Za-z0-9' and ' '
 					# 5. replace all ' <DATA>:' with ' "<DATA>":'
 					# 6. replace all ': <DATA>' with ': "<DATA>"'
 					# 7. replace '   ...' with '   "placeholder": "value"
@@ -94,7 +95,7 @@ for file in $files; do
 				fi
 			fi
 		fi
-	done <<< $(cat $file | sed ':a;N;$!ba;s/,\s*\n\s*\.\.\.//g' | sed ':a;N;$!ba;s/\s\\\n//g')
+	done <<< $(cat $file | tr '\n' '\r' | sed -r 's/,[[:blank:]]*\r[[:blank:]]*\.\.\.//g' | sed -r 's/\\[[:blank:]]*\r[[:blank:]]*//g' | tr '\r' '\n')
 	if [ $comment -eq 0 -a $json -eq 1 ]; then
 		# if the file ended but the parser is processing a json structure
 		cat $work_file | jq . > /dev/null
