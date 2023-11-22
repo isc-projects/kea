@@ -230,7 +230,7 @@ TEST(UDPSocket, SequenceTest) {
     // The server - with which the client communicates.  For convenience, we
     // use the same io_service, and use the endpoint object created for
     // the client to send to as the endpoint object in the constructor.
-    boost::asio::ip::udp::socket server(service.getIOService(),
+    boost::asio::ip::udp::socket server(service.getInternalIOService(),
         server_endpoint.getASIOEndpoint());
     server.set_option(socket_base::reuse_address(true));
 

@@ -173,7 +173,7 @@ UDPSocket<C>::UDPSocket(boost::asio::ip::udp::socket& socket) :
 
 template <typename C>
 UDPSocket<C>::UDPSocket(IOService& service) :
-    socket_ptr_(new boost::asio::ip::udp::socket(service.getIOService())),
+    socket_ptr_(new boost::asio::ip::udp::socket(service.getInternalIOService())),
     socket_(*socket_ptr_), isopen_(false)
 {
 }

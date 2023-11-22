@@ -324,7 +324,7 @@ TEST(TCPSocket, sequenceTest) {
     TCPEndpoint server_endpoint(server_address, SERVER_PORT);
                                             // Endpoint describing server
     TCPEndpoint server_remote_endpoint;     // Address where server received message from
-    tcp::socket server_socket(service.getIOService());
+    tcp::socket server_socket(service.getInternalIOService());
                                             // Socket used for server
 
     // Step 1.  Create the connection between the client and the server.  Set
@@ -335,7 +335,7 @@ TEST(TCPSocket, sequenceTest) {
     server_cb.queued() = TCPCallback::ACCEPT;
     server_cb.called() = TCPCallback::NONE;
     server_cb.setCode(42);  // Some error
-    tcp::acceptor acceptor(service.getIOService(),
+    tcp::acceptor acceptor(service.getInternalIOService(),
                             tcp::endpoint(tcp::v4(), SERVER_PORT));
     acceptor.set_option(tcp::acceptor::reuse_address(true));
     acceptor.async_accept(server_socket, server_cb);

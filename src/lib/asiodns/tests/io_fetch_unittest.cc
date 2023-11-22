@@ -101,7 +101,7 @@ public:
                                         // Timeout interval chosen to ensure no timeout
         protocol_(IOFetch::TCP),        // for initialization - will be changed
         cumulative_(0),
-        timer_(service_.getIOService()),
+        timer_(service_.getInternalIOService()),
         receive_buffer_(),
         expected_buffer_(new OutputBuffer(512)),
         send_buffer_(),
@@ -474,12 +474,11 @@ public:
         expected_ = IOFetch::STOPPED;
 
         // Post the query
-        service_.getIOService().post(fetch);
+        service_.post(fetch);
 
         // Post query_.stop() (yes, the std::bind thing is just
         // query_.stop()).
-        service_.getIOService().post(
-            std::bind(&IOFetch::stop, fetch, IOFetch::STOPPED));
+        service_.post(std::bind(&IOFetch::stop, fetch, IOFetch::STOPPED));
 
         // Run both of them.  run() returns when everything in the I/O service
         // queue has completed.
@@ -501,7 +500,7 @@ public:
 
         // Stop before it is started
         fetch.stop();
-        service_.getIOService().post(fetch);
+        service_.post(fetch);
 
         service_.run();
         EXPECT_TRUE(run_);
@@ -517,7 +516,7 @@ public:
         protocol_ = protocol;
         expected_ = IOFetch::TIME_OUT;
 
-        service_.getIOService().post(fetch);
+        service_.post(fetch);
         service_.run();
         EXPECT_TRUE(run_);
     }
@@ -543,17 +542,17 @@ public:
         }
 
         // Socket into which the connection will be accepted.
-        tcp::socket socket(service_.getIOService());
+        tcp::socket socket(service_.getInternalIOService());
 
         // Acceptor object - called when the connection is made, the handler
         // will initiate a read on the socket.
-        tcp::acceptor acceptor(service_.getIOService(),
+        tcp::acceptor acceptor(service_.getInternalIOService(),
                                tcp::endpoint(tcp::v4(), TEST_PORT));
         acceptor.async_accept(socket,
             std::bind(&IOFetchTest::tcpAcceptHandler, this, &socket, ph::_1));
 
         // Post the TCP fetch object to send the query and receive the response.
-        service_.getIOService().post(tcp_fetch_);
+        service_.post(tcp_fetch_);
 
         // ... and execute all the callbacks.  This exits when the fetch
         // completes.
@@ -575,7 +574,7 @@ public:
         protocol_ = IOFetch::UDP;
 
         // Set up the server.
-        udp::socket socket(service_.getIOService(), udp::v4());
+        udp::socket socket(service_.getInternalIOService(), udp::v4());
         socket.set_option(socket_base::reuse_address(true));
         socket.bind(udp::endpoint(TEST_HOST, TEST_PORT));
         return_data_ = "Message returned to the client";
@@ -587,7 +586,7 @@ public:
                                   std::bind(&IOFetchTest::udpReceiveHandler,
                                             this, &remote, &socket,
                                             ph::_1, ph::_2, bad_qid, second_send));
-        service_.getIOService().post(udp_fetch_);
+        service_.post(udp_fetch_);
         if (debug_) {
             cout << "udpSendReceive: async_receive_from posted,"
                 "waiting for callback" << endl;

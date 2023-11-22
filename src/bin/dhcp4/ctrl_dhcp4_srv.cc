@@ -1303,7 +1303,6 @@ ControlledDhcpv4Srv::~ControlledDhcpv4Srv() {
     } catch (...) {
         // Don't want to throw exceptions from the destructor. The server
         // is shutting down anyway.
-        ;
     }
 
     server_ = NULL; // forget this instance. There should be no callback anymore

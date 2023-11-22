@@ -211,14 +211,14 @@ void
 UnixControlSocketTest::reflectServer() {
     // Acceptor.
     boost::asio::local::stream_protocol::acceptor
-        acceptor(io_service_.getIOService());
+        acceptor(io_service_.getInternalIOService());
     EXPECT_NO_THROW_LOG(acceptor.open());
     boost::asio::local::stream_protocol::endpoint
         endpoint(unixSocketFilePath());
     EXPECT_NO_THROW_LOG(acceptor.bind(endpoint));
     EXPECT_NO_THROW_LOG(acceptor.listen());
     boost::asio::local::stream_protocol::socket
-        socket(io_service_.getIOService());
+        socket(io_service_.getInternalIOService());
 
     // Ready.
     signalReady();

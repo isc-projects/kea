@@ -241,7 +241,7 @@ public:
         while (!stopped && (!cond || !cond())) {
             io_service->runOne();
         }
-        io_service->getIOService().reset();
+        io_service->restart();
     }
 
     /// @brief This test verifies that the timer used to fetch the configuration

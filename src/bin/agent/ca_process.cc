@@ -88,9 +88,9 @@ CtrlAgentProcess::run() {
 
 size_t
 CtrlAgentProcess::runIO() {
-    size_t cnt = getIOService()->getIOService().poll();
+    size_t cnt = getIOService()->poll();
     if (!cnt) {
-        cnt = getIOService()->getIOService().run_one();
+        cnt = getIOService()->runOne();
     }
     return (cnt);
 }
@@ -208,7 +208,7 @@ CtrlAgentProcess::garbageCollectListeners(size_t leaving) {
         }
         // We have stopped listeners but there may be some pending handlers
         // related to these listeners. Need to invoke these handlers.
-        getIOService()->getIOService().poll();
+        getIOService()->poll();
         // Finally, we're ready to remove no longer used listeners.
         http_listeners_.erase(http_listeners_.begin(),
                               http_listeners_.end() - leaving);

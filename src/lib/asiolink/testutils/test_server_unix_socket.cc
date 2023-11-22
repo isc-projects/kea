@@ -160,7 +160,7 @@ public:
     /// @return Pointer to the socket.
     UnixSocketPtr getSocket() {
         if (!next_socket_) {
-            next_socket_.reset(new UnixSocket(io_service_.getIOService()));
+            next_socket_.reset(new UnixSocket(io_service_.getInternalIOService()));
         }
         return (next_socket_);
     }
@@ -228,7 +228,7 @@ TestServerUnixSocket::TestServerUnixSocket(IOService& io_service,
                                            const std::string& custom_response)
     : io_service_(io_service),
       server_endpoint_(socket_file_path),
-      server_acceptor_(io_service_.getIOService()),
+      server_acceptor_(io_service_.getInternalIOService()),
       test_timer_(io_service_),
       custom_response_(custom_response),
       connection_pool_(new ConnectionPool(io_service)),

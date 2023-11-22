@@ -634,6 +634,7 @@ TEST(TLSTest, loadCertKeyFile) {
     exps.addThrow("PEM lib");
     exps.addThrow("PEM lib (SSL routines)");
     exps.addThrow("unsupported (DECODER routines)");
+    exps.addThrow("unsupported");
     // Another possible error.
     exps.addThrow("No such file or directory");
     exps.runCanThrow([] {
@@ -747,7 +748,7 @@ TEST(TLSTest, noHandshake) {
     // Accept a client.
     tcp::endpoint server_ep(tcp::endpoint(address::from_string(SERVER_ADDRESS),
                                           SERVER_PORT));
-    tcp::acceptor acceptor(service.getIOService(), server_ep);
+    tcp::acceptor acceptor(service.getInternalIOService(), server_ep);
     acceptor.set_option(tcp::acceptor::reuse_address(true));
     TestCallback accept_cb;
     acceptor.async_accept(server.lowest_layer(), accept_cb);
@@ -854,7 +855,7 @@ TEST(TLSTest, serverNotConfigured) {
     // Accept a client.
     tcp::endpoint server_ep(tcp::endpoint(address::from_string(SERVER_ADDRESS),
                                           SERVER_PORT));
-    tcp::acceptor acceptor(service.getIOService(), server_ep);
+    tcp::acceptor acceptor(service.getInternalIOService(), server_ep);
     acceptor.set_option(tcp::acceptor::reuse_address(true));
     TestCallback accept_cb;
     acceptor.async_accept(server.lowest_layer(), accept_cb);
@@ -953,7 +954,7 @@ TEST(TLSTest, clientNotConfigured) {
     // Accept a client.
     tcp::endpoint server_ep(tcp::endpoint(address::from_string(SERVER_ADDRESS),
                                           SERVER_PORT));
-    tcp::acceptor acceptor(service.getIOService(), server_ep);
+    tcp::acceptor acceptor(service.getInternalIOService(), server_ep);
     acceptor.set_option(tcp::acceptor::reuse_address(true));
     TestCallback accept_cb;
     acceptor.async_accept(server.lowest_layer(), accept_cb);
@@ -1052,13 +1053,13 @@ TEST(TLSTest, clientHTTPnoS) {
     // Accept a client.
     tcp::endpoint server_ep(tcp::endpoint(address::from_string(SERVER_ADDRESS),
                                           SERVER_PORT));
-    tcp::acceptor acceptor(service.getIOService(), server_ep);
+    tcp::acceptor acceptor(service.getInternalIOService(), server_ep);
     acceptor.set_option(tcp::acceptor::reuse_address(true));
     TestCallback accept_cb;
     acceptor.async_accept(server.lowest_layer(), accept_cb);
 
     // Client part.
-    tcp::socket client(service.getIOService());
+    tcp::socket client(service.getInternalIOService());
 
     // Connect to.
     client.open(tcp::v4());
@@ -1147,13 +1148,13 @@ TEST(TLSTest, unknownClient) {
     // Accept a client.
     tcp::endpoint server_ep(tcp::endpoint(address::from_string(SERVER_ADDRESS),
                                           SERVER_PORT));
-    tcp::acceptor acceptor(service.getIOService(), server_ep);
+    tcp::acceptor acceptor(service.getInternalIOService(), server_ep);
     acceptor.set_option(tcp::acceptor::reuse_address(true));
     TestCallback accept_cb;
     acceptor.async_accept(server.lowest_layer(), accept_cb);
 
     // Client part.
-    tcp::socket client(service.getIOService());
+    tcp::socket client(service.getInternalIOService());
 
     // Connect to.
     client.open(tcp::v4());
@@ -1237,7 +1238,7 @@ TEST(TLSTest, anotherClient) {
     // Accept a client.
     tcp::endpoint server_ep(tcp::endpoint(address::from_string(SERVER_ADDRESS),
                                           SERVER_PORT));
-    tcp::acceptor acceptor(service.getIOService(), server_ep);
+    tcp::acceptor acceptor(service.getInternalIOService(), server_ep);
     acceptor.set_option(tcp::acceptor::reuse_address(true));
     TestCallback accept_cb;
     acceptor.async_accept(server.lowest_layer(), accept_cb);
@@ -1338,7 +1339,7 @@ TEST(TLSTest, selfSigned) {
     // Accept a client.
     tcp::endpoint server_ep(tcp::endpoint(address::from_string(SERVER_ADDRESS),
                                           SERVER_PORT));
-    tcp::acceptor acceptor(service.getIOService(), server_ep);
+    tcp::acceptor acceptor(service.getInternalIOService(), server_ep);
     acceptor.set_option(tcp::acceptor::reuse_address(true));
     TestCallback accept_cb;
     acceptor.async_accept(server.lowest_layer(), accept_cb);
@@ -1447,7 +1448,7 @@ TEST(TLSTest, noHandshakeCloseonError) {
     // Accept a client.
     tcp::endpoint server_ep(tcp::endpoint(address::from_string(SERVER_ADDRESS),
                                           SERVER_PORT));
-    tcp::acceptor acceptor(service.getIOService(), server_ep);
+    tcp::acceptor acceptor(service.getInternalIOService(), server_ep);
     acceptor.set_option(tcp::acceptor::reuse_address(true));
     TestCallback accept_cb;
     acceptor.async_accept(server.lowest_layer(), accept_cb);
@@ -1550,7 +1551,7 @@ TEST(TLSTest, serverNotConfiguredCloseonError) {
     // Accept a client.
     tcp::endpoint server_ep(tcp::endpoint(address::from_string(SERVER_ADDRESS),
                                           SERVER_PORT));
-    tcp::acceptor acceptor(service.getIOService(), server_ep);
+    tcp::acceptor acceptor(service.getInternalIOService(), server_ep);
     acceptor.set_option(tcp::acceptor::reuse_address(true));
     TestCallback accept_cb;
     acceptor.async_accept(server.lowest_layer(), accept_cb);
@@ -1648,7 +1649,7 @@ TEST(TLSTest, clientNotConfiguredCloseonError) {
     // Accept a client.
     tcp::endpoint server_ep(tcp::endpoint(address::from_string(SERVER_ADDRESS),
                                           SERVER_PORT));
-    tcp::acceptor acceptor(service.getIOService(), server_ep);
+    tcp::acceptor acceptor(service.getInternalIOService(), server_ep);
     acceptor.set_option(tcp::acceptor::reuse_address(true));
     TestCallback accept_cb;
     acceptor.async_accept(server.lowest_layer(), accept_cb);
@@ -1746,13 +1747,13 @@ TEST(TLSTest, clientHTTPnoSCloseonError) {
     // Accept a client.
     tcp::endpoint server_ep(tcp::endpoint(address::from_string(SERVER_ADDRESS),
                                           SERVER_PORT));
-    tcp::acceptor acceptor(service.getIOService(), server_ep);
+    tcp::acceptor acceptor(service.getInternalIOService(), server_ep);
     acceptor.set_option(tcp::acceptor::reuse_address(true));
     TestCallback accept_cb;
     acceptor.async_accept(server.lowest_layer(), accept_cb);
 
     // Client part.
-    tcp::socket client(service.getIOService());
+    tcp::socket client(service.getInternalIOService());
 
     // Connect to.
     client.open(tcp::v4());
@@ -1841,7 +1842,7 @@ TEST(TLSTest, anotherClientCloseonError) {
     // Accept a client.
     tcp::endpoint server_ep(tcp::endpoint(address::from_string(SERVER_ADDRESS),
                                           SERVER_PORT));
-    tcp::acceptor acceptor(service.getIOService(), server_ep);
+    tcp::acceptor acceptor(service.getInternalIOService(), server_ep);
     acceptor.set_option(tcp::acceptor::reuse_address(true));
     TestCallback accept_cb;
     acceptor.async_accept(server.lowest_layer(), accept_cb);
@@ -1940,7 +1941,7 @@ TEST(TLSTest, selfSignedCloseonError) {
     // Accept a client.
     tcp::endpoint server_ep(tcp::endpoint(address::from_string(SERVER_ADDRESS),
                                           SERVER_PORT));
-    tcp::acceptor acceptor(service.getIOService(), server_ep);
+    tcp::acceptor acceptor(service.getInternalIOService(), server_ep);
     acceptor.set_option(tcp::acceptor::reuse_address(true));
     TestCallback accept_cb;
     acceptor.async_accept(server.lowest_layer(), accept_cb);
@@ -2046,7 +2047,7 @@ TEST(TLSTest, anotherClientNoReq) {
     // Accept a client.
     tcp::endpoint server_ep(tcp::endpoint(address::from_string(SERVER_ADDRESS),
                                           SERVER_PORT));
-    tcp::acceptor acceptor(service.getIOService(), server_ep);
+    tcp::acceptor acceptor(service.getInternalIOService(), server_ep);
     acceptor.set_option(tcp::acceptor::reuse_address(true));
     TestCallback accept_cb;
     acceptor.async_accept(server.lowest_layer(), accept_cb);
@@ -2118,7 +2119,7 @@ TEST(TLSTest, serverRaw) {
     // Accept a client.
     tcp::endpoint server_ep(tcp::endpoint(address::from_string(SERVER_ADDRESS),
                                           SERVER_PORT));
-    tcp::acceptor acceptor(service.getIOService(), server_ep);
+    tcp::acceptor acceptor(service.getInternalIOService(), server_ep);
     acceptor.set_option(tcp::acceptor::reuse_address(true));
     TestCallback accept_cb;
     acceptor.async_accept(server.lowest_layer(), accept_cb);
@@ -2191,7 +2192,7 @@ TEST(TLSTest, trustedSelfSigned) {
     // Accept a client.
     tcp::endpoint server_ep(tcp::endpoint(address::from_string(SERVER_ADDRESS),
                                           SERVER_PORT));
-    tcp::acceptor acceptor(service.getIOService(), server_ep);
+    tcp::acceptor acceptor(service.getInternalIOService(), server_ep);
     acceptor.set_option(tcp::acceptor::reuse_address(true));
     TestCallback accept_cb;
     acceptor.async_accept(server.lowest_layer(), accept_cb);
@@ -2269,7 +2270,7 @@ TEST(TLSTest, shutdownInactive) {
     // Accept a client.
     tcp::endpoint server_ep(tcp::endpoint(address::from_string(SERVER_ADDRESS),
                                           SERVER_PORT));
-    tcp::acceptor acceptor(service.getIOService(), server_ep);
+    tcp::acceptor acceptor(service.getInternalIOService(), server_ep);
     acceptor.set_option(tcp::acceptor::reuse_address(true));
     TestCallback accept_cb;
     acceptor.async_accept(server.lowest_layer(), accept_cb);
@@ -2367,7 +2368,7 @@ TEST(TLSTest, shutdownActive) {
     // Accept a client.
     tcp::endpoint server_ep(tcp::endpoint(address::from_string(SERVER_ADDRESS),
                                           SERVER_PORT));
-    tcp::acceptor acceptor(service.getIOService(), server_ep);
+    tcp::acceptor acceptor(service.getInternalIOService(), server_ep);
     acceptor.set_option(tcp::acceptor::reuse_address(true));
     TestCallback accept_cb;
     acceptor.async_accept(server.lowest_layer(), accept_cb);
@@ -2479,7 +2480,7 @@ TEST(TLSTest, shutdownCloseInactive) {
     // Accept a client.
     tcp::endpoint server_ep(tcp::endpoint(address::from_string(SERVER_ADDRESS),
                                           SERVER_PORT));
-    tcp::acceptor acceptor(service.getIOService(), server_ep);
+    tcp::acceptor acceptor(service.getInternalIOService(), server_ep);
     acceptor.set_option(tcp::acceptor::reuse_address(true));
     TestCallback accept_cb;
     acceptor.async_accept(server.lowest_layer(), accept_cb);
@@ -2583,7 +2584,7 @@ TEST(TLSTest, shutdownCloseActive) {
     // Accept a client.
     tcp::endpoint server_ep(tcp::endpoint(address::from_string(SERVER_ADDRESS),
                                           SERVER_PORT));
-    tcp::acceptor acceptor(service.getIOService(), server_ep);
+    tcp::acceptor acceptor(service.getInternalIOService(), server_ep);
     acceptor.set_option(tcp::acceptor::reuse_address(true));
     TestCallback accept_cb;
     acceptor.async_accept(server.lowest_layer(), accept_cb);

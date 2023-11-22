@@ -118,7 +118,7 @@ typedef boost::asio::ssl::stream<boost::asio::ip::tcp::socket> TlsStreamImpl;
 template <typename Callback, typename TlsStreamImpl>
 TlsStreamBase<Callback, TlsStreamImpl>::
 TlsStreamBase(IOService& service, TlsContextPtr context)
-    : TlsStreamImpl(service.getIOService(), context->getContext()),
+    : TlsStreamImpl(service.getInternalIOService(), context->getContext()),
       role_(context->getRole()) {
 }
 

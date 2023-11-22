@@ -65,7 +65,7 @@ public:
     ///
     /// @param io_service IO service to be stopped on error.
     explicit TCPClient(IOService& io_service)
-        : io_service_(io_service.getIOService()), socket_(io_service_) {
+        : io_service_(io_service.getInternalIOService()), socket_(io_service_) {
     }
 
     /// @brief Destructor.

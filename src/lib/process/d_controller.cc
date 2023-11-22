@@ -842,7 +842,6 @@ DControllerBase::~DControllerBase() {
     } catch (...) {
         // Don't want to throw exceptions from the destructor. The process
         // is shutting down anyway.
-        ;
     }
 }
 

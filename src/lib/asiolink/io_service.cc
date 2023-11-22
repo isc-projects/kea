@@ -45,16 +45,30 @@ public:
     /// This method return control to the caller as soon as the
     /// first handler has completed.  (If no handlers are ready when
     /// it is run, it will block until one is.)
-    void runOne() {
-        io_service_.run_one();
+    ///
+    /// \return The number of handlers that were executed.
+    size_t runOne() {
+        return (static_cast<size_t>(io_service_.run_one()));
     };
 
     /// \brief Run the underlying event loop for a ready events.
     ///
     /// This method executes handlers for all ready events and returns.
     /// It will return immediately if there are no ready events.
-    void poll() {
-        io_service_.poll();
+    ///
+    /// \return The number of handlers that were executed.
+    size_t poll() {
+        return (static_cast<size_t>(io_service_.poll()));
+    };
+
+    /// \brief Run the underlying event loop for a ready events.
+    ///
+    /// This method executes handlers for all ready events and returns.
+    /// It will return immediately if there are no ready events.
+    ///
+    /// \return The number of handlers that were executed.
+    size_t pollOne() {
+        return (static_cast<size_t>(io_service_.poll_one()));
     };
 
     /// \brief Stop the underlying event loop.
@@ -88,7 +102,7 @@ public:
     /// that share the same \c io_service with the authoritative server.
     /// It will eventually be removed once the wrapper interface is
     /// generalized.
-    boost::asio::io_service& getIOService() {
+    boost::asio::io_service& getInternalIOService() {
         return (io_service_);
     }
 
@@ -115,14 +129,19 @@ IOService::run() {
     io_impl_->run();
 }
 
-void
+size_t
 IOService::runOne() {
-    io_impl_->runOne();
+    return (io_impl_->runOne());
 }
 
-void
+size_t
 IOService::poll() {
-    io_impl_->poll();
+    return (io_impl_->poll());
+}
+
+size_t
+IOService::pollOne() {
+    return (io_impl_->pollOne());
 }
 
 void
@@ -146,8 +165,8 @@ IOService::stopWork() {
 }
 
 boost::asio::io_service&
-IOService::getIOService() {
-    return (io_impl_->getIOService());
+IOService::getInternalIOService() {
+    return (io_impl_->getInternalIOService());
 }
 
 void

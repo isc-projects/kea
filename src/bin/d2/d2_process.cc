@@ -141,12 +141,12 @@ D2Process::runIO() {
 
     // Poll runs all that are ready. If none are ready it returns immediately
     // with a count of zero.
-    size_t cnt = getIOService()->getIOService().poll();
+    size_t cnt = getIOService()->poll();
     if (!cnt) {
         // Poll ran no handlers either none are ready or the service has been
-        // stopped.  Either way, call run_one to wait for a IO event. If the
+        // stopped.  Either way, call runOne to wait for a IO event. If the
         // service is stopped it will return immediately with a cnt of zero.
-        cnt = getIOService()->getIOService().run_one();
+        cnt = getIOService()->runOne();
     }
 
     return (cnt);

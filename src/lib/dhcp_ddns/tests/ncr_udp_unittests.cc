@@ -197,7 +197,7 @@ public:
 
         // Create a UDP socket through which our "sender" will send the NCR.
         boost::asio::ip::udp::socket
-            udp_socket(io_service_.getIOService(), boost::asio::ip::udp::v4());
+            udp_socket(io_service_.getInternalIOService(), boost::asio::ip::udp::v4());
 
         // Create an endpoint pointed at the listener.
         boost::asio::ip::udp::endpoint

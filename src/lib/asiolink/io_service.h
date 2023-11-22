@@ -58,13 +58,25 @@ public:
     /// This method return control to the caller as soon as the
     /// first handler has completed.  (If no handlers are ready when
     /// it is run, it will block until one is.)
-    void runOne();
+    ///
+    /// \return The number of handlers that were executed.
+    size_t runOne();
 
     /// \brief Run the underlying event loop for a ready events.
     ///
     /// This method executes handlers for all ready events and returns.
     /// It will return immediately if there are no ready events.
-    void poll();
+    ///
+    /// \return The number of handlers that were executed.
+    size_t poll();
+
+    /// \brief Run the underlying event loop for a ready events.
+    ///
+    /// This method executes handlers for all ready events and returns.
+    /// It will return immediately if there are no ready events.
+    ///
+    /// \return The number of handlers that were executed.
+    size_t pollOne();
 
     /// \brief Stop the underlying event loop.
     ///
@@ -89,7 +101,7 @@ public:
     /// that share the same \c io_service with the authoritative server.
     /// It will eventually be removed once the wrapper interface is
     /// generalized.
-    boost::asio::io_service& getIOService();
+    boost::asio::io_service& getInternalIOService();
 
     /// \brief Post a callback to the end of the queue.
     ///

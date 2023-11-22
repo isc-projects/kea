@@ -83,7 +83,7 @@ public:
                                 isc::asiolink::TlsContextPtr(),
                            const std::string& server_address = "127.0.0.1",
                            uint16_t port = 18123)
-        : io_service_(io_service.getIOService()),
+        : io_service_(io_service.getInternalIOService()),
           tls_context_(tls_context),
           tcp_socket_(), tls_socket_(),
           done_callback_(done_callback),

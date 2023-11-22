@@ -490,9 +490,7 @@ NameChangeSender::runReadyIO() {
 
     // We shouldn't be here if IO isn't ready to execute.
     // By running poll we're guaranteed not to hang.
-    /// @todo Trac# 3325 requests that asiolink::IOService provide a
-    /// wrapper for poll().
-    io_service_->getIOService().poll_one();
+    io_service_->pollOne();
 }
 
 }  // namespace dhcp_ddns

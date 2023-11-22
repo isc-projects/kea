@@ -344,7 +344,7 @@ TEST(TLSSocket, sequenceTest) {
     TlsContextPtr server_ctx;
     test::configServer(server_ctx);
     // Stream used for server.
-    TlsStreamImpl server(service.getIOService(), server_ctx->getContext());
+    TlsStreamImpl server(service.getInternalIOService(), server_ctx->getContext());
 
     // Step 1.  Create the connection between the client and the server.  Set
     // up the server to accept incoming connections and have the client open
@@ -354,7 +354,7 @@ TEST(TLSSocket, sequenceTest) {
     server_cb.queued() = TLSCallback::ACCEPT;
     server_cb.called() = TLSCallback::NONE;
     server_cb.setCode(42);  // Some error
-    tcp::acceptor acceptor(service.getIOService(),
+    tcp::acceptor acceptor(service.getInternalIOService(),
                            tcp::endpoint(tcp::v4(), SERVER_PORT));
     acceptor.set_option(tcp::acceptor::reuse_address(true));
     acceptor.async_accept(server.lowest_layer(), server_cb);

@@ -62,7 +62,7 @@ FauxServer::FauxServer(asiolink::IOService& io_service,
      server_socket_(), receive_pending_(false), perpetual_receive_(true),
      tsig_key_() {
 
-    server_socket_.reset(new boost::asio::ip::udp::socket(io_service_.getIOService(),
+    server_socket_.reset(new boost::asio::ip::udp::socket(io_service_.getInternalIOService(),
                                                    boost::asio::ip::udp::v4()));
     server_socket_->set_option(boost::asio::socket_base::reuse_address(true));
 
@@ -75,7 +75,7 @@ FauxServer::FauxServer(asiolink::IOService& io_service,
     :io_service_(io_service), address_(server.getIpAddress()),
      port_(server.getPort()), server_socket_(), receive_pending_(false),
      perpetual_receive_(true), tsig_key_() {
-    server_socket_.reset(new boost::asio::ip::udp::socket(io_service_.getIOService(),
+    server_socket_.reset(new boost::asio::ip::udp::socket(io_service_.getInternalIOService(),
                                                    boost::asio::ip::udp::v4()));
     server_socket_->set_option(boost::asio::socket_base::reuse_address(true));
     isc::asiolink::UDPEndpoint endpoint(address_, port_);
@@ -225,10 +225,10 @@ TimedIO::~TimedIO() {
 int
 TimedIO::runTimedIO(int run_time) {
     run_time_ = run_time;
-    int cnt = io_service_->getIOService().poll();
+    int cnt = io_service_->poll();
     if (cnt == 0) {
         timer_.setup(std::bind(&TimedIO::timesUp, this), run_time_);
-        cnt = io_service_->getIOService().run_one();
+        cnt = io_service_->runOne();
         timer_.cancel();
     }
 

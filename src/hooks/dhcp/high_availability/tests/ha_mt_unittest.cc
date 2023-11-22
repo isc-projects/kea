@@ -134,7 +134,7 @@ public:
     ///
     /// Stops all test servers.
     ~HAMtServiceTest() {
-        io_service_->getIOService().reset();
+        io_service_->restart();
         io_service_->poll();
         MultiThreadingMgr::instance().setMode(false);
         CmdResponseCreator::command_accept_list_.clear();
