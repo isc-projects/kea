@@ -119,7 +119,7 @@ OptionClasslessStaticRoute::encodeDestinationDescriptor(const StaticRouteTuple& 
 
 uint8_t
 OptionClasslessStaticRoute::calcSignificantOctets(const uint8_t& mask_width) {
-    return (mask_width / 8 + (mask_width % 8 != 0));
+    return ((mask_width + 7) / 8);
 }
 
 void
@@ -129,7 +129,7 @@ OptionClasslessStaticRoute::calcDataLen() {
         // 1-5 octets of destination descriptor
         len += calcSignificantOctets(std::get<1>(route)) + 1;
         // IP address of the router
-        len += 4;
+        len += V4ADDRESS_LEN;
     }
 
     data_len_ = len;
