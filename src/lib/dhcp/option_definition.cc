@@ -408,6 +408,12 @@ OptionDefinition::validate() const {
                             << " an option record.";
                     break;
                 }
+                // Custom type is not allowed within a record.
+                if (*it == OPT_CUSTOM_TYPE) {
+                    err_str << "custom data type can't be stored as a field in"
+                            << " an option record.";
+                    break;
+                }
             }
             // If the array flag is set the last field is an array.
             if (err_str.str().empty() && array_type_) {
@@ -435,6 +441,10 @@ OptionDefinition::validate() const {
 
         } else if (type_ == OPT_EMPTY_TYPE) {
             err_str << "array of empty value is not"
+                    << " a valid option definition.";
+
+        } else if (type_ == OPT_CUSTOM_TYPE) {
+            err_str << "array of custom type value is not"
                     << " a valid option definition.";
 
         }
