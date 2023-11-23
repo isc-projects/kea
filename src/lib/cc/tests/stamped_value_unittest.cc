@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -63,7 +63,7 @@ TEST(StampedValueTest, createFromInteger) {
     EXPECT_EQ(Element::integer, value->getType());
     EXPECT_EQ("bar", value->getName());
     EXPECT_EQ("5", value->getValue());
-    int64_t signed_integer;
+    int64_t signed_integer = 0;
     ASSERT_NO_THROW(signed_integer = value->getIntegerValue());
     EXPECT_EQ(5, signed_integer);
 

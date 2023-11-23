@@ -1,4 +1,4 @@
-// Copyright (C) 2021-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2021-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -633,6 +633,8 @@ TEST(TLSTest, loadCertKeyFile) {
     exps.addThrow("no start line (PEM routines, CRYPTO_internal)");
     exps.addThrow("PEM lib");
     exps.addThrow("PEM lib (SSL routines)");
+    exps.addThrow("unsupported");
+    exps.addThrow("unsupported (DECODER routines)");
     // Another possible error.
     exps.addThrow("No such file or directory");
     exps.runCanThrow([] {

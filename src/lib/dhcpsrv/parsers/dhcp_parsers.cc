@@ -1093,7 +1093,7 @@ PdPoolParser::PdPoolParser() {
 }
 
 void
-PdPoolParser::parse(PoolStoragePtr pools, ConstElementPtr pd_pool_, 
+PdPoolParser::parse(PoolStoragePtr pools, ConstElementPtr pd_pool_,
                     bool encapsulate_options) {
     checkKeywords(SimpleParser6::PD_POOL6_PARAMETERS, pd_pool_);
 
