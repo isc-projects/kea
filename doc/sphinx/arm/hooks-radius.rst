@@ -435,7 +435,7 @@ set up to enable basic functionality in Kea.
            Framed-IP-Address = "192.0.2.5"
 
        01:00:0c:01:02:03:06    Cleartext-password := "00:0c:01:02:03:06"
-           Framed-IP-Address = "192.0.2.6"
+           Framed-IP-Address = "192.0.2.6",
            Framed-Pool = "classical"
 
        00:03:00:01:00:0c:01:02:03:07    Cleartext-password := "00:0c:01:02:03:07"
@@ -444,7 +444,7 @@ set up to enable basic functionality in Kea.
            Framed-IPv6-Address = "2001:db8::8"
 
        00:03:00:01:00:0c:01:02:03:09    Cleartext-password := "00:0c:01:02:03:09"
-           Framed-IPv6-Address = "2001:db8::9"
+           Framed-IPv6-Address = "2001:db8::9",
            Framed-Pool = "classroom"
 
 7. Accounting should work out of the box with Kea, but customizations are
@@ -536,3 +536,15 @@ RADIUS dictionary. There are differences:
       - Do not require an attribute definition.
 
       - Must have an associated attribute definition in the dictionary.
+
+    * - Reply-Message Presence in the Kea Logs
+
+      - Only as part of the aggregated list of attributes in ``RADIUS_AUTHENTICATION_ACCEPTED``, ``RADIUS_ACCESS_CACHE_INSERT``, ``RADIUS_ACCESS_CACHE_GET`` log messages.
+
+      - Also has a dedicated ``RADIUS_REPLY_MESSAGE_ATTRIBUTE`` message per each Reply-Message attribute logged after a valid RADIUS reply is received.
+
+    * - Behavior of Multiple Attributes of the Same Type (except Reply-Message)
+
+      - Experimentally, only the **first** attribute on the wire from an Access-Accept message is considered.
+
+      - Experimentally, only the **last** attribute on the wire from an Access-Accept message is considered.
