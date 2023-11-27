@@ -1,3 +1,8 @@
+2193.	[build]		razvan
+	The library version numbers have been bumped up for the Kea 2.5.4
+	development release.
+	(Gitlab #3173)
+
 2192.	[func]		razvan
 	The packet logging is now more consistent between DHCPv4 and
 	DHCPv6. Also, extra details are now logged.
