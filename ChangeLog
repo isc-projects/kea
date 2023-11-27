@@ -1,3 +1,8 @@
+2192.	[func]		razvan
+	The packet logging is now more consistent between DHCPv4 and
+	DHCPv6. Also, extra details are now logged.
+	(Gitlab #3109)
+
 2191.	[doc]		andrei
 	The new RADIUS hook library is now operational. Documentation has
 	been updated. A section about differences to the old RADIUS hook
