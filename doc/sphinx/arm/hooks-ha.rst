@@ -2411,7 +2411,7 @@ responding to clients.
        "command": "ha-sync-complete-notify",
        "service": [ "dhcp4" ],
        "arguments": {
-           "origin": 1100,
+           "origin": 2000,
            "server-name": "server2"
        }
    }

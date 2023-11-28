@@ -100,11 +100,11 @@ public:
     ///
     /// Specify HA service-specific origins by adding a unique remote service
     /// identifier to this constant.
-    static const unsigned int HA_REMOTE_COMMAND = 1100;
+    static const unsigned int HA_REMOTE_COMMAND = 2000;
 
     /// @brief The network state is being altered by the DB connection
     /// recovery mechanics.
-    static const unsigned int DB_CONNECTION = 2000;
+    static const unsigned int DB_CONNECTION = 3000;
 
     /// @brief Type of the container holding collection of subnet identifiers.
     typedef std::set<SubnetID> Subnets;
