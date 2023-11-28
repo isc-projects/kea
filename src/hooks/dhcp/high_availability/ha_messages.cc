@@ -49,6 +49,7 @@ extern const isc::log::MessageID HA_INIT_OK = "HA_INIT_OK";
 extern const isc::log::MessageID HA_INVALID_PARTNER_STATE_COMMUNICATION_RECOVERY = "HA_INVALID_PARTNER_STATE_COMMUNICATION_RECOVERY";
 extern const isc::log::MessageID HA_INVALID_PARTNER_STATE_HOT_STANDBY = "HA_INVALID_PARTNER_STATE_HOT_STANDBY";
 extern const isc::log::MessageID HA_INVALID_PARTNER_STATE_LOAD_BALANCING = "HA_INVALID_PARTNER_STATE_LOAD_BALANCING";
+extern const isc::log::MessageID HA_LEASE4_SERVER_DECLINE_FAILED = "HA_LEASE4_SERVER_DECLINE_FAILED";
 extern const isc::log::MessageID HA_LEASES4_COMMITTED_FAILED = "HA_LEASES4_COMMITTED_FAILED";
 extern const isc::log::MessageID HA_LEASES4_COMMITTED_NOTHING_TO_UPDATE = "HA_LEASES4_COMMITTED_NOTHING_TO_UPDATE";
 extern const isc::log::MessageID HA_LEASES6_COMMITTED_FAILED = "HA_LEASES6_COMMITTED_FAILED";
@@ -157,6 +158,7 @@ const char* values[] = {
     "HA_INVALID_PARTNER_STATE_COMMUNICATION_RECOVERY", "%1: partner is in the communication-recovery state unexpectedly",
     "HA_INVALID_PARTNER_STATE_HOT_STANDBY", "%1: partner is in the hot-standby state unexpectedly",
     "HA_INVALID_PARTNER_STATE_LOAD_BALANCING", "%1: partner is in the load-balancing state unexpectedly",
+    "HA_LEASE4_SERVER_DECLINE_FAILED", "lease4_server_decline callout failed: %1",
     "HA_LEASES4_COMMITTED_FAILED", "leases4_committed callout failed: %1",
     "HA_LEASES4_COMMITTED_NOTHING_TO_UPDATE", "%1: leases4_committed callout was invoked without any leases",
     "HA_LEASES6_COMMITTED_FAILED", "leases6_committed callout failed: %1",

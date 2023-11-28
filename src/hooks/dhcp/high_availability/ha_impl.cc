@@ -186,6 +186,41 @@ HAImpl::leases4Committed(CalloutHandle& callout_handle) {
 }
 
 void
+HAImpl::lease4ServerDecline(CalloutHandle& callout_handle) {
+    // If the hook library is configured to not send lease updates to the
+    // partner, there is nothing to do because this whole callout is
+    // currently about sending lease updates.
+    if (!config_->amSendingLeaseUpdates()) {
+        // No need to log it, because it was already logged when configuration
+        // was applied.
+        return;
+    }
+
+    Pkt4Ptr query4;
+    Lease4Ptr lease4;
+
+    // Get all arguments available for the lease4_server_decline hook point.
+    // If any of these arguments is not available this is a programmatic
+    // error. An exception will be thrown which will be caught by the
+    // caller and logged.
+    callout_handle.getArgument("query4", query4);
+    callout_handle.getArgument("lease4", lease4);
+
+    // Get the parking lot for this hook point. We're going to remember this
+    // pointer until we unpark the packet.
+    ParkingLotHandlePtr parking_lot = callout_handle.getParkingLotHandlePtr();
+
+    // Asynchronously send lease updates. In some cases no updates will be sent,
+    // e.g. when this server is in the partner-down state and there are no backup
+    // servers. In those cases we simply return without parking the DHCP query.
+    // The response will be sent to the client immediately.
+    service_->asyncSendLeaseUpdate(query4, lease4, parking_lot);
+
+    callout_handle.setStatus(CalloutHandle::NEXT_STEP_CONTINUE);
+}
+
+
+void
 HAImpl::buffer6Receive(hooks::CalloutHandle& callout_handle) {
     Pkt6Ptr query6;
     callout_handle.getArgument("query6", query6);

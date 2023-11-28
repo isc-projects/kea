@@ -58,6 +58,7 @@ TEST_F(Dhcpv4SrvTest, Hooks) {
     int hook_index_leases4_committed = -1;
     int hook_index_host4_identifier = -1;
     int hook_index_lease4_offer = -1;
+    int hook_index_lease4_server_decline = -1;
 
     // check if appropriate indexes are set
     EXPECT_NO_THROW(hook_index_dhcp4_srv_configured = ServerHooks::getServerHooks()
@@ -84,6 +85,8 @@ TEST_F(Dhcpv4SrvTest, Hooks) {
                     .getIndex("host4_identifier"));
     EXPECT_NO_THROW(hook_index_lease4_offer = ServerHooks::getServerHooks()
                     .getIndex("lease4_offer"));
+    EXPECT_NO_THROW(hook_index_lease4_server_decline = ServerHooks::getServerHooks()
+                    .getIndex("lease4_server_decline"));
 
     EXPECT_TRUE(hook_index_dhcp4_srv_configured > 0);
     EXPECT_TRUE(hook_index_buffer4_receive > 0);
@@ -97,6 +100,7 @@ TEST_F(Dhcpv4SrvTest, Hooks) {
     EXPECT_TRUE(hook_index_leases4_committed > 0);
     EXPECT_TRUE(hook_index_host4_identifier > 0);
     EXPECT_TRUE(hook_index_lease4_offer > 0);
+    EXPECT_TRUE(hook_index_lease4_server_decline > 0);
 }
 
 // A dummy MAC address, padded with 0s
@@ -164,6 +168,7 @@ public:
         HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("lease4_decline");
         HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("host4_identifier");
         HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("lease4_offer");
+        HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("lease4_server_decline");
 
         HooksManager::setTestMode(false);
         bool status = HooksManager::unloadLibraries();
@@ -836,6 +841,39 @@ public:
         return (0);
     }
 
+    static int
+    lease4_offer_park_in_use_callout(CalloutHandle& callout_handle) {
+        callback_name_ = string("lease4_offer");
+
+        callout_handle.getArgument("query4", callback_qry_pkt4_);
+
+        callout_handle.setArgument("offer_address_in_use", true);
+        io_service_->post(std::bind(&HooksDhcpv4SrvTest::pkt4_unpark_callout,
+                                    callout_handle.getParkingLotHandlePtr(),
+                                    callback_qry_pkt4_));
+
+        callout_handle.getParkingLotHandlePtr()->reference(callback_qry_pkt4_);
+        callout_handle.setStatus(CalloutHandle::NEXT_STEP_PARK);
+
+        Lease4CollectionPtr leases4;
+        callout_handle.getArgument("leases4", leases4);
+        if (leases4->size() > 0) {
+            callback_lease4_ = leases4->at(0);
+        }
+
+        callout_handle.getArgument("offer_lifetime", callback_offer_lft_);
+        callout_handle.getArgument("old_lease", callback_old_lease_);
+        callback_argument_names_ = callout_handle.getArgumentNames();
+        sort(callback_argument_names_.begin(), callback_argument_names_.end());
+
+        if (callback_qry_pkt4_) {
+            callback_qry_options_copy_ = callback_qry_pkt4_->isCopyRetrievedOptions();
+        }
+
+        return (0);
+    }
+
+
     /// @brief Test callback that stores callout name and passed parameters.
     ///
     /// @param callout_handle handle passed by the hooks framework
@@ -857,6 +895,29 @@ public:
         if (deleted_leases4->size() > 0) {
             callback_deleted_lease4_ = deleted_leases4->at(0);
         }
+
+        callback_argument_names_ = callout_handle.getArgumentNames();
+        sort(callback_argument_names_.begin(), callback_argument_names_.end());
+
+        if (callback_qry_pkt4_) {
+            callback_qry_options_copy_ = callback_qry_pkt4_->isCopyRetrievedOptions();
+        }
+
+        return (0);
+    }
+
+    /// @brief Test callback that stores callout name and passed parameters.
+    ///
+    /// @param callout_handle handle passed by the hooks framework
+    /// @return always 0
+    static int
+    lease4_server_decline_callout(CalloutHandle& callout_handle) {
+        callback_name_ = string("lease4_server_decline");
+        callout_handle.getArgument("query4", callback_qry_pkt4_);
+
+        Lease4Ptr lease4;
+        callout_handle.getArgument("lease4", lease4);
+        callback_lease4_ = lease4;
 
         callback_argument_names_ = callout_handle.getArgumentNames();
         sort(callback_argument_names_.begin(), callback_argument_names_.end());
@@ -3879,6 +3940,84 @@ TEST_F(HooksDhcpv4SrvTest, lease4OfferParkedPacketLimit) {
 
     // Statistic should still show one drop.
     EXPECT_EQ(1, getStatistic("pkt4-receive-drop"));
+}
+
+// This test verifies that a lease4_offer callout that marks a
+// lease as in-use and unparks the query, causes the offer to be
+// discarded, and Dhcpv4Srv::serverDecline() to be invoked. This should,
+// in turn, cause the lease to be declined in the lease store and the
+// callout for lease4_server_decline to be called.
+TEST_F(HooksDhcpv4SrvTest, lease4OfferDiscoverDecline) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    // Install lease4_offer callout that will mark lease as in-use and unpark
+    ASSERT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+        "lease4_offer", lease4_offer_park_in_use_callout));
+
+    // Install lease4_server_decline callout
+    ASSERT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+        "lease4_server_decline", lease4_server_decline_callout));
+
+    // Make sure there's no existing lease.
+    IOAddress expected_address("192.0.2.100");
+    ASSERT_FALSE(LeaseMgrFactory::instance().getLease4(expected_address));
+
+    // Generate a DISCOVER.
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+    client.setIfaceName("eth1");
+    client.setIfaceIndex(ETH1_INDEX);
+    ASSERT_NO_THROW(client.doDiscover());
+
+    // Check that the callback called is indeed the one we installed
+    EXPECT_EQ("lease4_offer", callback_name_);
+
+    // Check if all expected parameters were really received
+    vector<string> expected_argument_names;
+    expected_argument_names.push_back("query4");
+    expected_argument_names.push_back("leases4");
+    expected_argument_names.push_back("offer_lifetime");
+    expected_argument_names.push_back("old_lease");
+    expected_argument_names.push_back("offer_address_in_use");
+
+    sort(expected_argument_names.begin(), expected_argument_names.end());
+    EXPECT_TRUE(callback_argument_names_ == expected_argument_names);
+
+    // Declined lease should be returned.
+    ASSERT_TRUE(callback_lease4_);
+    EXPECT_EQ(expected_address, callback_lease4_->addr_);
+
+    // Since the callout set offer_address_in_use flag to true the offer should
+    // have been discarded. Make sure that we did not receive a repsonse.
+    ASSERT_FALSE(client.getContext().response_);
+
+    // Clear static buffers
+    resetCalloutBuffers();
+
+    // Polling the IOService should unpark the packet invoking the unpark lambda
+    // which should invoke Dhcp4Srv::serverDecline().  This should decline the
+    // lease in the db and then invoke lease4_server_decline callback.
+    ASSERT_NO_THROW(io_service_->poll());
+
+    // The lease should be in the lease store and in the DECLINED state.
+    Lease4Ptr declined_lease = LeaseMgrFactory::instance().getLease4(callback_lease4_->addr_);
+    ASSERT_TRUE(declined_lease);
+    EXPECT_EQ(declined_lease->state_, Lease::STATE_DECLINED);
+
+    // Check that we called lease4_server_decline callback.
+    EXPECT_EQ("lease4_server_decline", callback_name_);
+
+    // Check if all expected parameters were really received
+    expected_argument_names.clear();
+    expected_argument_names.push_back("query4");
+    expected_argument_names.push_back("lease4");
+
+    sort(expected_argument_names.begin(), expected_argument_names.end());
+    EXPECT_TRUE(callback_argument_names_ == expected_argument_names);
+
+    // Declined lease should be returned.
+    ASSERT_TRUE(callback_lease4_);
+    EXPECT_EQ(expected_address, callback_lease4_->addr_);
 }
 
 }  // namespace

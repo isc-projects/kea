@@ -50,6 +50,7 @@ extern const isc::log::MessageID HA_INIT_OK;
 extern const isc::log::MessageID HA_INVALID_PARTNER_STATE_COMMUNICATION_RECOVERY;
 extern const isc::log::MessageID HA_INVALID_PARTNER_STATE_HOT_STANDBY;
 extern const isc::log::MessageID HA_INVALID_PARTNER_STATE_LOAD_BALANCING;
+extern const isc::log::MessageID HA_LEASE4_SERVER_DECLINE_FAILED;
 extern const isc::log::MessageID HA_LEASES4_COMMITTED_FAILED;
 extern const isc::log::MessageID HA_LEASES4_COMMITTED_NOTHING_TO_UPDATE;
 extern const isc::log::MessageID HA_LEASES6_COMMITTED_FAILED;

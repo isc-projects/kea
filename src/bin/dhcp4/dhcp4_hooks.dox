@@ -340,8 +340,32 @@ called before "subnet4_select".
  - <b>Next step status</b>: If any callout installed on the "lease4_offer" hook point
    sets the next step action to DROP, the server will drop the processed query
    and discard the prepared DHCPOFFER rather than sending it to the client.
-   Any further action, such as marking the discarded DHCPOFFER's lease as declined,
-   is the responsibility of the callout.
+   If it sets the next step action to PARK, the server will park the processed
+   packet (hold packet processing) until the hook libraries explicitly unpark
+   the packet after they are done performing asynchronous operations.
+
+   Prior to unparking the packet, callouts are expected to set the argument,
+   "offer_address_in_use" to false if the address is available and the offer should
+   be sent to the client. If the address should be declined, callouts should set
+   the argument to true. This will cause the server to discard the DHCPOFFER, mark
+   the lease DECLINED in the lease store, update the relevant statitics, and then
+   invoke callouts installed for lease4_server_decline.
+
+@subsection dhcpv4Lease4ServerDecline lease4_server_decline
+
+ - @b Arguments:
+   - name: @b query4, type: isc::dhcp::Pkt4Ptr, direction: <b>in</b>
+   - name: @b lease4, type: isc::dhcp::Lease4Ptr, direction: <b>in</b>
+
+ - @b Description: this callout is executed after a lease4_offer callout has
+   determined that the lease to be offered is already in use by an unknown
+   client.  At this point in processing, the offer has been discarded, the lease
+   has been marked DECLINED in the lease store, and the relevant statistics have
+   been updated.  The argument "query4" contains a pointer to an isc::dhcp::Pkt4
+   object that contains all information regarding incoming DHCPDISCOVER packet.
+   The "leases4" object will hold the pointer to the declined lease.
+
+ - <b>Next step status</b>: Not applicable, its value will be ignored.
 
 @subsection dhcpv4HooksPkt4Send pkt4_send
 

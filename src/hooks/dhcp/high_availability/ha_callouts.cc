@@ -115,6 +115,28 @@ int leases4_committed(CalloutHandle& handle) {
     return (0);
 }
 
+/// @brief lease4_server_decline callout implementation.
+///
+/// @param handle callout handle.
+int lease4_server_decline(CalloutHandle& handle) {
+    CalloutHandle::CalloutNextStep status = handle.getStatus();
+    if (status == CalloutHandle::NEXT_STEP_DROP ||
+        status == CalloutHandle::NEXT_STEP_SKIP) {
+        return (0);
+    }
+
+    try {
+        impl->lease4ServerDecline(handle);
+    } catch (const std::exception& ex) {
+        LOG_ERROR(ha_logger, HA_LEASE4_SERVER_DECLINE_FAILED)
+            .arg(ex.what());
+        return (1);
+    }
+
+    return (0);
+}
+
+
 /// @brief dhcp6_srv_configured callout implementation.
 ///
 /// @param handle callout handle.

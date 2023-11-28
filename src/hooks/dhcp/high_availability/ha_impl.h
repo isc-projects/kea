@@ -106,6 +106,11 @@ public:
     /// @param callout_handle Callout handle provided to the callout.
     void leases4Committed(hooks::CalloutHandle& callout_handle);
 
+    /// @brief Implementation of the "lease4_server_decline" callout.
+    ///
+    /// @param callout_handle Callout handle provided to the callout.
+    void lease4ServerDecline(hooks::CalloutHandle& callout_handle);
+
     /// @brief Implementation of the "buffer6_receive" callout.
     ///
     /// This callout uses HA service to check if the query should be processed

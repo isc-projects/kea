@@ -1244,6 +1244,55 @@ HAService::asyncSendLeaseUpdates(const dhcp::Pkt4Ptr& query,
 }
 
 size_t
+HAService::asyncSendLeaseUpdate(const dhcp::Pkt4Ptr& query,
+                                const dhcp::Lease4Ptr& lease,
+                                const hooks::ParkingLotHandlePtr& parking_lot) {
+
+    // Get configurations of the peers. Exclude this instance.
+    HAConfig::PeerConfigMap peers_configs = config_->getOtherServersConfig();
+
+    size_t sent_num = 0;
+
+    // Schedule sending lease updates to each peer.
+    for (auto p = peers_configs.begin(); p != peers_configs.end(); ++p) {
+        HAConfig::PeerConfigPtr conf = p->second;
+
+        // Check if the lease updates should be queued. This is the case when the
+        // server is in the communication-recovery state. Queued lease updates may
+        // be sent when the communication is re-established.
+        if (shouldQueueLeaseUpdates(conf)) {
+            lease_update_backlog_.push(LeaseUpdateBacklog::ADD, lease);
+            continue;
+        }
+
+        // Check if the lease update should be sent to the server. If we're in
+        // the partner-down state we don't send lease updates to the partner.
+        if (!shouldSendLeaseUpdates(conf)) {
+            // If we decide to not send the lease updates to an active partner, we
+            // should make a record of it in the communication state. The partner
+            // can check if there were any unsent lease updates when he determines
+            // whether it should synchronize its database or not when it recovers
+            // from the partner-down state.
+            if (conf->getRole() != HAConfig::PeerConfig::BACKUP) {
+                communication_state_->increaseUnsentUpdateCount();
+            }
+            continue;
+        }
+
+        asyncSendLeaseUpdate(query, conf, CommandCreator::createLease4Update(*lease), parking_lot);
+
+        // If we're contacting a backup server from which we don't expect a
+        // response prior to responding to the DHCP client we don't count
+        // it.
+        if ((config_->amWaitingBackupAck() || (conf->getRole() != HAConfig::PeerConfig::BACKUP))) {
+            ++sent_num;
+        }
+    }
+
+    return (sent_num);
+}
+
+size_t
 HAService::asyncSendLeaseUpdates(const dhcp::Pkt6Ptr& query,
                                  const dhcp::Lease6CollectionPtr& leases,
                                  const dhcp::Lease6CollectionPtr& deleted_leases,
@@ -1324,7 +1373,9 @@ HAService::leaseUpdateCompleteInternal(QueryPtrType& query,
     // If there are no more pending requests for this query, let's unpark
     // the DHCP packet.
     if (it == pending_requests_.end() || (--pending_requests_[query] <= 0)) {
-        parking_lot->unpark(query);
+        if (parking_lot) {
+            parking_lot->unpark(query);
+        }
 
         // If we have unparked the packet we can clear pending requests for
         // this query.
@@ -1481,7 +1532,9 @@ HAService::asyncSendLeaseUpdate(const QueryPtrType& query,
                 // a backup server and the lease update was unsuccessful. In such
                 // case the DHCP exchange fails.
                 if (!lease_update_success) {
-                    parking_lot->drop(query);
+                    if (parking_lot) {
+                        parking_lot->drop(query);
+                    }
                 }
             } else {
                 // This was a response from the backup server and we're configured to

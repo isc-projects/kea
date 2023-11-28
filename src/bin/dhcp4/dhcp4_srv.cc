@@ -89,31 +89,33 @@ namespace {
 
 /// Structure that holds registered hook indexes
 struct Dhcp4Hooks {
-    int hook_index_buffer4_receive_;   ///< index for "buffer4_receive" hook point
-    int hook_index_pkt4_receive_;      ///< index for "pkt4_receive" hook point
-    int hook_index_subnet4_select_;    ///< index for "subnet4_select" hook point
-    int hook_index_leases4_committed_; ///< index for "leases4_committed" hook point
-    int hook_index_lease4_release_;    ///< index for "lease4_release" hook point
-    int hook_index_pkt4_send_;         ///< index for "pkt4_send" hook point
-    int hook_index_buffer4_send_;      ///< index for "buffer4_send" hook point
-    int hook_index_lease4_decline_;    ///< index for "lease4_decline" hook point
-    int hook_index_host4_identifier_;  ///< index for "host4_identifier" hook point
-    int hook_index_ddns4_update_;      ///< index for "ddns4_update" hook point
-    int hook_index_lease4_offer_;      ///< index for "lease4_offer" hook point
+    int hook_index_buffer4_receive_;        ///< index for "buffer4_receive" hook point
+    int hook_index_pkt4_receive_;           ///< index for "pkt4_receive" hook point
+    int hook_index_subnet4_select_;         ///< index for "subnet4_select" hook point
+    int hook_index_leases4_committed_;      ///< index for "leases4_committed" hook point
+    int hook_index_lease4_release_;         ///< index for "lease4_release" hook point
+    int hook_index_pkt4_send_;              ///< index for "pkt4_send" hook point
+    int hook_index_buffer4_send_;           ///< index for "buffer4_send" hook point
+    int hook_index_lease4_decline_;         ///< index for "lease4_decline" hook point
+    int hook_index_host4_identifier_;       ///< index for "host4_identifier" hook point
+    int hook_index_ddns4_update_;           ///< index for "ddns4_update" hook point
+    int hook_index_lease4_offer_;           ///< index for "lease4_offer" hook point
+    int hook_index_lease4_server_decline_;  ///< index for "lease4_server_decline" hook point
 
     /// Constructor that registers hook points for DHCPv4 engine
     Dhcp4Hooks() {
-        hook_index_buffer4_receive_   = HooksManager::registerHook("buffer4_receive");
-        hook_index_pkt4_receive_      = HooksManager::registerHook("pkt4_receive");
-        hook_index_subnet4_select_    = HooksManager::registerHook("subnet4_select");
-        hook_index_leases4_committed_ = HooksManager::registerHook("leases4_committed");
-        hook_index_lease4_release_    = HooksManager::registerHook("lease4_release");
-        hook_index_pkt4_send_         = HooksManager::registerHook("pkt4_send");
-        hook_index_buffer4_send_      = HooksManager::registerHook("buffer4_send");
-        hook_index_lease4_decline_    = HooksManager::registerHook("lease4_decline");
-        hook_index_host4_identifier_  = HooksManager::registerHook("host4_identifier");
-        hook_index_ddns4_update_      = HooksManager::registerHook("ddns4_update");
-        hook_index_lease4_offer_      = HooksManager::registerHook("lease4_offer");
+        hook_index_buffer4_receive_         = HooksManager::registerHook("buffer4_receive");
+        hook_index_pkt4_receive_            = HooksManager::registerHook("pkt4_receive");
+        hook_index_subnet4_select_          = HooksManager::registerHook("subnet4_select");
+        hook_index_leases4_committed_       = HooksManager::registerHook("leases4_committed");
+        hook_index_lease4_release_          = HooksManager::registerHook("lease4_release");
+        hook_index_pkt4_send_               = HooksManager::registerHook("pkt4_send");
+        hook_index_buffer4_send_            = HooksManager::registerHook("buffer4_send");
+        hook_index_lease4_decline_          = HooksManager::registerHook("lease4_decline");
+        hook_index_host4_identifier_        = HooksManager::registerHook("host4_identifier");
+        hook_index_ddns4_update_            = HooksManager::registerHook("ddns4_update");
+        hook_index_lease4_offer_            = HooksManager::registerHook("lease4_offer");
+        hook_index_lease4_server_decline_   = HooksManager::registerHook("lease4_server_decline");
     }
 };
 
@@ -3949,8 +3951,11 @@ Dhcpv4Srv::declineLease(const Lease4Ptr& lease, const Pkt4Ptr& decline,
 }
 
 void
-Dhcpv4Srv::serverDecline(hooks::CalloutHandlePtr& /* callout_handle */, Pkt4Ptr& query,
+Dhcpv4Srv::serverDecline(hooks::CalloutHandlePtr& callout_handle, Pkt4Ptr& query,
                          Lease4Ptr lease, bool lease_exists) {
+    LOG_INFO(lease4_logger, DHCP4_SERVER_INITIATED_DECLINE)
+            .arg(lease->addr_.toText())
+            .arg(lease->valid_lft_);
 
     {
         // Check if the resource is busy i.e. can be modified by another thread
@@ -4039,47 +4044,25 @@ Dhcpv4Srv::serverDecline(hooks::CalloutHandlePtr& /* callout_handle */, Pkt4Ptr&
         StatsMgr::instance().addValue("assigned-addresses", static_cast<int64_t>(1));
     }
 
-    /*  (comment it out so picky tools don't flag this as dead code
-    //
-    /// @todo #3110, HA will implement a handler for this hook point to
-    /// propagate an update of the lease to peers.
-    //
     // Let's check if there are hooks installed for server decline hook point.
-    // If they are, let's pass the lease and client's packet.  Note this code
-    // has never been compiled, it is just an initial draft.
+    // If there are, let's pass the DHCPDISCOVER and the declined lease .
     if (HooksManager::calloutsPresent(Hooks.hook_index_lease4_server_decline_)) {
-        CalloutHandlePtr callout_handle = getCalloutHandle(decline);
-
         // Use the RAII wrapper to make sure that the callout handle state is
         // reset when this object goes out of scope. All hook points must do
         // it to prevent possible circular dependency between the callout
         // handle and its arguments.
         ScopedCalloutHandleState callout_handle_state(callout_handle);
 
-        // Pass the original packet
+        // Pass in the original DHCPDISCOVER
         callout_handle->setArgument("query4", query);
 
-        // Pass the lease to be updated
+        // Pass in the declined lease.
         callout_handle->setArgument("lease4", lease);
 
         // Call callouts
         HooksManager::callCallouts(Hooks.hook_index_lease4_server_decline_,
                                    *callout_handle);
-
-        // Check if callouts decided to skip the next processing step.
-        // If any of them did, we will drop the packet.
-        if ((callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) ||
-            (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_DROP)) {
-            LOG_DEBUG(hooks_logger, DBGLVL_PKT_HANDLING, DHCP4_HOOK_SERVER_DECLINE_SKIP)
-                .arg(query->getLabel()).arg(lease->addr_.toText());
-            return;
-        }
     }
-    */
-
-    LOG_INFO(lease4_logger, DHCP4_SERVER_INITIATED_DECLINE)
-            .arg(lease->addr_.toText())
-            .arg(lease->valid_lft_);
 }
 
 void
@@ -4091,7 +4074,6 @@ Dhcpv4Srv::serverDeclineNoThrow(hooks::CalloutHandlePtr& callout_handle, Pkt4Ptr
         LOG_ERROR(packet4_logger, DHCP4_PACKET_PROCESS_EXCEPTION);
     }
 }
-
 
 Pkt4Ptr
 Dhcpv4Srv::processInform(Pkt4Ptr& inform, AllocEngine::ClientContext4Ptr& context) {

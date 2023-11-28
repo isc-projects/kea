@@ -580,6 +580,10 @@ public:
                                  const dhcp::Lease4CollectionPtr& deleted_leases,
                                  const hooks::ParkingLotHandlePtr& parking_lot);
 
+    size_t asyncSendLeaseUpdate(const dhcp::Pkt4Ptr& query,
+                                const dhcp::Lease4Ptr& lease,
+                                const hooks::ParkingLotHandlePtr& parking_lot);
+
     /// @brief Schedules asynchronous IPv6 lease updates.
     ///
     /// This method schedules asynchronous IPv6 lease updates as a result of the
