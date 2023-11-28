@@ -1,7 +1,16 @@
-2193.	[build]		razvan
+Kea 2.5.4 (development) released on November 29, 2023
+
+2194.	[build]		razvan
 	The library version numbers have been bumped up for the Kea 2.5.4
 	development release.
 	(Gitlab #3173)
+
+2193.	[func]		tmark, piotrek
+	The ping-check hook library is now functional.  It provides
+	the ability of kea-dhcp4 to check the availability of an
+	address prior to offering it to a client using ICMP ECHO
+	REQUESTs.
+	(Gitlab #3084)
 
 2192.	[func]		razvan
 	The packet logging is now more consistent between DHCPv4 and

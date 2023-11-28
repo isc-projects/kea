@@ -452,6 +452,12 @@ for decline4 hook point and one of the callouts set next step status to DROP.
 The server will now abort processing of the packet as if it was never
 received. The lease will continue to be assigned to this client.
 
+% DHCP4_HOOK_LEASE4_OFFER_ARGUMENT_MISSING hook callouts did not set an argument as expected %1 for %2
+This error message is printed when none of the callouts installed on the
+lease4_offer hook point set an expected argument in the callout status.
+This is a programming error in the installed hook libraries.  Details of
+the argument and the query in process at the time are provided log arguments.
+
 % DHCP4_HOOK_LEASE4_OFFER_DROP %1: packet is dropped, because a callout set the next step to DROP
 This debug message is printed when a callout installed on the lease4_offer
 hook point sets the next step to DROP.
@@ -961,6 +967,41 @@ generated hostname.
 The DHCPv4 server has encountered a fatal error and is terminating.
 The reason for the failure is included in the message.
 
+% DHCP4_SERVER_INITIATED_DECLINE Lease for addr %1 has been found to be already in use. The lease will be unavailable for %2 seconds.
+This informational message is printed when the server has detected via
+ICMP ECHO (i.e. ping check) or other means that a lease which should be
+free to offer is actually in use. This message may indicate a misconfiguration
+in a network or more likely a device that is using an address that it is not
+supposed to use. The server will fully recover from this situation, but if
+the underlying problem of a misconfigured or rogue device is not solved, this
+address may be declined again in the future.
+
+% DHCP4_SERVER_INITIATED_DECLINE_ADD_FAILED %1: error adding a lease for address %2
+This error message indicates that the server failed to add a DECLINED lease to
+the lease store. The first argument includes the client and the transaction
+identification information. The second argument holds the IPv4 address for which
+the decline was attempted.
+
+% DHCP4_SERVER_INITIATED_DECLINE_FAILED %1: error on server-initiated decline lease for address %2: %3
+This error message indicates that the software failed to decline a
+lease from the lease database due to an error during a database
+operation. The first argument includes the client and the transaction
+identification information. The second argument holds the IPv4 address
+for which the decline was attempted. The last one contains the reason of
+failure.
+
+% DHCP4_SERVER_INITIATED_DECLINE_RESOURCE_BUSY %1: error declining a lease for address %2
+This error message indicates that while one server thread was attempting to mark
+a lease as DECLINED, it was already locked by another thread. The first argument
+includes the client and the transaction identification information.  The second
+argument holds the IPv4 address for which the decline was attempted.
+
+% DHCP4_SERVER_INITIATED_DECLINE_UPDATE_FAILED %1: error updating lease for address %2
+This error message indicates that the server failed to update a lease in the
+lease store to the DECLINED state. The first argument includes the client and
+the transaction identification information. The second argument holds the IPv4
+address for which the decline was attempted.
+
 % DHCP4_SHUTDOWN server shutdown
 The DHCPv4 server has terminated normally.
 
@@ -1056,44 +1097,3 @@ option (if present).
 % DHCP6_DHCP4O6_PACKET_RECEIVED received DHCPv4o6 packet from DHCPv6 server (type %1) for %2 port %3 on interface %4
 This debug message is printed when the server is receiving a DHCPv4o6
 from the DHCPv6 server over inter-process communication.
-
-% DHCP4_SERVER_INITIATED_DECLINE_FAILED %1: error on server-initiated decline lease for address %2: %3
-This error message indicates that the software failed to decline a
-lease from the lease database due to an error during a database
-operation. The first argument includes the client and the transaction
-identification information. The second argument holds the IPv4 address
-for which the decline was attempted. The last one contains the reason of
-failure.
-
-% DHCP4_HOOK_LEASE4_OFFER_ARGUMENT_MISSING hook callouts did not set an argument as expected %1 for %2
-This error message is printed when none of the callouts installed on the
-lease4_offer hook point set an expected argument in the callout status.
-This is a programming error in the installed hook libraries.  Details of
-the argument and the query in process at the time are provided log arguments.
-
-% DHCP4_SERVER_INITIATED_DECLINE Lease for addr %1 has been found to be already in use. The lease will be unavailable for %2 seconds.
-This informational message is printed when the server has detected via
-ICMP ECHO (i.e. ping check) or other means that a lease which should be
-free to offer is actually in use. This message may indicate a misconfiguration
-in a network or more likely a device that is using an address that it is not
-supposed to use. The server will fully recover from this situation, but if
-the underlying problem of a misconfigured or rogue device is not solved, this
-address may be declined again in the future.
-
-% DHCP4_SERVER_INITIATED_DECLINE_UPDATE_FAILED %1: error updating lease for address %2
-This error message indicates that the server failed to update a lease in the
-lease store to the DECLINED state. The first argument includes the client and
-the transaction identification information. The second argument holds the IPv4
-address for which the decline was attempted.
-
-% DHCP4_SERVER_INITIATED_DECLINE_ADD_FAILED %1: error adding a lease for address %2
-This error message indicates that the server failed to add a DECLINED lease to
-the lease store. The first argument includes the client and the transaction
-identification information. The second argument holds the IPv4 address for which
-the decline was attempted.
-
-% DHCP4_SERVER_INITIATED_DECLINE_RESOURCE_BUSY %1: error declining a lease for address %2
-This error message indicates that while one server thread was attempting to mark
-a lease as DECLINED, it was already locked by another thread. The first argument
-includes the client and the transaction identification information.  The second
-argument holds the IPv4 address for which the decline was attempted.

@@ -326,6 +326,13 @@ the message.
 This debug message is printed when the server is receiving a DHCPv4o6
 from the DHCPv4 server over inter-process communication socket.
 
+% DHCP6_DHCP4O6_RESPONSE_DATA %1: responding with packet %2 (type %3), packet details: %4
+A debug message including the detailed data about the packet being sent
+to the client. The first argument contains the client and the transaction
+identification information. The second and third argument contains the
+packet name and type respectively. The fourth argument contains detailed
+packet information.
+
 % DHCP6_DHCP4O6_SEND_FAIL failed to send DHCPv4o6 packet: %1
 This error is output if the IPv6 DHCP server fails to send an assembled
 DHCPv4o6 message to a client. The reason for the error is included in the
@@ -937,13 +944,6 @@ This is a message informing that host reservations lookup is performed before
 lease lookup when multi-threading is enabled overwriting configured value.
 
 % DHCP6_RESPONSE_DATA %1: responding with packet %2 (type %3), packet details: %4
-A debug message including the detailed data about the packet being sent
-to the client. The first argument contains the client and the transaction
-identification information. The second and third argument contains the
-packet name and type respectively. The fourth argument contains detailed
-packet information.
-
-% DHCP6_DHCP4O6_RESPONSE_DATA %1: responding with packet %2 (type %3), packet details: %4
 A debug message including the detailed data about the packet being sent
 to the client. The first argument contains the client and the transaction
 identification information. The second and third argument contains the
