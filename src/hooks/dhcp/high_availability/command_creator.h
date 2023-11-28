@@ -61,6 +61,7 @@ public:
     ///
     /// @param server_name name of the server sending the command allowing
     /// for associating the command with the relationship.
+    /// @param server_type type of the DHCP server, i.e. v4 or v6.
     /// @return Pointer to the JSON representation of the command.
     static data::ConstElementPtr
     createHeartbeat(const std::string& server_name,

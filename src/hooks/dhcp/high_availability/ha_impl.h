@@ -75,7 +75,7 @@ public:
 
     /// @brief Returns parsed configuration by partner name.
     ///
-    /// @param parameter_name name of a partner belonging to the relationship for
+    /// @param partner_name name of a partner belonging to the relationship for
     /// which the configuration should be retrieved.
     /// @return Configuration for the relationship to which the partner belongs.
     HAConfigPtr getConfig(const std::string& partner_name) const {

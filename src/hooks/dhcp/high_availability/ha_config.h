@@ -584,13 +584,13 @@ public:
         return (max_rejected_lease_updates_);
     }
 
-    /// @brief Sets the maximum number of clients for which lease updates can fail
+    /// @brief Sets the maximum number of clients for whom the lease updates can fail
     /// due to other than general error.
     ///
     /// The service is terminated when the actual number of rejected clients is equal
     /// or greater that number.
     ///
-    /// @param max_rejected_clients maximum number of distinct clients for which
+    /// @param max_rejected_lease_updates maximum number of distinct clients for which
     /// the lease updates can fail before the server terminates the HA service.
     /// A special value of 0 configures the server to never transition to the
     /// terminated state as a result of the lease updates issues.
