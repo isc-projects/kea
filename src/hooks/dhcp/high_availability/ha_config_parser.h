@@ -34,8 +34,8 @@ private:
     /// is going to be stored.
     ///
     /// @param config Specified configuration.
-    static void parseAllInternal(const HAConfigMapperPtr& config_storage,
-                                 const data::ConstElementPtr& config);
+    static void parseAll(const HAConfigMapperPtr& config_storage,
+                         const data::ConstElementPtr& config);
 
     /// @brief Parses HA configuration for a single relationship.
     ///
@@ -46,8 +46,8 @@ private:
     ///
     /// @param config specified configuration for a relationship.
     /// @throw ConfigError when parsing fails or configuration is invalid.
-    static void parseOneInternal(const HAConfigMapperPtr& config_storage,
-                                 const data::ElementPtr& config);
+    static void parseOne(const HAConfigMapperPtr& config_storage,
+                         const data::ElementPtr& config);
 
     /// @brief Validates and returns a value of the parameter.
     ///

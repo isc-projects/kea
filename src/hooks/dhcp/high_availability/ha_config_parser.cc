@@ -72,7 +72,7 @@ HAConfigParser::parse(const ConstElementPtr& config) {
 
         // This may cause different types of exceptions. We catch them here
         // and throw unified exception type.
-        parseAllInternal(config_storage, config);
+        parseAll(config_storage, config);
         validateRelationships(config_storage);
         logConfigStatus(config_storage);
         return (config_storage);
@@ -86,8 +86,8 @@ HAConfigParser::parse(const ConstElementPtr& config) {
 }
 
 void
-HAConfigParser::parseAllInternal(const HAConfigMapperPtr& config_storage,
-                                 const ConstElementPtr& config) {
+HAConfigParser::parseAll(const HAConfigMapperPtr& config_storage,
+                         const ConstElementPtr& config) {
     // Config must be provided.
     if (!config) {
         isc_throw(ConfigError, "HA configuration must not be null");
@@ -105,13 +105,13 @@ HAConfigParser::parseAllInternal(const HAConfigMapperPtr& config_storage,
         isc_throw(ConfigError, "a list of HA configurations must not be empty");
     }
     for (auto config : config_vec) {
-        parseOneInternal(config_storage, config);
+        parseOne(config_storage, config);
     }
 }
 
 void
-HAConfigParser::parseOneInternal(const HAConfigMapperPtr& config_storage,
-                                 const ElementPtr& config) {
+HAConfigParser::parseOne(const HAConfigMapperPtr& config_storage,
+                         const ElementPtr& config) {
     // Config must be provided.
     if (!config) {
         isc_throw(ConfigError, "HA configuration must not be null");
@@ -134,11 +134,6 @@ HAConfigParser::parseOneInternal(const HAConfigMapperPtr& config_storage,
     }
     // Set general defaults.
     setDefaults(config, HA_CONFIG_DEFAULTS);
-
-    // HA configuration must be a map.
-    if (config->getType() != Element::map) {
-        isc_throw(ConfigError, "expected list of maps in the HA configuration");
-    }
 
     // It must contain peers section.
     if (!config->contains("peers")) {
@@ -383,8 +378,9 @@ HAConfigParser::parseOneInternal(const HAConfigMapperPtr& config_storage,
         try {
             config_storage->map(peer_config.first, rel_config);
 
-        } catch (...) {
-            isc_throw(HAConfigValidationError, "server names must be unique for different relationships");
+        } catch (const std::exception& ex) {
+            isc_throw(HAConfigValidationError, "server names must be unique for different relationships: "
+                      << ex.what());
         }
     }
 }
