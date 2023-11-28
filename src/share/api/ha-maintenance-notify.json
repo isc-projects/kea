@@ -19,7 +19,7 @@
         "{",
         "    \"command\": \"ha-maintenance-notify\",",
         "    \"arguments\": {",
-        "        \"cancel\": <boolean>",
+        "        \"cancel\": true",
         "    }",
         "}"
     ],

@@ -12,11 +12,10 @@
     "cmd-syntax": [
         "{",
         "    \"command\": \"ha-sync-complete-notify\",",
-        "    \"service\": [ <service affected: 'dhcp4' or 'dhcp6'> ],",
         "    \"arguments\": {",
-        "        \"server-name\": <name of the partner server>,",
-        "        \"origin\": <an integer identifier of an origin to enable the DHCP service>,",
-        "        \"max-period\": <integer, in seconds>",
+        "        \"server-name\": \"server1\",",
+        "        \"origin\": 2001,",
+        "        \"max-period\": 60",
         "    }",
         "}"
     ],
