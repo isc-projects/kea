@@ -552,7 +552,6 @@ HAImpl::maintenanceStartHandler(hooks::CalloutHandle& callout_handle) {
         if (rcode != CONTROL_RESULT_SUCCESS) {
             break;
         }
-
     }
     callout_handle.setArgument("response", response);
 }

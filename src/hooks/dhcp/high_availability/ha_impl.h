@@ -193,7 +193,7 @@ public:
     /// parameter. If the parameter is not specified, a default @c HAService
     /// name is returned.
     ///
-    /// @param command_name command name.
+    /// @param command_name command name (used for logging purposes only).
     /// @param args command arguments or null.
     /// @return Pointer to an @c HAService instance.
     /// @throw BadValue if the specified server-name doesn't exist or if the
