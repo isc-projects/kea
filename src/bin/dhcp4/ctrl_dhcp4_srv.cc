@@ -581,8 +581,8 @@ ControlledDhcpv4Srv::commandDhcpDisableHandler(const std::string&,
             // The user specified that the DHCP service should resume not
             // later than in max-period seconds. If the 'dhcp-enable' command
             // is not sent, the DHCP service will resume automatically.
-            network_state_->delayedEnableAll(static_cast<unsigned>(max_period),
-                                             type);
+            network_state_->delayedEnableService(static_cast<unsigned>(max_period),
+                                                 type);
         }
         network_state_->disableService(type);
 
@@ -956,7 +956,7 @@ ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
         cfg_db->setAppendedParameters(params);
         cfg_db->createManagers();
         // Reset counters related to connections as all managers have been recreated.
-        srv->getNetworkState()->reset(NetworkState::DB_CONNECTION);
+        srv->getNetworkState()->resetForDbConnection();
 
     } catch (const std::exception& ex) {
         err << "Unable to open database: " << ex.what();

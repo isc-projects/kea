@@ -1888,7 +1888,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, dhcpDisableTemporarily) {
     EXPECT_FALSE(server_->network_state_->isServiceEnabled());
     // And the timer should be scheduled which counts the time to automatic
     // enabling of the service.
-    EXPECT_TRUE(server_->network_state_->isDelayedEnableAll());
+    EXPECT_TRUE(server_->network_state_->isDelayedEnableService());
 }
 
 // This test verifies that enable DHCP service command performs sanity check on

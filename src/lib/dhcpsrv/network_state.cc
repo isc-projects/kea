@@ -78,43 +78,33 @@ public:
         }
     }
 
-    /// @brief Reset internal counters for a specific origin.
+    /// @brief Reset internal counters for a database connection origin.
     ///
     /// @note The dhcp service will remain disabled until all flags are cleared.
-    ///
-    /// @param origin The origin of the state transition.
-    void reset(unsigned int origin) {
-        if (origin == NetworkState::DB_CONNECTION) {
-            disabled_by_db_connection_ = 0;
-        } else {
-            disabled_by_origin_.erase(origin);
-        }
-        // Enable the service only if all flags have been cleared.
-        if (disabled_by_origin_.empty() && disabled_by_db_connection_ == 0) {
+    void resetForDbConnection() {
+        disabled_by_db_connection_ = 0;
+        if (disabled_by_origin_.empty()) {
             globally_disabled_ = false;
         }
     }
 
-    /// @brief Enables DHCP service globally and per scopes.
+    /// @brief Enables DHCP service for an origin.
     ///
     /// If delayed enabling DHCP service has been scheduled, it cancels it.
     ///
     /// @param origin The origin of the state transition.
-    void enableAll(unsigned int origin) {
+    void delayedEnable(unsigned int origin) {
         setDisableService(false, origin);
-
-        /// @todo Enable service for all subnets and networks here.
-
         destroyTimer(origin);
     }
 
-    /// @brief Creates a timer counting the time when @c enableAll should be
+    /// @brief Creates a timer counting the time when @c delayedEnable should be
     /// automatically called.
     ///
     /// If the timer has been already scheduled, it is destroyed and replaced
     /// with a new timer.
     ///
-    /// @param seconds Number of seconds to elapse before the @c enableAll is
+    /// @param seconds Number of seconds to elapse before the @c delayedEnable is
     /// called.
     /// @param origin The origin of the state transition.
     void createTimer(const unsigned int seconds, unsigned int origin) {
@@ -124,7 +114,7 @@ public:
         }
         auto timer_name = getTimerName(origin);
         timer_mgr_->registerTimer(timer_name,
-                                  std::bind(&NetworkStateImpl::enableAll,
+                                  std::bind(&NetworkStateImpl::delayedEnable,
                                             shared_from_this(), origin),
                                   seconds * 1000,
                                   asiolink::IntervalTimer::ONE_SHOT);
@@ -198,34 +188,24 @@ void
 NetworkState::enableService(unsigned int origin) {
     if (MultiThreadingMgr::instance().getMode()) {
         std::lock_guard<std::mutex> lk(*mutex_);
-        impl_->setDisableService(false, origin);
+        impl_->delayedEnable(origin);
     } else {
-        impl_->setDisableService(false, origin);
+        impl_->delayedEnable(origin);
     }
 }
 
 void
-NetworkState::reset(unsigned int origin) {
+NetworkState::resetForDbConnection() {
     if (MultiThreadingMgr::instance().getMode()) {
         std::lock_guard<std::mutex> lk(*mutex_);
-        impl_->reset(origin);
+        impl_->resetForDbConnection();
     } else {
-        impl_->reset(origin);
+        impl_->resetForDbConnection();
     }
 }
 
 void
-NetworkState::enableAll(unsigned int origin) {
-    if (MultiThreadingMgr::instance().getMode()) {
-        std::lock_guard<std::mutex> lk(*mutex_);
-        impl_->enableAll(origin);
-    } else {
-        impl_->enableAll(origin);
-    }
-}
-
-void
-NetworkState::delayedEnableAll(const unsigned int seconds, unsigned int origin) {
+NetworkState::delayedEnableService(const unsigned int seconds, unsigned int origin) {
     if (MultiThreadingMgr::instance().getMode()) {
         std::lock_guard<std::mutex> lk(*mutex_);
         impl_->createTimer(seconds, origin);
@@ -245,7 +225,7 @@ NetworkState::isServiceEnabled() const {
 }
 
 bool
-NetworkState::isDelayedEnableAll() const {
+NetworkState::isDelayedEnableService() const {
     for (auto origin : impl_->disabled_by_origin_) {
         if (TimerMgr::instance()->isTimerRegistered(impl_->getTimerName(origin))) {
             return (true);

@@ -87,7 +87,7 @@ HAService::HAService(const unsigned int id, const IOServicePtr& io_service,
         communication_state_.reset(new CommunicationState6(io_service_, config));
     }
 
-    network_state_->reset(NetworkState::HA_LOCAL_COMMAND+id_);
+    network_state_->enableService(NetworkState::HA_LOCAL_COMMAND+id_);
 
     startModel(HA_WAITING_ST);
 
@@ -146,7 +146,7 @@ HAService::~HAService() {
     // Stop client and/or listener.
     stopClientAndListener();
 
-    network_state_->reset(NetworkState::HA_LOCAL_COMMAND+id_);
+    network_state_->enableService(NetworkState::HA_LOCAL_COMMAND+id_);
 }
 
 void

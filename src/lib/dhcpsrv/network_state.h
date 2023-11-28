@@ -133,27 +133,19 @@ public:
     /// @param origin The origin of the state transition.
     void enableService(unsigned int origin);
 
-    /// @brief Reset internal counters.
+    /// @brief Reset internal counters for database connection.
     ///
-    /// Reset internal counters for a specific 'origin' after the server has
-    /// been reconfigured or all the connections have been restored.
-    ///
-    /// @param type The origin for which the state flags need to be reset.
-    void reset(unsigned int type);
-
-    /// @brief Enables DHCP service globally and for scopes which have been
-    /// disabled as a result of control command.
-    ///
-    /// @param origin The origin of the state transition.
-    void enableAll(unsigned int origin);
+    /// It results in enabling the network service if network service for
+    /// all other origins is enabled.
+    void resetForDbConnection();
 
     /// @brief Schedules enabling DHCP service in the future.
     ///
     /// @param seconds Number of seconds after which the service should be enabled
     /// unless @c enableAll is enabled before that time.
     /// @param origin The origin of the state transition.
-    void delayedEnableAll(const unsigned int seconds,
-                          unsigned int origin);
+    void delayedEnableService(const unsigned int seconds,
+                              unsigned int origin);
 
     /// @brief Checks if the DHCP service is globally enabled.
     ///
@@ -163,11 +155,11 @@ public:
     /// @brief Checks if delayed enabling of DHCP services is scheduled.
     ///
     /// It indicates that the timer is present which counts the time until
-    /// @c enableAll function will be called automatically.
+    /// @c delayedEnable function will be called automatically.
     ///
     /// @return true if delayed enabling of the DHCP service is scheduled,
     /// false otherwise.
-    bool isDelayedEnableAll() const;
+    bool isDelayedEnableService() const;
 
     /// @name Selective disabling/enabling DHCP service per scopes
     //@{

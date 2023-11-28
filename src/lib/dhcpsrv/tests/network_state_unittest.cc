@@ -126,25 +126,21 @@ public:
     /// 8. Reset using 'DB connection' origin (expect enabled state).
     void resetUsingDBConnectionOriginTest();
 
-    /// @brief This test verifies that enableAll() enables the service. This test will be
-    /// extended in the future to verify that it also enables disabled scopes.
-    void enableAllTest();
-
     /// @brief This test verifies that it is possible to setup delayed execution of enableAll
     /// function.
-    void delayedEnableAllTest();
+    void delayedEnableServiceTest();
 
     /// @brief This test verifies that explicitly enabling the service cancels the timer
     /// scheduled for automatically enabling it.
-    void earlyEnableAllTest();
+    void earlyEnableServiceTest();
 
-    /// @brief This test verifies that it is possible to call delayedEnableAll multiple times
+    /// @brief This test verifies that it is possible to call delayedEnableService multiple times
     /// and that it results in only one timer being scheduled.
-    void multipleDelayedEnableAllTest();
+    void multipleDelayedEnableServiceTest();
 
-    /// @brief This test verifies that it is possible to call delayedEnableAll multiple times
+    /// @brief This test verifies that it is possible to call delayedEnableService multiple times
     /// from different origins and that it results in each timer being scheduled.
-    void multipleDifferentOriginsDelayedEnableAllTest();
+    void multipleDifferentOriginsDelayedEnableServiceTest();
 
     /// @brief Runs IO service with a timeout.
     ///
@@ -408,7 +404,7 @@ NetworkStateTest::resetUsingUserCommandOriginTest() {
     EXPECT_FALSE(state.isServiceEnabled());
     state.disableService(NetworkState::DB_CONNECTION);
     EXPECT_FALSE(state.isServiceEnabled());
-    state.reset(NetworkState::USER_COMMAND);
+    state.enableService(NetworkState::USER_COMMAND);
     EXPECT_FALSE(state.isServiceEnabled());
     state.enableService(NetworkState::HA_LOCAL_COMMAND);
     EXPECT_FALSE(state.isServiceEnabled());
@@ -422,7 +418,7 @@ NetworkStateTest::resetUsingUserCommandOriginTest() {
     EXPECT_FALSE(state.isServiceEnabled());
     state.disableService(NetworkState::USER_COMMAND);
     EXPECT_FALSE(state.isServiceEnabled());
-    state.reset(NetworkState::USER_COMMAND);
+    state.enableService(NetworkState::USER_COMMAND);
     EXPECT_TRUE(state.isServiceEnabled());
 }
 
@@ -431,11 +427,11 @@ NetworkStateTest::resetUsingUserCommandOriginTest() {
 // 1. Disable using 'user command' origin 1 time (expect disabled state).
 // 2. Disable using 'HA command' origin 3 times (expect disabled state).
 // 3. Disable using 'DB connection' origin 1 time (expect disabled state).
-// 4. Reset using 'HA command' origin (expect disabled state).
+// 4. Enable using 'HA command' origin (expect disabled state).
 // 5. Enable using 'user command' origin 1 time (expect disabled state).
 // 6. Enable using 'DB connection' origin 1 time (expect enabled state).
 // 7. Disable using 'HA command' origin 3 times (expect disabled state).
-// 8. Reset using 'HA command' origin (expect enabled state).
+// 8. Enable using 'HA command' origin (expect enabled state).
 void
 NetworkStateTest::resetUsingHACommandOriginTest() {
     NetworkState state(NetworkState::DHCPv4);
@@ -451,7 +447,7 @@ NetworkStateTest::resetUsingHACommandOriginTest() {
     EXPECT_FALSE(state.isServiceEnabled());
     state.disableService(NetworkState::DB_CONNECTION);
     EXPECT_FALSE(state.isServiceEnabled());
-    state.reset(NetworkState::HA_LOCAL_COMMAND);
+    state.enableService(NetworkState::HA_LOCAL_COMMAND);
     EXPECT_FALSE(state.isServiceEnabled());
     state.enableService(NetworkState::USER_COMMAND);
     EXPECT_FALSE(state.isServiceEnabled());
@@ -465,7 +461,7 @@ NetworkStateTest::resetUsingHACommandOriginTest() {
     EXPECT_FALSE(state.isServiceEnabled());
     state.disableService(NetworkState::HA_LOCAL_COMMAND);
     EXPECT_FALSE(state.isServiceEnabled());
-    state.reset(NetworkState::HA_LOCAL_COMMAND);
+    state.enableService(NetworkState::HA_LOCAL_COMMAND);
     EXPECT_TRUE(state.isServiceEnabled());
 }
 
@@ -494,7 +490,7 @@ NetworkStateTest::resetUsingDBConnectionOriginTest() {
     EXPECT_FALSE(state.isServiceEnabled());
     state.disableService(NetworkState::DB_CONNECTION);
     EXPECT_FALSE(state.isServiceEnabled());
-    state.reset(NetworkState::DB_CONNECTION);
+    state.resetForDbConnection();
     EXPECT_FALSE(state.isServiceEnabled());
     state.enableService(NetworkState::USER_COMMAND);
     EXPECT_FALSE(state.isServiceEnabled());
@@ -508,37 +504,18 @@ NetworkStateTest::resetUsingDBConnectionOriginTest() {
     EXPECT_FALSE(state.isServiceEnabled());
     state.disableService(NetworkState::DB_CONNECTION);
     EXPECT_FALSE(state.isServiceEnabled());
-    state.reset(NetworkState::DB_CONNECTION);
-    EXPECT_TRUE(state.isServiceEnabled());
-}
-
-// This test verifies that enableAll() enables the service. This test will be
-// extended in the future to verify that it also enables disabled scopes.
-void
-NetworkStateTest::enableAllTest() {
-    NetworkState state(NetworkState::DHCPv4);
-    state.disableService(NetworkState::USER_COMMAND);
-    EXPECT_FALSE(state.isServiceEnabled());
-    state.enableAll(NetworkState::USER_COMMAND);
-    EXPECT_TRUE(state.isServiceEnabled());
-    state.disableService(NetworkState::HA_LOCAL_COMMAND);
-    EXPECT_FALSE(state.isServiceEnabled());
-    state.enableAll(NetworkState::HA_LOCAL_COMMAND);
-    EXPECT_TRUE(state.isServiceEnabled());
-    state.disableService(NetworkState::DB_CONNECTION);
-    EXPECT_FALSE(state.isServiceEnabled());
-    state.enableAll(NetworkState::DB_CONNECTION);
+    state.resetForDbConnection();
     EXPECT_TRUE(state.isServiceEnabled());
 }
 
 // This test verifies that it is possible to setup delayed execution of enableAll
 // function.
 void
-NetworkStateTest::delayedEnableAllTest() {
+NetworkStateTest::delayedEnableServiceTest() {
     NetworkState state(NetworkState::DHCPv4);
     // Disable the service and then schedule enabling it in 1 second.
     state.disableService(NetworkState::USER_COMMAND);
-    state.delayedEnableAll(1, NetworkState::USER_COMMAND);
+    state.delayedEnableService(1, NetworkState::USER_COMMAND);
     // Initially the service should be still disabled.
     EXPECT_FALSE(state.isServiceEnabled());
     // After running IO service for 2 seconds, the service should be enabled.
@@ -546,7 +523,7 @@ NetworkStateTest::delayedEnableAllTest() {
     EXPECT_TRUE(state.isServiceEnabled());
     // Disable the service and then schedule enabling it in 1 second.
     state.disableService(NetworkState::HA_LOCAL_COMMAND);
-    state.delayedEnableAll(1, NetworkState::HA_LOCAL_COMMAND);
+    state.delayedEnableService(1, NetworkState::HA_LOCAL_COMMAND);
     // Initially the service should be still disabled.
     EXPECT_FALSE(state.isServiceEnabled());
     // After running IO service for 2 seconds, the service should be enabled.
@@ -554,38 +531,38 @@ NetworkStateTest::delayedEnableAllTest() {
     EXPECT_TRUE(state.isServiceEnabled());
     // Disable the service and then schedule enabling it in 1 second.
     state.disableService(NetworkState::DB_CONNECTION);
-    EXPECT_THROW(state.delayedEnableAll(1, NetworkState::DB_CONNECTION), BadValue);
+    EXPECT_THROW(state.delayedEnableService(1, NetworkState::DB_CONNECTION), BadValue);
 }
 
 // This test verifies that explicitly enabling the service cancels the timer
 // scheduled for automatically enabling it.
 void
-NetworkStateTest::earlyEnableAllTest() {
+NetworkStateTest::earlyEnableServiceTest() {
     NetworkState state(NetworkState::DHCPv4);
     // Disable the service.
     state.disableService(NetworkState::USER_COMMAND);
     EXPECT_FALSE(state.isServiceEnabled());
     // Schedule enabling the service in 2 seconds.
-    state.delayedEnableAll(2, NetworkState::USER_COMMAND);
+    state.delayedEnableService(10, NetworkState::USER_COMMAND);
     // Explicitly enable the service.
-    state.enableAll(NetworkState::USER_COMMAND);
+    state.enableService(NetworkState::USER_COMMAND);
     // The timer should be now canceled and the service should be enabled.
-    EXPECT_FALSE(state.isDelayedEnableAll());
+    EXPECT_FALSE(state.isDelayedEnableService());
     EXPECT_TRUE(state.isServiceEnabled());
 }
 
-// This test verifies that it is possible to call delayedEnableAll multiple times
+// This test verifies that it is possible to call delayedEnableService multiple times
 // and that it results in only one timer being scheduled.
 void
-NetworkStateTest::multipleDelayedEnableAllTest() {
+NetworkStateTest::multipleDelayedEnableServiceTest() {
     NetworkState state(NetworkState::DHCPv4);
     // Disable the service and then schedule enabling it in 5 second.
     state.disableService(NetworkState::USER_COMMAND);
     // Schedule the first timer for 5 seconds.
-    state.delayedEnableAll(5, NetworkState::USER_COMMAND);
+    state.delayedEnableService(5, NetworkState::USER_COMMAND);
     // When calling it the second time the old timer should be destroyed and
     // the timeout should be set to 2 seconds.
-    state.delayedEnableAll(2, NetworkState::USER_COMMAND);
+    state.delayedEnableService(2, NetworkState::USER_COMMAND);
     // Initially the service should be still disabled.
     EXPECT_FALSE(state.isServiceEnabled());
     // After running IO service for 3 seconds, the service should be enabled.
@@ -593,23 +570,23 @@ NetworkStateTest::multipleDelayedEnableAllTest() {
     EXPECT_TRUE(state.isServiceEnabled());
     // The timer should not be present, even though the first timer was created
     // with 5 seconds interval.
-    EXPECT_FALSE(state.isDelayedEnableAll());
+    EXPECT_FALSE(state.isDelayedEnableService());
 }
 
-// This test verifies that it is possible to call delayedEnableAll multiple times
+// This test verifies that it is possible to call delayedEnableService multiple times
 // from different origins and that it results in each timer being scheduled.
 void
-NetworkStateTest::multipleDifferentOriginsDelayedEnableAllTest() {
+NetworkStateTest::multipleDifferentOriginsDelayedEnableServiceTest() {
     NetworkState state(NetworkState::DHCPv4);
     // Disable the service and then schedule enabling it in 5 second.
     state.disableService(NetworkState::HA_LOCAL_COMMAND);
     // Disable the service and then schedule enabling it in 2 second.
     state.disableService(NetworkState::USER_COMMAND);
     // Schedule the first timer for 5 seconds.
-    state.delayedEnableAll(5, NetworkState::HA_LOCAL_COMMAND);
+    state.delayedEnableService(5, NetworkState::HA_LOCAL_COMMAND);
     // When calling it the second time the old timer should not be destroyed and
     // the new timeout should be set to 2 seconds.
-    state.delayedEnableAll(2, NetworkState::USER_COMMAND);
+    state.delayedEnableService(2, NetworkState::USER_COMMAND);
     // Initially the service should be still disabled.
     EXPECT_FALSE(state.isServiceEnabled());
     // After running IO service for 3 seconds, the service should not be enabled.
@@ -617,13 +594,13 @@ NetworkStateTest::multipleDifferentOriginsDelayedEnableAllTest() {
     EXPECT_FALSE(state.isServiceEnabled());
     // The timer should be present, because the first timer was created with 5
     // seconds interval.
-    EXPECT_TRUE(state.isDelayedEnableAll());
+    EXPECT_TRUE(state.isDelayedEnableService());
     // After running IO service for 3 seconds, the service should be enabled.
     runIOService(3000);
     EXPECT_TRUE(state.isServiceEnabled());
     // The timer should not be present, because the first timer was created with
     // 5 seconds interval.
-    EXPECT_FALSE(state.isDelayedEnableAll());
+    EXPECT_FALSE(state.isDelayedEnableService());
 }
 
 // Test invocations.
@@ -736,49 +713,40 @@ TEST_F(NetworkStateTest, resetUsingHACommandOriginTestMultiThreading) {
     resetUsingHACommandOriginTest();
 }
 
-TEST_F(NetworkStateTest, enableAllTest) {
-    enableAllTest();
-}
-
-TEST_F(NetworkStateTest, enableAllTestMultiThreading) {
-    MultiThreadingMgr::instance().setMode(true);
-    enableAllTest();
-}
-
-TEST_F(NetworkStateTest, delayedEnableAllTest) {
-    delayedEnableAllTest();
+TEST_F(NetworkStateTest, delayedEnableServiceTest) {
+    delayedEnableServiceTest();
 }
 
 TEST_F(NetworkStateTest, delayedEnableAllTestMultiThreading) {
     MultiThreadingMgr::instance().setMode(true);
-    delayedEnableAllTest();
+    delayedEnableServiceTest();
 }
 
-TEST_F(NetworkStateTest, earlyEnableAllTest) {
-    earlyEnableAllTest();
+TEST_F(NetworkStateTest, earlyEnableServiceTest) {
+    earlyEnableServiceTest();
 }
 
-TEST_F(NetworkStateTest, earlyEnableAllTestMultiThreading) {
+TEST_F(NetworkStateTest, earlyEnableServiceTestMultiThreading) {
     MultiThreadingMgr::instance().setMode(true);
-    earlyEnableAllTest();
+    earlyEnableServiceTest();
 }
 
-TEST_F(NetworkStateTest, multipleDelayedEnableAllTest) {
-    multipleDelayedEnableAllTest();
+TEST_F(NetworkStateTest, multipleDelayedEnableServiceTest) {
+    multipleDelayedEnableServiceTest();
 }
 
-TEST_F(NetworkStateTest, multipleDelayedEnableAllTestMultiThreading) {
+TEST_F(NetworkStateTest, multipleDelayedEnableServiceTestMultiThreading) {
     MultiThreadingMgr::instance().setMode(true);
-    multipleDelayedEnableAllTest();
+    multipleDelayedEnableServiceTest();
 }
 
-TEST_F(NetworkStateTest, multipleDifferentOriginsDelayedEnableAllTest) {
-    multipleDifferentOriginsDelayedEnableAllTest();
+TEST_F(NetworkStateTest, multipleDifferentOriginsDelayedEnableServiceTest) {
+    multipleDifferentOriginsDelayedEnableServiceTest();
 }
 
-TEST_F(NetworkStateTest, multipleDifferentOriginsDelayedEnableAllTestMultiThreading) {
+TEST_F(NetworkStateTest, multipleDifferentOriginsDelayedEnableServiceTestMultiThreading) {
     MultiThreadingMgr::instance().setMode(true);
-    multipleDifferentOriginsDelayedEnableAllTest();
+    multipleDifferentOriginsDelayedEnableServiceTest();
 }
 
 } // end of anonymous namespace
