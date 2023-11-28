@@ -59,7 +59,16 @@ public:
 
 public:
 
-    /// @brief Returns sole parsed configuration.
+    /// @brief Returns a configuration for the first relationship.
+    ///
+    /// This function is held here for historical reasons and it is currently
+    /// only used in the unit tests for a single-relationship test cases. The
+    /// production code should use the other variant of this function that
+    /// includes a partner name as a parameter. It coveres both the cases when
+    /// there is only one relationship and the hub-and-spoke case.
+    ///
+    /// @return Configuration for the relationship to which the partner belongs.
+    /// @throw InvalidOperation when there are no relationships.
     HAConfigPtr getConfig() const {
         return (config_->get());
     }
