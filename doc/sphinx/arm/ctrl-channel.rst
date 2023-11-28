@@ -716,7 +716,7 @@ command source. A server administrator should typically omit this parameter
 because the default value "user" indicates that the administrator sent the
 command. This command can also be sent by the partner server running HA hooks
 library. In that case, the partner server sets the parameter to a unique
-integer identifier of a HA service. The integer values are reserved for the
+integer identifier of an HA service. The integer values are reserved for the
 communication between HA partners and should not be specified in the
 administrator's commands, as it may interfere with HA operation. The
 administrator should either omit this parameter or set it to "user".
@@ -744,7 +744,7 @@ command source. A server administrator should typically omit this parameter
 because the default value "user" indicates that the administrator sent the
 command. This command can also be sent by the partner server running the HA hook
 library. In that case, the partner server sets the parameter to a unique
-integer identifier of a HA service. The integer values are reserved for the
+integer identifier of an HA service. The integer values are reserved for the
 communication between HA partners and should not be specified in the
 administrator's commands, as it may interfere with HA operation. The
 administrator should either omit this parameter or set it to
