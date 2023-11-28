@@ -1712,7 +1712,7 @@ HAService::asyncSendHeartbeat() {
         (HttpRequest::Method::HTTP_POST, "/", HttpVersion::HTTP_11(),
          HostHttpHeader(partner_config->getUrl().getStrippedHostname()));
     partner_config->addBasicAuthHttpHeader(request);
-    request->setBodyAsJson(CommandCreator::createHeartbeat(config_->getThisServerConfig()->getName(),
+    request->setBodyAsJson(CommandCreator::createHeartbeat(config_->getThisServerName(),
                                                            server_type_));
     request->finalize();
 
@@ -2550,7 +2550,7 @@ void
 HAService::asyncSendHAReset(HttpClient& http_client,
                             const HAConfig::PeerConfigPtr& config,
                             PostRequestCallback post_request_action) {
-    ConstElementPtr command = CommandCreator::createHAReset(config_->getThisServerConfig()->getName(),
+    ConstElementPtr command = CommandCreator::createHAReset(config_->getThisServerName(),
                                                             server_type_);
 
     // Create HTTP/1.1 request including our command.
@@ -2920,7 +2920,7 @@ HAService::asyncSyncCompleteNotify(HttpClient& http_client,
 
     remote_config->addBasicAuthHttpHeader(request);
     request->setBodyAsJson(CommandCreator::createSyncCompleteNotify(NetworkState::HA_REMOTE_COMMAND+id_,
-                                                                    config_->getThisServerConfig()->getName(),
+                                                                    config_->getThisServerName(),
                                                                     server_type_));
     request->finalize();
 
