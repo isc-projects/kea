@@ -82,8 +82,8 @@ is considered to not be served by the partner. The surviving server counts
 such clients and if the number of such clients exceeds the max-unacked-clients
 threshold, the server will transition to the partner-down state. The first
 argument specifies the relationship name. The second argument contains client
-identification information. The second argument specifies the number of
-clients to which the server has failed to respond. The third argument specifies
+identification information. The third argument specifies the number of
+clients to which the server has failed to respond. The forth argument specifies
 the number of additional clients which, if not provisioned, will cause the
 server to transition to the partner-down state.
 
@@ -102,8 +102,8 @@ is considered to not be served by the partner. The surviving server counts
 such clients and if the number of such clients exceeds the max-unacked-clients
 threshold, the server will transition to the partner-down state. The first
 argument specifies the relationship name. The second argument contains client
-identification information. The second argument specifies the number of clients
-to which the server has failed to respond. The third argument specifies the
+identification information. The third argument specifies the number of clients
+to which the server has failed to respond. The forth argument specifies the
 number of additional clients which, if not provisioned, will cause the server
 to transition to the partner-down state.
 
