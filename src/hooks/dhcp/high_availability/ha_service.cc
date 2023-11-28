@@ -2254,6 +2254,7 @@ HAService::asyncSyncLeasesInternal(http::HttpClient& http_client,
                 } catch (const std::exception& ex) {
                     error_message = ex.what();
                     LOG_ERROR(ha_logger, HA_LEASES_SYNC_FAILED)
+                        .arg(config_->getThisServerName())
                         .arg(partner_config->getLogLabel())
                         .arg(error_message);
                 }

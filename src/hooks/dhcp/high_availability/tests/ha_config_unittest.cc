@@ -2040,7 +2040,7 @@ TEST_F(HAConfigTest, hubAndSpokeRepeatingThisServerName) {
         "        ]"
         "    }"
         "]",
-        "server names must be unique for different relationships");
+        "server names must be unique for different relationships: a relationship 'server1' already exists");
 }
 
 
