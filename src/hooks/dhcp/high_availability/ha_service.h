@@ -129,6 +129,24 @@ public:
         return (server_type_);
     }
 
+private:
+
+    /// @brief Returns the network state origin associated with this
+    /// @c HAService instance.
+    ///
+    /// @return The service's origin value.
+    unsigned int getLocalOrigin() const {
+        return (dhcp::NetworkState::HA_LOCAL_COMMAND + id_);
+    }
+
+    /// @brief Returns the network state origin associated with the
+    /// remote @c HAService instance.
+    ///
+    /// @return The remote service's origin value.
+    unsigned int getRemoteOrigin() const {
+        return (dhcp::NetworkState::HA_REMOTE_COMMAND + id_);
+    }
+
     /// @brief Defines events used by the HA service.
     virtual void defineEvents();
 

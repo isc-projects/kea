@@ -57,8 +57,6 @@ public:
     /// @brief Destructor.
     ~HAImpl();
 
-public:
-
     /// @brief Returns a configuration for the first relationship.
     ///
     /// This function is held here for historical reasons and it is currently

@@ -87,7 +87,7 @@ HAService::HAService(const unsigned int id, const IOServicePtr& io_service,
         communication_state_.reset(new CommunicationState6(io_service_, config));
     }
 
-    network_state_->enableService(NetworkState::HA_LOCAL_COMMAND+id_);
+    network_state_->enableService(getLocalOrigin());
 
     startModel(HA_WAITING_ST);
 
@@ -146,7 +146,7 @@ HAService::~HAService() {
     // Stop client and/or listener.
     stopClientAndListener();
 
-    network_state_->enableService(NetworkState::HA_LOCAL_COMMAND+id_);
+    network_state_->enableService(getLocalOrigin());
 }
 
 void
@@ -1081,7 +1081,7 @@ HAService::adjustNetworkState() {
         LOG_INFO(ha_logger, HA_LOCAL_DHCP_DISABLE)
             .arg(config_->getThisServerName())
             .arg(current_state_name);
-        network_state_->disableService(NetworkState::HA_LOCAL_COMMAND+id_);
+        network_state_->disableService(getLocalOrigin());
 
     } else if (should_enable && !network_state_->isServiceEnabled()) {
         std::string current_state_name = getStateLabel(getCurrState());
@@ -1089,7 +1089,7 @@ HAService::adjustNetworkState() {
         LOG_INFO(ha_logger, HA_LOCAL_DHCP_ENABLE)
             .arg(config_->getThisServerName())
             .arg(current_state_name);
-        network_state_->enableService(NetworkState::HA_LOCAL_COMMAND+id_);
+        network_state_->enableService(getLocalOrigin());
     }
 }
 
@@ -1879,7 +1879,7 @@ HAService::asyncDisableDHCPService(HttpClient& http_client,
          HostHttpHeader(remote_config->getUrl().getStrippedHostname()));
 
     remote_config->addBasicAuthHttpHeader(request);
-    request->setBodyAsJson(CommandCreator::createDHCPDisable(NetworkState::HA_REMOTE_COMMAND+id_,
+    request->setBodyAsJson(CommandCreator::createDHCPDisable(getRemoteOrigin(),
                                                              max_period,
                                                              server_type_));
     request->finalize();
@@ -1960,7 +1960,7 @@ HAService::asyncEnableDHCPService(HttpClient& http_client,
         (HttpRequest::Method::HTTP_POST, "/", HttpVersion::HTTP_11(),
          HostHttpHeader(remote_config->getUrl().getStrippedHostname()));
     remote_config->addBasicAuthHttpHeader(request);
-    request->setBodyAsJson(CommandCreator::createDHCPEnable(NetworkState::HA_REMOTE_COMMAND+id_,
+    request->setBodyAsJson(CommandCreator::createDHCPEnable(getRemoteOrigin(),
                                                             server_type_));
     request->finalize();
 
@@ -2031,12 +2031,12 @@ HAService::asyncEnableDHCPService(HttpClient& http_client,
 
 void
 HAService::localDisableDHCPService() {
-    network_state_->disableService(NetworkState::HA_LOCAL_COMMAND+id_);
+    network_state_->disableService(getLocalOrigin());
 }
 
 void
 HAService::localEnableDHCPService() {
-    network_state_->enableService(NetworkState::HA_LOCAL_COMMAND+id_);
+    network_state_->enableService(getLocalOrigin());
 }
 
 void
@@ -2919,7 +2919,7 @@ HAService::asyncSyncCompleteNotify(HttpClient& http_client,
          HostHttpHeader(remote_config->getUrl().getStrippedHostname()));
 
     remote_config->addBasicAuthHttpHeader(request);
-    request->setBodyAsJson(CommandCreator::createSyncCompleteNotify(NetworkState::HA_REMOTE_COMMAND+id_,
+    request->setBodyAsJson(CommandCreator::createSyncCompleteNotify(getRemoteOrigin(),
                                                                     config_->getThisServerName(),
                                                                     server_type_));
     request->finalize();
