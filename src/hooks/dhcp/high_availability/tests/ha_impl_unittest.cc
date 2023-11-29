@@ -42,6 +42,9 @@ struct TestHooks {
     /// @brief Index of leases6_committed callout.
     int hook_index_leases6_committed_;
 
+    /// @brief Index of lease4_server_decline callout.
+    int hook_index_lease4_server_decline_;
+
     /// @brief Constructor
     ///
     /// The constructor registers hook points for callout tests.
@@ -50,6 +53,8 @@ struct TestHooks {
             HooksManager::registerHook("leases4_committed");
         hook_index_leases6_committed_ =
             HooksManager::registerHook("leases6_committed");
+        hook_index_lease4_server_decline_ =
+            HooksManager::registerHook("lease4_server_decline");
     }
 };
 
@@ -979,6 +984,7 @@ TEST_F(HAImplTest, haResetNoServerName) {
 // Test ha-reset command handler with a wrong server name.
 TEST_F(HAImplTest, haResetBadServerName) {
     HAImpl ha_impl;
+
     ASSERT_NO_THROW(ha_impl.configure(createValidJsonConfiguration()));
 
     // Starting the service is required prior to running any callouts.
@@ -1284,5 +1290,65 @@ TEST_F(HAImplTest, haScopesBadServerName) {
     checkAnswer(response, CONTROL_RESULT_ERROR, "server5 matches no configured 'server-name'");
 }
 
+// Tests lease4_server_decline callout implementation.
+TEST_F(HAImplTest, lease4ServerDecline) {
+    // Create implementation object and configure it.
+    TestHAImpl ha_impl;
+    ASSERT_NO_THROW(ha_impl.startService(io_service_, network_state,
+                                         HAServerType::DHCPv4));
+
+    // Make sure we wait for the acks from the backup server to be able to
+    // test the case of sending lease updates even though the service is
+    // in the state in which the lease updates are normally not sent.
+    ha_impl.config_->setWaitBackupAck(true);
+
+    // Create callout handle to be used for passing arguments to the
+    // callout.
+    CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
+    ASSERT_TRUE(callout_handle);
+
+    // Set the hook index so we can park packets.
+    callout_handle->setCurrentHook(test_hooks.hook_index_lease4_server_decline_);
+
+    // query4
+    Pkt4Ptr query4 = createMessage4(DHCPDISCOVER, 1, 0, 0);
+    callout_handle->setArgument("query4", query4);
+
+    // Create a lease and pass it to the callout.
+    HWAddrPtr hwaddr(new HWAddr(std::vector<uint8_t>(6, 1), HTYPE_ETHER));
+    Lease4Ptr lease4(new Lease4(IOAddress("192.1.2.3"), hwaddr,
+                                static_cast<const uint8_t*>(0), 0,
+                                60, 0, 1));
+
+    callout_handle->setArgument("lease4", lease4);
+
+    // Set initial status.
+    callout_handle->setStatus(CalloutHandle::NEXT_STEP_CONTINUE);
+
+    ha_impl.config_->setSendLeaseUpdates(false);
+
+    // Run the callout.
+    ASSERT_NO_THROW(ha_impl.lease4ServerDecline(*callout_handle));
+
+    // Status should be continue.
+    EXPECT_EQ(CalloutHandle::NEXT_STEP_CONTINUE, callout_handle->getStatus());
+
+    size_t peers_to_update;
+    ASSERT_NO_THROW_LOG(callout_handle->getArgument("peers_to_update", peers_to_update));
+    EXPECT_EQ(peers_to_update, 0);
+
+    // Enable updates and retry.
+    ha_impl.config_->setSendLeaseUpdates(true);
+    callout_handle->setArgument("lease4", lease4);
+
+    // Run the callout again.
+    ASSERT_NO_THROW(ha_impl.lease4ServerDecline(*callout_handle));
+
+    // Status should be continue.
+    EXPECT_EQ(CalloutHandle::NEXT_STEP_CONTINUE, callout_handle->getStatus());
+
+    ASSERT_NO_THROW_LOG(callout_handle->getArgument("peers_to_update", peers_to_update));
+    EXPECT_EQ(peers_to_update, 1);
+}
 
 }

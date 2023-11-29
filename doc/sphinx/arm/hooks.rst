@@ -533,7 +533,6 @@ loaded by the correct process per the table below.
    | :ref:`Ping Check <hooks-ping-check>`                      | ISC support  | With this hook library, :iscman:`kea-dhcp4` server can       |
    |                                                           | customers    | perform ping checks of candidate lease addresses before      |
    |                                                           |              | offering them to clients.                                    |
-   |                                                           |              | This library is under development and not yet functional.    |
    +-----------------------------------------------------------+--------------+--------------------------------------------------------------+
    | :ref:`PostgreSQL Configuration Backend <hooks-cb-pgsql>`  | Kea open     | This hook library is an implementation of the Kea            |
    |                                                           | source       | Configuration Backend for PostgreSQL. It uses a PostgreSQL   |

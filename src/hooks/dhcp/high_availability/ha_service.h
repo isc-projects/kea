@@ -567,7 +567,7 @@ public:
     /// @param leases Pointer to a collection of the newly allocated or
     /// updated leases.
     /// @param deleted_leases Pointer to a collection of the released leases.
-    /// @param [out] parking_lot Pointer to the parking lot handle available
+    /// @param parking_lot Pointer to the parking lot handle available
     /// for the "leases4_committed" hook point. This is where the DHCP client
     /// message is parked. This method calls @c unpark() on this object when
     /// the asynchronous updates are completed.
@@ -580,9 +580,38 @@ public:
                                  const dhcp::Lease4CollectionPtr& deleted_leases,
                                  const hooks::ParkingLotHandlePtr& parking_lot);
 
-    size_t asyncSendLeaseUpdate(const dhcp::Pkt4Ptr& query,
-                                const dhcp::Lease4Ptr& lease,
-                                const hooks::ParkingLotHandlePtr& parking_lot);
+    /// @brief Schedules an asynchronous IPv4 lease update.
+    ///
+    /// This method schedules an asynchronous lease update for a single lease.
+    /// It is currently only used for "lease4_server_decline" callout.
+    /// The lease update is transmitted over HTTP to the peers specified in
+    /// the configuration (except self).
+    /// If the server is in the partner-down state the lease update is not
+    /// sent to the partner but is sent to all backup servers.
+    /// In other states in which the server responds to DHCP queries, the
+    /// lease update is sent to all servers. The scheduled lease update
+    /// is performed after the callouts return. The server may or may not
+    /// parks the processed DHCP packet and runs IO service shared between
+    /// the server and the hook library.
+    ////
+    /// If the lease update to the partner (primary, secondary or standby)
+    /// fails, the packet, if parked, is dropped. If the lease update to
+    /// any of the backup server fails, an error message is logged but the DHCP
+    /// packet is not dropped.
+    ///
+    /// @param query Pointer to the processed DHCP client message.
+    /// @param lease Pointer to the updated lease
+    /// @param parking_lot Pointer to the parking lot handle available
+    /// for the hook point if one.  This is where the DHCP client message is
+    /// parked if it is parked. This method calls @c unpark() on this object
+    /// when the asynchronous updates are completed.
+    ///
+    /// @return Number of peers to whom the lease update has been scheduled
+    /// to be sent and from which we expect a response prior to unparking
+    /// the packet and sending a response to the DHCP client.
+    size_t asyncSendSingleLeaseUpdate(const dhcp::Pkt4Ptr& query,
+                                      const dhcp::Lease4Ptr& lease,
+                                      const hooks::ParkingLotHandlePtr& parking_lot);
 
     /// @brief Schedules asynchronous IPv6 lease updates.
     ///

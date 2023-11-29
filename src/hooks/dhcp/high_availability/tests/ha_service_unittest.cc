@@ -2126,6 +2126,156 @@ public:
         io_service_->poll();
     }
 
+    /// @brief Tests scenarios when a single lease update is sent to a partner while
+    /// the partner is online or offline, using asyncSendLeaseUpdate().
+    ///
+    /// @param unpark_handler a function called when packet is unparked.  If empty,
+    /// test assumes packet parking is not in use.
+    /// @param should_fail indicates if the update is expected to be unsuccessful.
+    /// @param num_updates expected number of servers to which lease updates are
+    /// sent.
+    /// @param my_state state of the server while lease updates are sent.
+    /// @param wait_backup_ack indicates if the server should wait for the acknowledgment
+    /// from the backup servers.
+    /// @param create_service a boolean flag indicating whether the test should
+    /// re-create HA service and communication state.
+    void testSendLeaseUpdate(std::function<void()> unpark_handler,
+                             const bool should_fail,
+                             const size_t num_updates,
+                             const MyState& my_state = MyState(HA_LOAD_BALANCING_ST),
+                             const bool wait_backup_ack = false,
+                             const bool create_service = true) {
+        // Create parking lot where query is going to be parked and unparked.
+        ParkingLotPtr parking_lot;
+        ParkingLotHandlePtr parking_lot_handle;
+        if (unpark_handler) {
+            parking_lot.reset(new ParkingLot());
+            parking_lot_handle.reset(new ParkingLotHandle(parking_lot));
+        }
+
+        // Create query.
+        Pkt4Ptr query(new Pkt4(DHCPDISCOVER, 1234));
+
+        // Create the update lease.
+        HWAddrPtr hwaddr(new HWAddr(std::vector<uint8_t>(6, 1), HTYPE_ETHER));
+        Lease4Ptr lease4(new Lease4(IOAddress("192.1.2.3"), hwaddr,
+                                    static_cast<const uint8_t*>(0), 0,
+                                    60, 0, 1));
+        if (create_service) {
+            // Create HA configuration for 3 servers. This server is
+            // server 1.
+            HAConfigPtr config_storage = createValidConfiguration();
+            config_storage->setWaitBackupAck(wait_backup_ack);
+            // Let's override the default value. The lower value makes it easier
+            // for some unit tests to simulate the server's overflow. Simulating it
+            // requires appending leases to the backlog. It is easier to add 10
+            // than 100.
+            config_storage->setDelayedUpdatesLimit(10);
+            setBasicAuth(config_storage);
+
+            // The communication state is the member of the HAServce object. We have to
+            // replace this object with our own implementation to have an ability to
+            // modify its poke time.
+            NakedCommunicationState4Ptr state(new NakedCommunicationState4(io_service_,
+                                                                       config_storage));
+            // Set poke time 30s in the past. If the state is poked it will be reset
+            // to the current time. This allows for testing whether the object has been
+            // poked by the HA service.
+            state->modifyPokeTime(-30);
+
+            // Create HA service.
+            createSTService(network_state_, config_storage);
+            service_->communication_state_ = state;
+        }
+
+        service_->transition(my_state.state_, HAService::NOP_EVT);
+
+        // Schedule lease updates.
+        EXPECT_EQ(num_updates,
+                  service_->asyncSendSingleLeaseUpdate(query, lease4, parking_lot_handle));
+
+        // Verify we have the right number of updates pending.
+        EXPECT_EQ(num_updates, service_->getPendingRequest(query));
+
+        if (parking_lot) {
+            // Let's park the packet and associate it with the callback function which
+            // simply records the fact that it has been called. We expect that it wasn't
+            // because the parked packet should be dropped as a result of lease updates
+            // failures.
+            ASSERT_NO_THROW(parking_lot->park(query, unpark_handler));
+            ASSERT_NO_THROW(parking_lot->reference(query));
+        }
+
+        // Actually perform the lease updates.
+        ASSERT_NO_THROW(runIOService(TEST_TIMEOUT, [this]() {
+            // Finish running IO service when there are no more pending requests.
+            return (service_->pendingRequestSize() == 0);
+        }));
+
+        // Only if we wait for lease updates to complete it makes sense to test
+        // that the packet was either dropped or unparked.
+        if (parking_lot && num_updates > 0) {
+            // Try to drop the packet. We expect that the packet has been already
+            // dropped so this should return false.
+            EXPECT_FALSE(parking_lot_handle->drop(query));
+        }
+
+        // The updates should not be sent to this server.
+        EXPECT_TRUE(factory_->getResponseCreator()->getReceivedRequests().empty());
+
+        if (should_fail) {
+            EXPECT_EQ(HA_UNAVAILABLE_ST, service_->communication_state_->getPartnerState());
+        } else {
+            EXPECT_NE(service_->communication_state_->getPartnerState(), HA_UNAVAILABLE_ST);
+        }
+    }
+
+    /// @brief Tests successful scenarios when a single lease update is done using
+    /// sendLeaseUpdate().
+    ///
+    /// @param with_parking True if packet parking should be used, false is not.
+    void testSuccessSendSingleLeaseUpdate(bool with_parking) {
+        // Start HTTP servers.
+        ASSERT_NO_THROW({
+                listener_->start();
+                listener2_->start();
+                listener3_->start();
+        });
+
+        if (with_parking) {
+            // This flag will be set to true if unpark is called.
+            bool unpark_called = false;
+            testSendLeaseUpdate([&unpark_called] { unpark_called = true; },
+                                false, 1);
+            // Expecting that the packet was unparked because lease
+            // updates are expected to be successful.
+            EXPECT_TRUE(unpark_called);
+        } else {
+            testSendLeaseUpdate(0, false, 1);
+        }
+
+        // Updates have been sent so this counter should remain 0.
+        EXPECT_EQ(0, service_->communication_state_->getUnsentUpdateCount());
+
+        // The server 2 should have received two commands.
+        EXPECT_EQ(1, factory2_->getResponseCreator()->getReceivedRequests().size());
+
+        // Check that the server 2 has received lease4-update command.
+        auto update_request2 =
+            factory2_->getResponseCreator()->findRequest("lease4-update",
+                                                         "192.1.2.3");
+        EXPECT_TRUE(update_request2);
+
+        // Lease update should be successfully sent to server3.
+        EXPECT_EQ(1, factory3_->getResponseCreator()->getReceivedRequests().size());
+
+        // Check that the server 3 has received lease4-update command.
+        auto update_request3 =
+            factory3_->getResponseCreator()->findRequest("lease4-update",
+                                                         "192.1.2.3");
+        EXPECT_TRUE(update_request3);
+    }
+
     /// @brief Pointer to the HA service under test.
     TestHAServicePtr service_;
 
@@ -8039,6 +8189,18 @@ TEST_F(HAServiceStateMachineTest, doNotTerminateWhenPartnerUnavailable) {
     // not terminate.
     ASSERT_NO_FATAL_FAILURE(waitForEvent(HAService::HA_HEARTBEAT_COMPLETE_EVT));
     EXPECT_EQ(HA_COMMUNICATION_RECOVERY_ST, service_->getCurrState());
+}
+
+// Test scenario when a single lease4 update is sent successfully, parking is not
+// employed.
+TEST_F(HAServiceTest, successfulSendSingleLeaseUpdateWithoutParking) {
+    testSuccessSendSingleLeaseUpdate(false);
+}
+
+// Test scenario when a single lease4 update is sent successfully, parkin is
+// employed.
+TEST_F(HAServiceTest, successfulSendSingleLeaseUpdateWithParking) {
+    testSuccessSendSingleLeaseUpdate(true);
 }
 
 } // end of anonymous namespace

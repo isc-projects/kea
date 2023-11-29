@@ -1244,7 +1244,7 @@ HAService::asyncSendLeaseUpdates(const dhcp::Pkt4Ptr& query,
 }
 
 size_t
-HAService::asyncSendLeaseUpdate(const dhcp::Pkt4Ptr& query,
+HAService::asyncSendSingleLeaseUpdate(const dhcp::Pkt4Ptr& query,
                                 const dhcp::Lease4Ptr& lease,
                                 const hooks::ParkingLotHandlePtr& parking_lot) {
 

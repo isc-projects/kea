@@ -171,9 +171,3 @@ The following excerpt demonstrates subnet level configuration:
 .. note::
 
     Ping checking is currently only supported when Kea is configured for multi-threaded operation.
-
-.. note::
-
-    Ping checking is not yet fully integrated with High Availability (HA). When ping checking
-    concludes that an address is not available and a declined lease is created, no corresponding
-    lease update is sent to HA peer(s).

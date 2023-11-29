@@ -427,6 +427,11 @@ libraries), or hook libraries (open source or premium).
    |                                  |                                       | message carried in             |
    |                                  |                                       | the packet is parsed.          |
    +----------------------------------+---------------------------------------+--------------------------------+
+   | ``kea-dhcp4.ping-check-hooks``   | :ischooklib:`libdhcp_ping_check.so`   | Used                           |
+   |                                  | subscription hook library             | to log messages related to     |
+   |                                  |                                       | carrying out pre-offer ping    |
+   |                                  |                                       | checks of candidate leases.    |
+   +----------------------------------+---------------------------------------+--------------------------------+
    | ``kea-dhcp4.pgsql-cb-hooks``,    | :ischooklib:`libdhcp_pgsql_cb.so`     | Used                           |
    | ``kea-dhcp6.pgsql-cb-hooks``     | open-source hook library              | to log messages                |
    |                                  |                                       | related to the                 |

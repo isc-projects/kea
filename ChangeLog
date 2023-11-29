@@ -1,3 +1,9 @@
+2195.	[func]		tmark
+	Added a new hook point to kea-dhcp4, "lease4_server_decline".
+	DHCPv4 leases declined by ping-check hook library are now
+	propagated to HA peers.
+	(Gitlab #3110)
+
 Kea 2.5.4 (development) released on November 29, 2023
 
 2194.	[build]		razvan
