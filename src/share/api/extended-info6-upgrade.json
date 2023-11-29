@@ -7,7 +7,6 @@
     "cmd-syntax": [
         "{",
         "    \"command\": \"extended-info6-upgrade\"",
-        "    }",
         "}"
     ],
     "description": "See <xref linkend=\"command-extended-info6-upgrade\"/>",
