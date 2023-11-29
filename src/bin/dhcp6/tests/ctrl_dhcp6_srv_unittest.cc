@@ -1843,7 +1843,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, dhcpDisable) {
     sendUnixCommand("{"
                     "    \"command\": \"dhcp-disable\","
                     "    \"arguments\": {"
-                    "        \"origin\": 1101"
+                    "        \"origin\": 2001"
                     "    }"
                     "}", response);
 
@@ -1992,7 +1992,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, dhcpEnable) {
     sendUnixCommand("{"
                     "    \"command\": \"dhcp-enable\","
                     "    \"arguments\": {"
-                    "        \"origin\": 1102"
+                    "        \"origin\": 2002"
                     "    }"
                     "}", response);
 
