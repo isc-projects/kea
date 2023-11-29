@@ -136,10 +136,12 @@ Now it's time to publish the code.
     - If release engineer does NOT have signing key, please contact team member.
  1. [ ] Confirm that the tarballs have the checksums mentioned on the signing ticket.
  1. [ ] Wait for clearance from Security Officer to proceed with the public release (if applicable). If this is a security release, next steps will be impacted by CVE checklist.
- 1. [ ] Login to repo.isc.org and upload final tarball to public ftp using make-available script (only OPS can remove incorrectly uploaded tarballs).
+ 1. [ ] Login to repo.isc.org and upload final tarball to public ftp using the make-available script.
+    * Example command: `make-available --public --symlink=cur/2.3 /data/shared/sweng/kea/releases/2.3.4`.
     * [ ] For premium tarballs use `--private` option.
-      * For newest stable release use `--symlink=cur` option.
-      * Example command: `make-available --public --symlink=cur /data/shared/sweng/kea/releases/2.3.4`.
+    * For more information use `--debug` option.
+    * To overwrite existing content, use `--force` option.
+    * If you did a mistake, contact ASAP someone from the ops team to remove incorrectly uploaded tarballs.
     * [ ] save links to all premium tarballs and put them into signing ticket as a comment.
  1. [ ] Upload final RPM & DEB packages, tarballs and sign files to cloudsmith.io:
     1. Go to [release-upload-to-cloudsmith](https://jenkins.aws.isc.org/job/kea-dev/job/release-upload-to-cloudsmith/).
