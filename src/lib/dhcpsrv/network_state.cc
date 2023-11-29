@@ -176,52 +176,32 @@ NetworkState::NetworkState(const NetworkState::ServerType& server_type)
 
 void
 NetworkState::disableService(unsigned int origin) {
-    if (MultiThreadingMgr::instance().getMode()) {
-        std::lock_guard<std::mutex> lk(*mutex_);
-        impl_->setDisableService(true, origin);
-    } else {
-        impl_->setDisableService(true, origin);
-    }
+    MultiThreadingLock lock(*mutex_);
+    impl_->setDisableService(true, origin);
 }
 
 void
 NetworkState::enableService(unsigned int origin) {
-    if (MultiThreadingMgr::instance().getMode()) {
-        std::lock_guard<std::mutex> lk(*mutex_);
-        impl_->delayedEnable(origin);
-    } else {
-        impl_->delayedEnable(origin);
-    }
+    MultiThreadingLock lock(*mutex_);
+    impl_->delayedEnable(origin);
 }
 
 void
 NetworkState::resetForDbConnection() {
-    if (MultiThreadingMgr::instance().getMode()) {
-        std::lock_guard<std::mutex> lk(*mutex_);
-        impl_->resetForDbConnection();
-    } else {
-        impl_->resetForDbConnection();
-    }
+    MultiThreadingLock lock(*mutex_);
+    impl_->resetForDbConnection();
 }
 
 void
 NetworkState::delayedEnableService(const unsigned int seconds, unsigned int origin) {
-    if (MultiThreadingMgr::instance().getMode()) {
-        std::lock_guard<std::mutex> lk(*mutex_);
-        impl_->createTimer(seconds, origin);
-    } else {
-        impl_->createTimer(seconds, origin);
-    }
+    MultiThreadingLock lock(*mutex_);
+    impl_->createTimer(seconds, origin);
 }
 
 bool
 NetworkState::isServiceEnabled() const {
-    if (MultiThreadingMgr::instance().getMode()) {
-        std::lock_guard<std::mutex> lk(*mutex_);
-        return (!impl_->globally_disabled_);
-    } else {
-        return (!impl_->globally_disabled_);
-    }
+    MultiThreadingLock lock(*mutex_);
+    return (!impl_->globally_disabled_);
 }
 
 bool
