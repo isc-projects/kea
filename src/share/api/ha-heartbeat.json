@@ -6,7 +6,7 @@
     ],
     "cmd-syntax": [
         "{",
-        "    \"command\": \"ha-heartbeat\"",
+        "    \"command\": \"ha-heartbeat\",",
         "    \"arguments\": {",
         "        \"server-name\": \"server1\"",
         "    }",

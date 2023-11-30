@@ -6,7 +6,7 @@
     ],
     "cmd-syntax": [
         "{",
-        "    \"command\": \"ha-reset\"",
+        "    \"command\": \"ha-reset\",",
         "    \"arguments\": {",
         "        \"server-name\": \"server1\"",
         "    }",
