@@ -32,7 +32,6 @@ Some of these checks and updates can be made before the actual freeze. For new s
    1. Click `Build with Parameters`.
    1. Pick the latest pkg build in the `Packages` field, and the corresponding tarball build in the `Tarball` field, leave the rest as they are `PrivPubRepos: "private"`, `TarballOrPkg: "packages"`, `TestProdRepos: "testing"` and click `Build`.
    1. If a new Cloudsmith repository is used, then:
-      1. [ ] Make sure freeradius packages are uploaded to the Cloudsmith repository or copied from a previous repository.
       1. [ ] Make sure access tokens have been synchronized from previous Cloudsmith repositories and to the [check-pkgs.py](https://gitlab.isc.org/isc-private/qa-dhcp/-/blob/master/kea/pkgs-check/check-pkgs.py) QA tool.
 1. [ ] Check if ReadTheDocs can build Kea documentation. Alternatively, look for failures in emails if you know that the ReadTheDocs webhook is working.
    1. Trigger rebuilding docs on [readthedocs.org](https://readthedocs.org/projects/kea/builds) and wait for the build to complete.
