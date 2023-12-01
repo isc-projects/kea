@@ -1294,13 +1294,17 @@ TEST_F(HAImplTest, haScopesBadServerName) {
 TEST_F(HAImplTest, lease4ServerDecline) {
     // Create implementation object and configure it.
     TestHAImpl ha_impl;
-    ASSERT_NO_THROW(ha_impl.startService(io_service_, network_state,
-                                         HAServerType::DHCPv4));
+    ASSERT_NO_THROW(ha_impl.configure(createValidJsonConfiguration()));
+
+    // Starting the service is required prior to running any callouts.
+    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv4));
+    ASSERT_NO_THROW(ha_impl.startServices(io_service_, network_state,
+                                          HAServerType::DHCPv4));
 
     // Make sure we wait for the acks from the backup server to be able to
     // test the case of sending lease updates even though the service is
     // in the state in which the lease updates are normally not sent.
-    ha_impl.config_->setWaitBackupAck(true);
+    ha_impl.config_->get()->setWaitBackupAck(true);
 
     // Create callout handle to be used for passing arguments to the
     // callout.
@@ -1325,7 +1329,7 @@ TEST_F(HAImplTest, lease4ServerDecline) {
     // Set initial status.
     callout_handle->setStatus(CalloutHandle::NEXT_STEP_CONTINUE);
 
-    ha_impl.config_->setSendLeaseUpdates(false);
+    ha_impl.config_->get()->setSendLeaseUpdates(false);
 
     // Run the callout.
     ASSERT_NO_THROW(ha_impl.lease4ServerDecline(*callout_handle));
@@ -1338,7 +1342,7 @@ TEST_F(HAImplTest, lease4ServerDecline) {
     EXPECT_EQ(peers_to_update, 0);
 
     // Enable updates and retry.
-    ha_impl.config_->setSendLeaseUpdates(true);
+    ha_impl.config_->get()->setSendLeaseUpdates(true);
     callout_handle->setArgument("lease4", lease4);
 
     // Run the callout again.

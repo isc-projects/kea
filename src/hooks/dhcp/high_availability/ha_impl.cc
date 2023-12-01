@@ -194,7 +194,7 @@ HAImpl::lease4ServerDecline(CalloutHandle& callout_handle) {
     // If the hook library is configured to not send lease updates to the
     // partner, there is nothing to do because this whole callout is
     // currently about sending lease updates.
-    if (!config_->amSendingLeaseUpdates()) {
+    if (!config_->get()->amSendingLeaseUpdates()) {
         // No need to log it, because it was already logged when configuration
         // was applied.
         callout_handle.setArgument("peers_to_update", peers_to_update);
@@ -214,7 +214,7 @@ HAImpl::lease4ServerDecline(CalloutHandle& callout_handle) {
     // Asynchronously send the lease update. In some cases no updates will be sent,
     // e.g. when this server is in the partner-down state and there are no backup
     // servers.
-    peers_to_update = service_->asyncSendSingleLeaseUpdate(query4, lease4, 0);
+    peers_to_update = services_->get()->asyncSendSingleLeaseUpdate(query4, lease4, 0);
     callout_handle.setArgument("peers_to_update", peers_to_update);
 }
 
