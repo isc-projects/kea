@@ -2231,7 +2231,7 @@ public:
     }
 
     /// @brief Tests successful scenarios when a single lease update is done using
-    /// sendLeaseUpdate().
+    /// asyncSendLeaseUpdate().
     ///
     /// @param with_parking True if packet parking should be used, false is not.
     void testSuccessSendSingleLeaseUpdate(bool with_parking) {
@@ -8197,7 +8197,7 @@ TEST_F(HAServiceTest, successfulSendSingleLeaseUpdateWithoutParking) {
     testSuccessSendSingleLeaseUpdate(false);
 }
 
-// Test scenario when a single lease4 update is sent successfully, parkin is
+// Test scenario when a single lease4 update is sent successfully, parking is
 // employed.
 TEST_F(HAServiceTest, successfulSendSingleLeaseUpdateWithParking) {
     testSuccessSendSingleLeaseUpdate(true);

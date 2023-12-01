@@ -1253,43 +1253,11 @@ HAService::asyncSendSingleLeaseUpdate(const dhcp::Pkt4Ptr& query,
 
     size_t sent_num = 0;
 
-    // Schedule sending lease updates to each peer.
-    for (auto p = peers_configs.begin(); p != peers_configs.end(); ++p) {
-        HAConfig::PeerConfigPtr conf = p->second;
+    Lease4CollectionPtr leases(new Lease4Collection());
+    leases->push_back(lease);
+    Lease4CollectionPtr deleted_leases(new Lease4Collection());
 
-        // Check if the lease updates should be queued. This is the case when the
-        // server is in the communication-recovery state. Queued lease updates may
-        // be sent when the communication is re-established.
-        if (shouldQueueLeaseUpdates(conf)) {
-            lease_update_backlog_.push(LeaseUpdateBacklog::ADD, lease);
-            continue;
-        }
-
-        // Check if the lease update should be sent to the server. If we're in
-        // the partner-down state we don't send lease updates to the partner.
-        if (!shouldSendLeaseUpdates(conf)) {
-            // If we decide to not send the lease updates to an active partner, we
-            // should make a record of it in the communication state. The partner
-            // can check if there were any unsent lease updates when he determines
-            // whether it should synchronize its database or not when it recovers
-            // from the partner-down state.
-            if (conf->getRole() != HAConfig::PeerConfig::BACKUP) {
-                communication_state_->increaseUnsentUpdateCount();
-            }
-            continue;
-        }
-
-        asyncSendLeaseUpdate(query, conf, CommandCreator::createLease4Update(*lease), parking_lot);
-
-        // If we're contacting a backup server from which we don't expect a
-        // response prior to responding to the DHCP client we don't count
-        // it.
-        if ((config_->amWaitingBackupAck() || (conf->getRole() != HAConfig::PeerConfig::BACKUP))) {
-            ++sent_num;
-        }
-    }
-
-    return (sent_num);
+    return (asyncSendLeaseUpdates(query, leases, deleted_leases, parking_lot));
 }
 
 size_t

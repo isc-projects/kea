@@ -841,6 +841,15 @@ public:
         return (0);
     }
 
+    /// @brief Test callback that marks address in use and asks the server to
+    /// park the packet.
+    ///
+    /// The server's unpark lambda uses the callout argument, "offer_adddress_in_use",
+    /// to deteremine if it should decline the lease or send the offer to the
+    /// client.  This function sets it to true.
+    ///
+    /// @param callout_handle handle passed by the hooks framework
+    /// @return always 0
     static int
     lease4_offer_park_in_use_callout(CalloutHandle& callout_handle) {
         callback_name_ = string("lease4_offer");
@@ -872,7 +881,6 @@ public:
 
         return (0);
     }
-
 
     /// @brief Test callback that stores callout name and passed parameters.
     ///
@@ -3988,7 +3996,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4OfferDiscoverDecline) {
     EXPECT_EQ(expected_address, callback_lease4_->addr_);
 
     // Since the callout set offer_address_in_use flag to true the offer should
-    // have been discarded. Make sure that we did not receive a repsonse.
+    // have been discarded. Make sure that we did not receive a response.
     ASSERT_FALSE(client.getContext().response_);
 
     // Clear static buffers

@@ -633,7 +633,7 @@ state. The partner must be restarted before the server can synchronize the
 database and start normal operation.
 
 % HA_LEASE4_SERVER_DECLINE_FAILED lease4_server_decline callout failed: %1
-This error message is issued when the callout for the lease4_server_declinehook
+This error message is issued when the callout for the lease4_server_decline hook
 point failed. This includes unexpected errors like wrong arguments provided to
 the callout by the DHCP server (unlikely internal server error).
 The argument contains a reason for the error.

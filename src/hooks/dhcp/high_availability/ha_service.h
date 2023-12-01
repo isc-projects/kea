@@ -582,22 +582,9 @@ public:
 
     /// @brief Schedules an asynchronous IPv4 lease update.
     ///
-    /// This method schedules an asynchronous lease update for a single lease.
-    /// It is currently only used for "lease4_server_decline" callout.
-    /// The lease update is transmitted over HTTP to the peers specified in
-    /// the configuration (except self).
-    /// If the server is in the partner-down state the lease update is not
-    /// sent to the partner but is sent to all backup servers.
-    /// In other states in which the server responds to DHCP queries, the
-    /// lease update is sent to all servers. The scheduled lease update
-    /// is performed after the callouts return. The server may or may not
-    /// parks the processed DHCP packet and runs IO service shared between
-    /// the server and the hook library.
-    ////
-    /// If the lease update to the partner (primary, secondary or standby)
-    /// fails, the packet, if parked, is dropped. If the lease update to
-    /// any of the backup server fails, an error message is logged but the DHCP
-    /// packet is not dropped.
+    /// This method is a convenience wrapper around asyncSendLeaseUpdates() for
+    /// propagating updates for a single lease. It is currently only used by
+    /// the "lease4_server_decline" callout.
     ///
     /// @param query Pointer to the processed DHCP client message.
     /// @param lease Pointer to the updated lease
