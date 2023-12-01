@@ -1562,37 +1562,6 @@ def _apt_update(system, revision, env=None, check_times=False, attempts=1, sleep
                    sleep_time_after_attempt=sleep_time_after_attempt, capture=capture)
 
 
-def _install_freeradius_client(system, revision, features, env, check_times):
-    """Install FreeRADIUS-client with necessary patches from Francis Dupont."""
-    # check if it is already installed
-    if (os.path.exists('/usr/local/lib/libfreeradius-client.so') and
-        os.path.exists('/usr/local/include/freeradius-client.h')):
-        log.info('freeradius-client is already installed.')
-        return
-
-    # Install freeradius-client dependencies.
-    if system in ['centos', 'rhel', 'fedora']:
-        install_pkgs('nettle-devel', env=env, check_times=check_times)
-    elif system in ['alpine', 'debian', 'ubuntu']:
-        install_pkgs('nettle-dev', env=env, check_times=check_times)
-    elif system in ['arch', 'freebsd']:
-        install_pkgs('nettle', env=env, check_times=check_times)
-    else:
-        raise NotImplementedError('no implementation for %s' % system)
-
-    # checkout sources, build them and install
-    execute('rm -rf freeradius-client')
-    execute('git clone https://github.com/fxdupont/freeradius-client.git', env=env, check_times=check_times)
-    execute('git checkout iscdev', cwd='freeradius-client', env=env, check_times=check_times)
-    execute('./configure --with-nettle', cwd='freeradius-client', env=env, check_times=check_times)
-    execute('make', cwd='freeradius-client', env=env, check_times=check_times)
-    execute('sudo make install', cwd='freeradius-client', env=env, check_times=check_times)
-    execute('rm -rf freeradius-client')
-    if system != 'alpine':
-        execute('sudo ldconfig', env=env)
-    log.info('freeradius-client successfully installed.')
-
-
 def _get_package_version(package: str):
     """
     Returns the version available in the package manager's repository for the requested package.
@@ -1669,9 +1638,6 @@ def prepare_system_local(features, check_times, ignore_errors_for):
                 packages.extend(['postgresql-devel'])
             packages.extend(['postgresql-server'])
 
-        if 'radius' in features:
-            packages.extend(['freeradius', 'git'])
-
         if 'gssapi' in features:
             packages.extend(['krb5-devel'])
 
@@ -1727,9 +1693,6 @@ def prepare_system_local(features, check_times, ignore_errors_for):
             else:
                 packages.append('postgresql-devel')
 
-        if 'radius' in features:
-            packages.extend(['freeradius', 'git'])
-
         if 'gssapi' in features:
             packages.extend(['krb5-devel'])
 
@@ -1782,9 +1745,6 @@ def prepare_system_local(features, check_times, ignore_errors_for):
             else:
                 packages.append('postgresql-private-devel')
 
-        if 'radius' in features:
-            packages.extend(['freeradius', 'git'])
-
         if 'gssapi' in features:
             packages.extend(['krb5-devel'])
 
@@ -1834,9 +1794,6 @@ def prepare_system_local(features, check_times, ignore_errors_for):
                 packages.extend(['postgresql-client', 'libpq-dev', 'postgresql', 'postgresql-server-dev-all'])
             else:
                 packages.extend(['postgresql-client', 'libpq-dev', 'postgresql-all'])
-
-        if 'radius' in features:
-            packages.extend(['freeradius', 'git'])
 
         if 'gssapi' in features:
             packages.extend(['libkrb5-dev'])
@@ -1895,9 +1852,6 @@ def prepare_system_local(features, check_times, ignore_errors_for):
             else:
                 packages.append('postgresql-all')
 
-        if 'radius' in features:
-            packages.extend(['freeradius', 'git'])
-
         if 'gssapi' in features:
             packages.extend(['libkrb5-dev'])
 
@@ -1935,9 +1889,6 @@ def prepare_system_local(features, check_times, ignore_errors_for):
                 packages.extend(['postgresql11-server', 'postgresql11-client'])
             else:
                 packages.extend(['postgresql13-server', 'postgresql13-client'])
-
-        if 'radius' in features:
-            packages.extend(['freeradius3', 'git'])
 
         if 'gssapi' in features:
             packages.extend(['krb5', 'krb5-devel'])
@@ -2032,9 +1983,6 @@ def prepare_system_local(features, check_times, ignore_errors_for):
     if 'pgsql' in features:
         _configure_pgsql(system, features, revision)
 
-    if 'radius' in features:
-        _install_freeradius_client(system, revision, features, env, check_times)
-
     #execute('sudo rm -rf /usr/share/doc')
 
     log.info('Preparing deps completed successfully.')
@@ -2116,8 +2064,6 @@ def _build_binaries_and_run_ut(system, revision, features, tarball_path, env, ch
             raise NotImplementedError('no implementation for %s' % system)
     if 'docs' in features and not system == 'rhel':
         cmd += ' --enable-generate-docs'
-    if 'radius' in features:
-        cmd += ' --with-freeradius=/usr/local'
     if 'gssapi' in features:
         cmd += ' --with-gssapi'
     if 'shell' in features:
@@ -2241,53 +2187,6 @@ def _check_installed_rpm_or_debs(services_list):
 
 def _build_rpm(system, revision, features, tarball_path, env, check_times, dry_run,
                pkg_version, pkg_isc_version, repo_url):
-    # install our freeradius-client but now from rpm
-    cmd = 'bash -c "cat <<EOF | sudo tee /etc/yum.repos.d/isc.repo\n'
-    cmd += '[nexus]\n'
-    cmd += 'name=ISC Repo\n'
-    cmd += 'baseurl=%s\n' % repo_url
-    cmd += 'enabled=1\n'
-    cmd += 'gpgcheck=0\n'
-    cmd += "EOF\n\""
-    execute(cmd)
-    if system == 'fedora' and revision == '28':
-        frc_version = 'isc20190916210635.fc28'
-    elif system == 'fedora' and revision == '29':
-        frc_version = 'isc20190916210635.fc29'
-    elif system == 'fedora' and revision == '30':
-        frc_version = 'isc20200318150024.fc30'
-    elif system == 'fedora' and revision == '31':
-        frc_version = 'isc20200318122047.fc31'
-    elif system == 'fedora' and revision == '32':
-        frc_version = 'isc20200511114306.fc32'
-    elif system == 'fedora' and revision == '33':
-        frc_version = 'isc20210415094816.fc33'
-    elif system == 'fedora' and revision == '34':
-        frc_version = 'isc20210528132302.fc34'
-    elif system == 'fedora' and revision == '35':
-        frc_version = 'isc20220516091026.fc35'
-    elif system == 'fedora' and revision == '36':
-        frc_version = 'isc20220516091651.fc36'
-    elif system == 'fedora' and revision == '37':
-        frc_version = 'isc20230620152003.fc37'
-    elif system == 'fedora' and revision == '38':
-        frc_version = 'isc20230621000612.fc38'
-    elif system == 'centos' and revision == '7':
-        frc_version = 'isc20200318122047.el7'
-    elif system in ['centos', 'rhel'] and revision == '8':
-        frc_version = 'isc20200318134606.el8'
-    elif system == 'rhel' and revision == '9':
-        frc_version = 'isc20220613134625.el9'
-    else:
-        raise NotImplementedError('missing freeradius-client version for %s-%s' % (system, revision))
-
-    install_pkgs([
-        f'freeradius-client-1.1.7-{frc_version}',
-        f'freeradius-client-devel-1.1.7-{frc_version}',
-    ], env=env, check_times=check_times)
-
-    _append_to_file('freeradius-pkgs.txt', f'freeradius-client-1.1.7-{frc_version}.x86_64.rpm')
-    _append_to_file('freeradius-pkgs.txt', f'freeradius-client-devel-1.1.7-{frc_version}.x86_64.rpm')
 
     # unpack kea sources tarball
     execute('sudo rm -rf kea-src', dry_run=dry_run)
@@ -2315,8 +2214,6 @@ def _build_rpm(system, revision, features, tarball_path, env, check_times, dry_r
         execute('cp %s %s/SOURCES' % (os.path.join(rpm_dir, f), rpm_root_path), check_times=check_times, dry_run=dry_run)
     execute('cp %s %s/SPECS' % (os.path.join(rpm_dir, 'kea.spec'), rpm_root_path), check_times=check_times, dry_run=dry_run)
     execute('cp %s %s/SOURCES' % (tarball_path, rpm_root_path), check_times=check_times, dry_run=dry_run)
-
-    execute('sed -i -e s/{FREERADIUS_CLIENT_VERSION}/%s/g %s/SPECS/kea.spec' % (frc_version, rpm_root_path), check_times=check_times, dry_run=dry_run)
 
     services_list = ['kea-dhcp4.service', 'kea-dhcp6.service', 'kea-dhcp-ddns.service', 'kea-ctrl-agent.service']
 
@@ -2363,15 +2260,8 @@ def _build_deb(system, revision, features, tarball_path, env, check_times, dry_r
         repo_name = 'kea-%s-%s-%s' % (pkg_version.rsplit('.', 1)[0], system, revision)
         log.error(f'{repo_url}/dists/kea/Release does not exist. '
              f'This is usually caused by no package existing in {repo_name}. '
-             'You can solve this by uploading the freeradius-client packages '
-             'which are also needed further to build packages. '
+             'You can solve this by uploading any package.'
              'Continuing, but the build will likely fail.')
-
-    # install our freeradius-client but now from deb
-    execute("echo 'deb %s kea main' | sudo tee /etc/apt/sources.list.d/isc.list" % repo_url)
-    key_url = "%s/repository/repo-keys/repo-key.gpg" % repository_url
-    execute('wget -qO- %s | sudo apt-key add -' % key_url,
-            env=env, check_times=check_times)
 
     # try apt update for up to 10 times if there is an error
     for _ in range(10):
@@ -2379,29 +2269,7 @@ def _build_deb(system, revision, features, tarball_path, env, check_times, dry_r
         if 'Bad header data' not in out:
             break
         time.sleep(4)
-    if system == 'debian' or (system == 'ubuntu' and revision == '18.04'):
-        frc_version = 'isc20200318122047'
-    elif system == 'ubuntu' and revision == '19.04':
-        frc_version = 'isc20200319090824'
-    elif system == 'ubuntu' and revision == '20.04':
-        frc_version = 'isc20200511114306'
-    elif system == 'ubuntu' and revision == '20.10':
-        frc_version = 'isc20210419151920'
-    elif system == 'ubuntu' and revision == '21.04':
-        frc_version = 'isc20210528123038'
-    elif system == 'ubuntu' and revision == '22.04':
-        frc_version = 'isc20220608134906'
-    else:
-        raise NotImplementedError('missing freeradius-client version for %s-%s' % (system, revision))
-
-    install_pkgs([
-        f'libfreeradius-client=1.1.7-{frc_version}',
-        f'libfreeradius-client-dev=1.1.7-{frc_version}',
-    ], env=env, check_times=check_times)
-
-    _append_to_file('freeradius-pkgs.txt', f'libfreeradius-client_1.1.7-{frc_version}_amd64.deb')
-    _append_to_file('freeradius-pkgs.txt', f'libfreeradius-client-dev_1.1.7-{frc_version}_amd64.deb')
-
+ 
     # unpack tarball
     execute('sudo rm -rf kea-src', check_times=check_times, dry_run=dry_run)
     os.mkdir('kea-src')
@@ -2412,7 +2280,6 @@ def _build_deb(system, revision, features, tarball_path, env, check_times, dry_r
     execute('sed -i -e s/{VERSION}/%s/ changelog' % pkg_version, cwd='kea-src/kea-%s/debian' % pkg_version, check_times=check_times, dry_run=dry_run)
     execute('sed -i -e s/{ISC_VERSION}/%s/ changelog' % pkg_isc_version, cwd='kea-src/kea-%s/debian' % pkg_version, check_times=check_times, dry_run=dry_run)
     execute('sed -i -e s/{ISC_VERSION}/%s/ rules' % pkg_isc_version, cwd='kea-src/kea-%s/debian' % pkg_version, check_times=check_times, dry_run=dry_run)
-    execute('sed -i -e s/{FREERADIUS_CLIENT_VERSION}/%s/g control' % frc_version, cwd='kea-src/kea-%s/debian' % pkg_version, check_times=check_times, dry_run=dry_run)
 
     services_list = ['isc-kea-dhcp4.isc-kea-dhcp4-server.service', 'isc-kea-dhcp6.isc-kea-dhcp6-server.service', 'isc-kea-dhcp-ddns.isc-kea-dhcp-ddns-server.service', 'isc-kea-ctrl-agent.service']
 
@@ -2715,7 +2582,7 @@ class CollectCommaSeparatedArgsAction(argparse.Action):
 DEFAULT_FEATURES = ['docs', 'install', 'perfdhcp', 'unittest']
 ALL_FEATURES = ['all', 'ccache', 'distcheck', 'docs', 'forge', 'gssapi',
                 'install', 'mysql', 'native-pkg', 'netconf', 'perfdhcp',
-                'pgsql', 'radius', 'shell', 'tls', 'unittest']
+                'pgsql', 'shell', 'tls', 'unittest']
 
 
 def parse_args():
@@ -2934,7 +2801,6 @@ def _get_features(args):
         features.add('shell')
         features.add('mysql')
         features.add('pgsql')
-        features.add('radius')
         features.add('gssapi')
         # in case of build command of native packages, unittest should not
         # be run as they are not built
@@ -3204,7 +3070,7 @@ def main():
     elif args.command == "package-box":
         _check_deps_presence()
         _check_system_revision(args.system, args.revision)
-        features = set(['docs', 'perfdhcp', 'shell', 'mysql', 'pgsql', 'radius', 'gssapi', 'native-pkg'])
+        features = set(['docs', 'perfdhcp', 'shell', 'mysql', 'pgsql', 'gssapi', 'native-pkg'])
 
         log.info('Enabled features: %s', ' '.join(features))
         package_box(args.provider, args.system, args.revision, features, args.dry_run, args.check_times, args.reuse, args.skip_upload)
