@@ -1245,14 +1245,8 @@ HAService::asyncSendLeaseUpdates(const dhcp::Pkt4Ptr& query,
 
 size_t
 HAService::asyncSendSingleLeaseUpdate(const dhcp::Pkt4Ptr& query,
-                                const dhcp::Lease4Ptr& lease,
-                                const hooks::ParkingLotHandlePtr& parking_lot) {
-
-    // Get configurations of the peers. Exclude this instance.
-    HAConfig::PeerConfigMap peers_configs = config_->getOtherServersConfig();
-
-    size_t sent_num = 0;
-
+                                      const dhcp::Lease4Ptr& lease,
+                                      const hooks::ParkingLotHandlePtr& parking_lot) {
     Lease4CollectionPtr leases(new Lease4Collection());
     leases->push_back(lease);
     Lease4CollectionPtr deleted_leases(new Lease4Collection());
