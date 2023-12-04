@@ -1,4 +1,4 @@
-// Copyright (C) 2019-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2019-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -375,7 +375,7 @@ public:
             }
         }
         for (auto pair : getSubOptionConfigMap()) {
-            for (auto sub_pair : pair.second) {
+            for (const auto& sub_pair : pair.second) {
                 const SubOptionConfigPtr& sub_cfg = sub_pair.second;
                 uint16_t sub_code = sub_cfg->getCode();
                 uint16_t opt_code = sub_cfg->getContainerCode();

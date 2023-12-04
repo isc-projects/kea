@@ -442,7 +442,7 @@ const PoolPtr Subnet::getPool(Lease::Type type, const isc::asiolink::IOAddress& 
 
 void
 Subnet::initAllocatorsAfterConfigure() {
-    for (auto allocator : allocators_) {
+    for (const auto& allocator : allocators_) {
         allocator.second->initAfterConfigure();
     }
 }

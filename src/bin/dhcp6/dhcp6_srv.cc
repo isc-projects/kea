@@ -1426,7 +1426,7 @@ Dhcpv6Srv::buildCfgOptionList(const Pkt6Ptr& question,
     // Secondly, pool specific options. Pools are defined within a subnet, so
     // if there is no subnet, there is nothing to do.
     if (ctx.subnet_) {
-        for (auto resource : ctx.allocated_resources_) {
+        for (const auto& resource : ctx.allocated_resources_) {
             PoolPtr pool =
                 ctx.subnet_->getPool(resource.getPrefixLength() == 128 ?
                                      Lease::TYPE_NA : Lease::TYPE_PD,
@@ -4211,7 +4211,7 @@ Dhcpv6Srv::processDhcp4Query(const Pkt6Ptr& dhcp4_query) {
 
 void Dhcpv6Srv::classifyByVendor(const Pkt6Ptr& pkt) {
     OptionVendorClassPtr vclass;
-    for (auto opt : pkt->getOptions(D6O_VENDOR_CLASS)) {
+    for (const auto& opt : pkt->getOptions(D6O_VENDOR_CLASS)) {
         vclass = boost::dynamic_pointer_cast<OptionVendorClass>(opt.second);
         if (!vclass || vclass->getTuplesNum() == 0) {
             continue;
@@ -4333,7 +4333,7 @@ Dhcpv6Srv::requiredClassify(const Pkt6Ptr& pkt, AllocEngine::ClientContext6& ctx
         }
 
         // And finish by pools
-        for (auto resource : ctx.allocated_resources_) {
+        for (const auto& resource : ctx.allocated_resources_) {
             PoolPtr pool =
                 ctx.subnet_->getPool(resource.getPrefixLength() == 128 ?
                                      Lease::TYPE_NA : Lease::TYPE_PD,

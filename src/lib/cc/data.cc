@@ -1178,7 +1178,7 @@ removeIdentical(ConstElementPtr a, ConstElementPtr b) {
         isc_throw(TypeError, "Non-map Elements passed to removeIdentical");
     }
 
-    for (auto kv : a->mapValue()) {
+    for (const auto& kv : a->mapValue()) {
         auto key = kv.first;
         if (!b->contains(key) ||
             !a->get(key)->equals(*b->get(key))) {
@@ -1196,7 +1196,7 @@ merge(ElementPtr element, ConstElementPtr other) {
         isc_throw(TypeError, "merge arguments not MapElements");
     }
 
-    for (auto kv : other->mapValue()) {
+    for (const auto& kv : other->mapValue()) {
         auto key = kv.first;
         auto value = kv.second;
         if (value && value->getType() != Element::null) {
@@ -1517,7 +1517,7 @@ isEquivalent0(ConstElementPtr a, ConstElementPtr b, unsigned level) {
             return (false);
         }
         // iterate on the first map
-        for (auto kv : a->mapValue()) {
+        for (const auto& kv : a->mapValue()) {
             // get the b value for the given keyword and recurse
             ConstElementPtr item = b->get(kv.first);
             if (!item || !isEquivalent0(kv.second, item, level - 1)) {

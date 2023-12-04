@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -80,7 +80,7 @@ StatContext::getAll() const {
 void
 StatContext::setMaxSampleCountAll(uint32_t max_samples) {
     // Let's iterate over all stored statistics...
-    for (auto s : stats_) {
+    for (const auto& s : stats_) {
         // ... and set count limit for each statistic.
         s.second->setMaxSampleCount(max_samples);
     }
