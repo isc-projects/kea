@@ -1031,6 +1031,11 @@ HAService::serveDefaultScopes() {
     query_filter_.serveDefaultScopes();
 }
 
+void
+HAService::serveFailoverScopes() {
+    query_filter_.serveFailoverScopes();
+}
+
 bool
 HAService::inScope(dhcp::Pkt4Ptr& query4) {
     return (inScopeInternal(query4));

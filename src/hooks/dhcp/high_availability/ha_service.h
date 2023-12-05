@@ -424,6 +424,12 @@ public:
     /// enabled to test @c inScope methods invoked via @c HAImpl class.
     void serveDefaultScopes();
 
+    /// @brief Instructs the HA service to serve failover scopes.
+    ///
+    /// This method is mostly useful for unit testing. The scopes need to be
+    /// enabled to test @c inScope methods invoked via @c HAImpl class.
+    void serveFailoverScopes();
+
     /// @brief Checks if the DHCPv4 query should be processed by this server.
     ///
     /// It also associates the DHCPv4 query with required classes appropriate

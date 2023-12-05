@@ -74,4 +74,19 @@ TEST(HARelationshipMapper, existingMappingError) {
     EXPECT_THROW(mapper.map("server1", rel2), InvalidOperation);
 }
 
+/// Tests checking if the mapper holds multiple instances.
+TEST(HARelationshipMapper, hasMultiple) {
+    HARelationshipMapper<HAConfig> mapper;
+    EXPECT_FALSE(mapper.hasMultiple());
+
+    auto rel1 = HAConfig::create();
+    EXPECT_NO_THROW(mapper.map("server1", rel1));
+    EXPECT_FALSE(mapper.hasMultiple());
+
+    auto rel2 = HAConfig::create();
+    EXPECT_NO_THROW(mapper.map("server2", rel2));
+    EXPECT_TRUE(mapper.hasMultiple());
+}
+
+
 } // end of anonymous namespace

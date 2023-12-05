@@ -222,6 +222,63 @@ HATest::createValidPassiveBackupJsonConfiguration() const {
     return (Element::fromJSON(config_text.str()));
 }
 
+ConstElementPtr
+HATest::createValidHubJsonConfiguration() const {
+    std::ostringstream config_text;
+    config_text <<
+        "["
+        "     {"
+        "         \"this-server-name\": \"server2\","
+        "         \"mode\": \"hot-standby\","
+        "         \"multi-threading\": {"
+        "             \"enable-multi-threading\": false"
+        "         },"
+        "         \"peers\": ["
+        "             {"
+        "                 \"name\": \"server1\","
+        "                 \"url\": \"http://127.0.0.1:18123/\","
+        "                 \"role\": \"primary\""
+        "             },"
+        "             {"
+        "                 \"name\": \"server2\","
+        "                 \"url\": \"http://127.0.0.1:18124/\","
+        "                 \"role\": \"standby\""
+        "             },"
+        "             {"
+        "                 \"name\": \"server5\","
+        "                 \"url\": \"http://127.0.0.1:18124/\","
+        "                 \"role\": \"backup\""
+        "             }"
+        "         ]"
+        "     },"
+        "     {"
+        "         \"this-server-name\": \"server4\","
+        "         \"mode\": \"hot-standby\","
+        "         \"multi-threading\": {"
+        "             \"enable-multi-threading\": false"
+        "         },"
+        "         \"peers\": ["
+        "             {"
+        "                 \"name\": \"server3\","
+        "                 \"url\": \"http://127.0.0.1:18123/\","
+        "                 \"role\": \"primary\""
+        "             },"
+        "             {"
+        "                 \"name\": \"server4\","
+        "                 \"url\": \"http://127.0.0.1:18124/\","
+        "                 \"role\": \"standby\""
+        "             },"
+        "             {"
+        "                 \"name\": \"server6\","
+        "                 \"url\": \"http://127.0.0.1:18124/\","
+        "                 \"role\": \"backup\""
+        "             }"
+        "         ]"
+        "     }"
+        "]";
+    return (Element::fromJSON(config_text.str()));
+}
+
 
 HAConfigPtr
 HATest::createValidConfiguration(const HAConfig::HAMode& ha_mode) const {
@@ -232,6 +289,12 @@ HATest::createValidConfiguration(const HAConfig::HAMode& ha_mode) const {
 HAConfigPtr
 HATest::createValidPassiveBackupConfiguration() const {
     auto config_storage = HAConfigParser::parse(createValidPassiveBackupJsonConfiguration());
+    return (config_storage->get());
+}
+
+HAConfigPtr
+HATest::createValidHubConfiguration() const {
+    auto config_storage = HAConfigParser::parse(createValidHubJsonConfiguration());
     return (config_storage->get());
 }
 

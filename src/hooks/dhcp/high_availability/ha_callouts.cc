@@ -93,6 +93,28 @@ int buffer4_receive(CalloutHandle& handle) {
     return (0);
 }
 
+/// @brief subnet4_select callout implementation.
+///
+/// @param handle callout handle.
+int subnet4_select(CalloutHandle& handle) {
+    CalloutHandle::CalloutNextStep status = handle.getStatus();
+    if (status == CalloutHandle::NEXT_STEP_DROP) {
+        return (0);
+    }
+
+    try {
+        impl->subnet4Select(handle);
+
+    } catch (const std::exception& ex) {
+        LOG_ERROR(ha_logger, HA_SUBNET4_SELECT_FAILED)
+            .arg(ex.what());
+        return (1);
+    }
+
+    return (0);
+}
+
+
 /// @brief leases4_committed callout implementation.
 ///
 /// @param handle callout handle.
@@ -183,6 +205,27 @@ int buffer6_receive(CalloutHandle& handle) {
 
     } catch (const std::exception& ex) {
         LOG_ERROR(ha_logger, HA_BUFFER6_RECEIVE_FAILED)
+            .arg(ex.what());
+        return (1);
+    }
+
+    return (0);
+}
+
+/// @brief subnet6_select callout implementation.
+///
+/// @param handle callout handle.
+int subnet6_select(CalloutHandle& handle) {
+    CalloutHandle::CalloutNextStep status = handle.getStatus();
+    if (status == CalloutHandle::NEXT_STEP_DROP) {
+        return (0);
+    }
+
+    try {
+        impl->subnet6Select(handle);
+
+    } catch (const std::exception& ex) {
+        LOG_ERROR(ha_logger, HA_SUBNET6_SELECT_FAILED)
             .arg(ex.what());
         return (1);
     }

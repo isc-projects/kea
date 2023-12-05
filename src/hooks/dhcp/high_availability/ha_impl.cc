@@ -15,6 +15,8 @@
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt6.h>
 #include <dhcpsrv/lease.h>
+#include <dhcpsrv/shared_network.h>
+#include <dhcpsrv/subnet.h>
 #include <stats/stats_mgr.h>
 
 using namespace isc::asiolink;
@@ -48,11 +50,6 @@ HAImpl::startServices(const IOServicePtr& io_service,
         for (auto peer_config : configs[id]->getAllServersConfig()) {
             services_->map(peer_config.first, service);
         }
-
-        /// @todo Running multiple HA services concurrently is not yet implemented.
-        /// The work is in progress. This break should be removed shortly, when we
-        /// finish up adding support for running multiple services.
-        break;
     }
     // Schedule a start of the services. This ensures we begin after
     // the dust has settled and Kea MT mode has been firmly established.
@@ -73,6 +70,12 @@ HAImpl::~HAImpl() {
 
 void
 HAImpl::buffer4Receive(hooks::CalloutHandle& callout_handle) {
+    // If there are multiple relationships, the HA-specific processing is
+    // in the subnet4_select hook point.
+    if (services_->hasMultiple()) {
+        return;
+    }
+
     Pkt4Ptr query4;
     callout_handle.getArgument("query4", query4);
 
@@ -125,16 +128,83 @@ HAImpl::buffer4Receive(hooks::CalloutHandle& callout_handle) {
 }
 
 void
-HAImpl::leases4Committed(CalloutHandle& callout_handle) {
-    // If the hook library is configured to not send lease updates to the
-    // partner, there is nothing to do because this whole callout is
-    // currently about sending lease updates.
-    if (!config_->get()->amSendingLeaseUpdates()) {
-        // No need to log it, because it was already logged when configuration
-        // was applied.
+HAImpl::subnet4Select(hooks::CalloutHandle& callout_handle) {
+    // This callout only applies in the case of multiple relationships.
+    // When there is only one relationship it has no effect because
+    // the decision if we should process the packet has been made
+    // in the buffer4_receive callout.
+    if (!services_->hasMultiple()) {
+        // Return silently. It is not an error.
         return;
     }
 
+    Pkt4Ptr query4;
+    callout_handle.getArgument("query4", query4);
+
+    Subnet4Ptr subnet4;
+    callout_handle.getArgument("subnet4", subnet4);
+
+    // The subnet configuration should contain a user context
+    // and this context should contain a mapping of the subnet to a
+    // relationship. If the context doesn't exist there is no way
+    // to determine which relationship the packet belongs to.
+    auto context = subnet4->getContext();
+    if (!context || (context->getType() != Element::map) || !context->contains("ha-server-name")) {
+        // The server name can be also specified at the shared network level.
+        SharedNetwork4Ptr shared_network;
+        subnet4->getSharedNetwork(shared_network);
+        if (shared_network) {
+            context = shared_network->getContext();
+        }
+        if (!context || (context->getType() != Element::map) || !context->contains("ha-server-name")) {
+            LOG_ERROR(ha_logger, HA_SUBNET4_SELECT_NO_RELATIONSHIP_SELECTOR_FOR_SUBNET)
+                .arg(query4->getLabel())
+                .arg(subnet4->toText());
+            callout_handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
+            return;
+        }
+
+    }
+
+    // The context has been found and it contains the ha-server-name.
+    auto server_name = context->get("ha-server-name");
+    if ((server_name->getType() != Element::string) || server_name->stringValue().empty()) {
+        LOG_ERROR(ha_logger, HA_SUBNET4_SELECT_INVALID_HA_SERVER_NAME)
+            .arg(query4->getLabel())
+            .arg(subnet4->toText());
+        callout_handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
+        return;
+    }
+
+    // Try to find a relationship matching this server name.
+    auto service = services_->get(server_name->stringValue());
+    if (!service) {
+        LOG_ERROR(ha_logger, HA_SUBNET4_SELECT_NO_RELATIONSHIP_FOR_SUBNET)
+            .arg(query4->getLabel())
+            .arg(server_name);
+        callout_handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
+        return;
+    }
+
+    // We have found appropriate relationship. Let's see if we should
+    // process the packet. We'll drop the packet if our partner is
+    // operational and is responsible for this packet.
+    if (!service->inScope(query4)) {
+        LOG_DEBUG(ha_logger, DBGLVL_TRACE_BASIC, HA_SUBNET4_SELECT_NOT_FOR_US)
+            .arg(query4->getLabel())
+            .arg(server_name);
+        callout_handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
+        return;
+    }
+
+    // Remember the server name we retrieved from the subnet. We will
+    // need it in a leases4_committed callout that doesn't have access
+    // to the subnet object.
+    callout_handle.setContext("ha-server-name", server_name->stringValue());
+}
+
+void
+HAImpl::leases4Committed(CalloutHandle& callout_handle) {
     Pkt4Ptr query4;
     Lease4CollectionPtr leases4;
     Lease4CollectionPtr deleted_leases4;
@@ -155,6 +225,44 @@ HAImpl::leases4Committed(CalloutHandle& callout_handle) {
         return;
     }
 
+    // Get default config and service instances.
+    HAConfigPtr config = config_->get();
+    HAServicePtr service = services_->get();
+
+    // If we have multiple relationships we need to find the one that
+    // matches our subnet.
+    if (services_->hasMultiple()) {
+        try {
+            // Retrieve the server name from the context and the respective
+            // config and service instances.
+            std::string server_name;
+            callout_handle.getContext("ha-server-name", server_name);
+            config = config_->get(server_name);
+            service = services_->get(server_name);
+
+            // This is rather impossible but let's be safe.
+            if (!config || !service) {
+                isc_throw(Unexpected, "relationship not configured for server '" << server_name << "'");
+            }
+
+        } catch (const std::exception& ex) {
+            LOG_ERROR(ha_logger, HA_LEASES4_COMMITTED_NO_RELATIONSHIP)
+                .arg(query4->getLabel())
+                .arg(ex.what());
+            callout_handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
+            return;
+        }
+    }
+
+    // If the hook library is configured to not send lease updates to the
+    // partner, there is nothing to do because this whole callout is
+    // currently about sending lease updates.
+    if (!config->amSendingLeaseUpdates()) {
+        // No need to log it, because it was already logged when configuration
+        // was applied.
+        return;
+    }
+
     // Get the parking lot for this hook point. We're going to remember this
     // pointer until we unpark the packet.
     ParkingLotHandlePtr parking_lot = callout_handle.getParkingLotHandlePtr();
@@ -168,7 +276,7 @@ HAImpl::leases4Committed(CalloutHandle& callout_handle) {
     // servers. In those cases we simply return without parking the DHCP query.
     // The response will be sent to the client immediately.
     try {
-        if (services_->get()->asyncSendLeaseUpdates(query4, leases4, deleted_leases4, parking_lot) == 0) {
+        if (service->asyncSendLeaseUpdates(query4, leases4, deleted_leases4, parking_lot) == 0) {
             // Dereference the parked packet.  This releases our stake in it.
             parking_lot->dereference(query4);
             return;
@@ -220,6 +328,12 @@ HAImpl::lease4ServerDecline(CalloutHandle& callout_handle) {
 
 void
 HAImpl::buffer6Receive(hooks::CalloutHandle& callout_handle) {
+    // If there are multiple relationships, the HA-specific processing is
+    // in the subnet6_select hook point.
+    if (services_->hasMultiple()) {
+        return;
+    }
+
     Pkt6Ptr query6;
     callout_handle.getArgument("query6", query6);
 
@@ -272,16 +386,83 @@ HAImpl::buffer6Receive(hooks::CalloutHandle& callout_handle) {
 }
 
 void
-HAImpl::leases6Committed(CalloutHandle& callout_handle) {
-    // If the hook library is configured to not send lease updates to the
-    // partner, there is nothing to do because this whole callout is
-    // currently about sending lease updates.
-    if (!config_->get()->amSendingLeaseUpdates()) {
-        // No need to log it, because it was already logged when configuration
-        // was applied.
+HAImpl::subnet6Select(hooks::CalloutHandle& callout_handle) {
+    // This callout only applies in the case of multiple relationships.
+    // When there is only one relationship it has no effect because
+    // the decision if we should process the packet has been made
+    // in the buffer6_receive callout.
+    if (!services_->hasMultiple()) {
+        // Return silently. It is not an error.
         return;
     }
 
+    Pkt6Ptr query6;
+    callout_handle.getArgument("query6", query6);
+
+    Subnet6Ptr subnet6;
+    callout_handle.getArgument("subnet6", subnet6);
+
+    // The subnet configuration should contain a user context
+    // and this context should contain a mapping of the subnet to a
+    // relationship. If the context doesn't exist there is no way
+    // to determine which relationship the packet belongs to.
+    auto context = subnet6->getContext();
+    if (!context || (context->getType() != Element::map) || !context->contains("ha-server-name")) {
+        // The server name can be also specified at the shared network level.
+        SharedNetwork6Ptr shared_network;
+        subnet6->getSharedNetwork(shared_network);
+        if (shared_network) {
+            context = shared_network->getContext();
+        }
+        if (!context || (context->getType() != Element::map) || !context->contains("ha-server-name")) {
+            LOG_ERROR(ha_logger, HA_SUBNET6_SELECT_NO_RELATIONSHIP_SELECTOR_FOR_SUBNET)
+                .arg(query6->getLabel())
+                .arg(subnet6->toText());
+            callout_handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
+            return;
+        }
+
+    }
+
+    // The context has been found and it contains the ha-server-name.
+    auto server_name = context->get("ha-server-name");
+    if ((server_name->getType() != Element::string) || server_name->stringValue().empty()) {
+        LOG_ERROR(ha_logger, HA_SUBNET6_SELECT_INVALID_HA_SERVER_NAME)
+            .arg(query6->getLabel())
+            .arg(subnet6->toText());
+        callout_handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
+        return;
+    }
+
+    // Try to find a relationship matching this server name.
+    auto service = services_->get(server_name->stringValue());
+    if (!service) {
+        LOG_ERROR(ha_logger, HA_SUBNET6_SELECT_NO_RELATIONSHIP_FOR_SUBNET)
+            .arg(query6->getLabel())
+            .arg(server_name);
+        callout_handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
+        return;
+    }
+
+    // We have found appropriate relationship. Let's see if we should
+    // process the packet. We'll drop the packet if our partner is
+    // operational and is responsible for this packet.
+    if (!service->inScope(query6)) {
+        LOG_DEBUG(ha_logger, DBGLVL_TRACE_BASIC, HA_SUBNET6_SELECT_NOT_FOR_US)
+            .arg(query6->getLabel())
+            .arg(server_name);
+        callout_handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
+        return;
+    }
+
+    // Remember the server name we retrieved from the subnet. We will
+    // need it in a leases4_committed callout that doesn't have access
+    // to the subnet object.
+    callout_handle.setContext("ha-server-name", server_name->stringValue());
+}
+
+void
+HAImpl::leases6Committed(CalloutHandle& callout_handle) {
     Pkt6Ptr query6;
     Lease6CollectionPtr leases6;
     Lease6CollectionPtr deleted_leases6;
@@ -302,6 +483,37 @@ HAImpl::leases6Committed(CalloutHandle& callout_handle) {
         return;
     }
 
+    HAConfigPtr config = config_->get();
+    HAServicePtr service = services_->get();
+    if (services_->hasMultiple()) {
+        try {
+            std::string server_name;
+            callout_handle.getContext("ha-server-name", server_name);
+            config = config_->get(server_name);
+            service = services_->get(server_name);
+
+            if (!config || !service) {
+                isc_throw(Unexpected, "relationship not found for the ha-server-name='" << server_name << "'");
+            }
+
+        } catch (const std::exception& ex) {
+            LOG_ERROR(ha_logger, HA_LEASES6_COMMITTED_NO_RELATIONSHIP)
+                .arg(query6->getLabel())
+                .arg(ex.what());
+            callout_handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
+            return;
+        }
+    }
+
+    // If the hook library is configured to not send lease updates to the
+    // partner, there is nothing to do because this whole callout is
+    // currently about sending lease updates.
+    if (!config->amSendingLeaseUpdates()) {
+        // No need to log it, because it was already logged when configuration
+        // was applied.
+        return;
+    }
+
     // Get the parking lot for this hook point. We're going to remember this
     // pointer until we unpark the packet.
     ParkingLotHandlePtr parking_lot = callout_handle.getParkingLotHandlePtr();
@@ -315,7 +527,7 @@ HAImpl::leases6Committed(CalloutHandle& callout_handle) {
     // servers. In those cases we simply return without parking the DHCP query.
     // The response will be sent to the client immediately.
     try {
-        if (services_->get()->asyncSendLeaseUpdates(query6, leases6, deleted_leases6, parking_lot) == 0) {
+        if (service->asyncSendLeaseUpdates(query6, leases6, deleted_leases6, parking_lot) == 0) {
             // Dereference the parked packet.  This releases our stake in it.
             parking_lot->dereference(query6);
             return;

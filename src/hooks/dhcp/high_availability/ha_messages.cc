@@ -52,8 +52,10 @@ extern const isc::log::MessageID HA_INVALID_PARTNER_STATE_LOAD_BALANCING = "HA_I
 extern const isc::log::MessageID HA_LEASE4_SERVER_DECLINE_FAILED = "HA_LEASE4_SERVER_DECLINE_FAILED";
 extern const isc::log::MessageID HA_LEASES4_COMMITTED_FAILED = "HA_LEASES4_COMMITTED_FAILED";
 extern const isc::log::MessageID HA_LEASES4_COMMITTED_NOTHING_TO_UPDATE = "HA_LEASES4_COMMITTED_NOTHING_TO_UPDATE";
+extern const isc::log::MessageID HA_LEASES4_COMMITTED_NO_RELATIONSHIP = "HA_LEASES4_COMMITTED_NO_RELATIONSHIP";
 extern const isc::log::MessageID HA_LEASES6_COMMITTED_FAILED = "HA_LEASES6_COMMITTED_FAILED";
 extern const isc::log::MessageID HA_LEASES6_COMMITTED_NOTHING_TO_UPDATE = "HA_LEASES6_COMMITTED_NOTHING_TO_UPDATE";
+extern const isc::log::MessageID HA_LEASES6_COMMITTED_NO_RELATIONSHIP = "HA_LEASES6_COMMITTED_NO_RELATIONSHIP";
 extern const isc::log::MessageID HA_LEASES_BACKLOG_COMMUNICATIONS_FAILED = "HA_LEASES_BACKLOG_COMMUNICATIONS_FAILED";
 extern const isc::log::MessageID HA_LEASES_BACKLOG_FAILED = "HA_LEASES_BACKLOG_FAILED";
 extern const isc::log::MessageID HA_LEASES_BACKLOG_NOTHING_TO_SEND = "HA_LEASES_BACKLOG_NOTHING_TO_SEND";
@@ -100,6 +102,16 @@ extern const isc::log::MessageID HA_STATE_MACHINE_CONTINUED = "HA_STATE_MACHINE_
 extern const isc::log::MessageID HA_STATE_MACHINE_PAUSED = "HA_STATE_MACHINE_PAUSED";
 extern const isc::log::MessageID HA_STATE_TRANSITION = "HA_STATE_TRANSITION";
 extern const isc::log::MessageID HA_STATE_TRANSITION_PASSIVE_BACKUP = "HA_STATE_TRANSITION_PASSIVE_BACKUP";
+extern const isc::log::MessageID HA_SUBNET4_SELECT_FAILED = "HA_SUBNET4_SELECT_FAILED";
+extern const isc::log::MessageID HA_SUBNET4_SELECT_INVALID_HA_SERVER_NAME = "HA_SUBNET4_SELECT_INVALID_HA_SERVER_NAME";
+extern const isc::log::MessageID HA_SUBNET4_SELECT_NOT_FOR_US = "HA_SUBNET4_SELECT_NOT_FOR_US";
+extern const isc::log::MessageID HA_SUBNET4_SELECT_NO_RELATIONSHIP_FOR_SUBNET = "HA_SUBNET4_SELECT_NO_RELATIONSHIP_FOR_SUBNET";
+extern const isc::log::MessageID HA_SUBNET4_SELECT_NO_RELATIONSHIP_SELECTOR_FOR_SUBNET = "HA_SUBNET4_SELECT_NO_RELATIONSHIP_SELECTOR_FOR_SUBNET";
+extern const isc::log::MessageID HA_SUBNET6_SELECT_FAILED = "HA_SUBNET6_SELECT_FAILED";
+extern const isc::log::MessageID HA_SUBNET6_SELECT_INVALID_HA_SERVER_NAME = "HA_SUBNET6_SELECT_INVALID_HA_SERVER_NAME";
+extern const isc::log::MessageID HA_SUBNET6_SELECT_NOT_FOR_US = "HA_SUBNET6_SELECT_NOT_FOR_US";
+extern const isc::log::MessageID HA_SUBNET6_SELECT_NO_RELATIONSHIP_FOR_SUBNET = "HA_SUBNET6_SELECT_NO_RELATIONSHIP_FOR_SUBNET";
+extern const isc::log::MessageID HA_SUBNET6_SELECT_NO_RELATIONSHIP_SELECTOR_FOR_SUBNET = "HA_SUBNET6_SELECT_NO_RELATIONSHIP_SELECTOR_FOR_SUBNET";
 extern const isc::log::MessageID HA_SYNC_COMPLETE_NOTIFY_COMMUNICATIONS_FAILED = "HA_SYNC_COMPLETE_NOTIFY_COMMUNICATIONS_FAILED";
 extern const isc::log::MessageID HA_SYNC_COMPLETE_NOTIFY_FAILED = "HA_SYNC_COMPLETE_NOTIFY_FAILED";
 extern const isc::log::MessageID HA_SYNC_COMPLETE_NOTIFY_HANDLER_FAILED = "HA_SYNC_COMPLETE_NOTIFY_HANDLER_FAILED";
@@ -161,8 +173,10 @@ const char* values[] = {
     "HA_LEASE4_SERVER_DECLINE_FAILED", "lease4_server_decline callout failed: %1",
     "HA_LEASES4_COMMITTED_FAILED", "leases4_committed callout failed: %1",
     "HA_LEASES4_COMMITTED_NOTHING_TO_UPDATE", "%1: leases4_committed callout was invoked without any leases",
+    "HA_LEASES4_COMMITTED_NO_RELATIONSHIP", "%1: HA relationship not found: %2",
     "HA_LEASES6_COMMITTED_FAILED", "leases6_committed callout failed: %1",
     "HA_LEASES6_COMMITTED_NOTHING_TO_UPDATE", "%1: leases6_committed callout was invoked without any leases",
+    "HA_LEASES6_COMMITTED_NO_RELATIONSHIP", "%1: HA relationship not found: %2",
     "HA_LEASES_BACKLOG_COMMUNICATIONS_FAILED", "%1: failed to communicate with %2 while sending lease updates backlog: %3",
     "HA_LEASES_BACKLOG_FAILED", "%1: failed to send lease updates backlog to %2: %3",
     "HA_LEASES_BACKLOG_NOTHING_TO_SEND", "%1: no leases in backlog after communication recovery",
@@ -209,6 +223,16 @@ const char* values[] = {
     "HA_STATE_MACHINE_PAUSED", "%1: state machine paused in state %2",
     "HA_STATE_TRANSITION", "%1: server transitions from %2 to %3 state, partner state is %4",
     "HA_STATE_TRANSITION_PASSIVE_BACKUP", "%1: server transitions from %2 to %3 state",
+    "HA_SUBNET4_SELECT_FAILED", "subnet4_select callout failed: %1",
+    "HA_SUBNET4_SELECT_INVALID_HA_SERVER_NAME", "%1: invalid ha-server-name value for subnet %2",
+    "HA_SUBNET4_SELECT_NOT_FOR_US", "%1: dropping query in relationship %2 to be processed by another server",
+    "HA_SUBNET4_SELECT_NO_RELATIONSHIP_FOR_SUBNET", "%1: HA relationship not found for %2",
+    "HA_SUBNET4_SELECT_NO_RELATIONSHIP_SELECTOR_FOR_SUBNET", "%1: unable to determine HA relationship because selected subnet %2 lacks the ha-server-name",
+    "HA_SUBNET6_SELECT_FAILED", "subnet6_select callout failed: %1",
+    "HA_SUBNET6_SELECT_INVALID_HA_SERVER_NAME", "%1: invalid ha-server-name value for subnet %2",
+    "HA_SUBNET6_SELECT_NOT_FOR_US", "%1: dropping query in relationship %2 to be processed by another server",
+    "HA_SUBNET6_SELECT_NO_RELATIONSHIP_FOR_SUBNET", "%1: HA relationship not found for %2",
+    "HA_SUBNET6_SELECT_NO_RELATIONSHIP_SELECTOR_FOR_SUBNET", "%1: unable to determine HA relationship because selected subnet %2 lacks the ha-server-name",
     "HA_SYNC_COMPLETE_NOTIFY_COMMUNICATIONS_FAILED", "%1: failed to send ha-sync-complete-notify to %2: %3",
     "HA_SYNC_COMPLETE_NOTIFY_FAILED", "%1: error processing ha-sync-complete-notify command on %2: %3",
     "HA_SYNC_COMPLETE_NOTIFY_HANDLER_FAILED", "ha-sync-complete-notify command failed: %1",

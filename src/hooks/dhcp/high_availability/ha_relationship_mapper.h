@@ -88,6 +88,14 @@ public:
         return (vector_);
     }
 
+    /// @brief Checks if the mapper has multiple objects.
+    ///
+    /// @return true if the mapper includes multiple objects (e.g., HAService),
+    /// false otherwise.
+    bool hasMultiple() const {
+        return (vector_.size() > 1);
+    }
+
 private:
 
     /// Key-to-object mappings.

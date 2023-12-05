@@ -150,6 +150,13 @@ public:
     data::ConstElementPtr
     createValidPassiveBackupJsonConfiguration() const;
 
+    /// @brief Return HA configuration for a hub in a hub-and-spoke model
+    /// in a JSON format.
+    ///
+    /// @return Pointer to the unparsed configuration.
+    data::ConstElementPtr
+    createValidHubJsonConfiguration() const;
+
     /// @brief Return HA configuration with three servers.
     ///
     /// @param ha_mode HA operation mode (default is load balancing).
@@ -161,6 +168,11 @@ public:
     ///
     /// @return Pointer to the parsed configuration.
     HAConfigPtr createValidPassiveBackupConfiguration() const;
+
+    /// @brief Return HA configuration for a hub in a hub-and-spoke model.
+    ///
+    /// @return Pointer to the parsed configuration.
+    HAConfigPtr createValidHubConfiguration() const;
 
     /// @brief Checks the status code and message against expected values.
     ///

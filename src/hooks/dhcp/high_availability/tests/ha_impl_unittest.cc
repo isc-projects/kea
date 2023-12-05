@@ -16,6 +16,8 @@
 #include <dhcp/hwaddr.h>
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/network_state.h>
+#include <dhcpsrv/shared_network.h>
+#include <dhcpsrv/subnet.h>
 #include <hooks/hooks_manager.h>
 #include <testutils/gtest_utils.h>
 #include <boost/pointer_cast.hpp>
@@ -251,6 +253,292 @@ TEST_F(HAImplTest, buffer4Receive) {
     EXPECT_TRUE(query4->getOption(DHO_DOMAIN_NAME));
 }
 
+// Tests subnet4_select callout implementation when the server name
+// is specified at the subnet level.
+TEST_F(HAImplTest, subnet4Select) {
+    ConstElementPtr ha_config = createValidHubJsonConfiguration();
+
+    // Create implementation object and configure it.
+    TestHAImpl ha_impl;
+    ASSERT_NO_THROW(ha_impl.configure(ha_config));
+
+    // Starting the service is required before any callouts.
+    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv4));
+    ASSERT_NO_THROW(ha_impl.startServices(io_service_, network_state,
+                                          HAServerType::DHCPv4));
+
+    // The hub is a standby server and by default serves no scopes. Explicitly
+    // enable the failover scopes to make this server responsible for the
+    // received packets.
+    ha_impl.services_->get("server2")->serveFailoverScopes();
+    ha_impl.services_->get("server4")->serveFailoverScopes();
+
+    // Create callout handle to be used for passing arguments to the
+    // callout.
+    CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
+    ASSERT_TRUE(callout_handle);
+    ASSERT_EQ(CalloutHandle::NEXT_STEP_CONTINUE, callout_handle->getStatus());
+
+    // Create the query.
+    Pkt4Ptr query4(new Pkt4(DHCPDISCOVER, 1234));
+    callout_handle->setArgument("query4", query4);
+
+    // Create the subnet and include the server name in the context.
+    auto context = Element::createMap();
+    context->set("ha-server-name", Element::create("server3"));
+    auto subnet4 = Subnet4::create(IOAddress("192.0.2.0"), 24, 30, 40, 50, 1);
+    subnet4->setContext(context);
+    callout_handle->setArgument("subnet4", subnet4);
+
+    // Invoke the subnet4_select callout.
+    ASSERT_NO_THROW(ha_impl.subnet4Select(*callout_handle));
+
+    // Make sure that the request was not dropped.
+    EXPECT_EQ(CalloutHandle::NEXT_STEP_CONTINUE, callout_handle->getStatus());
+
+    // The ha-server-name should be propagated to the leases4_committed callout.
+    std::string ha_server_name;
+    callout_handle->getContext("ha-server-name", ha_server_name);
+    EXPECT_EQ("server3", ha_server_name);
+
+    // The client class should be assigned to the query indicating the relationship
+    // to which the query belongs.
+    ASSERT_EQ(1, query4->getClasses().size());
+    EXPECT_TRUE(query4->inClass("HA_server3"));
+}
+
+// Tests subnet4_select callout implementation when the server name
+// is specified at the shared network level.
+TEST_F(HAImplTest, subnet4SelectSharedNetwork) {
+    ConstElementPtr ha_config = createValidHubJsonConfiguration();
+
+    // Create implementation object and configure it.
+    TestHAImpl ha_impl;
+    ASSERT_NO_THROW(ha_impl.configure(ha_config));
+
+    // Starting the service is required before any callouts.
+    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv4));
+    ASSERT_NO_THROW(ha_impl.startServices(io_service_, network_state,
+                                          HAServerType::DHCPv4));
+
+    // The hub is a standby server and by default serves no scopes. Explicitly
+    // enable the failover scopes to make this server responsible for the
+    // received packets.
+    ha_impl.services_->get("server2")->serveFailoverScopes();
+    ha_impl.services_->get("server4")->serveFailoverScopes();
+
+    // Create callout handle to be used for passing arguments to the
+    // callout.
+    CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
+    ASSERT_TRUE(callout_handle);
+    ASSERT_EQ(CalloutHandle::NEXT_STEP_CONTINUE, callout_handle->getStatus());
+
+    // Create the query.
+    Pkt4Ptr query4(new Pkt4(DHCPDISCOVER, 1234));
+    callout_handle->setArgument("query4", query4);
+
+    // Create the subnet and the shared network. Specify the server name at
+    // the shared network level.
+    auto context = Element::createMap();
+    context->set("ha-server-name", Element::create("server3"));
+    auto subnet4 = Subnet4::create(IOAddress("192.0.2.0"), 24, 30, 40, 50, 1);
+    auto shared_network4 = SharedNetwork4::create("foo");
+    shared_network4->setContext(context);
+    shared_network4->add(subnet4);
+    callout_handle->setArgument("subnet4", subnet4);
+
+    // Invoke the subnet4_select callout.
+    ASSERT_NO_THROW(ha_impl.subnet4Select(*callout_handle));
+
+    // Make sure that the request was not dropped.
+    EXPECT_EQ(CalloutHandle::NEXT_STEP_CONTINUE, callout_handle->getStatus());
+
+    // The ha-server-name should be propagated to the leases4_committed callout.
+    std::string ha_server_name;
+    callout_handle->getContext("ha-server-name", ha_server_name);
+    EXPECT_EQ("server3", ha_server_name);
+
+    // The client class should be assigned to the query indicating the relationship
+    // to which the query belongs.
+    ASSERT_EQ(1, query4->getClasses().size());
+    EXPECT_TRUE(query4->inClass("HA_server3"));
+}
+
+// Tests that subnet4_select callout returns when there is a single relationship.
+TEST_F(HAImplTest, subnet4SelectSingleRelationship) {
+    // Create a non-hub configuration including only one relationship.
+    ConstElementPtr ha_config = createValidJsonConfiguration(HAConfig::HOT_STANDBY);
+
+    // Create implementation object and configure it.
+    TestHAImpl ha_impl;
+    ASSERT_NO_THROW(ha_impl.configure(ha_config));
+
+    // Starting the service is required before any callouts.
+    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv4));
+    ASSERT_NO_THROW(ha_impl.startServices(io_service_, network_state,
+                                          HAServerType::DHCPv4));
+
+    // Create callout handle to be used for passing arguments to the
+    // callout.
+    CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
+    ASSERT_TRUE(callout_handle);
+    ASSERT_EQ(CalloutHandle::NEXT_STEP_CONTINUE, callout_handle->getStatus());
+
+    // Create the query.
+    Pkt4Ptr query4(new Pkt4(DHCPDISCOVER, 1234));
+    callout_handle->setArgument("query4", query4);
+
+    // Create the subnet. Don't bother specifying server name. The callout should
+    // return immediately regardless.
+    auto subnet4 = Subnet4::create(IOAddress("192.0.2.0"), 24, 30, 40, 50, 1);
+    callout_handle->setArgument("subnet4", subnet4);
+
+    // Invoke the subnet4_select callout.
+    ASSERT_NO_THROW(ha_impl.subnet4Select(*callout_handle));
+
+    // The request should not be dropped and there should be no classes assigned
+    // because the callout didn't call the HAService::inScope function.
+    EXPECT_EQ(CalloutHandle::NEXT_STEP_CONTINUE, callout_handle->getStatus());
+    EXPECT_TRUE(query4->getClasses().empty());
+}
+
+// Tests that the subnet4_select drops the packet when server name is not
+// specified for a subnet.
+TEST_F(HAImplTest, subnet4SelectDropNoServerName) {
+    ConstElementPtr ha_config = createValidHubJsonConfiguration();
+
+    // Create implementation object and configure it.
+    TestHAImpl ha_impl;
+    ASSERT_NO_THROW(ha_impl.configure(ha_config));
+
+    // Starting the service is required before any callouts.
+    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv4));
+    ASSERT_NO_THROW(ha_impl.startServices(io_service_, network_state,
+                                          HAServerType::DHCPv4));
+
+    // The hub is a standby server and by default serves no scopes. Explicitly
+    // enable the failover scopes to make this server responsible for the
+    // received packets.
+    ha_impl.services_->get("server2")->serveFailoverScopes();
+    ha_impl.services_->get("server4")->serveFailoverScopes();
+
+    // Create callout handle to be used for passing arguments to the
+    // callout.
+    CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
+    ASSERT_TRUE(callout_handle);
+    ASSERT_EQ(CalloutHandle::NEXT_STEP_CONTINUE, callout_handle->getStatus());
+
+    // Create the query.
+    Pkt4Ptr query4(new Pkt4(DHCPDISCOVER, 1234));
+    callout_handle->setArgument("query4", query4);
+
+    // Create the subnet without a server name setting.
+    auto subnet4 = Subnet4::create(IOAddress("192.0.2.0"), 24, 30, 40, 50, 1);
+    callout_handle->setArgument("subnet4", subnet4);
+
+    // Invoke the subnet4_select callout.
+    ASSERT_NO_THROW(ha_impl.subnet4Select(*callout_handle));
+
+    // The request should be dropped and no classes assigned to it.
+    EXPECT_EQ(CalloutHandle::NEXT_STEP_DROP, callout_handle->getStatus());
+    EXPECT_TRUE(query4->getClasses().empty());
+}
+
+// Tests that the subnet4_select drops the packet when server name has
+// an invalid data type.
+TEST_F(HAImplTest, subnet4SelectDropInvalidServerNameType) {
+    ConstElementPtr ha_config = createValidHubJsonConfiguration();
+
+    // Create implementation object and configure it.
+    TestHAImpl ha_impl;
+    ASSERT_NO_THROW(ha_impl.configure(ha_config));
+
+    // Starting the service is required before any callouts.
+    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv4));
+    ASSERT_NO_THROW(ha_impl.startServices(io_service_, network_state,
+                                          HAServerType::DHCPv4));
+
+    // The hub is a standby server and by default serves no scopes. Explicitly
+    // enable the failover scopes to make this server responsible for the
+    // received packets.
+    ha_impl.services_->get("server2")->serveFailoverScopes();
+    ha_impl.services_->get("server4")->serveFailoverScopes();
+
+    // Create callout handle to be used for passing arguments to the
+    // callout.
+    CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
+    ASSERT_TRUE(callout_handle);
+    ASSERT_EQ(CalloutHandle::NEXT_STEP_CONTINUE, callout_handle->getStatus());
+
+    // Create the query.
+    Pkt4Ptr query4(new Pkt4(DHCPDISCOVER, 1234));
+    callout_handle->setArgument("query4", query4);
+
+    // Create the subnet with an integer server name. The server name must
+    // be a string, though.
+    auto context = Element::createMap();
+    context->set("ha-server-name", Element::create(25));
+    auto subnet4 = Subnet4::create(IOAddress("192.0.2.0"), 24, 30, 40, 50, 1);
+    subnet4->setContext(context);
+    callout_handle->setArgument("subnet4", subnet4);
+
+    // Invoke the subnet4_select callout.
+    ASSERT_NO_THROW(ha_impl.subnet4Select(*callout_handle));
+
+    // The request should be dropped and no classes assigned to it.
+    EXPECT_EQ(CalloutHandle::NEXT_STEP_DROP, callout_handle->getStatus());
+    EXPECT_TRUE(query4->getClasses().empty());
+}
+
+// Tests that the subnet4_select drops the packet when server name is valid
+// but the server serves no scope in the selected relationship.
+TEST_F(HAImplTest, subnet4SelectDropNotInScope) {
+    ConstElementPtr ha_config = createValidHubJsonConfiguration();
+
+    // Create implementation object and configure it.
+    TestHAImpl ha_impl;
+    ASSERT_NO_THROW(ha_impl.configure(ha_config));
+
+    // Starting the service is required before any callouts.
+    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv4));
+    ASSERT_NO_THROW(ha_impl.startServices(io_service_, network_state,
+                                          HAServerType::DHCPv4));
+
+    // This server serves server1/server2 scopes but not server3/server4 scopes.
+    // The request should be dropped because the subnet will be associated with
+    // the server3.
+    ha_impl.services_->get("server2")->serveFailoverScopes();
+
+    // Create callout handle to be used for passing arguments to the
+    // callout.
+    CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
+    ASSERT_TRUE(callout_handle);
+    ASSERT_EQ(CalloutHandle::NEXT_STEP_CONTINUE, callout_handle->getStatus());
+
+    // Create the query.
+    Pkt4Ptr query4(new Pkt4(DHCPDISCOVER, 1234));
+    callout_handle->setArgument("query4", query4);
+
+    // Create the subnet with the server name pointing to the server3/server4
+    // relationship.
+    auto context = Element::createMap();
+    context->set("ha-server-name", Element::create("server3"));
+    auto subnet4 = Subnet4::create(IOAddress("192.0.2.0"), 24, 30, 40, 50, 1);
+    subnet4->setContext(context);
+    callout_handle->setArgument("subnet4", subnet4);
+
+    // Invoke the subnet4_select callout.
+    ASSERT_NO_THROW(ha_impl.subnet4Select(*callout_handle));
+
+    // The request should be dropped because the server is not responsible for
+    // this scope currently.
+    EXPECT_EQ(CalloutHandle::NEXT_STEP_DROP, callout_handle->getStatus());
+
+    // However, the class should be assigned after calling HAService::inScope.
+    ASSERT_EQ(1, query4->getClasses().size());
+    EXPECT_TRUE(query4->inClass("HA_server3"));
+}
+
 // Tests for buffer6_receive callout implementation.
 TEST_F(HAImplTest, buffer6Receive) {
     // Use hot-standby mode to make sure that this server instance is selected
@@ -339,6 +627,292 @@ TEST_F(HAImplTest, buffer6Receive) {
     EXPECT_FALSE(query6->getOption(D6O_NIS_DOMAIN_NAME));
 }
 
+// Tests subnet6_select callout implementation when the server name
+// is specified at the subnet level.
+TEST_F(HAImplTest, subnet6Select) {
+    ConstElementPtr ha_config = createValidHubJsonConfiguration();
+
+    // Create implementation object and configure it.
+    TestHAImpl ha_impl;
+    ASSERT_NO_THROW(ha_impl.configure(ha_config));
+
+    // Starting the service is required before any callouts.
+    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv6));
+    ASSERT_NO_THROW(ha_impl.startServices(io_service_, network_state,
+                                          HAServerType::DHCPv6));
+
+    // The hub is a standby server and by default serves no scopes. Explicitly
+    // enable the failover scopes to make this server responsible for the
+    // received packets.
+    ha_impl.services_->get("server2")->serveFailoverScopes();
+    ha_impl.services_->get("server4")->serveFailoverScopes();
+
+    // Create callout handle to be used for passing arguments to the
+    // callout.
+    CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
+    ASSERT_TRUE(callout_handle);
+    ASSERT_EQ(CalloutHandle::NEXT_STEP_CONTINUE, callout_handle->getStatus());
+
+    // Create the query.
+    Pkt6Ptr query6(new Pkt6(DHCPV6_SOLICIT, 1234));
+    callout_handle->setArgument("query6", query6);
+
+    // Create the subnet and include the server name in the context.
+    auto context = Element::createMap();
+    context->set("ha-server-name", Element::create("server3"));
+    auto subnet6 = Subnet6::create(IOAddress("2001:db8:1::"), 64, 30, 40, 50, 60, 1);
+    subnet6->setContext(context);
+    callout_handle->setArgument("subnet6", subnet6);
+
+    // Invoke the subnet6_select callout.
+    ASSERT_NO_THROW(ha_impl.subnet6Select(*callout_handle));
+
+    // Make sure that the request was not dropped.
+    EXPECT_EQ(CalloutHandle::NEXT_STEP_CONTINUE, callout_handle->getStatus());
+
+    // The ha-server-name should be propagated to the leases4_committed callout.
+    std::string ha_server_name;
+    callout_handle->getContext("ha-server-name", ha_server_name);
+    EXPECT_EQ("server3", ha_server_name);
+
+    // The client class should be assigned to the query indicating the relationship
+    // to which the query belongs.
+    ASSERT_EQ(1, query6->getClasses().size());
+    EXPECT_TRUE(query6->inClass("HA_server3"));
+}
+
+// Tests subnet6_select callout implementation when the server name
+// is specified at the shared network level.
+TEST_F(HAImplTest, subnet6SelectSharedNetwork) {
+    ConstElementPtr ha_config = createValidHubJsonConfiguration();
+
+    // Create implementation object and configure it.
+    TestHAImpl ha_impl;
+    ASSERT_NO_THROW(ha_impl.configure(ha_config));
+
+    // Starting the service is required before any callouts.
+    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv6));
+    ASSERT_NO_THROW(ha_impl.startServices(io_service_, network_state,
+                                          HAServerType::DHCPv6));
+
+    // The hub is a standby server and by default serves no scopes. Explicitly
+    // enable the failover scopes to make this server responsible for the
+    // received packets.
+    ha_impl.services_->get("server2")->serveFailoverScopes();
+    ha_impl.services_->get("server4")->serveFailoverScopes();
+
+    // Create callout handle to be used for passing arguments to the
+    // callout.
+    CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
+    ASSERT_TRUE(callout_handle);
+    ASSERT_EQ(CalloutHandle::NEXT_STEP_CONTINUE, callout_handle->getStatus());
+
+    // Create the query.
+    Pkt6Ptr query6(new Pkt6(DHCPV6_SOLICIT, 1234));
+    callout_handle->setArgument("query6", query6);
+
+    // Create the subnet and the shared network. Specify the server name at
+    // the shared network level.
+    auto context = Element::createMap();
+    context->set("ha-server-name", Element::create("server3"));
+    auto subnet6 = Subnet6::create(IOAddress("2001:db8:1::"), 64, 30, 40, 50, 60, 1);
+    auto shared_network6 = SharedNetwork6::create("foo");
+    shared_network6->setContext(context);
+    shared_network6->add(subnet6);
+    callout_handle->setArgument("subnet6", subnet6);
+
+    // Invoke the subnet6_select callout.
+    ASSERT_NO_THROW(ha_impl.subnet6Select(*callout_handle));
+
+    // Make sure that the request was not dropped.
+    EXPECT_EQ(CalloutHandle::NEXT_STEP_CONTINUE, callout_handle->getStatus());
+
+    // The ha-server-name should be propagated to the leases4_committed callout.
+    std::string ha_server_name;
+    callout_handle->getContext("ha-server-name", ha_server_name);
+    EXPECT_EQ("server3", ha_server_name);
+
+    // The client class should be assigned to the query indicating the relationship
+    // to which the query belongs.
+    ASSERT_EQ(1, query6->getClasses().size());
+    EXPECT_TRUE(query6->inClass("HA_server3"));
+}
+
+// Tests that subnet6_select callout returns when there is a single relationship.
+TEST_F(HAImplTest, subnet6SelectSingleRelationship) {
+    // Create a non-hub configuration including only one relationship.
+    ConstElementPtr ha_config = createValidJsonConfiguration(HAConfig::HOT_STANDBY);
+
+    // Create implementation object and configure it.
+    TestHAImpl ha_impl;
+    ASSERT_NO_THROW(ha_impl.configure(ha_config));
+
+    // Starting the service is required before any callouts.
+    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv6));
+    ASSERT_NO_THROW(ha_impl.startServices(io_service_, network_state,
+                                          HAServerType::DHCPv6));
+
+    // Create callout handle to be used for passing arguments to the
+    // callout.
+    CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
+    ASSERT_TRUE(callout_handle);
+    ASSERT_EQ(CalloutHandle::NEXT_STEP_CONTINUE, callout_handle->getStatus());
+
+    // Create the query.
+    Pkt6Ptr query6(new Pkt6(DHCPV6_SOLICIT, 1234));
+    callout_handle->setArgument("query6", query6);
+
+    // Create the subnet. Don't bother specifying server name. The callout should
+    // return immediately regardless.
+    auto subnet6 = Subnet6::create(IOAddress("2001:db8:1::"), 64, 30, 40, 50, 60, 1);
+    callout_handle->setArgument("subnet6", subnet6);
+
+    // Invoke the subnet6_select callout.
+    ASSERT_NO_THROW(ha_impl.subnet6Select(*callout_handle));
+
+    // The request should not be dropped and there should be no classes assigned
+    // because the callout didn't call the HAService::inScope function.
+    EXPECT_EQ(CalloutHandle::NEXT_STEP_CONTINUE, callout_handle->getStatus());
+    EXPECT_TRUE(query6->getClasses().empty());
+}
+
+// Tests that the subnet6_select drops the packet when server name is not
+// specified for a subnet.
+TEST_F(HAImplTest, subnet6SelectDropNoServerName) {
+    ConstElementPtr ha_config = createValidHubJsonConfiguration();
+
+    // Create implementation object and configure it.
+    TestHAImpl ha_impl;
+    ASSERT_NO_THROW(ha_impl.configure(ha_config));
+
+    // Starting the service is required before any callouts.
+    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv6));
+    ASSERT_NO_THROW(ha_impl.startServices(io_service_, network_state,
+                                          HAServerType::DHCPv6));
+
+    // The hub is a standby server and by default serves no scopes. Explicitly
+    // enable the failover scopes to make this server responsible for the
+    // received packets.
+    ha_impl.services_->get("server2")->serveFailoverScopes();
+    ha_impl.services_->get("server4")->serveFailoverScopes();
+
+    // Create callout handle to be used for passing arguments to the
+    // callout.
+    CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
+    ASSERT_TRUE(callout_handle);
+    ASSERT_EQ(CalloutHandle::NEXT_STEP_CONTINUE, callout_handle->getStatus());
+
+    // Create the query.
+    Pkt6Ptr query6(new Pkt6(DHCPV6_SOLICIT, 1234));
+    callout_handle->setArgument("query6", query6);
+
+    // Create the subnet without a server name setting.
+    auto subnet6 = Subnet6::create(IOAddress("2001:db8:1::"), 64, 30, 40, 50, 60, 1);
+    callout_handle->setArgument("subnet6", subnet6);
+
+    // Invoke the subnet6_select callout.
+    ASSERT_NO_THROW(ha_impl.subnet6Select(*callout_handle));
+
+    // The request should be dropped and no classes assigned to it.
+    EXPECT_EQ(CalloutHandle::NEXT_STEP_DROP, callout_handle->getStatus());
+    EXPECT_TRUE(query6->getClasses().empty());
+}
+
+// Tests that the subnet6_select drops the packet when server name has
+// an invalid data type.
+TEST_F(HAImplTest, subnet6SelectDropInvalidServerNameType) {
+    ConstElementPtr ha_config = createValidHubJsonConfiguration();
+
+    // Create implementation object and configure it.
+    TestHAImpl ha_impl;
+    ASSERT_NO_THROW(ha_impl.configure(ha_config));
+
+    // Starting the service is required before any callouts.
+    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv6));
+    ASSERT_NO_THROW(ha_impl.startServices(io_service_, network_state,
+                                          HAServerType::DHCPv6));
+
+    // The hub is a standby server and by default serves no scopes. Explicitly
+    // enable the failover scopes to make this server responsible for the
+    // received packets.
+    ha_impl.services_->get("server2")->serveFailoverScopes();
+    ha_impl.services_->get("server4")->serveFailoverScopes();
+
+    // Create callout handle to be used for passing arguments to the
+    // callout.
+    CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
+    ASSERT_TRUE(callout_handle);
+    ASSERT_EQ(CalloutHandle::NEXT_STEP_CONTINUE, callout_handle->getStatus());
+
+    // Create the query.
+    Pkt6Ptr query6(new Pkt6(DHCPV6_SOLICIT, 1234));
+    callout_handle->setArgument("query6", query6);
+
+    // Create the subnet with an integer server name. The server name must
+    // be a string, though.
+    auto context = Element::createMap();
+    context->set("ha-server-name", Element::create(25));
+    auto subnet6 = Subnet6::create(IOAddress("2001:db8:1::"), 64, 30, 40, 50, 60, 1);
+    subnet6->setContext(context);
+    callout_handle->setArgument("subnet6", subnet6);
+
+    // Invoke the subnet6_select callout.
+    ASSERT_NO_THROW(ha_impl.subnet6Select(*callout_handle));
+
+    // The request should be dropped and no classes assigned to it.
+    EXPECT_EQ(CalloutHandle::NEXT_STEP_DROP, callout_handle->getStatus());
+    EXPECT_TRUE(query6->getClasses().empty());
+}
+
+// Tests that the subnet6_select drops the packet when server name is valid
+// but the server serves no scope in the selected relationship.
+TEST_F(HAImplTest, subnet6SelectDropNotInScope) {
+    ConstElementPtr ha_config = createValidHubJsonConfiguration();
+
+    // Create implementation object and configure it.
+    TestHAImpl ha_impl;
+    ASSERT_NO_THROW(ha_impl.configure(ha_config));
+
+    // Starting the service is required before any callouts.
+    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv6));
+    ASSERT_NO_THROW(ha_impl.startServices(io_service_, network_state,
+                                          HAServerType::DHCPv6));
+
+    // This server serves server1/server2 scopes but not server3/server4 scopes.
+    // The request should be dropped because the subnet will be associated with
+    // the server3.
+    ha_impl.services_->get("server2")->serveFailoverScopes();
+
+    // Create callout handle to be used for passing arguments to the
+    // callout.
+    CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
+    ASSERT_TRUE(callout_handle);
+    ASSERT_EQ(CalloutHandle::NEXT_STEP_CONTINUE, callout_handle->getStatus());
+
+    // Create the query.
+    Pkt6Ptr query6(new Pkt6(DHCPV6_SOLICIT, 1234));
+    callout_handle->setArgument("query6", query6);
+
+    // Create the subnet with the server name pointing to the server3/server4
+    // relationship.
+    auto context = Element::createMap();
+    context->set("ha-server-name", Element::create("server3"));
+    auto subnet6 = Subnet6::create(IOAddress("2001:db8:1::"), 64, 30, 40, 50, 60, 1);
+    subnet6->setContext(context);
+    callout_handle->setArgument("subnet6", subnet6);
+
+    // Invoke the subnet6_select callout.
+    ASSERT_NO_THROW(ha_impl.subnet6Select(*callout_handle));
+
+    // The request should be dropped because the server is not responsible for
+    // this scope currently.
+    EXPECT_EQ(CalloutHandle::NEXT_STEP_DROP, callout_handle->getStatus());
+
+    // However, the class should be assigned after calling HAService::inScope.
+    ASSERT_EQ(1, query6->getClasses().size());
+    EXPECT_TRUE(query6->inClass("HA_server3"));
+}
+
 // Tests leases4_committed callout implementation.
 TEST_F(HAImplTest, leases4Committed) {
     // Create implementation object and configure it.
@@ -425,6 +999,168 @@ TEST_F(HAImplTest, leases4Committed) {
     EXPECT_TRUE(callout_handle->getParkingLotHandlePtr()->drop(query4));
 }
 
+// Tests leases4_committed callout implementation for multiple relationships.
+TEST_F(HAImplTest, leases4CommittedMultipleRelationships) {
+    // Create implementation object and configure it.
+    TestHAImpl ha_impl;
+    ASSERT_NO_THROW(ha_impl.configure(createValidHubJsonConfiguration()));
+
+    // Starting the service is required before running any callouts.
+    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv4));
+    ASSERT_NO_THROW(ha_impl.startServices(io_service_, network_state,
+                                          HAServerType::DHCPv4));
+
+    // By enabling this setting we ensure that the lease updates are always
+    // scheduled and the packet is parked because it is independent of a
+    // server state.
+    ha_impl.config_->get("server2")->setWaitBackupAck(true);
+
+    // Create callout handle to be used for passing arguments to the
+    // callout.
+    CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
+    ASSERT_TRUE(callout_handle);
+
+    // Set the hook index so we can park the packets.
+    callout_handle->setCurrentHook(test_hooks.hook_index_leases4_committed_);
+
+    // The server name is required to select HA relationship.
+    callout_handle->setContext("ha-server-name", std::string("server1"));
+
+    // DHCP query.
+    Pkt4Ptr query4 = createMessage4(DHCPREQUEST, 1, 0, 0);
+    callout_handle->setArgument("query4", query4);
+
+    // Leases.
+    HWAddrPtr hwaddr(new HWAddr(std::vector<uint8_t>(6, 1), HTYPE_ETHER));
+    Lease4Ptr lease4(new Lease4(IOAddress("192.1.2.3"), hwaddr,
+                                static_cast<const uint8_t*>(0), 0,
+                                60, 0, 1));
+    Lease4CollectionPtr leases4(new Lease4Collection());
+    leases4->push_back(lease4);
+    callout_handle->setArgument("leases4", leases4);
+
+    Lease4CollectionPtr deleted_leases4(new Lease4Collection());
+    callout_handle->setArgument("deleted_leases4", deleted_leases4);
+
+    // Park the packet.
+    HooksManager::park("leases4_committed", query4, []{});
+
+    // Run the callout.
+    ASSERT_NO_THROW(ha_impl.leases4Committed(*callout_handle));
+
+    // Make sure the callout completed successfully. The "park" status means
+    // there was no error during the callout.
+    EXPECT_EQ(CalloutHandle::NEXT_STEP_PARK, callout_handle->getStatus());
+    EXPECT_TRUE(callout_handle->getParkingLotHandlePtr()->drop(query4));
+}
+
+// Tests leases4_committed callout implementation for multiple relationships when
+// the relationship is not found.
+TEST_F(HAImplTest, leases4CommittedMultipleRelationshipsNoServerName) {
+    // Create implementation object and configure it.
+    TestHAImpl ha_impl;
+    ASSERT_NO_THROW(ha_impl.configure(createValidHubJsonConfiguration()));
+
+    // Starting the service is required before running any callouts.
+    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv4));
+    ASSERT_NO_THROW(ha_impl.startServices(io_service_, network_state,
+                                          HAServerType::DHCPv4));
+
+    // By enabling this setting we ensure that the lease updates are always
+    // scheduled and the packet is parked because it is independent of a
+    // server state.
+    ha_impl.config_->get("server2")->setWaitBackupAck(true);
+
+    // Create callout handle to be used for passing arguments to the
+    // callout.
+    CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
+    ASSERT_TRUE(callout_handle);
+
+    // Set the hook index so we can park the packets.
+    callout_handle->setCurrentHook(test_hooks.hook_index_leases4_committed_);
+
+    // DHCP query.
+    Pkt4Ptr query4 = createMessage4(DHCPREQUEST, 1, 0, 0);
+    callout_handle->setArgument("query4", query4);
+
+    // Leases.
+    HWAddrPtr hwaddr(new HWAddr(std::vector<uint8_t>(6, 1), HTYPE_ETHER));
+    Lease4Ptr lease4(new Lease4(IOAddress("192.1.2.3"), hwaddr,
+                                static_cast<const uint8_t*>(0), 0,
+                                60, 0, 1));
+    Lease4CollectionPtr leases4(new Lease4Collection());
+    leases4->push_back(lease4);
+    callout_handle->setArgument("leases4", leases4);
+
+    Lease4CollectionPtr deleted_leases4(new Lease4Collection());
+    callout_handle->setArgument("deleted_leases4", deleted_leases4);
+
+    // Park the packet.
+    HooksManager::park("leases4_committed", query4, []{});
+
+    // Run the callout.
+    ASSERT_NO_THROW(ha_impl.leases4Committed(*callout_handle));
+
+    // The relationship was not found so the packet should be dropped.
+    EXPECT_EQ(CalloutHandle::NEXT_STEP_DROP, callout_handle->getStatus());
+    EXPECT_TRUE(callout_handle->getParkingLotHandlePtr()->drop(query4));
+}
+
+// Tests leases4_committed callout implementation for multiple relationships when
+// the relationship name is invalid.
+TEST_F(HAImplTest, leases4CommittedMultipleRelationshipsInvalidServerName) {
+    // Create implementation object and configure it.
+    TestHAImpl ha_impl;
+    ASSERT_NO_THROW(ha_impl.configure(createValidHubJsonConfiguration()));
+
+    // Starting the service is required before running any callouts.
+    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv4));
+    ASSERT_NO_THROW(ha_impl.startServices(io_service_, network_state,
+                                          HAServerType::DHCPv4));
+
+    // By enabling this setting we ensure that the lease updates are always
+    // scheduled and the packet is parked because it is independent of a
+    // server state.
+    ha_impl.config_->get("server2")->setWaitBackupAck(true);
+
+    // Create callout handle to be used for passing arguments to the
+    // callout.
+    CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
+    ASSERT_TRUE(callout_handle);
+
+    // Set the hook index so we can park the packets.
+    callout_handle->setCurrentHook(test_hooks.hook_index_leases4_committed_);
+
+    // Set invalid relationship name. It should cause the packet drop.
+    callout_handle->setContext("ha-server-name", std::string("serverX"));
+
+    // DHCP query.
+    Pkt4Ptr query4 = createMessage4(DHCPREQUEST, 1, 0, 0);
+    callout_handle->setArgument("query4", query4);
+
+    // Leases.
+    HWAddrPtr hwaddr(new HWAddr(std::vector<uint8_t>(6, 1), HTYPE_ETHER));
+    Lease4Ptr lease4(new Lease4(IOAddress("192.1.2.3"), hwaddr,
+                                static_cast<const uint8_t*>(0), 0,
+                                60, 0, 1));
+    Lease4CollectionPtr leases4(new Lease4Collection());
+    leases4->push_back(lease4);
+    callout_handle->setArgument("leases4", leases4);
+
+    Lease4CollectionPtr deleted_leases4(new Lease4Collection());
+    callout_handle->setArgument("deleted_leases4", deleted_leases4);
+
+    // Park the packet.
+    HooksManager::park("leases4_committed", query4, []{});
+
+    // Run the callout.
+    ASSERT_NO_THROW(ha_impl.leases4Committed(*callout_handle));
+
+    // The relationship was not found so the packet should be dropped.
+    EXPECT_EQ(CalloutHandle::NEXT_STEP_DROP, callout_handle->getStatus());
+    EXPECT_TRUE(callout_handle->getParkingLotHandlePtr()->drop(query4));
+}
+
 // Tests leases6_committed callout implementation.
 TEST_F(HAImplTest, leases6Committed) {
     // Create implementation object and configure it.
@@ -507,6 +1243,165 @@ TEST_F(HAImplTest, leases6Committed) {
     // This time the lease update should be generated and the status should
     // be set to "park".
     EXPECT_EQ(CalloutHandle::NEXT_STEP_PARK, callout_handle->getStatus());
+    EXPECT_TRUE(callout_handle->getParkingLotHandlePtr()->drop(query6));
+}
+
+// Tests leases6_committed callout implementation for multiple relationships.
+TEST_F(HAImplTest, leases6CommittedMultipleRelationships) {
+    // Create implementation object and configure it.
+    TestHAImpl ha_impl;
+    ASSERT_NO_THROW(ha_impl.configure(createValidHubJsonConfiguration()));
+
+    // Starting the service is required before running any callouts.
+    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv6));
+    ASSERT_NO_THROW(ha_impl.startServices(io_service_, network_state,
+                                          HAServerType::DHCPv6));
+
+    // By enabling this setting we ensure that the lease updates are always
+    // scheduled and the packet is parked because it is independent of a
+    // server state.
+    ha_impl.config_->get("server2")->setWaitBackupAck(true);
+
+    // Create callout handle to be used for passing arguments to the
+    // callout.
+    CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
+    ASSERT_TRUE(callout_handle);
+
+    // Set the hook index so we can park the packets.
+    callout_handle->setCurrentHook(test_hooks.hook_index_leases6_committed_);
+
+    // The server name is required to select HA relationship.
+    callout_handle->setContext("ha-server-name", std::string("server1"));
+
+    // DHCP query.
+    Pkt6Ptr query6 = createMessage6(DHCPV6_REQUEST, 1, 0);
+    callout_handle->setArgument("query6", query6);
+
+    // Leases.
+    DuidPtr duid(new DUID(std::vector<uint8_t>(8, 2)));
+    Lease6Ptr lease6(new Lease6(Lease::TYPE_NA, IOAddress("2001:db8:1::cafe"), duid,
+                                1234, 50, 60, 1));
+    Lease6CollectionPtr leases6(new Lease6Collection());
+    leases6->push_back(lease6);
+    callout_handle->setArgument("leases6", leases6);
+
+    Lease6CollectionPtr deleted_leases6(new Lease6Collection());
+    callout_handle->setArgument("deleted_leases6", deleted_leases6);
+
+    // Park the packet.
+    HooksManager::park("leases6_committed", query6, []{});
+
+    // Run the callout.
+    ASSERT_NO_THROW(ha_impl.leases6Committed(*callout_handle));
+
+    // Make sure the callout completed successfully. The "park" status means
+    // there was no error during the callout.
+    EXPECT_EQ(CalloutHandle::NEXT_STEP_PARK, callout_handle->getStatus());
+    EXPECT_TRUE(callout_handle->getParkingLotHandlePtr()->drop(query6));
+}
+
+// Tests leases6_committed callout implementation for multiple relationships when
+// the relationship is not found.
+TEST_F(HAImplTest, leases6CommittedMultipleRelationshipsNoServerName) {
+    // Create implementation object and configure it.
+    TestHAImpl ha_impl;
+    ASSERT_NO_THROW(ha_impl.configure(createValidHubJsonConfiguration()));
+
+    // Starting the service is required before running any callouts.
+    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv6));
+    ASSERT_NO_THROW(ha_impl.startServices(io_service_, network_state,
+                                          HAServerType::DHCPv6));
+
+    // By enabling this setting we ensure that the lease updates are always
+    // scheduled and the packet is parked because it is independent of a
+    // server state.
+    ha_impl.config_->get("server2")->setWaitBackupAck(true);
+
+    // Create callout handle to be used for passing arguments to the
+    // callout.
+    CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
+    ASSERT_TRUE(callout_handle);
+
+    // Set the hook index so we can park the packets.
+    callout_handle->setCurrentHook(test_hooks.hook_index_leases6_committed_);
+
+    // DHCP query.
+    Pkt6Ptr query6 = createMessage6(DHCPV6_REQUEST, 1, 0);
+    callout_handle->setArgument("query6", query6);
+
+    // Leases.
+    DuidPtr duid(new DUID(std::vector<uint8_t>(8, 2)));
+    Lease6Ptr lease6(new Lease6(Lease::TYPE_NA, IOAddress("2001:db8:1::cafe"), duid,
+                                1234, 50, 60, 1));
+    Lease6CollectionPtr leases6(new Lease6Collection());
+    leases6->push_back(lease6);
+    callout_handle->setArgument("leases6", leases6);
+
+    Lease6CollectionPtr deleted_leases6(new Lease6Collection());
+    callout_handle->setArgument("deleted_leases6", deleted_leases6);
+
+    // Park the packet.
+    HooksManager::park("leases6_committed", query6, []{});
+
+    // Run the callout.
+    ASSERT_NO_THROW(ha_impl.leases6Committed(*callout_handle));
+
+    // The relationship was not found so the packet should be dropped.
+    EXPECT_EQ(CalloutHandle::NEXT_STEP_DROP, callout_handle->getStatus());
+    EXPECT_TRUE(callout_handle->getParkingLotHandlePtr()->drop(query6));
+}
+
+// Tests leases6_committed callout implementation for multiple relationships when
+// the relationship name is invalid.
+TEST_F(HAImplTest, leases6CommittedMultipleRelationshipsInvalidServerName) {
+    // Create implementation object and configure it.
+    TestHAImpl ha_impl;
+    ASSERT_NO_THROW(ha_impl.configure(createValidHubJsonConfiguration()));
+
+    // Starting the service is required before running any callouts.
+    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv6));
+    ASSERT_NO_THROW(ha_impl.startServices(io_service_, network_state,
+                                          HAServerType::DHCPv6));
+
+    // By enabling this setting we ensure that the lease updates are always
+    // scheduled and the packet is parked because it is independent of a
+    // server state.
+    ha_impl.config_->get("server2")->setWaitBackupAck(true);
+
+    // Create callout handle to be used for passing arguments to the
+    // callout.
+    CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
+    ASSERT_TRUE(callout_handle);
+
+    // Set the hook index so we can park the packets.
+    callout_handle->setCurrentHook(test_hooks.hook_index_leases6_committed_);
+
+    // The server name is required to select HA relationship.
+    callout_handle->setContext("ha-server-name", std::string("serverX"));
+
+    // DHCP query.
+    Pkt6Ptr query6 = createMessage6(DHCPV6_REQUEST, 1, 0);
+    callout_handle->setArgument("query6", query6);
+
+    // Leases.
+    DuidPtr duid(new DUID(std::vector<uint8_t>(8, 2)));
+    Lease6CollectionPtr leases6(new Lease6Collection());
+    Lease6Ptr lease6(new Lease6(Lease::TYPE_NA, IOAddress("2001:db8:1::cafe"), duid,
+                                1234, 50, 60, 1));
+    leases6->push_back(lease6);
+    callout_handle->setArgument("leases6", leases6);
+
+    Lease6CollectionPtr deleted_leases6(new Lease6Collection());
+    callout_handle->setArgument("deleted_leases6", deleted_leases6);
+
+    // Park the packet.
+    HooksManager::park("leases6_committed", query6, []{});
+
+    // Run the callout.
+    ASSERT_NO_THROW(ha_impl.leases6Committed(*callout_handle));
+
+    // The relationship was not found so the packet should be dropped.
+    EXPECT_EQ(CalloutHandle::NEXT_STEP_DROP, callout_handle->getStatus());
     EXPECT_TRUE(callout_handle->getParkingLotHandlePtr()->drop(query6));
 }
 

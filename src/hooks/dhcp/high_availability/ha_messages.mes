@@ -274,6 +274,13 @@ point failed. This includes unexpected errors like wrong arguments provided to
 the callout by the DHCP server (unlikely internal server error).
 The argument contains a reason for the error.
 
+% HA_LEASES4_COMMITTED_NO_RELATIONSHIP %1: HA relationship not found: %2
+This error message is issued when the relationship for the server name provided
+by the earlier callouts was not found in the HA configuration. This error is
+highly unlikely and rather indicates some programming error. The first argument
+is the client identification information. The second argument holds a more
+detailed error message.
+
 % HA_LEASES4_COMMITTED_NOTHING_TO_UPDATE %1: leases4_committed callout was invoked without any leases
 This debug message is issued when the "leases4_committed" callout returns
 because there are neither new leases nor deleted leases for which updates
@@ -285,6 +292,13 @@ This error message is issued when the callout for the leases6_committed hook
 point failed. This includes unexpected errors like wrong arguments provided to
 the callout by the DHCP server (unlikely internal server error).
 The argument contains a reason for the error.
+
+% HA_LEASES6_COMMITTED_NO_RELATIONSHIP %1: HA relationship not found: %2
+This error message is issued when the relationship for the server name provided
+by the earlier callouts was not found in the HA configuration. This error is
+highly unlikely and rather indicates some programming error. The first argument
+is the client identification information. The second argument holds a more
+detailed error message.
 
 % HA_LEASES6_COMMITTED_NOTHING_TO_UPDATE %1: leases6_committed callout was invoked without any leases
 This debug message is issued when the "leases6_committed" callout returns
@@ -554,6 +568,82 @@ This informational message is issued when the HA service is started as a result
 of server startup or reconfiguration. The first argument specifies a local server
 name. The second argument provides the HA mode. The third argument specifies the
 role of this server instance in this configuration.
+
+% HA_SUBNET4_SELECT_INVALID_HA_SERVER_NAME %1: invalid ha-server-name value for subnet %2
+This error message is issued when the received DHCPv4 query is dropped
+by this server because the specified ha-server-name value in the subnet's
+user context has non-string type or is empty. It is a server's misconifguration.
+The first argument is the client identification information. The second argument
+is a subnet prefix.
+
+% HA_SUBNET4_SELECT_NO_RELATIONSHIP_FOR_SUBNET %1: HA relationship not found for %2
+This error message is issued when the received DHCPv4 query is dropped
+by this server because the server could not find a relationship matching
+the specified ha-server-name for a subnet. The server name matches no
+relationship specified in the HA configuration. A typical reason for it
+is a typo. The first argument is the client identification information.
+The second argument is the relationship name.
+
+% HA_SUBNET4_SELECT_NO_RELATIONSHIP_SELECTOR_FOR_SUBNET %1: unable to determine HA relationship because selected subnet %2 lacks the ha-server-name
+This error message is issued when the received DHCPv4 query is dropped
+by this server because it was unable to determine the HA relationship to
+which the received query belongs. If there are multiple relationships,
+it is required to specify ha-server-name user context value at the subnet
+or shared network level for each subnet and/or shared network. The server
+uses them as a relationship selector. If these selectors are unspecified
+for any of the subnets it is a configuration error. The first argument is
+the client identification information. The second argument is a subnet
+prefix.
+
+% HA_SUBNET4_SELECT_NOT_FOR_US %1: dropping query in relationship %2 to be processed by another server
+This debug message is issued when the received DHCPv4 query is dropped
+by this server because it should be served by another server. This
+is the case when a remote primary server is operational. The first argument
+is the client identification information. The second argument is the
+relationship name.
+
+% HA_SUBNET4_SELECT_FAILED subnet4_select callout failed: %1
+This error message is issued when the callout for the subnet4_select hook
+point failed. This may occur as a result of an internal server error.
+The argument contains a reason for the error.
+
+% HA_SUBNET6_SELECT_INVALID_HA_SERVER_NAME %1: invalid ha-server-name value for subnet %2
+This error message is issued when the received DHCPv6 query is dropped
+by this server because the specified ha-server-name value in the subnet's
+user context has non-string type or is empty. It is a server's misconifguration.
+The first argument is the client identification information. The second argument
+is a subnet prefix.
+
+% HA_SUBNET6_SELECT_NO_RELATIONSHIP_FOR_SUBNET %1: HA relationship not found for %2 
+This error message is issued when the received DHCPv6 query is dropped
+by this server because the server could not find a relationship matching
+the specified ha-server-name for a subnet. The server name matches no
+relationship specified in the HA configuration. A typical reason for it
+is a typo.  The first argument is the client identification information.
+The second argument is the relationship name.
+
+% HA_SUBNET6_SELECT_NO_RELATIONSHIP_SELECTOR_FOR_SUBNET %1: unable to determine HA relationship because selected subnet %2 lacks the ha-server-name
+This error message is issued when the received DHCPv6 query is dropped
+by this server because it was unable to determine the HA relationship to
+which the received query belongs. If there are multiple relationships,
+it is required to specify ha-server-name user context value at the subnet
+or shared network level for each subnet and/or shared network. The server
+uses them as a relationship selector. If these selectors are unspecified
+for any of the subnets it is a configuration error. The first argument is
+the client identification information. The second argument is a subnet
+prefix.
+
+% HA_SUBNET6_SELECT_NOT_FOR_US %1: dropping query in relationship %2 to be processed by another server
+This debug message is issued when the received DHCPv6 query is dropped
+by this server because it should be served by another server. This
+is the case when a remote primary server is operational. The first argument
+is the client identification information. The second argument is the
+relationship name.
+
+% HA_SUBNET6_SELECT_FAILED subnet6_select callout failed: %1
+This error message is issued when the callout for the subnet6_select hook
+point failed. This may occur as a result of an internal server error.
+The argument contains a reason for the error.
 
 % HA_STATE_MACHINE_CONTINUED %1: state machine is un-paused
 This informational message is issued when the HA state machine is un-paused.

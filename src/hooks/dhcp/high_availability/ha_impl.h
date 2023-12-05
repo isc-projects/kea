@@ -101,6 +101,9 @@ public:
     /// @param callout_handle Callout handle provided to the callout.
     void buffer4Receive(hooks::CalloutHandle& callout_handle);
 
+    /// @brief Implementation of the "subnet4_select" callout.
+    void subnet4Select(hooks::CalloutHandle& callout_handle);
+
     /// @brief Implementation of the "leases4_committed" callout.
     ///
     /// @param callout_handle Callout handle provided to the callout.
@@ -131,6 +134,10 @@ public:
     ///
     /// @param callout_handle Callout handle provided to the callout.
     void buffer6Receive(hooks::CalloutHandle& callout_handle);
+
+
+    /// @brief Implementation of the "subnet6_select" callout.
+    void subnet6Select(hooks::CalloutHandle& callout_handle);
 
     /// @brief Implementation of the "leases6_committed" callout.
     ///
