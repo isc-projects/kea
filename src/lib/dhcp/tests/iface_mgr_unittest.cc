@@ -702,19 +702,22 @@ public:
         // Create first pipe and register it as extra socket
         int pipefd[2];
         EXPECT_TRUE(pipe(pipefd) == 0);
+        ASSERT_FALSE(ifacemgr->isExternalSocket(pipefd[0]));
         EXPECT_NO_THROW(ifacemgr->addExternalSocket(pipefd[0],
                         [&callback_ok, &pipefd](int fd) {
                             callback_ok = (pipefd[0] == fd);
                         }));
-
+        ASSERT_TRUE(ifacemgr->isExternalSocket(pipefd[0]));
 
         // Let's create a second pipe and register it as well
         int secondpipe[2];
         EXPECT_TRUE(pipe(secondpipe) == 0);
+        ASSERT_FALSE(ifacemgr->isExternalSocket(secondpipe[0]));
         EXPECT_NO_THROW(ifacemgr->addExternalSocket(secondpipe[0],
                         [&callback2_ok, &secondpipe](int fd) {
                             callback2_ok = (secondpipe[0] == fd);
                         }));
+        ASSERT_TRUE(ifacemgr->isExternalSocket(secondpipe[0]));
 
         // Verify a call with no data and normal external sockets works ok.
         Pkt4Ptr pkt4;
@@ -789,19 +792,22 @@ public:
         // Create first pipe and register it as extra socket
         int pipefd[2];
         EXPECT_TRUE(pipe(pipefd) == 0);
+        ASSERT_FALSE(ifacemgr->isExternalSocket(pipefd[0]));
         EXPECT_NO_THROW(ifacemgr->addExternalSocket(pipefd[0],
                         [&callback_ok, &pipefd](int fd) {
                             callback_ok = (pipefd[0] == fd);
                         }));
-
+        ASSERT_TRUE(ifacemgr->isExternalSocket(pipefd[0]));
 
         // Let's create a second pipe and register it as well
         int secondpipe[2];
         EXPECT_TRUE(pipe(secondpipe) == 0);
+        ASSERT_FALSE(ifacemgr->isExternalSocket(secondpipe[0]));
         EXPECT_NO_THROW(ifacemgr->addExternalSocket(secondpipe[0],
                         [&callback2_ok, &secondpipe](int fd) {
                             callback2_ok = (secondpipe[0] == fd);
                         }));
+        ASSERT_TRUE(ifacemgr->isExternalSocket(secondpipe[0]));
 
         // Verify a call with no data and normal external sockets works ok.
         Pkt6Ptr pkt6;

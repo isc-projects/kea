@@ -1146,6 +1146,11 @@ public:
     /// @param callback callback function
     void addExternalSocket(int socketfd, SocketCallback callback);
 
+    /// @brief Checks if socket's file description is registered.
+    ///
+    /// @return True if the fd is in the list of registered sockets.
+    bool isExternalSocket(int fd);
+
     /// @brief Deletes external socket
     ///
     /// @param socketfd socket descriptor

@@ -363,6 +363,18 @@ IfaceMgr::deleteExternalSocketInternal(int socketfd) {
     }
 }
 
+bool
+IfaceMgr::isExternalSocket(int fd) {
+    std::lock_guard<std::mutex> lock(callbacks_mutex_);
+    for (SocketCallbackInfo s : callbacks_) {
+        if (s.socket_ == fd) {
+            return (true);
+        }
+    }
+
+    return (false);
+}
+
 int
 IfaceMgr::purgeBadSockets() {
     std::lock_guard<std::mutex> lock(callbacks_mutex_);

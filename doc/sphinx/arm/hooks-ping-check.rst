@@ -36,7 +36,7 @@ by adding it to the ``hooks-libraries`` element of the server's configuration:
         ...
     }
 
-When the library is loaded :iscman:`kea-dhcp4` will conduct ping-check prior to
+When the library is loaded :iscman:`kea-dhcp4` will conduct a ping-check prior to
 offering a lease to client if all of the following conditions are true:
 
 1. Ping check hook library is loaded.
@@ -124,7 +124,7 @@ that may be set at the global and subnet levels. Subnet values override global v
 
 The following parameter is only supported at the global level:
 
-- `ping-channel-threads` - In multi-threaded mode, this is the number of threads in the channel's thread pool. The default is 0 which instructs the library to use the same number of threads as Kea core.
+- `ping-channel-threads` - In multi-threaded mode, this is the number of threads in the channel's thread pool. The default is 0 which instructs the library to use the same number of threads as Kea core.  The value is ignored if given when Kea is in single-threaded mode.
 
 The following configuration excerpt illustrates global level configuration:
 
@@ -167,7 +167,3 @@ The following excerpt demonstrates subnet level configuration:
 
     Ping checking is an experimental feature. It is not currently recommended for
     production environments.
-
-.. note::
-
-    Ping checking is currently only supported when Kea is configured for multi-threaded operation.
