@@ -5176,9 +5176,7 @@ TEST_F(HAServiceTest, processSyncCompleteNotify) {
     EXPECT_NO_THROW(service.transition(HA_PARTNER_DOWN_ST, HAService::NOP_EVT));
 
     // Simulate disabling the DHCP service for synchronization.
-    if (service.network_state_->isServiceEnabled()) {
-        EXPECT_NO_THROW(service.network_state_->disableService(NetworkState::HA_REMOTE_COMMAND+1));
-    }
+    EXPECT_NO_THROW(service.network_state_->disableService(NetworkState::HA_REMOTE_COMMAND+1));
 
     ConstElementPtr rsp;
     EXPECT_NO_THROW(rsp = service.processSyncCompleteNotify(NetworkState::HA_REMOTE_COMMAND+1));
@@ -5200,10 +5198,15 @@ TEST_F(HAServiceTest, processSyncCompleteNotify) {
     // serving the clients in the partner-down state.
     EXPECT_NO_THROW(service.postNextEvent(HAService::HA_SYNCED_PARTNER_UNAVAILABLE_EVT));
     EXPECT_NO_THROW(service.runModel(HAService::NOP_EVT));
+    EXPECT_EQ(HA_PARTNER_DOWN_ST, service.getCurrState());
     EXPECT_TRUE(service.network_state_->isServiceEnabled());
 
     // Transition the server to the load-balancing state.
     EXPECT_NO_THROW(service.transition(HA_LOAD_BALANCING_ST, HAService::NOP_EVT));
+    EXPECT_NO_THROW(service.runModel(HAService::NOP_EVT));
+
+    // It should unlock the network service.
+    EXPECT_TRUE(service.network_state_->isServiceEnabled());
 
     // Disable the service again.
     EXPECT_NO_THROW(service.network_state_->disableService(NetworkState::HA_REMOTE_COMMAND+1));

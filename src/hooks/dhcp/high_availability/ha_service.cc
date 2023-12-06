@@ -3011,9 +3011,14 @@ ConstElementPtr
 HAService::processSyncCompleteNotify(const unsigned int origin) {
     if (getCurrState() == HA_PARTNER_DOWN_ST) {
         sync_complete_notified_ = true;
-    } else {
-        network_state_->enableService(origin);
+        // We're in the partner-down state, so we don't want to enable the
+        // service until we confirm that the partner is really available.
+        // Let's disable the service locally until we confirm.
+        network_state_->disableService(getLocalOrigin());
     }
+    // Release the network state lock for the remote origin because we
+    // now have the service disabled locally.
+    network_state_->enableService(origin);
     return (createAnswer(CONTROL_RESULT_SUCCESS,
                          "Server successfully notified about the synchronization completion."));
 }
