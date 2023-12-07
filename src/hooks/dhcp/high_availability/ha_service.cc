@@ -149,6 +149,13 @@ HAService::~HAService() {
     network_state_->enableService(getLocalOrigin());
 }
 
+std::string
+HAService::getCSCallbacksSetName() const {
+    std::ostringstream s;
+    s << "HA_MT_" << id_;
+    return (s.str());
+}
+
 void
 HAService::defineEvents() {
     StateModel::defineEvents();
@@ -3266,7 +3273,7 @@ HAService::checkPermissionsClientAndListener() {
 void
 HAService::startClientAndListener() {
     // Add critical section callbacks.
-    MultiThreadingMgr::instance().addCriticalSectionCallbacks("HA_MT",
+    MultiThreadingMgr::instance().addCriticalSectionCallbacks(getCSCallbacksSetName(),
         std::bind(&HAService::checkPermissionsClientAndListener, this),
         std::bind(&HAService::pauseClientAndListener, this),
         std::bind(&HAService::resumeClientAndListener, this));
@@ -3320,7 +3327,7 @@ HAService::resumeClientAndListener() {
 void
 HAService::stopClientAndListener() {
     // Remove critical section callbacks.
-    MultiThreadingMgr::instance().removeCriticalSectionCallbacks("HA_MT");
+    MultiThreadingMgr::instance().removeCriticalSectionCallbacks(getCSCallbacksSetName());
 
     if (client_) {
         client_->stop();

@@ -147,6 +147,15 @@ private:
         return (dhcp::NetworkState::HA_REMOTE_COMMAND + id_);
     }
 
+    /// @brief Returns the name of the critical section callbacks set.
+    ///
+    /// This function is used internally during the registration and
+    /// deregistration of the critical section callbacks in the MT
+    /// manager.
+    ///
+    /// @return HA_MT_ plus service id.
+    std::string getCSCallbacksSetName() const;
+
     /// @brief Defines events used by the HA service.
     virtual void defineEvents();
 
