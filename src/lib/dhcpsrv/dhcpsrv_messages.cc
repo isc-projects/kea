@@ -313,7 +313,7 @@ const char* values[] = {
     "DHCPSRV_CFGMGR_FLQ_POPULATE_FREE_PREFIX_LEASES_DONE", "populated %1 free prefix leases for the FLQ allocator in subnet %2 completed in %3",
     "DHCPSRV_CFGMGR_IPV4_RESERVATIONS_NON_UNIQUE_IGNORED", "ignoring \"ip-reservations-unique\" setting because at least one of the host database backends does not support non-unique IP reservations in a subnet",
     "DHCPSRV_CFGMGR_IPV6_RESERVATIONS_NON_UNIQUE_IGNORED", "ignoring \"ip-reservations-unique\" setting because at least one of the host database backends does not support non unique IP reservations in a subnet",
-    "DHCPSRV_CFGMGR_IP_RESERVATIONS_UNIQUE_DUPLICATES_DETECTED", "the \"ip-reservations-unique\" flag is set to false and multiple reservations for the IP address: %1 in subnet: %2 are not allowed causing error: %3",
+    "DHCPSRV_CFGMGR_IP_RESERVATIONS_UNIQUE_DUPLICATES_DETECTED", "the \"ip-reservations-unique\" flag is set to true and multiple reservations for the IP address: %1 in subnet: %2 are not allowed causing error: %3",
     "DHCPSRV_CFGMGR_IP_RESERVATIONS_UNIQUE_DUPLICATES_POSSIBLE", "setting \"ip-reservations-unique\" from false to true poses a risk that some host backends may still contain multiple reservations for the same IP address",
     "DHCPSRV_CFGMGR_NEW_SUBNET4", "a new subnet has been added to configuration: %1",
     "DHCPSRV_CFGMGR_NEW_SUBNET6", "a new subnet has been added to configuration: %1",

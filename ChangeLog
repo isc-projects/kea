@@ -1,3 +1,10 @@
+2198.	[func]		razvan
+	A new log message
+	DHCPSRV_CFGMGR_IP_RESERVATIONS_UNIQUE_DUPLICATES_DETECTED is
+	shown when multiple reservations are detected for the same IP
+	address.
+	(Gitlab #3108)
+
 2197.	[func]		razvan
 	Added support for database connection retry on server startup.
 	The new 'retry-on-startup' parameter controls this behavior along
