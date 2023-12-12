@@ -51,10 +51,8 @@ Guide <https://reports.kea.isc.org/dev_guide/df/d46/hooksdgDevelopersGuide.html>
 Note that some libraries are available under different licenses.
 
 Please also note that some libraries may require additional dependencies and/or
-compilation switches to be enabled, e.g. the RADIUS library
-requires the FreeRadius-client library to be present. If
-the ``--with-freeradius`` option is not specified, the RADIUS library is not
-built.
+compilation switches to be enabled.
+
 
 Installing Hook Packages
 ========================
@@ -133,9 +131,8 @@ first section of the output should look something like this:
      Included Hooks:   forensic_log flex_id host_cmds
 
 The last line indicates which specific hooks were detected. Note that
-some hooks may require their own dedicated switches, e.g. the RADIUS hook
-requires extra switches for FreeRADIUS. Please consult later sections of
-this chapter for details.
+some hooks may require their own dedicated switches.
+Please consult later sections of this chapter for details.
 
 6. Rebuild Kea.
 

@@ -2078,16 +2078,6 @@ Google Test:
 END
 fi
 
-if test "$FREERADIUS_INCLUDE" != ""; then
-cat >> config.report << END
-
-FreeRADIUS client:
-  FREERADIUS_INCLUDE:    ${FREERADIUS_INCLUDE}
-  FREERADIUS_LIB:        ${FREERADIUS_LIB}
-  FREERADIUS_DICTIONARY: ${FREERADIUS_DICTIONARY}
-END
-fi
-
 if test "$ENABLE_GSSAPI" = "yes"; then
 cat >> config.report << END
 

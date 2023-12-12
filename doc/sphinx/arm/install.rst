@@ -169,9 +169,6 @@ the system:
    or on a machine reachable over a network is required. Note that running
    the unit tests requires a local PostgreSQL server.
 
--  The FreeRADIUS client library is required to connect to a RADIUS server.
-   This is specified using the ``--with-freeradius`` configuration switch.
-
 -  Sysrepo v1.4.140 and libyang v1.0.240 are needed to connect to a Sysrepo
    datastore. Earlier versions are no longer supported. When compiling from
    sources, the configure switches that can be used are ``--with-libyang`` and
@@ -315,19 +312,6 @@ options. Some commonly used options are:
  - ``--enable-perfdhcp``
    Build the optional :iscman:`perfdhcp` DHCP benchmarking tool. The default
    is to not build it.
-
- - ``--with-freeradius``
-   Build the optional ``RADIUS`` hook. This option specifies the path to the
-   patched version of the FreeRADIUS client. This feature is available in
-   the subscriber-only version of Kea, and requires the subscription-only RADIUS hook.
-
- - ``--with-freeradius-dictionary``
-   Specify a non-standard location for a FreeRADIUS dictionary file, which
-   contains a list of supported RADIUS attributes. This feature is available in
-   the subscriber-only version of Kea, and requires the subscription-only RADIUS hook.
-
-If the RADIUS options are not available, ensure that the RADIUS hook sources are in
-the ``premium`` directory and rerun ``autoreconf -i``.
 
 .. note::
 
