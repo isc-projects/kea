@@ -1255,7 +1255,6 @@ ControlledDhcpv4Srv::~ControlledDhcpv4Srv() {
         MultiThreadingMgr::instance().apply(false, 0, 0);
         LeaseMgrFactory::destroy();
         HostMgr::create();
-        cleanup();
 
         // The closure captures either a shared pointer (memory leak)
         // or a raw pointer (pointing to a deleted object).
@@ -1264,6 +1263,8 @@ ControlledDhcpv4Srv::~ControlledDhcpv4Srv() {
         DatabaseConnection::db_failed_callback_ = 0;
 
         timer_mgr_->unregisterTimers();
+
+        cleanup();
 
         // Close the command socket (if it exists).
         CommandMgr::instance().closeCommandSocket();

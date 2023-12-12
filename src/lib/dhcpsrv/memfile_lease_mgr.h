@@ -901,7 +901,7 @@ public:
     /// @param timer_name The DB reconnect timer name.
     /// @return Version number as a pair of unsigned integers.  "first" is the
     ///         major version number, "second" the minor number.
-    virtual std::pair<uint32_t, uint32_t> getVersion(const std::string& /* timer_name */ = "") const override;
+    virtual std::pair<uint32_t, uint32_t> getVersion(const std::string& timer_name = std::string()) const override;
 
     /// @brief Commit Transactions
     ///

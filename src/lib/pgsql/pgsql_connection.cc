@@ -310,7 +310,7 @@ PgSqlConnection::openDatabaseInternal(bool logging) {
 
             std::ostringstream s;
 
-            s << " (scheduling retry " << rec->retriesLeft() << " in " << rec->retryInterval() << " milliseconds)";
+            s << " (scheduling retry " << rec->retryIndex() + 1 << " of " << rec->maxRetries() << " in " << rec->retryInterval() << " milliseconds)";
 
             error_message += s.str();
 

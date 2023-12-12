@@ -1393,7 +1393,7 @@ public:
 
     /// @brief Creates the lease statistical data result set
     ///
-    /// The result set is populated by executing a  prepared SQL query
+    /// The result set is populated by executing a prepared SQL query
     /// against the database fetches the lease count per lease state per
     /// (per least type - v6 only) per subnet id.
     ///

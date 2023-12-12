@@ -550,14 +550,16 @@ The possible values are:
 
 -  ``stop-retry-exit`` - disables the DHCP service while trying to automatically
    recover lost connections. Shuts down the server on failure after exhausting
-   ``max-reconnect-tries``. This is the default value for MySQL and PostgreSQL.
+   ``max-reconnect-tries``. This is the default value for the lease backend,
+   the host backend, and the configuration backend.
 
--  ``serve-retry-exit`` - continues the DHCP service while trying to automatically
-   recover lost connections. Shuts down the server on failure after exhausting
-   ``max-reconnect-tries``.
+-  ``serve-retry-exit`` - continues the DHCP service while trying to
+   automatically recover lost connections. Shuts down the server on failure
+   after exhausting ``max-reconnect-tries``.
 
--  ``serve-retry-continue`` - continues the DHCP service and does not shut down the
-   server even if the recovery fails.
+-  ``serve-retry-continue`` - continues the DHCP service and does not shut down
+   the server even if the recovery fails. This is the default value for forensic
+   logging.
 
 .. note::
 

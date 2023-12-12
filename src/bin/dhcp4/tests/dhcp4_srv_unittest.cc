@@ -2724,7 +2724,7 @@ Dhcpv4SrvTest::badRelayAgentInfoEcho() {
     // Let's create a relayed DISCOVER. This particular relayed DISCOVER has
     // added option 82 (relay agent info) with a sub-option which does not
     // fit in the option. Unpacking it gave an empty option which is
-    // supposed to not be  echoed back in its response.
+    // supposed to not be echoed back in its response.
     Pkt4Ptr dis;
     ASSERT_NO_THROW(dis = PktCaptures::captureBadRelayedDiscover());
 
@@ -4299,7 +4299,7 @@ TEST_F(Dhcpv4SrvTest, relayOverride) {
     EXPECT_TRUE(subnet1 == srv_.selectSubnet(dis, drop));
     EXPECT_FALSE(drop);
 
-    // Relay belongs to the second subnet, so it  should be selected.
+    // Relay belongs to the second subnet, so it should be selected.
     dis->setGiaddr(IOAddress("192.0.3.1"));
     EXPECT_TRUE(subnet2 == srv_.selectSubnet(dis, drop));
     EXPECT_FALSE(drop);

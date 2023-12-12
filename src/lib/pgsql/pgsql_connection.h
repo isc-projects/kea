@@ -243,7 +243,7 @@ public:
     getVersion(const ParameterMap& parameters,
                const IOServiceAccessorPtr& ac = IOServiceAccessorPtr(),
                const DbCallback& cb = DbCallback(),
-               const std::string& timer_name = "");
+               const std::string& timer_name = std::string());
 
     /// @brief Prepare Single Statement
     ///

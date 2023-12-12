@@ -2269,7 +2269,7 @@ public:
     ///
     /// @param server_selector Server selector.
     /// @param pool_start_address Lower bound pool address.
-    /// @param pool_end_address  Upper bound pool address.
+    /// @param pool_end_address Upper bound pool address.
     /// @param code Code of the deleted option.
     /// @param space Option space of the deleted option.
     /// @return Number of deleted options.
@@ -2911,6 +2911,16 @@ public:
         try {
             auto srv_cfg = CfgMgr::instance().getCurrentCfg();
             auto config_ctl = srv_cfg->getConfigControlInfo();
+
+            // Something is definitely wrong. Did the configuration change
+            // somehow and there is no configuration for CB?
+            if (!config_ctl) {
+                std::string reason("No CB configuration found!");
+                LOG_ERROR(mysql_cb_logger, MYSQL_CB_RECONNECT_ATTEMPT_FAILED4)
+                        .arg(reason);
+                return (true);
+            }
+
             // Iterate over the configured DBs and instantiate them.
             for (auto db : config_ctl->getConfigDatabases()) {
                 const std::string& access = db.getAccessString();
@@ -3603,7 +3613,7 @@ TaggedStatementArray tagged_statements = { {
 
     // Delete single global option.
     { MySqlConfigBackendDHCPv4Impl::DELETE_OPTION4,
-      MYSQL_DELETE_OPTION_WITH_TAG(dhcp4, AND o.scope_id = 0  AND o.code = ? AND o.space = ?)
+      MYSQL_DELETE_OPTION_WITH_TAG(dhcp4, AND o.scope_id = 0 AND o.code = ? AND o.space = ?)
     },
 
     // Delete all global options which are unassigned to any servers.

@@ -3901,7 +3901,7 @@ GenericLeaseMgrTest::testLeaseStatsQuery4() {
     }
 
     // Now let's insert some leases into subnet 1.
-    // Two leases in  the default state, i.e. assigned.
+    // Two leases in the default state, i.e. assigned.
     // One lease in declined state.
     // One lease in the expired state.
     int subnet_id = 1;

@@ -1074,9 +1074,9 @@ to dump the logs table from a MYSQL database:
 Like all the other database-centric features, forensic logging supports database
 connection recovery, which can be enabled by setting the ``on-fail`` parameter.
 If not specified, the ``on-fail`` parameter in forensic logging defaults to
-``serve-retry-continue``;
-this is a change from its behavior in the Lease Commands, Host Commands, and
-Configuration Backend hook libraries, where
+``serve-retry-continue``. This is different than for
+:ischooklib:`libdhcp_lease_cmds.so`, :ischooklib:`libdhcp_host_cmds.so`, and
+:ischooklib:`libdhcp_cb_cmds.so`, where
 ``on-fail`` defaults to ``stop-retry-exit``. In this case, the server continues
 serving clients and does not shut down even if the recovery mechanism fails.
 If ``on-fail`` is set to ``serve-retry-exit``, the server will shut down if

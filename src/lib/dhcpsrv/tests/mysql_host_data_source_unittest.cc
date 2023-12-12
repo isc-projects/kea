@@ -479,26 +479,26 @@ TEST_F(MySqlHostDataSourceTest, globalSubnetId6MultiThreading) {
 }
 
 /// @brief Verifies that IPv4 host reservation with options can have a max value
-/// for  dhcp4_subnet id
+/// for dhcp4_subnet id
 TEST_F(MySqlHostDataSourceTest, maxSubnetId4) {
     testMaxSubnetId4();
 }
 
 /// @brief Verifies that IPv4 host reservation with options can have a max value
-/// for  dhcp4_subnet id
+/// for dhcp4_subnet id
 TEST_F(MySqlHostDataSourceTest, maxSubnetId4MultiThreading) {
     MultiThreadingTest mt(true);
     testMaxSubnetId4();
 }
 
 /// @brief Verifies that IPv6 host reservation with options can have a max value
-/// for  dhcp6_subnet id
+/// for dhcp6_subnet id
 TEST_F(MySqlHostDataSourceTest, maxSubnetId6) {
     testMaxSubnetId6();
 }
 
 /// @brief Verifies that IPv6 host reservation with options can have a max value
-/// for  dhcp6_subnet id
+/// for dhcp6_subnet id
 TEST_F(MySqlHostDataSourceTest, maxSubnetId6MultiThreading) {
     MultiThreadingTest mt(true);
     testMaxSubnetId6();

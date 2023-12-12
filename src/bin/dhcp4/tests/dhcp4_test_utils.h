@@ -4,7 +4,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-/// @file   dhcp4_test_utils.h
+/// @file dhcp4_test_utils.h
 ///
 /// @brief This file contains utility classes used for DHCPv4 server testing
 

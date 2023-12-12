@@ -58,13 +58,14 @@ CfgDbAccess::getHostDbAccessStringList() const {
 
 void
 CfgDbAccess::createManagers() const {
+    std::string access = getLeaseDbAccessString();
     try {
         // Recreate lease manager without preserving the registered callbacks.
-        LeaseMgrFactory::recreate(getLeaseDbAccessString(), false);
+        LeaseMgrFactory::recreate(access, false);
     } catch (const isc::db::DbOpenErrorWithRetry& err) {
         std::string redacted;
         try {
-            DatabaseConnection::ParameterMap parameters = DatabaseConnection::parse(getLeaseDbAccessString());
+            DatabaseConnection::ParameterMap parameters = DatabaseConnection::parse(access);
             redacted = DatabaseConnection::redactedAccessString(parameters);
         } catch (...) {
         }

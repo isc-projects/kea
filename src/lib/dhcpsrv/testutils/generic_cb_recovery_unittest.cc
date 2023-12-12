@@ -99,7 +99,7 @@ GenericConfigBackendDbLostCallbackTest::testRetryOpenDbLostAndRecoveredCallback(
     // Verify we can execute a query.  We don't care about the answer.
     ServerCollection servers;
 
-    // A query should fail with NoSuchDatabase,.
+    // A query should fail with NoSuchDatabase.
     ASSERT_THROW(servers = getAllServers(), NoSuchDatabase);
 
     access = validConnectionString();
@@ -154,7 +154,7 @@ GenericConfigBackendDbLostCallbackTest::testRetryOpenDbLostAndFailedCallback() {
     // Verify we can execute a query.  We don't care about the answer.
     ServerCollection servers;
 
-    // A query should fail with NoSuchDatabase,.
+    // A query should fail with NoSuchDatabase.
     ASSERT_THROW(servers = getAllServers(), NoSuchDatabase);
 
     io_service_->poll();
@@ -164,7 +164,7 @@ GenericConfigBackendDbLostCallbackTest::testRetryOpenDbLostAndFailedCallback() {
     EXPECT_EQ(0, db_recovered_callback_called_);
     EXPECT_EQ(1, db_failed_callback_called_);
 
-    // A query should fail with NoSuchDatabase,.
+    // A query should fail with NoSuchDatabase.
     ASSERT_THROW(servers = getAllServers(), NoSuchDatabase);
 }
 
@@ -200,7 +200,7 @@ GenericConfigBackendDbLostCallbackTest::testRetryOpenDbLostAndRecoveredAfterTime
     // Verify we can execute a query.  We don't care about the answer.
     ServerCollection servers;
 
-    // A query should fail with NoSuchDatabase,.
+    // A query should fail with NoSuchDatabase.
     ASSERT_THROW(servers = getAllServers(), NoSuchDatabase);
 
     io_service_->poll();
@@ -274,7 +274,7 @@ GenericConfigBackendDbLostCallbackTest::testRetryOpenDbLostAndFailedAfterTimeout
     // Verify we can execute a query.  We don't care about the answer.
     ServerCollection servers;
 
-    // A query should fail with NoSuchDatabase,.
+    // A query should fail with NoSuchDatabase.
     ASSERT_THROW(servers = getAllServers(), NoSuchDatabase);
 
     io_service_->poll();
@@ -284,7 +284,7 @@ GenericConfigBackendDbLostCallbackTest::testRetryOpenDbLostAndFailedAfterTimeout
     EXPECT_EQ(0, db_recovered_callback_called_);
     EXPECT_EQ(0, db_failed_callback_called_);
 
-    // A query should fail with NoSuchDatabase,.
+    // A query should fail with NoSuchDatabase.
     ASSERT_THROW(servers = getAllServers(), NoSuchDatabase);
 
     sleep(1);
@@ -296,7 +296,7 @@ GenericConfigBackendDbLostCallbackTest::testRetryOpenDbLostAndFailedAfterTimeout
     EXPECT_EQ(0, db_recovered_callback_called_);
     EXPECT_EQ(0, db_failed_callback_called_);
 
-    // A query should fail with NoSuchDatabase,.
+    // A query should fail with NoSuchDatabase.
     ASSERT_THROW(servers = getAllServers(), NoSuchDatabase);
 
     sleep(1);
@@ -308,7 +308,7 @@ GenericConfigBackendDbLostCallbackTest::testRetryOpenDbLostAndFailedAfterTimeout
     EXPECT_EQ(0, db_recovered_callback_called_);
     EXPECT_EQ(1, db_failed_callback_called_);
 
-    // A query should fail with NoSuchDatabase,.
+    // A query should fail with NoSuchDatabase.
     ASSERT_THROW(servers = getAllServers(), NoSuchDatabase);
 }
 

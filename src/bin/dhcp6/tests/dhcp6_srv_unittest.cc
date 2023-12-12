@@ -1850,7 +1850,7 @@ TEST_F(Dhcpv6SrvTest, minLifetimeRenew) {
 // This test verifies that a renewal returns max ifetimes when
 // the client adds an IAPREFIX sub option with too large lifetime hints.
 TEST_F(Dhcpv6SrvTest, maxLifetimeRenew) {
-    // Max  values are 4000 and 5000.
+    // Max values are 4000 and 5000.
     testRenewBasic(Lease::TYPE_PD, "2001:db8:1:2::",
                    "2001:db8:1:2::", pd_pool_->getLength(),
                    true, false, 5000, 6000, 4000, 5000);
@@ -1895,7 +1895,7 @@ TEST_F(Dhcpv6SrvTest, minLifetimeReuseExpired) {
 // This test verifies that an expired reuse returns max lifetimes when
 // the client adds an IAADDR sub option with too large lifetime hints.
 TEST_F(Dhcpv6SrvTest, maxLifetimeReuseExpired) {
-    // Max  values are 4000 and 5000.
+    // Max values are 4000 and 5000.
     testRenewBasic(Lease::TYPE_NA, "2001:db8:1:1::cafe:babe",
                    "2001:db8:1:1::cafe:babe", 128,
                    true, true, 5000, 6000, 4000, 5000);
