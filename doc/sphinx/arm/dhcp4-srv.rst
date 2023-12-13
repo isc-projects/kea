@@ -583,13 +583,13 @@ The possible values are:
    "Dhcp4": { "lease-database": { "retry-on-startup" : true, ... }, ... }
 
 During server startup, the inability to connect to any of the configured
-backends is considered fatal only if ``retry-on-startup`` is set to ``false``.
-A fatal error is logged and the server exits, based on the idea that the
-configuration should be valid at startup. Exiting to the operating system allows
-nanny scripts to detect the problem.
+backends is considered fatal only if ``retry-on-startup`` is set to ``false``
+(the default). A fatal error is logged and the server exits, based on the idea
+that the configuration should be valid at startup. Exiting to the operating
+system allows nanny scripts to detect the problem.
 If ``retry-on-startup`` is set to ``true``, the server will start reconnection
 attempts even at server startup or on reconfigure events, and will honor the
-action specified in ``on-fail`` parameter.
+action specified in the ``on-fail`` parameter.
 
 The host parameter is used by the MySQL and PostgreSQL backends.
 
@@ -818,13 +818,13 @@ The possible values are:
    "Dhcp4": { "hosts-database": { "retry-on-startup" : true, ... }, ... }
 
 During server startup, the inability to connect to any of the configured
-backends is considered fatal only if ``retry-on-startup`` is set to ``false``.
-A fatal error is logged and the server exits, based on the idea that the
-configuration should be valid at startup. Exiting to the operating system allows
-nanny scripts to detect the problem.
+backends is considered fatal only if ``retry-on-startup`` is set to ``false``
+(the default). A fatal error is logged and the server exits, based on the idea
+that the configuration should be valid at startup. Exiting to the operating
+system allows nanny scripts to detect the problem.
 If ``retry-on-startup`` is set to ``true``, the server will start reconnection
 attempts even at server startup or on reconfigure events, and will honor the
-action specified in ``on-fail`` parameter.
+action specified in the ``on-fail`` parameter.
 
 Finally, the credentials of the account under which the server will
 access the database should be set:

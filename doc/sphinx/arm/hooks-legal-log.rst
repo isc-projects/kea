@@ -1085,10 +1085,10 @@ the connection to the database backend is not restored according to the
 continues serving clients while this mechanism is activated.
 
 During server startup, the inability to connect to any of the configured
-backends is considered fatal only if ``retry-on-startup`` is set to ``false``.
-A fatal error is logged and the server exits, based on the idea that the
-configuration should be valid at startup. Exiting to the operating system allows
-nanny scripts to detect the problem.
+backends is considered fatal only if ``retry-on-startup`` is set to ``false``
+(the default). A fatal error is logged and the server exits, based on the idea
+that the configuration should be valid at startup. Exiting to the operating
+system allows nanny scripts to detect the problem.
 If ``retry-on-startup`` is set to ``true``, the server will start reconnection
 attempts even at server startup or on reconfigure events, and will honor the
-action specified in ``on-fail`` parameter.
+action specified in the ``on-fail`` parameter.

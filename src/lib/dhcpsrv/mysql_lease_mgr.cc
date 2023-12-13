@@ -2199,7 +2199,7 @@ MySqlLeaseMgr::MySqlLeaseMgr(const DatabaseConnection::ParameterMap& parameters)
     std::pair<uint32_t, uint32_t> code_version(MYSQL_SCHEMA_VERSION_MAJOR,
                                                MYSQL_SCHEMA_VERSION_MINOR);
 
-    std::string timer_name = "";
+    std::string timer_name;
     bool retry = false;
     if (parameters.count("retry-on-startup")) {
         if (parameters.at("retry-on-startup") == "true") {

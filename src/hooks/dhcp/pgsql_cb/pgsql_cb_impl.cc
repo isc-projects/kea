@@ -117,7 +117,7 @@ PgSqlConfigBackendImpl::PgSqlConfigBackendImpl(const std::string& space,
     std::pair<uint32_t, uint32_t> code_version(PGSQL_SCHEMA_VERSION_MAJOR,
                                                PGSQL_SCHEMA_VERSION_MINOR);
 
-    std::string timer_name = "";
+    std::string timer_name;
     bool retry = false;
     if (parameters.count("retry-on-startup")) {
         if (parameters.at("retry-on-startup") == "true") {

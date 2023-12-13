@@ -1620,7 +1620,7 @@ public:
     ///
     /// @throw isc::db::DbOperationError An operation on the open database
     ///        has failed.
-    std::pair<uint32_t, uint32_t> getVersion(const std::string& timer_name = "") const;
+    std::pair<uint32_t, uint32_t> getVersion(const std::string& timer_name = std::string()) const;
 
     /// @brief The parameters
     DatabaseConnection::ParameterMap parameters_;
@@ -2301,7 +2301,7 @@ PgSqlHostDataSourceImpl::PgSqlHostDataSourceImpl(const DatabaseConnection::Param
     std::pair<uint32_t, uint32_t> code_version(PGSQL_SCHEMA_VERSION_MAJOR,
                                                PGSQL_SCHEMA_VERSION_MINOR);
 
-    std::string timer_name = "";
+    std::string timer_name;
     bool retry = false;
     if (parameters.count("retry-on-startup")) {
         if (parameters.at("retry-on-startup") == "true") {

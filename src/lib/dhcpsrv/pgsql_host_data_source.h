@@ -517,7 +517,7 @@ public:
     ///
     /// @throw isc::db::DbOperationError An operation on the open database
     ///        has failed.
-    virtual std::pair<uint32_t, uint32_t> getVersion(const std::string& timer_name = "") const;
+    virtual std::pair<uint32_t, uint32_t> getVersion(const std::string& timer_name = std::string()) const;
 
     /// @brief Commit Transactions
     ///

@@ -818,7 +818,7 @@ public:
     /// B>=A and B=C (it is ok to have newer backend, as it should be backward
     /// compatible)
     /// Also if B>C, some database upgrade procedure may be triggered
-    virtual VersionPair getVersion(const std::string& timer_name = "") const = 0;
+    virtual VersionPair getVersion(const std::string& timer_name = std::string()) const = 0;
 
     /// @brief Commit Transactions
     ///

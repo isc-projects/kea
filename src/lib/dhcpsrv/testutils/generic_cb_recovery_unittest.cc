@@ -85,6 +85,8 @@ GenericConfigBackendDbLostCallbackTest::testRetryOpenDbLostAndRecoveredCallback(
     std::string access = invalidConnectionString();
     access += " retry-on-startup=true";
 
+    // by adding an invalid access will cause the manager factory to throw
+    // resulting in failure to recreate the manager
     ConfigControlInfoPtr config_ctl_info(new ConfigControlInfo());
     config_ctl_info->addConfigDatabase(access);
     CfgMgr::instance().getCurrentCfg()->setConfigControlInfo(config_ctl_info);
@@ -104,8 +106,6 @@ GenericConfigBackendDbLostCallbackTest::testRetryOpenDbLostAndRecoveredCallback(
 
     access = validConnectionString();
     CfgMgr::instance().clear();
-    // by adding an invalid access will cause the manager factory to throw
-    // resulting in failure to recreate the manager
     config_ctl_info.reset(new ConfigControlInfo());
     config_ctl_info->addConfigDatabase(access);
     CfgMgr::instance().getCurrentCfg()->setConfigControlInfo(config_ctl_info);
@@ -140,6 +140,8 @@ GenericConfigBackendDbLostCallbackTest::testRetryOpenDbLostAndFailedCallback() {
     std::string access = invalidConnectionString();
     access += " retry-on-startup=true";
 
+    // by adding an invalid access will cause the manager factory to throw
+    // resulting in failure to recreate the manager
     ConfigControlInfoPtr config_ctl_info(new ConfigControlInfo());
     config_ctl_info->addConfigDatabase(access);
     CfgMgr::instance().getCurrentCfg()->setConfigControlInfo(config_ctl_info);
@@ -186,6 +188,8 @@ GenericConfigBackendDbLostCallbackTest::testRetryOpenDbLostAndRecoveredAfterTime
     std::string extra = " max-reconnect-tries=3 reconnect-wait-time=1 retry-on-startup=true";
     access += extra;
 
+    // by adding an invalid access will cause the manager factory to throw
+    // resulting in failure to recreate the manager
     ConfigControlInfoPtr config_ctl_info(new ConfigControlInfo());
     config_ctl_info->addConfigDatabase(access);
     CfgMgr::instance().getCurrentCfg()->setConfigControlInfo(config_ctl_info);
@@ -260,6 +264,8 @@ GenericConfigBackendDbLostCallbackTest::testRetryOpenDbLostAndFailedAfterTimeout
     std::string extra = " max-reconnect-tries=3 reconnect-wait-time=1 retry-on-startup=true";
     access += extra;
 
+    // by adding an invalid access will cause the manager factory to throw
+    // resulting in failure to recreate the manager
     ConfigControlInfoPtr config_ctl_info(new ConfigControlInfo());
     config_ctl_info->addConfigDatabase(access);
     CfgMgr::instance().getCurrentCfg()->setConfigControlInfo(config_ctl_info);
@@ -429,6 +435,7 @@ GenericConfigBackendDbLostCallbackTest::testDbLostAndFailedCallback() {
 
     access = invalidConnectionString();
     CfgMgr::instance().clear();
+
     // by adding an invalid access will cause the manager factory to throw
     // resulting in failure to recreate the manager
     config_ctl_info.reset(new ConfigControlInfo());
@@ -494,6 +501,7 @@ GenericConfigBackendDbLostCallbackTest::testDbLostAndRecoveredAfterTimeoutCallba
     access = invalidConnectionString();
     access += extra;
     CfgMgr::instance().clear();
+
     // by adding an invalid access will cause the manager factory to throw
     // resulting in failure to recreate the manager
     config_ctl_info.reset(new ConfigControlInfo());
@@ -584,6 +592,7 @@ GenericConfigBackendDbLostCallbackTest::testDbLostAndFailedAfterTimeoutCallback(
     access = invalidConnectionString();
     access += extra;
     CfgMgr::instance().clear();
+
     // by adding an invalid access will cause the manager factory to throw
     // resulting in failure to recreate the manager
     config_ctl_info.reset(new ConfigControlInfo());

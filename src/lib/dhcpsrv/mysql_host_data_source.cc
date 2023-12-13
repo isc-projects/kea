@@ -2178,7 +2178,7 @@ public:
     ///
     /// @throw isc::dhcp::DbOperationError An operation on the open database
     ///        has failed.
-    std::pair<uint32_t, uint32_t> getVersion(const std::string& timer_name = "") const;
+    std::pair<uint32_t, uint32_t> getVersion(const std::string& timer_name = std::string()) const;
 
     /// @brief Executes statements which inserts a row into one of the tables.
     ///
@@ -2884,7 +2884,7 @@ MySqlHostDataSourceImpl::MySqlHostDataSourceImpl(const DatabaseConnection::Param
     std::pair<uint32_t, uint32_t> code_version(MYSQL_SCHEMA_VERSION_MAJOR,
                                                MYSQL_SCHEMA_VERSION_MINOR);
 
-    std::string timer_name = "";
+    std::string timer_name;
     bool retry = false;
     if (parameters.count("retry-on-startup")) {
         if (parameters.at("retry-on-startup") == "true") {
