@@ -6314,6 +6314,17 @@ UPDATE schema_version
 
 -- This line concludes the schema upgrade to version 19.0.
 
+-- This line starts the schema upgrade to version 20.0.
+
+-- Add subnet id and address index for lease6.
+CREATE INDEX lease6_by_subnet_id_address ON lease6 (subnet_id, address ASC);
+
+-- Update the schema version number.
+UPDATE schema_version
+    SET version = '20', minor = '0';
+
+-- This line concludes the schema upgrade to version 20.0.
+
 -- Commit the script transaction.
 COMMIT;
 
