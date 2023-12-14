@@ -1235,7 +1235,6 @@ GenericExtendedInfoTest<NakedLeaseMgrType>::testGetLeases6ByLink() {
     // Link: 8 entries.
     EXPECT_NO_THROW(got = lease_mgr_->getLeases6(1, zero,
                                                  LeasePageSize(10)));
-
     ASSERT_EQ(8, got.size());
     Lease6Ptr lease;
     for (size_t i = 0; i < 8; ++i) {
