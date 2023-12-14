@@ -365,6 +365,8 @@ other than Discover and the first Request from each client.
    than global. Loading the RADIUS hook library in a Kea DHCP server
    that has this configuration raises an error.
 
+.. _radius-server-example:
+
 RADIUS Server Setup Example
 ---------------------------
 
@@ -435,6 +437,7 @@ set up to enable basic functionality in Kea.
    - ``/etc/radius-config/mods-config/files/accounting``
    - ``/etc/freeradius/3.0/mods-config/files/accounting``
 
+.. _radius-lease-allocation:
 
 RADIUS Workflows for Lease Allocation
 -------------------------------------
@@ -447,6 +450,8 @@ lease allocation process in :iscman:`kea-dhcp4` and :iscman:`kea-dhcp6`.
 Somewhat tangential to lease allocation, and not shown in the diagrams above,
 is the ``command_processed`` callout, which sends Accounting-Request messages
 when a lease command is received.
+
+.. _radius-differences:
 
 Differences Between RADIUS Hook Libraries Prior To 2.4.0 and As Of 2.6.0
 ------------------------------------------------------------------------
