@@ -59,7 +59,7 @@ public:
     ///
     /// Starts test timer which detects timeouts.
     TlsListenerTest()
-        : io_service_(), test_timer_(io_service_),
+        : io_service_(new IOService()), test_timer_(io_service_),
           run_io_service_timer_(io_service_),
           clients_(), clients_done_(0) {
         test_timer_.setup(std::bind(&TlsListenerTest::timeoutHandler, this, true),
@@ -139,7 +139,7 @@ public:
         if (fail_on_timeout) {
             ADD_FAILURE() << "Timeout occurred while running the test!";
         }
-        io_service_.stop();
+        io_service_->stop();
     }
 
     /// @brief Callback function each client invokes when done.
@@ -151,7 +151,7 @@ public:
         ++clients_done_;
         if (clients_done_ >= clients_.size()) {
             // They're all done or dead. Stop the service.
-            io_service_.stop();
+            io_service_->stop();
         }
     }
 
@@ -160,7 +160,7 @@ public:
     /// @param timeout Optional value specifying for how long the io service
     /// should be ran.
     void runIOService(long timeout = 0) {
-        io_service_.restart();
+        io_service_->restart();
 
         if (timeout > 0) {
             run_io_service_timer_.setup(std::bind(&TlsListenerTest::timeoutHandler,
@@ -168,9 +168,9 @@ public:
                                         timeout,
                                         IntervalTimer::ONE_SHOT);
         }
-        io_service_.run();
-        io_service_.restart();
-        io_service_.poll();
+        io_service_->run();
+        io_service_->restart();
+        io_service_->poll();
     }
 
     /// @brief Filter that denies every other connection.
@@ -192,7 +192,7 @@ public:
     }
 
     /// @brief IO service used in the tests.
-    IOService io_service_;
+    IOServicePtr io_service_;
 
     /// @brief Asynchronous timer service to detect timeouts.
     IntervalTimer test_timer_;
@@ -244,7 +244,7 @@ TEST_F(TlsListenerTest, listen) {
     ASSERT_EQ(expected_entries, listener.audit_trail_->getConnectionTrail(1));
 
     listener.stop();
-    io_service_.poll();
+    io_service_->poll();
 }
 
 // This test verifies that a TLS connection is denied to a client
@@ -305,7 +305,7 @@ TEST_F(TlsListenerTest, splitReads) {
     EXPECT_FALSE(client->expectedEof());
 
     listener.stop();
-    io_service_.poll();
+    io_service_->poll();
 }
 
 // This test verifies that a TLS connection can be established and used to
@@ -334,7 +334,7 @@ TEST_F(TlsListenerTest, idleTimeoutTest) {
     EXPECT_TRUE(client->expectedEof());
 
     listener.stop();
-    io_service_.poll();
+    io_service_->poll();
 }
 
 // This test verifies that TLS connections with multiple clients.
@@ -375,7 +375,7 @@ TEST_F(TlsListenerTest, multipleClientsListen) {
     }
 
     listener.stop();
-    io_service_.poll();
+    io_service_->poll();
 }
 
 // Verify that the listener handles multiple requests for multiple
@@ -428,7 +428,7 @@ TEST_F(TlsListenerTest, multipleRequetsPerClients) {
     }
 
     listener.stop();
-    io_service_.poll();
+    io_service_->poll();
 }
 
 // Verify that connection filtering can eliminate specific connections.
@@ -492,7 +492,7 @@ TEST_F(TlsListenerTest, filterClientsTest) {
     }
 
     listener.stop();
-    io_service_.poll();
+    io_service_->poll();
 }
 
 }

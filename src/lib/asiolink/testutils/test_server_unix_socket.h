@@ -53,7 +53,7 @@ public:
     /// @param io_service IO service.
     /// @param socket_file_path Socket file path.
     /// @param custom_response Custom response to be sent to the client.
-    TestServerUnixSocket(IOService& io_service,
+    TestServerUnixSocket(const IOServicePtr& io_service,
                          const std::string& socket_file_path,
                          const std::string& custom_response = "");
 
@@ -123,7 +123,7 @@ private:
     void signalRunning();
 
     /// @brief IO service used by the tests.
-    IOService& io_service_;
+    IOServicePtr io_service_;
 
     /// @brief Server endpoint.
     boost::asio::local::stream_protocol::endpoint server_endpoint_;

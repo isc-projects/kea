@@ -14,7 +14,7 @@ namespace ph = std::placeholders;
 namespace isc {
 namespace tcp {
 
-TcpListener::TcpListener(IOService& io_service,
+TcpListener::TcpListener(const IOServicePtr& io_service,
                          const IOAddress& server_address,
                          const unsigned short server_port,
                          const TlsContextPtr& tls_context,

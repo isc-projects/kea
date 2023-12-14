@@ -131,7 +131,7 @@ D2QueueMgr::startListening() {
 
     // Instruct the listener to start listening and set state accordingly.
     try {
-        listener_->startListening(*io_service_);
+        listener_->startListening(io_service_);
         mgr_state_ = RUNNING;
     } catch (const isc::Exception& ex) {
         isc_throw(D2QueueMgrError, "D2QueueMgr listener start failed: "

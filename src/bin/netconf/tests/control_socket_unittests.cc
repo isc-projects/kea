@@ -144,7 +144,7 @@ public:
 
     /// @brief Constructor.
     UnixControlSocketTest()
-        : ThreadedTest(), io_service_() {
+        : ThreadedTest(), io_service_(new IOService()) {
     }
 
     void SetUp() override {
@@ -160,7 +160,7 @@ public:
         // io_service must be stopped after the thread returns,
         // otherwise the thread may never return if it is
         // waiting for the completion of some asynchronous tasks.
-        io_service_.stop();
+        io_service_->stop();
         removeUnixSocketFile();
     }
 
@@ -200,7 +200,7 @@ public:
     void reflectServer();
 
     /// @brief IOService object.
-    IOService io_service_;
+    IOServicePtr io_service_;
 };  // UnixControlSocketTest
 
 /// @brief Server method running in a thread reflecting the command.
@@ -211,14 +211,14 @@ void
 UnixControlSocketTest::reflectServer() {
     // Acceptor.
     boost::asio::local::stream_protocol::acceptor
-        acceptor(io_service_.getInternalIOService());
+        acceptor(io_service_->getInternalIOService());
     EXPECT_NO_THROW_LOG(acceptor.open());
     boost::asio::local::stream_protocol::endpoint
         endpoint(unixSocketFilePath());
     EXPECT_NO_THROW_LOG(acceptor.bind(endpoint));
     EXPECT_NO_THROW_LOG(acceptor.listen());
     boost::asio::local::stream_protocol::socket
-        socket(io_service_.getInternalIOService());
+        socket(io_service_->getInternalIOService());
 
     // Ready.
     signalReady();
@@ -241,7 +241,7 @@ UnixControlSocketTest::reflectServer() {
                               accepted = true;
                           });
     while (!accepted && !timeout) {
-        io_service_.runOne();
+        io_service_->runOne();
     }
     ASSERT_FALSE(ec);
 
@@ -255,7 +255,7 @@ UnixControlSocketTest::reflectServer() {
                              received = cnt;
                          });
     while (!received && !timeout) {
-        io_service_.runOne();
+        io_service_->runOne();
     }
     ASSERT_FALSE(ec);
     rbuf.resize(received);
@@ -274,7 +274,7 @@ UnixControlSocketTest::reflectServer() {
                           sent = cnt;
                       });
     while (!sent && !timeout) {
-        io_service_.runOne();
+        io_service_->runOne();
     }
     ASSERT_FALSE(ec);
 
@@ -511,6 +511,10 @@ public:
 /// @brief Test fixture class for http control sockets.
 class HttpControlSocketTest : public ThreadedTest {
 public:
+    /// @brief Constructor.
+    HttpControlSocketTest() : io_service_(new IOService()) {
+    }
+
     void SetUp() override {
         SysrepoSetup::cleanSharedMemory();
     }
@@ -524,7 +528,7 @@ public:
         // io_service must be stopped after the thread returns,
         // otherwise the thread may never return if it is
         // waiting for the completion of some asynchronous tasks.
-        io_service_.stop();
+        io_service_->stop();
     }
 
     /// @brief Returns socket URL.
@@ -562,12 +566,12 @@ public:
             signalReady();
             // Until stop() is called run IO service.
             while (!isStopping()) {
-                io_service_.runOne();
+                io_service_->runOne();
             }
             // Main thread signalled that the thread should
             // terminate. Launch any outstanding IO service
             // handlers.
-            io_service_.poll();
+            io_service_->poll();
             // Nothing more to do. Signal that the thread is
             // done so as the main thread can close HTTP
             // listener and clean up after the test.
@@ -587,7 +591,7 @@ public:
         // If the thread is blocked on running the IO
         // service, post the empty handler to cause
         // runOne to return.
-        io_service_.post([]() { return; });
+        io_service_->post([]() { return; });
         // We asked that the thread stops. Let's wait
         // for it to signal that it has stopped.
         waitStopped();
@@ -600,7 +604,7 @@ public:
     }
 
     /// @brief IOService object.
-    IOService io_service_;
+    IOServicePtr io_service_;
 
     /// @brief Pointer to listener.
     HttpListenerPtr listener_;
@@ -611,12 +615,11 @@ void
 HttpControlSocketTest::createReflectListener() {
     HttpResponseCreatorFactoryPtr
         factory(new TestHttpResponseCreatorFactory());
-    listener_.reset(new
-                HttpListener(io_service_,
-                             IOAddress(SERVER_ADDRESS), SERVER_PORT,
-                             TlsContextPtr(), factory,
-                             HttpListener::RequestTimeout(2000),
-                             HttpListener::IdleTimeout(2000)));
+    listener_.reset(new HttpListener(io_service_,
+                                     IOAddress(SERVER_ADDRESS), SERVER_PORT,
+                                     TlsContextPtr(), factory,
+                                     HttpListener::RequestTimeout(2000),
+                                     HttpListener::IdleTimeout(2000)));
 }
 
 // Verifies that the createControlSocket template can create a http

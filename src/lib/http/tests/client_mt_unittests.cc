@@ -196,7 +196,7 @@ public:
 
     /// @brief Constructor.
     MultiThreadingHttpClientTest()
-        : io_service_(), client_(), listener_(), factory_(), listeners_(), factories_(),
+        : io_service_(new IOService()), client_(), listener_(), factory_(), listeners_(), factories_(),
           test_timer_(io_service_), num_threads_(0), num_batches_(0), num_listeners_(0),
           expected_requests_(0), num_in_progress_(0), num_finished_(0), paused_(false),
           pause_cnt_(0) {
@@ -229,7 +229,7 @@ public:
         if (fail_on_timeout) {
             ADD_FAILURE() << "Timeout occurred while running the test!";
         }
-        io_service_.stop();
+        io_service_->stop();
     }
 
     /// @brief Runs the test's IOService until the desired number of requests
@@ -237,10 +237,10 @@ public:
     void runIOService(size_t request_limit) {
         while (getRRCount() < request_limit) {
             // Always call reset() before we call run();
-            io_service_.restart();
+            io_service_->restart();
 
             // Run until a client stops the service.
-            io_service_.run();
+            io_service_->run();
         }
     }
 
@@ -354,7 +354,7 @@ public:
                     num_in_progress_ = 0;
                     test_cv_.notify_all();
                     // Stop the test's IOService.
-                    io_service_.stop();
+                    io_service_->stop();
                 } else {
                     // I'm done but others aren't wait here.
                     bool ret = test_cv_.wait_for(lck, std::chrono::seconds(10),
@@ -410,8 +410,8 @@ public:
                 std::unique_lock<std::mutex> lck(test_mutex_);
                 clientRRs_.push_back(clientRR);
                 ++num_finished_;
-                if ((num_finished_ >= expected_requests_) && !io_service_.stopped()) {
-                    io_service_.stop();
+                if ((num_finished_ >= expected_requests_) && !io_service_->stopped()) {
+                    io_service_->stop();
                 }
             }
 
@@ -773,7 +773,7 @@ public:
     }
 
     /// @brief IO service used in the tests.
-    IOService io_service_;
+    IOServicePtr io_service_;
 
     /// @brief Instance of the client used in the tests.
     HttpClientPtr client_;

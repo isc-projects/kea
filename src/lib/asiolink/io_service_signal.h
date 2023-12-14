@@ -29,7 +29,7 @@ public:
     ///
     /// @param io_service IOService to which to send the signal.
     /// @param handler Handler to call when a signal is received.
-    IOSignalSet(asiolink::IOServicePtr io_service, IOSignalHandler handler);
+    IOSignalSet(const asiolink::IOServicePtr& io_service, IOSignalHandler handler);
 
     /// @brief Destructor.
     ~IOSignalSet();

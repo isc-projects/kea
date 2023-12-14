@@ -15,7 +15,7 @@ using namespace isc::asiolink;
 namespace isc {
 namespace http {
 
-HttpListener::HttpListener(IOService& io_service,
+HttpListener::HttpListener(const IOServicePtr& io_service,
                            const asiolink::IOAddress& server_address,
                            const unsigned short server_port,
                            const TlsContextPtr& tls_context,

@@ -40,7 +40,7 @@ public:
     /// @brief Constructor.
     ///
     /// @param io_service The IO service used to handle events.
-    IntervalTimerImpl(IOService& io_service);
+    IntervalTimerImpl(const IOServicePtr& io_service);
 
     /// @brief Destructor.
     ~IntervalTimerImpl();
@@ -85,6 +85,9 @@ private:
     /// @brief The interval in milliseconds.
     std::atomic<long> interval_;
 
+    /// @brief The IO service used to handle events.
+    IOServicePtr io_service_;
+
     /// @brief The asio timer.
     boost::asio::deadline_timer timer_;
 
@@ -101,8 +104,8 @@ private:
     static const long INVALIDATED_INTERVAL = -1;
 };
 
-IntervalTimerImpl::IntervalTimerImpl(IOService& io_service) :
-    interval_(0), timer_(io_service.getInternalIOService()),
+IntervalTimerImpl::IntervalTimerImpl(const IOServicePtr& io_service) :
+    interval_(0), io_service_(io_service), timer_(io_service_->getInternalIOService()),
     mode_(IntervalTimer::REPEATING) {
 }
 
@@ -173,7 +176,7 @@ IntervalTimerImpl::callback(const boost::system::error_code& ec) {
     }
 }
 
-IntervalTimer::IntervalTimer(IOService& io_service) :
+IntervalTimer::IntervalTimer(const IOServicePtr& io_service) :
     impl_(new IntervalTimerImpl(io_service)) {
 }
 

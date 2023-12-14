@@ -16,7 +16,7 @@ namespace ph = std::placeholders;
 namespace isc {
 namespace http {
 
-HttpListenerImpl::HttpListenerImpl(IOService& io_service,
+HttpListenerImpl::HttpListenerImpl(const IOServicePtr& io_service,
                                    const asiolink::IOAddress& server_address,
                                    const unsigned short server_port,
                                    const TlsContextPtr& tls_context,

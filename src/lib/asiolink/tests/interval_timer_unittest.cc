@@ -25,7 +25,7 @@ using namespace isc::asiolink;
 class IntervalTimerTest : public ::testing::Test {
 protected:
     IntervalTimerTest() :
-        io_service_(), timer_called_(false), timer_cancel_success_(false)
+        io_service_(new IOService()), timer_called_(false), timer_cancel_success_(false)
     {}
     ~IntervalTimerTest() {}
     class TimerCallBack {
@@ -33,7 +33,7 @@ protected:
         TimerCallBack(IntervalTimerTest* test_obj) : test_obj_(test_obj) {}
         void operator()() const {
             test_obj_->timer_called_ = true;
-            test_obj_->io_service_.stop();
+            test_obj_->io_service_->stop();
             return;
         }
     private:
@@ -72,7 +72,7 @@ protected:
             } else if (count_ == 2) {
                 // Second time of call back.
                 // Stop io_service to stop all timers.
-                test_obj_->io_service_.stop();
+                test_obj_->io_service_->stop();
                 // Compare the value of counter_.counter_ with stored one.
                 // If TimerCallBackCounter was not called (expected behavior),
                 // they are same.
@@ -119,7 +119,7 @@ protected:
                 // Second time of call back.
                 // If it reaches here, re-setup() is failed (unexpected).
                 // We should stop here.
-                test_obj_->io_service_.stop();
+                test_obj_->io_service_->stop();
             }
             return;
         }
@@ -143,7 +143,7 @@ protected:
         int& counter_;
     };
 protected:
-    IOService io_service_;
+    IOServicePtr io_service_;
     bool timer_called_;
     bool timer_cancel_success_;
 };
@@ -169,7 +169,7 @@ TEST_F(IntervalTimerTest, startIntervalTimer) {
     // setup timer
     itimer.setup(TimerCallBack(this), 100);
     EXPECT_EQ(100, itimer.getInterval());
-    io_service_.run();
+    io_service_->run();
     // Control reaches here after io_service_ was stopped by TimerCallBack.
 
     // delta: difference between elapsed time and 100 milliseconds.
@@ -226,7 +226,7 @@ TEST_F(IntervalTimerTest, destructIntervalTimer) {
     itimer_canceller.setup(
         TimerCallBackCancelDeleter(this, itimer_counter, callback_canceller),
         300);
-    io_service_.run();
+    io_service_->run();
     EXPECT_TRUE(timer_cancel_success_);
 }
 
@@ -238,7 +238,7 @@ TEST_F(IntervalTimerTest, cancel) {
     unsigned int counter = 0;
     itimer_counter.setup(TimerCallBackCanceller(counter, itimer_counter), 100);
     itimer_watcher.setup(TimerCallBack(this), 200);
-    io_service_.run();
+    io_service_->run();
     EXPECT_EQ(1, counter);
     EXPECT_EQ(0, itimer_counter.getInterval());
 
@@ -255,7 +255,7 @@ TEST_F(IntervalTimerTest, overwriteIntervalTimer) {
     //     - increments internal counter in callback function
     //       (TimerCallBackCounter)
     //       interval: 300 milliseconds
-    //     - io_service_.stop() (TimerCallBack)
+    //     - io_service_->stop() (TimerCallBack)
     //       interval: 100 milliseconds
     //  itimer_overwriter (B)
     //   (Calls TimerCallBackOverwriter)
@@ -281,7 +281,7 @@ TEST_F(IntervalTimerTest, overwriteIntervalTimer) {
     start = boost::posix_time::microsec_clock::universal_time();
     itimer.setup(TimerCallBackCounter(this), 300);
     itimer_overwriter.setup(TimerCallBackOverwriter(this, itimer), 400);
-    io_service_.run();
+    io_service_->run();
     // Control reaches here after io_service_ was stopped by
     // TimerCallBackCounter or TimerCallBackOverwriter.
 
@@ -314,7 +314,7 @@ TEST_F(IntervalTimerTest, intervalModeTest) {
     // we've hit our goals.  It won't return zero unless is out of
     // work or the service has been stopped by the test timer.
     int cnt = 0;
-    while (((cnt = io_service_.runOne()) > 0) && (repeater_count < 5)) {
+    while (((cnt = io_service_->runOne()) > 0) && (repeater_count < 5)) {
         // deliberately empty
     };
 
@@ -341,7 +341,7 @@ TEST_F(IntervalTimerTest, timerReuseTest) {
 
     // Run until a single event handler executes.  This should be our
     // one-shot expiring.
-    io_service_.runOne();
+    io_service_->runOne();
 
     // Verify the timer expired once.
     ASSERT_EQ(one_shot_count, 1);
@@ -351,7 +351,7 @@ TEST_F(IntervalTimerTest, timerReuseTest) {
 
     // Run until a single event handler executes.  This should be our
     // one-shot expiring.
-    io_service_.runOne();
+    io_service_->runOne();
 
     // Verify the timer expired once.
     ASSERT_EQ(one_shot_count, 2);
@@ -363,7 +363,7 @@ TEST_F(IntervalTimerTest, timerReuseTest) {
     // we've hit our goals.  It won't return zero unless is out of
     // work or the service has been stopped by the test timer.
     int cnt = 0;
-    while ((cnt = io_service_.runOne()) && (one_shot_count < 4)) {
+    while ((cnt = io_service_->runOne()) && (one_shot_count < 4)) {
         // deliberately empty
     };
 

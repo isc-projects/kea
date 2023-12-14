@@ -64,8 +64,8 @@ public:
     /// connect() to connect to the server.
     ///
     /// @param io_service IO service to be stopped on error.
-    explicit TCPClient(IOService& io_service)
-        : io_service_(io_service.getInternalIOService()), socket_(io_service_) {
+    explicit TCPClient(const IOServicePtr& io_service)
+        : io_service_(io_service), socket_(io_service_->getInternalIOService()) {
     }
 
     /// @brief Destructor.
@@ -105,7 +105,7 @@ public:
             if (ec.value() != boost::asio::error::in_progress) {
                 ADD_FAILURE() << "error occurred while connecting: "
                               << ec.message();
-                io_service_.stop();
+                io_service_->stop();
             }
         }
     }
@@ -117,8 +117,8 @@ public:
 
 private:
 
-    /// @brief Holds reference to the IO service.
-    boost::asio::io_service& io_service_;
+    /// @brief Holds the IO service.
+    IOServicePtr io_service_;
 
     /// @brief A socket used for the connection.
     boost::asio::ip::tcp::socket socket_;
@@ -148,7 +148,7 @@ public:
     /// @param acceptor Reference to the TCP acceptor on which asyncAccept
     /// will be called.
     /// @param callback Callback function for the asyncAccept.
-    explicit Acceptor(IOService& io_service, TestTCPAcceptor& acceptor,
+    explicit Acceptor(const IOServicePtr& io_service, TestTCPAcceptor& acceptor,
                       const TCPAcceptorCallback& callback)
         : socket_(io_service), acceptor_(acceptor), callback_(callback) {
     }
@@ -201,7 +201,7 @@ public:
     /// against endlessly running IO service when TCP connections are
     /// unsuccessful.
     TCPAcceptorTest()
-        : io_service_(), acceptor_(io_service_),
+        : io_service_(new IOService()), acceptor_(io_service_),
           asio_endpoint_(boost::asio::ip::address::from_string(SERVER_ADDRESS),
                          SERVER_PORT),
           endpoint_(asio_endpoint_), test_timer_(io_service_), connections_(),
@@ -284,12 +284,12 @@ public:
             } else {
                 ++aborted_connections_num_;
             }
-            io_service_.stop();
+            io_service_->stop();
         }
 
         // We have reached the maximum number of connections - end the test.
         if (++connections_num_ >= max_connections_) {
-            io_service_.stop();
+            io_service_->stop();
             return;
         }
 
@@ -301,11 +301,11 @@ public:
     /// It stops the IO service and reports test timeout.
     void timeoutHandler() {
         ADD_FAILURE() << "Timeout occurred while running the test!";
-        io_service_.stop();
+        io_service_->stop();
     }
 
     /// @brief IO service.
-    IOService io_service_;
+    IOServicePtr io_service_;
 
     /// @brief TCPAcceptor under test.
     TestTCPAcceptor acceptor_;
@@ -355,7 +355,7 @@ TEST_F(TCPAcceptorTest, asyncAccept) {
 
     // Run the IO service until we have accepted 10 connections, an error
     // or test timeout occurred.
-    io_service_.run();
+    io_service_->run();
 
     // Make sure that all accepted connections have been recorded.
     EXPECT_EQ(10, connections_num_);
@@ -431,7 +431,7 @@ TEST_F(TCPAcceptorTest, close) {
     acceptor_.close();
 
     // Run the IO service.
-    io_service_.run();
+    io_service_->run();
 
     // The connections should have been aborted.
     EXPECT_EQ(1, connections_num_);

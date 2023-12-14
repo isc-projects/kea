@@ -58,7 +58,7 @@ struct TimerInfo {
     /// during the timer registration.
     /// @param interval Timer interval in milliseconds.
     /// @param mode Interval timer scheduling mode.
-    TimerInfo(asiolink::IOService& io_service,
+    TimerInfo(const asiolink::IOServicePtr& io_service,
               const asiolink::IntervalTimer::Callback& user_callback,
               const long interval,
               const asiolink::IntervalTimer::Mode& mode)
@@ -274,7 +274,7 @@ TimerMgrImpl::registerTimerInternal(const std::string& timer_name,
     // Create a structure holding the configuration for the timer. It will
     // create the instance if the IntervalTimer. It will also hold the
     // callback, interval and scheduling mode parameters.
-    TimerInfoPtr timer_info(new TimerInfo(*io_service_, callback,
+    TimerInfoPtr timer_info(new TimerInfo(io_service_, callback,
                                           interval, scheduling_mode));
 
     // Actually register the timer.

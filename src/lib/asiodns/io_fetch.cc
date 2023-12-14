@@ -55,17 +55,17 @@ const int DBG_ALL = DBGLVL_TRACE_DETAIL + 20;
 /// want keep the same data).  Organising the data in this way keeps copying to
 /// a minimum.
 struct IOFetchData {
-
+    IOServicePtr io_service_;                ///< The IO service
     // The first two members are shared pointers to a base class because what is
     // actually instantiated depends on whether the fetch is over UDP or TCP,
     // which is not known until construction of the IOFetch.  Use of a shared
     // pointer here is merely to ensure deletion when the data object is deleted.
-    boost::scoped_ptr<IOAsioSocket<IOFetch> > socket;
+    boost::scoped_ptr<IOAsioSocket<IOFetch>> socket;
                                              ///< Socket to use for I/O
     boost::scoped_ptr<IOEndpoint> remote_snd;///< Where the fetch is sent
     boost::scoped_ptr<IOEndpoint> remote_rcv;///< Where the response came from
-    OutputBufferPtr   msgbuf;      ///< Wire buffer for question
-    OutputBufferPtr   received;    ///< Received data put here
+    OutputBufferPtr   msgbuf;                ///< Wire buffer for question
+    OutputBufferPtr   received;              ///< Received data put here
     IOFetch::Callback*          callback;    ///< Called on I/O Completion
     boost::asio::deadline_timer timer;       ///< Timer to measure timeouts
     IOFetch::Protocol           protocol;    ///< Protocol being used
@@ -103,14 +103,14 @@ struct IOFetchData {
     /// \param wait Timeout for the fetch (in ms).
     ///
     /// TODO: May need to alter constructor (see comment 4 in Trac ticket #554)
-    IOFetchData(IOFetch::Protocol proto, IOService& service,
+    IOFetchData(IOFetch::Protocol proto, const IOServicePtr& service,
         const IOAddress& address, uint16_t port, OutputBufferPtr& buff,
-        IOFetch::Callback* cb, int wait) :
+        IOFetch::Callback* cb, int wait) : io_service_(service),
         socket((proto == IOFetch::UDP) ?
             static_cast<IOAsioSocket<IOFetch>*>(
-                new UDPSocket<IOFetch>(service)) :
+                new UDPSocket<IOFetch>(io_service_)) :
             static_cast<IOAsioSocket<IOFetch>*>(
-                new TCPSocket<IOFetch>(service))
+                new TCPSocket<IOFetch>(io_service_))
             ),
         remote_snd((proto == IOFetch::UDP) ?
             static_cast<IOEndpoint*>(new UDPEndpoint(address, port)) :
@@ -123,7 +123,7 @@ struct IOFetchData {
         msgbuf(new OutputBuffer(512)),
         received(buff),
         callback(cb),
-        timer(service.getInternalIOService()),
+        timer(io_service_->getInternalIOService()),
         protocol(proto),
         cumulative(0),
         expected(0),
@@ -151,7 +151,7 @@ struct IOFetchData {
 
 /// IOFetch Constructor - just initialize the private data
 
-IOFetch::IOFetch(Protocol protocol, IOService& service,
+IOFetch::IOFetch(Protocol protocol, const IOServicePtr& service,
     const isc::dns::Question& question, const IOAddress& address,
     uint16_t port, OutputBufferPtr& buff, Callback* cb, int wait, bool edns) {
     MessagePtr query_msg(new Message(Message::RENDER));
@@ -159,7 +159,7 @@ IOFetch::IOFetch(Protocol protocol, IOService& service,
                 cb, wait, edns);
 }
 
-IOFetch::IOFetch(Protocol protocol, IOService& service,
+IOFetch::IOFetch(Protocol protocol, const IOServicePtr& service,
     OutputBufferPtr& outpkt, const IOAddress& address, uint16_t port,
     OutputBufferPtr& buff, Callback* cb, int wait) :
     data_(new IOFetchData(protocol, service,
@@ -168,7 +168,7 @@ IOFetch::IOFetch(Protocol protocol, IOService& service,
     data_->packet = true;
 }
 
-IOFetch::IOFetch(Protocol protocol, IOService& service,
+IOFetch::IOFetch(Protocol protocol, const IOServicePtr& service,
     ConstMessagePtr query_message, const IOAddress& address, uint16_t port,
     OutputBufferPtr& buff, Callback* cb, int wait) {
     MessagePtr msg(new Message(Message::RENDER));
@@ -185,7 +185,7 @@ IOFetch::IOFetch(Protocol protocol, IOService& service,
 
 void
 IOFetch::initIOFetch(MessagePtr& query_msg, Protocol protocol,
-                     IOService& service,
+                     const IOServicePtr& service,
                      const isc::dns::Question& question,
                      const IOAddress& address, uint16_t port,
                      OutputBufferPtr& buff, Callback* cb, int wait, bool edns) {

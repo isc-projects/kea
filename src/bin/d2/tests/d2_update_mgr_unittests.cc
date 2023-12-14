@@ -692,7 +692,7 @@ TEST_F(D2UpdateMgrTest, addTransaction) {
 
     // Create a server based on the transaction's current server, and
     // start it listening.
-    FauxServer server(*io_service_, *(trans->getCurrentServer()));
+    FauxServer server(io_service_, *(trans->getCurrentServer()));
     server.receive(FauxServer::USE_RCODE, dns::Rcode::NOERROR());
 
     // Run sweep and IO until everything is done.
@@ -747,9 +747,9 @@ TEST_F(D2UpdateMgrTest, removeTransaction) {
     ASSERT_EQ(1, trans->getUpdateAttempts());
     ASSERT_EQ(StateModel::NOP_EVT, trans->getNextEvent());
 
-    // Create a server based on the transaction's current server,
-    // and start it listening.
-    FauxServer server(*io_service_, *(trans->getCurrentServer()));
+    // Create a server based on the transaction's current server, and
+    // start it listening.
+    FauxServer server(io_service_, *(trans->getCurrentServer()));
     server.receive(FauxServer::USE_RCODE, dns::Rcode::NOERROR());
 
     // Run sweep and IO until everything is done.
@@ -797,7 +797,7 @@ TEST_F(D2UpdateMgrTest, errorTransaction) {
     ASSERT_TRUE(trans->getCurrentServer());
 
     // Create a server and start it listening.
-    FauxServer server(*io_service_, *(trans->getCurrentServer()));
+    FauxServer server(io_service_, *(trans->getCurrentServer()));
     server.receive(FauxServer::CORRUPT_RESP);
 
     // Run sweep and IO until everything is done.
@@ -836,7 +836,7 @@ TEST_F(D2UpdateMgrTest, multiTransaction) {
     // that all of configured servers have the same address.
     // and start it listening.
     asiolink::IOAddress server_ip("127.0.0.1");
-    FauxServer server(*io_service_, server_ip, 5301);
+    FauxServer server(io_service_, server_ip, 5301);
     server.receive(FauxServer::USE_RCODE, dns::Rcode::NOERROR());
 
     // Run sweep and IO until everything is done.
@@ -908,7 +908,7 @@ TEST_F(D2UpdateMgrTest, simpleAddTransaction) {
 
     // Create a server based on the transaction's current server, and
     // start it listening.
-    FauxServer server(*io_service_, *(trans->getCurrentServer()));
+    FauxServer server(io_service_, *(trans->getCurrentServer()));
     server.receive(FauxServer::USE_RCODE, dns::Rcode::NOERROR());
 
     // Run sweep and IO until everything is done.
@@ -964,9 +964,9 @@ TEST_F(D2UpdateMgrTest, simpleRemoveTransaction) {
     ASSERT_EQ(1, trans->getUpdateAttempts());
     ASSERT_EQ(StateModel::NOP_EVT, trans->getNextEvent());
 
-    // Create a server based on the transaction's current server,
-    // and start it listening.
-    FauxServer server(*io_service_, *(trans->getCurrentServer()));
+    // Create a server based on the transaction's current server, and
+    // start it listening.
+    FauxServer server(io_service_, *(trans->getCurrentServer()));
     server.receive(FauxServer::USE_RCODE, dns::Rcode::NOERROR());
 
     // Run sweep and IO until everything is done.

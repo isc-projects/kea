@@ -21,6 +21,7 @@
 #include <sys/select.h>
 
 using namespace std;
+using namespace isc::asiolink;
 using namespace isc::dhcp;
 using namespace isc;
 namespace ph = std::placeholders;
@@ -65,10 +66,9 @@ public:
         // Update the configuration with one that is enabled.
         D2ClientConfigPtr new_cfg;
 
-        isc::asiolink::IOAddress server_ip(server_address);
-        isc::asiolink::IOAddress sender_ip(server_ip.isV4() ?
-                                           D2ClientConfig::DFT_V4_SENDER_IP :
-                                           D2ClientConfig::DFT_V6_SENDER_IP);
+        IOAddress server_ip(server_address);
+        IOAddress sender_ip(server_ip.isV4() ? D2ClientConfig::DFT_V4_SENDER_IP :
+                            D2ClientConfig::DFT_V6_SENDER_IP);
 
         ASSERT_NO_THROW(new_cfg.reset(new D2ClientConfig(true,
                                   server_ip, server_port,
@@ -296,7 +296,7 @@ TEST_F(D2ClientMgrTest, udpSendExternalIOService) {
     enableDdns("127.0.0.1", 53001, dhcp_ddns::NCR_UDP);
 
     // Place sender in send mode using an external IO service.
-    asiolink::IOService io_service;
+    asiolink::IOServicePtr io_service(new IOService());
     ASSERT_NO_THROW(startSender(getErrorHandler(), io_service));
 
     // select_fd should evaluate to NOT ready to read.
@@ -328,7 +328,7 @@ TEST_F(D2ClientMgrTest, udpSendExternalIOService6) {
     enableDdns("::1", 53001, dhcp_ddns::NCR_UDP);
 
     // Place sender in send mode using an external IO service.
-    asiolink::IOService io_service;
+    asiolink::IOServicePtr io_service(new IOService());
     ASSERT_NO_THROW(startSender(getErrorHandler(), io_service));
 
     // select_fd should evaluate to NOT ready to read.

@@ -194,7 +194,7 @@ void
 DControllerTest::scheduleTimedWrite(const std::string& config,
                                     int write_time_ms) {
     new_cfg_content_ = config;
-    write_timer_.reset(new asiolink::IntervalTimer(*getIOService()));
+    write_timer_.reset(new asiolink::IntervalTimer(getIOService()));
     write_timer_->setup(std::bind(&DControllerTest::timedWriteCallback, this),
                         write_time_ms, asiolink::IntervalTimer::ONE_SHOT);
 }
@@ -206,7 +206,7 @@ DControllerTest::runWithConfig(const std::string& config, int run_time_ms,
     writeFile(config);
 
     // Shutdown (without error) after runtime.
-    isc::asiolink::IntervalTimer timer(*getIOService());
+    isc::asiolink::IntervalTimer timer(getIOService());
     timer.setup(genShutdownCallback, run_time_ms);
 
     // Record start time, and invoke launch().
@@ -236,7 +236,7 @@ DControllerTest::runWithConfig(const std::string& config, int run_time_ms,
     writeFile(config);
 
     // Shutdown (without error) after runtime.
-    isc::asiolink::IntervalTimer timer(*getIOService());
+    isc::asiolink::IntervalTimer timer(getIOService());
     timer.setup([&] { callback(); genShutdownCallback(); }, run_time_ms);
 
     // Record start time, and invoke launch().

@@ -259,14 +259,14 @@ D2ClientMgr::startSender(D2ClientErrorHandler error_handler) {
     // Create a our own service instance when we are not being multiplexed
     // into an external service..
     private_io_service_.reset(new asiolink::IOService());
-    startSender(error_handler, *private_io_service_);
+    startSender(error_handler, private_io_service_);
     LOG_INFO(dhcpsrv_logger, DHCPSRV_DHCP_DDNS_SENDER_STARTED)
              .arg(d2_client_config_->toText());
 }
 
 void
 D2ClientMgr::startSender(D2ClientErrorHandler error_handler,
-                         isc::asiolink::IOService& io_service) {
+                         const isc::asiolink::IOServicePtr& io_service) {
     if (amSending()) {
         return;
     }

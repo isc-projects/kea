@@ -27,7 +27,7 @@ public:
     ///
     /// @param io_service the process IO service.
     /// @param handler the signal handler.
-    IOSignalSetImpl(IOServicePtr io_service, IOSignalHandler handler);
+    IOSignalSetImpl(const IOServicePtr& io_service, IOSignalHandler handler);
 
     /// @brief Destructor.
     ~IOSignalSetImpl();
@@ -65,7 +65,7 @@ private:
     void callback(const boost::system::error_code& ec, int signum);
 };
 
-IOSignalSetImpl::IOSignalSetImpl(IOServicePtr io_service,
+IOSignalSetImpl::IOSignalSetImpl(const IOServicePtr& io_service,
                                  IOSignalHandler handler)
     : io_service_(io_service),
       signal_set_(io_service_->getInternalIOService()),
@@ -122,7 +122,7 @@ IOSignalSetImpl::remove(int signum) {
     }
 }
 
-IOSignalSet::IOSignalSet(IOServicePtr io_service, IOSignalHandler handler) :
+IOSignalSet::IOSignalSet(const IOServicePtr& io_service, IOSignalHandler handler) :
     impl_(new IOSignalSetImpl(io_service, handler)) {
     // It can throw but the error is fatal...
     impl_->install();

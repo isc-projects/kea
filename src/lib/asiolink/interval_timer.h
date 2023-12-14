@@ -79,8 +79,8 @@ public:
     /// memory allocation fails inside the method.
     /// This constructor may also throw \c boost::system::system_error.
     ///
-    /// \param io_service A reference to an instance of IOService
-    IntervalTimer(IOService& io_service);
+    /// \param io_service A smart pointer to an instance of IOService
+    IntervalTimer(const IOServicePtr& io_service);
 
     /// \brief The destructor.
     ///

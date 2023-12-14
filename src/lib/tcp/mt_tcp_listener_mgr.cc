@@ -57,7 +57,7 @@ MtTcpListenerMgr::start() {
         thread_io_service_.reset(new IOService());
 
         // Create a new TCPListener derivation using the factory.
-        tcp_listener_ = listener_factory_(*thread_io_service_,
+        tcp_listener_ = listener_factory_(thread_io_service_,
                                           address_,
                                           port_,
                                           tls_context_,

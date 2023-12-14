@@ -118,7 +118,7 @@ public:
     /// @param conn_pool Back pointer to the connection pool to which this
     /// connection belongs.
     /// @param url URL associated with this connection.
-    explicit Connection(IOService& io_service,
+    explicit Connection(const IOServicePtr& io_service,
                         const TlsContextPtr& tls_context,
                         const ConnectionPoolPtr& conn_pool,
                         const Url& url);
@@ -482,7 +482,7 @@ public:
     /// connections.
     /// @param max_url_connections maximum number of concurrent
     /// connections allowed per URL.
-    explicit ConnectionPool(IOService& io_service, size_t max_url_connections)
+    explicit ConnectionPool(const IOServicePtr& io_service, size_t max_url_connections)
         : io_service_(io_service), destinations_(), pool_mutex_(),
           max_url_connections_(max_url_connections) {
     }
@@ -515,8 +515,8 @@ public:
     /// should be processed.
     void postProcessNextRequest(const Url& url,
                                 const TlsContextPtr& tls_context) {
-        io_service_.post(std::bind(&ConnectionPool::processNextRequest,
-                                   shared_from_this(), url, tls_context));
+        io_service_->post(std::bind(&ConnectionPool::processNextRequest,
+                                    shared_from_this(), url, tls_context));
     }
 
     /// @brief Queue next request for sending to the server.
@@ -1106,7 +1106,7 @@ private:
     }
 
     /// @brief A reference to the IOService that drives socket IO.
-    IOService& io_service_;
+    IOServicePtr io_service_;
 
     /// @brief Map of Destinations by URL and TLS context.
     std::map<DestinationDescriptor, DestinationPtr> destinations_;
@@ -1118,7 +1118,7 @@ private:
     size_t max_url_connections_;
 };
 
-Connection::Connection(IOService& io_service,
+Connection::Connection(const IOServicePtr& io_service,
                        const TlsContextPtr& tls_context,
                        const ConnectionPoolPtr& conn_pool,
                        const Url& url)
@@ -1783,7 +1783,7 @@ public:
     /// the thread pool threads will be created and started, with the
     /// operational state being RUNNING.  Applicable only when thread-pool size
     /// is greater than zero.
-    HttpClientImpl(IOService& io_service, size_t thread_pool_size = 0,
+    HttpClientImpl(const IOServicePtr& io_service, size_t thread_pool_size = 0,
                    bool defer_thread_start = false)
         : thread_pool_size_(thread_pool_size), thread_pool_() {
         if (thread_pool_size_ > 0) {
@@ -1792,7 +1792,7 @@ public:
 
             // Create the connection pool. Note that we use the thread_pool_size
             // as the maximum connections per URL value.
-            conn_pool_.reset(new ConnectionPool(*thread_io_service_, thread_pool_size_));
+            conn_pool_.reset(new ConnectionPool(thread_io_service_, thread_pool_size_));
 
             // Create the thread pool.
             thread_pool_.reset(new IoServiceThreadPool(thread_io_service_, thread_pool_size_,
@@ -1947,7 +1947,7 @@ private:
     IoServiceThreadPoolPtr thread_pool_;
 };
 
-HttpClient::HttpClient(IOService& io_service, bool multi_threading_enabled,
+HttpClient::HttpClient(const IOServicePtr& io_service, bool multi_threading_enabled,
                        size_t thread_pool_size, bool defer_thread_start) {
     if (!multi_threading_enabled && thread_pool_size) {
         isc_throw(InvalidOperation,

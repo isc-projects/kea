@@ -35,7 +35,7 @@ public:
     /// @brief Constructor.
     ///
     /// @param io_service IO service.
-    explicit TCPAcceptor(IOService& io_service)
+    explicit TCPAcceptor(const IOServicePtr& io_service)
         : IOAcceptor<boost::asio::ip::tcp, C>(io_service) {
     }
 

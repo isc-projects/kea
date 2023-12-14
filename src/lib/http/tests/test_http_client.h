@@ -31,10 +31,10 @@ public:
     /// @param io_service IO service to be stopped on error or completion.
     /// @param server_address string containing the IP address of the server.
     /// @param port port number of the server.
-    explicit TestHttpClient(IOService& io_service,
+    explicit TestHttpClient(const IOServicePtr& io_service,
                             const std::string& server_address = "127.0.0.1",
                             uint16_t port = 18123)
-        : io_service_(io_service.getInternalIOService()), socket_(io_service_),
+        : io_service_(io_service), socket_(io_service_->getInternalIOService()),
           buf_(), response_(), server_address_(server_address),
           server_port_(port), receive_done_(false) {
     }
@@ -65,7 +65,7 @@ public:
                 if (ec.value() != boost::asio::error::in_progress) {
                     ADD_FAILURE() << "error occurred while connecting: "
                                   << ec.message();
-                    io_service_.stop();
+                    io_service_->stop();
                     return;
                 }
             }
@@ -100,7 +100,7 @@ public:
                 } else {
                     ADD_FAILURE() << "error occurred while connecting: "
                                   << ec.message();
-                    io_service_.stop();
+                    io_service_->stop();
                     return;
                 }
             }
@@ -143,7 +143,7 @@ public:
                     // Error occurred, bail...
                     ADD_FAILURE() << "error occurred while receiving HTTP"
                         " response from the server: " << ec.message();
-                    io_service_.stop();
+                    io_service_->stop();
                 }
             }
 
@@ -156,7 +156,7 @@ public:
             // expecting.
             if (response_.find("\r\n\r\n", 0) != std::string::npos) {
                 receive_done_ = true;
-                io_service_.stop();
+                io_service_->stop();
             } else {
                 receivePartialResponse();
             }
@@ -245,8 +245,8 @@ public:
 
 private:
 
-    /// @brief Holds reference to the IO service.
-    boost::asio::io_service& io_service_;
+    /// @brief Holds pointer to the IO service.
+    isc::asiolink::IOServicePtr io_service_;
 
     /// @brief A socket used for the connection.
     boost::asio::ip::tcp::socket socket_;

@@ -107,9 +107,9 @@ typedef Botan::TLS::Stream<boost::asio::ip::tcp::socket> TlsStreamImpl;
 /// @note The caller must not provide a null pointer to the TLS context.
 template <typename Callback, typename TlsStreamImpl>
 TlsStreamBase<Callback, TlsStreamImpl>::
-TlsStreamBase(IOService& service, TlsContextPtr context)
-    : TlsStreamImpl(service.getInternalIOService(), context->getContext()),
-      role_(context->getRole()) {
+TlsStreamBase(const IOServicePtr& io_service, TlsContextPtr context)
+    : StreamService(io_service), TlsStreamImpl(io_service->getInternalIOService(),
+      context->getContext()), role_(context->getRole()) {
 }
 
 /// @brief Botan boost ASIO TLS stream.
@@ -128,7 +128,7 @@ public:
     /// @param service I/O Service object used to manage the stream.
     /// @param context Pointer to the TLS context.
     /// @note The caller must not provide a null pointer to the TLS context.
-    TlsStream(IOService& service, TlsContextPtr context)
+    TlsStream(const IOServicePtr& service, TlsContextPtr context)
         : Base(service, context) {
     }
 

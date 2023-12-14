@@ -58,7 +58,7 @@ NameChangeListener::NameChangeListener(RequestReceiveHandler&
 
 
 void
-NameChangeListener::startListening(isc::asiolink::IOService& io_service) {
+NameChangeListener::startListening(const isc::asiolink::IOServicePtr& io_service) {
     if (amListening()) {
         // This amounts to a programmatic error.
         isc_throw(NcrListenerError, "NameChangeListener is already listening");
@@ -160,14 +160,14 @@ NameChangeListener::invokeRecvHandler(const Result result,
 NameChangeSender::NameChangeSender(RequestSendHandler& send_handler,
                                    size_t send_queue_max)
     : sending_(false), send_handler_(send_handler),
-      send_queue_max_(send_queue_max), io_service_(NULL), mutex_(new mutex) {
+      send_queue_max_(send_queue_max), mutex_(new mutex) {
 
     // Queue size must be big enough to hold at least 1 entry.
     setQueueMaxSize(send_queue_max);
 }
 
 void
-NameChangeSender::startSending(isc::asiolink::IOService& io_service) {
+NameChangeSender::startSending(const isc::asiolink::IOServicePtr& io_service) {
     if (amSending()) {
         // This amounts to a programmatic error.
         isc_throw(NcrSenderError, "NameChangeSender is already sending");
@@ -188,12 +188,12 @@ NameChangeSender::startSending(isc::asiolink::IOService& io_service) {
 }
 
 void
-NameChangeSender::startSendingInternal(isc::asiolink::IOService& io_service) {
+NameChangeSender::startSendingInternal(const isc::asiolink::IOServicePtr& io_service) {
     // Clear send marker.
     ncr_to_send_.reset();
 
     // Remember io service we're given.
-    io_service_ = &io_service;
+    io_service_ = io_service;
     open(io_service);
 
     // Set our status to sending.
@@ -211,7 +211,7 @@ NameChangeSender::stopSending() {
     setSending(false);
 
     // If there is an outstanding IO to complete, attempt to process it.
-    if (ioReady() && io_service_ != NULL) {
+    if (ioReady() && io_service_) {
         try {
             runReadyIO();
         } catch (const std::exception& ex) {
@@ -232,7 +232,7 @@ NameChangeSender::stopSending() {
                   DHCP_DDNS_NCR_SEND_CLOSE_ERROR).arg(ex.what());
     }
 
-    io_service_ = NULL;
+    io_service_.reset();
 }
 
 void

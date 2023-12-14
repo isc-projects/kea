@@ -94,10 +94,10 @@ HAService::HAService(const unsigned int id, const IOServicePtr& io_service,
     // Create the client and(or) listener as appropriate.
     if (!config_->getEnableMultiThreading()) {
         // Not configured for multi-threading, start a client in ST mode.
-        client_.reset(new HttpClient(*io_service_, false));
+        client_.reset(new HttpClient(io_service_, false));
     } else {
         // Create an MT-mode client.
-        client_.reset(new HttpClient(*io_service_, true,
+        client_.reset(new HttpClient(io_service_, true,
                       config_->getHttpClientThreads(), true));
 
         // If we're configured to use our own listener create and start it.
@@ -2347,10 +2347,9 @@ HAService::processSynchronize(const std::string& server_name,
 int
 HAService::synchronize(std::string& status_message, const std::string& server_name,
                        const unsigned int max_period) {
-
     lease_sync_filter_.apply();
 
-    IOService io_service;
+    IOServicePtr io_service(new IOService());
     HttpClient client(io_service, false);
 
     asyncSyncLeases(client, server_name, max_period, Lease4Ptr(),
@@ -2393,7 +2392,7 @@ HAService::synchronize(std::string& status_message, const std::string& server_na
                             // The synchronization process is completed, so let's break
                             // the IO service so as we can return the response to the
                             // controlling client.
-                            io_service.stop();
+                            io_service->stop();
                         });
 
                     } else {
@@ -2403,7 +2402,7 @@ HAService::synchronize(std::string& status_message, const std::string& server_na
                             status_message = error_message;
                         }
 
-                        io_service.stop();
+                        io_service->stop();
                     }
                 });
 
@@ -2423,7 +2422,7 @@ HAService::synchronize(std::string& status_message, const std::string& server_na
                     // The synchronization process is completed, so let's break
                     // the IO service so as we can return the response to the
                     // controlling client.
-                    io_service.stop();
+                    io_service->stop();
 
                 });
             }
@@ -2431,7 +2430,7 @@ HAService::synchronize(std::string& status_message, const std::string& server_na
         } else {
             // Also stop IO service if there is no need to enable DHCP
             // service.
-            io_service.stop();
+            io_service->stop();
         }
     });
 
@@ -2444,7 +2443,7 @@ HAService::synchronize(std::string& status_message, const std::string& server_na
 
     // Run the IO service until it is stopped by any of the callbacks. This
     // makes it synchronous.
-    io_service.run();
+    io_service->run();
 
     // End measuring duration.
     stopwatch.stop();
@@ -2562,7 +2561,7 @@ HAService::sendLeaseUpdatesFromBacklog() {
         return (true);
     }
 
-    IOService io_service;
+    IOServicePtr io_service(new IOService());
     HttpClient client(io_service, false);
     auto remote_config = config_->getFailoverPeerConfig();
     bool updates_successful = true;
@@ -2574,7 +2573,7 @@ HAService::sendLeaseUpdatesFromBacklog() {
 
     asyncSendLeaseUpdatesFromBacklog(client, remote_config,
                                      [&](const bool success, const std::string&, const int) {
-        io_service.stop();
+        io_service->stop();
         updates_successful = success;
     });
 
@@ -2582,7 +2581,7 @@ HAService::sendLeaseUpdatesFromBacklog() {
     Stopwatch stopwatch;
 
     // Run the IO service until it is stopped by the callback. This makes it synchronous.
-    io_service.run();
+    io_service->run();
 
     // End measuring duration.
     stopwatch.stop();
@@ -2652,19 +2651,19 @@ HAService::asyncSendHAReset(HttpClient& http_client,
 
 bool
 HAService::sendHAReset() {
-    IOService io_service;
+    IOServicePtr io_service(new IOService());
     HttpClient client(io_service, false);
     auto remote_config = config_->getFailoverPeerConfig();
     bool reset_successful = true;
 
     asyncSendHAReset(client, remote_config,
                      [&](const bool success, const std::string&, const int) {
-        io_service.stop();
+        io_service->stop();
         reset_successful = success;
     });
 
     // Run the IO service until it is stopped by the callback. This makes it synchronous.
-    io_service.run();
+    io_service->run();
 
     return (reset_successful);
 }
@@ -2756,7 +2755,7 @@ HAService::processMaintenanceStart() {
     // to know the type of the expected response.
     HttpResponseJsonPtr response = boost::make_shared<HttpResponseJson>();
 
-    IOService io_service;
+    IOServicePtr io_service(new IOService());
     HttpClient client(io_service, false);
 
     boost::system::error_code captured_ec;
@@ -2773,7 +2772,7 @@ HAService::processMaintenanceStart() {
              const HttpResponsePtr& response,
              const std::string& error_str) {
 
-             io_service.stop();
+             io_service->stop();
 
              // There are three possible groups of errors. One is the IO error
              // causing issues in communication with the peer. Another one is
@@ -2823,7 +2822,7 @@ HAService::processMaintenanceStart() {
 
     // Run the IO service until it is stopped by any of the callbacks. This
     // makes it synchronous.
-    io_service.run();
+    io_service->run();
 
     // If there was a communication problem with the partner we assume that
     // the partner is already down while we receive this command.
@@ -2883,7 +2882,7 @@ HAService::processMaintenanceCancel() {
     // to know the type of the expected response.
     HttpResponseJsonPtr response = boost::make_shared<HttpResponseJson>();
 
-    IOService io_service;
+    IOServicePtr io_service(new IOService());
     HttpClient client(io_service, false);
 
     std::string error_message;
@@ -2897,7 +2896,7 @@ HAService::processMaintenanceCancel() {
              const HttpResponsePtr& response,
              const std::string& error_str) {
 
-             io_service.stop();
+             io_service->stop();
 
              // Handle first two groups of errors.
              if (ec || !error_str.empty()) {
@@ -2937,7 +2936,7 @@ HAService::processMaintenanceCancel() {
 
     // Run the IO service until it is stopped by any of the callbacks. This
     // makes it synchronous.
-    io_service.run();
+    io_service->run();
 
     // There was an error in communication with the partner or the
     // partner was unable to revert its state.

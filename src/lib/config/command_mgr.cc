@@ -67,7 +67,7 @@ public:
                const boost::shared_ptr<UnixDomainSocket>& socket,
                ConnectionPool& connection_pool,
                const long timeout)
-        : socket_(socket), timeout_timer_(*io_service), timeout_(timeout),
+        : socket_(socket), timeout_timer_(io_service), timeout_(timeout),
           buf_(), response_(), connection_pool_(connection_pool), feed_(),
           response_in_progress_(false), watch_socket_(new util::WatchSocket()) {
 
@@ -180,7 +180,6 @@ public:
     /// @param bytes_transferred Number of bytes received.
     void receiveHandler(const boost::system::error_code& ec,
                         size_t bytes_transferred);
-
 
     /// @brief Handler invoked when the data is sent over the control socket.
     ///
@@ -463,7 +462,6 @@ Connection::timeoutHandler() {
     doSend();
 }
 
-
 }
 
 namespace isc {
@@ -575,7 +573,7 @@ CommandMgrImpl::openCommandSocket(const isc::data::ConstElementPtr& socket_info)
 
     try {
         // Start asynchronous acceptor service.
-        acceptor_.reset(new UnixDomainSocketAcceptor(*io_service_));
+        acceptor_.reset(new UnixDomainSocketAcceptor(io_service_));
         UnixDomainSocketEndpoint endpoint(socket_name_);
         acceptor_->open(endpoint);
         acceptor_->bind(endpoint);
@@ -593,7 +591,7 @@ CommandMgrImpl::openCommandSocket(const isc::data::ConstElementPtr& socket_info)
 void
 CommandMgrImpl::doAccept() {
     // Create a socket into which the acceptor will accept new connection.
-    socket_.reset(new UnixDomainSocket(*io_service_));
+    socket_.reset(new UnixDomainSocket(io_service_));
     acceptor_->asyncAccept(*socket_, [this](const boost::system::error_code& ec) {
         if (!ec) {
             // New connection is arriving. Start asynchronous transmission.
@@ -644,7 +642,6 @@ CommandMgr::getControlSocketFD() {
     return (impl_->acceptor_ ? impl_->acceptor_->getNative() : -1);
 }
 
-
 CommandMgr&
 CommandMgr::instance() {
     static CommandMgr cmd_mgr;
@@ -661,6 +658,5 @@ CommandMgr::setConnectionTimeout(const long timeout) {
     impl_->timeout_ = timeout;
 }
 
-
-}; // end of isc::config
-}; // end of isc
+} // end of isc::config
+} // end of isc

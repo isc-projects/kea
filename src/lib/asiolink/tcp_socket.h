@@ -68,7 +68,7 @@ public:
     /// socket.  In this case, the open() and close() methods are used.
     ///
     /// \param service I/O Service object used to manage the socket.
-    TCPSocket(IOService& service);
+    TCPSocket(const IOServicePtr& service);
 
     /// \brief Destructor
     virtual ~TCPSocket();
@@ -222,6 +222,10 @@ public:
     }
 
 private:
+
+    /// @brief The IO service used to handle events.
+    IOServicePtr io_service_;
+
     /// Two variables to hold the socket - a socket and a pointer to it.  This
     /// handles the case where a socket is passed to the TCPSocket on
     /// construction, or where it is asked to manage its own socket.
@@ -261,8 +265,8 @@ TCPSocket<C>::TCPSocket(boost::asio::ip::tcp::socket& socket) :
 // Constructor - create socket on the fly
 
 template <typename C>
-TCPSocket<C>::TCPSocket(IOService& service) :
-    socket_ptr_(new boost::asio::ip::tcp::socket(service.getInternalIOService())),
+TCPSocket<C>::TCPSocket(const IOServicePtr& io_service) : io_service_(io_service),
+    socket_ptr_(new boost::asio::ip::tcp::socket(io_service_->getInternalIOService())),
     socket_(*socket_ptr_)
 {
 }

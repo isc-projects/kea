@@ -249,7 +249,7 @@ TEST_F(DStubControllerTest, missingConfigFileArgument) {
 TEST_F(DStubControllerTest, launchRuntimeError) {
     // Use an asiolink IntervalTimer and callback to generate the
     // shutdown invocation. (Note IntervalTimer setup is in milliseconds).
-    isc::asiolink::IntervalTimer timer(*getIOService());
+    isc::asiolink::IntervalTimer timer(getIOService());
     timer.setup(genFatalErrorCallback, 2000);
 
     // Write the valid, empty, config and then run launch() for 5000 ms
@@ -337,9 +337,9 @@ TEST_F(DStubControllerTest, ioSignals) {
     controller_->recordSignalOnly(true);
 
     // Setup to raise SIGHUP in 10 ms.
-    TimedSignal sighup(*getIOService(), SIGHUP, 10);
-    TimedSignal sigint(*getIOService(), SIGINT, 100);
-    TimedSignal sigterm(*getIOService(), SIGTERM, 200);
+    TimedSignal sighup(getIOService(), SIGHUP, 10);
+    TimedSignal sigint(getIOService(), SIGINT, 100);
+    TimedSignal sigterm(getIOService(), SIGTERM, 200);
 
     // Write the valid, empty, config and then run launch() for 500 ms
     time_duration elapsed_time;
@@ -362,7 +362,7 @@ TEST_F(DStubControllerTest, invalidConfigReload) {
     scheduleTimedWrite("{ \"string_test\": BOGUS JSON }", 100);
 
     // Setup to raise SIGHUP in 200 ms.
-    TimedSignal sighup(*getIOService(), SIGHUP, 200);
+    TimedSignal sighup(getIOService(), SIGHUP, 200);
 
     // Write the config and then run launch() for 500 ms
     // After startup, which will load the initial configuration this enters
@@ -383,7 +383,7 @@ TEST_F(DStubControllerTest, alternateParsing) {
     controller_->useAlternateParser(true);
 
     // Setup to raise SIGHUP in 200 ms.
-    TimedSignal sighup(*getIOService(), SIGHUP, 200);
+    TimedSignal sighup(getIOService(), SIGHUP, 200);
 
     // Write the config and then run launch() for 500 ms
     // After startup, which will load the initial configuration this enters
@@ -406,8 +406,8 @@ TEST_F(DStubControllerTest, validConfigReload) {
     scheduleTimedWrite("{ \"string_test\": \"second value\" }", 100);
 
     // Setup to raise SIGHUP in 200 ms and another at 400 ms.
-    TimedSignal sighup(*getIOService(), SIGHUP, 200);
-    TimedSignal sighup2(*getIOService(), SIGHUP, 400);
+    TimedSignal sighup(getIOService(), SIGHUP, 200);
+    TimedSignal sighup2(getIOService(), SIGHUP, 400);
 
     // Write the config and then run launch() for 800 ms
     time_duration elapsed_time;
@@ -423,7 +423,7 @@ TEST_F(DStubControllerTest, validConfigReload) {
 // Tests that the SIGINT triggers a normal shutdown.
 TEST_F(DStubControllerTest, sigintShutdown) {
     // Setup to raise SIGHUP in 1 ms.
-    TimedSignal sighup(*getIOService(), SIGINT, 1);
+    TimedSignal sighup(getIOService(), SIGINT, 1);
 
     // Write the config and then run launch() for 1000 ms
     time_duration elapsed_time;
@@ -452,7 +452,7 @@ TEST_F(DStubControllerTest, getVersion) {
 // Tests that the SIGTERM triggers a normal shutdown.
 TEST_F(DStubControllerTest, sigtermShutdown) {
     // Setup to raise SIGHUP in 1 ms.
-    TimedSignal sighup(*getIOService(), SIGTERM, 1);
+    TimedSignal sighup(getIOService(), SIGTERM, 1);
 
     // Write the config and then run launch() for 1000 ms
     time_duration elapsed_time;

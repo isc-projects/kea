@@ -42,7 +42,7 @@ public:
     ///
     /// @param service I/O Service object used to manage the socket.
     /// @param context Pointer to TLS context.
-    TLSSocket(IOService& service, TlsContextPtr context);
+    TLSSocket(const IOServicePtr& service, TlsContextPtr context);
 
     /// @brief Destructor.
     virtual ~TLSSocket() { }
@@ -224,6 +224,9 @@ public:
     }
 
 private:
+    /// @brief The IO service used to handle events.
+    IOServicePtr io_service_;
+
     /// Two variables to hold the stream - a stream and a pointer to it.  This
     /// handles the case where a stream is passed to the TLSSocket on
     /// construction, or where it is asked to manage its own stream.
@@ -266,10 +269,10 @@ TLSSocket<C>::TLSSocket(TlsStream<C>& stream) :
 // Constructor - create socket on the fly.
 
 template <typename C>
-TLSSocket<C>::TLSSocket(IOService& service, TlsContextPtr context) :
-    stream_ptr_(new TlsStream<C>(service, context)),
-    stream_(*stream_ptr_), socket_(stream_.lowest_layer()), send_buffer_()
-{
+TLSSocket<C>::TLSSocket(const IOServicePtr& io_service, TlsContextPtr context)
+    : io_service_(io_service),
+      stream_ptr_(new TlsStream<C>(io_service, context)),
+      stream_(*stream_ptr_), socket_(stream_.lowest_layer()), send_buffer_() {
 }
 
 // Open the socket.

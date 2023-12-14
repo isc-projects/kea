@@ -86,14 +86,16 @@ NameChangeUDPListener::~NameChangeUDPListener() {
 }
 
 void
-NameChangeUDPListener::open(isc::asiolink::IOService& io_service) {
+NameChangeUDPListener::open(const isc::asiolink::IOServicePtr& io_service) {
     // create our endpoint and bind the low level socket to it.
     isc::asiolink::UDPEndpoint endpoint(ip_address_, port_);
+
+    io_service_ = io_service;
 
     // Create the low level socket.
     try {
         asio_socket_.reset(new boost::asio::ip::udp::
-                           socket(io_service.getInternalIOService(),
+                           socket(io_service_->getInternalIOService(),
                                   (ip_address_.isV4() ? boost::asio::ip::udp::v4() :
                                    boost::asio::ip::udp::v6())));
 
@@ -106,6 +108,7 @@ NameChangeUDPListener::open(isc::asiolink::IOService& io_service) {
         asio_socket_->bind(endpoint.getASIOEndpoint());
     } catch (const boost::system::system_error& ex) {
         asio_socket_.reset();
+        io_service_.reset();
         isc_throw (NcrUDPError, ex.code().message());
     }
 
@@ -147,6 +150,7 @@ NameChangeUDPListener::close() {
     }
 
     socket_.reset();
+    io_service_.reset();
 }
 
 void
@@ -226,14 +230,16 @@ NameChangeUDPSender::~NameChangeUDPSender() {
 }
 
 void
-NameChangeUDPSender::open(isc::asiolink::IOService& io_service) {
+NameChangeUDPSender::open(const isc::asiolink::IOServicePtr& io_service) {
     // create our endpoint and bind the low level socket to it.
     isc::asiolink::UDPEndpoint endpoint(ip_address_, port_);
+
+    io_service_ = io_service;
 
     // Create the low level socket.
     try {
         asio_socket_.reset(new boost::asio::ip::udp::
-                           socket(io_service.getInternalIOService(),
+                           socket(io_service_->getInternalIOService(),
                                   (ip_address_.isV4() ? boost::asio::ip::udp::v4() :
                                    boost::asio::ip::udp::v6())));
 
@@ -245,6 +251,8 @@ NameChangeUDPSender::open(isc::asiolink::IOService& io_service) {
         // Bind the low level socket to our endpoint.
         asio_socket_->bind(endpoint.getASIOEndpoint());
     } catch (const boost::system::system_error& ex) {
+        asio_socket_.reset();
+        io_service_.reset();
         isc_throw (NcrUDPError, ex.code().message());
     }
 
@@ -288,6 +296,7 @@ NameChangeUDPSender::close() {
 
     closeWatchSocket();
     watch_socket_.reset();
+    io_service_.reset();
 }
 
 void

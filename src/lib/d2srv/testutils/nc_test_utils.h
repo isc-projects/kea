@@ -42,8 +42,8 @@ public:
         INVALID_TSIG  // Generate a response with the wrong TSIG key
     };
 
-    /// @brief Reference to IOService to use for IO processing.
-    asiolink::IOService& io_service_;
+    /// @brief The IO service used to handle events.
+    asiolink::IOServicePtr io_service_;
 
     /// @brief IP address at which to listen for requests.
     const asiolink::IOAddress& address_;
@@ -77,7 +77,7 @@ public:
     /// @param io_service IOService to be used for socket IO.
     /// @param address  IP address at which the server should listen.
     /// @param port Port number at which the server should listen.
-    FauxServer(asiolink::IOService& io_service, asiolink::IOAddress& address,
+    FauxServer(asiolink::IOServicePtr& io_service, asiolink::IOAddress& address,
                size_t port);
 
     /// @brief Constructor
@@ -85,7 +85,7 @@ public:
     /// @param io_service IOService to be used for socket IO.
     /// @param server DnsServerInfo of server the DNS server. This supplies the
     /// server's ip address and port.
-    FauxServer(asiolink::IOService& io_service, DnsServerInfo& server);
+    FauxServer(asiolink::IOServicePtr& io_service, DnsServerInfo& server);
 
     /// @brief Destructor
     virtual ~FauxServer();

@@ -34,7 +34,7 @@ public:
     /// @brief Constructor.
     ///
     /// @param io_service IO service.
-    explicit TLSAcceptor(IOService& io_service) : TCPAcceptor<C>(io_service) {
+    explicit TLSAcceptor(const IOServicePtr& io_service) : TCPAcceptor<C>(io_service) {
     }
 
     /// @brief Destructor.

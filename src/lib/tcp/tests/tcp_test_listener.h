@@ -121,7 +121,7 @@ public:
     typedef std::function<std::string(const std::string&)> ResponseHandler;
 
     /// @brief Constructor
-    TcpTestConnection(IOService& io_service,
+    TcpTestConnection(const IOServicePtr& io_service,
                       const TcpConnectionAcceptorPtr& acceptor,
                       const TlsContextPtr& tls_context,
                       TcpConnectionPool& connection_pool,
@@ -232,7 +232,7 @@ typedef boost::shared_ptr<TcpTestConnection> TcpTestConnectionPtr;
 class TcpTestListener : public TcpListener {
 public:
     /// @brief Constructor
-    TcpTestListener(IOService& io_service,
+    TcpTestListener(const IOServicePtr& io_service,
                     const IOAddress& server_address,
                     const unsigned short server_port,
                     const TlsContextPtr& tls_context,

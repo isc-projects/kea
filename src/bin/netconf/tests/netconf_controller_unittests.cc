@@ -157,7 +157,7 @@ TEST_F(NetconfControllerTest, launchNormalShutdown) {
 // Tests that the SIGINT triggers a normal shutdown.
 TEST_F(NetconfControllerTest, sigintShutdown) {
     // Setup to raise SIGINT in 1 ms.
-    TimedSignal sighup(*getIOService(), SIGINT, 1);
+    TimedSignal sighup(getIOService(), SIGINT, 1);
 
     // Write valid_netconf_config and then run launch() for a maximum
     // of 500 ms.
@@ -173,7 +173,7 @@ TEST_F(NetconfControllerTest, sigintShutdown) {
 // Tests that the SIGTERM triggers a normal shutdown.
 TEST_F(NetconfControllerTest, sigtermShutdown) {
     // Setup to raise SIGTERM in 1 ms.
-    TimedSignal sighup(*getIOService(), SIGTERM, 1);
+    TimedSignal sighup(getIOService(), SIGTERM, 1);
 
     // Write valid_netconf_config and then run launch() for a maximum
     // of 500 ms.

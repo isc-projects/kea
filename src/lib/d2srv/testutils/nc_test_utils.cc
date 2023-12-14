@@ -47,7 +47,6 @@ const char* valid_d2_config = "{ "
                         "    \"port\": 100 } ] } "
                         "] } }";
 
-
 const char* TEST_DNS_SERVER_IP = "127.0.0.1";
 size_t TEST_DNS_SERVER_PORT = 5301;
 
@@ -56,32 +55,31 @@ const bool NO_RDATA = false;
 
 //*************************** FauxServer class ***********************
 
-FauxServer::FauxServer(asiolink::IOService& io_service,
+FauxServer::FauxServer(asiolink::IOServicePtr& io_service,
                        asiolink::IOAddress& address, size_t port)
-    :io_service_(io_service), address_(address), port_(port),
-     server_socket_(), receive_pending_(false), perpetual_receive_(true),
-     tsig_key_() {
+    : io_service_(io_service), address_(address), port_(port),
+      server_socket_(), receive_pending_(false), perpetual_receive_(true),
+      tsig_key_() {
 
-    server_socket_.reset(new boost::asio::ip::udp::socket(io_service_.getInternalIOService(),
-                                                   boost::asio::ip::udp::v4()));
+    server_socket_.reset(new boost::asio::ip::udp::socket(io_service_->getInternalIOService(),
+                                                          boost::asio::ip::udp::v4()));
     server_socket_->set_option(boost::asio::socket_base::reuse_address(true));
 
     isc::asiolink::UDPEndpoint endpoint(address_, port_);
     server_socket_->bind(endpoint.getASIOEndpoint());
 }
 
-FauxServer::FauxServer(asiolink::IOService& io_service,
+FauxServer::FauxServer(asiolink::IOServicePtr& io_service,
                        DnsServerInfo& server)
-    :io_service_(io_service), address_(server.getIpAddress()),
-     port_(server.getPort()), server_socket_(), receive_pending_(false),
-     perpetual_receive_(true), tsig_key_() {
-    server_socket_.reset(new boost::asio::ip::udp::socket(io_service_.getInternalIOService(),
-                                                   boost::asio::ip::udp::v4()));
+    : io_service_(io_service), address_(server.getIpAddress()),
+      port_(server.getPort()), server_socket_(), receive_pending_(false),
+      perpetual_receive_(true), tsig_key_() {
+    server_socket_.reset(new boost::asio::ip::udp::socket(io_service_->getInternalIOService(),
+                                                          boost::asio::ip::udp::v4()));
     server_socket_->set_option(boost::asio::socket_base::reuse_address(true));
     isc::asiolink::UDPEndpoint endpoint(address_, port_);
     server_socket_->bind(endpoint.getASIOEndpoint());
 }
-
 
 FauxServer::~FauxServer() {
 }
@@ -210,13 +208,11 @@ FauxServer::requestHandler(const boost::system::error_code& error,
     }
 }
 
-
-
 //********************** TimedIO class ***********************
 
 TimedIO::TimedIO()
-    : io_service_(new isc::asiolink::IOService()),
-     timer_(*io_service_), run_time_(0) {
+    : io_service_(new isc::asiolink::IOService()), timer_(io_service_),
+      run_time_(0) {
 }
 
 TimedIO::~TimedIO() {
@@ -370,7 +366,6 @@ TransactionTest::setupForIPv6Transaction(dhcp_ddns::NameChangeType chg_type,
                                          const std::string& key_name) {
     setupForIPv6Transaction(chg_type, change_mask, makeTSIGKeyInfo(key_name));
 }
-
 
 //********************** Functions ****************************
 

@@ -108,7 +108,7 @@ public:
     /// @brief Constructor.
     ///
     /// @param io_service Reference to the IO service.
-    explicit ClientConnection(asiolink::IOService& io_service);
+    explicit ClientConnection(const asiolink::IOServicePtr& io_service);
 
     /// @brief Starts asynchronous transaction with a remote endpoint.
     ///

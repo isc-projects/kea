@@ -145,7 +145,7 @@ public:
     /// the thread pool threads will be created and started, with the
     /// operational state being RUNNING.  Applicable only when thread-pool size
     /// is greater than zero.
-    explicit HttpClient(asiolink::IOService& io_service,
+    explicit HttpClient(const asiolink::IOServicePtr& io_service,
                         bool multi_threading_enabled,
                         size_t thread_pool_size = 0,
                         bool defer_thread_start = false);

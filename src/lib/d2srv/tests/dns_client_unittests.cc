@@ -60,7 +60,7 @@ class DNSClientTest : public ::testing::Test, DNSClient::Callback,
                       public D2StatTest {
 public:
     /// @brief The IOService which handles IO operations.
-    IOService service_;
+    IOServicePtr service_;
 
     /// @brief The UDP socket.
     std::unique_ptr<udp::socket> socket_;
@@ -107,7 +107,7 @@ public:
     /// waiting for a response. Some of the tests are checking DNSClient behavior
     /// in case when response from the server is not received. Tests output would
     /// become messy if such errors were logged.
-    DNSClientTest() : service_(), socket_(), endpoint_(),
+    DNSClientTest() : service_(new IOService()), socket_(), endpoint_(),
                       status_(DNSClient::SUCCESS), corrupt_response_(false),
                       expect_response_(true), test_timer_(service_),
                       received_(0), expected_(0), go_on_(false) {
@@ -136,7 +136,7 @@ public:
     virtual void operator()(DNSClient::Status status) {
         status_ = status;
         if (!expected_ || (expected_ == ++received_)) {
-            service_.stop();
+            service_->stop();
         }
 
         if (expect_response_) {
@@ -168,7 +168,7 @@ public:
     ///
     /// This callback stops all running (hanging) tasks on IO service.
     void testTimeoutHandler() {
-        service_.stop();
+        service_->stop();
         FAIL() << "Test timeout hit.";
     }
 
@@ -367,7 +367,7 @@ public:
 
         // This starts the execution of tasks posted to IOService. run() blocks
         // until stop() is called in the completion callback function.
-        service_.run();
+        service_->run();
 
     }
 
@@ -392,7 +392,7 @@ public:
         // responses. The reuse address option is set so as both sockets can
         // use the same address. This new socket is bound to the test address
         // and port, where requests will be sent.
-        socket_.reset(new udp::socket(service_.getInternalIOService(),
+        socket_.reset(new udp::socket(service_->getInternalIOService(),
                                       boost::asio::ip::udp::v4()));
         socket_->set_option(socket_base::reuse_address(true));
         socket_->bind(udp::endpoint(address::from_string(TEST_ADDRESS),
@@ -437,14 +437,14 @@ public:
 
         // Kick of the message exchange by actually running the scheduled
         // "send" and "receive" operations.
-        service_.run();
+        service_->run();
 
         socket_->close();
 
         // Since the callback, operator(), calls stop() on the io_service,
         // we must reset it in order for subsequent calls to run() or
         // runOne() to work.
-        service_.restart();
+        service_->restart();
     }
 
     /// @brief Performs a single request-response exchange with or without TSIG.
@@ -465,7 +465,7 @@ public:
         ASSERT_NO_THROW(message.setZone(Name("example.com"), RRClass::IN()));
 
         // Setup our "loopback" server.
-        udp::socket udp_socket(service_.getInternalIOService(), boost::asio::ip::udp::v4());
+        udp::socket udp_socket(service_->getInternalIOService(), boost::asio::ip::udp::v4());
         udp_socket.set_option(socket_base::reuse_address(true));
         udp_socket.bind(udp::endpoint(address::from_string(TEST_ADDRESS),
                                       TEST_PORT));
@@ -489,14 +489,14 @@ public:
 
         // Kick of the message exchange by actually running the scheduled
         // "send" and "receive" operations.
-        service_.run();
+        service_->run();
 
         udp_socket.close();
 
         // Since the callback, operator(), calls stop() on the io_service,
         // we must reset it in order for subsequent calls to run() or
         // runOne() to work.
-        service_.restart();
+        service_->restart();
     }
 };
 

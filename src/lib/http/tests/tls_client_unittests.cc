@@ -227,7 +227,7 @@ public:
     ///
     /// Starts test timer which detects timeouts.
     HttpListenerTest()
-        : io_service_(), factory_(new TestHttpResponseCreatorFactory()),
+        : io_service_(new IOService()), factory_(new TestHttpResponseCreatorFactory()),
           test_timer_(io_service_), run_io_service_timer_(io_service_) {
         test_timer_.setup(std::bind(&HttpListenerTest::timeoutHandler, this, true),
                           TEST_TIMEOUT, IntervalTimer::ONE_SHOT);
@@ -242,7 +242,7 @@ public:
         if (fail_on_timeout) {
             ADD_FAILURE() << "Timeout occurred while running the test!";
         }
-        io_service_.stop();
+        io_service_->stop();
     }
 
     /// @brief Runs IO service with optional timeout.
@@ -250,20 +250,20 @@ public:
     /// @param timeout Optional value specifying for how long the io service
     /// should be ran (ms).
     void runIOService(long timeout = 0) {
-        io_service_.restart();
+        io_service_->restart();
 
         if (timeout > 0) {
             run_io_service_timer_.setup(std::bind(&HttpListenerTest::timeoutHandler,
                                                   this, false),
                                         timeout, IntervalTimer::ONE_SHOT);
         }
-        io_service_.run();
-        io_service_.restart();
-        io_service_.poll();
+        io_service_->run();
+        io_service_->restart();
+        io_service_->poll();
     }
 
     /// @brief IO service used in the tests.
-    IOService io_service_;
+    IOServicePtr io_service_;
 
     /// @brief Pointer to the response creator factory.
     HttpResponseCreatorFactoryPtr factory_;
@@ -315,7 +315,7 @@ public:
         listener_->stop();
         listener2_->stop();
         listener3_->stop();
-        io_service_.poll();
+        io_service_->poll();
         MultiThreadingMgr::instance().setMode(false);
         HttpRequest::recordSubject_ = false;
         HttpRequest::recordIssuer_ = false;
@@ -372,7 +372,7 @@ public:
                               const HttpResponsePtr&,
                               const std::string&) {
             if (++resp_num > 1) {
-                io_service_.stop();
+                io_service_->stop();
             }
             if (ec) {
                 ADD_FAILURE() << "asyncSendRequest failed: " << ec.message();
@@ -388,7 +388,7 @@ public:
                               const HttpResponsePtr&,
                               const std::string&) {
             if (++resp_num > 1) {
-                io_service_.stop();
+                io_service_->stop();
             }
             if (ec) {
                 ADD_FAILURE() << "asyncSendRequest failed: " << ec.message();
@@ -437,7 +437,7 @@ public:
                               const HttpResponsePtr&,
                               const std::string&) {
             if (++resp_num > 1) {
-                io_service_.stop();
+                io_service_->stop();
             }
             if (ec) {
                 ADD_FAILURE() << "asyncSendRequest failed: " << ec.message();
@@ -453,7 +453,7 @@ public:
                               const HttpResponsePtr&,
                               const std::string&) {
             if (++resp_num > 1) {
-                io_service_.stop();
+                io_service_->stop();
             }
             if (ec) {
                 ADD_FAILURE() << "asyncSendRequest failed: " << ec.message();
@@ -501,7 +501,7 @@ public:
                               const HttpResponsePtr&,
                               const std::string&) {
             if (++resp_num > 1) {
-                io_service_.stop();
+                io_service_->stop();
             }
             if (ec) {
                 ADD_FAILURE() << "asyncSendRequest failed: " << ec.message();
@@ -517,7 +517,7 @@ public:
                               const HttpResponsePtr&,
                               const std::string&) {
             if (++resp_num > 1) {
-                io_service_.stop();
+                io_service_->stop();
             }
             if (ec) {
                 ADD_FAILURE() << "asyncSendRequest failed: " << ec.message();
@@ -562,7 +562,7 @@ public:
                                                 request1, response1,
             [this](const boost::system::error_code& ec, const HttpResponsePtr&,
                    const std::string&) {
-            io_service_.stop();
+            io_service_->stop();
             if (ec) {
                 ADD_FAILURE() << "asyncSendRequest failed: " << ec.message();
             }
@@ -587,7 +587,7 @@ public:
                                                 request2, response2,
             [this](const boost::system::error_code& ec, const HttpResponsePtr&,
                    const std::string&) {
-            io_service_.stop();
+            io_service_->stop();
             if (ec) {
                 ADD_FAILURE() << "asyncSendRequest failed: " << ec.message();
             }
@@ -622,7 +622,7 @@ public:
             [this](const boost::system::error_code& ec,
                    const HttpResponsePtr&,
                    const std::string&) {
-            io_service_.stop();
+            io_service_->stop();
             // The server should have returned an IO error.
             if (!ec) {
                 ADD_FAILURE() << "asyncSendRequest didn't fail";
@@ -657,7 +657,7 @@ public:
             [this](const boost::system::error_code& ec,
                    const HttpResponsePtr& response,
                    const std::string& parsing_error) {
-            io_service_.stop();
+            io_service_->stop();
             // There should be no IO error (answer from the server is received).
             if (ec) {
                 ADD_FAILURE() << "asyncSendRequest failed: " << ec.message();
@@ -700,7 +700,7 @@ public:
                             const HttpResponsePtr& response,
                             const std::string&) {
                 if (++cb_num > 1) {
-                    io_service_.stop();
+                    io_service_->stop();
                 }
                 // In this particular case we know exactly the type of the
                 // IO error returned, because the client explicitly sets this
@@ -728,7 +728,7 @@ public:
                             const HttpResponsePtr&,
                             const std::string&) {
                 if (++cb_num > 1) {
-                    io_service_.stop();
+                    io_service_->stop();
                 }
             }));
 
@@ -759,7 +759,7 @@ public:
                             const HttpResponsePtr& response,
                             const std::string&) {
                 if (++cb_num > 1) {
-                    io_service_.stop();
+                    io_service_->stop();
                 }
                 // In this particular case we know exactly the type of the
                 // IO error returned, because the client explicitly sets this
@@ -786,7 +786,7 @@ public:
                             const HttpResponsePtr&,
                             const std::string&) {
                 if (++cb_num > 1) {
-                    io_service_.stop();
+                    io_service_->stop();
                 }
             }));
 
@@ -880,7 +880,7 @@ public:
                          [this](const boost::system::error_code& ec,
                                 const HttpResponsePtr&,
                                 const std::string&) {
-            io_service_.stop();
+            io_service_->stop();
 
             // Everything should be ok.
             if (ec) {
@@ -918,7 +918,7 @@ public:
                               const HttpResponsePtr&,
                               const std::string&) {
                 if (++resp_num > 1) {
-                    io_service_.stop();
+                    io_service_->stop();
                 }
 
                 if (ec) {
@@ -940,7 +940,7 @@ public:
                               const HttpResponsePtr&,
                               const std::string&) {
                 if (++resp_num > 1) {
-                    io_service_.stop();
+                    io_service_->stop();
                 }
                 if (ec) {
                     ADD_FAILURE() << "asyncSendRequest failed: " << ec.message();
@@ -1017,7 +1017,7 @@ public:
                               const HttpResponsePtr&,
                               const std::string&) {
                 if (++resp_num == 1) {
-                    io_service_.stop();
+                    io_service_->stop();
                 }
 
                 // We should have 1 connect.
@@ -1084,7 +1084,7 @@ public:
                               const HttpResponsePtr&,
                               const std::string&) {
                 if (++resp_num == 1) {
-                    io_service_.stop();
+                    io_service_->stop();
                 }
 
                 // We should have 1 connect.

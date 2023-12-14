@@ -1000,7 +1000,7 @@ TEST_F(NameChangeTransactionTest, sendUpdateCorruptResponse) {
     ASSERT_TRUE(name_change->selectFwdServer());
 
     // Create a server and start it listening.
-    FauxServer server(*io_service_, *(name_change->getCurrentServer()));
+    FauxServer server(io_service_, *(name_change->getCurrentServer()));
     server.receive(FauxServer::CORRUPT_RESP);
 
     // Build a valid request, call sendUpdate and process the response.
@@ -1020,7 +1020,7 @@ TEST_F(NameChangeTransactionTest, sendUpdate) {
     ASSERT_TRUE(name_change->selectFwdServer());
 
     // Create a server and start it listening.
-    FauxServer server(*io_service_, *(name_change->getCurrentServer()));
+    FauxServer server(io_service_, *(name_change->getCurrentServer()));
     server.receive (FauxServer::USE_RCODE, dns::Rcode::NOERROR());
 
     // Build a valid request, call sendUpdate and process the response.
@@ -1049,7 +1049,7 @@ TEST_F(NameChangeTransactionTest, tsigUnsignedResponse) {
     ASSERT_TRUE(name_change->selectFwdServer());
 
     // Create a server and start it listening.
-    FauxServer server(*io_service_, *(name_change->getCurrentServer()));
+    FauxServer server(io_service_, *(name_change->getCurrentServer()));
     server.receive (FauxServer::USE_RCODE, dns::Rcode::NOERROR());
 
     // Do the update.
@@ -1080,7 +1080,7 @@ TEST_F(NameChangeTransactionTest, tsigInvalidResponse) {
 
     // Create a server, tell it to sign responses with a "random" key,
     // then start it listening.
-    FauxServer server(*io_service_, *(name_change->getCurrentServer()));
+    FauxServer server(io_service_, *(name_change->getCurrentServer()));
     server.receive (FauxServer::INVALID_TSIG, dns::Rcode::NOERROR());
 
     // Do the update.
@@ -1113,7 +1113,7 @@ TEST_F(NameChangeTransactionTest, tsigUnexpectedSignedResponse) {
 
     // Create a server, tell it to sign responses with a "random" key,
     // then start it listening.
-    FauxServer server(*io_service_, *(name_change->getCurrentServer()));
+    FauxServer server(io_service_, *(name_change->getCurrentServer()));
     server.receive (FauxServer::INVALID_TSIG, dns::Rcode::NOERROR());
 
     // Perform an update without TSIG.
@@ -1156,7 +1156,7 @@ TEST_F(NameChangeTransactionTest, tsigAllValid) {
         ASSERT_TRUE(name_change->selectFwdServer());
 
         // Create a server, set its TSIG key, and then start it listening.
-        FauxServer server(*io_service_, *(name_change->getCurrentServer()));
+        FauxServer server(io_service_, *(name_change->getCurrentServer()));
         // Since we create a new server instance each time we need to tell
         // it not reschedule receives automatically.
         server.perpetual_receive_ = false;

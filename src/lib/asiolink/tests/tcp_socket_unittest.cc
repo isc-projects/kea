@@ -234,7 +234,7 @@ serverRead(tcp::socket& socket, TCPCallback& server_cb) {
 TEST(TCPSocket, processReceivedData) {
     const uint16_t PACKET_SIZE = 16382;     // Amount of "real" data in the buffer
 
-    IOService               service;        // Used to instantiate socket
+    IOServicePtr            service(new IOService);   // Used to instantiate socket
     TCPSocket<TCPCallback>  test(service);  // Socket under test
     uint8_t                 inbuff[PACKET_SIZE + 2];   // Buffer to check
     OutputBufferPtr         outbuff(new OutputBuffer(16));
@@ -308,10 +308,10 @@ TEST(TCPSocket, processReceivedData) {
 TEST(TCPSocket, sequenceTest) {
 
     // Common objects.
-    IOService   service;                    // Service object for async control
+    IOServicePtr service(new IOService());  // Service object for async control
 
     // The client - the TCPSocket being tested
-    TCPSocket<TCPCallback>  client(service);// Socket under test
+    TCPSocket<TCPCallback> client(service); // Socket under test
     TCPCallback client_cb("Client");        // Async I/O callback function
     TCPEndpoint client_remote_endpoint;     // Where client receives message from
     OutputBufferPtr client_buffer(new OutputBuffer(128));
@@ -324,7 +324,7 @@ TEST(TCPSocket, sequenceTest) {
     TCPEndpoint server_endpoint(server_address, SERVER_PORT);
                                             // Endpoint describing server
     TCPEndpoint server_remote_endpoint;     // Address where server received message from
-    tcp::socket server_socket(service.getInternalIOService());
+    tcp::socket server_socket(service->getInternalIOService());
                                             // Socket used for server
 
     // Step 1.  Create the connection between the client and the server.  Set
@@ -335,8 +335,8 @@ TEST(TCPSocket, sequenceTest) {
     server_cb.queued() = TCPCallback::ACCEPT;
     server_cb.called() = TCPCallback::NONE;
     server_cb.setCode(42);  // Some error
-    tcp::acceptor acceptor(service.getInternalIOService(),
-                            tcp::endpoint(tcp::v4(), SERVER_PORT));
+    tcp::acceptor acceptor(service->getInternalIOService(),
+                           tcp::endpoint(tcp::v4(), SERVER_PORT));
     acceptor.set_option(tcp::acceptor::reuse_address(true));
     acceptor.async_accept(server_socket, server_cb);
 
@@ -348,8 +348,8 @@ TEST(TCPSocket, sequenceTest) {
     client.open(&server_endpoint, client_cb);
 
     // Run the open and the accept callback and check that they ran.
-    service.runOne();
-    service.runOne();
+    service->runOne();
+    service->runOne();
 
     EXPECT_EQ(TCPCallback::ACCEPT, server_cb.called());
     EXPECT_EQ(0, server_cb.getCode());
@@ -377,7 +377,7 @@ TEST(TCPSocket, sequenceTest) {
 
     // Wait for the client callback to complete. (Must do this first on
     // Solaris: if we do the synchronous read first, the test hangs.)
-    service.runOne();
+    service->runOne();
 
     // Synchronously read the data from the server.;
     serverRead(server_socket, server_cb);
@@ -442,7 +442,7 @@ TEST(TCPSocket, sequenceTest) {
     bool server_complete = false;
     bool client_complete = false;
     while (!server_complete || !client_complete) {
-        service.runOne();
+        service->runOne();
 
         // Has the server run?
         if (!server_complete) {

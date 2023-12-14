@@ -31,7 +31,7 @@ public:
     /// raised.
     /// @param mode selects between a one-shot signal or a signal which repeats
     /// at "milliseconds" interval.
-    TimedSignal(asiolink::IOService& io_service, int signum, int milliseconds,
+    TimedSignal(asiolink::IOServicePtr& io_service, int signum, int milliseconds,
                 const asiolink::IntervalTimer::Mode& mode =
                 asiolink::IntervalTimer::ONE_SHOT)
         : timer_(new asiolink::IntervalTimer(io_service)) {

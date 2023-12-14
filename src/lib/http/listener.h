@@ -96,7 +96,7 @@ public:
     ///
     /// @throw HttpListenerError when any of the specified parameters is
     /// invalid.
-    HttpListener(asiolink::IOService& io_service,
+    HttpListener(const asiolink::IOServicePtr& io_service,
                  const asiolink::IOAddress& server_address,
                  const unsigned short server_port,
                  const asiolink::TlsContextPtr& tls_context,

@@ -117,7 +117,7 @@ CfgIfaceTest::unicastOpen(const std::string& iface_name) const {
 
 void
 CfgIfaceTest::doWait(const long timeout) {
-    asiolink::IntervalTimer timer(*io_service_);
+    asiolink::IntervalTimer timer(io_service_);
     timer.setup([this]() {
         io_service_->stop();
     }, timeout, asiolink::IntervalTimer::ONE_SHOT);

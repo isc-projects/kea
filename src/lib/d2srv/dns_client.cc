@@ -100,7 +100,7 @@ public:
     /// @param tsig_key A pointer to an @c D2TsigKeyPtr object that will
     /// (if not null) be used to sign the DNS Update message and verify the
     /// response.
-    void doUpdate(asiolink::IOService& io_service,
+    void doUpdate(const asiolink::IOServicePtr& io_service,
                   const asiolink::IOAddress& ns_addr,
                   const uint16_t ns_port,
                   D2UpdateMessage& update,
@@ -222,7 +222,7 @@ DNSClientImpl::getStatus(const asiodns::IOFetch::Result result) {
 }
 
 void
-DNSClientImpl::doUpdate(asiolink::IOService& io_service,
+DNSClientImpl::doUpdate(const asiolink::IOServicePtr& io_service,
                         const IOAddress& ns_addr,
                         const uint16_t ns_port,
                         D2UpdateMessage& update,
@@ -275,7 +275,7 @@ DNSClientImpl::doUpdate(asiolink::IOService& io_service,
 
     // Post the task to the task queue in the IO service. Caller will actually
     // run these tasks by executing IOService::run.
-    io_service.post(io_fetch);
+    io_service->post(io_fetch);
 
     // Update sent statistics.
     incrStats("update-sent");
@@ -311,7 +311,7 @@ DNSClient::getMaxTimeout() {
 }
 
 void
-DNSClient::doUpdate(asiolink::IOService& io_service,
+DNSClient::doUpdate(const asiolink::IOServicePtr& io_service,
                     const IOAddress& ns_addr,
                     const uint16_t ns_port,
                     D2UpdateMessage& update,

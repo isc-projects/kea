@@ -27,7 +27,7 @@ public:
     /// @brief Constructor.
     ///
     /// @param io_service Reference to the IO service.
-    explicit ClientConnectionImpl(IOService& io_service);
+    explicit ClientConnectionImpl(const IOServicePtr& io_service);
 
     /// @brief This method schedules timer or reschedules existing timer.
     ///
@@ -115,7 +115,7 @@ private:
     long timeout_;
 };
 
-ClientConnectionImpl::ClientConnectionImpl(IOService& io_service)
+ClientConnectionImpl::ClientConnectionImpl(const IOServicePtr& io_service)
     : socket_(io_service), feed_(), current_command_(), timer_(io_service),
       timeout_(0) {
 }
@@ -268,7 +268,7 @@ ClientConnectionImpl::timeoutCallback(ClientConnection::Handler handler) {
     terminate(boost::asio::error::timed_out, handler);
 }
 
-ClientConnection::ClientConnection(asiolink::IOService& io_service)
+ClientConnection::ClientConnection(const IOServicePtr& io_service)
     : impl_(new ClientConnectionImpl(io_service)) {
 }
 
@@ -279,7 +279,6 @@ ClientConnection::start(const ClientConnection::SocketPath& socket_path,
                         const ClientConnection::Timeout& timeout) {
     impl_->start(socket_path, command, handler, timeout);
 }
-
 
 } // end of namespace config
 } // end of namespace isc

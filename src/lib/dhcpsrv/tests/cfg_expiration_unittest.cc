@@ -322,7 +322,7 @@ public:
     ///
     /// @param timeout_ms Amount of time after which the method returns.
     void runTimersWithTimeout(const long timeout_ms) {
-        IntervalTimer timer(*io_service_);
+        IntervalTimer timer(io_service_);
         timer.setup([this]() {
                 io_service_->stop();
         }, timeout_ms, IntervalTimer::ONE_SHOT);

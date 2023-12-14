@@ -55,7 +55,7 @@ const bool DEBUG = false;
 class IOFetchTest : public virtual ::testing::Test, public virtual IOFetch::Callback
 {
 public:
-    IOService       service_;       ///< Service to run the query
+    IOServicePtr    service_;       ///< Service to run the query
     IOFetch::Result expected_;      ///< Expected result of the callback
     bool            run_;           ///< Did the callback run already?
     Question        question_;      ///< What to ask
@@ -88,7 +88,7 @@ public:
 
     /// \brief Constructor
     IOFetchTest() :
-        service_(),
+        service_(new IOService()),
         expected_(IOFetch::NOTSET),
         run_(false),
         question_(Name("example.net"), RRClass::IN(), RRType::A()),
@@ -101,7 +101,7 @@ public:
                                         // Timeout interval chosen to ensure no timeout
         protocol_(IOFetch::TCP),        // for initialization - will be changed
         cumulative_(0),
-        timer_(service_.getInternalIOService()),
+        timer_(service_->getInternalIOService()),
         receive_buffer_(),
         expected_buffer_(new OutputBuffer(512)),
         send_buffer_(),
@@ -455,7 +455,7 @@ public:
         }
 
         // ... and cause the run loop to exit.
-        service_.stop();
+        service_->stop();
     }
 
     // The next set of methods are the tests themselves.  A number of the TCP
@@ -474,15 +474,15 @@ public:
         expected_ = IOFetch::STOPPED;
 
         // Post the query
-        service_.post(fetch);
+        service_->post(fetch);
 
         // Post query_.stop() (yes, the std::bind thing is just
         // query_.stop()).
-        service_.post(std::bind(&IOFetch::stop, fetch, IOFetch::STOPPED));
+        service_->post(std::bind(&IOFetch::stop, fetch, IOFetch::STOPPED));
 
         // Run both of them.  run() returns when everything in the I/O service
         // queue has completed.
-        service_.run();
+        service_->run();
         EXPECT_TRUE(run_);
     }
 
@@ -500,9 +500,9 @@ public:
 
         // Stop before it is started
         fetch.stop();
-        service_.post(fetch);
+        service_->post(fetch);
 
-        service_.run();
+        service_->run();
         EXPECT_TRUE(run_);
     }
 
@@ -516,8 +516,8 @@ public:
         protocol_ = protocol;
         expected_ = IOFetch::TIME_OUT;
 
-        service_.post(fetch);
-        service_.run();
+        service_->post(fetch);
+        service_->run();
         EXPECT_TRUE(run_);
     }
 
@@ -542,21 +542,21 @@ public:
         }
 
         // Socket into which the connection will be accepted.
-        tcp::socket socket(service_.getInternalIOService());
+        tcp::socket socket(service_->getInternalIOService());
 
         // Acceptor object - called when the connection is made, the handler
         // will initiate a read on the socket.
-        tcp::acceptor acceptor(service_.getInternalIOService(),
+        tcp::acceptor acceptor(service_->getInternalIOService(),
                                tcp::endpoint(tcp::v4(), TEST_PORT));
         acceptor.async_accept(socket,
             std::bind(&IOFetchTest::tcpAcceptHandler, this, &socket, ph::_1));
 
         // Post the TCP fetch object to send the query and receive the response.
-        service_.post(tcp_fetch_);
+        service_->post(tcp_fetch_);
 
         // ... and execute all the callbacks.  This exits when the fetch
         // completes.
-        service_.run();
+        service_->run();
         EXPECT_TRUE(run_);  // Make sure the callback did execute
 
         // Tidy up
@@ -574,7 +574,7 @@ public:
         protocol_ = IOFetch::UDP;
 
         // Set up the server.
-        udp::socket socket(service_.getInternalIOService(), udp::v4());
+        udp::socket socket(service_->getInternalIOService(), udp::v4());
         socket.set_option(socket_base::reuse_address(true));
         socket.bind(udp::endpoint(TEST_HOST, TEST_PORT));
         return_data_ = "Message returned to the client";
@@ -586,12 +586,12 @@ public:
                                   std::bind(&IOFetchTest::udpReceiveHandler,
                                             this, &remote, &socket,
                                             ph::_1, ph::_2, bad_qid, second_send));
-        service_.post(udp_fetch_);
+        service_->post(udp_fetch_);
         if (debug_) {
             cout << "udpSendReceive: async_receive_from posted,"
                 "waiting for callback" << endl;
         }
-        service_.run();
+        service_->run();
 
         socket.close();
 

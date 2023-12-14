@@ -207,7 +207,7 @@ CommunicationState::startHeartbeatInternal(const long interval,
     }
 
     if (!timer_) {
-        timer_.reset(new IntervalTimer(*io_service_));
+        timer_.reset(new IntervalTimer(io_service_));
     }
 
     if (settings_modified) {

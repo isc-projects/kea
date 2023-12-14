@@ -118,12 +118,22 @@ public:
     TlsRole role_;
 };
 
+class StreamService {
+public:
+    /// @brief Constructor.
+    StreamService(const IOServicePtr& io_service) : io_service_(io_service) {
+    }
+private:
+    /// @brief The IO service used to handle events.
+    IOServicePtr io_service_;
+};
+
 /// @brief TLS stream base class.
 ///
 /// @tparam Callback The type of callbacks.
 /// @tparam TlsStreamImpl The type of underlying TLS streams.
 template <typename Callback, typename TlsStreamImpl>
-class TlsStreamBase : public TlsStreamImpl {
+class TlsStreamBase : public StreamService, public TlsStreamImpl {
 public:
 
     /// @brief Constructor.
@@ -131,7 +141,7 @@ public:
     /// @param service I/O Service object used to manage the stream.
     /// @param context Pointer to the TLS context.
     /// @note The caller must not provide a null pointer to the TLS context.
-    TlsStreamBase(IOService& service, TlsContextPtr context);
+    TlsStreamBase(const IOServicePtr& service, TlsContextPtr context);
 
     /// @brief Destructor.
     virtual ~TlsStreamBase() { }

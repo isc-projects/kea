@@ -62,7 +62,7 @@ SocketCallback::operator()(boost::system::error_code ec, size_t length) {
     callback_(ec, length);
 }
 
-HttpConnection::HttpConnection(asiolink::IOService& io_service,
+HttpConnection::HttpConnection(const asiolink::IOServicePtr& io_service,
                                const HttpAcceptorPtr& acceptor,
                                const TlsContextPtr& tls_context,
                                HttpConnectionPool& connection_pool,

@@ -226,7 +226,7 @@ CtrlAgentCommandMgr::forwardCommand(const std::string& service,
 
     // Forward command and receive reply.
     IOServicePtr io_service(new IOService());;
-    ClientConnection conn(*io_service);
+    ClientConnection conn(io_service);
     boost::system::error_code received_ec;
     ConstJSONFeedPtr received_feed;
     conn.start(ClientConnection::SocketPath(socket_name),

@@ -54,7 +54,7 @@ public:
 
     /// @brief Constructor.
     ProcessSpawnTest() :
-        io_service_(getIOService()), test_timer_(*io_service_),
+        io_service_(getIOService()), test_timer_(io_service_),
         test_time_ms_(0), io_signal_set_(), processed_signals_() {
 
         io_signal_set_.reset(new IOSignalSet(io_service_,

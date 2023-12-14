@@ -207,7 +207,7 @@ TEST_F(D2ControllerTest, invalidConfigReload) {
     scheduleTimedWrite("{ \"string_test\": BOGUS JSON }", 100);
 
     // Setup to raise SIGHUP in 200 ms.
-    TimedSignal sighup(*getIOService(), SIGHUP, 200);
+    TimedSignal sighup(getIOService(), SIGHUP, 200);
 
     // Write valid_d2_config and then run launch() for a maximum of 500 ms.
     time_duration elapsed_time;
@@ -246,7 +246,7 @@ TEST_F(D2ControllerTest, validConfigReload) {
     scheduleTimedWrite(second_cfg, 100);
 
     // Setup to raise SIGHUP in 200 ms.
-    TimedSignal sighup(*getIOService(), SIGHUP, 200);
+    TimedSignal sighup(getIOService(), SIGHUP, 200);
 
     // Write valid_d2_config and then run launch() for a maximum of 500ms.
     time_duration elapsed_time;
@@ -269,7 +269,7 @@ TEST_F(D2ControllerTest, validConfigReload) {
 // Tests that the SIGINT triggers a normal shutdown.
 TEST_F(D2ControllerTest, sigintShutdown) {
     // Setup to raise SIGINT in 1 ms.
-    TimedSignal sighup(*getIOService(), SIGINT, 1);
+    TimedSignal sighup(getIOService(), SIGINT, 1);
 
     // Write valid_d2_config and then run launch() for a maximum of 1000 ms.
     time_duration elapsed_time;
@@ -286,7 +286,7 @@ TEST_F(D2ControllerTest, sigintShutdown) {
 // Tests that the SIGTERM triggers a normal shutdown.
 TEST_F(D2ControllerTest, sigtermShutdown) {
     // Setup to raise SIGTERM in 1 ms.
-    TimedSignal sighup(*getIOService(), SIGTERM, 1);
+    TimedSignal sighup(getIOService(), SIGTERM, 1);
 
     // Write valid_d2_config and then run launch() for a maximum of 1 s.
     time_duration elapsed_time;

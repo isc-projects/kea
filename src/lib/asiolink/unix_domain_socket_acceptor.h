@@ -32,7 +32,7 @@ public:
     /// @brief Constructor.
     ///
     /// @param io_service Reference to the IO service.
-    explicit UnixDomainSocketAcceptor(IOService& io_service)
+    explicit UnixDomainSocketAcceptor(const IOServicePtr& io_service)
         : IOAcceptor<boost::asio::local::stream_protocol,
                      std::function<void(const boost::system::error_code&)> >(io_service) {
     }

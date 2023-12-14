@@ -287,7 +287,7 @@ public:
     /// @throw D2ClientError if sender instance is null. Underlying layer
     /// may throw NCRSenderExceptions exceptions.
     void startSender(D2ClientErrorHandler error_handler,
-                     isc::asiolink::IOService& io_service);
+                     const isc::asiolink::IOServicePtr& io_service);
 
     /// @brief Enables sending NameChangeRequests to kea-dhcp-ddns
     ///

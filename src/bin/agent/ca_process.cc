@@ -164,7 +164,7 @@ CtrlAgentProcess::configure(isc::data::ConstElementPtr config_set,
             // Create http listener. It will open up a TCP socket and be
             // prepared to accept incoming connection.
             HttpListenerPtr http_listener
-                (new HttpListener(*getIOService(), server_address,
+                (new HttpListener(getIOService(), server_address,
                                   server_port, tls_context, rcf,
                                   HttpListener::RequestTimeout(TIMEOUT_AGENT_RECEIVE_COMMAND),
                                   HttpListener::IdleTimeout(TIMEOUT_AGENT_IDLE_CONNECTION_TIMEOUT)));

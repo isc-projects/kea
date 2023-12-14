@@ -158,17 +158,16 @@ private:
 // two bytes of a buffer.
 
 TEST(UDPSocket, processReceivedData) {
-    IOService               service;        // Used to instantiate socket
-    UDPSocket<UDPCallback>  test(service);  // Socket under test
-    uint8_t                 inbuff[32];     // Buffer to check
-    OutputBufferPtr         outbuff(new OutputBuffer(16));
-                                            // Where data is put
-                                            // cppcheck-suppress variableScope
-    size_t                  expected;       // Expected amount of data
-                                            // cppcheck-suppress variableScope
-    size_t                  offset;         // Where to put next data
-                                            // cppcheck-suppress variableScope
-    size_t                  cumulative;     // Cumulative data received
+    IOServicePtr            service(new IOService());      // Used to instantiate socket
+    UDPSocket<UDPCallback>  test(service);                 // Socket under test
+    uint8_t                 inbuff[32];                    // Buffer to check
+    OutputBufferPtr         outbuff(new OutputBuffer(16)); // Where data is put
+                                                           // cppcheck-suppress variableScope
+    size_t                  expected;                      // Expected amount of data
+                                                           // cppcheck-suppress variableScope
+    size_t                  offset;                        // Where to put next data
+                                                           // cppcheck-suppress variableScope
+    size_t                  cumulative;                    // Cumulative data received
 
     // Set some dummy values in the buffer to check
     for (uint8_t i = 0; i < sizeof(inbuff); ++i) {
@@ -206,31 +205,27 @@ TEST(UDPSocket, processReceivedData) {
 // message to a server, receiving an asynchronous message from the server and
 // closing.
 TEST(UDPSocket, SequenceTest) {
-
     // Common objects.
-    IOService   service;                    // Service object for async control
-
+    IOServicePtr service(new IOService());                    // Service object for async control
     // Server
-    IOAddress   server_address(SERVER_ADDRESS); // Address of target server
-    UDPCallback server_cb("Server");        // Server callback
-    UDPEndpoint server_endpoint(            // Endpoint describing server
-        server_address, SERVER_PORT);
-    UDPEndpoint server_remote_endpoint;     // Address where server received message from
+    IOAddress   server_address(SERVER_ADDRESS);               // Address of target server
+    UDPCallback server_cb("Server");                          // Server callback
+    UDPEndpoint server_endpoint(server_address, SERVER_PORT); // Endpoint describing server
+    UDPEndpoint server_remote_endpoint;                       // Address where server received message from
 
     // The client - the UDPSocket being tested
-    UDPSocket<UDPCallback>  client(service);// Socket under test
-    UDPCallback client_cb("Client");        // Async I/O callback function
-    UDPEndpoint client_remote_endpoint;     // Where client receives message from
-    size_t      client_cumulative = 0;      // Cumulative data received
-    size_t      client_offset = 0;          // Offset into buffer where data is put
-    size_t      client_expected = 0;        // Expected amount of data
-    OutputBufferPtr client_buffer(new OutputBuffer(16));
-                                            // Where data is put
+    UDPSocket<UDPCallback>  client(service);                  // Socket under test
+    UDPCallback client_cb("Client");                          // Async I/O callback function
+    UDPEndpoint client_remote_endpoint;                       // Where client receives message from
+    size_t      client_cumulative = 0;                        // Cumulative data received
+    size_t      client_offset = 0;                            // Offset into buffer where data is put
+    size_t      client_expected = 0;                          // Expected amount of data
+    OutputBufferPtr client_buffer(new OutputBuffer(16));      // Where data is put
 
     // The server - with which the client communicates.  For convenience, we
     // use the same io_service, and use the endpoint object created for
     // the client to send to as the endpoint object in the constructor.
-    boost::asio::ip::udp::socket server(service.getInternalIOService(),
+    boost::asio::ip::udp::socket server(service->getInternalIOService(),
         server_endpoint.getASIOEndpoint());
     server.set_option(socket_base::reuse_address(true));
 
@@ -250,15 +245,15 @@ TEST(UDPSocket, SequenceTest) {
     EXPECT_FALSE(server_cb.getCalled());
 
     // Write something to the server using the client - the callback should not
-    // be called until we call the io_service.run() method.
+    // be called until we call the io_service->run() method.
     client_cb.setCalled(false);
     client_cb.setCode(7);  // Arbitrary number
     client.asyncSend(OUTBOUND_DATA, sizeof(OUTBOUND_DATA), &server_endpoint, client_cb);
     EXPECT_FALSE(client_cb.getCalled());
 
     // Execute the two callbacks.
-    service.runOne();
-    service.runOne();
+    service->runOne();
+    service->runOne();
 
     EXPECT_TRUE(client_cb.getCalled());
     EXPECT_EQ(0, client_cb.getCode());
@@ -286,8 +281,8 @@ TEST(UDPSocket, SequenceTest) {
         server_remote_endpoint.getASIOEndpoint(), server_cb);
 
     // Expect two callbacks to run.
-    service.runOne();
-    service.runOne();
+    service->runOne();
+    service->runOne();
 
     EXPECT_TRUE(client_cb.getCalled());
     EXPECT_EQ(0, client_cb.getCode());

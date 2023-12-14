@@ -56,7 +56,7 @@ public:
     /// socket.  In this case, the open() and close() methods are used.
     ///
     /// \param service I/O Service object used to manage the socket.
-    UDPSocket(IOService& service);
+    UDPSocket(const IOServicePtr& service);
 
     /// \brief Destructor
     virtual ~UDPSocket();
@@ -147,6 +147,9 @@ public:
 
 
 private:
+    /// @brief The IO service used to handle events.
+    IOServicePtr io_service_;
+
     // Two variables to hold the socket - a socket and a pointer to it.  This
     // handles the case where a socket is passed to the UDPSocket on
     // construction, or where it is asked to manage its own socket.
@@ -172,8 +175,8 @@ UDPSocket<C>::UDPSocket(boost::asio::ip::udp::socket& socket) :
 // Constructor - create socket on the fly
 
 template <typename C>
-UDPSocket<C>::UDPSocket(IOService& service) :
-    socket_ptr_(new boost::asio::ip::udp::socket(service.getInternalIOService())),
+UDPSocket<C>::UDPSocket(const IOServicePtr& io_service) : io_service_(io_service),
+    socket_ptr_(new boost::asio::ip::udp::socket(io_service_->getInternalIOService())),
     socket_(*socket_ptr_), isopen_(false)
 {
 }

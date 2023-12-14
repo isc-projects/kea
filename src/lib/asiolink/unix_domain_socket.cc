@@ -25,8 +25,8 @@ public:
     /// @brief Constructor.
     ///
     /// @param io_service IO service to be used by the socket class.
-    UnixDomainSocketImpl(IOService& io_service)
-        : socket_(io_service.getInternalIOService()) {
+    UnixDomainSocketImpl(const IOServicePtr& io_service)
+        : io_service_(io_service), socket_(io_service_->getInternalIOService()) {
     }
 
     /// @brief Destructor.
@@ -159,6 +159,9 @@ public:
     /// @brief Closes the socket.
     void close();
 
+    /// @brief The IO service used to handle events.
+    IOServicePtr io_service_;
+
     /// @brief Instance of the boost asio unix domain socket.
     stream_protocol::socket socket_;
 };
@@ -280,7 +283,7 @@ UnixDomainSocketImpl::close() {
     }
 }
 
-UnixDomainSocket::UnixDomainSocket(IOService& io_service)
+UnixDomainSocket::UnixDomainSocket(const IOServicePtr& io_service)
     : impl_(new UnixDomainSocketImpl(io_service)) {
 }
 

@@ -77,13 +77,13 @@ public:
     /// @param tls_context
     /// @param server_address string containing the IP address of the server.
     /// @param port port number of the server.
-    explicit TcpTestClient(isc::asiolink::IOService& io_service,
+    explicit TcpTestClient(const isc::asiolink::IOServicePtr& io_service,
                            std::function<void()> done_callback,
                            isc::asiolink::TlsContextPtr tls_context =
                                 isc::asiolink::TlsContextPtr(),
                            const std::string& server_address = "127.0.0.1",
                            uint16_t port = 18123)
-        : io_service_(io_service.getInternalIOService()),
+        : io_service_(io_service),
           tls_context_(tls_context),
           tcp_socket_(), tls_socket_(),
           done_callback_(done_callback),
@@ -382,8 +382,8 @@ public:
 
 private:
 
-    /// @brief Holds reference to the IO service.
-    boost::asio::io_service& io_service_;
+    /// @brief Holds pointer to the IO service.
+    isc::asiolink::IOServicePtr io_service_;
 
     /// @brief TLS context.
     isc::asiolink::TlsContextPtr tls_context_;

@@ -56,7 +56,7 @@ public:
     ///
     /// @throw TcpListenerError when any of the specified parameters is
     /// invalid.
-    TcpListener(asiolink::IOService& io_service,
+    TcpListener(const asiolink::IOServicePtr& io_service,
                 const asiolink::IOAddress& server_address,
                 const unsigned short server_port,
                 const asiolink::TlsContextPtr& tls_context,
@@ -135,8 +135,8 @@ protected:
         const TcpConnectionAcceptorCallback& acceptor_callback,
         const TcpConnectionFilterCallback& connection_filter);
 
-    /// @brief Reference to the IO service.
-    asiolink::IOService& io_service_;
+    /// @brief Pointer to the IO service.
+    asiolink::IOServicePtr io_service_;
 
     /// @brief TLS context.
     asiolink::TlsContextPtr tls_context_;

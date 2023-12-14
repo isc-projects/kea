@@ -22,7 +22,7 @@ const long TCP_IDLE_CONNECTION_TIMEOUT = 300 * 1000;
 
 /// @brief Defines a factory function for creating TcpListeners.
 typedef std::function<
-        TcpListenerPtr(asiolink::IOService& io_service,
+        TcpListenerPtr(const asiolink::IOServicePtr& io_service,
                        const asiolink::IOAddress& server_address,
                        const unsigned short server_port,
                        const asiolink::TlsContextPtr& tls_context,

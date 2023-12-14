@@ -44,7 +44,7 @@ public:
     ///
     /// @throw HttpListenerError when any of the specified parameters is
     /// invalid.
-    HttpListenerImpl(asiolink::IOService& io_service,
+    HttpListenerImpl(const asiolink::IOServicePtr& io_service,
                      const asiolink::IOAddress& server_address,
                      const unsigned short server_port,
                      const asiolink::TlsContextPtr& tls_context,
@@ -102,8 +102,8 @@ protected:
     virtual HttpConnectionPtr createConnection(const HttpResponseCreatorPtr& response_creator,
                                                const HttpAcceptorCallback& callback);
 
-    /// @brief Reference to the IO service.
-    asiolink::IOService& io_service_;
+    /// @brief Pointer to the IO service.
+    asiolink::IOServicePtr io_service_;
 
     /// @brief TLS context.
     asiolink::TlsContextPtr tls_context_;

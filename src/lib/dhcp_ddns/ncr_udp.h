@@ -110,7 +110,6 @@
 
 #include <boost/shared_array.hpp>
 
-
 /// responsibility of the completion handler to perform the steps necessary
 /// to interpret the raw data provided by the service outcome.   The
 /// UDPCallback operator implementation is mostly a pass through.
@@ -351,7 +350,7 @@ public:
     /// @param io_service the IOService which will monitor the socket.
     ///
     /// @throw NcrUDPError if the open fails.
-    virtual void open(isc::asiolink::IOService& io_service);
+    virtual void open(const isc::asiolink::IOServicePtr& io_service);
 
     /// @brief Closes the UDPSocket.
     ///
@@ -397,7 +396,12 @@ public:
     /// the socket receive completion.
     void receiveCompletionHandler(const bool successful,
                                   const UDPCallback* recv_callback);
+
 private:
+
+    /// @brief The IO service used to handle events.
+    isc::asiolink::IOServicePtr io_service_;
+
     /// @brief IP address on which to listen for requests.
     isc::asiolink::IOAddress ip_address_;
 
@@ -430,7 +434,6 @@ private:
     NameChangeUDPListener& operator=(const NameChangeUDPListener& source);
     //@}
 };
-
 
 /// @brief Provides the ability to send NameChangeRequests via  UDP socket
 ///
@@ -469,7 +472,6 @@ public:
     /// @brief Destructor
     virtual ~NameChangeUDPSender();
 
-
     /// @brief Opens a UDP socket using the given IOService.
     ///
     /// Creates a NameChangeUDPSocket bound to the sender's IP address
@@ -478,8 +480,7 @@ public:
     /// @param io_service the IOService which will monitor the socket.
     ///
     /// @throw NcrUDPError if the open fails.
-    virtual void open(isc::asiolink::IOService& io_service);
-
+    virtual void open(const isc::asiolink::IOServicePtr& io_service);
 
     /// @brief Closes the UDPSocket.
     ///

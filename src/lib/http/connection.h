@@ -241,7 +241,7 @@ public:
     /// @param request_timeout Configured timeout for a HTTP request.
     /// @param idle_timeout Timeout after which persistent HTTP connection is
     /// closed by the server.
-    HttpConnection(asiolink::IOService& io_service,
+    HttpConnection(const asiolink::IOServicePtr& io_service,
                    const HttpAcceptorPtr& acceptor,
                    const asiolink::TlsContextPtr& tls_context,
                    HttpConnectionPool& connection_pool,

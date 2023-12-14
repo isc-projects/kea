@@ -105,7 +105,7 @@ public:
 
     /// @brief Constructor.
     HttpConnectionPoolTest()
-        : io_service_(),
+        : io_service_(new IOService()),
           acceptor_(new HttpAcceptor(io_service_)),
           connection_pool_(),
           response_creator_(new TestHttpResponseCreator()) {
@@ -216,7 +216,7 @@ public:
         ASSERT_EQ(1, pool.hasConnection(conn1));
     }
 
-    IOService io_service_;                      ///< IO service.
+    IOServicePtr io_service_;                   ///< IO service.
     HttpAcceptorPtr acceptor_;                  ///< Test acceptor.
     HttpConnectionPool connection_pool_;        ///< Test connection pool.
     HttpResponseCreatorPtr response_creator_;   ///< Test response creator.

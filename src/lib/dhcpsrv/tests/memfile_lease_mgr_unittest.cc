@@ -242,7 +242,7 @@ public:
     ///
     /// @param ms Duration in milliseconds.
     void setTestTime(const uint32_t ms) {
-        IntervalTimer timer(*io_service_);
+        IntervalTimer timer(io_service_);
         timer.setup([this]() {
             io_service_->stop();
         }, ms, IntervalTimer::ONE_SHOT);
@@ -260,8 +260,8 @@ public:
     bool waitForProcess(const Memfile_LeaseMgr& lease_mgr,
                         const uint8_t timeout) {
         const uint32_t iterations_max = timeout * 1000;
-        IntervalTimer fast_path_timer(*io_service_);
-        IntervalTimer timer(*io_service_);
+        IntervalTimer fast_path_timer(io_service_);
+        IntervalTimer timer(io_service_);
         bool elapsed = false;
         timer.setup([&]() {
             io_service_->stop();

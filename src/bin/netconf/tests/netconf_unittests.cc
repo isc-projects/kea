@@ -275,7 +275,7 @@ NetconfAgentTest::fakeServer() {
 
     // Timeout.
     bool timeout = false;
-    IntervalTimer timer(*io_service_);
+    IntervalTimer timer(io_service_);
     timer.setup([&timeout]() {
             timeout = true;
             FAIL() << "timeout";

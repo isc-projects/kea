@@ -216,7 +216,7 @@ public:
     /// stops the IO service and causes the function to return.
     void runTimersWithTimeout(const IOServicePtr& io_service, const long timeout_ms,
                               std::function<bool()> cond = std::function<bool()>()) {
-        IntervalTimer timer(*io_service);
+        IntervalTimer timer(io_service);
         std::atomic<bool> stopped(false);
         timer.setup([&io_service, &stopped]() {
             stopped = true;

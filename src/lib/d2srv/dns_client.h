@@ -139,7 +139,7 @@ public:
     /// @param tsig_key A pointer to an @c D2TsigKeyPtr object that will
     /// (if not null) be used to sign the DNS Update message and verify the
     /// response.
-    void doUpdate(asiolink::IOService& io_service,
+    void doUpdate(const asiolink::IOServicePtr& io_service,
                   const asiolink::IOAddress& ns_addr,
                   const uint16_t ns_port,
                   D2UpdateMessage& update,

@@ -209,7 +209,7 @@ class QueueMgrUDPTest : public virtual ::testing::Test, public D2StatTest,
                         NameChangeSender::RequestSendHandler {
 public:
     asiolink::IOServicePtr io_service_;
-    NameChangeSenderPtr   sender_;
+    NameChangeSenderPtr sender_;
     isc::asiolink::IntervalTimer test_timer_;
     D2QueueMgrPtr queue_mgr_;
 
@@ -218,7 +218,7 @@ public:
     std::vector<NameChangeRequestPtr> received_ncrs_;
 
     QueueMgrUDPTest() : io_service_(new isc::asiolink::IOService()),
-                        test_timer_(*io_service_),
+                        test_timer_(io_service_),
                         send_result_(NameChangeSender::SUCCESS) {
         isc::asiolink::IOAddress addr(TEST_ADDRESS);
         // Create our sender instance. Note that reuse_address is true.
@@ -359,7 +359,7 @@ TEST_F (QueueMgrUDPTest, liveFeed) {
     ASSERT_EQ(D2QueueMgr::RUNNING, queue_mgr_->getMgrState());
 
     // Place the sender into sending state.
-    ASSERT_NO_THROW(sender_->startSending(*io_service_));
+    ASSERT_NO_THROW(sender_->startSending(io_service_));
     ASSERT_TRUE(sender_->amSending());
 
     // Iterate over the list of requests sending and receiving

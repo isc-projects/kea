@@ -51,7 +51,7 @@ public:
     ///
     /// Starts test timer which detects timeouts, and enables multi-threading mode.
     MtTcpListenerMgrTest()
-        : mt_listener_mgr_(), io_service_(), test_timer_(io_service_),
+        : mt_listener_mgr_(), io_service_(new IOService()), test_timer_(io_service_),
           run_io_service_timer_(io_service_), clients_(), num_threads_(),
           num_clients_(), num_in_progress_(0), num_finished_(0), chunk_size_(0),
           pause_cnt_(0), response_handler_(0) {
@@ -112,7 +112,7 @@ public:
     }
 
     /// @brief TcpListener factory for MtTcpListener to instantiate new listeners.
-    TcpListenerPtr listenerFactory(asiolink::IOService& io_service,
+    TcpListenerPtr listenerFactory(const asiolink::IOServicePtr& io_service,
                                    const asiolink::IOAddress& server_address,
                                    const unsigned short server_port,
                                    const asiolink::TlsContextPtr& tls_context,
@@ -135,7 +135,7 @@ public:
     ///
     /// @param fail_on_timeout Specifies if test failure should be reported.
     void clientDone() {
-        io_service_.stop();
+        io_service_->stop();
     }
 
     /// @brief Initiates a command via a new TCP client.
@@ -206,7 +206,7 @@ public:
         if (fail_on_timeout) {
             ADD_FAILURE() << "Timeout occurred while running the test!";
         }
-        io_service_.stop();
+        io_service_->stop();
     }
 
     /// @brief Runs IO service with optional timeout.
@@ -227,10 +227,10 @@ public:
         size_t num_done = 0;
         while (num_done != request_limit) {
             // Always call restart() before we call run();
-            io_service_.restart();
+            io_service_->restart();
 
             // Run until a client stops the service.
-            io_service_.run();
+            io_service_->run();
 
             // If all the clients are done receiving, the test is done.
             num_done = 0;
@@ -428,7 +428,7 @@ public:
         // Create an MtTcpListenerMgr with prescribed number of threads.
         createMtTcpListenerMgr(num_threads,
                                std::bind(&MtTcpListenerMgrTest::synchronizedCommandHandler,
-                                          this, ph::_1));
+                                         this, ph::_1));
 
         // Start it and verify it is running.
         ASSERT_NO_THROW_LOG(mt_listener_mgr_->start());
@@ -703,7 +703,7 @@ public:
     MtTcpListenerMgrPtr mt_listener_mgr_;
 
     /// @brief IO service used in drive the test and test clients.
-    IOService io_service_;
+    IOServicePtr io_service_;
 
     /// @brief Asynchronous timer service to detect timeouts.
     IntervalTimer test_timer_;

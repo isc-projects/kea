@@ -730,7 +730,7 @@ TEST(TLSTest, configureError) {
 
 // Test if we can get a stream.
 TEST(TLSTest, stream) {
-    IOService service;
+    IOServicePtr service(new IOService());
     TlsContextPtr ctx(new TlsContext(TlsRole::CLIENT));
     boost::scoped_ptr<TlsStream<TestCallback> > st;
     EXPECT_NO_THROW(st.reset(new TlsStream<TestCallback>(service, ctx)));
@@ -738,7 +738,7 @@ TEST(TLSTest, stream) {
 
 // Test what happens when handshake is forgotten.
 TEST(TLSTest, noHandshake) {
-    IOService service;
+    IOServicePtr service(new IOService());
 
     // Server part.
     TlsContextPtr server_ctx;
@@ -748,7 +748,7 @@ TEST(TLSTest, noHandshake) {
     // Accept a client.
     tcp::endpoint server_ep(tcp::endpoint(address::from_string(SERVER_ADDRESS),
                                           SERVER_PORT));
-    tcp::acceptor acceptor(service.getInternalIOService(), server_ep);
+    tcp::acceptor acceptor(service->getInternalIOService(), server_ep);
     acceptor.set_option(tcp::acceptor::reuse_address(true));
     TestCallback accept_cb;
     acceptor.async_accept(server.lowest_layer(), accept_cb);
@@ -765,7 +765,7 @@ TEST(TLSTest, noHandshake) {
 
     // Run accept and connect.
     while (!accept_cb.getCalled() || !connect_cb.getCalled()) {
-        service.runOne();
+        service->runOne();
     }
 
     // Verify the error codes.
@@ -790,7 +790,7 @@ TEST(TLSTest, noHandshake) {
     TestCallback send_cb;
     async_write(client, boost::asio::buffer(send_buf), send_cb);
     while (!timeout && !send_cb.getCalled()) {
-        service.runOne();
+        service->runOne();
     }
     timer1.cancel();
 
@@ -817,7 +817,7 @@ TEST(TLSTest, noHandshake) {
     TestCallback receive_cb;
     server.async_read_some(boost::asio::buffer(receive_buf), receive_cb);
     while (!timeout && !receive_cb.getCalled()) {
-        service.runOne();
+        service->runOne();
     }
     timer2.cancel();
 
@@ -845,7 +845,7 @@ TEST(TLSTest, noHandshake) {
 
 // Test what happens when the server was not configured.
 TEST(TLSTest, serverNotConfigured) {
-    IOService service;
+    IOServicePtr service(new IOService());
 
     // Server part.
     TlsContextPtr server_ctx(new TlsContext(TlsRole::SERVER));
@@ -855,7 +855,7 @@ TEST(TLSTest, serverNotConfigured) {
     // Accept a client.
     tcp::endpoint server_ep(tcp::endpoint(address::from_string(SERVER_ADDRESS),
                                           SERVER_PORT));
-    tcp::acceptor acceptor(service.getInternalIOService(), server_ep);
+    tcp::acceptor acceptor(service->getInternalIOService(), server_ep);
     acceptor.set_option(tcp::acceptor::reuse_address(true));
     TestCallback accept_cb;
     acceptor.async_accept(server.lowest_layer(), accept_cb);
@@ -872,7 +872,7 @@ TEST(TLSTest, serverNotConfigured) {
 
     // Run accept and connect.
     while (!accept_cb.getCalled() || !connect_cb.getCalled()) {
-        service.runOne();
+        service->runOne();
     }
 
     // Verify the error codes.
@@ -898,7 +898,7 @@ TEST(TLSTest, serverNotConfigured) {
     TestCallback client_cb;
     client.handshake(client_cb);
     while (!timeout && (!server_cb.getCalled() || !client_cb.getCalled())) {
-        service.runOne();
+        service->runOne();
     }
     timer.cancel();
 
@@ -945,7 +945,7 @@ TEST(TLSTest, serverNotConfigured) {
 
 // Test what happens when the client was not configured.
 TEST(TLSTest, clientNotConfigured) {
-    IOService service;
+    IOServicePtr service(new IOService());
 
     // Server part.
     TlsContextPtr server_ctx;
@@ -955,7 +955,7 @@ TEST(TLSTest, clientNotConfigured) {
     // Accept a client.
     tcp::endpoint server_ep(tcp::endpoint(address::from_string(SERVER_ADDRESS),
                                           SERVER_PORT));
-    tcp::acceptor acceptor(service.getInternalIOService(), server_ep);
+    tcp::acceptor acceptor(service->getInternalIOService(), server_ep);
     acceptor.set_option(tcp::acceptor::reuse_address(true));
     TestCallback accept_cb;
     acceptor.async_accept(server.lowest_layer(), accept_cb);
@@ -972,7 +972,7 @@ TEST(TLSTest, clientNotConfigured) {
 
     // Run accept and connect.
     while (!accept_cb.getCalled() || !connect_cb.getCalled()) {
-        service.runOne();
+        service->runOne();
     }
 
     // Verify the error codes.
@@ -998,7 +998,7 @@ TEST(TLSTest, clientNotConfigured) {
     TestCallback client_cb;
     client.async_handshake(roleToImpl(TlsRole::CLIENT), client_cb);
     while (!timeout && (!server_cb.getCalled() || !client_cb.getCalled())) {
-        service.runOne();
+        service->runOne();
     }
     timer.cancel();
 
@@ -1044,7 +1044,7 @@ TEST(TLSTest, clientNotConfigured) {
 
 // Test what happens when the client is HTTP (vs HTTPS).
 TEST(TLSTest, clientHTTPnoS) {
-    IOService service;
+    IOServicePtr service(new IOService());
 
     // Server part.
     TlsContextPtr server_ctx;
@@ -1054,13 +1054,13 @@ TEST(TLSTest, clientHTTPnoS) {
     // Accept a client.
     tcp::endpoint server_ep(tcp::endpoint(address::from_string(SERVER_ADDRESS),
                                           SERVER_PORT));
-    tcp::acceptor acceptor(service.getInternalIOService(), server_ep);
+    tcp::acceptor acceptor(service->getInternalIOService(), server_ep);
     acceptor.set_option(tcp::acceptor::reuse_address(true));
     TestCallback accept_cb;
     acceptor.async_accept(server.lowest_layer(), accept_cb);
 
     // Client part.
-    tcp::socket client(service.getInternalIOService());
+    tcp::socket client(service->getInternalIOService());
 
     // Connect to.
     client.open(tcp::v4());
@@ -1069,7 +1069,7 @@ TEST(TLSTest, clientHTTPnoS) {
 
     // Run accept and connect.
     while (!accept_cb.getCalled() || !connect_cb.getCalled()) {
-        service.runOne();
+        service->runOne();
     }
 
     // Verify the error codes.
@@ -1099,7 +1099,7 @@ TEST(TLSTest, clientHTTPnoS) {
     client.async_send(boost::asio::buffer(send_buf), client_cb);
 
     while (!timeout && (!server_cb.getCalled() || !client_cb.getCalled())) {
-        service.runOne();
+        service->runOne();
     }
     timer.cancel();
 
@@ -1139,7 +1139,7 @@ TEST(TLSTest, clientHTTPnoS) {
 
 // Test what happens when the client does not use HTTP nor HTTP.
 TEST(TLSTest, unknownClient) {
-    IOService service;
+    IOServicePtr service(new IOService());
 
     // Server part.
     TlsContextPtr server_ctx;
@@ -1149,13 +1149,13 @@ TEST(TLSTest, unknownClient) {
     // Accept a client.
     tcp::endpoint server_ep(tcp::endpoint(address::from_string(SERVER_ADDRESS),
                                           SERVER_PORT));
-    tcp::acceptor acceptor(service.getInternalIOService(), server_ep);
+    tcp::acceptor acceptor(service->getInternalIOService(), server_ep);
     acceptor.set_option(tcp::acceptor::reuse_address(true));
     TestCallback accept_cb;
     acceptor.async_accept(server.lowest_layer(), accept_cb);
 
     // Client part.
-    tcp::socket client(service.getInternalIOService());
+    tcp::socket client(service->getInternalIOService());
 
     // Connect to.
     client.open(tcp::v4());
@@ -1164,7 +1164,7 @@ TEST(TLSTest, unknownClient) {
 
     // Run accept and connect.
     while (!accept_cb.getCalled() || !connect_cb.getCalled()) {
-        service.runOne();
+        service->runOne();
     }
 
     // Verify the error codes.
@@ -1194,7 +1194,7 @@ TEST(TLSTest, unknownClient) {
     client.async_send(boost::asio::buffer(send_buf), client_cb);
 
     while (!timeout && (!server_cb.getCalled() || !client_cb.getCalled())) {
-        service.runOne();
+        service->runOne();
     }
     timer.cancel();
 
@@ -1230,7 +1230,7 @@ TEST(TLSTest, unknownClient) {
 
 // Test what happens when the client uses a certificate from another CA.
 TEST(TLSTest, anotherClient) {
-    IOService service;
+    IOServicePtr service(new IOService());
 
     // Server part.
     TlsContextPtr server_ctx;
@@ -1240,7 +1240,7 @@ TEST(TLSTest, anotherClient) {
     // Accept a client.
     tcp::endpoint server_ep(tcp::endpoint(address::from_string(SERVER_ADDRESS),
                                           SERVER_PORT));
-    tcp::acceptor acceptor(service.getInternalIOService(), server_ep);
+    tcp::acceptor acceptor(service->getInternalIOService(), server_ep);
     acceptor.set_option(tcp::acceptor::reuse_address(true));
     TestCallback accept_cb;
     acceptor.async_accept(server.lowest_layer(), accept_cb);
@@ -1257,7 +1257,7 @@ TEST(TLSTest, anotherClient) {
 
     // Run accept and connect.
     while (!accept_cb.getCalled() || !connect_cb.getCalled()) {
-        service.runOne();
+        service->runOne();
     }
 
     // Verify the error codes.
@@ -1283,7 +1283,7 @@ TEST(TLSTest, anotherClient) {
     TestCallback client_cb;
     client.async_handshake(roleToImpl(TlsRole::CLIENT), client_cb);
     while (!timeout && (!server_cb.getCalled() || !client_cb.getCalled())) {
-        service.runOne();
+        service->runOne();
     }
     timer.cancel();
 
@@ -1331,7 +1331,7 @@ TEST(TLSTest, anotherClient) {
 
 // Test what happens when the client uses a self-signed certificate.
 TEST(TLSTest, selfSigned) {
-    IOService service;
+    IOServicePtr service(new IOService());
 
     // Server part.
     TlsContextPtr server_ctx;
@@ -1341,7 +1341,7 @@ TEST(TLSTest, selfSigned) {
     // Accept a client.
     tcp::endpoint server_ep(tcp::endpoint(address::from_string(SERVER_ADDRESS),
                                           SERVER_PORT));
-    tcp::acceptor acceptor(service.getInternalIOService(), server_ep);
+    tcp::acceptor acceptor(service->getInternalIOService(), server_ep);
     acceptor.set_option(tcp::acceptor::reuse_address(true));
     TestCallback accept_cb;
     acceptor.async_accept(server.lowest_layer(), accept_cb);
@@ -1358,7 +1358,7 @@ TEST(TLSTest, selfSigned) {
 
     // Run accept and connect.
     while (!accept_cb.getCalled() || !connect_cb.getCalled()) {
-        service.runOne();
+        service->runOne();
     }
 
     // Verify the error codes.
@@ -1384,7 +1384,7 @@ TEST(TLSTest, selfSigned) {
     TestCallback client_cb;
     client.async_handshake(roleToImpl(TlsRole::CLIENT), client_cb);
     while (!timeout && (!server_cb.getCalled() || !client_cb.getCalled())) {
-        service.runOne();
+        service->runOne();
     }
     timer.cancel();
 
@@ -1440,7 +1440,7 @@ TEST(TLSTest, selfSigned) {
 
 // Test what happens when handshake is forgotten.
 TEST(TLSTest, noHandshakeCloseonError) {
-    IOService service;
+    IOServicePtr service(new IOService());
 
     // Server part.
     TlsContextPtr server_ctx;
@@ -1450,7 +1450,7 @@ TEST(TLSTest, noHandshakeCloseonError) {
     // Accept a client.
     tcp::endpoint server_ep(tcp::endpoint(address::from_string(SERVER_ADDRESS),
                                           SERVER_PORT));
-    tcp::acceptor acceptor(service.getInternalIOService(), server_ep);
+    tcp::acceptor acceptor(service->getInternalIOService(), server_ep);
     acceptor.set_option(tcp::acceptor::reuse_address(true));
     TestCallback accept_cb;
     acceptor.async_accept(server.lowest_layer(), accept_cb);
@@ -1467,7 +1467,7 @@ TEST(TLSTest, noHandshakeCloseonError) {
 
     // Run accept and connect.
     while (!accept_cb.getCalled() || !connect_cb.getCalled()) {
-        service.runOne();
+        service->runOne();
     }
 
     // Verify the error codes.
@@ -1492,7 +1492,7 @@ TEST(TLSTest, noHandshakeCloseonError) {
     TestCallback send_cb(&client.lowest_layer());
     async_write(client, boost::asio::buffer(send_buf), send_cb);
     while (!timeout && !send_cb.getCalled()) {
-        service.runOne();
+        service->runOne();
     }
     timer1.cancel();
 
@@ -1519,7 +1519,7 @@ TEST(TLSTest, noHandshakeCloseonError) {
     TestCallback receive_cb;
     server.async_read_some(boost::asio::buffer(receive_buf), receive_cb);
     while (!timeout && !receive_cb.getCalled()) {
-        service.runOne();
+        service->runOne();
     }
     timer2.cancel();
 
@@ -1543,7 +1543,7 @@ TEST(TLSTest, noHandshakeCloseonError) {
 
 // Test what happens when the server was not configured.
 TEST(TLSTest, serverNotConfiguredCloseonError) {
-    IOService service;
+    IOServicePtr service(new IOService());
 
     // Server part.
     TlsContextPtr server_ctx(new TlsContext(TlsRole::SERVER));
@@ -1553,7 +1553,7 @@ TEST(TLSTest, serverNotConfiguredCloseonError) {
     // Accept a client.
     tcp::endpoint server_ep(tcp::endpoint(address::from_string(SERVER_ADDRESS),
                                           SERVER_PORT));
-    tcp::acceptor acceptor(service.getInternalIOService(), server_ep);
+    tcp::acceptor acceptor(service->getInternalIOService(), server_ep);
     acceptor.set_option(tcp::acceptor::reuse_address(true));
     TestCallback accept_cb;
     acceptor.async_accept(server.lowest_layer(), accept_cb);
@@ -1570,7 +1570,7 @@ TEST(TLSTest, serverNotConfiguredCloseonError) {
 
     // Run accept and connect.
     while (!accept_cb.getCalled() || !connect_cb.getCalled()) {
-        service.runOne();
+        service->runOne();
     }
 
     // Verify the error codes.
@@ -1596,7 +1596,7 @@ TEST(TLSTest, serverNotConfiguredCloseonError) {
     TestCallback client_cb;
     client.handshake(client_cb);
     while (!timeout && (!server_cb.getCalled() || !client_cb.getCalled())) {
-        service.runOne();
+        service->runOne();
     }
     timer.cancel();
 
@@ -1642,7 +1642,7 @@ TEST(TLSTest, serverNotConfiguredCloseonError) {
 
 // Test what happens when the client was not configured.
 TEST(TLSTest, clientNotConfiguredCloseonError) {
-    IOService service;
+    IOServicePtr service(new IOService());
 
     // Server part.
     TlsContextPtr server_ctx;
@@ -1652,7 +1652,7 @@ TEST(TLSTest, clientNotConfiguredCloseonError) {
     // Accept a client.
     tcp::endpoint server_ep(tcp::endpoint(address::from_string(SERVER_ADDRESS),
                                           SERVER_PORT));
-    tcp::acceptor acceptor(service.getInternalIOService(), server_ep);
+    tcp::acceptor acceptor(service->getInternalIOService(), server_ep);
     acceptor.set_option(tcp::acceptor::reuse_address(true));
     TestCallback accept_cb;
     acceptor.async_accept(server.lowest_layer(), accept_cb);
@@ -1669,7 +1669,7 @@ TEST(TLSTest, clientNotConfiguredCloseonError) {
 
     // Run accept and connect.
     while (!accept_cb.getCalled() || !connect_cb.getCalled()) {
-        service.runOne();
+        service->runOne();
     }
 
     // Verify the error codes.
@@ -1695,7 +1695,7 @@ TEST(TLSTest, clientNotConfiguredCloseonError) {
     TestCallback client_cb(&client.lowest_layer());
     client.async_handshake(roleToImpl(TlsRole::CLIENT), client_cb);
     while (!timeout && (!server_cb.getCalled() || !client_cb.getCalled())) {
-        service.runOne();
+        service->runOne();
     }
     timer.cancel();
 
@@ -1740,7 +1740,7 @@ TEST(TLSTest, clientNotConfiguredCloseonError) {
 
 // Test what happens when the client is HTTP (vs HTTPS).
 TEST(TLSTest, clientHTTPnoSCloseonError) {
-    IOService service;
+    IOServicePtr service(new IOService());
 
     // Server part.
     TlsContextPtr server_ctx;
@@ -1750,13 +1750,13 @@ TEST(TLSTest, clientHTTPnoSCloseonError) {
     // Accept a client.
     tcp::endpoint server_ep(tcp::endpoint(address::from_string(SERVER_ADDRESS),
                                           SERVER_PORT));
-    tcp::acceptor acceptor(service.getInternalIOService(), server_ep);
+    tcp::acceptor acceptor(service->getInternalIOService(), server_ep);
     acceptor.set_option(tcp::acceptor::reuse_address(true));
     TestCallback accept_cb;
     acceptor.async_accept(server.lowest_layer(), accept_cb);
 
     // Client part.
-    tcp::socket client(service.getInternalIOService());
+    tcp::socket client(service->getInternalIOService());
 
     // Connect to.
     client.open(tcp::v4());
@@ -1765,7 +1765,7 @@ TEST(TLSTest, clientHTTPnoSCloseonError) {
 
     // Run accept and connect.
     while (!accept_cb.getCalled() || !connect_cb.getCalled()) {
-        service.runOne();
+        service->runOne();
     }
 
     // Verify the error codes.
@@ -1795,7 +1795,7 @@ TEST(TLSTest, clientHTTPnoSCloseonError) {
     client.async_send(boost::asio::buffer(send_buf), client_cb);
 
     while (!timeout && (!server_cb.getCalled() || !client_cb.getCalled())) {
-        service.runOne();
+        service->runOne();
     }
     timer.cancel();
 
@@ -1835,7 +1835,7 @@ TEST(TLSTest, clientHTTPnoSCloseonError) {
 
 // Test what happens when the client uses a certificate from another CA.
 TEST(TLSTest, anotherClientCloseonError) {
-    IOService service;
+    IOServicePtr service(new IOService());
 
     // Server part.
     TlsContextPtr server_ctx;
@@ -1845,7 +1845,7 @@ TEST(TLSTest, anotherClientCloseonError) {
     // Accept a client.
     tcp::endpoint server_ep(tcp::endpoint(address::from_string(SERVER_ADDRESS),
                                           SERVER_PORT));
-    tcp::acceptor acceptor(service.getInternalIOService(), server_ep);
+    tcp::acceptor acceptor(service->getInternalIOService(), server_ep);
     acceptor.set_option(tcp::acceptor::reuse_address(true));
     TestCallback accept_cb;
     acceptor.async_accept(server.lowest_layer(), accept_cb);
@@ -1862,7 +1862,7 @@ TEST(TLSTest, anotherClientCloseonError) {
 
     // Run accept and connect.
     while (!accept_cb.getCalled() || !connect_cb.getCalled()) {
-        service.runOne();
+        service->runOne();
     }
 
     // Verify the error codes.
@@ -1888,7 +1888,7 @@ TEST(TLSTest, anotherClientCloseonError) {
     TestCallback client_cb;
     client.async_handshake(roleToImpl(TlsRole::CLIENT), client_cb);
     while (!timeout && (!server_cb.getCalled() || !client_cb.getCalled())) {
-        service.runOne();
+        service->runOne();
     }
     timer.cancel();
 
@@ -1934,7 +1934,7 @@ TEST(TLSTest, anotherClientCloseonError) {
 
 // Test what happens when the client uses a self-signed certificate.
 TEST(TLSTest, selfSignedCloseonError) {
-    IOService service;
+    IOServicePtr service(new IOService());
 
     // Server part.
     TlsContextPtr server_ctx;
@@ -1944,7 +1944,7 @@ TEST(TLSTest, selfSignedCloseonError) {
     // Accept a client.
     tcp::endpoint server_ep(tcp::endpoint(address::from_string(SERVER_ADDRESS),
                                           SERVER_PORT));
-    tcp::acceptor acceptor(service.getInternalIOService(), server_ep);
+    tcp::acceptor acceptor(service->getInternalIOService(), server_ep);
     acceptor.set_option(tcp::acceptor::reuse_address(true));
     TestCallback accept_cb;
     acceptor.async_accept(server.lowest_layer(), accept_cb);
@@ -1961,7 +1961,7 @@ TEST(TLSTest, selfSignedCloseonError) {
 
     // Run accept and connect.
     while (!accept_cb.getCalled() || !connect_cb.getCalled()) {
-        service.runOne();
+        service->runOne();
     }
 
     // Verify the error codes.
@@ -1987,7 +1987,7 @@ TEST(TLSTest, selfSignedCloseonError) {
     TestCallback client_cb;
     client.async_handshake(roleToImpl(TlsRole::CLIENT), client_cb);
     while (!timeout && (!server_cb.getCalled() || !client_cb.getCalled())) {
-        service.runOne();
+        service->runOne();
     }
     timer.cancel();
 
@@ -2040,7 +2040,7 @@ TEST(TLSTest, selfSignedCloseonError) {
 // Test what happens when the client uses a certificate from another CA
 // but the client certificate request and validation are disabled.
 TEST(TLSTest, anotherClientNoReq) {
-    IOService service;
+    IOServicePtr service(new IOService());
 
     // Server part.
     TlsContextPtr server_ctx;
@@ -2050,7 +2050,7 @@ TEST(TLSTest, anotherClientNoReq) {
     // Accept a client.
     tcp::endpoint server_ep(tcp::endpoint(address::from_string(SERVER_ADDRESS),
                                           SERVER_PORT));
-    tcp::acceptor acceptor(service.getInternalIOService(), server_ep);
+    tcp::acceptor acceptor(service->getInternalIOService(), server_ep);
     acceptor.set_option(tcp::acceptor::reuse_address(true));
     TestCallback accept_cb;
     acceptor.async_accept(server.lowest_layer(), accept_cb);
@@ -2067,7 +2067,7 @@ TEST(TLSTest, anotherClientNoReq) {
 
     // Run accept and connect.
     while (!accept_cb.getCalled() || !connect_cb.getCalled()) {
-        service.runOne();
+        service->runOne();
     }
 
     // Verify the error codes.
@@ -2093,7 +2093,7 @@ TEST(TLSTest, anotherClientNoReq) {
     TestCallback client_cb;
     client.async_handshake(roleToImpl(TlsRole::CLIENT), client_cb);
     while (!timeout && (!server_cb.getCalled() || !client_cb.getCalled())) {
-        service.runOne();
+        service->runOne();
     }
     timer.cancel();
 
@@ -2112,7 +2112,7 @@ TEST(TLSTest, anotherClientNoReq) {
 // Test what happens when the server uses a certificate without subject
 // alternative name (but still a version 3 certificate).
 TEST(TLSTest, serverRaw) {
-    IOService service;
+    IOServicePtr service(new IOService());
 
     // Server part.
     TlsContextPtr server_ctx;
@@ -2122,7 +2122,7 @@ TEST(TLSTest, serverRaw) {
     // Accept a client.
     tcp::endpoint server_ep(tcp::endpoint(address::from_string(SERVER_ADDRESS),
                                           SERVER_PORT));
-    tcp::acceptor acceptor(service.getInternalIOService(), server_ep);
+    tcp::acceptor acceptor(service->getInternalIOService(), server_ep);
     acceptor.set_option(tcp::acceptor::reuse_address(true));
     TestCallback accept_cb;
     acceptor.async_accept(server.lowest_layer(), accept_cb);
@@ -2139,7 +2139,7 @@ TEST(TLSTest, serverRaw) {
 
     // Run accept and connect.
     while (!accept_cb.getCalled() || !connect_cb.getCalled()) {
-        service.runOne();
+        service->runOne();
     }
 
     // Verify the error codes.
@@ -2165,7 +2165,7 @@ TEST(TLSTest, serverRaw) {
     TestCallback client_cb;
     client.async_handshake(roleToImpl(TlsRole::CLIENT), client_cb);
     while (!timeout && (!server_cb.getCalled() || !client_cb.getCalled())) {
-        service.runOne();
+        service->runOne();
     }
     timer.cancel();
 
@@ -2185,7 +2185,7 @@ TEST(TLSTest, serverRaw) {
 // Test what happens when the client uses a trusted self-signed certificate.
 // Not really a failure case as it works...
 TEST(TLSTest, trustedSelfSigned) {
-    IOService service;
+    IOServicePtr service(new IOService());
 
     // Server part.
     TlsContextPtr server_ctx;
@@ -2195,7 +2195,7 @@ TEST(TLSTest, trustedSelfSigned) {
     // Accept a client.
     tcp::endpoint server_ep(tcp::endpoint(address::from_string(SERVER_ADDRESS),
                                           SERVER_PORT));
-    tcp::acceptor acceptor(service.getInternalIOService(), server_ep);
+    tcp::acceptor acceptor(service->getInternalIOService(), server_ep);
     acceptor.set_option(tcp::acceptor::reuse_address(true));
     TestCallback accept_cb;
     acceptor.async_accept(server.lowest_layer(), accept_cb);
@@ -2212,7 +2212,7 @@ TEST(TLSTest, trustedSelfSigned) {
 
     // Run accept and connect.
     while (!accept_cb.getCalled() || !connect_cb.getCalled()) {
-        service.runOne();
+        service->runOne();
     }
 
     // Verify the error codes.
@@ -2238,7 +2238,7 @@ TEST(TLSTest, trustedSelfSigned) {
     TestCallback client_cb;
     client.async_handshake(roleToImpl(TlsRole::CLIENT), client_cb);
     while (!timeout && (!server_cb.getCalled() || !client_cb.getCalled())) {
-        service.runOne();
+        service->runOne();
     }
     timer.cancel();
 
@@ -2263,7 +2263,7 @@ TEST(TLSTest, trustedSelfSigned) {
 
 // Test what happens when the shutdown receiver is inactive.
 TEST(TLSTest, shutdownInactive) {
-    IOService service;
+    IOServicePtr service(new IOService());
 
     // Server part.
     TlsContextPtr server_ctx(new TlsContext(TlsRole::SERVER));
@@ -2273,7 +2273,7 @@ TEST(TLSTest, shutdownInactive) {
     // Accept a client.
     tcp::endpoint server_ep(tcp::endpoint(address::from_string(SERVER_ADDRESS),
                                           SERVER_PORT));
-    tcp::acceptor acceptor(service.getInternalIOService(), server_ep);
+    tcp::acceptor acceptor(service->getInternalIOService(), server_ep);
     acceptor.set_option(tcp::acceptor::reuse_address(true));
     TestCallback accept_cb;
     acceptor.async_accept(server.lowest_layer(), accept_cb);
@@ -2290,7 +2290,7 @@ TEST(TLSTest, shutdownInactive) {
 
     // Run accept and connect.
     while (!accept_cb.getCalled() || !connect_cb.getCalled()) {
-        service.runOne();
+        service->runOne();
     }
 
     // Verify the error codes.
@@ -2316,7 +2316,7 @@ TEST(TLSTest, shutdownInactive) {
     TestCallback client_cb;
     client.handshake(client_cb);
     while (!timeout && (!server_cb.getCalled() || !client_cb.getCalled())) {
-        service.runOne();
+        service->runOne();
     }
     timer.cancel();
 
@@ -2336,7 +2336,7 @@ TEST(TLSTest, shutdownInactive) {
     TestCallback shutdown_cb;
     client.shutdown(shutdown_cb);
     while (!timeout && !shutdown_cb.getCalled()) {
-        service.runOne();
+        service->runOne();
     }
     timer2.cancel();
 
@@ -2361,7 +2361,7 @@ TEST(TLSTest, shutdownInactive) {
 
 // Test what happens when the shutdown receiver is active.
 TEST(TLSTest, shutdownActive) {
-    IOService service;
+    IOServicePtr service(new IOService());
 
     // Server part.
     TlsContextPtr server_ctx(new TlsContext(TlsRole::SERVER));
@@ -2371,7 +2371,7 @@ TEST(TLSTest, shutdownActive) {
     // Accept a client.
     tcp::endpoint server_ep(tcp::endpoint(address::from_string(SERVER_ADDRESS),
                                           SERVER_PORT));
-    tcp::acceptor acceptor(service.getInternalIOService(), server_ep);
+    tcp::acceptor acceptor(service->getInternalIOService(), server_ep);
     acceptor.set_option(tcp::acceptor::reuse_address(true));
     TestCallback accept_cb;
     acceptor.async_accept(server.lowest_layer(), accept_cb);
@@ -2388,7 +2388,7 @@ TEST(TLSTest, shutdownActive) {
 
     // Run accept and connect.
     while (!accept_cb.getCalled() || !connect_cb.getCalled()) {
-        service.runOne();
+        service->runOne();
     }
 
     // Verify the error codes.
@@ -2414,7 +2414,7 @@ TEST(TLSTest, shutdownActive) {
     TestCallback client_cb;
     client.handshake(client_cb);
     while (!timeout && (!server_cb.getCalled() || !client_cb.getCalled())) {
-        service.runOne();
+        service->runOne();
     }
     timer.cancel();
 
@@ -2439,7 +2439,7 @@ TEST(TLSTest, shutdownActive) {
     TestCallback shutdown_cb;
     client.shutdown(shutdown_cb);
     while (!timeout && (!shutdown_cb.getCalled() || !receive_cb.getCalled())) {
-        service.runOne();
+        service->runOne();
     }
     timer2.cancel();
 
@@ -2473,7 +2473,7 @@ TEST(TLSTest, shutdownActive) {
 // Test what happens when the shutdown receiver is inactive on shutdown
 // and immediate close.
 TEST(TLSTest, shutdownCloseInactive) {
-    IOService service;
+    IOServicePtr service(new IOService());
 
     // Server part.
     TlsContextPtr server_ctx(new TlsContext(TlsRole::SERVER));
@@ -2483,7 +2483,7 @@ TEST(TLSTest, shutdownCloseInactive) {
     // Accept a client.
     tcp::endpoint server_ep(tcp::endpoint(address::from_string(SERVER_ADDRESS),
                                           SERVER_PORT));
-    tcp::acceptor acceptor(service.getInternalIOService(), server_ep);
+    tcp::acceptor acceptor(service->getInternalIOService(), server_ep);
     acceptor.set_option(tcp::acceptor::reuse_address(true));
     TestCallback accept_cb;
     acceptor.async_accept(server.lowest_layer(), accept_cb);
@@ -2500,7 +2500,7 @@ TEST(TLSTest, shutdownCloseInactive) {
 
     // Run accept and connect.
     while (!accept_cb.getCalled() || !connect_cb.getCalled()) {
-        service.runOne();
+        service->runOne();
     }
 
     // Verify the error codes.
@@ -2526,7 +2526,7 @@ TEST(TLSTest, shutdownCloseInactive) {
     TestCallback client_cb;
     client.handshake(client_cb);
     while (!timeout && (!server_cb.getCalled() || !client_cb.getCalled())) {
-        service.runOne();
+        service->runOne();
     }
     timer.cancel();
 
@@ -2547,9 +2547,9 @@ TEST(TLSTest, shutdownCloseInactive) {
     client.shutdown(shutdown_cb);
 
     // Post a close which should be called after the shutdown.
-    service.post([&client] { client.lowest_layer().close(); });
+    service->post([&client] { client.lowest_layer().close(); });
     while (!timeout && !shutdown_cb.getCalled()) {
-        service.runOne();
+        service->runOne();
     }
     timer2.cancel();
 
@@ -2577,7 +2577,7 @@ TEST(TLSTest, shutdownCloseInactive) {
 // Test what happens when the shutdown receiver is active with an
 // immediate close.
 TEST(TLSTest, shutdownCloseActive) {
-    IOService service;
+    IOServicePtr service(new IOService());
 
     // Server part.
     TlsContextPtr server_ctx(new TlsContext(TlsRole::SERVER));
@@ -2587,7 +2587,7 @@ TEST(TLSTest, shutdownCloseActive) {
     // Accept a client.
     tcp::endpoint server_ep(tcp::endpoint(address::from_string(SERVER_ADDRESS),
                                           SERVER_PORT));
-    tcp::acceptor acceptor(service.getInternalIOService(), server_ep);
+    tcp::acceptor acceptor(service->getInternalIOService(), server_ep);
     acceptor.set_option(tcp::acceptor::reuse_address(true));
     TestCallback accept_cb;
     acceptor.async_accept(server.lowest_layer(), accept_cb);
@@ -2604,7 +2604,7 @@ TEST(TLSTest, shutdownCloseActive) {
 
     // Run accept and connect.
     while (!accept_cb.getCalled() || !connect_cb.getCalled()) {
-        service.runOne();
+        service->runOne();
     }
 
     // Verify the error codes.
@@ -2630,7 +2630,7 @@ TEST(TLSTest, shutdownCloseActive) {
     TestCallback client_cb;
     client.handshake(client_cb);
     while (!timeout && (!server_cb.getCalled() || !client_cb.getCalled())) {
-        service.runOne();
+        service->runOne();
     }
     timer.cancel();
 
@@ -2656,9 +2656,9 @@ TEST(TLSTest, shutdownCloseActive) {
     client.shutdown(shutdown_cb);
 
     // Post a close which should be called after the shutdown.
-    service.post([&client] { client.lowest_layer().close(); });
+    service->post([&client] { client.lowest_layer().close(); });
     while (!timeout && (!shutdown_cb.getCalled() || !receive_cb.getCalled())) {
-        service.runOne();
+        service->runOne();
     }
     timer2.cancel();
 

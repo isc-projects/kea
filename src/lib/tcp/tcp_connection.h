@@ -208,7 +208,7 @@ public:
     /// @param idle_timeout Timeout after which a TCP connection is
     /// closed by the server.
     /// @param read_max maximum size of a single socket read.  Defaults to 32K.
-    TcpConnection(asiolink::IOService& io_service,
+    TcpConnection(const asiolink::IOServicePtr& io_service,
                   const TcpConnectionAcceptorPtr& acceptor,
                   const asiolink::TlsContextPtr& tls_context,
                   TcpConnectionPool& connection_pool,
@@ -421,6 +421,9 @@ protected:
     size_t getInputBufSize() const {
         return (input_buf_.size());
     }
+
+    /// @brief The IO service used to handle events.
+    asiolink::IOServicePtr io_service_;
 
     /// @brief TLS context.
     asiolink::TlsContextPtr tls_context_;

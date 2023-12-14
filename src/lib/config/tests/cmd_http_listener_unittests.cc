@@ -54,7 +54,7 @@ public:
     /// Starts test timer which detects timeouts, deregisters all commands
     /// from CommandMgr, and enables multi-threading mode.
     CmdHttpListenerTest()
-        : listener_(), io_service_(), test_timer_(io_service_),
+        : listener_(), io_service_(new IOService()), test_timer_(io_service_),
           run_io_service_timer_(io_service_), clients_(), num_threads_(),
           num_clients_(), num_in_progress_(0), num_finished_(0), chunk_size_(0),
           pause_cnt_(0) {
@@ -171,7 +171,7 @@ public:
         if (fail_on_timeout) {
             ADD_FAILURE() << "Timeout occurred while running the test!";
         }
-        io_service_.stop();
+        io_service_->stop();
     }
 
     /// @brief Runs IO service with optional timeout.
@@ -192,10 +192,10 @@ public:
         size_t num_done = 0;
         while (num_done != request_limit) {
             // Always call restart() before we call run();
-            io_service_.restart();
+            io_service_->restart();
 
             // Run until a client stops the service.
-            io_service_.run();
+            io_service_->run();
 
             // If all the clients are done receiving, the test is done.
             num_done = 0;
@@ -687,7 +687,7 @@ public:
     CmdHttpListenerPtr listener_;
 
     /// @brief IO service used in drive the test and test clients.
-    IOService io_service_;
+    IOServicePtr io_service_;
 
     /// @brief Asynchronous timer service to detect timeouts.
     IntervalTimer test_timer_;

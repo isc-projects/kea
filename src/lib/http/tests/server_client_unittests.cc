@@ -208,7 +208,7 @@ template<typename HttpConnectionType>
 class HttpListenerImplCustom : public HttpListenerImpl {
 public:
 
-    HttpListenerImplCustom(IOService& io_service,
+    HttpListenerImplCustom(const IOServicePtr& io_service,
                            const IOAddress& server_address,
                            const unsigned short server_port,
                            const TlsContextPtr& tls_context,
@@ -270,7 +270,7 @@ public:
     ///
     /// @throw HttpListenerError when any of the specified parameters is
     /// invalid.
-    HttpListenerCustom(IOService& io_service,
+    HttpListenerCustom(const IOServicePtr& io_service,
                        const IOAddress& server_address,
                        const unsigned short server_port,
                        const TlsContextPtr& tls_context,
@@ -308,7 +308,7 @@ public:
     /// @param request_timeout Configured timeout for a HTTP request.
     /// @param idle_timeout Timeout after which persistent HTTP connection is
     /// closed by the server.
-    HttpConnectionLongWriteBuffer(IOService& io_service,
+    HttpConnectionLongWriteBuffer(const IOServicePtr& io_service,
                                   const HttpAcceptorPtr& acceptor,
                                   const TlsContextPtr& tls_context,
                                   HttpConnectionPool& connection_pool,
@@ -355,7 +355,7 @@ public:
     /// @param request_timeout Configured timeout for a HTTP request.
     /// @param idle_timeout Timeout after which persistent HTTP connection is
     /// closed by the server.
-    HttpConnectionTransactionChange(IOService& io_service,
+    HttpConnectionTransactionChange(const IOServicePtr& io_service,
                                     const HttpAcceptorPtr& acceptor,
                                     const TlsContextPtr& tls_context,
                                     HttpConnectionPool& connection_pool,
@@ -399,7 +399,7 @@ public:
     ///
     /// Starts test timer which detects timeouts.
     HttpListenerTest()
-        : io_service_(), factory_(new TestHttpResponseCreatorFactory()),
+        : io_service_(new IOService()), factory_(new TestHttpResponseCreatorFactory()),
           test_timer_(io_service_), run_io_service_timer_(io_service_), clients_() {
         test_timer_.setup(std::bind(&HttpListenerTest::timeoutHandler, this, true),
                           TEST_TIMEOUT, IntervalTimer::ONE_SHOT);
@@ -435,7 +435,7 @@ public:
         if (fail_on_timeout) {
             ADD_FAILURE() << "Timeout occurred while running the test!";
         }
-        io_service_.stop();
+        io_service_->stop();
     }
 
     /// @brief Runs IO service with optional timeout.
@@ -443,16 +443,16 @@ public:
     /// @param timeout Optional value specifying for how long the io service
     /// should be ran.
     void runIOService(long timeout = 0) {
-        io_service_.restart();
+        io_service_->restart();
 
         if (timeout > 0) {
             run_io_service_timer_.setup(std::bind(&HttpListenerTest::timeoutHandler,
                                                   this, false),
                                         timeout, IntervalTimer::ONE_SHOT);
         }
-        io_service_.run();
-        io_service_.restart();
-        io_service_.poll();
+        io_service_->run();
+        io_service_->restart();
+        io_service_->poll();
     }
 
     /// @brief Returns HTTP OK response expected by unit tests.
@@ -554,7 +554,7 @@ public:
     }
 
     /// @brief IO service used in the tests.
-    IOService io_service_;
+    IOServicePtr io_service_;
 
     /// @brief Pointer to the response creator factory.
     HttpResponseCreatorFactoryPtr factory_;
@@ -593,7 +593,7 @@ TEST_F(HttpListenerTest, listen) {
     EXPECT_EQ(httpOk(HttpVersion::HTTP_11()), client->getResponse());
 
     listener.stop();
-    io_service_.poll();
+    io_service_->poll();
 }
 
 
@@ -645,7 +645,7 @@ TEST_F(HttpListenerTest, keepAlive) {
     EXPECT_TRUE(client->isConnectionClosed());
 
     listener.stop();
-    io_service_.poll();
+    io_service_->poll();
 }
 
 // This test verifies that persistent HTTP connection is established by default
@@ -694,7 +694,7 @@ TEST_F(HttpListenerTest, persistentConnection) {
     EXPECT_TRUE(client->isConnectionClosed());
 
     listener.stop();
-    io_service_.poll();
+    io_service_->poll();
 }
 
 // This test verifies that "keep-alive" connection is closed by the server after
@@ -753,7 +753,7 @@ TEST_F(HttpListenerTest, keepAliveTimeout) {
     EXPECT_TRUE(client->isConnectionClosed());
 
     listener.stop();
-    io_service_.poll();
+    io_service_->poll();
 }
 
 // This test verifies that persistent connection is closed by the server after
@@ -810,7 +810,7 @@ TEST_F(HttpListenerTest, persistentConnectionTimeout) {
     EXPECT_TRUE(client->isConnectionClosed());
 
     listener.stop();
-    io_service_.poll();
+    io_service_->poll();
 }
 
 // This test verifies that HTTP/1.1 connection remains open even if there is an
@@ -863,7 +863,7 @@ TEST_F(HttpListenerTest, persistentConnectionBadBody) {
     EXPECT_TRUE(client->isConnectionClosed());
 
     listener.stop();
-    io_service_.poll();
+    io_service_->poll();
 }
 
 // This test verifies that the HTTP listener can't be started twice.
@@ -938,7 +938,7 @@ TEST_F(HttpListenerTest, invalidIdleTimeout) {
 // This test verifies that listener can't be bound to the port to which
 // other server is bound.
 TEST_F(HttpListenerTest, addressInUse) {
-    tcp::acceptor acceptor(io_service_.getInternalIOService());
+    tcp::acceptor acceptor(io_service_->getInternalIOService());
     // Use other port than SERVER_PORT to make sure that this TCP connection
     // doesn't affect subsequent tests.
     tcp::endpoint endpoint(address::from_string(SERVER_ADDRESS),
@@ -1021,7 +1021,7 @@ public:
         listener_.stop();
         listener2_.stop();
         listener3_.stop();
-        io_service_.poll();
+        io_service_->poll();
         MultiThreadingMgr::instance().setMode(false);
     }
 
@@ -1076,7 +1076,7 @@ public:
                               const HttpResponsePtr&,
                               const std::string&) {
             if (++resp_num > 1) {
-                io_service_.stop();
+                io_service_->stop();
             }
             EXPECT_FALSE(ec);
         }));
@@ -1090,7 +1090,7 @@ public:
                               const HttpResponsePtr&,
                               const std::string&) {
             if (++resp_num > 1) {
-                io_service_.stop();
+                io_service_->stop();
             }
             EXPECT_FALSE(ec);
         }));
@@ -1137,7 +1137,7 @@ public:
                               const HttpResponsePtr&,
                               const std::string&) {
             if (++resp_num > 1) {
-                io_service_.stop();
+                io_service_->stop();
             }
             EXPECT_FALSE(ec);
         }));
@@ -1151,7 +1151,7 @@ public:
                               const HttpResponsePtr&,
                               const std::string&) {
             if (++resp_num > 1) {
-                io_service_.stop();
+                io_service_->stop();
             }
             EXPECT_FALSE(ec);
         }));
@@ -1193,7 +1193,7 @@ public:
                               const HttpResponsePtr&,
                               const std::string&) {
             if (++resp_num > 1) {
-                io_service_.stop();
+                io_service_->stop();
             }
             if (ec) {
                 ADD_FAILURE() << "asyncSendRequest failed: " << ec.message();
@@ -1209,7 +1209,7 @@ public:
                               const HttpResponsePtr&,
                               const std::string&) {
             if (++resp_num > 1) {
-                io_service_.stop();
+                io_service_->stop();
             }
             if (ec) {
                 ADD_FAILURE() << "asyncSendRequest failed: " << ec.message();
@@ -1250,7 +1250,7 @@ public:
                                                 request1, response1,
             [this](const boost::system::error_code& ec, const HttpResponsePtr&,
                    const std::string&) {
-            io_service_.stop();
+            io_service_->stop();
             EXPECT_FALSE(ec);
         }));
 
@@ -1273,7 +1273,7 @@ public:
                                                 request2, response2,
             [this](const boost::system::error_code& ec, const HttpResponsePtr&,
                    const std::string&) {
-            io_service_.stop();
+            io_service_->stop();
             EXPECT_FALSE(ec);
         }));
 
@@ -1306,7 +1306,7 @@ public:
             [this](const boost::system::error_code& ec,
                    const HttpResponsePtr&,
                    const std::string&) {
-            io_service_.stop();
+            io_service_->stop();
             // The server should have returned an IO error.
             EXPECT_TRUE(ec);
         }));
@@ -1339,7 +1339,7 @@ public:
             [this](const boost::system::error_code& ec,
                    const HttpResponsePtr& response,
                    const std::string& parsing_error) {
-            io_service_.stop();
+            io_service_->stop();
             // There should be no IO error (answer from the server is received).
             EXPECT_FALSE(ec);
             // The response object is NULL because it couldn't be finalized.
@@ -1380,7 +1380,7 @@ public:
                             const HttpResponsePtr& response,
                             const std::string&) {
                 if (++cb_num > 1) {
-                    io_service_.stop();
+                    io_service_->stop();
                 }
                 // In this particular case we know exactly the type of the
                 // IO error returned, because the client explicitly sets this
@@ -1408,7 +1408,7 @@ public:
                             const HttpResponsePtr&,
                             const std::string&) {
                 if (++cb_num > 1) {
-                    io_service_.stop();
+                    io_service_->stop();
                 }
             }));
 
@@ -1439,7 +1439,7 @@ public:
                             const HttpResponsePtr& response,
                             const std::string&) {
             if (++cb_num > 1) {
-                io_service_.stop();
+                io_service_->stop();
             }
             // In this particular case we know exactly the type of the
             // IO error returned, because the client explicitly sets this
@@ -1466,7 +1466,7 @@ public:
                             const HttpResponsePtr&,
                             const std::string&) {
                 if (++cb_num > 1) {
-                    io_service_.stop();
+                    io_service_->stop();
                 }
             }));
 
@@ -1560,7 +1560,7 @@ public:
                          [this](const boost::system::error_code& ec,
                                 const HttpResponsePtr&,
                                 const std::string&) {
-            io_service_.stop();
+            io_service_->stop();
 
             // Everything should be ok.
             EXPECT_TRUE(ec.value() == 0);
@@ -1596,7 +1596,7 @@ public:
                               const HttpResponsePtr&,
                               const std::string&) {
             if (++resp_num > 1) {
-                io_service_.stop();
+                io_service_->stop();
             }
 
             EXPECT_FALSE(ec);
@@ -1616,7 +1616,7 @@ public:
                               const HttpResponsePtr&,
                               const std::string&) {
             if (++resp_num > 1) {
-                io_service_.stop();
+                io_service_->stop();
             }
             EXPECT_FALSE(ec);
         },
@@ -1691,7 +1691,7 @@ public:
                               const HttpResponsePtr&,
                               const std::string&) {
             if (++resp_num == 1) {
-                io_service_.stop();
+                io_service_->stop();
             }
 
             EXPECT_EQ(1, monitor.connect_cnt_);      // We should have 1 connect.
@@ -1751,7 +1751,7 @@ public:
                               const HttpResponsePtr&,
                               const std::string&) {
             if (++resp_num == 1) {
-                io_service_.stop();
+                io_service_->stop();
             }
 
             EXPECT_EQ(2, monitor.connect_cnt_);      // We should have 1 connect.

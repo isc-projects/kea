@@ -242,7 +242,7 @@ TEST_F(CtrlAgentControllerTest, launchNormalShutdown) {
 // Tests that the SIGINT triggers a normal shutdown.
 TEST_F(CtrlAgentControllerTest, sigintShutdown) {
     // Setup to raise SIGHUP in 1 ms.
-    TimedSignal sighup(*getIOService(), SIGINT, 1);
+    TimedSignal sighup(getIOService(), SIGINT, 1);
 
     // Write valid_agent_config and then run launch() for a maximum
     // of 1000 ms.
@@ -258,7 +258,7 @@ TEST_F(CtrlAgentControllerTest, sigintShutdown) {
 // Tests that the SIGTERM triggers a normal shutdown.
 TEST_F(CtrlAgentControllerTest, sigtermShutdown) {
     // Setup to raise SIGTERM in 1 ms.
-    TimedSignal sighup(*getIOService(), SIGTERM, 1);
+    TimedSignal sighup(getIOService(), SIGTERM, 1);
 
     // Write valid_agent_config and then run launch() for a maximum of 1 s.
     time_duration elapsed_time;
@@ -307,7 +307,7 @@ TEST_F(CtrlAgentControllerTest, successfulConfigUpdate) {
     // Schedule reconfiguration.
     scheduleTimedWrite(second_config, 100);
     // Schedule SIGHUP signal to trigger reconfiguration.
-    TimedSignal sighup(*getIOService(), SIGHUP, 200);
+    TimedSignal sighup(getIOService(), SIGHUP, 200);
 
     // Start the server.
     time_duration elapsed_time;
@@ -372,7 +372,7 @@ TEST_F(CtrlAgentControllerTest, unsuccessfulConfigUpdate) {
     // Schedule reconfiguration.
     scheduleTimedWrite(second_config, 100);
     // Schedule SIGHUP signal to trigger reconfiguration.
-    TimedSignal sighup(*getIOService(), SIGHUP, 200);
+    TimedSignal sighup(getIOService(), SIGHUP, 200);
 
     // Start the server.
     time_duration elapsed_time;
@@ -438,7 +438,7 @@ TEST_F(CtrlAgentControllerTest, noListenerChange) {
     // Schedule reconfiguration.
     scheduleTimedWrite(second_config, 100);
     // Schedule SIGHUP signal to trigger reconfiguration.
-    TimedSignal sighup(*getIOService(), SIGHUP, 200);
+    TimedSignal sighup(getIOService(), SIGHUP, 200);
 
     // Start the server.
     time_duration elapsed_time;

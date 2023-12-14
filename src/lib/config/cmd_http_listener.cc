@@ -62,7 +62,7 @@ CmdHttpListener::start() {
 
         // Create the HTTP listener. It will open up a TCP socket and be
         // prepared to accept incoming connections.
-        http_listener_.reset(new HttpListener(*thread_io_service_, address_,
+        http_listener_.reset(new HttpListener(thread_io_service_, address_,
                                               port_, tls_context_, rcf,
                                               HttpListener::RequestTimeout(TIMEOUT_AGENT_RECEIVE_COMMAND),
                                               HttpListener::IdleTimeout(TIMEOUT_AGENT_IDLE_CONNECTION_TIMEOUT)));

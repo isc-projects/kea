@@ -33,7 +33,7 @@ public:
     ///
     /// Removes unix socket descriptor before the test.
     ClientConnectionTest() :
-        io_service_(),
+        io_service_(new IOService()),
         test_socket_(new test::TestServerUnixSocket(io_service_,
                                                     unixSocketFilePath())) {
         removeUnixSocketFile();
@@ -76,7 +76,7 @@ public:
     }
 
     /// @brief IO service used by the tests.
-    IOService io_service_;
+    IOServicePtr io_service_;
 
     /// @brief Server side unix socket used in these tests.
     test::TestServerUnixSocketPtr test_socket_;
@@ -116,7 +116,7 @@ TEST_F(ClientConnectionTest, success) {
     });
     // Run the connection.
     while (!handler_invoked && !test_socket_->isStopped()) {
-        io_service_.runOne();
+        io_service_->runOne();
     }
 }
 
@@ -153,7 +153,7 @@ TEST_F(ClientConnectionTest, timeout) {
     }, ClientConnection::Timeout(1000));
 
     while (!handler_invoked && !test_socket_->isStopped()) {
-        io_service_.runOne();
+        io_service_->runOne();
     }
 }
 
@@ -176,7 +176,7 @@ TEST_F(ClientConnectionTest, connectionError) {
     });
 
     while (!handler_invoked && !test_socket_->isStopped()) {
-        io_service_.runOne();
+        io_service_->runOne();
     }
 }
 

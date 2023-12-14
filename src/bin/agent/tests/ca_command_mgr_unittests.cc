@@ -170,7 +170,7 @@ public:
     /// @param use_thread Indicates if the IO service will be ran in thread.
     void bindServerSocket(const std::string& response,
                           const bool use_thread = false) {
-        server_socket_.reset(new test::TestServerUnixSocket(*getIOService(),
+        server_socket_.reset(new test::TestServerUnixSocket(getIOService(),
                                                             unixSocketFilePath(),
                                                             response));
         server_socket_->startTimer(TEST_TIMEOUT);

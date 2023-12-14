@@ -132,7 +132,7 @@ public:
     ///        -1 indicates no timeout.
     /// \param edns true if the request should be EDNS. The default value is
     ///        true.
-    IOFetch(Protocol protocol, isc::asiolink::IOService& service,
+    IOFetch(Protocol protocol, const isc::asiolink::IOServicePtr& service,
             const isc::dns::Question& question,
             const isc::asiolink::IOAddress& address,
             uint16_t port, isc::util::OutputBufferPtr& buff, Callback* cb,
@@ -159,7 +159,7 @@ public:
     ///        and deleting it if necessary.
     /// \param wait Timeout for the fetch (in ms).  The default value of
     ///        -1 indicates no timeout.
-    IOFetch(Protocol protocol, isc::asiolink::IOService& service,
+    IOFetch(Protocol protocol, const isc::asiolink::IOServicePtr& service,
             isc::dns::ConstMessagePtr query_message,
             const isc::asiolink::IOAddress& address,
             uint16_t port, isc::util::OutputBufferPtr& buff, Callback* cb,
@@ -184,7 +184,7 @@ public:
     /// (default = 53)
     /// \param wait Timeout for the fetch (in ms).  The default value of
     ///     -1 indicates no timeout.
-    IOFetch(Protocol protocol, isc::asiolink::IOService& service,
+    IOFetch(Protocol protocol, const isc::asiolink::IOServicePtr& service,
             isc::util::OutputBufferPtr& outpkt,
             const isc::asiolink::IOAddress& address,
             uint16_t port, isc::util::OutputBufferPtr& buff, Callback* cb,
@@ -218,7 +218,7 @@ private:
     /// parameter "query_message"
     /// \param query_message the message to be sent out.
     void initIOFetch(isc::dns::MessagePtr& query_message, Protocol protocol,
-                     isc::asiolink::IOService& service,
+                     const isc::asiolink::IOServicePtr& service,
                      const isc::dns::Question& question,
                      const isc::asiolink::IOAddress& address, uint16_t port,
                      isc::util::OutputBufferPtr& buff, Callback* cb, int wait,

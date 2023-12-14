@@ -48,7 +48,7 @@ SocketCallback::operator()(boost::system::error_code ec, size_t length) {
     callback_(ec, length);
 }
 
-TcpConnection::TcpConnection(asiolink::IOService& io_service,
+TcpConnection::TcpConnection(const asiolink::IOServicePtr& io_service,
                              const TcpConnectionAcceptorPtr& acceptor,
                              const TlsContextPtr& tls_context,
                              TcpConnectionPool& connection_pool,
@@ -56,7 +56,8 @@ TcpConnection::TcpConnection(asiolink::IOService& io_service,
                              const TcpConnectionFilterCallback& connection_filter,
                              const long idle_timeout,
                              const size_t read_max /* = 32768 */)
-    : tls_context_(tls_context),
+    : io_service_(io_service),
+      tls_context_(tls_context),
       idle_timeout_(idle_timeout),
       idle_timer_(io_service),
       tcp_socket_(),

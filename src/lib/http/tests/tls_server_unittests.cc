@@ -212,7 +212,7 @@ template<typename HttpConnectionType>
 class HttpListenerImplCustom : public HttpListenerImpl {
 public:
 
-    HttpListenerImplCustom(IOService& io_service,
+    HttpListenerImplCustom(const IOServicePtr& io_service,
                            const IOAddress& server_address,
                            const unsigned short server_port,
                            const TlsContextPtr& tls_context,
@@ -276,7 +276,7 @@ public:
     ///
     /// @throw HttpListenerError when any of the specified parameters is
     /// invalid.
-    HttpListenerCustom(IOService& io_service,
+    HttpListenerCustom(const IOServicePtr& io_service,
                        const IOAddress& server_address,
                        const unsigned short server_port,
                        const TlsContextPtr& tls_context,
@@ -314,7 +314,7 @@ public:
     /// @param request_timeout Configured timeout for a HTTP request.
     /// @param idle_timeout Timeout after which persistent HTTP connection is
     /// closed by the server.
-    HttpConnectionLongWriteBuffer(IOService& io_service,
+    HttpConnectionLongWriteBuffer(const IOServicePtr& io_service,
                                   const HttpAcceptorPtr& acceptor,
                                   const TlsContextPtr& tls_context,
                                   HttpConnectionPool& connection_pool,
@@ -361,7 +361,7 @@ public:
     /// @param request_timeout Configured timeout for a HTTP request.
     /// @param idle_timeout Timeout after which persistent HTTP connection is
     /// closed by the server.
-    HttpConnectionTransactionChange(IOService& io_service,
+    HttpConnectionTransactionChange(const IOServicePtr& io_service,
                                     const HttpAcceptorPtr& acceptor,
                                     const TlsContextPtr& tls_context,
                                     HttpConnectionPool& connection_pool,
@@ -406,10 +406,9 @@ public:
     ///
     /// @param io_service IO service to be stopped on error.
     /// @param tls_context TLS context.
-    TestHttpClient(IOService& io_service, TlsContextPtr tls_context)
-        : io_service_(io_service.getInternalIOService()),
-          stream_(io_service_, tls_context->getContext()),
-          buf_(), response_() {
+    TestHttpClient(const IOServicePtr& io_service, TlsContextPtr tls_context)
+        : io_service_(io_service), stream_(io_service_->getInternalIOService(),
+          tls_context->getContext()), buf_(), response_() {
     }
 
     /// @brief Destructor.
@@ -438,7 +437,7 @@ public:
                 if (ec.value() != boost::asio::error::in_progress) {
                     ADD_FAILURE() << "error occurred while connecting: "
                                   << ec.message();
-                    io_service_.stop();
+                    io_service_->stop();
                     return;
                 }
             }
@@ -447,7 +446,7 @@ public:
                 if (ec) {
                     ADD_FAILURE() << "error occurred during handshake: "
                                   << ec.message();
-                    io_service_.stop();
+                    io_service_->stop();
                     return;
                 }
                 sendRequest(request);
@@ -483,7 +482,7 @@ public:
                 } else {
                     ADD_FAILURE() << "error occurred while connecting: "
                                   << ec.message();
-                    io_service_.stop();
+                    io_service_->stop();
                     return;
                 }
             }
@@ -526,7 +525,7 @@ public:
                     // Error occurred, bail...
                     ADD_FAILURE() << "error occurred while receiving HTTP"
                         " response from the server: " << ec.message();
-                    io_service_.stop();
+                    io_service_->stop();
                 }
             }
 
@@ -538,7 +537,7 @@ public:
             // Two consecutive new lines end the part of the response we're
             // expecting.
             if (response_.find("\r\n\r\n", 0) != std::string::npos) {
-                io_service_.stop();
+                io_service_->stop();
 
             } else {
                 receivePartialResponse();
@@ -620,8 +619,8 @@ public:
 
 private:
 
-    /// @brief Holds reference to the IO service.
-    boost::asio::io_service& io_service_;
+    /// @brief Holds pointer to the IO service.
+    isc::asiolink::IOServicePtr io_service_;
 
     /// @brief A socket used for the connection.
     TlsStreamImpl stream_;
@@ -644,7 +643,7 @@ public:
     ///
     /// Starts test timer which detects timeouts.
     HttpsListenerTest()
-        : io_service_(), factory_(new TestHttpResponseCreatorFactory()),
+        : io_service_(new IOService()), factory_(new TestHttpResponseCreatorFactory()),
           test_timer_(io_service_), run_io_service_timer_(io_service_),
           clients_(), server_context_(), client_context_() {
         configServer(server_context_);
@@ -684,7 +683,7 @@ public:
         if (fail_on_timeout) {
             ADD_FAILURE() << "Timeout occurred while running the test!";
         }
-        io_service_.stop();
+        io_service_->stop();
     }
 
     /// @brief Runs IO service with optional timeout.
@@ -692,16 +691,16 @@ public:
     /// @param timeout Optional value specifying for how long the io service
     /// should be ran.
     void runIOService(long timeout = 0) {
-        io_service_.restart();
+        io_service_->restart();
 
         if (timeout > 0) {
             run_io_service_timer_.setup(std::bind(&HttpsListenerTest::timeoutHandler,
                                                   this, false),
                                         timeout, IntervalTimer::ONE_SHOT);
         }
-        io_service_.run();
-        io_service_.restart();
-        io_service_.poll();
+        io_service_->run();
+        io_service_->restart();
+        io_service_->poll();
     }
 
     /// @brief Returns HTTP OK response expected by unit tests.
@@ -803,7 +802,7 @@ public:
     }
 
     /// @brief IO service used in the tests.
-    IOService io_service_;
+    IOServicePtr io_service_;
 
     /// @brief Pointer to the response creator factory.
     HttpResponseCreatorFactoryPtr factory_;
@@ -848,7 +847,7 @@ TEST_F(HttpsListenerTest, listen) {
     EXPECT_EQ(httpOk(HttpVersion::HTTP_11()), client->getResponse());
 
     listener.stop();
-    io_service_.poll();
+    io_service_->poll();
 }
 
 
@@ -900,7 +899,7 @@ TEST_F(HttpsListenerTest, keepAlive) {
     EXPECT_TRUE(client->isConnectionClosed());
 
     listener.stop();
-    io_service_.poll();
+    io_service_->poll();
 }
 
 // This test verifies that persistent HTTP connection is established by default
@@ -949,7 +948,7 @@ TEST_F(HttpsListenerTest, persistentConnection) {
     EXPECT_TRUE(client->isConnectionClosed());
 
     listener.stop();
-    io_service_.poll();
+    io_service_->poll();
 }
 
 // This test verifies that "keep-alive" connection is closed by the server after
@@ -1008,7 +1007,7 @@ TEST_F(HttpsListenerTest, keepAliveTimeout) {
     EXPECT_TRUE(client->isConnectionClosed());
 
     listener.stop();
-    io_service_.poll();
+    io_service_->poll();
 }
 
 // This test verifies that persistent connection is closed by the server after
@@ -1065,7 +1064,7 @@ TEST_F(HttpsListenerTest, persistentConnectionTimeout) {
     EXPECT_TRUE(client->isConnectionClosed());
 
     listener.stop();
-    io_service_.poll();
+    io_service_->poll();
 }
 
 // This test verifies that HTTP/1.1 connection remains open even if there is an
@@ -1118,7 +1117,7 @@ TEST_F(HttpsListenerTest, persistentConnectionBadBody) {
     EXPECT_TRUE(client->isConnectionClosed());
 
     listener.stop();
-    io_service_.poll();
+    io_service_->poll();
 }
 
 // This test verifies that the HTTP listener can't be started twice.
@@ -1193,7 +1192,7 @@ TEST_F(HttpsListenerTest, invalidIdleTimeout) {
 // This test verifies that listener can't be bound to the port to which
 // other server is bound.
 TEST_F(HttpsListenerTest, addressInUse) {
-    tcp::acceptor acceptor(io_service_.getInternalIOService());
+    tcp::acceptor acceptor(io_service_->getInternalIOService());
     // Use other port than SERVER_PORT to make sure that this TCP connection
     // doesn't affect subsequent tests.
     tcp::endpoint endpoint(address::from_string(SERVER_ADDRESS),
