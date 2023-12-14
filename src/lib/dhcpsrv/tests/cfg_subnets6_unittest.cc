@@ -2361,33 +2361,24 @@ TEST(CfgSubnets6Test, getLinks) {
 
     // No 2001:db8:4:: subnet.
     SubnetIDSet links;
-    uint8_t link_len = 111;
-    EXPECT_NO_THROW(links = cfg.getLinks(IOAddress("2001:db8:4::"), link_len));
+    EXPECT_NO_THROW(links = cfg.getLinks(IOAddress("2001:db8:4::")));
     EXPECT_TRUE(links.empty());
-    EXPECT_EQ(111, link_len);
 
     // A 2001:db8:2::/64 subnet.
     links.clear();
-    link_len = 111;
-    EXPECT_NO_THROW(links = cfg.getLinks(IOAddress("2001:db8:2::"), link_len));
+    EXPECT_NO_THROW(links = cfg.getLinks(IOAddress("2001:db8:2::")));
     SubnetIDSet expected = { 2 };
     EXPECT_EQ(expected, links);
-    EXPECT_EQ(64, link_len);
 
     // Check that any address in the subnet works.
     links.clear();
-    link_len = 111;
-    EXPECT_NO_THROW(links = cfg.getLinks(IOAddress("2001:db8:2::1234:5678:9abc:def0"),
-                                         link_len));
+    EXPECT_NO_THROW(links = cfg.getLinks(IOAddress("2001:db8:2::1234:5678:9abc:def0")));
     EXPECT_EQ(expected, links);
-    EXPECT_EQ(64, link_len);
 
     // Check that an address outside the subnet does not work.
     links.clear();
-    link_len = 111;
-    EXPECT_NO_THROW(links = cfg.getLinks(IOAddress("2001:db8:2:1::"), link_len));
+    EXPECT_NO_THROW(links = cfg.getLinks(IOAddress("2001:db8:2:1::")));
     EXPECT_TRUE(links.empty());
-    EXPECT_EQ(111, link_len);
 
     // Add a second 2001:db8:2::/64 subnet.
     Subnet6Ptr subnet10(new Subnet6(IOAddress("2001:db8:2::10"), 64, 1, 2, 3,
@@ -2396,40 +2387,32 @@ TEST(CfgSubnets6Test, getLinks) {
 
     // Now we should get 2 subnets.
     links.clear();
-    link_len = 111;
-    EXPECT_NO_THROW(links = cfg.getLinks(IOAddress("2001:db8:2::"), link_len));
+    EXPECT_NO_THROW(links = cfg.getLinks(IOAddress("2001:db8:2::")));
     expected = { 2, 10 };
     EXPECT_EQ(expected, links);
-    EXPECT_EQ(64, link_len);
 
     // Add a larger subnet.
     Subnet6Ptr subnet20(new Subnet6(IOAddress("2001:db8:2::20"), 56, 1, 2, 3,
                                     4, SubnetID(20)));
     ASSERT_NO_THROW(cfg.add(subnet20));
 
-    // Now we should get 3 subnets and a smaller prefix length.
+    // Now we should get 3 subnets.
     links.clear();
-    link_len = 111;
-    EXPECT_NO_THROW(links = cfg.getLinks(IOAddress("2001:db8:2::"), link_len));
+    EXPECT_NO_THROW(links = cfg.getLinks(IOAddress("2001:db8:2::")));
     expected = { 2, 10, 20 };
     EXPECT_EQ(expected, links);
-    EXPECT_EQ(56, link_len);
 
     // But only the larger subnet if the address is only in it.
     links.clear();
-    link_len = 111;
-    EXPECT_NO_THROW(links = cfg.getLinks(IOAddress("2001:db8:2:1::"), link_len));
+    EXPECT_NO_THROW(links = cfg.getLinks(IOAddress("2001:db8:2:1::")));
     expected = { 20 };
     EXPECT_EQ(expected, links);
-    EXPECT_EQ(56, link_len);
 
     // Even it is not used for Bulk Leasequery, it works for :: too.
     links.clear();
-    link_len = 111;
-    EXPECT_NO_THROW(links = cfg.getLinks(IOAddress("::"), link_len));
+    EXPECT_NO_THROW(links = cfg.getLinks(IOAddress("::")));
     expected = { 111 };
     EXPECT_EQ(expected, links);
-    EXPECT_EQ(48, link_len);
 }
 
 // This test verifies that for each subnet in the configuration it calls

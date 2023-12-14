@@ -2334,32 +2334,24 @@ TEST(CfgSubnets4Test, getLinks) {
 
     // No 192.0.4.0 subnet.
     SubnetIDSet links;
-    uint8_t link_len = 111;
-    EXPECT_NO_THROW(links = cfg.getLinks(IOAddress("192.0.4.0"), link_len));
+    EXPECT_NO_THROW(links = cfg.getLinks(IOAddress("192.0.4.0")));
     EXPECT_TRUE(links.empty());
-    EXPECT_EQ(111, link_len);
 
     // A 192.0.2.0/26 subnet.
     links.clear();
-    link_len = 111;
-    EXPECT_NO_THROW(links = cfg.getLinks(IOAddress("192.0.2.0"), link_len));
+    EXPECT_NO_THROW(links = cfg.getLinks(IOAddress("192.0.2.0")));
     SubnetIDSet expected = { 2 };
     EXPECT_EQ(expected, links);
-    EXPECT_EQ(26, link_len);
 
     // Check that any address in the subnet works.
     links.clear();
-    link_len = 111;
-    EXPECT_NO_THROW(links = cfg.getLinks(IOAddress("192.0.2.23"), link_len));
+    EXPECT_NO_THROW(links = cfg.getLinks(IOAddress("192.0.2.23")));
     EXPECT_EQ(expected, links);
-    EXPECT_EQ(26, link_len);
 
     // Check that an address outside the subnet does not work.
     links.clear();
-    link_len = 111;
-    EXPECT_NO_THROW(links = cfg.getLinks(IOAddress("192.0.2.123"), link_len));
+    EXPECT_NO_THROW(links = cfg.getLinks(IOAddress("192.0.2.123")));
     EXPECT_TRUE(links.empty());
-    EXPECT_EQ(111, link_len);
 
     // Add a second 192.0.2.0/26 subnet.
     Subnet4Ptr subnet10(new Subnet4(IOAddress("192.0.2.10"),
@@ -2368,40 +2360,32 @@ TEST(CfgSubnets4Test, getLinks) {
 
     // Now we should get 2 subnets.
     links.clear();
-    link_len = 111;
-    EXPECT_NO_THROW(links = cfg.getLinks(IOAddress("192.0.2.0"), link_len));
+    EXPECT_NO_THROW(links = cfg.getLinks(IOAddress("192.0.2.0")));
     expected = { 2, 10 };
     EXPECT_EQ(expected, links);
-    EXPECT_EQ(26, link_len);
 
     // Add a larger subnet.
     Subnet4Ptr subnet20(new Subnet4(IOAddress("192.0.2.20"),
                                     24, 1, 2, 3, SubnetID(20)));
     ASSERT_NO_THROW(cfg.add(subnet20));
 
-    // Now we should get 3 subnets and a smaller prefix length.
+    // Now we should get 3 subnets.
     links.clear();
-    link_len = 111;
-    EXPECT_NO_THROW(links = cfg.getLinks(IOAddress("192.0.2.0"), link_len));
+    EXPECT_NO_THROW(links = cfg.getLinks(IOAddress("192.0.2.0")));
     expected = { 2, 10, 20 };
     EXPECT_EQ(expected, links);
-    EXPECT_EQ(24, link_len);
 
     // But only the larger subnet if the address is only in it.
     links.clear();
-    link_len = 111;
-    EXPECT_NO_THROW(links = cfg.getLinks(IOAddress("192.0.2.123"), link_len));
+    EXPECT_NO_THROW(links = cfg.getLinks(IOAddress("192.0.2.123")));
     expected = { 20 };
     EXPECT_EQ(expected, links);
-    EXPECT_EQ(24, link_len);
 
     // Even it is not used for Bulk Leasequery, it works for 0.0.0.0 too.
     links.clear();
-    link_len = 111;
-    EXPECT_NO_THROW(links = cfg.getLinks(IOAddress("0.0.0.0"), link_len));
+    EXPECT_NO_THROW(links = cfg.getLinks(IOAddress("0.0.0.0")));
     expected = { 111 };
     EXPECT_EQ(expected, links);
-    EXPECT_EQ(24, link_len);
 }
 
 // This test verifies that for each subnet in the configuration it calls
