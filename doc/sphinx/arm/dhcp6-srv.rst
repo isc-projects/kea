@@ -781,6 +781,10 @@ system allows nanny scripts to detect the problem.
 If ``retry-on-startup`` is set to ``true``, the server will start reconnection
 attempts even at server startup or on reconfigure events, and will honor the
 action specified in the ``on-fail`` parameter.
+Database connection retries are not attempted on startup if the
+:ischooklib:`libdhcp_limits.so` is loaded because the hook library requires a
+valid connection to the database to check if JSON format is supported and to
+recount class limits.
 
 Finally, the credentials of the account under which the server will
 access the database should be set:

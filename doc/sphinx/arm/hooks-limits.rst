@@ -117,6 +117,13 @@ This is how a lease limit is defined for a subnet inside a shared network:
     respective client class or subnet. To reset the lease count, change the client class name
     or the subnet ID.
 
+.. note::
+
+    Database connection retries are not attempted on startup if the
+    :ischooklib:`libdhcp_limits.so` is loaded because the hook library requires a
+    valid connection to the database to check if JSON format is supported and to
+    recount class limits.
+
 .. _hooks-limits-lease-limiting:
 
 Lease Limiting
