@@ -280,8 +280,7 @@ ConcreteLeaseMgr::getLeases6ByRemoteId(const OptionBuffer& /* remote_id */,
 }
 
 Lease6Collection
-ConcreteLeaseMgr::getLeases6ByLink(const IOAddress& /* link_addr */,
-                                   uint8_t /* link_len */,
+ConcreteLeaseMgr::getLeases6ByLink(SubnetID /* subnet_id */,
                                    const IOAddress& /* lower_bound_address */,
                                    const LeasePageSize& /* page_size */) {
     isc_throw(NotImplemented, "ConcreteLeaseMgr::getLeases6ByLink not implemented");

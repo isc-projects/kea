@@ -1385,16 +1385,14 @@ public:
 
     /// @brief Returns existing IPv6 leases with on a given link.
     ///
-    /// @param link_addr limit results to leases on this link (prefix).
-    /// @param link_len limit results to leases on this link (length).
+    /// @param subnet_id subnet identifier.
     /// @param lower_bound_address IPv4 address used as lower bound for the
     /// returned range.
     /// @param page_size maximum size of the page returned.
     ///
     /// @return collection of IPv6 leases
     virtual Lease6Collection
-    getLeases6ByLink(const asiolink::IOAddress& link_addr,
-                     uint8_t link_len,
+    getLeases6ByLink(SubnetID subnet_id,
                      const asiolink::IOAddress& lower_bound_address,
                      const LeasePageSize& page_size) override;
 
@@ -1496,16 +1494,14 @@ private:
 
     /// @brief Returns existing IPv6 leases with on a given link.
     ///
-    /// @param link_addr limit results to leases on this link (prefix).
-    /// @param link_len limit results to leases on this link (length).
+    /// @param subnet_id subnet identifier.
     /// @param lower_bound_address IPv4 address used as lower bound for the
     /// returned range.
     /// @param page_size maximum size of the page returned.
     ///
     /// @return collection of IPv6 leases
     Lease6Collection
-    getLeases6ByLinkInternal(const asiolink::IOAddress& link_addr,
-                             uint8_t link_len,
+    getLeases6ByLinkInternal(SubnetID subnet_id,
                              const asiolink::IOAddress& lower_bound_address,
                              const LeasePageSize& page_size);
 public:

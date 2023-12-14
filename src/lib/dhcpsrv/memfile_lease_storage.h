@@ -40,7 +40,7 @@ struct HWAddressSubnetIdIndexTag { };
 /// @brief Tag for indexes by client-id, subnet-id tuple.
 struct ClientIdSubnetIdIndexTag { };
 
-/// @brief Tag for indexes by subnet-id.
+/// @brief Tag for indexes by subnet-id (and address for v6).
 struct SubnetIdIndexTag { };
 
 /// @brief Tag for indexes by subnet-id and pool-id.
@@ -124,11 +124,20 @@ typedef boost::multi_index_container<
         >,
 
         // Specification of the fourth index starts here.
-        // This index sorts leases by SubnetID.
+        // This index sorts leases by SubnetID and address.
         boost::multi_index::ordered_non_unique<
             boost::multi_index::tag<SubnetIdIndexTag>,
-            boost::multi_index::member<Lease, isc::dhcp::SubnetID,
-            &Lease::subnet_id_>
+            boost::multi_index::composite_key<
+                Lease6,
+                // Subnet id.
+                boost::multi_index::member<Lease,
+                                           isc::dhcp::SubnetID,
+                                           &Lease::subnet_id_>,
+                // Address.
+                boost::multi_index::member<Lease,
+                                           isc::asiolink::IOAddress,
+                                           &Lease::addr_>
+            >
         >,
 
         // Specification of the fifth index starts here

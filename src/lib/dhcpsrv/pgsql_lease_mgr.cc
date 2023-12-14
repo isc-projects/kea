@@ -409,7 +409,7 @@ PgSqlTaggedStatement tagged_statements[] = {
       "LIMIT $3" },
 
     // GET_LEASE6_LINK
-    { 3, { OID_VARCHAR, OID_VARCHAR, OID_INT8 },
+    { 3, { OID_INT8, OID_VARCHAR, OID_INT8 },
       "get_lease6_link",
       "SELECT host(address), duid, valid_lifetime, "
         "extract(epoch from expire)::bigint, subnet_id, pref_lifetime, "
@@ -417,7 +417,7 @@ PgSqlTaggedStatement tagged_statements[] = {
         "hwaddr, hwtype, hwaddr_source, "
         "state, user_context, pool_id "
       "FROM lease6 "
-      "WHERE address BETWEEN cast($1 as inet) and cast($2 as inet) "
+      "WHERE subnet_id = $1 AND address > cast($2 as inet) "
       "ORDER BY address "
       "LIMIT $3" },
 
@@ -3530,29 +3530,16 @@ PgSqlLeaseMgr::getLeases6ByRemoteId(const OptionBuffer& remote_id,
 }
 
 Lease6Collection
-PgSqlLeaseMgr::getLeases6ByLink(const IOAddress& link_addr,
-                                uint8_t link_len,
+PgSqlLeaseMgr::getLeases6ByLink(SubnetID subnet_id,
                                 const IOAddress& lower_bound_address,
                                 const LeasePageSize& page_size) {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_PGSQL_GET_LINKADDR6)
         .arg(page_size.page_size_)
         .arg(lower_bound_address.toText())
-        .arg(link_addr.toText())
-        .arg(static_cast<unsigned>(link_len));
+        .arg(subnet_id);
 
-    // Expecting IPv6 valid prefix and address.
-    if (!link_addr.isV6()) {
-        isc_throw(InvalidAddressFamily, "expected IPv6 link address while "
-                  "retrieving leases from the lease database, got "
-                  << link_addr);
-    }
-
-    if ((link_len == 0) || (link_len > 128)) {
-        isc_throw(OutOfRange, "invalid IPv6 prefix length "
-                  << static_cast<unsigned>(link_len));
-    }
-
+    // Expecting IPv6 valid address.
     if (!lower_bound_address.isV6()) {
         isc_throw(InvalidAddressFamily, "expected IPv6 start address while "
                   "retrieving leases from the lease database, got "
@@ -3560,29 +3547,16 @@ PgSqlLeaseMgr::getLeases6ByLink(const IOAddress& link_addr,
     }
 
     Lease6Collection result;
-    const IOAddress& first_addr = firstAddrInPrefix(link_addr, link_len);
-    const IOAddress& last_addr = lastAddrInPrefix(link_addr, link_len);
-    IOAddress start_addr = lower_bound_address;
-    if (lower_bound_address < first_addr) {
-        start_addr = first_addr;
-    } else if (last_addr <= lower_bound_address) {
-        // Range was already done.
-        return (result);
-    } else {
-        // The lower bound address is from the last call so skip it.
-        start_addr = IOAddress::increase(lower_bound_address);
-    }
-
     // Prepare WHERE clause
     PsqlBindArray bind_array;
 
-    // Bind start address
-    std::string start_addr_str = start_addr.toText();
-    bind_array.add(start_addr_str);
+    // Bind subnet id.
+    std::string subnet_id_str = boost::lexical_cast<std::string>(subnet_id);
+    bind_array.add(subnet_id_str);
 
-    // Bind last address
-    std::string last_addr_str = last_addr.toText();
-    bind_array.add(last_addr_str);
+    // Bind lower bound address
+    std::string lb_address_str = lower_bound_address.toText();
+    bind_array.add(lb_address_str);
 
     // Bind page size value
     std::string page_size_data =

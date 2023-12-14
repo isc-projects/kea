@@ -368,8 +368,7 @@ public:
 
     /// @brief Stub implementation.
     Lease6Collection
-    getLeases6ByLink(const asiolink::IOAddress& /* link_addr */,
-                     uint8_t /* link_len */,
+    getLeases6ByLink(SubnetID /* subnet_id */,
                      const asiolink::IOAddress& /* lower_bound_address */,
                      const LeasePageSize& /* page_size */) override;
 
