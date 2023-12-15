@@ -250,6 +250,7 @@ DControllerBase::parseArgs(int argc, char* argv[]) {
     // ("c" or "d") handle it here.  If its a valid custom option, then
     // invoke customOption.
     int ch;
+    optarg = 0;
     opterr = 0;
     optind = 1;
     std::string opts("dvVWc:t:" + getCustomOpts());
