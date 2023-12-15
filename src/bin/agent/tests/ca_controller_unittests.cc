@@ -13,8 +13,12 @@
 #include <cc/data.h>
 #include <cc/command_interpreter.h>
 #include <process/testutils/d_test_stubs.h>
+#include <testutils/gtest_utils.h>
+
 #include <boost/pointer_cast.hpp>
+
 #include <sstream>
+
 #include <unistd.h>
 
 using namespace isc::asiolink::test;
@@ -200,7 +204,7 @@ TEST_F(CtrlAgentControllerTest, commandLineArgs) {
     EXPECT_TRUE(checkVerbose(false));
 
     // Verify that standard options can be parsed without error.
-    EXPECT_NO_THROW(parseArgs(argc, argv));
+    EXPECT_NO_THROW_LOG(parseArgs(argc, argv));
 
     // Verify that verbose flag is true.
     EXPECT_TRUE(checkVerbose(true));
@@ -212,7 +216,7 @@ TEST_F(CtrlAgentControllerTest, commandLineArgs) {
     char* argv2[] = { const_cast<char*>("progName"),
                       const_cast<char*>("-x") };
     argc = 2;
-    EXPECT_THROW(parseArgs(argc, argv2), InvalidUsage);
+    EXPECT_THROW_MSG(parseArgs(argc, argv2), InvalidUsage, "unsupported option: [x] ");
 }
 
 // Tests application process creation and initialization.

@@ -10,6 +10,7 @@
 #include <asiolink/testutils/timed_signal.h>
 #include <cc/command_interpreter.h>
 #include <process/testutils/d_test_stubs.h>
+#include <testutils/gtest_utils.h>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <gtest/gtest.h>
@@ -79,7 +80,7 @@ TEST_F(DStubControllerTest, commandLineArgs) {
                      const_cast<char*>("cfgName"),
                      const_cast<char*>("-d") };
     int argc = 4;
-    EXPECT_NO_THROW(parseArgs(argc, argv));
+    EXPECT_NO_THROW_LOG(parseArgs(argc, argv));
 
     // Verify that verbose is true.
     EXPECT_TRUE(checkVerbose(true));
@@ -92,20 +93,20 @@ TEST_F(DStubControllerTest, commandLineArgs) {
     xopt[1] =  *DStubController::stub_option_x_;
     char* argv1[] = { const_cast<char*>("progName"), xopt};
     argc = 2;
-    EXPECT_NO_THROW (parseArgs(argc, argv1));
+    EXPECT_NO_THROW_LOG(parseArgs(argc, argv1));
 
     // Verify that an unknown option is detected.
     char* argv2[] = { const_cast<char*>("progName"),
                       const_cast<char*>("-bs") };
     argc = 2;
-    EXPECT_THROW (parseArgs(argc, argv2), InvalidUsage);
+    EXPECT_THROW_MSG(parseArgs(argc, argv2), InvalidUsage, "unsupported option: [b] ");
 
     // Verify that extraneous information is detected.
     char* argv3[] = { const_cast<char*>("progName"),
                       const_cast<char*>("extra"),
                       const_cast<char*>("information") };
     argc = 3;
-    EXPECT_THROW (parseArgs(argc, argv3), InvalidUsage);
+    EXPECT_THROW_MSG(parseArgs(argc, argv3), InvalidUsage, "unsupported option: [s] ");
 }
 
 /// @brief Tests application process creation and initialization.
