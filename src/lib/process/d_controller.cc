@@ -293,10 +293,16 @@ DControllerBase::parseArgs(int argc, char* argv[]) {
             break;
 
         case '?': {
+            char const saved_optopt(optopt);
+            std::string const saved_optarg(optarg ? optarg : std::string());
+
+            // Exhaust all remaining options in case parseArgs() is called again.
+            while (getopt(argc, argv, opts.c_str()) != -1) {
+            }
+
             // We hit an invalid option.
-            isc_throw(InvalidUsage, "unsupported option: ["
-                      << static_cast<char>(optopt) << "] "
-                      << (!optarg ? "" : optarg));
+            isc_throw(InvalidUsage, "unsupported option: -" << saved_optopt <<
+                      (saved_optarg.empty() ? std::string() : " " + saved_optarg));
 
             break;
             }
@@ -304,10 +310,16 @@ DControllerBase::parseArgs(int argc, char* argv[]) {
         default:
             // We hit a valid custom option
             if (!customOption(ch, optarg)) {
-                // This would be a programmatic error.
-                isc_throw(InvalidUsage, " Option listed but implemented?: ["
-                          << static_cast<char>(ch) << "] "
-                          << (!optarg ? "" : optarg));
+                char const saved_optopt(optopt);
+                std::string const saved_optarg(optarg ? optarg : std::string());
+
+                // Exhaust all remaining options in case parseArgs() is called again.
+                while (getopt(argc, argv, opts.c_str()) != -1) {
+                }
+
+                // We hit an invalid option.
+                isc_throw(InvalidUsage, "unsupported option: -" << saved_optopt <<
+                        (saved_optarg.empty() ? std::string() : " " + saved_optarg));
             }
             break;
         }

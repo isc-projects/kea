@@ -99,14 +99,14 @@ TEST_F(DStubControllerTest, commandLineArgs) {
     char* argv2[] = { const_cast<char*>("progName"),
                       const_cast<char*>("-bs") };
     argc = 2;
-    EXPECT_THROW_MSG(parseArgs(argc, argv2), InvalidUsage, "unsupported option: [b] ");
+    EXPECT_THROW_MSG(parseArgs(argc, argv2), InvalidUsage, "unsupported option: -b");
 
     // Verify that extraneous information is detected.
     char* argv3[] = { const_cast<char*>("progName"),
                       const_cast<char*>("extra"),
                       const_cast<char*>("information") };
     argc = 3;
-    EXPECT_THROW_MSG(parseArgs(argc, argv3), InvalidUsage, "unsupported option: [s] ");
+    EXPECT_THROW_MSG(parseArgs(argc, argv3), InvalidUsage, "extraneous command line information");
 }
 
 /// @brief Tests application process creation and initialization.
