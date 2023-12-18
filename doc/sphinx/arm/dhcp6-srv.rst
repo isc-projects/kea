@@ -5124,6 +5124,8 @@ configuration error will be emitted and the server will fail to start.
    the server ensures that IP reservations are unique for a subnet within
    a single host backend and/or Kea configuration file. It does not
    guarantee that the reservations are unique across multiple backends.
+   On server startup, only IP reservations defined in the Kea configuration
+   file are checked for uniqueness.
 
 
 The following is an example configuration with two reservations for
@@ -5177,7 +5179,7 @@ for the same IP address or delegated prefix.
    Currently the Kea server does not verify whether multiple reservations for
    the same IP address and/or delegated prefix exist in
    MySQL and/or PostgreSQL) host databases when ``ip-reservations-unique``
-   is updated from ``true`` to ``false``. This may cause issues with
+   is updated from ``false`` to ``true``. This may cause issues with
    lease allocations. The administrator must ensure that there is at
    most one reservation for each IP address and/or delegated prefix
    within each subnet, prior to the configuration update.
