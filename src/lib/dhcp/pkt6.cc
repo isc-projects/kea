@@ -948,7 +948,7 @@ HWAddrPtr
 Pkt6::getMACFromDocsisModem() {
     HWAddrPtr mac;
     OptionVendorPtr vendor;
-    for (auto opt : getNonCopiedOptions(D6O_VENDOR_OPTS)) {
+    for (auto const& opt : getNonCopiedOptions(D6O_VENDOR_OPTS)) {
         if (opt.first != D6O_VENDOR_OPTS) {
             continue;
         }
@@ -982,8 +982,8 @@ Pkt6::getMACFromDocsisCMTS() {
     // CMTS-specific options in it.
     HWAddrPtr mac;
     OptionVendorPtr vendor;
-    for (auto opt : getAllRelayOptions(D6O_VENDOR_OPTS,
-                                       RELAY_SEARCH_FROM_CLIENT)) {
+    for (auto const& opt : getAllRelayOptions(D6O_VENDOR_OPTS,
+                                              RELAY_SEARCH_FROM_CLIENT)) {
         if (opt.first != D6O_VENDOR_OPTS) {
             continue;
         }

@@ -2975,7 +2975,7 @@ TEST_F(Dhcpv4SharedNetworkTest, authoritative) {
 
     // Let's test them one by one
     int cnt = 0;
-    for ( auto s : scenarios) {
+    for (auto const& s : scenarios) {
         cnt++;
 
         string cfg = generateAuthConfig(s.global, s.subnet1, s.subnet2);

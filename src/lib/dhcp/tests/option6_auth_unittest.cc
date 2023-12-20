@@ -74,7 +74,7 @@ TEST_F(Option6AuthTest, parseFields) {
     buff_[8] = 0xa9; //rdm value
     buff_[9] = 0xaa; //rdm value
     buff_[10] = 0xab; //rdm value
-    for ( uint8_t i = 11; i < 27; i++ ) {
+    for (uint8_t i = 11; i < 27; i++) {
         buff_[i] = 0xa8; //auth info 16 bytes
     }
 

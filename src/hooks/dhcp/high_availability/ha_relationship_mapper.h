@@ -47,7 +47,7 @@ public:
         mapping_[key] = obj;
 
         auto found = false;
-        for (auto o : vector_) {
+        for (auto const& o : vector_) {
             if (o == obj) {
                 found = true;
                 break;

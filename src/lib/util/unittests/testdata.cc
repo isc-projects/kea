@@ -34,8 +34,8 @@ addTestDataPath(const string& path) {
 
 void
 openTestData(const char* const datafile, ifstream& ifs) {
-    vector<string>::const_iterator it = getDataPaths().begin();
-    for (; it != getDataPaths().end(); ++it) {
+    for (vector<string>::const_iterator it = getDataPaths().begin();
+         it != getDataPaths().end(); ++it) {
         string data_path = *it;
         if (data_path.empty() || *data_path.rbegin() != '/') {
             data_path.push_back('/');

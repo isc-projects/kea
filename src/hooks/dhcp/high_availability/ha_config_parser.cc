@@ -104,7 +104,7 @@ HAConfigParser::parseAll(const HAConfigMapperPtr& config_storage,
     if (config_vec.empty()) {
         isc_throw(ConfigError, "a list of HA configurations must not be empty");
     }
-    for (auto config : config_vec) {
+    for (auto const& config : config_vec) {
         parseOne(config_storage, config);
     }
 }
@@ -374,7 +374,7 @@ HAConfigParser::parseOne(const HAConfigMapperPtr& config_storage,
     rel_config->validate();
 
     auto peer_configs = rel_config->getAllServersConfig();
-    for (auto peer_config : peer_configs) {
+    for (auto const& peer_config : peer_configs) {
         try {
             config_storage->map(peer_config.first, rel_config);
 
@@ -404,7 +404,7 @@ void
 HAConfigParser::logConfigStatus(const HAConfigMapperPtr& config_storage) {
     LOG_INFO(ha_logger, HA_CONFIGURATION_SUCCESSFUL);
 
-    for (auto config : config_storage->getAll()) {
+    for (auto const& config : config_storage->getAll()) {
         // If lease updates are disabled, we want to make sure that the user
         // realizes that and that he has configured some other mechanism to
         // populate leases.
@@ -449,7 +449,7 @@ HAConfigParser::validateRelationships(const HAConfigMapperPtr& config_storage) {
         return;
     }
     std::unordered_set<std::string> server_names;
-    for (auto config : configs) {
+    for (auto const& config : configs) {
         // Only the hot-standby mode is supported for multiple relationships.
         if (config->getHAMode() != HAConfig::HOT_STANDBY) {
             isc_throw(HAConfigValidationError, "multiple HA relationships are only supported for 'hot-standby' mode");

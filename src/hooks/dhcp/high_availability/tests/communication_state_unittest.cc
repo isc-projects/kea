@@ -964,7 +964,7 @@ CommunicationStateTest::getRejectedLeaseUpdatesCountFromContainerTest() {
     EXPECT_EQ(500, entries.size());
 
     // Validate that we removed expired entries, not the valid ones.
-    for (auto entry : entries) {
+    for (auto const& entry : entries) {
         EXPECT_EQ(1, entry.ordinal_ % 2);
     }
 }

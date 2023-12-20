@@ -243,7 +243,7 @@ SrvConfig::mergeGlobals(SrvConfig& other) {
     }
     // Iterate over the "other" globals, adding/overwriting them into
     // this config's list of globals.
-    for (auto other_global : other.getConfiguredGlobals()->valuesMap()) {
+    for (auto const& other_global : other.getConfiguredGlobals()->valuesMap()) {
         addConfiguredGlobal(other_global.first, other_global.second);
     }
 
@@ -252,7 +252,7 @@ SrvConfig::mergeGlobals(SrvConfig& other) {
 
     // A handful of values are stored as members in SrvConfig. So we'll
     // iterate over the merged globals, setting appropriate members.
-    for (auto merged_global : getConfiguredGlobals()->valuesMap()) {
+    for (auto const& merged_global : getConfiguredGlobals()->valuesMap()) {
         std::string name = merged_global.first;
         ConstElementPtr element = merged_global.second;
         try {
@@ -890,7 +890,7 @@ SrvConfig::moveDdnsParams(isc::data::ElementPtr srv_elem) {
         { "hostname-char-replacement", "hostname-char-replacement" }
     };
 
-    for (auto param : params) {
+    for (auto const& param : params) {
         if (d2_elem->contains(param.from_name)) {
             if (!srv_elem->contains(param.to_name)) {
                 // No global value for it already, so let's add it.

@@ -730,7 +730,7 @@ public:
     void multipleUpdateDeleteQueries(T first_index, R... other_indexes) {
         std::vector<T> indexes({ first_index, other_indexes... });
         db::MySqlBindingCollection empty_bindings;
-        for (auto index : indexes) {
+        for (auto const& index : indexes) {
             conn_.updateDeleteQuery(index, empty_bindings);
         }
     }

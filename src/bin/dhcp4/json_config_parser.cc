@@ -523,7 +523,7 @@ processDhcp4Config(isc::data::ConstElementPtr config_set) {
         if (hosts_databases) {
             parameter_name = "hosts-databases";
             CfgDbAccessPtr cfg_db_access = srv_config->getCfgDbAccess();
-            for (auto it : hosts_databases->listValue()) {
+            for (auto const& it : hosts_databases->listValue()) {
                 db::DbAccessParser parser;
                 std::string access_string;
                 parser.parse(access_string, it);
@@ -578,7 +578,7 @@ processDhcp4Config(isc::data::ConstElementPtr config_set) {
 
         ConstElementPtr compatibility = mutable_cfg->get("compatibility");
         if (compatibility) {
-            for (auto kv : compatibility->mapValue()) {
+            for (auto const& kv : compatibility->mapValue()) {
                 if (!kv.second || (kv.second->getType() != Element::boolean)) {
                     isc_throw(DhcpConfigError,
                               "compatibility parameter values must be "

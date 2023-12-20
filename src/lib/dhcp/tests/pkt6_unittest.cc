@@ -1029,7 +1029,7 @@ TEST_F(Pkt6Test, getAnyRelayOption) {
         msg->getNonCopiedAllRelayOptions(200, Pkt6::RELAY_SEARCH_FROM_CLIENT);
     EXPECT_EQ(3, opts0.size());
     vector<OptionPtr> lopts0;
-    for (auto it : opts0) {
+    for (auto const& it : opts0) {
         lopts0.push_back(it.second);
     }
     ASSERT_EQ(3, lopts0.size());
@@ -1052,7 +1052,7 @@ TEST_F(Pkt6Test, getAnyRelayOption) {
     opts = msg->getNonCopiedAllRelayOptions(200, Pkt6::RELAY_SEARCH_FROM_SERVER);
     EXPECT_EQ(3, opts.size());
     vector<OptionPtr> lopts;
-    for (auto it : opts) {
+    for (auto const& it : opts) {
         lopts.push_back(it.second);
     }
     ASSERT_EQ(3, lopts.size());
@@ -1113,7 +1113,7 @@ TEST_F(Pkt6Test, getAnyRelayOption) {
     // Check collections.
     opts = msg->getNonCopiedAllRelayOptions(200, Pkt6::RELAY_SEARCH_FROM_CLIENT);
     lopts0.clear();
-    for (auto it : opts) {
+    for (auto const& it : opts) {
         lopts0.push_back(it.second);
     }
     ASSERT_EQ(3, lopts0.size());
@@ -1123,7 +1123,7 @@ TEST_F(Pkt6Test, getAnyRelayOption) {
     EXPECT_TRUE(lopts0[2] == relay1_opt1);
     opts = msg->getAllRelayOptions(200, Pkt6::RELAY_SEARCH_FROM_CLIENT);
     lopts.clear();
-    for (auto it : opts) {
+    for (auto const& it : opts) {
         lopts.push_back(it.second);
     }
     ASSERT_EQ(3, lopts.size());
@@ -1150,7 +1150,7 @@ TEST_F(Pkt6Test, getAnyRelayOption) {
     // Check collections.
     opts = msg->getNonCopiedAllRelayOptions(200, Pkt6::RELAY_SEARCH_FROM_SERVER);
     lopts0.clear();
-    for (auto it : opts) {
+    for (auto const& it : opts) {
         lopts0.push_back(it.second);
     }
     ASSERT_EQ(3, lopts0.size());
@@ -1160,7 +1160,7 @@ TEST_F(Pkt6Test, getAnyRelayOption) {
     EXPECT_TRUE(lopts0[2] == relay3_opt1);
     opts = msg->getAllRelayOptions(200, Pkt6::RELAY_SEARCH_FROM_SERVER);
     lopts.clear();
-    for (auto it : opts) {
+    for (auto const& it : opts) {
         lopts.push_back(it.second);
     }
     ASSERT_EQ(3, lopts.size());

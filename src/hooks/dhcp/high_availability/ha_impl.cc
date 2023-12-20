@@ -47,21 +47,21 @@ HAImpl::startServices(const IOServicePtr& io_service,
         // Create the HA service and crank up the state machine.
         auto service = boost::make_shared<HAService>(id, io_service, network_state,
                                                      configs[id], server_type);
-        for (auto peer_config : configs[id]->getAllServersConfig()) {
+        for (auto const& peer_config : configs[id]->getAllServersConfig()) {
             services_->map(peer_config.first, service);
         }
     }
     // Schedule a start of the services. This ensures we begin after
     // the dust has settled and Kea MT mode has been firmly established.
     io_service->post([&]() {
-        for (auto service : services_->getAll()) {
+        for (auto const& service : services_->getAll()) {
             service->startClientAndListener();
         }
     });
 }
 
 HAImpl::~HAImpl() {
-    for (auto service : services_->getAll()) {
+    for (auto const& service : services_->getAll()) {
         // Shut down the services explicitly, we need finer control
         // than relying on destruction order.
         service->stopClientAndListener();
@@ -574,7 +574,7 @@ HAImpl::commandProcessed(hooks::CalloutHandle& callout_handle) {
 
         // Process the status get command for each HA service.
         auto ha_relationships = Element::createList();
-        for (auto service : services_->getAll()) {
+        for (auto const& service : services_->getAll()) {
             auto ha_relationship = Element::createMap();
             ConstElementPtr ha_servers = service->processStatusGet();
             ha_relationship->set("ha-servers", ha_servers);
@@ -798,7 +798,7 @@ HAImpl::maintenanceNotifyHandler(hooks::CalloutHandle& callout_handle) {
 void
 HAImpl::maintenanceStartHandler(hooks::CalloutHandle& callout_handle) {
     ConstElementPtr response;
-    for (auto service : services_->getAll()) {
+    for (auto const& service : services_->getAll()) {
         response = service->processMaintenanceStart();
         int rcode = CONTROL_RESULT_SUCCESS;
         static_cast<void>(parseAnswer(rcode, response));
@@ -812,7 +812,7 @@ HAImpl::maintenanceStartHandler(hooks::CalloutHandle& callout_handle) {
 void
 HAImpl::maintenanceCancelHandler(hooks::CalloutHandle& callout_handle) {
     ConstElementPtr response;
-    for (auto service : services_->getAll()) {
+    for (auto const& service : services_->getAll()) {
         response = service->processMaintenanceCancel();
     }
     callout_handle.setArgument("response", response);

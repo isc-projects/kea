@@ -212,7 +212,7 @@ LoggerImpl::hasAppender(OutputOption::Destination const destination) {
         appenders = log4cplus::Logger::getInstance(getRootLoggerName()).getAllAppenders();
     }
 
-    for (log4cplus::helpers::SharedObjectPtr<log4cplus::Appender> logger : appenders) {
+    for (const log4cplus::helpers::SharedObjectPtr<log4cplus::Appender>& logger : appenders) {
         if (destination == OutputOption::DEST_CONSOLE &&
             dynamic_cast<log4cplus::ConsoleAppender*>(logger.get())) {
             return true;

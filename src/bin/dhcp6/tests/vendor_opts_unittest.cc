@@ -1692,7 +1692,7 @@ TEST_F(VendorOptsTest, twoVendors) {
     ASSERT_EQ(2, classes.size());
     OptionVendorClassPtr opt_class1234;
     OptionVendorClassPtr opt_class5678;
-    for (auto opt : classes) {
+    for (auto const& opt : classes) {
         ASSERT_EQ(D6O_VENDOR_CLASS, opt.first);
         OptionVendorClassPtr opt_class =
             boost::dynamic_pointer_cast<OptionVendorClass>(opt.second);
@@ -1724,7 +1724,7 @@ TEST_F(VendorOptsTest, twoVendors) {
     ASSERT_EQ(2, options.size());
     OptionVendorPtr opt_opts1234;
     OptionVendorPtr opt_opts5678;
-    for (auto opt : options) {
+    for (auto const& opt : options) {
         ASSERT_EQ(D6O_VENDOR_OPTS, opt.first);
         OptionVendorPtr opt_opts =
             boost::dynamic_pointer_cast<OptionVendor>(opt.second);
@@ -1861,7 +1861,7 @@ TEST_F(VendorOptsTest, threeVendors) {
     OptionVendorPtr opt_opts1234;
     OptionVendorPtr opt_docsis;
     OptionVendorPtr opt_opts5678;
-    for (auto opt : options) {
+    for (auto const& opt : options) {
         ASSERT_EQ(D6O_VENDOR_OPTS, opt.first);
         OptionVendorPtr opt_opts =
             boost::dynamic_pointer_cast<OptionVendor>(opt.second);

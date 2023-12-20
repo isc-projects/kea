@@ -478,7 +478,7 @@ TEST_F(LeaseFileLoaderTest, maxRowErrors4) {
 
     std::ostringstream os;
     os << v4_hdr_;
-    for (auto row : rows) {
+    for (auto const& row : rows) {
         os << row;
     }
 
@@ -682,7 +682,7 @@ TEST_F(LeaseFileLoaderTest, maxRowErrors6) {
 
     std::ostringstream os;
     os << v6_hdr_;
-    for (auto row : rows) {
+    for (auto const& row : rows) {
         os << row;
     }
 

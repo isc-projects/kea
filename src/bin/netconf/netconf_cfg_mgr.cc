@@ -65,7 +65,7 @@ NetconfCfgMgr::getConfigSummary(const uint32_t /*selection*/) {
     ostringstream s;
 
     // Then print managed servers.
-    for (auto serv : *ctx->getCfgServersMap()) {
+    for (auto const& serv : *ctx->getCfgServersMap()) {
         if (s.tellp() != 0) {
             s << " ";
         }
@@ -156,7 +156,7 @@ NetconfConfig::toElement() const {
     netconf->set("hooks-libraries", hooks_config_.toElement());
     // Set managed-servers
     ElementPtr servers = Element::createMap();
-    for (auto serv : *servers_map_) {
+    for (auto const& serv : *servers_map_) {
         ElementPtr server = serv.second->toElement();
         servers->set(serv.first, server);
     }

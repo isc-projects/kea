@@ -1658,7 +1658,7 @@ HAService::processStatusGet() const {
     }
     std::set<std::string> scopes = query_filter_.getServedScopes();
     ElementPtr list = Element::createList();
-    for (std::string scope : scopes) {
+    for (const std::string& scope : scopes) {
         list->add(Element::create(scope));
     }
     local->set("scopes", list);
@@ -1700,7 +1700,7 @@ HAService::processHeartbeat() {
 
     auto scopes = query_filter_.getServedScopes();
     ElementPtr scopes_list = Element::createList();
-    for (auto scope : scopes) {
+    for (auto const& scope : scopes) {
         scopes_list->add(Element::create(scope));
     }
     arguments->set("scopes", scopes_list);

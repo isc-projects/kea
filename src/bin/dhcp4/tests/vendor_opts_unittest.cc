@@ -2770,7 +2770,7 @@ TEST_F(VendorOptsTest, twoVivcos) {
     ASSERT_EQ(2, classes.size());
     OptionVendorClassPtr opt_class1234;
     OptionVendorClassPtr opt_class5678;
-    for (auto opt : classes) {
+    for (auto const& opt : classes) {
         ASSERT_EQ(DHO_VIVCO_SUBOPTIONS, opt.first);
         OptionVendorClassPtr opt_class =
             boost::dynamic_pointer_cast<OptionVendorClass>(opt.second);

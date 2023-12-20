@@ -134,7 +134,7 @@ BasicHttpAuthConfig::toElement() const {
 
     // Set clients
     ElementPtr clients = Element::createList();
-    for (auto client : list_) {
+    for (auto const& client : list_) {
         clients->add(client.toElement());
     }
     result->set("clients", clients);
@@ -209,7 +209,7 @@ BasicHttpAuthConfig::parse(const ConstElementPtr& config) {
     }
 
     // Iterate on clients.
-    for (auto client : clients->listValue()) {
+    for (auto const& client : clients->listValue()) {
         if (client->getType() != Element::map) {
             isc_throw(DhcpConfigError, "clients items must be maps ("
                       << client->getPosition() << ")");

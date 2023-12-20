@@ -406,7 +406,7 @@ public:
     ///
     /// @throw DuplicateClientClassDef if class already exists within the
     /// dictionary, BadValue if the pointer is empty.
-    void addClass(ClientClassDefPtr& class_def);
+    void addClass(const ClientClassDefPtr& class_def);
 
     /// @brief Fetches the class definition for a given class name
     ///

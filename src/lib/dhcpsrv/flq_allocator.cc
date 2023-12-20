@@ -189,14 +189,14 @@ FreeLeaseQueueAllocator::populateFreeAddressLeases(const LeaseCollectionType& le
     // unordered_set. Also, elminate the expired leases and those
     // in the expired-reclaimed state.
     unordered_set<IOAddress, IOAddress::Hash> leased_addresses;
-    for (auto lease : leases) {
+    for (auto const& lease : leases) {
         if ((lease->getType() == pool_type_) && (!lease->expired()) && (!lease->stateExpiredReclaimed())) {
             leased_addresses.insert(lease->addr_);
         }
     }
     // For each pool, check if the address is in the leases list.
     size_t free_lease_count = 0;
-    for (auto pool : pools) {
+    for (auto const& pool : pools) {
         // Create the pool permutation so the resulting lease queue is no
         // particular order.
         IPRangePermutation perm(AddressRange(pool->getFirstAddress(), pool->getLastAddress()));
@@ -236,14 +236,14 @@ FreeLeaseQueueAllocator::populateFreePrefixDelegationLeases(const Lease6Collecti
     // unordered_set. Also, elminate the expired leases and those
     // in the expired-reclaimed state.
     unordered_set<IOAddress, IOAddress::Hash> leased_prefixes;
-    for (auto lease : leases) {
+    for (auto const& lease : leases) {
         if ((lease->getType() == Lease::TYPE_PD) && (!lease->expired()) && (!lease->stateExpiredReclaimed())) {
             leased_prefixes.insert(lease->addr_);
         }
     }
     // For each pool, check if the prefix is in the leases list.
     size_t free_lease_count = 0;
-    for (auto pool : pools) {
+    for (auto const& pool : pools) {
         auto pool6 = boost::dynamic_pointer_cast<Pool6>(pool);
         if (!pool6) {
             continue;

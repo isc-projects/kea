@@ -722,7 +722,7 @@ LeaseMgr::upgradeLease4ExtendedInfo(const Lease4Ptr& lease,
         }
 
         verifying = "relay-agent-info";
-        for (auto elem : extended_info->mapValue()) {
+        for (auto const& elem : extended_info->mapValue()) {
             if ((elem.first != "sub-options") &&
                 (elem.first != "remote-id") &&
                 (elem.first != "relay-id") &&
@@ -1060,7 +1060,7 @@ LeaseMgr::upgradeLease6ExtendedInfo(const Lease6Ptr& lease,
             }
 
             verifying = (upgraded ? "relays" : "relay-info");
-            for (auto elem : relay->mapValue()) {
+            for (auto const& elem : relay->mapValue()) {
                 if ((elem.first != "hop") &&
                     (elem.first != "link") &&
                     (elem.first != "peer") &&

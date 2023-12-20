@@ -286,7 +286,7 @@ public:
     template <typename PktType>
     void process(isc::dhcp::Option::Universe universe,
                  PktType query, PktType response) {
-        for (auto pair : getOptionConfigMap()) {
+        for (auto const& pair : getOptionConfigMap()) {
             for (const OptionConfigPtr& opt_cfg : pair.second) {
                 const isc::dhcp::ClientClass& client_class =
                     opt_cfg->getClass();
@@ -374,7 +374,7 @@ public:
                 }
             }
         }
-        for (auto pair : getSubOptionConfigMap()) {
+        for (auto const& pair : getSubOptionConfigMap()) {
             for (const auto& sub_pair : pair.second) {
                 const SubOptionConfigPtr& sub_cfg = sub_pair.second;
                 uint16_t sub_code = sub_cfg->getCode();

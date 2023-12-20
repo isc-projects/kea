@@ -530,7 +530,7 @@ DControllerBase::handleOtherObjects(ConstElementPtr args) {
     // Check obsolete or unknown (aka unsupported) objects.
     const std::string& app_name = getAppName();
     std::string errmsg;
-    for (auto obj : args->mapValue()) {
+    for (auto const& obj : args->mapValue()) {
         const std::string& obj_name = obj.first;
         if (obj_name == app_name) {
             continue;

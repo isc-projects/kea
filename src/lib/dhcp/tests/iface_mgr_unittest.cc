@@ -336,7 +336,7 @@ public:
                        const bool up, const bool running,
                        const bool inactive4,
                        const bool inactive6) {
-        for (IfacePtr iface : ifaces_) {
+        for (const IfacePtr& iface : ifaces_) {
             if (iface->getName() == name) {
                 iface->flag_loopback_ = loopback;
                 iface->flag_up_ = up;
@@ -1121,7 +1121,7 @@ TEST_F(IfaceMgrTest, getIface) {
 
     cout << "There are " << ifacemgr->getIfacesLst().size()
          << " interfaces." << endl;
-    for (IfacePtr iface : ifacemgr->getIfacesLst()) {
+    for (const IfacePtr& iface : ifacemgr->getIfacesLst()) {
         cout << "  " << iface->getFullName() << endl;
     }
 

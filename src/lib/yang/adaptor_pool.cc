@@ -21,7 +21,7 @@ void
 AdaptorPool::canonizePool(ElementPtr pool) {
     const string& orig = pool->get("pool")->stringValue();
     vector<char> v;
-    for (char ch : orig) {
+    for (auto ch : orig) {
         if ((ch == ' ') || (ch == '\t') || (ch == '\n')) {
             continue;
         } else if (ch == '-') {

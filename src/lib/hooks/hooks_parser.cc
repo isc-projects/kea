@@ -54,7 +54,7 @@ HooksLibrariesParser::parse(HooksConfig& libraries, ConstElementPtr value) {
         // values from the previous loop round.
         parameters.reset();
 
-        BOOST_FOREACH(auto entry_item, library_entry->mapValue()) {
+        BOOST_FOREACH(auto const& entry_item, library_entry->mapValue()) {
             if (entry_item.first == "library") {
                 if (entry_item.second->getType() != Element::string) {
                     isc_throw(DhcpConfigError, "hooks library configuration"

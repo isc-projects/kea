@@ -134,8 +134,8 @@ PerfSocket::~PerfSocket() {
 
 void
 PerfSocket::initSocketData() {
-    for (IfacePtr iface : IfaceMgr::instance().getIfaces()) {
-        for (SocketInfo s : iface->getSockets()) {
+    for (auto const& iface : IfaceMgr::instance().getIfaces()) {
+        for (auto const& s : iface->getSockets()) {
             if (s.sockfd_ == sockfd_) {
                 ifindex_ = iface->getIndex();
                 addr_ = s.addr_;

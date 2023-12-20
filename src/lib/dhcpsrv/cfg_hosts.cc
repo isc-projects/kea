@@ -709,7 +709,7 @@ CfgHosts::getAll4(const SubnetID& subnet_id,
         .arg(subnet_id).arg(address.toText());
 
     ConstHostCollection hosts;
-    for (auto host : getAll4(address)) {
+    for (auto const& host : getAll4(address)) {
         if (host->getIPv4SubnetID() == subnet_id) {
             LOG_DEBUG(hosts_logger, HOSTS_DBG_TRACE_DETAIL_DATA,
                       HOSTS_CFG_GET_ALL_SUBNET_ID_ADDRESS4_HOST)
@@ -1092,7 +1092,7 @@ CfgHosts::del(const SubnetID& subnet_id, const asiolink::IOAddress& addr) {
     if (addr.isV4()) {
         HostContainerIndex4& idx = hosts_.get<4>();
         // Delete IPv4 reservation and host.
-        for (auto host : getAll4(subnet_id, addr)) {
+        for (auto const& host : getAll4(subnet_id, addr)) {
             erased_hosts += idx.erase(host->getHostId());
         }
         erased_addresses = erased_hosts;

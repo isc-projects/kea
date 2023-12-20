@@ -382,7 +382,7 @@ ControlledDhcpv6Srv::commandConfigSetHandler(const string&,
 
     // Check unsupported objects.
     if (message.empty()) {
-        for (auto obj : args->mapValue()) {
+        for (auto const& obj : args->mapValue()) {
             const string& obj_name = obj.first;
             if (obj_name != "Dhcp6") {
                 LOG_ERROR(dhcp6_logger, DHCP6_CONFIG_UNSUPPORTED_OBJECT)
@@ -477,7 +477,7 @@ ControlledDhcpv6Srv::commandConfigTestHandler(const string&,
 
     // Check unsupported objects.
     if (message.empty()) {
-        for (auto obj : args->mapValue()) {
+        for (auto const& obj : args->mapValue()) {
             const string& obj_name = obj.first;
             if (obj_name != "Dhcp6") {
                 LOG_ERROR(dhcp6_logger, DHCP6_CONFIG_UNSUPPORTED_OBJECT)

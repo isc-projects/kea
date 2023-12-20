@@ -3441,7 +3441,7 @@ PgSqlLeaseMgr::upgradeExtendedInfo4(const LeasePageSize& page_size) {
 
         ++pages;
         start_addr = leases.back()->addr_;
-        for (auto lease : leases) {
+        for (auto const& lease : leases) {
             ConstElementPtr previous_user_context = lease->getContext();
             vector<uint8_t> previous_relay_id = lease->relay_id_;
             vector<uint8_t> previous_remote_id = lease->remote_id_;

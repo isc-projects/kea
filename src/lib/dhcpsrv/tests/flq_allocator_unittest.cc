@@ -125,7 +125,7 @@ TEST_F(FreeLeaseQueueAllocatorTest4, singlePoolWithAllocations) {
     EXPECT_TRUE(candidate.isV4Zero());
 
     auto i = 0;
-    for (auto address_lease : leases) {
+    for (auto const& address_lease : leases) {
         if (i % 2) {
             EXPECT_TRUE(lease_mgr.deleteLease(address_lease.second));
         }
@@ -171,7 +171,7 @@ TEST_F(FreeLeaseQueueAllocatorTest4, singlePoolWithReclamations) {
     EXPECT_TRUE(candidate.isV4Zero());
 
     auto i = 0;
-    for (auto address_lease : leases) {
+    for (auto const& address_lease : leases) {
         if (i % 2) {
             auto lease = address_lease.second;
             lease->state_ = Lease::STATE_EXPIRED_RECLAIMED;
@@ -453,7 +453,7 @@ TEST_F(FreeLeaseQueueAllocatorTest6, singlePoolWithAllocations) {
     EXPECT_TRUE(candidate.isV6Zero());
 
     auto i = 0;
-    for (auto address_lease : leases) {
+    for (auto const& address_lease : leases) {
         if (i % 2) {
             EXPECT_TRUE(lease_mgr.deleteLease(address_lease.second));
         }
@@ -499,7 +499,7 @@ TEST_F(FreeLeaseQueueAllocatorTest6, singlePoolWithReclamations) {
     EXPECT_TRUE(candidate.isV6Zero());
 
     auto i = 0;
-    for (auto address_lease : leases) {
+    for (auto const& address_lease : leases) {
         if (i % 2) {
             auto lease = address_lease.second;
             lease->state_ = Lease::STATE_EXPIRED_RECLAIMED;
@@ -759,7 +759,7 @@ TEST_F(FreeLeaseQueueAllocatorTest6, singlePdPoolWithAllocations) {
     EXPECT_TRUE(candidate.isV6Zero());
 
     auto i = 0;
-    for (auto address_lease : leases) {
+    for (auto const& address_lease : leases) {
         if (i % 2) {
             EXPECT_TRUE(lease_mgr.deleteLease(address_lease.second));
         }
@@ -814,7 +814,7 @@ TEST_F(FreeLeaseQueueAllocatorTest6, singlePdPoolWithReclamations) {
     EXPECT_TRUE(candidate.isV6Zero());
 
     auto i = 0;
-    for (auto address_lease : leases) {
+    for (auto const& address_lease : leases) {
         if (i % 2) {
             auto lease = address_lease.second;
             lease->state_ = Lease::STATE_EXPIRED_RECLAIMED;

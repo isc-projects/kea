@@ -96,7 +96,7 @@ TEST_F(DHCPQueueControlParserTest, validContent) {
     // Iterate over the valid scenarios and verify they succeed.
     ConstElementPtr config_elems;
     ConstElementPtr queue_control;
-    for (auto scenario : scenarios) {
+    for (auto const& scenario : scenarios) {
         SCOPED_TRACE(scenario.description_);
         {
             // Construct the config JSON
@@ -161,7 +161,7 @@ TEST_F(DHCPQueueControlParserTest, invalidContent) {
     // Iterate over the valid scenarios and verify they succeed.
     ConstElementPtr config_elems;
     ConstElementPtr queue_control;
-    for (auto scenario : scenarios) {
+    for (auto const& scenario : scenarios) {
         SCOPED_TRACE(scenario.description_);
         {
             // Construct the config JSON

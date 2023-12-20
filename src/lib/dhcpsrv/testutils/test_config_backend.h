@@ -96,7 +96,7 @@ public:
     void mergeServerTags(const StampedElementPtr& elem,
                          const db::ServerSelector& server_selector) const {
         auto tags = server_selector.getTags();
-        for (auto tag : tags) {
+        for (auto const& tag : tags) {
             elem->setServerTag(tag.get());
         }
     }

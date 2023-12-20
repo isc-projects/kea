@@ -362,11 +362,11 @@ Dhcpv6SrvTest::checkConfigFiles() {
         "with-ddns.json",
     };
     vector<string> files;
-    for (string example : examples) {
+    for (const string& example : examples) {
         string file = path + "/" + example;
         files.push_back(file);
     }
-    for (const auto& file: files) {
+    for (const auto& file : files) {
         string label("Checking configuration from file: ");
         label += file;
         SCOPED_TRACE(label);
@@ -3859,15 +3859,15 @@ TEST_F(Dhcpv6SrvTest, calculateTeeTimers) {
     sol->setIndex(ETH0_INDEX);
 
     // Iterate over the test scenarios.
-    for (auto test = tests.begin(); test != tests.end(); ++test) {
+    for (auto const& test : tests) {
         {
-            SCOPED_TRACE((*test).description_);
+            SCOPED_TRACE(test.description_);
             // Configure subnet for the scenario
-            subnet_->setT1((*test).cfg_t1_);
-            subnet_->setT2((*test).cfg_t2_);
-            subnet_->setCalculateTeeTimes((*test).calculate_tee_times);
-            subnet_->setT1Percent((*test).t1_percent_);
-            subnet_->setT2Percent((*test).t2_percent_);
+            subnet_->setT1(test.cfg_t1_);
+            subnet_->setT2(test.cfg_t2_);
+            subnet_->setCalculateTeeTimes(test.calculate_tee_times);
+            subnet_->setT1Percent(test.t1_percent_);
+            subnet_->setT2Percent(test.t2_percent_);
             AllocEngine::ClientContext6 ctx;
             bool drop = !srv.earlyGHRLookup(sol, ctx);
             ASSERT_FALSE(drop);
@@ -3879,7 +3879,7 @@ TEST_F(Dhcpv6SrvTest, calculateTeeTimers) {
             checkResponse(reply, DHCPV6_ADVERTISE, 1234);
 
             // check that IA_NA was returned and T1 and T2 are correct.
-            checkIA_NA(reply, 234, (*test).t1_exp_value_, (*test).t2_exp_value_);
+            checkIA_NA(reply, 234, test.t1_exp_value_, test.t2_exp_value_);
         }
     }
 }

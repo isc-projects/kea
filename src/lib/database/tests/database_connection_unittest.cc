@@ -626,7 +626,7 @@ TEST(DatabaseConnection, DISABLED_toElementDbAccessStringInvalid) {
         "readonly=not-boolean"
     };
 
-    for (auto access_str : access_strs) {
+    for (auto const& access_str : access_strs) {
         /// @todo: verify that an ERROR is logged.
         ASSERT_NO_THROW(DatabaseConnection::toElementDbAccessString(access_str));
     }

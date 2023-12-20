@@ -58,7 +58,7 @@ Option6Auth::pack(isc::util::OutputBuffer& buf, bool) const {
     // authentication information for reconfig msg
     // should have zero
 
-    for (auto i : auth_info_) {
+    for (auto const& i : auth_info_) {
         buf.writeUint8(i);
     }
 }

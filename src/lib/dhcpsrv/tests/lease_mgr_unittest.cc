@@ -290,7 +290,7 @@ TEST(Lease4ExtendedInfoTest, upgradeLease4ExtendedInfo) {
     Lease4Ptr lease(new Lease4());
     ElementPtr orig_context;
     ElementPtr exp_context;
-    for (auto scenario : scenarios) {
+    for (auto const& scenario : scenarios) {
         SCOPED_TRACE(scenario.description_);
 
         // Create the original user context from JSON.
@@ -505,7 +505,7 @@ TEST(Lease4ExtendedInfoTest, extractLease4ExtendedInfo) {
 
     Lease4Ptr lease(new Lease4());
     ElementPtr user_context;
-    for (auto scenario : scenarios) {
+    for (auto const& scenario : scenarios) {
         SCOPED_TRACE(scenario.description_);
 
         // Create the original user context from JSON.
@@ -752,7 +752,7 @@ TEST(Lease6ExtendedInfoTest, upgradeLease6ExtendedInfo) {
     Lease6Ptr lease(new Lease6());
     ElementPtr orig_context;
     ElementPtr exp_context;
-    for (auto scenario : scenarios) {
+    for (auto const& scenario : scenarios) {
         SCOPED_TRACE(scenario.description_);
 
         // Create the original user context from JSON.
@@ -874,7 +874,7 @@ TEST(Lease6ExtendedInfoTest, invalidSetExtendedInfoTablesEnabled) {
 
     Lease6Ptr lease(new Lease6());
     ElementPtr user_context;
-    for (auto scenario : scenarios) {
+    for (auto const& scenario : scenarios) {
         SCOPED_TRACE(scenario.description_);
 
         // Create the user context from JSON.

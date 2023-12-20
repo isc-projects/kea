@@ -25,7 +25,7 @@ ResourceHandler::ResourceHandler() : owned_() {
 
 ResourceHandler::~ResourceHandler() {
     lock_guard<mutex> lock_(mutex_);
-    for (auto res : owned_) {
+    for (auto const& res : owned_) {
         unLockInternal(res->type_, res->addr_);
     }
     owned_.clear();

@@ -49,7 +49,7 @@ CfgIface::equals(const CfgIface& other) const {
 
 bool
 CfgIface::multipleAddressesPerInterfaceActive() {
-    for (IfacePtr iface : IfaceMgr::instance().getIfaces()) {
+    for (const IfacePtr& iface : IfaceMgr::instance().getIfaces()) {
         if (iface->countActive4() > 1) {
             return (true);
         }
@@ -284,7 +284,7 @@ CfgIface::reset() {
 void
 CfgIface::setState(const uint16_t family, const bool inactive,
                    const bool loopback_inactive) const {
-    for (IfacePtr iface : IfaceMgr::instance().getIfaces()) {
+    for (const IfacePtr& iface : IfaceMgr::instance().getIfaces()) {
         bool iface_inactive = iface->flag_loopback_ ? loopback_inactive : inactive;
         if (family == AF_INET) {
             iface->inactive4_ = iface_inactive;
@@ -301,7 +301,7 @@ void
 CfgIface::setIfaceAddrsState(const uint16_t family, const bool active,
                              Iface& iface) const {
     // Activate/deactivate all addresses.
-    for (Iface::Address addr : iface.getAddresses()) {
+    for (const Iface::Address& addr : iface.getAddresses()) {
         if (addr.get().getFamily() == family) {
             iface.setActive(addr.get(), active);
         }

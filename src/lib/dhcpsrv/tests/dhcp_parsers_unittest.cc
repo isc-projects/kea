@@ -1701,7 +1701,7 @@ TEST_F(ParseConfigTest, hexOptionData) {
         "0x0c000301C0000302"   // upper or lower case digits
     };
 
-    for (auto hex_str : valid_hexes) {
+    for (auto const& hex_str : valid_hexes) {
         ostringstream os;
         os <<
             "{ \n"
@@ -1795,7 +1795,7 @@ TEST_F(ParseConfigTest, stringOrHexBinaryData) {
     };
 
     // Iterate over our test scenarios
-    for (auto scenario : scenarios) {
+    for (auto const& scenario : scenarios) {
         SCOPED_TRACE(scenario.description_);
         {
             // Build the configuration text.

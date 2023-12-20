@@ -47,7 +47,7 @@ ConfigDbInfo::getParameterValue(const std::string& name, std::string& value) con
 
 ConfigControlInfo::ConfigControlInfo(const ConfigControlInfo& other)
     : config_fetch_wait_time_(other.config_fetch_wait_time_) {
-    for (auto db : other.db_infos_) {
+    for (auto const& db : other.db_infos_) {
         addConfigDatabase(db.getAccessString());
     }
 }
@@ -57,7 +57,7 @@ ConfigControlInfo::addConfigDatabase(const std::string& access_str) {
     ConfigDbInfo new_db;
     new_db.setAccessString(access_str);
 
-    for (auto db : db_infos_) {
+    for (auto const& db : db_infos_) {
         if (new_db == db) {
             // we have a duplicate!
             isc_throw(BadValue, "database with access parameters: "
@@ -106,7 +106,7 @@ ElementPtr
 ConfigControlInfo::toElement() const {
     ElementPtr result = Element::createMap();
     ElementPtr db_list = Element::createList();
-    for (auto db_info : db_infos_) {
+    for (auto const& db_info : db_infos_) {
         db_list->add(db_info.toElement());
     }
 

@@ -244,7 +244,7 @@ void
 DUIDFactory::createLinkLayerId(std::vector<uint8_t>& identifier,
                                uint16_t& htype) const {
     // Let's find suitable interface.
-    for (IfacePtr iface : IfaceMgr::instance().getIfaces()) {
+    for (const IfacePtr& iface : IfaceMgr::instance().getIfaces()) {
         // All the following checks could be merged into one multi-condition
         // statement, but let's keep them separated as perhaps one day
         // we will grow knobs to selectively turn them on or off. Also,

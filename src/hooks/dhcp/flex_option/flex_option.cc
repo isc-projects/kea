@@ -141,7 +141,7 @@ FlexOptionImpl::configure(ConstElementPtr options) {
     if (options->empty()) {
         return;
     }
-    for (auto option : options->listValue()) {
+    for (auto const& option : options->listValue()) {
         parseOptionConfig(option);
     }
 }
@@ -156,7 +156,7 @@ FlexOptionImpl::parseOptionConfig(ConstElementPtr option) {
         isc_throw(BadValue, "option element is not a map");
     }
     // See SimpleParser::checkKeywords
-    for (auto entry : option->mapValue()) {
+    for (auto const& entry : option->mapValue()) {
         if (OPTION_PARAMETERS.count(entry.first) == 0) {
             isc_throw(BadValue, "unknown parameter '" << entry.first << "'");
         }
@@ -316,7 +316,7 @@ void
 FlexOptionImpl::parseSubOptions(ConstElementPtr sub_options,
                                 OptionConfigPtr opt_cfg,
                                 Option::Universe universe) {
-    for (ConstElementPtr sub_option : sub_options->listValue()) {
+    for (auto const& sub_option : sub_options->listValue()) {
         parseSubOption(sub_option, opt_cfg, universe);
     }
 }
@@ -332,7 +332,7 @@ FlexOptionImpl::parseSubOption(ConstElementPtr sub_option,
         isc_throw(BadValue, "sub-option element is not a map");
     }
     // See SimpleParser::checkKeywords
-    for (auto entry : sub_option->mapValue()) {
+    for (auto const& entry : sub_option->mapValue()) {
         if (SUB_OPTION_PARAMETERS.count(entry.first) == 0) {
             isc_throw(BadValue, "unknown parameter '" << entry.first << "'");
         }

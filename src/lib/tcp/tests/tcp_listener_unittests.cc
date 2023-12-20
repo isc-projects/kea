@@ -76,7 +76,7 @@ public:
     ///
     /// Removes active clients.
     virtual ~TcpListenerTest() {
-        for (auto client : clients_) {
+        for (auto const& client : clients_) {
             client->close();
         }
     }
@@ -319,7 +319,7 @@ TEST_F(TcpListenerTest, multipleClientsListen) {
     ASSERT_EQ(num_clients, clients_.size());
 
     size_t connection_id = 1;
-    for (auto client : clients_) {
+    for (auto const& client : clients_) {
         EXPECT_TRUE(client->receiveDone());
         EXPECT_FALSE(client->expectedEof());
         // Create the list of expected entries.
@@ -329,7 +329,7 @@ TEST_F(TcpListenerTest, multipleClientsListen) {
         };
 
         // Fetch the entries for this connection.
-        auto entries = listener.audit_trail_->getConnectionTrail(connection_id);
+        auto const& entries = listener.audit_trail_->getConnectionTrail(connection_id);
         ASSERT_EQ(expected_entries, entries);
         ++connection_id;
     }
@@ -363,7 +363,7 @@ TEST_F(TcpListenerTest, multipleRequetsPerClients) {
     std::list<std::string>expected_responses{ "echo one", "echo two",
                                               "echo three", "good bye"};
     size_t connection_id = 1;
-    for (auto client : clients_) {
+    for (auto const& client : clients_) {
         EXPECT_TRUE(client->receiveDone());
         EXPECT_FALSE(client->expectedEof());
         EXPECT_EQ(expected_responses, client->getResponses());
@@ -382,7 +382,7 @@ TEST_F(TcpListenerTest, multipleRequetsPerClients) {
         };
 
         // Fetch the entries for this connection.
-        auto entries = listener.audit_trail_->getConnectionTrail(connection_id);
+        auto const& entries = listener.audit_trail_->getConnectionTrail(connection_id);
         ASSERT_EQ(expected_entries, entries);
         ++connection_id;
     }
@@ -420,7 +420,7 @@ TEST_F(TcpListenerTest, filterClientsTest) {
     ASSERT_EQ(num_clients, clients_.size());
 
     size_t i = 0;
-    for (auto client : clients_) {
+    for (auto const& client : clients_) {
         if (i % 2 == 0) {
             // These clients should have been accepted and received responses.
             EXPECT_TRUE(client->receiveDone());
@@ -433,7 +433,7 @@ TEST_F(TcpListenerTest, filterClientsTest) {
                 { i+1, AuditEntry::OUTBOUND, "good bye" }
             };
 
-            auto entries = listener.audit_trail_->getConnectionTrail(i+1);
+            auto const& entries = listener.audit_trail_->getConnectionTrail(i+1);
             ASSERT_EQ(expected_entries, entries);
 
         } else {
@@ -442,7 +442,7 @@ TEST_F(TcpListenerTest, filterClientsTest) {
             EXPECT_TRUE(client->expectedEof());
 
             // Verify connection recorded no audit entries.
-            auto entries = listener.audit_trail_->getConnectionTrail(i+1);
+            auto const& entries = listener.audit_trail_->getConnectionTrail(i+1);
             ASSERT_EQ(entries.size(), 0);
         }
 
@@ -561,11 +561,11 @@ TEST(TcpStreamRequst, postBufferTest) {
         }
     }
 
-    for (auto scenario : scenarios ) {
+    for (auto const& scenario : scenarios ) {
         SCOPED_TRACE(scenario.desc_);
         std::list<TcpStreamRequestPtr> requests;
         TcpStreamRequestPtr request;
-        for (auto input_buf : scenario.input_buffers_) {
+        for (auto const& input_buf : scenario.input_buffers_) {
             // Copy the input buffer.
             std::vector<uint8_t> buf = input_buf;
 
@@ -593,7 +593,7 @@ TEST(TcpStreamRequst, postBufferTest) {
 
         ASSERT_EQ(requests.size(), scenario.expected_strings_.size());
         auto exp_string = scenario.expected_strings_.begin();
-        for (auto recvd_request : requests) {
+        for (auto const& recvd_request : requests) {
             ASSERT_NO_THROW(recvd_request->unpack());
             EXPECT_EQ(*exp_string++, recvd_request->getRequestString());
         }

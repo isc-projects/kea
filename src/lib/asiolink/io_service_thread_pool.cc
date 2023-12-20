@@ -114,7 +114,7 @@ IoServiceThreadPool::checkPermissions(State state) {
 
 bool
 IoServiceThreadPool::checkThreadId(std::thread::id id) {
-    for (auto thread : threads_) {
+    for (const auto& thread : threads_) {
         if (id == thread->get_id()) {
             return (true);
         }

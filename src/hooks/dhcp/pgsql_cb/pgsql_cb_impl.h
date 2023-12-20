@@ -694,7 +694,7 @@ public:
     void multipleUpdateDeleteQueries(T first_index, R... other_indexes) {
         std::vector<T> indexes({ first_index, other_indexes... });
         db::PsqlBindArray in_bindings;
-        for (auto index : indexes) {
+        for (auto const& index : indexes) {
             updateDeleteQuery(index, in_bindings);
         }
     }

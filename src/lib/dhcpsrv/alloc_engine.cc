@@ -435,7 +435,7 @@ AllocEngine::findReservation(ClientContext6& ctx) {
     // The hosts can be used by the server to return reserved options to
     // the DHCP client. Such options must be encapsulated (i.e., they must
     // include suboptions).
-    for (auto host : ctx.hosts_) {
+    for (auto const& host : ctx.hosts_) {
         host.second->encapsulateOptions();
     }
 }
@@ -480,7 +480,7 @@ AllocEngine::allocateLeases6(ClientContext6& ctx) {
         // our shared network.
         Lease6Collection leases;
         while (subnet) {
-            for (auto l : all_leases) {
+            for (auto const& l : all_leases) {
                 if ((l)->subnet_id_ == subnet->getID()) {
                     leases.push_back(l);
                 }
@@ -3369,7 +3369,7 @@ addressReserved(const IOAddress& address, const AllocEngine::ClientContext4& ctx
             hosts = HostMgr::instance().getAll4(ctx.subnet_->getID(), address);
         }
 
-        for (auto host : hosts) {
+        for (auto const& host : hosts) {
             for (const AllocEngine::IdentifierPair& id_pair : ctx.host_identifiers_) {
                 // If we find the matching host we know that this address is reserved
                 // for us and we can return immediately.
@@ -3806,7 +3806,7 @@ AllocEngine::findReservation(ClientContext4& ctx) {
     // The hosts can be used by the server to return reserved options to
     // the DHCP client. Such options must be encapsulated (i.e., they must
     // include suboptions).
-    for (auto host : ctx.hosts_) {
+    for (auto const& host : ctx.hosts_) {
         host.second->encapsulateOptions();
     }
 }
@@ -5054,7 +5054,7 @@ AllocEngine::updateLease6ExtendedInfo(const Lease6Ptr& lease,
     //   },..]
     //
     ElementPtr extended_info = Element::createList();
-    for (auto relay : ctx.query_->relay_info_) {
+    for (auto const& relay : ctx.query_->relay_info_) {
         ElementPtr relay_elem = Element::createMap();
         relay_elem->set("hop", ElementPtr(new IntElement(relay.hop_count_)));
         relay_elem->set("link", ElementPtr(new StringElement(relay.linkaddr_.toText())));

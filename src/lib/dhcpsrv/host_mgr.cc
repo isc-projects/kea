@@ -130,7 +130,7 @@ HostMgr::getAll(const Host::IdentifierType& identifier_type,
                                       identifier_len);
     }
     if (target & HostMgrOperationTarget::ALTERNATE_SOURCES) {
-        for (auto source : alternate_sources_) {
+        for (auto const& source : alternate_sources_) {
             ConstHostCollection hosts_plus =
                 source->getAll(identifier_type, identifier_begin, identifier_len);
             hosts.insert(hosts.end(), hosts_plus.begin(), hosts_plus.end());
@@ -154,7 +154,7 @@ HostMgr::getAll4(const SubnetID& subnet_id, const HostMgrOperationTarget target)
         hosts = getCfgHosts()->getAll4(subnet_id);
     }
     if (target & HostMgrOperationTarget::ALTERNATE_SOURCES) {
-        for (auto source : alternate_sources_) {
+        for (auto const& source : alternate_sources_) {
             ConstHostCollection hosts_plus = source->getAll4(subnet_id);
             hosts.insert(hosts.end(), hosts_plus.begin(), hosts_plus.end());
         }
@@ -174,7 +174,7 @@ HostMgr::getAll6(const SubnetID& subnet_id, const HostMgrOperationTarget target)
         hosts = getCfgHosts()->getAll6(subnet_id);
     }
     if (target & HostMgrOperationTarget::ALTERNATE_SOURCES) {
-        for (auto source : alternate_sources_) {
+        for (auto const& source : alternate_sources_) {
             ConstHostCollection hosts_plus = source->getAll6(subnet_id);
             hosts.insert(hosts.end(), hosts_plus.begin(), hosts_plus.end());
         }
@@ -194,7 +194,7 @@ HostMgr::getAllbyHostname(const std::string& hostname, const HostMgrOperationTar
         hosts = getCfgHosts()->getAllbyHostname(hostname);
     }
     if (target & HostMgrOperationTarget::ALTERNATE_SOURCES) {
-        for (auto source : alternate_sources_) {
+        for (auto const& source : alternate_sources_) {
             ConstHostCollection hosts_plus = source->getAllbyHostname(hostname);
             hosts.insert(hosts.end(), hosts_plus.begin(), hosts_plus.end());
         }
@@ -216,7 +216,7 @@ HostMgr::getAllbyHostname4(const std::string& hostname,
         hosts = getCfgHosts()->getAllbyHostname4(hostname, subnet_id);
     }
     if (target & HostMgrOperationTarget::ALTERNATE_SOURCES) {
-        for (auto source : alternate_sources_) {
+        for (auto const& source : alternate_sources_) {
             ConstHostCollection hosts_plus = source->getAllbyHostname4(hostname,
                                                                     subnet_id);
             hosts.insert(hosts.end(), hosts_plus.begin(), hosts_plus.end());
@@ -240,7 +240,7 @@ HostMgr::getAllbyHostname6(const std::string& hostname,
         hosts = getCfgHosts()->getAllbyHostname6(hostname, subnet_id);
     }
     if (target & HostMgrOperationTarget::ALTERNATE_SOURCES) {
-        for (auto source : alternate_sources_) {
+        for (auto const& source : alternate_sources_) {
             ConstHostCollection hosts_plus = source->getAllbyHostname6(hostname,
                                                                     subnet_id);
             hosts.insert(hosts.end(), hosts_plus.begin(), hosts_plus.end());
@@ -384,7 +384,7 @@ HostMgr::getAll4(const IOAddress& address, const HostMgrOperationTarget target) 
         hosts = getCfgHosts()->getAll4(address);
     }
     if (target & HostMgrOperationTarget::ALTERNATE_SOURCES) {
-        for (auto source : alternate_sources_) {
+        for (auto const& source : alternate_sources_) {
             ConstHostCollection hosts_plus = source->getAll4(address);
             hosts.insert(hosts.end(), hosts_plus.begin(), hosts_plus.end());
         }
@@ -424,7 +424,7 @@ HostMgr::get4Any(const SubnetID& subnet_id,
 
     // Try to find a host in each configured backend. We return as soon
     // as we find first hit.
-    for (auto source : alternate_sources_) {
+    for (auto const& source : alternate_sources_) {
         host = source->get4(subnet_id, identifier_type,
                            identifier_begin, identifier_len);
 
@@ -503,7 +503,7 @@ HostMgr::get4(const SubnetID& subnet_id,
               HOSTS_MGR_ALTERNATE_GET4_SUBNET_ID_ADDRESS4)
         .arg(subnet_id)
         .arg(address.toText());
-    for (auto source : alternate_sources_) {
+    for (auto const& source : alternate_sources_) {
         host = source->get4(subnet_id, address);
         if (host && host->getNegative()) {
             return (ConstHostPtr());
@@ -539,7 +539,7 @@ HostMgr::getAll4(const SubnetID& subnet_id,
             .arg(subnet_id)
             .arg(address.toText());
 
-        for (auto source : alternate_sources_) {
+        for (auto const& source : alternate_sources_) {
             auto hosts_plus = source->getAll4(subnet_id, address);
             hosts.insert(hosts.end(), hosts_plus.begin(), hosts_plus.end());
         }
@@ -566,7 +566,7 @@ HostMgr::get6(const IOAddress& prefix, const uint8_t prefix_len,
     LOG_DEBUG(hosts_logger, HOSTS_DBG_TRACE, HOSTS_MGR_ALTERNATE_GET6_PREFIX)
         .arg(prefix.toText())
         .arg(static_cast<int>(prefix_len));
-    for (auto source : alternate_sources_) {
+    for (auto const& source : alternate_sources_) {
         host = source->get6(prefix, prefix_len);
         if (host && host->getNegative()) {
             return (ConstHostPtr());
@@ -607,7 +607,7 @@ HostMgr::get6Any(const SubnetID& subnet_id,
         .arg(Host::getIdentifierAsText(identifier_type, identifier_begin,
                                        identifier_len));
 
-    for (auto source : alternate_sources_) {
+    for (auto const& source : alternate_sources_) {
         host = source->get6(subnet_id, identifier_type,
                            identifier_begin, identifier_len);
 
@@ -687,7 +687,7 @@ HostMgr::get6(const SubnetID& subnet_id,
               HOSTS_MGR_ALTERNATE_GET6_SUBNET_ID_ADDRESS6)
         .arg(subnet_id)
         .arg(addr.toText());
-    for (auto source : alternate_sources_) {
+    for (auto const& source : alternate_sources_) {
         host = source->get6(subnet_id, addr);
         if (host && host->getNegative()) {
             return (ConstHostPtr());
@@ -724,7 +724,7 @@ HostMgr::getAll6(const SubnetID& subnet_id,
             .arg(subnet_id)
             .arg(address.toText());
 
-        for (auto source : alternate_sources_) {
+        for (auto const& source : alternate_sources_) {
             auto hosts_plus = source->getAll6(subnet_id, address);
             hosts.insert(hosts.end(), hosts_plus.begin(), hosts_plus.end());
         }
@@ -751,7 +751,7 @@ HostMgr::getAll6(const IOAddress& address, const HostMgrOperationTarget target) 
     }
 
     if (target & HostMgrOperationTarget::ALTERNATE_SOURCES) {
-        for (auto source : alternate_sources_) {
+        for (auto const&source : alternate_sources_) {
             ConstHostCollection hosts_plus = source->getAll6(address);
             hosts.insert(hosts.end(), hosts_plus.begin(), hosts_plus.end());
         }
@@ -774,7 +774,7 @@ HostMgr::add(const HostPtr& host, const HostMgrOperationTarget target) {
 
         }
 
-        for (auto source : alternate_sources_) {
+        for (auto const& source : alternate_sources_) {
             source->add(host);
         }
     }
@@ -806,7 +806,7 @@ HostMgr::del(const SubnetID& subnet_id, const asiolink::IOAddress& addr,
                     "no hosts-database configured.");
         }
 
-        for (auto source : alternate_sources_) {
+        for (auto const& source : alternate_sources_) {
             bool alternate_erased = source->del(subnet_id, addr);
             erased = alternate_erased || erased;
         }
@@ -840,7 +840,7 @@ HostMgr::del4(const SubnetID& subnet_id, const Host::IdentifierType& identifier_
                     "no hosts-database configured.");
         }
 
-        for (auto source : alternate_sources_) {
+        for (auto const& source : alternate_sources_) {
             if (source->del4(subnet_id, identifier_type,
                              identifier_begin, identifier_len)) {
                 success = true;
@@ -877,7 +877,7 @@ HostMgr::del6(const SubnetID& subnet_id, const Host::IdentifierType& identifier_
                     "no hosts-database configured.");
         }
 
-        for (auto source : alternate_sources_) {
+        for (auto const& source : alternate_sources_) {
             if (source->del6(subnet_id, identifier_type,
                              identifier_begin, identifier_len)) {
                 success = true;
@@ -958,7 +958,7 @@ bool
 HostMgr::setIPReservationsUnique(const bool unique) {
     // Iterate over the alternate sources first, because they may include those
     // for which the new setting is not supported.
-    for (auto source : alternate_sources_) {
+    for (auto const& source : alternate_sources_) {
         if (!source->setIPReservationsUnique(unique)) {
             // One of the sources does not support this new mode of operation.
             // Let's log a warning and back off the changes to the default
@@ -966,7 +966,7 @@ HostMgr::setIPReservationsUnique(const bool unique) {
             ip_reservations_unique_ = true;
             LOG_WARN(hosts_logger, HOSTS_MGR_NON_UNIQUE_IP_UNSUPPORTED)
                 .arg(source->getType());
-            for (auto source : alternate_sources_) {
+            for (auto const& source : alternate_sources_) {
                 source->setIPReservationsUnique(true);
             }
             return (false);

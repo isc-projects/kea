@@ -1126,7 +1126,7 @@ LibDHCP::splitOptions4(OptionCollection& options,
                     // parent option will be created for each suboption.
                     // This will guarantee that none of the options plus
                     // suboptions will have more than 255 bytes.
-                    for (auto sub_option : candidate->getMutableOptions()) {
+                    for (auto const& sub_option : candidate->getMutableOptions()) {
                         OptionPtr data_sub_option(new Option(candidate->getUniverse(),
                                                              candidate->getType(),
                                                              OptionBuffer(0)));

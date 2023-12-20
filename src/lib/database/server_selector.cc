@@ -24,7 +24,7 @@ ServerSelector::MULTIPLE(const std::set<std::string>& server_tags) {
     std::set<ServerTag> tags;
 
     // Create a set of tags from strings.
-    for (auto tag : server_tags) {
+    for (const auto& tag : server_tags) {
         tags.insert(ServerTag(tag));
     }
 

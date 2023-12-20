@@ -114,12 +114,10 @@ TEST_F(PostHttpRequestJsonTest, getBodyAsJson) {
 
     // Iterate over JSON values and store them in a simple map.
     std::map<std::string, std::string> config_values;
-    for (auto config_element = json->mapValue().begin();
-         config_element != json->mapValue().end();
-         ++config_element) {
-        ASSERT_FALSE(config_element->first.empty());
-        ASSERT_TRUE(config_element->second);
-        config_values[config_element->first] = config_element->second->stringValue();
+    for (auto const& config_element : json->mapValue()) {
+        ASSERT_FALSE(config_element.first.empty());
+        ASSERT_TRUE(config_element.second);
+        config_values[config_element.first] = config_element.second->stringValue();
     }
 
     // Verify the values.

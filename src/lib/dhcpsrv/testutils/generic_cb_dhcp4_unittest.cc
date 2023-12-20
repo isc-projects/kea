@@ -1326,7 +1326,7 @@ void
 GenericConfigBackendDHCPv4Test::getAllSubnets4Test() {
     // Insert test subnets into the database. Note that the second subnet will
     // overwrite the first subnet as they use the same ID.
-    for (auto subnet : test_subnets_) {
+    for (auto const& subnet : test_subnets_) {
         cbptr_->createUpdateSubnet4(ServerSelector::ALL(), subnet);
 
         // That subnet overrides the first subnet so the audit entry should
@@ -1853,12 +1853,12 @@ GenericConfigBackendDHCPv4Test::getSharedNetworkSubnets4Test() {
     test_subnets_[3]->setSharedNetworkName("level2");
 
     // Store shared networks in the database.
-    for (auto network : test_networks_) {
+    for (auto const& network : test_networks_) {
         cbptr_->createUpdateSharedNetwork4(ServerSelector::ALL(), network);
     }
 
     // Store subnets in the database.
-    for (auto subnet : test_subnets_) {
+    for (auto const& subnet : test_subnets_) {
         cbptr_->createUpdateSubnet4(ServerSelector::ALL(), subnet);
     }
 
@@ -2266,7 +2266,7 @@ void
 GenericConfigBackendDHCPv4Test::getAllSharedNetworks4Test() {
     // Insert test shared networks into the database. Note that the second shared
     // network will overwrite the first shared network as they use the same name.
-    for (auto network : test_networks_) {
+    for (auto const& network : test_networks_) {
         cbptr_->createUpdateSharedNetwork4(ServerSelector::ALL(), network);
 
         // That shared network overrides the first one so the audit entry should
@@ -3070,7 +3070,7 @@ GenericConfigBackendDHCPv4Test::getAllOptionDefs4Test() {
     // option definition will overwrite the first option definition as they use
     // the same code and space.
     size_t updates_num = 0;
-    for (auto option_def : test_option_defs_) {
+    for (auto const& option_def : test_option_defs_) {
         cbptr_->createUpdateOptionDef4(ServerSelector::ALL(), option_def);
 
         // That option definition overrides the first one so the audit entry should
@@ -3915,7 +3915,7 @@ GenericConfigBackendDHCPv4Test::subnetOptionIdOrderTest() {
     ASSERT_EQ(2, subnets.size());
 
     // Verify that the subnets returned are as expected.
-    for (auto subnet : subnets) {
+    for (auto const& subnet : subnets) {
         ASSERT_EQ(1, subnet->getServerTags().size());
         EXPECT_EQ("all", subnet->getServerTags().begin()->get());
         if (subnet->getID() == 1024) {

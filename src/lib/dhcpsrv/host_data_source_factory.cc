@@ -167,7 +167,7 @@ void
 HostDataSourceFactory::printRegistered() {
     std::stringstream txt;
 
-    for (auto x : map_) {
+    for (auto const& x : map_) {
         txt << x.first << " ";
     }
 

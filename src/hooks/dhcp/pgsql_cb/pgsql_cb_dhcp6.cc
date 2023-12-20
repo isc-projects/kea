@@ -2663,7 +2663,7 @@ public:
 
         tossNonMatchingElements(server_selector, class_list);
 
-        for (auto c : class_list) {
+        for (auto const& c : class_list) {
             client_classes.addClass(c);
         }
     }

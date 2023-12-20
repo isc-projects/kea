@@ -619,7 +619,7 @@ CfgSubnets4::updateStatistics() {
 
 void
 CfgSubnets4::initAllocatorsAfterConfigure() {
-    for (auto subnet : subnets_) {
+    for (auto const& subnet : subnets_) {
         subnet->initAllocatorsAfterConfigure();
     }
 }

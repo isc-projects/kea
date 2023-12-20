@@ -119,7 +119,7 @@ LibraryHandle::getParameterNames() {
         (params->size() == 0)) {
         return (names);
     }
-    auto map = params->mapValue();
+    auto const& map = params->mapValue();
     for (auto elem = map.begin(); elem != map.end(); ++elem) {
         names.push_back(elem->first);
     }

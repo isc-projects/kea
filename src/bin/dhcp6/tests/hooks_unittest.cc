@@ -5589,7 +5589,7 @@ TEST_F(LoadUnloadDhcpv6SrvTest, failLoadIncompatibleLibraries) {
 // Checks if callouts installed on the dhcp6_srv_configured ared indeed called
 // and all the necessary parameters are passed.
 TEST_F(LoadUnloadDhcpv6SrvTest, Dhcpv6SrvConfigured) {
-    for (string parameters : {
+    for (const string& parameters : vector<string>{
         "",
         R"(, "parameters": { "mode": "fail-without-error" } )",
         R"(, "parameters": { "mode": "fail-with-error" } )"}) {

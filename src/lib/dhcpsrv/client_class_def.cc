@@ -376,7 +376,7 @@ ClientClassDictionary::addClass(const std::string& name,
 }
 
 void
-ClientClassDictionary::addClass(ClientClassDefPtr& class_def) {
+ClientClassDictionary::addClass(const ClientClassDefPtr& class_def) {
     if (!class_def) {
         isc_throw(BadValue, "ClientClassDictionary::addClass "
                             " - class definition cannot be null");
@@ -485,7 +485,7 @@ ClientClassDictionary::equals(const ClientClassDictionary& other) const {
 void
 ClientClassDictionary::initMatchExpr(uint16_t family) {
     std::queue<ExpressionPtr> expressions;
-    for (auto c : *list_) {
+    for (auto const& c : *list_) {
         if (!c->getTest().empty()) {
             ExpressionPtr match_expr = boost::make_shared<Expression>();
             ExpressionParser parser;
@@ -500,7 +500,7 @@ ClientClassDictionary::initMatchExpr(uint16_t family) {
     }
     // All expressions successfully initialized. Let's set them for the
     // client classes in the dictionary.
-    for (auto c : *list_) {
+    for (auto const& c : *list_) {
         if (!c->getTest().empty()) {
             c->setMatchExpr(expressions.front());
             expressions.pop();
@@ -510,7 +510,7 @@ ClientClassDictionary::initMatchExpr(uint16_t family) {
 
 void
 ClientClassDictionary::createOptions(const CfgOptionDefPtr& external_defs) {
-    for (auto c : *list_) {
+    for (auto const& c : *list_) {
         // If the class has no options, skip it.
         CfgOptionPtr class_options = c->getCfgOption();
         if (!class_options || class_options->empty()) {
@@ -564,7 +564,7 @@ ClientClassDictionary::operator=(const ClientClassDictionary& rhs) {
     if (this != &rhs) {
         list_->clear();
         map_->clear();
-        for (auto cclass : *(rhs.list_)) {
+        for (auto const& cclass : *(rhs.list_)) {
             ClientClassDefPtr copy(new ClientClassDef(*cclass));
             addClass(copy);
         }

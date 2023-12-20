@@ -1226,7 +1226,7 @@ public:
         // to add several more leases to the backlog to exceed the limit.
         if (overflow) {
             ASSERT_NO_THROW(generateTestLeases4());
-            for (auto lease : leases4_) {
+            for (auto const& lease : leases4_) {
                 service_->lease_update_backlog_.push(LeaseUpdateBacklog::ADD, lease);
             }
         }
@@ -1641,7 +1641,7 @@ public:
         // to add several more leases to the backlog to exceed the limit.
         if (overflow) {
             ASSERT_NO_THROW(generateTestLeases6());
-            for (auto lease : leases6_) {
+            for (auto const& lease : leases6_) {
                 service_->lease_update_backlog_.push(LeaseUpdateBacklog::ADD, lease);
             }
         }
@@ -4794,7 +4794,7 @@ TEST_F(HAServiceTest, processMaintenanceNotify) {
     TestHAService service(1, io_service_, network_state_, config_storage);
 
     // Test transition from the states for which it is allowed.
-    for (auto state : valid_states) {
+    for (auto const& state : valid_states) {
         EXPECT_NO_THROW(service.transition(state, HAService::NOP_EVT));
 
         // Process ha-maintenance-notify command that should transition the
@@ -4828,7 +4828,7 @@ TEST_F(HAServiceTest, processMaintenanceNotify) {
     };
 
     // Make sure that the transition from the other states is not allowed.
-    for (auto state : invalid_states) {
+    for (auto const& state : invalid_states) {
         EXPECT_NO_THROW(service.transition(state, HAService::NOP_EVT));
         EXPECT_NO_THROW(service.runModel(HAService::NOP_EVT));
 
@@ -5507,7 +5507,7 @@ public:
         }
         if (!static_scopes_.empty()) {
             auto json_scopes = Element::createList();
-            for (auto scope : static_scopes_) {
+            for (auto const&  scope : static_scopes_) {
                 json_scopes->add(Element::create(scope));
             }
             response_arguments->set("scopes", json_scopes);
@@ -5890,7 +5890,7 @@ public:
                 << "'";
 
         // Now, verify that each specified scope is handled.
-        for(auto scope : scopes) {
+        for(auto const& scope : scopes) {
             EXPECT_TRUE(service_->query_filter_.amServingScope(scope))
                 << "test failed for state '" << service_->getStateLabel(my_state.state_)
                 << "'";

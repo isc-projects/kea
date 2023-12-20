@@ -785,12 +785,12 @@ TEST(ParserTest, mapEntries) {
         [] (ConstElementPtr json, KeywordSet& set) {
             if (json->getType() == Element::list) {
                 // Handle lists.
-                for (auto elem : json->listValue()) {
+                for (auto const& elem : json->listValue()) {
                     extract(elem, set);
                 }
             } else if (json->getType() == Element::map) {
                 // Handle maps.
-                for (auto elem : json->mapValue()) {
+                for (auto const& elem : json->mapValue()) {
                     static_cast<void>(set.insert(elem.first));
                     // Skip entries with free content.
                     if ((elem.first != "user-context") &&
@@ -841,12 +841,12 @@ TEST(ParserTest, duplicateMapEntries) {
         [] (ElementPtr config, ElementPtr json, size_t& cnt) {
             if (json->getType() == Element::list) {
                 // Handle lists.
-                for (auto elem : json->listValue()) {
+                for (auto const& elem : json->listValue()) {
                     test(config, elem, cnt);
                 }
             } else if (json->getType() == Element::map) {
                 // Handle maps.
-                for (auto elem : json->mapValue()) {
+                for (auto const& elem : json->mapValue()) {
                     // Skip entries with free content.
                     if ((elem.first == "user-context") ||
                         (elem.first == "parameters")) {

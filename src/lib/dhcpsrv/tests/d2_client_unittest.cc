@@ -851,7 +851,7 @@ TEST_F(D2ClientMgrParamsTest, adjustDomainNameV4) {
         }
     };
 
-    for (auto scenario : scenarios) {
+    for (auto const& scenario : scenarios) {
         SCOPED_TRACE(scenario.description_);
         {
             subnet_->setDdnsReplaceClientNameMode(scenario.mode_);
@@ -966,7 +966,7 @@ TEST_F(D2ClientMgrParamsTest, adjustDomainNameV6) {
         }
     };
 
-    for (auto scenario : scenarios) {
+    for (auto const& scenario : scenarios) {
         SCOPED_TRACE(scenario.description_);
         {
             subnet_->setDdnsReplaceClientNameMode(scenario.mode_);
@@ -1145,7 +1145,7 @@ TEST_F(D2ClientMgrParamsTest, sanitizeFqdnV4) {
         }
     };
 
-    for (auto scenario : scenarios) {
+    for (auto const& scenario : scenarios) {
         SCOPED_TRACE(scenario.description_);
         {
             Option4ClientFqdn request(0, Option4ClientFqdn::RCODE_CLIENT(),
@@ -1232,7 +1232,7 @@ TEST_F(D2ClientMgrParamsTest, sanitizeFqdnV6) {
     };
 
     Option6ClientFqdnPtr response;
-    for (auto scenario : scenarios) {
+    for (auto const& scenario : scenarios) {
         SCOPED_TRACE(scenario.description_);
         {
             Option6ClientFqdn request(0, scenario.client_name_, scenario.name_type_);

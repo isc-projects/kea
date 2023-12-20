@@ -338,7 +338,7 @@ QueryFilter::getServedScopes() const {
 std::set<std::string>
 QueryFilter::getServedScopesInternal() const {
     std::set<std::string> scope_set;
-    for (auto scope : scopes_) {
+    for (auto const& scope : scopes_) {
         if (scope.second) {
             scope_set.insert(scope.first);
         }
@@ -474,7 +474,7 @@ uint8_t
 QueryFilter::loadBalanceHash(const uint8_t* key, const size_t key_len) const {
     uint8_t hash  = static_cast<uint8_t>(key_len);
 
-    for (auto i = key_len; i > 0;) {
+    for (size_t i = key_len; i > 0;) {
         hash = loadb_mx_tbl[hash ^ key[--i]];
     }
 

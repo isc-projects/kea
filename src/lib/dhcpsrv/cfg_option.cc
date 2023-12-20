@@ -411,7 +411,7 @@ CfgOption::del(const uint64_t id) {
     // Hierarchical nature of the options configuration requires that
     // we go over all options and decapsulate them before removing
     // any of them. Let's walk over the existing option spaces.
-    for (auto space_name : getOptionSpaceNames()) {
+    for (auto const& space_name : getOptionSpaceNames()) {
         // Get all options for the option space.
         auto options = getAll(space_name);
         for (auto option_it = options->begin(); option_it != options->end();

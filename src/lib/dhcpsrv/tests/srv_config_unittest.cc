@@ -1412,7 +1412,7 @@ TEST_F(SrvConfigTest, moveDdnsParamsTest) {
         }
     };
 
-    for (auto scenario : scenarios) {
+    for (auto const& scenario : scenarios) {
         SrvConfig conf(32);
         ElementPtr input_cfg;
         ConstElementPtr exp_cfg;

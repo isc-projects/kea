@@ -321,7 +321,7 @@ ClientClassDefParser::checkParametersSupported(const ConstElementPtr& class_def_
                                                          "max-preferred-lifetime" };
 
     // Iterate over the specified parameters and check if they are all supported.
-    for (auto name_value_pair : class_def_cfg->mapValue()) {
+    for (auto const& name_value_pair : class_def_cfg->mapValue()) {
         if ((supported_params.count(name_value_pair.first) > 0) ||
             ((family == AF_INET) && (supported_params_v4.count(name_value_pair.first) > 0)) ||
             ((family != AF_INET) && (supported_params_v6.count(name_value_pair.first) > 0))) {

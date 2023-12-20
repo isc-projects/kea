@@ -60,7 +60,7 @@ StatContext::clear() {
 void
 StatContext::resetAll() {
     // Let's iterate over all stored statistics...
-    for (auto s : stats_) {
+    for (auto const& s : stats_) {
         // ... and reset each statistic.
         s.second->reset();
     }
@@ -70,7 +70,7 @@ ConstElementPtr
 StatContext::getAll() const {
     ElementPtr map = Element::createMap(); // a map
     // Let's iterate over all stored statistics...
-    for (auto s : stats_) {
+    for (auto const& s : stats_) {
         // ... and add each of them to the map.
         map->set(s.first, s.second->getJSON());
     }
@@ -89,7 +89,7 @@ StatContext::setMaxSampleCountAll(uint32_t max_samples) {
 void
 StatContext::setMaxSampleAgeAll(const StatsDuration& duration) {
     // Let's iterate over all stored statistics...
-    for (auto s : stats_) {
+    for (auto const& s : stats_) {
         // ... and set duration limit for each statistic.
         s.second->setMaxSampleAge(duration);
     }

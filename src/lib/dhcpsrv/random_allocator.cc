@@ -65,7 +65,7 @@ RandomAllocator::pickAddressInternal(const ClientClasses& client_classes,
         // All pools have been exhausted. We will start offering the same
         // addresses from these pools. We need to reset the permutations
         // of the exhausted pools.
-        for (auto e : exhausted) {
+        for (auto const& e : exhausted) {
             getPoolState(pools[e])->getPermutation()->reset();
         }
         // Get random pool from those we just reset.
@@ -132,7 +132,7 @@ RandomAllocator::pickPrefixInternal(const ClientClasses& client_classes,
         // All pools have been exhausted. We will start offering the same
         // prefixes from these pools. We need to reset the permutations
         // of the exhausted pools.
-        for (auto e : exhausted) {
+        for (auto const& e : exhausted) {
             getPoolState(pools[e])->getPermutation()->reset();
         }
         // Get random pool from those we just reset.

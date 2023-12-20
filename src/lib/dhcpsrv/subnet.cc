@@ -770,7 +770,7 @@ Subnet4::createAllocators() {
                      (Lease::TYPE_V4, shared_from_this()));
         setAllocationState(Lease::TYPE_V4, SubnetAllocationStatePtr());
 
-        for (auto pool : pools_) {
+        for (auto const& pool : pools_) {
             pool->setAllocationState(PoolRandomAllocationState::create(pool));
         }
 
@@ -780,7 +780,7 @@ Subnet4::createAllocators() {
                      (Lease::TYPE_V4, shared_from_this()));
         setAllocationState(Lease::TYPE_V4, SubnetAllocationStatePtr());
 
-        for (auto pool : pools_) {
+        for (auto const& pool : pools_) {
             pool->setAllocationState(PoolFreeLeaseQueueAllocationState::create(pool));
         }
 
@@ -791,7 +791,7 @@ Subnet4::createAllocators() {
         setAllocationState(Lease::TYPE_V4,
                            SubnetIterativeAllocationState::create(shared_from_this()));
 
-        for (auto pool : pools_) {
+        for (auto const& pool : pools_) {
             pool->setAllocationState(PoolIterativeAllocationState::create(pool));
         }
     }
@@ -882,7 +882,7 @@ Subnet6::createAllocators() {
         setAllocationState(Lease::TYPE_PD, SubnetIterativeAllocationState::create(shared_from_this()));
     }
     // Create allocation states for NA pools.
-    for (auto pool : pools_) {
+    for (auto const& pool : pools_) {
         if (allocator_type == "random") {
             pool->setAllocationState(PoolRandomAllocationState::create(pool));
         } else {
@@ -890,7 +890,7 @@ Subnet6::createAllocators() {
         }
     }
     // Create allocation states for TA pools.
-    for (auto pool : pools_ta_) {
+    for (auto const& pool : pools_ta_) {
         if (allocator_type == "random") {
             pool->setAllocationState(PoolRandomAllocationState::create(pool));
         } else {
@@ -898,7 +898,7 @@ Subnet6::createAllocators() {
         }
     }
     // Create allocation states for PD pools.
-    for (auto pool : pools_pd_) {
+    for (auto const& pool : pools_pd_) {
         if (pd_allocator_type == "random") {
             pool->setAllocationState(PoolRandomAllocationState::create(pool));
         } else if (pd_allocator_type == "flq") {

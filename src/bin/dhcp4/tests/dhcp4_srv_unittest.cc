@@ -1302,7 +1302,7 @@ TEST_F(Dhcpv4SrvTest, DiscoverValidLifetime) {
     };
 
     // Iterate over the test scenarios.
-    for (auto test : tests) {
+    for (auto const& test : tests) {
         SCOPED_TRACE(test.description_);
 
         // Create a discover packet to use
@@ -1468,12 +1468,12 @@ TEST_F(Dhcpv4SrvTest, DiscoverTimers) {
     dis->setIndex(ETH1_INDEX);
 
     // Iterate over the test scenarios.
-    for (auto test = tests.begin(); test != tests.end(); ++test) {
+    for (auto const& test : tests) {
         {
-            SCOPED_TRACE((*test).description_);
+            SCOPED_TRACE(test.description_);
             // Configure subnet's timer values
-            subnet_->setT1((*test).cfg_t1_);
-            subnet_->setT2((*test).cfg_t2_);
+            subnet_->setT1(test.cfg_t1_);
+            subnet_->setT2(test.cfg_t2_);
 
             // Discover/Offer exchange with the server
             Pkt4Ptr offer = srv->processDiscover(dis);
@@ -1483,7 +1483,7 @@ TEST_F(Dhcpv4SrvTest, DiscoverTimers) {
 
             // Verify the timers are as expected.
             checkAddressParams(offer, subnet_,
-                               (*test).exp_t1_, (*test).exp_t2_);
+                               test.exp_t1_, test.exp_t2_);
         }
     }
 }
@@ -1585,15 +1585,15 @@ TEST_F(Dhcpv4SrvTest, calculateTeeTimers) {
     dis->setIndex(ETH1_INDEX);
 
     // Iterate over the test scenarios.
-    for (auto test = tests.begin(); test != tests.end(); ++test) {
+    for (auto const& test : tests) {
         {
-            SCOPED_TRACE((*test).description_);
+            SCOPED_TRACE(test.description_);
             // Configure subnet's timer values
-            subnet_->setT1((*test).cfg_t1_);
-            subnet_->setT2((*test).cfg_t2_);
+            subnet_->setT1(test.cfg_t1_);
+            subnet_->setT2(test.cfg_t2_);
 
-            subnet_->setT1Percent((*test).t1_percent_);
-            subnet_->setT2Percent((*test).t2_percent_);
+            subnet_->setT1Percent(test.t1_percent_);
+            subnet_->setT2Percent(test.t2_percent_);
 
             // Discover/Offer exchange with the server
             Pkt4Ptr offer = srv->processDiscover(dis);
@@ -1605,24 +1605,24 @@ TEST_F(Dhcpv4SrvTest, calculateTeeTimers) {
             OptionUint32Ptr opt = boost::dynamic_pointer_cast
                                   <OptionUint32> (offer->getOption(DHO_DHCP_RENEWAL_TIME));
 
-            if ((*test).t1_exp_value_ == not_expected) {
+            if (test.t1_exp_value_ == not_expected) {
                 EXPECT_FALSE(opt) << "T1 present and shouldn't be";
             } else {
                 ASSERT_TRUE(opt) << "Required T1 option missing or it has"
                                     " an unexpected type";
-                EXPECT_EQ(opt->getValue(), (*test).t1_exp_value_);
+                EXPECT_EQ(opt->getValue(), test.t1_exp_value_);
             }
 
             // Check T2 timer
              opt = boost::dynamic_pointer_cast
                    <OptionUint32>(offer->getOption(DHO_DHCP_REBINDING_TIME));
 
-            if ((*test).t2_exp_value_ == not_expected) {
+            if (test.t2_exp_value_ == not_expected) {
                 EXPECT_FALSE(opt) << "T2 present and shouldn't be";
             } else {
                 ASSERT_TRUE(opt) << "Required T2 option missing or it has"
                                     " an unexpected type";
-                EXPECT_EQ(opt->getValue(), (*test).t2_exp_value_);
+                EXPECT_EQ(opt->getValue(), test.t2_exp_value_);
             }
         }
     }
@@ -2991,11 +2991,11 @@ Dhcpv4SrvTest::checkConfigFiles() {
         "with-ddns.json",
     };
     vector<string> files;
-    for (string example : examples) {
+    for (const string& example : examples) {
         string file = path + "/" + example;
         files.push_back(file);
     }
-    for (const auto& file: files) {
+    for (const auto& file : files) {
         string label("Checking configuration from file: ");
         label += file;
         SCOPED_TRACE(label);
@@ -5174,7 +5174,7 @@ TEST_F(Dhcpv4SrvTest, fixedFieldsInClassOrder) {
        }
     };
 
-    for (auto scenario : scenarios) {
+    for (auto const& scenario : scenarios) {
         SCOPED_TRACE(scenario.hw_str_); {
             // Build a DISCOVER
             Pkt4Ptr query(new Pkt4(DHCPDISCOVER, 1234));

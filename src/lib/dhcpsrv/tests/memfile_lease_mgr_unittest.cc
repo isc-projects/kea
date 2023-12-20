@@ -2765,7 +2765,7 @@ TEST_F(MemfileLeaseMgrTest, classLeaseRecount4) {
     };
 
     // Bake all the leases.
-    for ( auto recipe : recipes ) {
+    for (auto const& recipe : recipes) {
         ElementPtr ctx = makeContextWithClasses(recipe.classes_);
         ASSERT_TRUE(makeLease4(recipe.address_, 777, recipe.state_, ctx));
     }
@@ -2844,7 +2844,7 @@ TEST_F(MemfileLeaseMgrTest, classLeaseRecount6) {
     };
 
     // Bake all the leases.
-    for ( auto recipe : recipes ) {
+    for (auto const& recipe : recipes) {
         ElementPtr ctx = makeContextWithClasses(recipe.classes_);
         ASSERT_TRUE(makeLease6(recipe.ltype_, recipe.address_, recipe.prefix_len_, 777, recipe.state_, ctx));
     }

@@ -1924,7 +1924,7 @@ void
 TestControl::addExtraOpts(const Pkt4Ptr& pkt) {
     // Add all extra options that the user may have specified.
     const dhcp::OptionCollection& extra_opts = options_.getExtraOpts();
-    for (auto entry : extra_opts) {
+    for (auto const& entry : extra_opts) {
         mergeOptionIntoPacket(pkt, entry.second);
     }
 }
@@ -1933,7 +1933,7 @@ void
 TestControl::addExtraOpts(const Pkt6Ptr& pkt) {
     // Add all extra options that the user may have specified.
     const dhcp::OptionCollection& extra_opts = options_.getExtraOpts();
-    for (auto entry : extra_opts) {
+    for (auto const& entry : extra_opts) {
         pkt->addOption(entry.second);
     }
 }

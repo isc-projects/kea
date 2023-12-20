@@ -1109,7 +1109,7 @@ Dhcpv6Srv::processDhcp6Query(Pkt6Ptr& query, Pkt6Ptr& rsp) {
         Lease6CollectionPtr new_leases(new Lease6Collection());
         if (!ctx.new_leases_.empty()) {
             // Filter out reused leases as they were not committed.
-            for (auto new_lease : ctx.new_leases_) {
+            for (auto const& new_lease : ctx.new_leases_) {
                 if (new_lease->reuseable_valid_lft_ == 0) {
                     new_leases->push_back(new_lease);
                 }
@@ -1122,7 +1122,7 @@ Dhcpv6Srv::processDhcp6Query(Pkt6Ptr& query, Pkt6Ptr& rsp) {
         // Do per IA lists
         for (auto const& iac : ctx.ias_) {
             if (!iac.old_leases_.empty()) {
-                for (auto old_lease : iac.old_leases_) {
+                for (auto const& old_lease : iac.old_leases_) {
                     if (ctx.new_leases_.empty()) {
                         deleted_leases->push_back(old_lease);
                         continue;
@@ -1570,7 +1570,7 @@ Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer,
         // D6O_VENDOR_CLASS options at most once per vendor.
         set<uint32_t> vendor_ids;
         // Get what already exists in the response.
-        for (auto opt : answer->getOptions(D6O_VENDOR_CLASS)) {
+        for (auto const& opt : answer->getOptions(D6O_VENDOR_CLASS)) {
             OptionVendorClassPtr vendor_class;
             vendor_class = boost::dynamic_pointer_cast<OptionVendorClass>(opt.second);
             if (vendor_class) {
@@ -1580,8 +1580,7 @@ Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer,
         }
         // Iterate on the configured option list.
         for (auto const& copts : co_list) {
-            for (OptionDescriptor desc : copts->getList(DHCP6_OPTION_SPACE,
-                                                        D6O_VENDOR_CLASS)) {
+            for (auto const& desc : copts->getList(DHCP6_OPTION_SPACE, D6O_VENDOR_CLASS)) {
                 if (!desc.option_) {
                     continue;
                 }
@@ -1608,7 +1607,7 @@ Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer,
         // D6O_VENDOR_OPTS options at most once per vendor.
         set<uint32_t> vendor_ids;
         // Get what already exists in the response.
-        for (auto opt : answer->getOptions(D6O_VENDOR_OPTS)) {
+        for (auto const& opt : answer->getOptions(D6O_VENDOR_OPTS)) {
             OptionVendorPtr vendor_opts;
             vendor_opts = boost::dynamic_pointer_cast<OptionVendor>(opt.second);
             if (vendor_opts) {
@@ -1618,8 +1617,7 @@ Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer,
         }
         // Iterate on the configured option list
         for (auto const& copts : co_list) {
-            for (OptionDescriptor desc : copts->getList(DHCP6_OPTION_SPACE,
-                                                        D6O_VENDOR_OPTS)) {
+            for (auto const& desc : copts->getList(DHCP6_OPTION_SPACE, D6O_VENDOR_OPTS)) {
                 if (!desc.option_) {
                     continue;
                 }
@@ -1665,7 +1663,7 @@ Dhcpv6Srv::appendRequestedVendorOptions(const Pkt6Ptr& question,
     // The server could have provided the option using client classification or
     // hooks. If there're vendor info options in the response already, use them.
     map<uint32_t, OptionVendorPtr> vendor_rsps;
-    for (auto opt : answer->getOptions(D6O_VENDOR_OPTS)) {
+    for (auto const& opt : answer->getOptions(D6O_VENDOR_OPTS)) {
         OptionVendorPtr vendor_rsp;
         vendor_rsp = boost::dynamic_pointer_cast<OptionVendor>(opt.second);
         if (vendor_rsp) {
@@ -1678,7 +1676,7 @@ Dhcpv6Srv::appendRequestedVendorOptions(const Pkt6Ptr& question,
     // Next, try to get the vendor-id from the client packet's
     // vendor-specific information option (17).
     map<uint32_t, OptionVendorPtr> vendor_reqs;
-    for (auto opt : question->getOptions(D6O_VENDOR_OPTS)) {
+    for (auto const& opt : question->getOptions(D6O_VENDOR_OPTS)) {
         OptionVendorPtr vendor_req;
         vendor_req = boost::dynamic_pointer_cast<OptionVendor>(opt.second);
         if (vendor_req) {
@@ -1690,7 +1688,7 @@ Dhcpv6Srv::appendRequestedVendorOptions(const Pkt6Ptr& question,
 
     // Finally, try to get the vendor-id from the client packet's vendor-class
     // option (16).
-    for (auto opt : question->getOptions(D6O_VENDOR_CLASS)) {
+    for (auto const& opt : question->getOptions(D6O_VENDOR_CLASS)) {
         OptionVendorClassPtr vendor_class;
         vendor_class = boost::dynamic_pointer_cast<OptionVendorClass>(opt.second);
         if (vendor_class) {
@@ -2240,7 +2238,7 @@ Dhcpv6Srv::createNameChangeRequests(const Pkt6Ptr& answer,
 
     // Get all IAs from the answer. For each IA, holding an address we will
     // create a corresponding NameChangeRequest.
-    for (auto answer_ia : answer->getOptions(D6O_IA_NA)) {
+    for (auto const& answer_ia : answer->getOptions(D6O_IA_NA)) {
         /// @todo IA_NA may contain multiple addresses. We should process
         /// each address individually. Currently we get only one.
         Option6IAAddrPtr iaaddr = boost::static_pointer_cast<
@@ -4270,7 +4268,7 @@ Dhcpv6Srv::removeDependentEvaluatedClasses(const Pkt6Ptr& pkt) {
     const ClientClassDictionaryPtr& dict =
         CfgMgr::instance().getCurrentCfg()->getClientClassDictionary();
     const ClientClassDefListPtr& defs_ptr = dict->getClasses();
-    for (auto def : *defs_ptr) {
+    for (auto const& def : *defs_ptr) {
         // Only remove evaluated classes. Other classes can be
         // assigned via hooks libraries and we should not remove
         // them because there is no way they can be added back.
@@ -4484,7 +4482,7 @@ Dhcpv6Srv::generateFqdn(const Pkt6Ptr& answer,
         // our notion of client's FQDN in the Client FQDN option.
         if (answer->getType() != DHCPV6_ADVERTISE) {
             Lease6Ptr lease;
-            for (auto l : ctx.new_leases_) {
+            for (auto const& l : ctx.new_leases_) {
                 if ((l->type_ == Lease::TYPE_NA) && (l->addr_ == addr)) {
                     lease = l;
                     break;

@@ -34,7 +34,7 @@ void checkMergedNetwork(const CfgSharedNetworks4& networks, const std::string& n
     ASSERT_EQ(exp_valid, network->getValid().get()) << " network valid lifetime wrong";
     const Subnet4SimpleCollection* subnets = network->getAllSubnets();
     ASSERT_EQ(exp_subnets.size(), subnets->size()) << " wrong number of subnets";
-    for (auto exp_id : exp_subnets) {
+    for (auto const& exp_id : exp_subnets) {
         ASSERT_TRUE(network->getSubnet(exp_id))
                     << " did not find expected subnet: " << exp_id;
     }

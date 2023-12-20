@@ -1122,7 +1122,7 @@ MapElement::equals(const Element& other) const {
         if (size() != other.size()) {
             return (false);
         }
-        for (auto kv : mapValue()) {
+        for (const auto& kv : mapValue()) {
             auto key = kv.first;
             if (other.contains(key)) {
                 if (!get(key)->equals(*other.get(key))) {
@@ -1156,7 +1156,7 @@ removeIdentical(ElementPtr a, ConstElementPtr b) {
     // over a checking for identical entries in b or vice-versa.  As elements
     // are removed from a if a match is found, we choose to iterate over b to
     // avoid problems with element removal affecting the iterator.
-    for (auto kv : b->mapValue()) {
+    for (const auto& kv : b->mapValue()) {
         auto key = kv.first;
         if (a->contains(key)) {
             if (a->get(key)->equals(*b->get(key))) {
@@ -1249,7 +1249,7 @@ mergeDiffAdd(ElementPtr& element, ElementPtr& other,
     }
 
     if (element->getType() == Element::map) {
-        for (auto kv : other->mapValue()) {
+        for (const auto& kv : other->mapValue()) {
             auto current_key = kv.first;
             auto value = boost::const_pointer_cast<Element>(kv.second);
             if (value && value->getType() != Element::null) {
@@ -1318,7 +1318,7 @@ mergeDiffDel(ElementPtr& element, ElementPtr& other,
         // If the resulting element still contains data, we need to restore the
         // key parameters, so we store them here.
         ElementPtr new_elements = Element::createMap();
-        for (auto kv : other->mapValue()) {
+        for (const auto& kv : other->mapValue()) {
             auto current_key = kv.first;
             auto value = boost::const_pointer_cast<Element>(kv.second);
             if (value && value->getType() != Element::null) {
@@ -1349,7 +1349,7 @@ mergeDiffDel(ElementPtr& element, ElementPtr& other,
         }
         // If the element still contains data, restore the key elements.
         if (element->size()) {
-            for (auto kv : new_elements->mapValue()) {
+            for (const auto& kv : new_elements->mapValue()) {
                 element->set(kv.first, kv.second);
             }
         }
@@ -1389,7 +1389,7 @@ extend(const std::string& container, const std::string& extension,
     }
 
     if (element->getType() == Element::map) {
-        for (auto kv : other->mapValue()) {
+        for (const auto& kv : other->mapValue()) {
             auto current_key = kv.first;
             auto value = boost::const_pointer_cast<Element>(kv.second);
             if (value && value->getType() != Element::null) {
@@ -1428,7 +1428,7 @@ copy(ConstElementPtr from, int level) {
         return (ElementPtr(new StringElement(from->stringValue())));
     } else if (from_type == Element::list) {
         ElementPtr result = ElementPtr(new ListElement());
-        for (auto elem : from->listValue()) {
+        for (const auto& elem : from->listValue()) {
             if (level == 0) {
                 result->add(elem);
             } else {
@@ -1438,7 +1438,7 @@ copy(ConstElementPtr from, int level) {
         return (result);
     } else if (from_type == Element::map) {
         ElementPtr result = ElementPtr(new MapElement());
-        for (auto kv : from->mapValue()) {
+        for (const auto& kv : from->mapValue()) {
             auto key = kv.first;
             auto value = kv.second;
             if (level == 0) {

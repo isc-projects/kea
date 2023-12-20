@@ -42,7 +42,7 @@ TEST(ConfigCtlInfoParser, validConfigs) {
        "] } \n"
     };
 
-    for (auto config : configs) {
+    for (auto const& config : configs) {
         ConfigControlParser parser;
         ConfigControlInfoPtr ctl_info;
 
@@ -87,7 +87,7 @@ TEST(ConfigCtlInfoParser, invalidConfigs) {
        "{ \"config-fetch-wait-time\": \"a-string\" }",
     };
 
-    for (auto config : configs) {
+    for (auto const& config : configs) {
         ConfigControlParser parser;
 
         // Turn the JSON config into Elements.

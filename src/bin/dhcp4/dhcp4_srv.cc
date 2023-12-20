@@ -501,7 +501,7 @@ Dhcpv4Exchange::removeDependentEvaluatedClasses(const Pkt4Ptr& query) {
     const ClientClassDictionaryPtr& dict =
         CfgMgr::instance().getCurrentCfg()->getClientClassDictionary();
     const ClientClassDefListPtr& defs_ptr = dict->getClasses();
-    for (auto def : *defs_ptr) {
+    for (auto const& def : *defs_ptr) {
         // Only remove evaluated classes. Other classes can be
         // assigned via hooks libraries and we should not remove
         // them because there is no way they can be added back.
@@ -1975,7 +1975,7 @@ Dhcpv4Srv::appendRequestedOptions(Dhcpv4Exchange& ex) {
         // VIVCO options at most once per vendor.
         set<uint32_t> vendor_ids;
         // Get what already exists in the response.
-        for (auto opt : resp->getOptions(DHO_VIVCO_SUBOPTIONS)) {
+        for (auto const& opt : resp->getOptions(DHO_VIVCO_SUBOPTIONS)) {
             OptionVendorClassPtr vendor_opts;
             vendor_opts = boost::dynamic_pointer_cast<OptionVendorClass>(opt.second);
             if (vendor_opts) {
@@ -1985,7 +1985,7 @@ Dhcpv4Srv::appendRequestedOptions(Dhcpv4Exchange& ex) {
         }
         // Iterate on the configured option list.
         for (auto const& copts : co_list) {
-            for (OptionDescriptor desc : copts->getList(DHCP4_OPTION_SPACE,
+            for (auto const& desc : copts->getList(DHCP4_OPTION_SPACE,
                                                         DHO_VIVCO_SUBOPTIONS)) {
                 if (!desc.option_) {
                     continue;
@@ -2013,7 +2013,7 @@ Dhcpv4Srv::appendRequestedOptions(Dhcpv4Exchange& ex) {
         // VIVSO options at most once per vendor.
         set<uint32_t> vendor_ids;
         // Get what already exists in the response.
-        for (auto opt : resp->getOptions(DHO_VIVSO_SUBOPTIONS)) {
+        for (auto const& opt : resp->getOptions(DHO_VIVSO_SUBOPTIONS)) {
             OptionVendorPtr vendor_opts;
             vendor_opts = boost::dynamic_pointer_cast<OptionVendor>(opt.second);
             if (vendor_opts) {
@@ -2023,7 +2023,7 @@ Dhcpv4Srv::appendRequestedOptions(Dhcpv4Exchange& ex) {
         }
         // Iterate on the configured option list
         for (auto const& copts : co_list) {
-            for (OptionDescriptor desc : copts->getList(DHCP4_OPTION_SPACE,
+            for (auto const& desc : copts->getList(DHCP4_OPTION_SPACE,
                                                         DHO_VIVSO_SUBOPTIONS)) {
                 if (!desc.option_) {
                     continue;
@@ -2073,7 +2073,7 @@ Dhcpv4Srv::appendRequestedVendorOptions(Dhcpv4Exchange& ex) {
     // The server could have provided the option using client classification or
     // hooks. If there're vendor info options in the response already, use them.
     map<uint32_t, OptionVendorPtr> vendor_rsps;
-    for (auto opt : resp->getOptions(DHO_VIVSO_SUBOPTIONS)) {
+    for (auto const& opt : resp->getOptions(DHO_VIVSO_SUBOPTIONS)) {
         OptionVendorPtr vendor_rsp;
         vendor_rsp = boost::dynamic_pointer_cast<OptionVendor>(opt.second);
         if (vendor_rsp) {
@@ -2086,7 +2086,7 @@ Dhcpv4Srv::appendRequestedVendorOptions(Dhcpv4Exchange& ex) {
     // Next, try to get the vendor-id from the client packet's
     // vendor-specific information option (125).
     map<uint32_t, OptionVendorPtr> vendor_reqs;
-    for (auto opt : query->getOptions(DHO_VIVSO_SUBOPTIONS)) {
+    for (auto const& opt : query->getOptions(DHO_VIVSO_SUBOPTIONS)) {
         OptionVendorPtr vendor_req;
         vendor_req = boost::dynamic_pointer_cast<OptionVendor>(opt.second);
         if (vendor_req) {
@@ -2098,7 +2098,7 @@ Dhcpv4Srv::appendRequestedVendorOptions(Dhcpv4Exchange& ex) {
 
     // Finally, try to get the vendor-id from the client packet's
     // vendor-specific class option (124).
-    for (auto opt : query->getOptions(DHO_VIVCO_SUBOPTIONS)) {
+    for (auto const& opt : query->getOptions(DHO_VIVCO_SUBOPTIONS)) {
         OptionVendorClassPtr vendor_class;
         vendor_class = boost::dynamic_pointer_cast<OptionVendorClass>(opt.second);
         if (vendor_class) {

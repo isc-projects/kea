@@ -1335,7 +1335,7 @@ GenericLeaseMgrTest::testGetLeases4Paged() {
         Lease4Collection page = lmptr_->getLeases4(last_address, LeasePageSize(3));
 
         // Collect leases in a common structure. They may be out of order.
-        for (Lease4Ptr lease : page) {
+        for (const Lease4Ptr& lease : page) {
             all_leases.push_back(lease);
         }
 
@@ -1356,9 +1356,9 @@ GenericLeaseMgrTest::testGetLeases4Paged() {
 
     // Make sure that all leases that we stored in the lease database
     // have been retrieved.
-    for (Lease4Ptr lease : leases) {
+    for (const Lease4Ptr& lease : leases) {
         bool found = false;
-        for (Lease4Ptr returned_lease : all_leases) {
+        for (const Lease4Ptr& returned_lease : all_leases) {
             if (lease->addr_ == returned_lease->addr_) {
                 found = true;
                 break;
@@ -1517,7 +1517,7 @@ GenericLeaseMgrTest::testGetLeases6Paged() {
         Lease6Collection page = lmptr_->getLeases6(last_address, LeasePageSize(3));
 
         // Collect leases in a common structure. They may be out of order.
-        for (Lease6Ptr lease : page) {
+        for (const Lease6Ptr& lease : page) {
             all_leases.push_back(lease);
         }
 
@@ -1538,9 +1538,9 @@ GenericLeaseMgrTest::testGetLeases6Paged() {
 
     // Make sure that all leases that we stored in the lease database
     // have been retrieved.
-    for (Lease6Ptr lease : leases) {
+    for (const Lease6Ptr& lease : leases) {
         bool found = false;
-        for (Lease6Ptr returned_lease : all_leases) {
+        for (const Lease6Ptr& returned_lease : all_leases) {
             if (lease->addr_ == returned_lease->addr_) {
                 found = true;
                 break;
@@ -3066,7 +3066,7 @@ int
 GenericLeaseMgrTest::countLogs(TrackingLeaseMgr::CallbackType type, SubnetID subnet_id,
                                Lease::Type lease_type) const {
     int count = 0;
-    for (auto log : logs_) {
+    for (auto const& log : logs_) {
         if ((log.type == type) && (log.subnet_id == subnet_id) && (log.lease->getType() == lease_type)) {
             ++count;
         }
@@ -4383,7 +4383,7 @@ GenericLeaseMgrTest::makeContextWithClasses(const std::list<ClientClass>& classe
     ElementPtr ctx = Element::createMap();
     if (classes.size()) {
         ElementPtr clist = Element::createList();
-        for (auto client_class : classes ) {
+        for (auto const& client_class : classes ) {
             clist->add(Element::create(client_class));
         }
 

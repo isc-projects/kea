@@ -67,7 +67,7 @@ namespace {
 string
 join(const ProcessEnvVars& vars) {
     string result;
-    for (auto var : vars) {
+    for (auto const& var : vars) {
         result += var + "\n";
     }
     return (result);

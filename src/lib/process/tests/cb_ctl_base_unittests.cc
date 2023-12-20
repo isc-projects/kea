@@ -493,7 +493,7 @@ TEST_F(CBControlBaseTest, fetchConfigElement) {
     EXPECT_EQ(2, updated.size());
     bool saw_create = false;
     bool saw_update =  false;
-    for (auto entry : updated) {
+    for (auto const& entry : updated) {
         EXPECT_EQ("my_object_type", entry->getObjectType());
         EXPECT_EQ(5678, entry->getObjectId());
         if (AuditEntry::ModificationType::CREATE == entry->getModificationType()) {

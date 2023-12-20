@@ -548,7 +548,7 @@ CommunicationState::getReport() const {
     }
 
     auto list = Element::createList();
-    for (auto scope : getPartnerScopes()) {
+    for (auto const& scope : getPartnerScopes()) {
         list->add(Element::create(scope));
     }
     report->set("last-scopes", list);

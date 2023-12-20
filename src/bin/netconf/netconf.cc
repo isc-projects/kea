@@ -306,7 +306,7 @@ void
 NetconfAgent::checkModules(CfgServersMapPtr const& servers /* = {} */) const {
     bool faulty_model(false);
     if (servers) {
-        for (auto pair : *servers) {
+        for (auto const& pair : *servers) {
             if (!checkModule(pair.second->getModel())) {
                 faulty_model = true;
             }
@@ -318,7 +318,7 @@ NetconfAgent::checkModules(CfgServersMapPtr const& servers /* = {} */) const {
                               "supported. Check logs for details.");
     }
 
-    for (auto modrev : YANG_REVISIONS) {
+    for (auto const& modrev : YANG_REVISIONS) {
         auto module = modules_.find(modrev.first);
         if (module == modules_.end()) {
             LOG_WARN(netconf_logger, NETCONF_MODULE_MISSING_WARN)

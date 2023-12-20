@@ -177,7 +177,7 @@ TEST(NetconfCfgMgr, contextGlobals) {
     EXPECT_NE(0, globals->mapValue().size());
 
     // Maps and lists should be excluded.
-    for (auto it : globals->mapValue()) {
+    for (auto const& it : globals->mapValue()) {
         if (it.first == "astring") {
             ASSERT_EQ(Element::string, it.second->getType());
             EXPECT_EQ("okay", it.second->stringValue());

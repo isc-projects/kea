@@ -3784,7 +3784,7 @@ TEST_F(Dhcp4ParserTest, optionDataValidHexLiterals) {
         "0xA0B0C0D"     // 0x prefix
     };
 
-    for (auto valid_hex : valid_hexes) {
+    for (auto const& valid_hex : valid_hexes) {
         ConstElementPtr x;
         std::string config = createConfigWithOption(valid_hex, "data");
         ConstElementPtr json;
@@ -7421,7 +7421,7 @@ TEST_F(Dhcp4ParserTest, dhcpQueueControl) {
 
     // Iterate over the valid scenarios and verify they succeed.
     data::ElementPtr exp_control;
-    for (auto scenario : scenarios) {
+    for (auto const& scenario : scenarios) {
         SCOPED_TRACE(scenario.description_);
         {
             // Clear the config
@@ -7522,7 +7522,7 @@ TEST_F(Dhcp4ParserTest, dhcpQueueControlInvalid) {
     // Iterate over the incorrect scenarios and verify they
     // fail as expected. Note, we use parseDHCP4() directly
     // as all of the errors above are enforced by the grammar.
-    for (auto scenario : scenarios) {
+    for (auto const& scenario : scenarios) {
         SCOPED_TRACE(scenario.description_);
         {
             // Construct the config JSON

@@ -142,7 +142,7 @@ public:
         }
 
         // Iterate over the configured DBs and instantiate them.
-        for (auto db : config_ctl->getConfigDatabases()) {
+        for (auto const& db : config_ctl->getConfigDatabases()) {
             const std::string& redacted = db.redactedAccessString();
             LOG_INFO(dctl_logger, DCTL_OPEN_CONFIG_DB)
                 .arg(redacted);

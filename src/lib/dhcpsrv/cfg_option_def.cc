@@ -240,16 +240,16 @@ CfgOptionDef::merge(CfgOptionDef& other) {
     // Iterate over this config's definitions in each space.
     // If either a definition's name or code already exist in
     // that space in "other", skip it.  Otherwise, add it to "other".
-    for (auto space : option_definitions_.getOptionSpaceNames()) {
-        for (auto my_def : *(getAll(space))) {
-            if ((other.get(space, my_def->getName())) ||
-                (other.get(space, my_def->getCode()))) {
+    for (auto const& space : option_definitions_.getOptionSpaceNames()) {
+        for (auto const& tmp_def : *(getAll(space))) {
+            if ((other.get(space, tmp_def->getName())) ||
+                (other.get(space, tmp_def->getCode()))) {
                 // Already in "other" so skip it.
                 continue;
             }
 
             // Not in "other" so add it.
-            other.add(my_def);
+            other.add(tmp_def);
         }
     }
 

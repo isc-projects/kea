@@ -24,7 +24,7 @@ namespace data {
 void
 SimpleParser::checkRequired(const SimpleRequiredKeywords& required,
                             ConstElementPtr scope) {
-    for (auto name : required) {
+    for (const auto& name : required) {
         if (scope->contains(name)) {
             continue;
         }
@@ -36,7 +36,7 @@ void
 SimpleParser::checkKeywords(const SimpleKeywords& keywords,
                             ConstElementPtr scope) {
     string spurious;
-    for (auto entry : scope->mapValue()) {
+    for (const auto& entry : scope->mapValue()) {
         if (keywords.count(entry.first) == 0) {
             if (spurious.empty()) {
                 spurious = entry.first;

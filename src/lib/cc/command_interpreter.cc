@@ -212,8 +212,8 @@ parseCommand(ConstElementPtr& arg, ConstElementPtr command) {
     }
 
     // Make sure that all specified parameters are supported.
-    auto command_params = command->mapValue();
-    for (auto param : command_params) {
+    auto const& command_params = command->mapValue();
+    for (const auto& param : command_params) {
         if ((param.first != CONTROL_COMMAND) &&
             (param.first != CONTROL_ARGUMENTS) &&
             (param.first != CONTROL_SERVICE) &&

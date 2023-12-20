@@ -95,7 +95,7 @@ size_t NetconfSimpleParser::setAllDefaults(const ElementPtr& global) {
     ConstElementPtr servers = global->get("managed-servers");
     if (servers) {
         ElementPtr mutable_servers(copy(servers, 0));
-        for (auto it : mutable_servers->mapValue()) {
+        for (auto const& it : mutable_servers->mapValue()) {
             ElementPtr server(copy(it.second, 0));
             cnt += setServerDefaults(it.first, server);
             mutable_servers->set(it.first, server);
@@ -113,7 +113,7 @@ size_t NetconfSimpleParser::deriveParameters(ElementPtr global) {
     ConstElementPtr servers = global->get("managed-servers");
     if (servers) {
         ElementPtr mutable_servers(copy(servers, 0));
-        for (auto it : mutable_servers->mapValue()) {
+        for (auto const& it : mutable_servers->mapValue()) {
             ElementPtr mutable_server = copy(it.second, 0);
             cnt += SimpleParser::deriveParams(global,
                                               mutable_server,
@@ -166,7 +166,7 @@ NetconfSimpleParser::parse(const NetconfConfigPtr& ctx,
     // get managed servers.
     ConstElementPtr servers = config->get("managed-servers");
     if (servers) {
-        for (auto it : servers->mapValue()) {
+        for (auto const& it : servers->mapValue()) {
             ServerConfigParser server_parser;
             CfgServerPtr server = server_parser.parse(it.second);
             ctx->getCfgServersMap()->insert(make_pair(it.first, server));

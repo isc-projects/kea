@@ -523,7 +523,7 @@ PgSqlConfigBackendImpl::createUpdateOptionDef(const db::ServerSelector& server_s
     in_bindings.addTempString(option_def->getEncapsulatedSpace());
 
     ElementPtr record_types = Element::createList();
-    for (auto field : option_def->getRecordFields()) {
+    for (auto const& field : option_def->getRecordFields()) {
         record_types->add(Element::create(static_cast<int>(field)));
     }
 

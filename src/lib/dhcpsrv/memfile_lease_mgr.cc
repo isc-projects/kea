@@ -3076,7 +3076,7 @@ Memfile_LeaseMgr::getLeases4ByRemoteIdInternal(const OptionBuffer& remote_id,
     }
 
     // Return all leases being within the page size.
-    for (auto it : sorted) {
+    for (auto const& it : sorted) {
         collection.push_back(Lease4Ptr(new Lease4(*it.second)));
         if (collection.size() >= page_size.page_size_) {
             break;

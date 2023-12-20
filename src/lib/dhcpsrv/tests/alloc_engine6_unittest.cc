@@ -4240,7 +4240,7 @@ TEST_F(AllocEngine6ExtendedInfoTest, updateExtendedInfo6) {
     // Iterate over the test scenarios.
     ElementPtr orig_context;
     ElementPtr exp_context;
-    for (auto scenario : scenarios) {
+    for (auto const& scenario : scenarios) {
         SCOPED_TRACE(scenario.description_);
 
         // Create the original user context from JSON.
@@ -4343,7 +4343,7 @@ TEST_F(AllocEngine6ExtendedInfoTest, storeExtendedInfoEnabled6) {
 
     // Iterate over the test scenarios.
     DuidPtr current_duid;
-    for (auto scenario : scenarios) {
+    for (auto const& scenario : scenarios) {
         SCOPED_TRACE(scenario.description_);
 
         ElementPtr exp_context;
@@ -4431,7 +4431,7 @@ TEST_F(AllocEngine6ExtendedInfoTest, storeExtendedInfoDisabled6) {
 
     // Iterate over the test scenarios.
     DuidPtr current_duid;
-    for (auto scenario : scenarios) {
+    for (auto const& scenario : scenarios) {
         SCOPED_TRACE(scenario.description_);
 
         Pkt6Ptr pkt;
@@ -5503,13 +5503,13 @@ TEST_F(AllocEngine6Test, getValidLifetime) {
     };
 
     // Iterate over the scenarios and verify the correct outcome.
-    for (auto scenario : scenarios) {
+    for (auto const& scenario : scenarios) {
         SCOPED_TRACE(scenario.desc_); {
             // Create a context;
             AllocEngine::ClientContext6 ctx(subnet_, duid_, false, false, "", true,
                                             Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234)));
             // Add client classes (if any)
-            for (auto class_name : scenario.classes_) {
+            for (auto const& class_name : scenario.classes_) {
                 ctx.query_->addClass(class_name);
             }
 
@@ -5641,13 +5641,13 @@ TEST_F(AllocEngine6Test, getTemplateClassValidLifetime) {
     };
 
     // Iterate over the scenarios and verify the correct outcome.
-    for (auto scenario : scenarios) {
+    for (auto const& scenario : scenarios) {
         SCOPED_TRACE(scenario.desc_); {
             // Create a context;
             AllocEngine::ClientContext6 ctx(subnet_, duid_, false, false, "", true,
                                             Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234)));
             // Add client classes (if any)
-            for (auto class_name : scenario.classes_) {
+            for (auto const& class_name : scenario.classes_) {
                 ctx.query_->addClass(class_name);
             }
 
@@ -5790,7 +5790,7 @@ TEST_F(AllocEngine6Test, getPreferredLifetime) {
     };
 
     // Iterate over the scenarios and verify the correct outcome.
-    for (auto scenario : scenarios) {
+    for (auto const& scenario : scenarios) {
         SCOPED_TRACE(scenario.desc_); {
             // Set the subnet's preferred-lifetime triplet.
             subnet_->setPreferred(scenario.subnet_pref_);
@@ -5799,7 +5799,7 @@ TEST_F(AllocEngine6Test, getPreferredLifetime) {
             AllocEngine::ClientContext6 ctx(subnet_, duid_, false, false, "", true,
                                             Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234)));
             // Add client classes (if any)
-            for (auto class_name : scenario.classes_) {
+            for (auto const& class_name : scenario.classes_) {
                 string subclass(TemplateClientClassDef::SPAWN_CLASS_PREFIX);
                 subclass += class_name;
                 subclass += "_value";
@@ -5935,13 +5935,13 @@ TEST_F(AllocEngine6Test, getTemplateClassPreferredLifetime) {
     };
 
     // Iterate over the scenarios and verify the correct outcome.
-    for (auto scenario : scenarios) {
+    for (auto const& scenario : scenarios) {
         SCOPED_TRACE(scenario.desc_); {
             // Create a context;
             AllocEngine::ClientContext6 ctx(subnet_, duid_, false, false, "", true,
                                             Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234)));
             // Add client classes (if any)
-            for (auto class_name : scenario.classes_) {
+            for (auto const& class_name : scenario.classes_) {
                 string subclass(TemplateClientClassDef::SPAWN_CLASS_PREFIX);
                 subclass += class_name;
                 subclass += "_value";

@@ -565,7 +565,7 @@ CfgSubnets6::updateStatistics() {
 
 void
 CfgSubnets6::initAllocatorsAfterConfigure() {
-    for (auto subnet : subnets_) {
+    for (auto const& subnet : subnets_) {
         subnet->initAllocatorsAfterConfigure();
     }
 }

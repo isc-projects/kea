@@ -146,7 +146,7 @@ AgentSimpleParser::parse(const CtrlAgentCfgContextPtr& ctx,
     // Control sockets are third.
     ConstElementPtr ctrl_sockets = config->get("control-sockets");
     if (ctrl_sockets) {
-        auto sockets_map = ctrl_sockets->mapValue();
+        auto const& sockets_map = ctrl_sockets->mapValue();
         for (auto cs = sockets_map.cbegin(); cs != sockets_map.cend(); ++cs) {
             ctx->setControlSocketInfo(cs->second, cs->first);
         }

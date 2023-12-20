@@ -35,7 +35,7 @@ public:
 
     /// @brief Destructor.
     ~NetworkStateImpl() {
-        for (auto origin : disabled_by_origin_) {
+        for (auto const& origin : disabled_by_origin_) {
             destroyTimer(origin);
         }
     }
@@ -206,7 +206,7 @@ NetworkState::isServiceEnabled() const {
 
 bool
 NetworkState::isDelayedEnableService() const {
-    for (auto origin : impl_->disabled_by_origin_) {
+    for (auto const& origin : impl_->disabled_by_origin_) {
         if (TimerMgr::instance()->isTimerRegistered(impl_->getTimerName(origin))) {
             return (true);
         }

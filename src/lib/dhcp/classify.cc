@@ -66,7 +66,7 @@ ClientClasses::toText(const std::string& separator) const {
 ElementPtr
 ClientClasses::toElement() const {
     ElementPtr result(Element::createList());
-    for (ClientClass c : container_) {
+    for (const ClientClass& c : container_) {
         result->add(Element::create(c));
     }
     return (result);

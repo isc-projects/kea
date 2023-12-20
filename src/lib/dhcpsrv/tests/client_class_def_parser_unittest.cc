@@ -1955,7 +1955,7 @@ TEST_F(ClientClassDefParserTest, validLifetimeTests) {
         }
     };
 
-    for (auto scenario : scenarios) {
+    for (auto const& scenario : scenarios) {
         SCOPED_TRACE(scenario.desc_); {
             std::stringstream oss;
             oss << "{ \"name\": \"foo\"";
@@ -2018,7 +2018,7 @@ TEST_F(ClientClassDefParserTest, preferredLifetimeTests) {
         }
     };
 
-    for (auto scenario : scenarios) {
+    for (auto const& scenario : scenarios) {
         SCOPED_TRACE(scenario.desc_); {
             std::stringstream oss;
             oss << "{ \"name\": \"foo\"";

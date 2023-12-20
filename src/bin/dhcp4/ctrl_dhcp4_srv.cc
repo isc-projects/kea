@@ -380,7 +380,7 @@ ControlledDhcpv4Srv::commandConfigSetHandler(const string&,
 
     // Check unsupported objects.
     if (message.empty()) {
-        for (auto obj : args->mapValue()) {
+        for (auto const& obj : args->mapValue()) {
             const string& obj_name = obj.first;
             if (obj_name != "Dhcp4") {
                 LOG_ERROR(dhcp4_logger, DHCP4_CONFIG_UNSUPPORTED_OBJECT)
@@ -475,7 +475,7 @@ ControlledDhcpv4Srv::commandConfigTestHandler(const string&,
 
     // Check unsupported objects.
     if (message.empty()) {
-        for (auto obj : args->mapValue()) {
+        for (auto const& obj : args->mapValue()) {
             const string& obj_name = obj.first;
             if (obj_name != "Dhcp4") {
                 LOG_ERROR(dhcp4_logger, DHCP4_CONFIG_UNSUPPORTED_OBJECT)

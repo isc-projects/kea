@@ -111,7 +111,7 @@ public:
     /// @return Number of deleted options or option definitions.
     uint64_t deleteItems(const uint64_t id) {
         uint64_t num_deleted = 0;
-        for (auto space : option_space_map_) {
+        for (auto const& space : option_space_map_) {
             auto container = space.second;
             auto& index = container->template get<OptionIdIndexTag>();
             num_deleted += index.erase(id);

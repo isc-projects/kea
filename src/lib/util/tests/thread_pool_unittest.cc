@@ -130,7 +130,7 @@ public:
         // signal threads that are waiting
         signalThreads();
         // wait for all test threads to exit
-        for (auto thread : threads_) {
+        for (const auto& thread : threads_) {
             thread->join();
         }
         // reset all threads
@@ -172,7 +172,7 @@ public:
     void checkRunHistory(uint32_t items_count) {
         uint32_t count = 0;
         // iterate over all threads history and count all the processed tasks
-        for (auto element : history_) {
+        for (const auto& element : history_) {
             count += element.second.size();
         }
         ASSERT_EQ(count, items_count);

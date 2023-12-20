@@ -520,7 +520,7 @@ MySqlConfigBackendImpl::createUpdateOptionDef(const db::ServerSelector& server_s
     auto tag = getServerTag(server_selector, "creating or updating option definition");
 
     ElementPtr record_types = Element::createList();
-    for (auto field : option_def->getRecordFields()) {
+    for (auto const& field : option_def->getRecordFields()) {
         record_types->add(Element::create(static_cast<int>(field)));
     }
     MySqlBindingPtr record_types_binding = record_types->empty() ?

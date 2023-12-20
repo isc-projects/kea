@@ -1362,7 +1362,7 @@ TEST_F(PgSqlBasicsTest, tripleTest) {
     // Insert a row for each reference value
     PsqlBindArrayPtr bind_array;
     PgSqlResultPtr r;
-    for (auto triplet : triplets) {
+    for (auto const& triplet : triplets) {
         bind_array.reset(new PsqlBindArray());
         bind_array->add(triplet);
         bind_array->addMin(triplet);
@@ -1375,7 +1375,7 @@ TEST_F(PgSqlBasicsTest, tripleTest) {
 
     // Iterate over the rows, verifying each value against its reference
     int row = 0;
-    for (auto expected : triplets) {
+    for (auto const& expected : triplets) {
         Triplet<uint32_t> fetched;
         // First we test making a triplet only with default value column.
         ASSERT_NO_THROW_LOG(fetched = PgSqlExchange::getTripletValue(*r, row, INT_COL));
