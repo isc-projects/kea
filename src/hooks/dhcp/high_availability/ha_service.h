@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,6 +10,7 @@
 #include <communication_state.h>
 #include <ha_config.h>
 #include <ha_server_type.h>
+#include <lease_sync_filter.h>
 #include <lease_update_backlog.h>
 #include <query_filter.h>
 #include <asiolink/asio_wrapper.h>
@@ -1246,6 +1247,9 @@ protected:
 
     /// @brief Selects queries to be processed/dropped.
     QueryFilter query_filter_;
+
+    /// @brief Lease synchronization filter used in hub-and-spoke model.
+    LeaseSyncFilter lease_sync_filter_;
 
     /// @brief Handle last pending request for this query.
     ///

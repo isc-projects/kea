@@ -9,6 +9,7 @@
 
 #include <ha_relationship_mapper.h>
 #include <asiolink/crypto_tls.h>
+#include <dhcpsrv/subnet.h>
 #include <exceptions/exceptions.h>
 #include <http/basic_auth.h>
 #include <http/post_request_json.h>
@@ -802,6 +803,18 @@ public:
     ///
     /// @throw HAConfigValidationError if configuration is invalid.
     void validate();
+
+    /// @brief Convenience function extracting a value of the ha-server-name
+    /// parameter from a subnet context.
+    ///
+    /// If the subnet does not contain this parameter it tries to find this
+    /// parameter in the shared network.
+    ///
+    /// @param subnet pointer to the subnet.
+    /// @return ha-server-name parameter value or an empty string if it was
+    /// not found.
+    /// @throw BadValue if the parameter is not a string or is empty.
+    static std::string getSubnetServerName(const dhcp::SubnetPtr& subnet);
 
     std::string this_server_name_;            ///< This server name.
     HAMode ha_mode_;                          ///< Mode of operation.

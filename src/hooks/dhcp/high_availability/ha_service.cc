@@ -76,8 +76,8 @@ HAService::HAService(const unsigned int id, const IOServicePtr& io_service,
                      const HAServerType& server_type)
     : id_(id), io_service_(io_service), network_state_(network_state), config_(config),
       server_type_(server_type), client_(), listener_(), communication_state_(),
-      query_filter_(config), mutex_(), pending_requests_(),
-      lease_update_backlog_(config->getDelayedUpdatesLimit()),
+      query_filter_(config), lease_sync_filter_(server_type, config), mutex_(),
+      pending_requests_(), lease_update_backlog_(config->getDelayedUpdatesLimit()),
       sync_complete_notified_(false) {
 
     if (server_type == HAServerType::DHCPv4) {
@@ -2078,6 +2078,7 @@ HAService::asyncSyncLeases() {
         dhcp_disable_timeout = 1;
     }
 
+    lease_sync_filter_.apply();
     asyncSyncLeases(*client_, config_->getFailoverPeerConfig()->getName(),
                     dhcp_disable_timeout, LeasePtr(), null_action);
 }
@@ -2205,6 +2206,18 @@ HAService::asyncSyncLeasesInternal(http::HttpClient& http_client,
                             if (server_type_ == HAServerType::DHCPv4) {
                                 Lease4Ptr lease = Lease4::fromElement(*l);
 
+                                // If we're not on the last page and we're processing final lease on
+                                // this page, let's record the lease as input to the next
+                                // lease4-get-page command.
+                                if ((leases_element.size() >= config_->getSyncPageLimit()) &&
+                                    (l + 1 == leases_element.end())) {
+                                    last_lease = boost::dynamic_pointer_cast<Lease>(lease);
+                                }
+
+                                if (!lease_sync_filter_.shouldSync(lease)) {
+                                    continue;
+                                }
+
                                 // Check if there is such lease in the database already.
                                 Lease4Ptr existing_lease = LeaseMgrFactory::instance().getLease4(lease->addr_);
                                 if (!existing_lease) {
@@ -2227,16 +2240,20 @@ HAService::asyncSyncLeasesInternal(http::HttpClient& http_client,
                                         .arg(lease->subnet_id_);
                                 }
 
+                            } else {
+                                Lease6Ptr lease = Lease6::fromElement(*l);
+
                                 // If we're not on the last page and we're processing final lease on
                                 // this page, let's record the lease as input to the next
-                                // lease4-get-page command.
+                                // lease6-get-page command.
                                 if ((leases_element.size() >= config_->getSyncPageLimit()) &&
                                     (l + 1 == leases_element.end())) {
                                     last_lease = boost::dynamic_pointer_cast<Lease>(lease);
                                 }
 
-                            } else {
-                                Lease6Ptr lease = Lease6::fromElement(*l);
+                                if (!lease_sync_filter_.shouldSync(lease)) {
+                                    continue;
+                                }
 
                                 // Check if there is such lease in the database already.
                                 Lease6Ptr existing_lease = LeaseMgrFactory::instance().getLease6(lease->type_,
@@ -2259,14 +2276,6 @@ HAService::asyncSyncLeasesInternal(http::HttpClient& http_client,
                                         .arg(config_->getThisServerName())
                                         .arg(lease->addr_.toText())
                                         .arg(lease->subnet_id_);
-                                }
-
-                                // If we're not on the last page and we're processing final lease on
-                                // this page, let's record the lease as input to the next
-                                // lease6-get-page command.
-                                if ((leases_element.size() >= config_->getSyncPageLimit()) &&
-                                    (l + 1 == leases_element.end())) {
-                                    last_lease = boost::dynamic_pointer_cast<Lease>(lease);
                                 }
                             }
 
@@ -2326,6 +2335,9 @@ HAService::processSynchronize(const std::string& server_name,
 int
 HAService::synchronize(std::string& status_message, const std::string& server_name,
                        const unsigned int max_period) {
+
+    lease_sync_filter_.apply();
+
     IOService io_service;
     HttpClient client(io_service, false);
 

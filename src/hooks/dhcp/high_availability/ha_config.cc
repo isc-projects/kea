@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,6 +11,7 @@
 #include <asiolink/crypto_tls.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/cfg_multi_threading.h>
+#include <dhcpsrv/network.h>
 #include <exceptions/exceptions.h>
 #include <util/multi_threading_mgr.h>
 #include <util/strutil.h>
@@ -20,6 +21,8 @@
 #include <sstream>
 
 using namespace isc::asiolink;
+using namespace isc::data;
+using namespace isc::dhcp;
 using namespace isc::http;
 using namespace isc::util;
 using namespace isc::dhcp;
@@ -515,6 +518,27 @@ HAConfig::validate() {
             return;
         }
     }
+}
+
+std::string
+HAConfig::getSubnetServerName(const SubnetPtr& subnet) {
+    const std::string parameter_name = "ha-server-name";
+    auto context = subnet->getContext();
+    if (!context || (context->getType() != Element::map) || !context->contains(parameter_name)) {
+        NetworkPtr shared_network;
+        subnet->getSharedNetwork(shared_network);
+        if (shared_network) {
+            context = shared_network->getContext();
+        }
+    }
+    if (context && (context->getType() == Element::map) && context->contains(parameter_name)) {
+        auto server_name_element = context->get(parameter_name);
+        if ((server_name_element->getType() != Element::string) || server_name_element->stringValue().empty()) {
+            isc_throw(BadValue, "'" << parameter_name << "'  must be a non-empty string");
+        }
+        return (server_name_element->stringValue());
+    }
+    return ("");
 }
 
 } // end of namespace isc::ha

@@ -615,6 +615,7 @@ public:
           user3_(""),
           password3_("") {
         MultiThreadingMgr::instance().setMode(false);
+        CfgMgr::instance().clear();
     }
 
     /// @brief Destructor.
@@ -627,6 +628,7 @@ public:
         io_service_->restart();
         io_service_->poll();
         MultiThreadingMgr::instance().setMode(false);
+        CfgMgr::instance().clear();
     }
 
     /// @brief Callback function invoke upon test timeout.
@@ -701,16 +703,19 @@ public:
 
         // First, return leases with indexes from 0 to 2.
         response_arguments->set("leases", getTestLeases4AsJson(0, 3));
+        factory_->getResponseCreator()->setArguments("lease4-get-page", response_arguments);
         factory2_->getResponseCreator()->setArguments("lease4-get-page", response_arguments);
         factory3_->getResponseCreator()->setArguments("lease4-get-page", response_arguments);
 
         // Next, return leases with indexes from 3 to 5.
         response_arguments->set("leases", getTestLeases4AsJson(3, 6));
+        factory_->getResponseCreator()->setArguments("lease4-get-page", response_arguments);
         factory2_->getResponseCreator()->setArguments("lease4-get-page", response_arguments);
         factory3_->getResponseCreator()->setArguments("lease4-get-page", response_arguments);
 
         // Then, return leases with indexes from 6 to 8.
         response_arguments->set("leases", getTestLeases4AsJson(6, 9));
+        factory_->getResponseCreator()->setArguments("lease4-get-page", response_arguments);
         factory2_->getResponseCreator()->setArguments("lease4-get-page", response_arguments);
         factory3_->getResponseCreator()->setArguments("lease4-get-page", response_arguments);
 
@@ -719,6 +724,7 @@ public:
         // means that the last page was returned. At this point, the
         // server ends synchronization.
         response_arguments->set("leases", getTestLeases4AsJson(9, 10));
+        factory_->getResponseCreator()->setArguments("lease4-get-page", response_arguments);
         factory2_->getResponseCreator()->setArguments("lease4-get-page", response_arguments);
         factory3_->getResponseCreator()->setArguments("lease4-get-page", response_arguments);
     }
@@ -735,16 +741,19 @@ public:
 
         // First, return leases with indexes from 0 to 2.
         response_arguments->set("leases", getTestLeases6AsJson(0, 3));
+        factory_->getResponseCreator()->setArguments("lease6-get-page", response_arguments);
         factory2_->getResponseCreator()->setArguments("lease6-get-page", response_arguments);
         factory3_->getResponseCreator()->setArguments("lease6-get-page", response_arguments);
 
         // Next, return leases with indexes from 3 to 5.
         response_arguments->set("leases", getTestLeases6AsJson(3, 6));
+        factory_->getResponseCreator()->setArguments("lease6-get-page", response_arguments);
         factory2_->getResponseCreator()->setArguments("lease6-get-page", response_arguments);
         factory3_->getResponseCreator()->setArguments("lease6-get-page", response_arguments);
 
         // Then, return leases with indexes from 6 to 8.
         response_arguments->set("leases", getTestLeases6AsJson(6, 9));
+        factory_->getResponseCreator()->setArguments("lease6-get-page", response_arguments);
         factory2_->getResponseCreator()->setArguments("lease6-get-page", response_arguments);
         factory3_->getResponseCreator()->setArguments("lease6-get-page", response_arguments);
 
@@ -753,6 +762,7 @@ public:
         // means that the last page was returned. At this point, the
         // server ends synchronization.
         response_arguments->set("leases", getTestLeases6AsJson(9, 10));
+        factory_->getResponseCreator()->setArguments("lease6-get-page", response_arguments);
         factory2_->getResponseCreator()->setArguments("lease6-get-page", response_arguments);
         factory3_->getResponseCreator()->setArguments("lease6-get-page", response_arguments);
     }
@@ -3418,6 +3428,85 @@ TEST_F(HAServiceTest, asyncSyncLeases4ServerUnauthorized) {
     ASSERT_NO_THROW(runIOService(1000));
 }
 
+// This test verifies that IPv4 leases belonging to the particular service can
+// be fetched from the peer and inserted into a local lease database in the
+// hub-and-spoke configuration.
+TEST_F(HAServiceTest, asyncSyncLeases4Hub) {
+    // Create lease manager.
+    ASSERT_NO_THROW(LeaseMgrFactory::create("universe=4 type=memfile persist=false"));
+
+    // Create IPv4 leases which will be fetched from the other server.
+    ASSERT_NO_THROW(generateTestLeases4());
+
+    // Create HA configuration.
+    HAConfigPtr config_storage = createValidHubConfiguration();
+    setBasicAuth(config_storage);
+
+    // Convert leases to the JSON format, the same as used by the lease_cmds
+    // hook library. Configure our test HTTP servers to return those
+    // leases in this format.
+    ElementPtr response_arguments = Element::createMap();
+
+    // In the hub-and-spoke configuration we have to filter out the leases
+    // belonging to the subnets the service is responsible for and we drop
+    // all other leases. Let's create a new subnet for each received lease
+    // and associate the subnets with even indexes with this service. It
+    // should cause the synchronization to accept only these leases for this
+    // service.
+    for (auto i = 1; i <= 10; ++i) {
+        auto subnet = Subnet4::create(IOAddress(static_cast<uint32_t>(i << 24)), 24,
+                                                30, 40, 50, SubnetID(i));
+        if (i % 2 == 0) {
+            auto context = Element::createMap();
+            context->set("ha-server-name", Element::create("server1"));
+            subnet->setContext(context);
+        }
+        CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->add(subnet);
+    }
+    CfgMgr::instance().commit();
+
+    // Leases are fetched in pages, so the lease4-get-page should be
+    // sent multiple times. The server is configured to return leases
+    // in 3-element chunks.
+    createPagedSyncResponses4();
+
+    // Start the servers.
+    ASSERT_NO_THROW({
+        listener_->start();
+        listener2_->start();
+    });
+
+    TestHAService service(1, io_service_, network_state_, config_storage);
+    // Setting the heartbeat delay to 0 disables the recurring heartbeat.
+    // We just want to synchronize leases and not send the heartbeat.
+    config_storage->setHeartbeatDelay(0);
+
+    // Start fetching leases asynchronously.
+    ASSERT_NO_THROW(service.asyncSyncLeases());
+
+    // Run IO service to actually perform the transaction.
+    ASSERT_NO_THROW(runIOService(TEST_TIMEOUT, []() {
+        // Stop running the IO service if we see a lease in the lease
+        // database which is expected to be inserted as a result of lease
+        // syncing.
+        return (!LeaseMgrFactory::instance().getLeases4(SubnetID(10)).empty());
+    }));
+
+    // Check that some leases have been added to the lease database and
+    // some not.
+    for (size_t i = 0; i < leases4_.size(); ++i) {
+        Lease4Ptr existing_lease = LeaseMgrFactory::instance().getLease4(leases4_[i]->addr_);
+        // This time we take odd indexes because we count from 0 (not from 1).
+        if (i % 2 == 1) {
+            EXPECT_TRUE(existing_lease) << "lease " << leases4_[i]->addr_.toText()
+                                        << " not in the lease database";
+        } else {
+            EXPECT_FALSE(existing_lease) << "lease " << leases4_[i]->addr_.toText()
+                                         << " is in the lease database but it should not be";
+        }
+    }
+}
+
 // This test verifies that IPv6 leases can be fetched from the peer and inserted
 // or updated in the local lease database.
 TEST_F(HAServiceTest, asyncSyncLeases6) {
@@ -3762,6 +3851,90 @@ TEST_F(HAServiceTest, asyncSyncLeases6Unauthorized) {
 
     // Run IO service to actually perform the transaction.
     ASSERT_NO_THROW(runIOService(1000));
+}
+
+// This test verifies that IPv6 leases belonging to the particular service can
+// be fetched from the peer and inserted into a local lease database in the
+// hub-and-spoke configuration.
+TEST_F(HAServiceTest, asyncSyncLeases6Hub) {
+    // Create lease manager.
+    ASSERT_NO_THROW(LeaseMgrFactory::create("universe=6 type=memfile persist=false"));
+
+    // Create IPv6 leases which will be fetched from the other server.
+    ASSERT_NO_THROW(generateTestLeases6());
+
+    // Create HA configuration.
+    HAConfigPtr config_storage = createValidHubConfiguration();
+    setBasicAuth(config_storage);
+
+    // Convert leases to the JSON format, the same as used by the lease_cmds
+    // hook library. Configure our test HTTP servers to return those
+    // leases in this format.
+    ElementPtr response_arguments = Element::createMap();
+
+    // In the hub-and-spoke configuration we have to filter out the leases
+    // belonging to the subnets the service is responsible for and we drop
+    // all other leases. Let's create a new subnet for each received lease
+    // and associate the subnets with even indexes with this service. It
+    // should cause the synchronization to accept only these leases for this
+    // service.
+    for (auto i = 1; i <= 10; ++i) {
+        std::ostringstream s;
+        s << i << "::";
+        auto subnet = Subnet6::create(IOAddress(s.str()), 64, 30, 40, 50,
+                                      60, SubnetID(i));
+        if (i % 2 == 0) {
+            auto context = Element::createMap();
+            context->set("ha-server-name", Element::create("server1"));
+            subnet->setContext(context);
+        }
+        CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->add(subnet);
+    }
+    CfgMgr::instance().commit();
+
+    // Leases are fetched in pages, so the lease4-get-page should be
+    // sent multiple times. We need to configure the server side to
+    // return leases in 3-element chunks.
+    createPagedSyncResponses6();
+
+    // Start the servers.
+    ASSERT_NO_THROW({
+        listener_->start();
+        listener2_->start();
+    });
+
+    TestHAService service(1, io_service_, network_state_, config_storage,
+                          HAServerType::DHCPv6);
+    // Setting the heartbeat delay to 0 disables the recurring heartbeat.
+    // We just want to synchronize leases and not send the heartbeat.
+    config_storage->setHeartbeatDelay(0);
+
+    // Start fetching leases asynchronously.
+    ASSERT_NO_THROW(service.asyncSyncLeases());
+
+    // Run IO service to actually perform the transaction.
+    ASSERT_NO_THROW(runIOService(TEST_TIMEOUT, []() {
+        // Stop running the IO service if we see a lease in the lease
+        // database which is expected to be inserted as a result of lease
+        // syncing.
+        return (!LeaseMgrFactory::instance().getLeases6(SubnetID(10)).empty());
+    }));
+
+    // Check that some leases have been added to the lease database and
+    // some not.
+    for (size_t i = 0; i < leases6_.size(); ++i) {
+        // Other leases should be inserted/updated.
+        Lease6Ptr existing_lease = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA,
+                                                                         leases6_[i]->addr_);
+        // This time we take odd indexes because we count from 0 (not from 1).
+        if (i % 2 == 1) {
+            EXPECT_TRUE(existing_lease) << "lease " << leases6_[i]->addr_.toText()
+                                        << " not in the lease database";
+        } else {
+            EXPECT_FALSE(existing_lease) << "lease " << leases6_[i]->addr_.toText()
+                                         << " is in the lease database but it should not be";
+        }
+    }
 }
 
 // This test verifies that the ha-sync command is processed successfully for the

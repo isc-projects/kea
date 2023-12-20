@@ -148,15 +148,10 @@ HAImpl::subnet4Select(hooks::CalloutHandle& callout_handle) {
     // and this context should contain a mapping of the subnet to a
     // relationship. If the context doesn't exist there is no way
     // to determine which relationship the packet belongs to.
-    auto context = subnet4->getContext();
-    if (!context || (context->getType() != Element::map) || !context->contains("ha-server-name")) {
-        // The server name can be also specified at the shared network level.
-        SharedNetwork4Ptr shared_network;
-        subnet4->getSharedNetwork(shared_network);
-        if (shared_network) {
-            context = shared_network->getContext();
-        }
-        if (!context || (context->getType() != Element::map) || !context->contains("ha-server-name")) {
+    std::string server_name;
+    try {
+        server_name = HAConfig::getSubnetServerName(subnet4);
+        if (server_name.empty()) {
             LOG_ERROR(ha_logger, HA_SUBNET4_SELECT_NO_RELATIONSHIP_SELECTOR_FOR_SUBNET)
                 .arg(query4->getLabel())
                 .arg(subnet4->toText());
@@ -164,11 +159,7 @@ HAImpl::subnet4Select(hooks::CalloutHandle& callout_handle) {
             return;
         }
 
-    }
-
-    // The context has been found and it contains the ha-server-name.
-    auto server_name = context->get("ha-server-name");
-    if ((server_name->getType() != Element::string) || server_name->stringValue().empty()) {
+    } catch (...) {
         LOG_ERROR(ha_logger, HA_SUBNET4_SELECT_INVALID_HA_SERVER_NAME)
             .arg(query4->getLabel())
             .arg(subnet4->toText());
@@ -177,7 +168,7 @@ HAImpl::subnet4Select(hooks::CalloutHandle& callout_handle) {
     }
 
     // Try to find a relationship matching this server name.
-    auto service = services_->get(server_name->stringValue());
+    auto service = services_->get(server_name);
     if (!service) {
         LOG_ERROR(ha_logger, HA_SUBNET4_SELECT_NO_RELATIONSHIP_FOR_SUBNET)
             .arg(query4->getLabel())
@@ -200,7 +191,7 @@ HAImpl::subnet4Select(hooks::CalloutHandle& callout_handle) {
     // Remember the server name we retrieved from the subnet. We will
     // need it in a leases4_committed callout that doesn't have access
     // to the subnet object.
-    callout_handle.setContext("ha-server-name", server_name->stringValue());
+    callout_handle.setContext("ha-server-name", server_name);
 }
 
 void
@@ -406,27 +397,18 @@ HAImpl::subnet6Select(hooks::CalloutHandle& callout_handle) {
     // and this context should contain a mapping of the subnet to a
     // relationship. If the context doesn't exist there is no way
     // to determine which relationship the packet belongs to.
-    auto context = subnet6->getContext();
-    if (!context || (context->getType() != Element::map) || !context->contains("ha-server-name")) {
-        // The server name can be also specified at the shared network level.
-        SharedNetwork6Ptr shared_network;
-        subnet6->getSharedNetwork(shared_network);
-        if (shared_network) {
-            context = shared_network->getContext();
-        }
-        if (!context || (context->getType() != Element::map) || !context->contains("ha-server-name")) {
-            LOG_ERROR(ha_logger, HA_SUBNET6_SELECT_NO_RELATIONSHIP_SELECTOR_FOR_SUBNET)
+    std::string server_name;
+    try {
+        server_name = HAConfig::getSubnetServerName(subnet6);
+        if (server_name.empty()) {
+            LOG_ERROR(ha_logger, HA_SUBNET4_SELECT_NO_RELATIONSHIP_SELECTOR_FOR_SUBNET)
                 .arg(query6->getLabel())
                 .arg(subnet6->toText());
             callout_handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
             return;
         }
 
-    }
-
-    // The context has been found and it contains the ha-server-name.
-    auto server_name = context->get("ha-server-name");
-    if ((server_name->getType() != Element::string) || server_name->stringValue().empty()) {
+    } catch (...) {
         LOG_ERROR(ha_logger, HA_SUBNET6_SELECT_INVALID_HA_SERVER_NAME)
             .arg(query6->getLabel())
             .arg(subnet6->toText());
@@ -435,7 +417,7 @@ HAImpl::subnet6Select(hooks::CalloutHandle& callout_handle) {
     }
 
     // Try to find a relationship matching this server name.
-    auto service = services_->get(server_name->stringValue());
+    auto service = services_->get(server_name);
     if (!service) {
         LOG_ERROR(ha_logger, HA_SUBNET6_SELECT_NO_RELATIONSHIP_FOR_SUBNET)
             .arg(query6->getLabel())
@@ -458,7 +440,7 @@ HAImpl::subnet6Select(hooks::CalloutHandle& callout_handle) {
     // Remember the server name we retrieved from the subnet. We will
     // need it in a leases4_committed callout that doesn't have access
     // to the subnet object.
-    callout_handle.setContext("ha-server-name", server_name->stringValue());
+    callout_handle.setContext("ha-server-name", server_name);
 }
 
 void

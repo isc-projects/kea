@@ -9,18 +9,22 @@
 #include <ha_impl.h>
 #include <ha_service_states.h>
 #include <ha_test.h>
+#include <asiolink/io_address.h>
 #include <cc/command_interpreter.h>
 #include <cc/data.h>
 #include <cc/dhcp_config_error.h>
 #include <config/command_mgr.h>
+#include <dhcpsrv/shared_network.h>
 #include <util/state_model.h>
 #include <util/multi_threading_mgr.h>
 #include <testutils/gtest_utils.h>
 #include <string>
 
 using namespace isc;
+using namespace isc::asiolink;
 using namespace isc::config;
 using namespace isc::data;
+using namespace isc::dhcp;
 using namespace isc::ha;
 using namespace isc::hooks;
 using namespace isc::ha::test;
@@ -402,9 +406,9 @@ TEST_F(HAConfigTest, configurePassiveBackup) {
     EXPECT_EQ(hardware_threads_, impl->getConfig()->getHttpClientThreads());
 }
 
-// Verifies that the correct hub configuration in the hub-and-spoke model is parsed correctly
+// Verifies that multiple relationships in hot-standby mode are parsed correctly
 // and accepted.
-TEST_F(HAConfigTest, configureHub) {
+TEST_F(HAConfigTest, configureMultipleHotStandby) {
     const std::string ha_config =
         "["
         "    {"
@@ -2041,6 +2045,67 @@ TEST_F(HAConfigTest, hubAndSpokeRepeatingThisServerName) {
         "    }"
         "]",
         "server names must be unique for different relationships: a relationship 'server1' already exists");
+}
+
+// Test that server name can be fetched for a subnet at shared network level.
+TEST_F(HAConfigTest, getSubnetServerNameSharedNetworkLevel) {
+    auto context = Element::createMap();
+    context->set("ha-server-name", Element::create("server1"));
+    auto shared_network = SharedNetwork6::create("foo");
+    auto subnet6 = Subnet6::create(IOAddress("2001:db8:1::"), 64, 30, 40, 50, 60, SubnetID(1));
+    shared_network->setContext(context);
+    shared_network->add(subnet6);
+    auto server_name = HAConfig::getSubnetServerName(subnet6);
+    EXPECT_EQ("server1", server_name);
+}
+
+// Test that server name can be fetched for a subnet at subnet level.
+TEST_F(HAConfigTest, getSubnetServerNameSubnetLevel) {
+    auto context = Element::createMap();
+    context->set("ha-server-name", Element::create("server2"));
+    auto shared_network = SharedNetwork6::create("foo");
+    auto subnet6 = Subnet6::create(IOAddress("2001:db8:1::"), 64, 30, 40, 50, 60, SubnetID(1));
+    subnet6->setContext(context);
+    shared_network->add(subnet6);
+    auto server_name = HAConfig::getSubnetServerName(subnet6);
+    EXPECT_EQ("server2", server_name);
+}
+
+// Test that server name can be fetched for a subnet when there is no
+// shared network.
+TEST_F(HAConfigTest, getSubnetServerName) {
+    auto context = Element::createMap();
+    context->set("ha-server-name", Element::create("server3"));
+    auto subnet6 = Subnet6::create(IOAddress("2001:db8:1::"), 64, 30, 40, 50, 60, SubnetID(1));
+    subnet6->setContext(context);
+    auto server_name = HAConfig::getSubnetServerName(subnet6);
+    EXPECT_EQ("server3", server_name);
+}
+
+// Test that empty server name is returned when it is not specified.
+TEST_F(HAConfigTest, getSubnetServerNameUnspecified) {
+    auto subnet6 = Subnet6::create(IOAddress("2001:db8:1::"), 64, 30, 40, 50, 60, SubnetID(1));
+    auto server_name = HAConfig::getSubnetServerName(subnet6);
+    EXPECT_TRUE(server_name.empty());
+}
+
+// Test that an exception is thrown when server name is empty.
+TEST_F(HAConfigTest, getSubnetServerNameEmpty) {
+    auto context = Element::createMap();
+    context->set("ha-server-name", Element::create(""));
+    auto subnet6 = Subnet6::create(IOAddress("2001:db8:1::"), 64, 30, 40, 50, 60, SubnetID(1));
+    subnet6->setContext(context);
+    EXPECT_THROW(HAConfig::getSubnetServerName(subnet6), BadValue);
+}
+
+// Test that an exception is thrown when server name is not a
+// valid string.
+TEST_F(HAConfigTest, getSubnetServerNameInvalid) {
+    auto context = Element::createMap();
+    context->set("ha-server-name", Element::createMap());
+    auto subnet6 = Subnet6::create(IOAddress("2001:db8:1::"), 64, 30, 40, 50, 60, SubnetID(1));
+    subnet6->setContext(context);
+    EXPECT_THROW(HAConfig::getSubnetServerName(subnet6), BadValue);
 }
 
 
