@@ -38,7 +38,7 @@ StampedElement::getMetadata() const {
     ElementPtr metadata = Element::createMap();
     ElementPtr tags = Element::createList();
 
-    for (const auto& server_tag : server_tags_) {
+    for (auto const& server_tag : server_tags_) {
         tags->add(Element::create(server_tag.get()));
     }
 

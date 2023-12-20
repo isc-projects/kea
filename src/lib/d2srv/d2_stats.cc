@@ -46,10 +46,10 @@ void
 D2Stats::init() {
     StatsMgr& stats_mgr = isc::stats::StatsMgr::instance();
     stats_mgr.setMaxSampleCountDefault(0);
-    for (const auto& name : D2Stats::ncr) {
+    for (auto const& name : D2Stats::ncr) {
         stats_mgr.setValue(name, static_cast<int64_t>(0));
     }
-    for (const auto& name : D2Stats::update) {
+    for (auto const& name : D2Stats::update) {
         stats_mgr.setValue(name, static_cast<int64_t>(0));
     }
 };

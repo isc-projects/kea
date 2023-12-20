@@ -269,7 +269,7 @@ protected:
     fetchConfigElement(const db::AuditEntryCollection& audit_entries,
                        const std::string& object_type) const {
         db::AuditEntryCollection result;
-        const auto& index = audit_entries.get<db::AuditEntryObjectTypeTag>();
+        auto const& index = audit_entries.get<db::AuditEntryObjectTypeTag>();
         auto range = index.equal_range(object_type);
         for (auto it = range.first; it != range.second; ++it) {
             if ((*it)->getModificationType() != db::AuditEntry::ModificationType::DELETE) {
@@ -346,7 +346,7 @@ protected:
 
         // Get the audit entries sorted by modification time and id,
 	// and pick the latest entry.
-        const auto& index = audit_entries.get<db::AuditEntryModificationTimeIdTag>();
+        auto const& index = audit_entries.get<db::AuditEntryModificationTimeIdTag>();
         last_audit_revision_time_ = (*index.rbegin())->getModificationTime();
         last_audit_revision_id_ = (*index.rbegin())->getRevisionId();
     }
@@ -370,7 +370,7 @@ protected:
 inline bool
 hasObjectId(const db::AuditEntryCollection& audit_entries,
             const uint64_t& object_id) {
-    const auto& object_id_idx = audit_entries.get<db::AuditEntryObjectIdTag>();
+    auto const& object_id_idx = audit_entries.get<db::AuditEntryObjectIdTag>();
     return (object_id_idx.count(object_id) > 0);
 }
 

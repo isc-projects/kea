@@ -101,7 +101,7 @@ namespace test {
 #define SKIP_IF(expression) \
 { \
     if (expression) { \
-        const auto info = ::testing::UnitTest::GetInstance()->current_test_info(); \
+        auto const info = ::testing::UnitTest::GetInstance()->current_test_info(); \
         std::cerr << "SKIPPING: " << info->test_case_name() << ":" << info->name() \
                   << ": '" << #expression << "' is true" << std::endl; \
         return; \
@@ -111,7 +111,7 @@ namespace test {
 #define SKIP_IF(expression) \
 { \
     if (expression) { \
-        const auto info = ::testing::UnitTest::GetInstance()->current_test_info(); \
+        auto const info = ::testing::UnitTest::GetInstance()->current_test_info(); \
         GTEST_SKIP() << "SKIPPING: " << info->test_case_name() << ":" << info->name() \
                   << ": '" << #expression << "' is true"; \
     } \

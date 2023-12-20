@@ -158,7 +158,7 @@ public:
     template<typename SubnetPtrType, typename SubnetCollectionType>
     static SubnetPtrType getSubnet(const SubnetCollectionType& subnets,
                                    const SubnetID& subnet_id) {
-        const auto& index = subnets.template get<SubnetSubnetIdIndexTag>();
+        auto const& index = subnets.template get<SubnetSubnetIdIndexTag>();
         auto subnet_it = index.find(subnet_id);
         if (subnet_it != index.cend()) {
             return (*subnet_it);
@@ -183,7 +183,7 @@ public:
     template<typename SubnetPtrType, typename SubnetCollectionType>
     static SubnetPtrType getSubnet(const SubnetCollectionType& subnets,
                                    const std::string& subnet_prefix) {
-        const auto& index = subnets.template get<SubnetPrefixIndexTag>();
+        auto const& index = subnets.template get<SubnetPrefixIndexTag>();
         auto subnet_it = index.find(subnet_prefix);
         if (subnet_it != index.cend()) {
             return (*subnet_it);
@@ -245,7 +245,7 @@ public:
         // Need to retrieve an iterator to the current subnet first. The
         // subnet must exist in this container, thus we throw if the iterator
         // is not found.
-        const auto& index = subnets.template get<SubnetSubnetIdIndexTag>();
+        auto const& index = subnets.template get<SubnetSubnetIdIndexTag>();
         auto subnet_it = index.find(current_subnet);
         if (subnet_it == index.cend()) {
             isc_throw(BadValue, "no such subnet " << current_subnet

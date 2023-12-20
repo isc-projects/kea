@@ -5352,7 +5352,7 @@ HostMgrTest::testDelete6ByIDAndIdentifier(BaseHostDataSource& data_source1,
 }
 
 bool HostMgrTest::isPrimaryDataSource(const BaseHostDataSource& data_source) const {
-    const auto ptr = dynamic_cast<const CfgHosts*>(&data_source);
+    auto const ptr = dynamic_cast<const CfgHosts*>(&data_source);
     return ptr != nullptr;
 }
 

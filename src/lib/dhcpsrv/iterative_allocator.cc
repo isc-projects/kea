@@ -97,7 +97,7 @@ IterativeAllocator::pickAddressInternal(const ClientClasses& client_classes,
     bool valid = true;
     bool retrying = false;
 
-    const auto& pools = subnet_.lock()->getPools(pool_type_);
+    auto const& pools = subnet_.lock()->getPools(pool_type_);
 
     if (pools.empty()) {
         isc_throw(AllocFailed, "No pools defined in selected subnet");
@@ -210,7 +210,7 @@ IterativeAllocator::pickPrefixInternal(const ClientClasses& client_classes,
     bool valid = true;
     bool retrying = false;
 
-    const auto& pools = subnet_.lock()->getPools(pool_type_);
+    auto const& pools = subnet_.lock()->getPools(pool_type_);
 
     if (pools.empty()) {
         isc_throw(AllocFailed, "No pools defined in selected subnet");

@@ -5705,7 +5705,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6ParkedPacketLimit) {
     ASSERT_NO_THROW(configure(config, *srv_));
 
     // Verify we have no packets parked.
-    const auto& parking_lot = ServerHooks::getServerHooks()
+    auto const& parking_lot = ServerHooks::getServerHooks()
                               .getParkingLotPtr("leases6_committed");
     ASSERT_TRUE(parking_lot);
     ASSERT_EQ(0, parking_lot->size());

@@ -162,7 +162,7 @@ public:
     /// @param insert_rows Collection of rows of data to insert. Note that
     /// each row is inserted as a separate statement execution.
     void testInsert(const TestRowSet& insert_rows) {
-        for (const auto& row : insert_rows) {
+        for (auto const& row : insert_rows) {
             // Set the insert parameters based on the current insert row.
             PsqlBindArray in_bindings;
             in_bindings.add(row.int_col);
@@ -238,7 +238,7 @@ public:
     /// @param update_rows Collection of rows of data to update.
     void testUpdate(const TestRowSet& update_rows) {
         size_t update_count = 0;
-        for (const auto& row : update_rows) {
+        for (auto const& row : update_rows) {
             // Set the text value and where clause parameters based on the
             // this row's values.
             PsqlBindArray in_bindings;

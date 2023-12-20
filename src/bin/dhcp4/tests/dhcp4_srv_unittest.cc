@@ -2995,7 +2995,7 @@ Dhcpv4SrvTest::checkConfigFiles() {
         string file = path + "/" + example;
         files.push_back(file);
     }
-    for (const auto& file : files) {
+    for (auto const& file : files) {
         string label("Checking configuration from file: ");
         label += file;
         SCOPED_TRACE(label);

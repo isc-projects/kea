@@ -106,7 +106,7 @@ public:
     /// @return Pointer to the shared network or null pointer if the network
     /// is not found.
     SharedNetworkPtrType getByName(const std::string& name) const {
-        const auto& index = networks_.template get<SharedNetworkNameIndexTag>();
+        auto const& index = networks_.template get<SharedNetworkNameIndexTag>();
         auto shared_network = index.find(name);
         if (shared_network != index.cend()) {
             return (*shared_network);
@@ -122,7 +122,7 @@ public:
         data::ElementPtr list = data::Element::createList();
 
         // Insert shared networks sorted by their names into the list.
-        const auto& index = networks_.template get<SharedNetworkNameIndexTag>();
+        auto const& index = networks_.template get<SharedNetworkNameIndexTag>();
         for (auto shared_network = index.begin(); shared_network != index.end();
              ++shared_network) {
             list->add((*shared_network)->toElement());
@@ -186,7 +186,7 @@ public:
                 // Network exists, which means we're updating it.
                 // First we need to move its subnets to the new
                 // version of the network.
-                const auto subnets = (*existing_network)->getAllSubnets();
+                auto const subnets = (*existing_network)->getAllSubnets();
 
                 auto copy_subnets(*subnets);
                 for (auto subnet = copy_subnets.cbegin(); subnet != copy_subnets.cend(); ++subnet) {

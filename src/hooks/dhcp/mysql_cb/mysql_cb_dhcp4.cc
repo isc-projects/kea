@@ -1035,7 +1035,7 @@ public:
 
         // Create JSON list of required classes.
         ElementPtr required_classes_element = Element::createList();
-        const auto& required_classes = subnet->getRequiredClasses();
+        auto const& required_classes = subnet->getRequiredClasses();
         for (auto required_class = required_classes.cbegin();
              required_class != required_classes.cend();
              ++required_class) {
@@ -1161,14 +1161,14 @@ public:
                                MySqlBinding::createTimestamp(subnet->getModificationTime()));
 
         // (Re)create pools.
-        for (const auto& pool : subnet->getPools(Lease::TYPE_V4)) {
+        for (auto const& pool : subnet->getPools(Lease::TYPE_V4)) {
             createPool4(server_selector, boost::dynamic_pointer_cast<Pool4>(pool),
                         subnet);
         }
 
         // (Re)create options.
         auto option_spaces = subnet->getCfgOption()->getOptionSpaceNames();
-        for (const auto& option_space : option_spaces) {
+        for (auto const& option_space : option_spaces) {
             OptionContainerPtr options = subnet->getCfgOption()->getAll(option_space);
             for (auto desc = options->begin(); desc != options->end(); ++desc) {
                 OptionDescriptorPtr desc_copy = OptionDescriptor::create(*desc);
@@ -1203,7 +1203,7 @@ public:
 
         uint64_t pool_id = mysql_insert_id(conn_.mysql_);
         auto option_spaces = pool->getCfgOption()->getOptionSpaceNames();
-        for (const auto& option_space : option_spaces) {
+        for (auto const& option_space : option_spaces) {
             OptionContainerPtr options = pool->getCfgOption()->getAll(option_space);
             for (auto desc = options->begin(); desc != options->end(); ++desc) {
                 OptionDescriptorPtr desc_copy = OptionDescriptor::create(*desc);
@@ -1798,7 +1798,7 @@ public:
 
         // (Re)create options.
         auto option_spaces = shared_network->getCfgOption()->getOptionSpaceNames();
-        for (const auto& option_space : option_spaces) {
+        for (auto const& option_space : option_spaces) {
             OptionContainerPtr options = shared_network->getCfgOption()->getAll(option_space);
             for (auto desc = options->begin(); desc != options->end(); ++desc) {
                 OptionDescriptorPtr desc_copy = OptionDescriptor::create(*desc);
@@ -2721,7 +2721,7 @@ public:
                                MySqlBinding::createTimestamp(client_class->getModificationTime()));
 
         // Iterate over the captured dependencies and try to insert them into the database.
-        for (const auto& dependency : dependencies) {
+        for (auto const& dependency : dependencies) {
             try {
                 MySqlBindingCollection in_dependency_bindings = {
                     MySqlBinding::createString(client_class->getName()),
@@ -2747,7 +2747,7 @@ public:
         if (client_class->getCfgOptionDef()) {
             auto option_defs = client_class->getCfgOptionDef()->getContainer();
             auto option_spaces = option_defs.getOptionSpaceNames();
-            for (const auto& option_space : option_spaces) {
+            for (auto const& option_space : option_spaces) {
                 OptionDefContainerPtr defs = option_defs.getItems(option_space);
                 for (auto def = defs->begin(); def != defs->end(); ++def) {
                     createUpdateOptionDef4(server_selector, *def, client_class->getName());
@@ -2757,7 +2757,7 @@ public:
 
         // (Re)create options.
         auto option_spaces = client_class->getCfgOption()->getOptionSpaceNames();
-        for (const auto& option_space : option_spaces) {
+        for (auto const& option_space : option_spaces) {
             OptionContainerPtr options = client_class->getCfgOption()->getAll(option_space);
             for (auto desc = options->begin(); desc != options->end(); ++desc) {
                 OptionDescriptorPtr desc_copy = OptionDescriptor::create(*desc);
@@ -2922,7 +2922,7 @@ public:
             }
 
             // Iterate over the configured DBs and instantiate them.
-            for (const auto& db : config_ctl->getConfigDatabases()) {
+            for (auto const& db : config_ctl->getConfigDatabases()) {
                 const std::string& access = db.getAccessString();
                 auto parameters = db.getParameters();
                 if (ConfigBackendDHCPv4Mgr::instance().delBackend(parameters["type"], access, true)) {

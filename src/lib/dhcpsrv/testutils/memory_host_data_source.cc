@@ -179,7 +179,7 @@ MemHostDataSource::getPage6(size_t& /*source_index*/,
 ConstHostCollection
 MemHostDataSource::getAll4(const asiolink::IOAddress& address) const {
     ConstHostCollection hosts;
-    for (const auto & h : store_) {
+    for (auto const & h : store_) {
         if (h->getIPv4Reservation() == address) {
             hosts.push_back(h);
         }
@@ -250,7 +250,7 @@ ConstHostCollection
 MemHostDataSource::getAll4(const SubnetID& subnet_id,
                            const asiolink::IOAddress& address) const {
     ConstHostCollection hosts;
-    for (const auto & h : store_) {
+    for (auto const & h : store_) {
         if (h->getIPv4SubnetID() == subnet_id &&
             h->getIPv4Reservation() == address) {
             hosts.push_back(h);
@@ -296,7 +296,7 @@ ConstHostCollection
 MemHostDataSource::getAll6(const SubnetID& subnet_id,
                            const asiolink::IOAddress& address) const {
     ConstHostCollection hosts;
-    for (const auto & h : store_) {
+    for (auto const & h : store_) {
         if (h->getIPv6SubnetID() != subnet_id) {
             continue;
         }
@@ -315,7 +315,7 @@ MemHostDataSource::getAll6(const SubnetID& subnet_id,
 ConstHostCollection
 MemHostDataSource::getAll6(const asiolink::IOAddress& address) const {
     ConstHostCollection hosts;
-    for (const auto & h : store_) {
+    for (auto const & h : store_) {
         auto resrvs = h->getIPv6Reservations();
         for (auto r = resrvs.first; r != resrvs.second; ++r) {
             if ((*r).second.getPrefix() == address) {

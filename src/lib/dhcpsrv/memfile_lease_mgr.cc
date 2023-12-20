@@ -3321,7 +3321,7 @@ Memfile_LeaseMgr::buildExtendedInfoTables6() {
     size_t modified = 0;
     size_t processed = 0;
 
-    for (const auto& lease : storage6_) {
+    for (auto const& lease : storage6_) {
         ++leases;
         try {
             if (upgradeLease6ExtendedInfo(lease, check)) {
@@ -3397,7 +3397,7 @@ Memfile_LeaseMgr::writeLeases4Internal(const std::string& filename) {
         ::rename(filename.c_str(), old.str().c_str());
         CSVLeaseFile4 backup(filename);
         backup.open();
-        for (const auto& lease : storage4_) {
+        for (auto const& lease : storage4_) {
             backup.append(*lease);
         }
         backup.close();
@@ -3434,7 +3434,7 @@ Memfile_LeaseMgr::writeLeases6Internal(const std::string& filename) {
         ::rename(filename.c_str(), old.str().c_str());
         CSVLeaseFile6 backup(filename);
         backup.open();
-        for (const auto& lease : storage6_) {
+        for (auto const& lease : storage6_) {
             backup.append(*lease);
         }
         backup.close();

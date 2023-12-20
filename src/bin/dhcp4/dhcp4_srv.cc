@@ -1495,7 +1495,7 @@ Dhcpv4Srv::processDhcp4Query(Pkt4Ptr& query, Pkt4Ptr& rsp,
                 }
 
                 if (parked_packet_limit) {
-                    const auto& parking_lot =
+                    auto const& parking_lot =
                         ServerHooks::getServerHooks().getParkingLotPtr(hook_label);
 
                     if (parking_lot && (parking_lot->size() >= parked_packet_limit)) {
@@ -3748,9 +3748,9 @@ Dhcpv4Srv::processRelease(Pkt4Ptr& release, AllocEngine::ClientContext4Ptr& cont
                         StatsMgr::generateName("subnet", lease->subnet_id_, "assigned-addresses"),
                         static_cast<int64_t>(-1));
 
-                    const auto& subnet = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getBySubnetId(lease->subnet_id_);
+                    auto const& subnet = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getBySubnetId(lease->subnet_id_);
                     if (subnet) {
-                        const auto& pool = subnet->getPool(Lease::TYPE_V4, lease->addr_, false);
+                        auto const& pool = subnet->getPool(Lease::TYPE_V4, lease->addr_, false);
                         if (pool) {
                             StatsMgr::instance().addValue(
                                 StatsMgr::generateName("subnet", subnet->getID(),
@@ -3920,9 +3920,9 @@ Dhcpv4Srv::declineLease(const Lease4Ptr& lease, const Pkt4Ptr& decline,
         StatsMgr::generateName("subnet", lease->subnet_id_, "declined-addresses"),
         static_cast<int64_t>(1));
 
-    const auto& subnet = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getBySubnetId(lease->subnet_id_);
+    auto const& subnet = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getBySubnetId(lease->subnet_id_);
     if (subnet) {
-        const auto& pool = subnet->getPool(Lease::TYPE_V4, lease->addr_, false);
+        auto const& pool = subnet->getPool(Lease::TYPE_V4, lease->addr_, false);
         if (pool) {
             StatsMgr::instance().addValue(
                 StatsMgr::generateName("subnet", subnet->getID(),
@@ -4021,9 +4021,9 @@ Dhcpv4Srv::serverDecline(hooks::CalloutHandlePtr& callout_handle, Pkt4Ptr& query
             static_cast<int64_t>(1));
     }
 
-    const auto& subnet = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getBySubnetId(lease->subnet_id_);
+    auto const& subnet = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getBySubnetId(lease->subnet_id_);
     if (subnet) {
-        const auto& pool = subnet->getPool(Lease::TYPE_V4, lease->addr_, false);
+        auto const& pool = subnet->getPool(Lease::TYPE_V4, lease->addr_, false);
         if (pool) {
             StatsMgr::instance().addValue(
                 StatsMgr::generateName("subnet", subnet->getID(),

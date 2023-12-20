@@ -1100,7 +1100,7 @@ CfgHosts::del(const SubnetID& subnet_id, const asiolink::IOAddress& addr) {
         HostContainer6Index1& idx6 = hosts6_.get<1>();
         HostContainerIndex4& idx = hosts_.get<4>();
         // Delete IPv6 reservations.
-        const auto& range = idx6.equal_range(boost::make_tuple(subnet_id, addr));
+        auto const& range = idx6.equal_range(boost::make_tuple(subnet_id, addr));
         erased_addresses = boost::distance(range);
         // Delete hosts.
         for (auto key = range.first; key != range.second; ++key) {
@@ -1136,10 +1136,10 @@ CfgHosts::del4(const SubnetID& subnet_id,
                const uint8_t* identifier_begin,
                const size_t identifier_len) {
     HostContainerIndex0& idx = hosts_.get<0>();
-    const auto t = boost::make_tuple(std::vector<uint8_t>(identifier_begin,
+    auto const t = boost::make_tuple(std::vector<uint8_t>(identifier_begin,
                                                     identifier_begin + identifier_len),
                                                     identifier_type);
-    const auto& range = idx.equal_range(t);
+    auto const& range = idx.equal_range(t);
     size_t erased = 0;
     for (auto key = range.first; key != range.second;) {
         if ((*key)->getIPv4SubnetID() != subnet_id) {
@@ -1186,10 +1186,10 @@ CfgHosts::del6(const SubnetID& subnet_id,
     HostContainerIndex0& idx = hosts_.get<0>();
     HostContainer6Index3& idx6 = hosts6_.get<3>();
 
-    const auto t = boost::make_tuple(std::vector<uint8_t>(identifier_begin,
+    auto const t = boost::make_tuple(std::vector<uint8_t>(identifier_begin,
                                                           identifier_begin + identifier_len),
                                                           identifier_type);
-    const auto& range = idx.equal_range(t);
+    auto const& range = idx.equal_range(t);
     size_t erased_hosts = 0;
     size_t erased_reservations = 0;
     for (auto key = range.first; key != range.second;) {

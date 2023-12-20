@@ -36,7 +36,7 @@ TestConfigBackendDHCPv6::unregisterBackendType(ConfigBackendDHCPv6Mgr& mgr,
 Subnet6Ptr
 TestConfigBackendDHCPv6::getSubnet6(const db::ServerSelector& server_selector,
                                     const std::string& subnet_prefix) const{
-    const auto& index = subnets_.get<SubnetPrefixIndexTag>();
+    auto const& index = subnets_.get<SubnetPrefixIndexTag>();
     auto subnet_it = index.find(subnet_prefix);
     if (subnet_it == index.cend()) {
         return (Subnet6Ptr());
@@ -60,7 +60,7 @@ TestConfigBackendDHCPv6::getSubnet6(const db::ServerSelector& server_selector,
 Subnet6Ptr
 TestConfigBackendDHCPv6::getSubnet6(const db::ServerSelector& server_selector,
                                     const SubnetID& subnet_id) const {
-    const auto& index = subnets_.get<SubnetSubnetIdIndexTag>();
+    auto const& index = subnets_.get<SubnetSubnetIdIndexTag>();
     auto subnet_it = index.find(subnet_id);
     if (subnet_it == index.cend()) {
         return (Subnet6Ptr());
@@ -117,7 +117,7 @@ TestConfigBackendDHCPv6::getAllSubnets6(const db::ServerSelector& server_selecto
 Subnet6Collection
 TestConfigBackendDHCPv6::getModifiedSubnets6(const db::ServerSelector& server_selector,
                                              const boost::posix_time::ptime& modification_time) const {
-    const auto& index = subnets_.get<SubnetModificationTimeIndexTag>();
+    auto const& index = subnets_.get<SubnetModificationTimeIndexTag>();
     Subnet6Collection subnets;
     auto lb = index.lower_bound(modification_time);
     for (auto subnet = lb; subnet != index.end(); ++subnet) {
@@ -196,7 +196,7 @@ TestConfigBackendDHCPv6::getSharedNetworkSubnets6(const db::ServerSelector& serv
 SharedNetwork6Ptr
 TestConfigBackendDHCPv6::getSharedNetwork6(const db::ServerSelector& server_selector,
                                            const std::string& name) const {
-    const auto& index = shared_networks_.get<SharedNetworkNameIndexTag>();
+    auto const& index = shared_networks_.get<SharedNetworkNameIndexTag>();
     auto network_it = index.find(name);
     if (network_it == index.cend()) {
         return (SharedNetwork6Ptr());
@@ -253,7 +253,7 @@ TestConfigBackendDHCPv6::getAllSharedNetworks6(const db::ServerSelector& server_
 SharedNetwork6Collection
 TestConfigBackendDHCPv6::getModifiedSharedNetworks6(const db::ServerSelector& server_selector,
                                                     const boost::posix_time::ptime& modification_time) const {
-    const auto& index = shared_networks_.get<SharedNetworkModificationTimeIndexTag>();
+    auto const& index = shared_networks_.get<SharedNetworkModificationTimeIndexTag>();
     SharedNetwork6Collection shared_networks;
     auto lb = index.lower_bound(modification_time);
     for (auto shared_network = lb; shared_network != index.end(); ++shared_network) {
@@ -292,7 +292,7 @@ TestConfigBackendDHCPv6::getOptionDef6(const db::ServerSelector& server_selector
                                        const std::string& space) const {
     auto tags = server_selector.getTags();
     auto candidate = OptionDefinitionPtr();
-    const auto& index = option_defs_.get<1>();
+    auto const& index = option_defs_.get<1>();
     auto option_def_it_pair = index.equal_range(code);
 
     for (auto option_def_it = option_def_it_pair.first;
@@ -347,7 +347,7 @@ TestConfigBackendDHCPv6::getModifiedOptionDefs6(const db::ServerSelector& server
                                                 const boost::posix_time::ptime& modification_time) const {
     auto tags = server_selector.getTags();
     OptionDefContainer option_defs;
-    const auto& index = option_defs_.get<3>();
+    auto const& index = option_defs_.get<3>();
     auto lb = index.lower_bound(modification_time);
     for (auto option_def = lb; option_def != index.end(); ++option_def) {
         bool got = false;
@@ -374,7 +374,7 @@ TestConfigBackendDHCPv6::getOption6(const db::ServerSelector& server_selector,
                                     const std::string& space) const {
     auto tags = server_selector.getTags();
     auto candidate = OptionDescriptorPtr();
-    const auto& index = options_.get<1>();
+    auto const& index = options_.get<1>();
     auto option_it_pair = index.equal_range(code);
 
     for (auto option_it = option_it_pair.first; option_it != option_it_pair.second;
@@ -422,7 +422,7 @@ TestConfigBackendDHCPv6::getModifiedOptions6(const db::ServerSelector& server_se
                                              const boost::posix_time::ptime& modification_time) const {
     auto tags = server_selector.getTags();
     OptionContainer options;
-    const auto& index = options_.get<3>();
+    auto const& index = options_.get<3>();
     auto lb = index.lower_bound(modification_time);
     for (auto option = lb; option != index.end(); ++option) {
         bool got = false;
@@ -448,7 +448,7 @@ TestConfigBackendDHCPv6::getGlobalParameter6(const db::ServerSelector& server_se
                                              const std::string& name) const {
     auto tags = server_selector.getTags();
     auto candidate = StampedValuePtr();
-    const auto& index = globals_.get<StampedValueNameIndexTag>();
+    auto const& index = globals_.get<StampedValueNameIndexTag>();
     auto global_range = index.equal_range(name);
     for (auto global_it = global_range.first; global_it != global_range.second;
          ++global_it) {
@@ -494,7 +494,7 @@ TestConfigBackendDHCPv6::getModifiedGlobalParameters6(const db::ServerSelector& 
                                                       const boost::posix_time::ptime& modification_time) const {
     auto tags = server_selector.getTags();
     StampedValueCollection globals;
-    const auto& index = globals_.get<StampedValueModificationTimeIndexTag>();
+    auto const& index = globals_.get<StampedValueModificationTimeIndexTag>();
     auto lb = index.lower_bound(modification_time);
     for (auto global = lb; global != index.end(); ++global) {
         bool got = false;
@@ -657,7 +657,7 @@ TestConfigBackendDHCPv6::getAllServers6() const {
 
 ServerPtr
 TestConfigBackendDHCPv6::getServer6(const ServerTag& server_tag) const {
-    const auto& index = servers_.get<ServerTagIndexTag>();
+    auto const& index = servers_.get<ServerTagIndexTag>();
     auto server_it = index.find(server_tag.get());
     return ((server_it != index.cend()) ? (*server_it) : ServerPtr());
 }

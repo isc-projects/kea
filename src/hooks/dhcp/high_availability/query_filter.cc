@@ -420,7 +420,7 @@ QueryFilter::loadBalance(const dhcp::Pkt4Ptr& query4) const {
     // identifier has been specified.
     OptionPtr opt_client_id = query4->getOption(DHO_DHCP_CLIENT_IDENTIFIER);
     if (opt_client_id && !opt_client_id->getData().empty()) {
-        const auto& client_id_key = opt_client_id->getData();
+        auto const& client_id_key = opt_client_id->getData();
         lb_hash = loadBalanceHash(&client_id_key[0], client_id_key.size());
 
     } else {
@@ -452,7 +452,7 @@ QueryFilter::loadBalance(const dhcp::Pkt6Ptr& query6) const {
     // Compute the hash by DUID if the DUID.
     OptionPtr opt_duid = query6->getOption(D6O_CLIENTID);
     if (opt_duid && !opt_duid->getData().empty()) {
-        const auto& duid_key = opt_duid->getData();
+        auto const& duid_key = opt_duid->getData();
         lb_hash = loadBalanceHash(&duid_key[0], duid_key.size());
 
     } else {

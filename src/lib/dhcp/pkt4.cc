@@ -60,7 +60,7 @@ Pkt4::len() {
     size_t length = DHCPV4_PKT_HDR_LEN; // DHCPv4 header
 
     // ... and sum of lengths of all options
-    for (const auto& it : options_) {
+    for (auto const& it : options_) {
         length += it.second->len();
     }
 
@@ -447,7 +447,7 @@ Pkt4::toText() const {
 
     if (!options_.empty()) {
         tmp << "," << endl << "options:";
-        for (const auto& opt : options_) {
+        for (auto const& opt : options_) {
             try {
                 tmp << endl << opt.second->toText(2);
             } catch (...) {

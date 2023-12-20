@@ -651,7 +651,7 @@ SubnetConfigParser::createSubnet(ConstElementPtr params) {
     initSubnet(params, addr, len);
 
     // Add pools to it.
-    for (const auto& pool : *pools_) {
+    for (auto const& pool : *pools_) {
         try {
             subnet_->addPool(pool);
         } catch (const BadValue& ex) {

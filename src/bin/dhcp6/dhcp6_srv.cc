@@ -1153,7 +1153,7 @@ Dhcpv6Srv::processDhcp6Query(Pkt6Ptr& query, Pkt6Ptr& rsp) {
         }
 
         if (parked_packet_limit) {
-            const auto& parking_lot = ServerHooks::getServerHooks().
+            auto const& parking_lot = ServerHooks::getServerHooks().
                 getParkingLotPtr("leases6_committed");
             if (parking_lot && (parking_lot->size() >= parked_packet_limit)) {
                 // We can't park it so we're going to throw it on the floor.
@@ -1426,7 +1426,7 @@ Dhcpv6Srv::buildCfgOptionList(const Pkt6Ptr& question,
     // Secondly, pool specific options. Pools are defined within a subnet, so
     // if there is no subnet, there is nothing to do.
     if (ctx.subnet_) {
-        for (const auto& resource : ctx.allocated_resources_) {
+        for (auto const& resource : ctx.allocated_resources_) {
             PoolPtr pool =
                 ctx.subnet_->getPool(resource.getPrefixLength() == 128 ?
                                      Lease::TYPE_NA : Lease::TYPE_PD,
@@ -2019,7 +2019,7 @@ Dhcpv6Srv::assignLeases(const Pkt6Ptr& question, Pkt6Ptr& answer,
     // responses in answer message (ADVERTISE or REPLY).
     //
     // @todo: IA_TA once we implement support for temporary addresses.
-    for (const auto& opt : question->options_) {
+    for (auto const& opt : question->options_) {
         switch (opt.second->getType()) {
         case D6O_IA_NA: {
             OptionPtr answer_opt = assignIA_NA(question, ctx,
@@ -3009,7 +3009,7 @@ Dhcpv6Srv::extendLeases(const Pkt6Ptr& query, Pkt6Ptr& reply,
     // Save the originally selected subnet.
     Subnet6Ptr orig_subnet = ctx.subnet_;
 
-    for (const auto& opt : query->options_) {
+    for (auto const& opt : query->options_) {
         switch (opt.second->getType()) {
         case D6O_IA_NA: {
             OptionPtr answer_opt = extendIA_NA(query, ctx,
@@ -3061,7 +3061,7 @@ Dhcpv6Srv::releaseLeases(const Pkt6Ptr& release, Pkt6Ptr& reply,
     // handled properly. Therefore the releaseIA_NA and releaseIA_PD options
     // may turn the status code to some error, but can't turn it back to success.
     int general_status = STATUS_Success;
-    for (const auto& opt : release->options_) {
+    for (auto const& opt : release->options_) {
         Lease6Ptr old_lease;
         switch (opt.second->getType()) {
         case D6O_IA_NA: {
@@ -3289,9 +3289,9 @@ Dhcpv6Srv::releaseIA_NA(const DuidPtr& duid, const Pkt6Ptr& query,
                 StatsMgr::generateName("subnet", lease->subnet_id_, "assigned-nas"),
                 static_cast<int64_t>(-1));
 
-            const auto& subnet = CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getBySubnetId(lease->subnet_id_);
+            auto const& subnet = CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getBySubnetId(lease->subnet_id_);
             if (subnet) {
-                const auto& pool = subnet->getPool(Lease::TYPE_NA, lease->addr_, false);
+                auto const& pool = subnet->getPool(Lease::TYPE_NA, lease->addr_, false);
                 if (pool) {
                     StatsMgr::instance().addValue(
                         StatsMgr::generateName("subnet", subnet->getID(),
@@ -3497,9 +3497,9 @@ Dhcpv6Srv::releaseIA_PD(const DuidPtr& duid, const Pkt6Ptr& query,
                 StatsMgr::generateName("subnet", lease->subnet_id_, "assigned-pds"),
                 static_cast<int64_t>(-1));
 
-            const auto& subnet = CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getBySubnetId(lease->subnet_id_);
+            auto const& subnet = CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getBySubnetId(lease->subnet_id_);
             if (subnet) {
-                const auto& pool = subnet->getPool(Lease::TYPE_PD, lease->addr_, false);
+                auto const& pool = subnet->getPool(Lease::TYPE_PD, lease->addr_, false);
                 if (pool) {
                     StatsMgr::instance().addValue(
                         StatsMgr::generateName("subnet", subnet->getID(),
@@ -3876,7 +3876,7 @@ Dhcpv6Srv::declineLeases(const Pkt6Ptr& decline, Pkt6Ptr& reply,
     // may turn the status code to some error, but can't turn it back to success.
     int general_status = STATUS_Success;
 
-    for (const auto& opt : decline->options_) {
+    for (auto const& opt : decline->options_) {
         switch (opt.second->getType()) {
         case D6O_IA_NA: {
             OptionPtr answer_opt = declineIA(decline, ctx.duid_, general_status,
@@ -4125,9 +4125,9 @@ Dhcpv6Srv::declineLease(const Pkt6Ptr& decline, const Lease6Ptr lease,
         StatsMgr::generateName("subnet", lease->subnet_id_, "declined-addresses"),
         static_cast<int64_t>(1));
 
-    const auto& subnet = CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getBySubnetId(lease->subnet_id_);
+    auto const& subnet = CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getBySubnetId(lease->subnet_id_);
     if (subnet) {
-        const auto& pool = subnet->getPool(Lease::TYPE_NA, lease->addr_, false);
+        auto const& pool = subnet->getPool(Lease::TYPE_NA, lease->addr_, false);
         if (pool) {
             StatsMgr::instance().addValue(
                 StatsMgr::generateName("subnet", subnet->getID(),
@@ -4209,7 +4209,7 @@ Dhcpv6Srv::processDhcp4Query(const Pkt6Ptr& dhcp4_query) {
 
 void Dhcpv6Srv::classifyByVendor(const Pkt6Ptr& pkt) {
     OptionVendorClassPtr vclass;
-    for (const auto& opt : pkt->getOptions(D6O_VENDOR_CLASS)) {
+    for (auto const& opt : pkt->getOptions(D6O_VENDOR_CLASS)) {
         vclass = boost::dynamic_pointer_cast<OptionVendorClass>(opt.second);
         if (!vclass || vclass->getTuplesNum() == 0) {
             continue;
@@ -4331,7 +4331,7 @@ Dhcpv6Srv::requiredClassify(const Pkt6Ptr& pkt, AllocEngine::ClientContext6& ctx
         }
 
         // And finish by pools
-        for (const auto& resource : ctx.allocated_resources_) {
+        for (auto const& resource : ctx.allocated_resources_) {
             PoolPtr pool =
                 ctx.subnet_->getPool(resource.getPrefixLength() == 128 ?
                                      Lease::TYPE_NA : Lease::TYPE_PD,

@@ -113,8 +113,8 @@ TcpConnectionPool::usedByRemoteIpInternal(const IOAddress& remote_ip,
                                           size_t& total_connections) {
     total_connections = connections_.size();
     size_t cnt = 0;
-    for (const auto& conn : connections_) {
-        const auto& ep = conn->getRemoteEndpoint();
+    for (auto const& conn : connections_) {
+        auto const& ep = conn->getRemoteEndpoint();
         if ((ep != TcpConnection::NO_ENDPOINT()) &&
             (IOAddress(ep.address()) == remote_ip)) {
             ++cnt;

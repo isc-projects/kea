@@ -80,7 +80,7 @@ StatContext::getAll() const {
 void
 StatContext::setMaxSampleCountAll(uint32_t max_samples) {
     // Let's iterate over all stored statistics...
-    for (const auto& s : stats_) {
+    for (auto const& s : stats_) {
         // ... and set count limit for each statistic.
         s.second->setMaxSampleCount(max_samples);
     }

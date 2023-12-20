@@ -633,7 +633,7 @@ public:
     db::MySqlBindingPtr createInputRequiredClassesBinding(const T& object) {
         // Create JSON list of required classes.
         data::ElementPtr required_classes_element = data::Element::createList();
-        const auto& required_classes = object->getRequiredClasses();
+        auto const& required_classes = object->getRequiredClasses();
         for (auto required_class = required_classes.cbegin();
              required_class != required_classes.cend();
              ++required_class) {

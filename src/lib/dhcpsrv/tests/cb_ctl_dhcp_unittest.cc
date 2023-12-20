@@ -174,7 +174,7 @@ public:
     /// @param object_type Object type.
     bool hasConfigElement(const std::string& object_type) const {
         if (!audit_entries_.empty()) {
-            const auto& index = audit_entries_.get<AuditEntryObjectTypeTag>();
+            auto const& index = audit_entries_.get<AuditEntryObjectTypeTag>();
             auto range = index.equal_range(object_type);
             for (auto it = range.first; it != range.second; ++it) {
                 if (((*it)->getModificationType() != AuditEntry::ModificationType::DELETE)) {
@@ -195,7 +195,7 @@ public:
     bool deleteConfigElement(const std::string& object_type,
                              const uint64_t object_id) const {
         if (!audit_entries_.empty()) {
-            const auto& index = audit_entries_.get<AuditEntryObjectTypeTag>();
+            auto const& index = audit_entries_.get<AuditEntryObjectTypeTag>();
             auto range = index.equal_range(boost::make_tuple(object_type,
                                                              AuditEntry::ModificationType::DELETE));
             for (auto it = range.first; it != range.second; ++it) {

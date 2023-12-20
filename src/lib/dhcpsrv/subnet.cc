@@ -406,7 +406,7 @@ const PoolPtr Subnet::getPool(Lease::Type type, const isc::asiolink::IOAddress& 
     // check if the type is valid (and throw if it isn't)
     checkType(type);
 
-    const auto& pools = getPools(type);
+    auto const& pools = getPools(type);
 
     PoolPtr candidate;
 
@@ -442,7 +442,7 @@ const PoolPtr Subnet::getPool(Lease::Type type, const isc::asiolink::IOAddress& 
 
 void
 Subnet::initAllocatorsAfterConfigure() {
-    for (const auto& allocator : allocators_) {
+    for (auto const& allocator : allocators_) {
         allocator.second->initAfterConfigure();
     }
 }
@@ -453,7 +453,7 @@ const PoolPtr Subnet::getPool(Lease::Type type,
     // check if the type is valid (and throw if it isn't)
     checkType(type);
 
-    const auto& pools = getPools(type);
+    auto const& pools = getPools(type);
 
     PoolPtr candidate;
 
@@ -543,8 +543,8 @@ Subnet::inPool(Lease::Type type, const isc::asiolink::IOAddress& addr) const {
         return (false);
     }
 
-    const auto& pools = getPools(type);
-    for (const auto& pool : pools) {
+    auto const& pools = getPools(type);
+    for (auto const& pool : pools) {
         if (pool->inRange(addr)) {
             return (true);
         }
@@ -563,8 +563,8 @@ Subnet::inPool(Lease::Type type,
         return (false);
     }
 
-    const auto& pools = getPools(type);
-    for (const auto& pool : pools) {
+    auto const& pools = getPools(type);
+    for (auto const& pool : pools) {
         if (!pool->clientSupported(client_classes)) {
             continue;
         }
@@ -578,7 +578,7 @@ Subnet::inPool(Lease::Type type,
 
 bool
 Subnet::poolOverlaps(const Lease::Type& pool_type, const PoolPtr& pool) const {
-    const auto& pools = getPools(pool_type);
+    auto const& pools = getPools(pool_type);
 
     // If no pools, we don't overlap. Nothing to do.
     if (pools.empty()) {
@@ -599,7 +599,7 @@ Subnet::poolOverlaps(const Lease::Type& pool_type, const PoolPtr& pool) const {
     // greater than F2). prefixLessThanPoolAddress with the first argument
     // set to "true" is the custom comparison function for upper_bound, which
     // compares F2 with the first addresses of the existing pools.
-    const auto pool3_it =
+    auto const pool3_it =
         std::upper_bound(pools.begin(), pools.end(), pool->getFirstAddress(),
                          prefixLessThanFirstAddress);
 
@@ -810,9 +810,9 @@ Subnet4::toElement() const {
     isc::data::merge(map, d4o6.toElement());
 
     // Set pools
-    const auto& pools = getPools(Lease::TYPE_V4);
+    auto const& pools = getPools(Lease::TYPE_V4);
     ElementPtr pool_list = Element::createList();
-    for (const auto& pool : pools) {
+    for (auto const& pool : pools) {
         // Add the formatted pool to the list
         pool_list->add(pool->toElement());
     }
@@ -918,18 +918,18 @@ Subnet6::toElement() const {
     merge(map, network_map);
 
     // Set pools
-    const auto& pools = getPools(Lease::TYPE_NA);
+    auto const& pools = getPools(Lease::TYPE_NA);
     ElementPtr pool_list = Element::createList();
-    for (const auto& pool : pools) {
+    for (auto const& pool : pools) {
         // Add the formatted pool to the list
         pool_list->add(pool->toElement());
     }
     map->set("pools", pool_list);
 
     // Set pd-pools
-    const auto& pdpools = getPools(Lease::TYPE_PD);
+    auto const& pdpools = getPools(Lease::TYPE_PD);
     ElementPtr pdpool_list = Element::createList();
-    for (const auto& pool : pdpools) {
+    for (auto const& pool : pdpools) {
         // Add the formatted pool to the list
         pdpool_list->add(pool->toElement());
     }

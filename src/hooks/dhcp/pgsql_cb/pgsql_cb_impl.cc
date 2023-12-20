@@ -1099,9 +1099,9 @@ void
 PgSqlConfigBackendImpl::addRelayBinding(PsqlBindArray& bindings,
                                         const NetworkPtr& network) {
     ElementPtr relay_element = Element::createList();
-    const auto& addresses = network->getRelayAddresses();
+    auto const& addresses = network->getRelayAddresses();
     if (!addresses.empty()) {
-        for (const auto& address : addresses) {
+        for (auto const& address : addresses) {
             relay_element->add(Element::create(address.toText()));
         }
     }

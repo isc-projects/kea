@@ -3518,7 +3518,7 @@ TEST_F(HooksDhcpv4SrvTest, leases4ParkedPacketLimit) {
     ASSERT_FALSE(client.getContext().response_);
 
     // Verify we have a packet parked.
-    const auto& parking_lot = ServerHooks::getServerHooks().getParkingLotPtr("leases4_committed");
+    auto const& parking_lot = ServerHooks::getServerHooks().getParkingLotPtr("leases4_committed");
     ASSERT_TRUE(parking_lot);
     ASSERT_EQ(1, parking_lot->size());
 
@@ -3878,7 +3878,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4OfferParkedPacketLimit) {
     ASSERT_FALSE(client.getContext().response_);
 
     // Verify we have a packet parked.
-    const auto& parking_lot = ServerHooks::getServerHooks().getParkingLotPtr("lease4_offer");
+    auto const& parking_lot = ServerHooks::getServerHooks().getParkingLotPtr("lease4_offer");
     ASSERT_TRUE(parking_lot);
     ASSERT_EQ(1, parking_lot->size());
 

@@ -56,7 +56,7 @@ public:
     /// @return Value of the property or 0 if property doesn't exist.
     virtual int getProperty(const ServerSelector&,
                             const std::string& property_name) const {
-        for (const auto& property : properties_) {
+        for (auto const& property : properties_) {
             if (property.first == property_name) {
                 return (property.second);
             }
@@ -72,7 +72,7 @@ public:
     virtual int getProperty(const ServerSelector&,
                             const std::string& property_name,
                             const int property_value) const {
-        for (const auto& property : properties_) {
+        for (auto const& property : properties_) {
             if ((property.first == property_name) &&
                 (property.second == property_value)) {
                 return (property.second);
@@ -89,7 +89,7 @@ public:
     virtual PropertiesList getProperties(const ServerSelector&,
                                          const std::string& property_name) const {
         PropertiesList properties;
-        for (const auto& property : properties_) {
+        for (auto const& property : properties_) {
             if (property.first == property_name) {
                 properties.push_back(property);
             }

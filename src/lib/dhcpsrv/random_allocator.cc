@@ -28,7 +28,7 @@ RandomAllocator::pickAddressInternal(const ClientClasses& client_classes,
                                      const IdentifierBaseTypePtr&,
                                      const IOAddress&) {
     auto subnet = subnet_.lock();
-    const auto& pools = subnet->getPools(pool_type_);
+    auto const& pools = subnet->getPools(pool_type_);
 
     // Let's first iterate over the pools and identify the ones that
     // meet client class criteria. Then, segregate these pools into
@@ -91,7 +91,7 @@ RandomAllocator::pickPrefixInternal(const ClientClasses& client_classes,
                                     const IOAddress&,
                                     uint8_t hint_prefix_length) {
     auto subnet = subnet_.lock();
-    const auto& pools = subnet->getPools(pool_type_);
+    auto const& pools = subnet->getPools(pool_type_);
 
     // Let's first iterate over the pools and identify the ones that
     // meet client class criteria. Then, segragate these pools into

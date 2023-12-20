@@ -764,7 +764,7 @@ public:
     checkSubnet(const CollectionType& col, std::string subnet,
                 uint32_t t1, uint32_t t2, uint32_t valid,
                 uint32_t min_valid = 0, uint32_t max_valid = 0) {
-        const auto& index = col.template get<SubnetPrefixIndexTag>();
+        auto const& index = col.template get<SubnetPrefixIndexTag>();
         auto subnet_it = index.find(subnet);
         if (subnet_it == index.cend()) {
             ADD_FAILURE() << "Unable to find expected subnet " << subnet;

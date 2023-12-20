@@ -886,7 +886,7 @@ GenericConfigBackendDHCPv4Test::getAllGlobalParameters4Test() {
     auto parameters = cbptr_->getAllGlobalParameters4(ServerSelector::ALL());
     ASSERT_EQ(5, parameters.size());
 
-    const auto& parameters_index = parameters.get<StampedValueNameIndexTag>();
+    auto const& parameters_index = parameters.get<StampedValueNameIndexTag>();
 
     // Verify their values.
     EXPECT_EQ("value1", (*parameters_index.find("name1"))->getValue());
@@ -939,7 +939,7 @@ GenericConfigBackendDHCPv4Test::getModifiedGlobalParameters4Test() {
     auto parameters = cbptr_->getModifiedGlobalParameters4(ServerSelector::ALL(),
                                                            timestamps_["after today"]);
 
-    const auto& parameters_index = parameters.get<StampedValueNameIndexTag>();
+    auto const& parameters_index = parameters.get<StampedValueNameIndexTag>();
 
     // It should be the one modified "tomorrow".
     ASSERT_EQ(1, parameters_index.size());

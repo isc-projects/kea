@@ -64,7 +64,7 @@ CBControlDHCPv6::databaseConfigApply(const db::BackendSelector& backend_selector
         auto external_cfg = CfgMgr::instance().createExternalCfg();
 
         // Get audit entries for deleted global parameters.
-        const auto& index = audit_entries.get<AuditEntryObjectTypeTag>();
+        auto const& index = audit_entries.get<AuditEntryObjectTypeTag>();
         auto range = index.equal_range(boost::make_tuple("dhcp6_global_parameter",
                                                          AuditEntry::ModificationType::DELETE));
         if (range.first != range.second) {

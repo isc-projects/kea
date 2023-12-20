@@ -129,7 +129,7 @@ LeaseMgr::recountLeaseStats4() {
             stats_mgr.setValue(name_rec, zero);
         }
 
-        for (const auto& pool : (*subnet)->getPools(Lease::TYPE_V4)) {
+        for (auto const& pool : (*subnet)->getPools(Lease::TYPE_V4)) {
             const std::string name_aa(StatsMgr::generateName("subnet", subnet_id,
                                                              StatsMgr::generateName("pool", pool->getID(),
                                                                                     "assigned-addresses")));
@@ -353,7 +353,7 @@ LeaseMgr::recountLeaseStats6() {
                 zero);
         }
 
-        for (const auto& pool : (*subnet)->getPools(Lease::TYPE_NA)) {
+        for (auto const& pool : (*subnet)->getPools(Lease::TYPE_NA)) {
             const std::string& name_anas(StatsMgr::generateName("subnet", subnet_id,
                                                                 StatsMgr::generateName("pool", pool->getID(),
                                                                                        "assigned-nas")));
@@ -383,7 +383,7 @@ LeaseMgr::recountLeaseStats6() {
             }
         }
 
-        for (const auto& pool : (*subnet)->getPools(Lease::TYPE_PD)) {
+        for (auto const& pool : (*subnet)->getPools(Lease::TYPE_PD)) {
             const std::string& name_apds(StatsMgr::generateName("subnet", subnet_id,
                                                                 StatsMgr::generateName("pd-pool", pool->getID(),
                                                                                        "assigned-pds")));

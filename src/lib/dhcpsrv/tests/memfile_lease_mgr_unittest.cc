@@ -187,7 +187,7 @@ public:
 
     /// @brief Remove other files.
     void removeOtherFiles() const {
-        for (const auto& file : extra_files_) {
+        for (auto const& file : extra_files_) {
             LeaseFileIO io(file);
             io.removeFile();
         }

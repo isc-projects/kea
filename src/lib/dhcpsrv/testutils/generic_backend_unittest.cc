@@ -144,7 +144,7 @@ GenericBackendTest::testNewAuditEntry(const std::string& exp_object_type,
         // Server tag is 'all'.
         tag = "all";
     } else {
-        const auto& tags = server_selector.getTags();
+        auto const& tags = server_selector.getTags();
         // This test is not meant to handle multiple server tags all at once.
         if (tags.size() > 1) {
             ADD_FAILURE() << "Test error: do not use multiple server tags";
@@ -191,7 +191,7 @@ GenericBackendTest::testNewAuditEntry(const std::vector<ExpAuditEntry>& exp_entr
         // Server tag is 'all'.
         tag = "all";
     } else {
-        const auto& tags = server_selector.getTags();
+        auto const& tags = server_selector.getTags();
         // This test is not meant to handle multiple server tags all at once.
         if (tags.size() != 1) {
             ADD_FAILURE() << "Test error: tags.size(): " << tags.size()

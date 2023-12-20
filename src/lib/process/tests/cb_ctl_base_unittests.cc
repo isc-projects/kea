@@ -51,7 +51,7 @@ public:
         db::AuditEntryCollection filtered_entries;
 
         // Use the index which orders the audit entries by timestamps.
-        const auto& index = audit_entries_.get<AuditEntryModificationTimeIdTag>();
+        auto const& index = audit_entries_.get<AuditEntryModificationTimeIdTag>();
 
         // Locate the first audit entry after the last one having the
         // specified modification time and id.

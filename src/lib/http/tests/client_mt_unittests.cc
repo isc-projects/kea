@@ -213,7 +213,7 @@ public:
         }
 
         // Stop all listeners.
-        for (const auto& listener : listeners_) {
+        for (auto const& listener : listeners_) {
             listener->stop();
         }
 
@@ -518,7 +518,7 @@ public:
         ASSERT_NO_THROW(client_->stop());
 
         // Listeners should stop without issue.
-        for (const auto& listener : listeners_) {
+        for (auto const& listener : listeners_) {
             ASSERT_NO_THROW(listener->stop());
         }
 
@@ -713,7 +713,7 @@ public:
         ASSERT_NO_THROW(client_->stop());
 
         // Listeners should stop without issue.
-        for (const auto& listener : listeners_) {
+        for (auto const& listener : listeners_) {
             ASSERT_NO_THROW(listener->stop());
         }
 

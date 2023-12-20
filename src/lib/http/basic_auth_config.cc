@@ -362,7 +362,7 @@ BasicHttpAuthConfig::checkAuth(const HttpResponseCreator& creator,
         value = value.substr(5);
         value = str::trim(value);
         // Verify the credential is in the list.
-        const auto it = credentials.find(value);
+        auto const it = credentials.find(value);
         if (it != credentials.end()) {
             LOG_INFO(auth_logger, HTTP_CLIENT_REQUEST_AUTHORIZED)
                 .arg(it->second);

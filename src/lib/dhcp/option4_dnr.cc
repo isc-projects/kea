@@ -380,7 +380,7 @@ DnrInstance::getDnrInstanceAsText() const {
            << "adn='" << getAdnAsText() << "'";
     if (!adn_only_mode_) {
         stream << ", addr_length=" << addr_length_ << ", address(es):";
-        for (const auto& address : ip_addresses_) {
+        for (auto const& address : ip_addresses_) {
             stream << " " << address.toText();
         }
 

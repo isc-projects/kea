@@ -44,7 +44,7 @@ std::string Pkt6::RelayInfo::toText() const {
         << "link-address=" << linkaddr_.toText()
         << ", peer-address=" << peeraddr_.toText() << ", "
         << options_.size() << " option(s)" << endl;
-    for (const auto& option : options_) {
+    for (auto const& option : options_) {
         tmp << option.second->toText() << endl;
     }
     return (tmp.str());
@@ -346,7 +346,7 @@ uint16_t Pkt6::getRelayOverhead(const RelayInfo& relay) const {
     uint16_t len = DHCPV6_RELAY_HDR_LEN // fixed header
         + Option::OPTION6_HDR_LEN; // header of the relay-msg option
 
-    for (const auto& opt : relay.options_) {
+    for (auto const& opt : relay.options_) {
         len += (opt.second)->len();
     }
 
@@ -368,7 +368,7 @@ uint16_t Pkt6::calculateRelaySizes() {
 uint16_t Pkt6::directLen() const {
     uint16_t length = DHCPV6_PKT_HDR_LEN; // DHCPv6 header
 
-    for (const auto& it : options_) {
+    for (auto const& it : options_) {
         length += it.second->len();
     }
 
@@ -422,7 +422,7 @@ Pkt6::packUDP() {
                 // present here as well (vendor-opts for Cable modems,
                 // subscriber-id, remote-id, options echoed back from Echo
                 // Request Option, etc.)
-                for (const auto& opt : relay->options_) {
+                for (auto const& opt : relay->options_) {
                     (opt.second)->pack(buffer_out_);
                 }
 
@@ -738,7 +738,7 @@ Pkt6::toText() const {
 
     if (!options_.empty()) {
         tmp << "," << endl << "options:";
-        for (const auto& opt : options_) {
+        for (auto const& opt : options_) {
             try {
                 tmp << endl << opt.second->toText(2);
             } catch (...) {
@@ -754,7 +754,7 @@ Pkt6::toText() const {
     if (!relay_info_.empty()) {
         tmp << endl << relay_info_.size() << " relay(s):" << endl;
         int cnt = 0;
-        for (const auto& relay : relay_info_) {
+        for (auto const& relay : relay_info_) {
             tmp << "relay[" << cnt++ << "]: " << relay.toText();
         }
     } else {

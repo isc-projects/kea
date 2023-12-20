@@ -41,7 +41,7 @@ Option6Dnr::pack(util::OutputBuffer& buf, bool check) const {
 
 void
 Option6Dnr::packAddresses(util::OutputBuffer& buf) const {
-    for (const auto& address : ip_addresses_) {
+    for (auto const& address : ip_addresses_) {
         if (!address.isV6()) {
             isc_throw(isc::BadValue, getLogPrefix()
                                          << address.toText() << " is not an IPv6 address");

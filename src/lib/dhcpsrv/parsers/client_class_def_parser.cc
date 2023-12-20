@@ -251,7 +251,7 @@ ClientClassDefParser::parse(ClientClassDictionaryPtr& class_dictionary,
     }
 
     // Sanity checks on built-in classes
-    for (const auto& bn : builtinNames) {
+    for (auto const& bn : builtinNames) {
         if (name == bn) {
             if (required) {
                 isc_throw(DhcpConfigError, "built-in class '" << name

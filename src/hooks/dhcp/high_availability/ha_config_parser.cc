@@ -100,7 +100,7 @@ HAConfigParser::parseAll(const HAConfigMapperPtr& config_storage,
     }
 
     // Get the HA configuration.
-    const auto& config_vec = config->listValue();
+    auto const& config_vec = config->listValue();
     if (config_vec.empty()) {
         isc_throw(ConfigError, "a list of HA configurations must not be empty");
     }
@@ -258,7 +258,7 @@ HAConfigParser::parseOne(const HAConfigMapperPtr& config_storage,
     rel_config->setRestrictCommands(getBoolean(config, "restrict-commands"));
 
     // Peers configuration parsing.
-    const auto& peers_vec = peers->listValue();
+    auto const& peers_vec = peers->listValue();
 
     // Go over configuration of each peer.
     for (auto p = peers_vec.begin(); p != peers_vec.end(); ++p) {
@@ -338,7 +338,7 @@ HAConfigParser::parseOne(const HAConfigMapperPtr& config_storage,
 
     // Per state configuration is optional.
     if (states_list) {
-        const auto& states_vec = states_list->listValue();
+        auto const& states_vec = states_list->listValue();
 
         std::set<int> configured_states;
 

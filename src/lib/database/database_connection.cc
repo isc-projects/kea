@@ -220,7 +220,7 @@ isc::data::ElementPtr
 DatabaseConnection::toElement(const ParameterMap& params) {
     isc::data::ElementPtr result = isc::data::Element::createMap();
 
-    for (const auto& param : params) {
+    for (auto const& param : params) {
         std::string keyword = param.first;
         std::string value = param.second;
 

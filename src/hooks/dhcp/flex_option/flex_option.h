@@ -375,7 +375,7 @@ public:
             }
         }
         for (auto const& pair : getSubOptionConfigMap()) {
-            for (const auto& sub_pair : pair.second) {
+            for (auto const& sub_pair : pair.second) {
                 const SubOptionConfigPtr& sub_cfg = sub_pair.second;
                 uint16_t sub_code = sub_cfg->getCode();
                 uint16_t opt_code = sub_cfg->getContainerCode();

@@ -44,14 +44,14 @@ protected:
     /// backend
     void addGlobalsToConfig(SrvConfigPtr external_cfg,
                             data::StampedValueCollection& cb_globals) const {
-        const auto& index = cb_globals.get<data::StampedValueNameIndexTag>();
+        auto const& index = cb_globals.get<data::StampedValueNameIndexTag>();
         for (auto cb_global = index.begin(); cb_global != index.end(); ++cb_global) {
 
             if ((*cb_global)->amNull()) {
                 continue;
             }
 
-            external_cfg->addConfiguredGlobal((*cb_global)->getName(), 
+            external_cfg->addConfiguredGlobal((*cb_global)->getName(),
                                               (*cb_global)->getElementValue());
         }
     }

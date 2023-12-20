@@ -46,7 +46,7 @@ redact(ElementPtrType const& element, list<string> json_path) {
         if (next_key == "*" || json_path.empty()) {
             // Then iterate through all the children.
             result = Element::createMap();
-            for (const auto& kv : element->mapValue()) {
+            for (auto const& kv : element->mapValue()) {
                 std::string const& key(kv.first);
                 ConstElementPtr const& value(kv.second);
 

@@ -37,7 +37,7 @@ TestConfigBackendDHCPv4::unregisterBackendType(ConfigBackendDHCPv4Mgr& mgr,
 Subnet4Ptr
 TestConfigBackendDHCPv4::getSubnet4(const db::ServerSelector& server_selector,
                                     const std::string& subnet_prefix) const{
-    const auto& index = subnets_.get<SubnetPrefixIndexTag>();
+    auto const& index = subnets_.get<SubnetPrefixIndexTag>();
     auto subnet_it = index.find(subnet_prefix);
     if (subnet_it == index.cend()) {
         return (Subnet4Ptr());
@@ -61,7 +61,7 @@ TestConfigBackendDHCPv4::getSubnet4(const db::ServerSelector& server_selector,
 Subnet4Ptr
 TestConfigBackendDHCPv4::getSubnet4(const db::ServerSelector& server_selector,
                                     const SubnetID& subnet_id) const {
-    const auto& index = subnets_.get<SubnetSubnetIdIndexTag>();
+    auto const& index = subnets_.get<SubnetSubnetIdIndexTag>();
     auto subnet_it = index.find(subnet_id);
     if (subnet_it == index.cend()) {
         return (Subnet4Ptr());
@@ -118,7 +118,7 @@ TestConfigBackendDHCPv4::getAllSubnets4(const db::ServerSelector& server_selecto
 Subnet4Collection
 TestConfigBackendDHCPv4::getModifiedSubnets4(const db::ServerSelector& server_selector,
                                              const boost::posix_time::ptime& modification_time) const {
-    const auto& index = subnets_.get<SubnetModificationTimeIndexTag>();
+    auto const& index = subnets_.get<SubnetModificationTimeIndexTag>();
     Subnet4Collection subnets;
     auto lb = index.lower_bound(modification_time);
     for (auto subnet = lb; subnet != index.end(); ++subnet) {
@@ -197,7 +197,7 @@ TestConfigBackendDHCPv4::getSharedNetworkSubnets4(const db::ServerSelector& serv
 SharedNetwork4Ptr
 TestConfigBackendDHCPv4::getSharedNetwork4(const db::ServerSelector& server_selector,
                                            const std::string& name) const {
-    const auto& index = shared_networks_.get<SharedNetworkNameIndexTag>();
+    auto const& index = shared_networks_.get<SharedNetworkNameIndexTag>();
     auto network_it = index.find(name);
     if (network_it == index.cend()) {
         return (SharedNetwork4Ptr());
@@ -254,7 +254,7 @@ TestConfigBackendDHCPv4::getAllSharedNetworks4(const db::ServerSelector& server_
 SharedNetwork4Collection
 TestConfigBackendDHCPv4::getModifiedSharedNetworks4(const db::ServerSelector& server_selector,
                                                     const boost::posix_time::ptime& modification_time) const {
-    const auto& index = shared_networks_.get<SharedNetworkModificationTimeIndexTag>();
+    auto const& index = shared_networks_.get<SharedNetworkModificationTimeIndexTag>();
     SharedNetwork4Collection shared_networks;
     auto lb = index.lower_bound(modification_time);
     for (auto shared_network = lb; shared_network != index.end(); ++shared_network) {
@@ -293,7 +293,7 @@ TestConfigBackendDHCPv4::getOptionDef4(const db::ServerSelector& server_selector
                                        const std::string& space) const {
     auto tags = server_selector.getTags();
     auto candidate = OptionDefinitionPtr();
-    const auto& index = option_defs_.get<1>();
+    auto const& index = option_defs_.get<1>();
     auto option_def_it_pair = index.equal_range(code);
 
     for (auto option_def_it = option_def_it_pair.first;
@@ -348,7 +348,7 @@ TestConfigBackendDHCPv4::getModifiedOptionDefs4(const db::ServerSelector& server
                                                 const boost::posix_time::ptime& modification_time) const {
     auto tags = server_selector.getTags();
     OptionDefContainer option_defs;
-    const auto& index = option_defs_.get<3>();
+    auto const& index = option_defs_.get<3>();
     auto lb = index.lower_bound(modification_time);
     for (auto option_def = lb; option_def != index.end(); ++option_def) {
         bool got = false;
@@ -375,7 +375,7 @@ TestConfigBackendDHCPv4::getOption4(const db::ServerSelector& server_selector,
                                     const std::string& space) const {
     auto tags = server_selector.getTags();
     auto candidate = OptionDescriptorPtr();
-    const auto& index = options_.get<1>();
+    auto const& index = options_.get<1>();
     auto option_it_pair = index.equal_range(code);
 
     for (auto option_it = option_it_pair.first; option_it != option_it_pair.second;
@@ -423,7 +423,7 @@ TestConfigBackendDHCPv4::getModifiedOptions4(const db::ServerSelector& server_se
                                              const boost::posix_time::ptime& modification_time) const {
     auto tags = server_selector.getTags();
     OptionContainer options;
-    const auto& index = options_.get<3>();
+    auto const& index = options_.get<3>();
     auto lb = index.lower_bound(modification_time);
     for (auto option = lb; option != index.end(); ++option) {
         bool got = false;
@@ -449,7 +449,7 @@ TestConfigBackendDHCPv4::getGlobalParameter4(const db::ServerSelector& server_se
                                              const std::string& name) const {
     auto tags = server_selector.getTags();
     auto candidate = StampedValuePtr();
-    const auto& index = globals_.get<StampedValueNameIndexTag>();
+    auto const& index = globals_.get<StampedValueNameIndexTag>();
     auto global_range = index.equal_range(name);
     for (auto global_it = global_range.first; global_it != global_range.second;
          ++global_it) {
@@ -495,7 +495,7 @@ TestConfigBackendDHCPv4::getModifiedGlobalParameters4(const db::ServerSelector& 
                                                       const boost::posix_time::ptime& modification_time) const {
     auto tags = server_selector.getTags();
     StampedValueCollection globals;
-    const auto& index = globals_.get<StampedValueModificationTimeIndexTag>();
+    auto const& index = globals_.get<StampedValueModificationTimeIndexTag>();
     auto lb = index.lower_bound(modification_time);
     for (auto global = lb; global != index.end(); ++global) {
         bool got = false;
@@ -658,7 +658,7 @@ TestConfigBackendDHCPv4::getAllServers4() const {
 
 ServerPtr
 TestConfigBackendDHCPv4::getServer4(const ServerTag& server_tag) const {
-    const auto& index = servers_.get<ServerTagIndexTag>();
+    auto const& index = servers_.get<ServerTagIndexTag>();
     auto server_it = index.find(server_tag.get());
     return ((server_it != index.cend()) ? (*server_it) : ServerPtr());
 }

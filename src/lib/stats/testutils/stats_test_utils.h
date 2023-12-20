@@ -61,7 +61,7 @@ inline void checkNoStat(const std::string& name) {
 ///
 /// @param expected_stats Map of expected static names and values.
 inline void checkStats(const StatMap& expected_stats) {
-    for (const auto& it : expected_stats) {
+    for (auto const& it : expected_stats) {
         checkStat(it.first, it.second);
     }
 }

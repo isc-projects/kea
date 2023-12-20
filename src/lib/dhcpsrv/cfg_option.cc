@@ -162,7 +162,7 @@ CfgOption::createOptions(CfgOptionDefPtr cfg_def) {
     // Iterate over all the option descriptors in
     // all the spaces and instantiate the options
     // based on the given definitions.
-    for (const auto& space : getOptionSpaceNames()) {
+    for (auto const& space : getOptionSpaceNames()) {
         for (auto opt_desc : *(getAll(space))) {
             if (createDescriptorOption(cfg_def, space, opt_desc)) {
                 // Option was recreated, let's replace the descriptor.
@@ -372,7 +372,7 @@ CfgOption::del(const std::string& option_space, const uint16_t option_code) {
         (option_space != DHCP6_OPTION_SPACE)) {
         // For each option space name iterate over the existing options.
         auto option_space_names = getOptionSpaceNames();
-        for (const auto& option_space_from_list : option_space_names) {
+        for (auto const& option_space_from_list : option_space_names) {
             // Get all options within the particular option space.
             auto options_in_space = getAll(option_space_from_list);
             for (auto option_it = options_in_space->begin();

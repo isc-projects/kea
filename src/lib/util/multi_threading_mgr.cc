@@ -154,7 +154,7 @@ MultiThreadingMgr::apply(bool enabled, uint32_t thread_count, uint32_t queue_siz
 void
 MultiThreadingMgr::checkCallbacksPermissions() {
     if (getMode()) {
-        for (const auto& cb : cs_callbacks_.getCallbackSets()) {
+        for (auto const& cb : cs_callbacks_.getCallbackSets()) {
             try {
                 (cb.check_cb_)();
             } catch (const isc::MultiThreadingInvalidOperation& ex) {
@@ -177,7 +177,7 @@ MultiThreadingMgr::checkCallbacksPermissions() {
 void
 MultiThreadingMgr::callEntryCallbacks() {
     if (getMode()) {
-        const auto& callbacks = cs_callbacks_.getCallbackSets();
+        auto const& callbacks = cs_callbacks_.getCallbackSets();
         for (auto cb_it = callbacks.begin(); cb_it != callbacks.end(); cb_it++) {
             try {
                 (cb_it->entry_cb_)();
@@ -193,7 +193,7 @@ MultiThreadingMgr::callEntryCallbacks() {
 void
 MultiThreadingMgr::callExitCallbacks() {
     if (getMode()) {
-        const auto& callbacks = cs_callbacks_.getCallbackSets();
+        auto const& callbacks = cs_callbacks_.getCallbackSets();
         for (auto cb_it = callbacks.rbegin(); cb_it != callbacks.rend(); cb_it++) {
             try {
                 (cb_it->exit_cb_)();

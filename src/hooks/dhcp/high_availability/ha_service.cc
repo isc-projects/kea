@@ -2195,7 +2195,7 @@ HAService::asyncSyncLeasesInternal(http::HttpClient& http_client,
                     }
 
                     // Iterate over the leases and update the database as appropriate.
-                    const auto& leases_element = leases->listValue();
+                    auto const& leases_element = leases->listValue();
 
                     LOG_INFO(ha_logger, HA_LEASES_SYNC_LEASE_PAGE_RECEIVED)
                         .arg(config_->getThisServerName())

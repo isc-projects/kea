@@ -693,7 +693,7 @@ void
 extendVivco(OptionCollection& options) {
     typedef vector<OpaqueDataTuple> TuplesCollection;
     map<uint32_t, TuplesCollection> vendors_tuples;
-    const auto& range = options.equal_range(DHO_VIVCO_SUBOPTIONS);
+    auto const& range = options.equal_range(DHO_VIVCO_SUBOPTIONS);
     for (auto it = range.first; it != range.second; ++it) {
         uint32_t offset = 0;
         auto const& data = it->second->getData();
@@ -752,7 +752,7 @@ extendVivco(OptionCollection& options) {
 void
 extendVivso(OptionCollection& options) {
     map<uint32_t, OptionCollection> vendors_data;
-    const auto& range = options.equal_range(DHO_VIVSO_SUBOPTIONS);
+    auto const& range = options.equal_range(DHO_VIVSO_SUBOPTIONS);
     for (auto it = range.first; it != range.second; ++it) {
         uint32_t offset = 0;
         auto const& data = it->second->getData();

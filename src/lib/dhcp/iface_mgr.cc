@@ -828,7 +828,7 @@ IfaceCollection::getIfaceInternal(const unsigned int ifindex, const bool need_lo
             return (cache_);
         }
     }
-    const auto& idx = ifaces_container_.get<1>();
+    auto const& idx = ifaces_container_.get<1>();
     auto it = idx.find(ifindex);
     if (it == idx.end()) {
         return (IfacePtr()); // not found
@@ -855,7 +855,7 @@ IfaceCollection::getIfaceInternal(const std::string& ifname, const bool need_loc
             return (cache_);
         }
     }
-    const auto& idx = ifaces_container_.get<2>();
+    auto const& idx = ifaces_container_.get<2>();
     auto it = idx.find(ifname);
     if (it == idx.end()) {
         return (IfacePtr()); // not found

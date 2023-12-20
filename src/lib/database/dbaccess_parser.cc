@@ -270,7 +270,7 @@ DbAccessParser::getDbAccessString() const {
     // Construct the database access string from all keywords and values in the
     // parameter map where the value is not null.
     string dbaccess;
-    for (const auto& keyval : values_) {
+    for (auto const& keyval : values_) {
         if (!keyval.second.empty()) {
 
             // Separate keyword/value pair from predecessor (if there is one).

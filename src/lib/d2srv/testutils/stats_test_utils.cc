@@ -28,7 +28,7 @@ D2StatTest::~D2StatTest() {
 void
 checkStats(const string& key_name, const StatMap& expected_stats) {
     StatMap key_stats;
-    for (const auto& it : expected_stats) {
+    for (auto const& it : expected_stats) {
         const string& stat_name =
             StatsMgr::generateName("key", key_name, it.first);
         key_stats[stat_name] = it.second;

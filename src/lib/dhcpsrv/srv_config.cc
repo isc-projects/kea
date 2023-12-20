@@ -333,7 +333,7 @@ SrvConfig::applyDefaultsConfiguredGlobals(const SimpleDefaults& defaults) {
     const Element::Position pos("<default-value>", 0, 0);
 
     // Let's go over all parameters we have defaults for.
-    for (const auto& def_value : defaults) {
+    for (auto const& def_value : defaults) {
 
         // Try if such a parameter is there. If it is, let's
         // skip it, because user knows best *cough*.

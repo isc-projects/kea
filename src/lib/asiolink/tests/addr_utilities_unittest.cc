@@ -248,7 +248,7 @@ TEST(AddrUtilitiesTest, addrsInRange6) {
 // Checks if IPv4 address ranges can be converted to prefix / prefix_len
 TEST(AddrUtilitiesTest, prefixLengthFromRange4) {
     // Use a shorter name
-    const auto& plfr = prefixLengthFromRange;
+    auto const& plfr = prefixLengthFromRange;
 
     // Let's start with something simple
     EXPECT_EQ(32, plfr(IOAddress("192.0.2.0"), IOAddress("192.0.2.0")));
@@ -279,7 +279,7 @@ TEST(AddrUtilitiesTest, prefixLengthFromRange4) {
 // Checks if IPv6 address ranges can be converted to prefix / prefix_len
 TEST(AddrUtilitiesTest, prefixLengthFromRange6) {
     // Use a shorter name
-    const auto& plfr = prefixLengthFromRange;
+    auto const& plfr = prefixLengthFromRange;
 
     // Let's start with something simple
     EXPECT_EQ(128, plfr(IOAddress("::"), IOAddress("::")));

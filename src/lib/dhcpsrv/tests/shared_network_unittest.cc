@@ -404,7 +404,7 @@ TEST(SharedNetwork4Test, getNextSubnet) {
             if (j < subnets.size() - 1) {
                 ASSERT_TRUE(s) << "retrieving next subnet failed for pair of"
                     " indexes (i, j) = (" << i << ", " << j << ")";
-                const auto expected_subnet_id = (i + j + 1) % subnets.size() + 1;
+                auto const expected_subnet_id = (i + j + 1) % subnets.size() + 1;
                 EXPECT_EQ(expected_subnet_id, s->getID());
             } else {
                 // Null subnet returned for a last iteration.
@@ -1154,7 +1154,7 @@ TEST(SharedNetwork6Test, getNextSubnet) {
             if (j < subnets.size() - 1) {
                 ASSERT_TRUE(s) << "retrieving next subnet failed for pair of"
                     " indexes (i, j) = (" << i << ", " << j << ")";
-                const auto expected_subnet_id = (i + j + 1) % subnets.size() + 1;
+                auto const expected_subnet_id = (i + j + 1) % subnets.size() + 1;
                 EXPECT_EQ(expected_subnet_id, s->getID());
             } else {
                 // Null subnet returned for a last iteration.

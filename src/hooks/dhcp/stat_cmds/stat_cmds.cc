@@ -406,7 +406,7 @@ LeaseStatCmdsImpl::makeResultSet4(const ElementPtr& result_wrapper,
         CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
 
     // Set the bounds on the selected subnet range
-    const auto& idx = subnets->get<SubnetSubnetIdIndexTag>();
+    auto const& idx = subnets->get<SubnetSubnetIdIndexTag>();
 
     // Init to ALL so we can use auto
     auto lower = idx.begin();
@@ -537,7 +537,7 @@ LeaseStatCmdsImpl::makeResultSet6(const ElementPtr& result_wrapper,
         CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getAll();
 
     // Set the bounds on the selected subnet range
-    const auto& idx = subnets->get<SubnetSubnetIdIndexTag>();
+    auto const& idx = subnets->get<SubnetSubnetIdIndexTag>();
 
     // Init to ALL so we can use auto
     auto lower = idx.begin();

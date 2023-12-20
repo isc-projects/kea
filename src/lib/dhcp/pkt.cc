@@ -53,7 +53,7 @@ Pkt::addOption(const OptionPtr& opt) {
 
 OptionPtr
 Pkt::getNonCopiedOption(const uint16_t type) const {
-    const auto& x = options_.find(type);
+    auto const& x = options_.find(type);
     if (x != options_.end()) {
         return (x->second);
     }
@@ -62,7 +62,7 @@ Pkt::getNonCopiedOption(const uint16_t type) const {
 
 OptionPtr
 Pkt::getOption(const uint16_t type) {
-    const auto& x = options_.find(type);
+    auto const& x = options_.find(type);
     if (x != options_.end()) {
         if (copy_retrieved_options_) {
             OptionPtr option_copy = x->second->clone();
@@ -102,7 +102,7 @@ Pkt::getOptions(const uint16_t opt_type) {
 
 bool
 Pkt::delOption(uint16_t type) {
-    const auto& x = options_.find(type);
+    auto const& x = options_.find(type);
     if (x != options_.end()) {
         options_.erase(x);
         return (true); // delete successful

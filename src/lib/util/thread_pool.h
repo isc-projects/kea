@@ -242,7 +242,7 @@ private:
             isc_throw(MultiThreadingInvalidOperation, "thread pool stop called by worker thread");
         }
         queue_.disable();
-        for (const auto& thread : threads_) {
+        for (auto const& thread : threads_) {
             thread->join();
         }
         threads_.clear();
@@ -252,7 +252,7 @@ private:
     ///
     /// @return true if thread is owned, false otherwise
     bool checkThreadId(std::thread::id id) {
-        for (const auto& thread : threads_) {
+        for (auto const& thread : threads_) {
             if (id == thread->get_id()) {
                 return (true);
             }
