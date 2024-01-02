@@ -2200,6 +2200,8 @@ HAService::asyncSyncLeasesInternal(http::HttpClient& http_client,
                         .arg(leases_element.size())
                         .arg(server_name);
 
+                    // Count actually applied leases.
+                    uint64_t applied_lease_count = 0;
                     for (auto l = leases_element.begin(); l != leases_element.end(); ++l) {
                         try {
 
@@ -2223,6 +2225,7 @@ HAService::asyncSyncLeasesInternal(http::HttpClient& http_client,
                                 if (!existing_lease) {
                                     // There is no such lease, so let's add it.
                                     LeaseMgrFactory::instance().addLease(lease);
+                                    ++applied_lease_count;
 
                                 } else if (existing_lease->cltt_ < lease->cltt_) {
                                     // If the existing lease is older than the fetched lease, update
@@ -2232,6 +2235,7 @@ HAService::asyncSyncLeasesInternal(http::HttpClient& http_client,
                                     // the current expiration time value does not match what is stored.
                                     Lease::syncCurrentExpirationTime(*existing_lease, *lease);
                                     LeaseMgrFactory::instance().updateLease4(lease);
+                                    ++applied_lease_count;
 
                                 } else {
                                     LOG_DEBUG(ha_logger, DBGLVL_TRACE_BASIC, HA_LEASE_SYNC_STALE_LEASE4_SKIP)
@@ -2261,6 +2265,7 @@ HAService::asyncSyncLeasesInternal(http::HttpClient& http_client,
                                 if (!existing_lease) {
                                     // There is no such lease, so let's add it.
                                     LeaseMgrFactory::instance().addLease(lease);
+                                    ++applied_lease_count;
 
                                 } else if (existing_lease->cltt_ < lease->cltt_) {
                                     // If the existing lease is older than the fetched lease, update
@@ -2270,6 +2275,7 @@ HAService::asyncSyncLeasesInternal(http::HttpClient& http_client,
                                     // the current expiration time value does not match what is stored.
                                     Lease::syncCurrentExpirationTime(*existing_lease, *lease);
                                     LeaseMgrFactory::instance().updateLease6(lease);
+                                    ++applied_lease_count;
 
                                 } else {
                                     LOG_DEBUG(ha_logger, DBGLVL_TRACE_BASIC, HA_LEASE_SYNC_STALE_LEASE6_SKIP)
@@ -2286,6 +2292,10 @@ HAService::asyncSyncLeasesInternal(http::HttpClient& http_client,
                                 .arg(ex.what());
                         }
                     }
+
+                    LOG_INFO(ha_logger, HA_LEASES_SYNC_APPLIED_LEASES)
+                        .arg(config_->getThisServerName())
+                        .arg(applied_lease_count);
 
                 } catch (const std::exception& ex) {
                     error_message = ex.what();

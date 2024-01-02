@@ -61,6 +61,7 @@ extern const isc::log::MessageID HA_LEASES_BACKLOG_FAILED = "HA_LEASES_BACKLOG_F
 extern const isc::log::MessageID HA_LEASES_BACKLOG_NOTHING_TO_SEND = "HA_LEASES_BACKLOG_NOTHING_TO_SEND";
 extern const isc::log::MessageID HA_LEASES_BACKLOG_START = "HA_LEASES_BACKLOG_START";
 extern const isc::log::MessageID HA_LEASES_BACKLOG_SUCCESS = "HA_LEASES_BACKLOG_SUCCESS";
+extern const isc::log::MessageID HA_LEASES_SYNC_APPLIED_LEASES = "HA_LEASES_SYNC_APPLIED_LEASES";
 extern const isc::log::MessageID HA_LEASES_SYNC_COMMUNICATIONS_FAILED = "HA_LEASES_SYNC_COMMUNICATIONS_FAILED";
 extern const isc::log::MessageID HA_LEASES_SYNC_FAILED = "HA_LEASES_SYNC_FAILED";
 extern const isc::log::MessageID HA_LEASES_SYNC_LEASE_PAGE_RECEIVED = "HA_LEASES_SYNC_LEASE_PAGE_RECEIVED";
@@ -184,6 +185,7 @@ const char* values[] = {
     "HA_LEASES_BACKLOG_NOTHING_TO_SEND", "%1: no leases in backlog after communication recovery",
     "HA_LEASES_BACKLOG_START", "%1: starting to send %2 outstanding lease updates to %3",
     "HA_LEASES_BACKLOG_SUCCESS", "%1: sending lease updates backlog to %2 successful in %3",
+    "HA_LEASES_SYNC_APPLIED_LEASES", "%1: applied %2 leases received from the partner in the local lease database",
     "HA_LEASES_SYNC_COMMUNICATIONS_FAILED", "%1: failed to communicate with %2 while syncing leases: %3",
     "HA_LEASES_SYNC_FAILED", "%1: failed to synchronize leases with %2: %3",
     "HA_LEASES_SYNC_LEASE_PAGE_RECEIVED", "%1: received %2 leases from %3",

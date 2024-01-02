@@ -62,6 +62,7 @@ extern const isc::log::MessageID HA_LEASES_BACKLOG_FAILED;
 extern const isc::log::MessageID HA_LEASES_BACKLOG_NOTHING_TO_SEND;
 extern const isc::log::MessageID HA_LEASES_BACKLOG_START;
 extern const isc::log::MessageID HA_LEASES_BACKLOG_SUCCESS;
+extern const isc::log::MessageID HA_LEASES_SYNC_APPLIED_LEASES;
 extern const isc::log::MessageID HA_LEASES_SYNC_COMMUNICATIONS_FAILED;
 extern const isc::log::MessageID HA_LEASES_SYNC_FAILED;
 extern const isc::log::MessageID HA_LEASES_SYNC_LEASE_PAGE_RECEIVED;

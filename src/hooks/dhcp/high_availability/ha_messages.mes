@@ -339,6 +339,14 @@ local server's name. The second argument specifies the name of the remote server
 The third argument specifies the duration of
 this operation.
 
+% HA_LEASES_SYNC_APPLIED_LEASES %1: applied %2 leases received from the partner in the local lease database
+This informational message outputs the number of leases received from the
+partner during the database synchronization and applied in the local database.
+A typical case when only some leases are applied is when the server has
+multiple relationships and some of the received leases belong to another
+relationship. The first argument specifies this server name. The second
+argument specifies the number of applied leases.
+
 % HA_LEASES_SYNC_COMMUNICATIONS_FAILED %1: failed to communicate with %2 while syncing leases: %3
 This error message is issued to indicate that there was a communication error
 with a partner server while trying to fetch leases from its lease database.
