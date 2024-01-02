@@ -539,6 +539,47 @@ TEST_F(HAImplTest, subnet4SelectDropNotInScope) {
     EXPECT_TRUE(query4->inClass("HA_server3"));
 }
 
+// Tests that the subnet4_select drops a packet when no subnet has been selected.
+TEST_F(HAImplTest, subnet4SelectNoSubnet) {
+    ConstElementPtr ha_config = createValidHubJsonConfiguration();
+
+    // Create implementation object and configure it.
+    TestHAImpl ha_impl;
+    ASSERT_NO_THROW(ha_impl.configure(ha_config));
+
+    // Starting the service is required before any callouts.
+    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv4));
+    ASSERT_NO_THROW(ha_impl.startServices(io_service_, network_state,
+                                          HAServerType::DHCPv4));
+
+    ha_impl.services_->get("server2")->serveFailoverScopes();
+    ha_impl.services_->get("server4")->serveFailoverScopes();
+
+    // Create callout handle to be used for passing arguments to the
+    // callout.
+    CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
+    ASSERT_TRUE(callout_handle);
+    ASSERT_EQ(CalloutHandle::NEXT_STEP_CONTINUE, callout_handle->getStatus());
+
+    // Create the query.
+    Pkt4Ptr query4(new Pkt4(DHCPDISCOVER, 1234));
+    callout_handle->setArgument("query4", query4);
+
+    // Create null subnet.
+    Subnet4Ptr subnet4;
+    callout_handle->setArgument("subnet4", subnet4);
+
+    // Invoke the subnet4_select callout.
+    ASSERT_NO_THROW(ha_impl.subnet4Select(*callout_handle));
+
+    // No subnet has been selected and we have multiple relationships. We
+    // expect that the server drops the packet.
+    EXPECT_EQ(CalloutHandle::NEXT_STEP_DROP, callout_handle->getStatus());
+
+    // No HA-specific classes should be assigned.
+    EXPECT_TRUE(query4->getClasses().empty());
+}
+
 // Tests for buffer6_receive callout implementation.
 TEST_F(HAImplTest, buffer6Receive) {
     // Use hot-standby mode to make sure that this server instance is selected
@@ -911,6 +952,47 @@ TEST_F(HAImplTest, subnet6SelectDropNotInScope) {
     // However, the class should be assigned after calling HAService::inScope.
     ASSERT_EQ(1, query6->getClasses().size());
     EXPECT_TRUE(query6->inClass("HA_server3"));
+}
+
+// Tests that the subnet6_select drops a packet when no subnet has been selected.
+TEST_F(HAImplTest, subnet6SelectNoSubnet) {
+    ConstElementPtr ha_config = createValidHubJsonConfiguration();
+
+    // Create implementation object and configure it.
+    TestHAImpl ha_impl;
+    ASSERT_NO_THROW(ha_impl.configure(ha_config));
+
+    // Starting the service is required before any callouts.
+    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv6));
+    ASSERT_NO_THROW(ha_impl.startServices(io_service_, network_state,
+                                          HAServerType::DHCPv6));
+
+    ha_impl.services_->get("server2")->serveFailoverScopes();
+    ha_impl.services_->get("server4")->serveFailoverScopes();
+
+    // Create callout handle to be used for passing arguments to the
+    // callout.
+    CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
+    ASSERT_TRUE(callout_handle);
+    ASSERT_EQ(CalloutHandle::NEXT_STEP_CONTINUE, callout_handle->getStatus());
+
+    // Create the query.
+    Pkt6Ptr query6(new Pkt6(DHCPV6_SOLICIT, 1234));
+    callout_handle->setArgument("query6", query6);
+
+    // Create null subnet.
+    Subnet6Ptr subnet6;
+    callout_handle->setArgument("subnet6", subnet6);
+
+    // Invoke the subnet6_select callout.
+    ASSERT_NO_THROW(ha_impl.subnet6Select(*callout_handle));
+
+    // No subnet has been selected and we have multiple relationships. We
+    // expect that the server drops the packet.
+    EXPECT_EQ(CalloutHandle::NEXT_STEP_DROP, callout_handle->getStatus());
+
+    // No HA-specific classes should be assigned.
+    EXPECT_TRUE(query6->getClasses().empty());
 }
 
 // Tests leases4_committed callout implementation.

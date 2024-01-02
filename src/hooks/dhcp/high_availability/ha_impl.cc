@@ -144,6 +144,19 @@ HAImpl::subnet4Select(hooks::CalloutHandle& callout_handle) {
     Subnet4Ptr subnet4;
     callout_handle.getArgument("subnet4", subnet4);
 
+    // If the server failed to select the subnet this pointer is null.
+    // There is nothing we can do with this packet because we don't know
+    // which relationship it belongs to. We're even unable to check if the
+    // server is responsible for this packet.
+    if (!subnet4) {
+        // Log at debug level because that's the level at which the server
+        // logs the subnet selection failure.
+        LOG_DEBUG(ha_logger, DBGLVL_TRACE_BASIC, HA_SUBNET4_SELECT_NO_SUBNET_SELECTED)
+            .arg(query4->getLabel());
+        callout_handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
+        return;
+    }
+
     // The subnet configuration should contain a user context
     // and this context should contain a mapping of the subnet to a
     // relationship. If the context doesn't exist there is no way
@@ -393,6 +406,19 @@ HAImpl::subnet6Select(hooks::CalloutHandle& callout_handle) {
     Subnet6Ptr subnet6;
     callout_handle.getArgument("subnet6", subnet6);
 
+    // If the server failed to select the subnet this pointer is null.
+    // There is nothing we can do with this packet because we don't know
+    // which relationship it belongs to. We're even unable to check if the
+    // server is responsible for this packet.
+    if (!subnet6) {
+        // Log at debug level because that's the level at which the server
+        // logs the subnet selection failure.
+        LOG_DEBUG(ha_logger, DBGLVL_TRACE_BASIC, HA_SUBNET6_SELECT_NO_SUBNET_SELECTED)
+            .arg(query6->getLabel());
+        callout_handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
+        return;
+    }
+
     // The subnet configuration should contain a user context
     // and this context should contain a mapping of the subnet to a
     // relationship. If the context doesn't exist there is no way
@@ -401,7 +427,7 @@ HAImpl::subnet6Select(hooks::CalloutHandle& callout_handle) {
     try {
         server_name = HAConfig::getSubnetServerName(subnet6);
         if (server_name.empty()) {
-            LOG_ERROR(ha_logger, HA_SUBNET4_SELECT_NO_RELATIONSHIP_SELECTOR_FOR_SUBNET)
+            LOG_ERROR(ha_logger, HA_SUBNET6_SELECT_NO_RELATIONSHIP_SELECTOR_FOR_SUBNET)
                 .arg(query6->getLabel())
                 .arg(subnet6->toText());
             callout_handle.setStatus(CalloutHandle::NEXT_STEP_DROP);

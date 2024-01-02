@@ -107,11 +107,13 @@ extern const isc::log::MessageID HA_SUBNET4_SELECT_INVALID_HA_SERVER_NAME = "HA_
 extern const isc::log::MessageID HA_SUBNET4_SELECT_NOT_FOR_US = "HA_SUBNET4_SELECT_NOT_FOR_US";
 extern const isc::log::MessageID HA_SUBNET4_SELECT_NO_RELATIONSHIP_FOR_SUBNET = "HA_SUBNET4_SELECT_NO_RELATIONSHIP_FOR_SUBNET";
 extern const isc::log::MessageID HA_SUBNET4_SELECT_NO_RELATIONSHIP_SELECTOR_FOR_SUBNET = "HA_SUBNET4_SELECT_NO_RELATIONSHIP_SELECTOR_FOR_SUBNET";
+extern const isc::log::MessageID HA_SUBNET4_SELECT_NO_SUBNET_SELECTED = "HA_SUBNET4_SELECT_NO_SUBNET_SELECTED";
 extern const isc::log::MessageID HA_SUBNET6_SELECT_FAILED = "HA_SUBNET6_SELECT_FAILED";
 extern const isc::log::MessageID HA_SUBNET6_SELECT_INVALID_HA_SERVER_NAME = "HA_SUBNET6_SELECT_INVALID_HA_SERVER_NAME";
 extern const isc::log::MessageID HA_SUBNET6_SELECT_NOT_FOR_US = "HA_SUBNET6_SELECT_NOT_FOR_US";
 extern const isc::log::MessageID HA_SUBNET6_SELECT_NO_RELATIONSHIP_FOR_SUBNET = "HA_SUBNET6_SELECT_NO_RELATIONSHIP_FOR_SUBNET";
 extern const isc::log::MessageID HA_SUBNET6_SELECT_NO_RELATIONSHIP_SELECTOR_FOR_SUBNET = "HA_SUBNET6_SELECT_NO_RELATIONSHIP_SELECTOR_FOR_SUBNET";
+extern const isc::log::MessageID HA_SUBNET6_SELECT_NO_SUBNET_SELECTED = "HA_SUBNET6_SELECT_NO_SUBNET_SELECTED";
 extern const isc::log::MessageID HA_SYNC_COMPLETE_NOTIFY_COMMUNICATIONS_FAILED = "HA_SYNC_COMPLETE_NOTIFY_COMMUNICATIONS_FAILED";
 extern const isc::log::MessageID HA_SYNC_COMPLETE_NOTIFY_FAILED = "HA_SYNC_COMPLETE_NOTIFY_FAILED";
 extern const isc::log::MessageID HA_SYNC_COMPLETE_NOTIFY_HANDLER_FAILED = "HA_SYNC_COMPLETE_NOTIFY_HANDLER_FAILED";
@@ -228,11 +230,13 @@ const char* values[] = {
     "HA_SUBNET4_SELECT_NOT_FOR_US", "%1: dropping query in relationship %2 to be processed by another server",
     "HA_SUBNET4_SELECT_NO_RELATIONSHIP_FOR_SUBNET", "%1: HA relationship not found for %2",
     "HA_SUBNET4_SELECT_NO_RELATIONSHIP_SELECTOR_FOR_SUBNET", "%1: unable to determine HA relationship because selected subnet %2 lacks the ha-server-name",
+    "HA_SUBNET4_SELECT_NO_SUBNET_SELECTED", "%1: unable to determine HA relationship because no subnet has been selected for the client",
     "HA_SUBNET6_SELECT_FAILED", "subnet6_select callout failed: %1",
     "HA_SUBNET6_SELECT_INVALID_HA_SERVER_NAME", "%1: invalid ha-server-name value for subnet %2",
     "HA_SUBNET6_SELECT_NOT_FOR_US", "%1: dropping query in relationship %2 to be processed by another server",
     "HA_SUBNET6_SELECT_NO_RELATIONSHIP_FOR_SUBNET", "%1: HA relationship not found for %2",
     "HA_SUBNET6_SELECT_NO_RELATIONSHIP_SELECTOR_FOR_SUBNET", "%1: unable to determine HA relationship because selected subnet %2 lacks the ha-server-name",
+    "HA_SUBNET6_SELECT_NO_SUBNET_SELECTED", "%1: unable to determine HA relationship because no subnet has been selected for the client",
     "HA_SYNC_COMPLETE_NOTIFY_COMMUNICATIONS_FAILED", "%1: failed to send ha-sync-complete-notify to %2: %3",
     "HA_SYNC_COMPLETE_NOTIFY_FAILED", "%1: error processing ha-sync-complete-notify command on %2: %3",
     "HA_SYNC_COMPLETE_NOTIFY_HANDLER_FAILED", "ha-sync-complete-notify command failed: %1",

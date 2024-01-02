@@ -595,6 +595,13 @@ for any of the subnets it is a configuration error. The first argument is
 the client identification information. The second argument is a subnet
 prefix.
 
+% HA_SUBNET4_SELECT_NO_SUBNET_SELECTED %1: unable to determine HA relationship because no subnet has been selected for the client
+This debug message is issued when the received DHCPv4 query is dropped
+by this server because it could not select a subnet for this client.
+Selecting the subnet is required to find a suitable HA relationship.
+This message is not emitted when the server has only one relationship.
+The argument is the client identification information.
+
 % HA_SUBNET4_SELECT_NOT_FOR_US %1: dropping query in relationship %2 to be processed by another server
 This debug message is issued when the received DHCPv4 query is dropped
 by this server because it should be served by another server. This
@@ -632,6 +639,13 @@ uses them as a relationship selector. If these selectors are unspecified
 for any of the subnets it is a configuration error. The first argument is
 the client identification information. The second argument is a subnet
 prefix.
+
+% HA_SUBNET6_SELECT_NO_SUBNET_SELECTED %1: unable to determine HA relationship because no subnet has been selected for the client
+This debug message is issued when the received DHCPv6 query is dropped
+by this server because it could not select a subnet for this client.
+Selecting the subnet is required to find a suitable HA relationship.
+This message is not emitted when the server has only one relationship.
+The argument is the client identification information.
 
 % HA_SUBNET6_SELECT_NOT_FOR_US %1: dropping query in relationship %2 to be processed by another server
 This debug message is issued when the received DHCPv6 query is dropped
