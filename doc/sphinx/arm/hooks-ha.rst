@@ -2439,3 +2439,221 @@ It elicits the response:
    administrators. It is used for internal communication between a pair of
    HA-enabled DHCP servers. Direct use of this command is not supported and may
    produce unintended consequences.
+
+
+.. _ha-hub-and-spoke:
+
+Hub and Spoke Configuration
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The hub-and-spoke is a common arrangement of the DHCP servers for resiliency. It contains
+one central server and multiple branch servers. The branch servers are the primary servers
+in the ``hot-standby`` mode and respond to the local DHCP traffic in their respective
+locations. The central server acts as a standby server for each branch server.
+It maintains independent state machines with the branch servers, called relationships.
+If one of the branch servers experiences a failure, the central server can take over its
+DHCP traffic. In this case, we say that one of the central server's relationships is in
+the ``partner-down`` state. The remaining relationships may still be in the ``hot-standby``
+state and not actively respond to DHCP traffic. When the branch server becomes active again,
+it synchronizes the lease database with the central server, and the central server becomes
+fully passive again. In rare cases, when multiple branch servers stop, the central server
+takes responsibility for all their traffic (possibly the entire DHCP traffic in the network
+when all branch servers are down). A simple hub-and-spoke arrangement consisting of two
+branch servers and one central server is shown below.
+
+::
+
+
+                                +----- Central Server ------+
+                                |                           |
+    +----------+ relationship 1 |  +----------+----------+  | relationship 2 +----------+
+    | Server 1 |===================| Server 2 | Server 4 |===================| Server 3 |
+    +----------+                |  +----------+----------+  |                +----------+
+                                |                           |
+                                +---------------------------+
+
+Each branch server's configuration comprises a set of subnets appropriate for the branch
+server. Different branch servers serve different subnets. The central server's configuration
+comprises all subnets of the branch servers so that it can respond to the DHCP traffic
+directed to any of the failing branch servers. The subnets in the central server must be
+grouped into relationships like in the snippet below:
+
+.. code-block:: json
+
+    {
+        "Dhcp6": {
+            "interfaces-config": {
+                "interfaces": [ "enp0s8", "enp0s9" ]
+            },
+            "hooks-libraries": [
+                {
+                    "library": "/usr/lib/kea/hooks/libdhcp_lease_cmds.so",
+                    "parameters": {}
+                },
+                {
+                    "library": "/usr/lib/kea/hooks/libdhcp_ha.so",
+                    "parameters": {
+                        "high-availability": [
+                            {
+                                "this-server-name": "server2",
+                                "mode": "hot-standby",
+                                "multi-threading": {
+                                    "enable-multi-threading": true,
+                                    "http-dedicated-listener": true,
+                                    "http-listener-threads": 4,
+                                    "http-client-threads": 4
+                                },
+                                "peers": [
+                                    {
+                                        "name": "server1",
+                                        "url": "http://192.168.56.66:8000/",
+                                        "role": "primary",
+                                        "auto-failover": true
+                                    },
+                                    {
+                                        "name": "server2",
+                                        "url": "http://192.168.56.33:8000/",
+                                        "role": "standby",
+                                        "auto-failover": true
+                                    }
+                                ]
+                            },
+                            {
+                                "this-server-name": "server4",
+                                "mode": "hot-standby",
+                                "multi-threading": {
+                                    "enable-multi-threading": true,
+                                    "http-dedicated-listener": true,
+                                    "http-listener-threads": 4,
+                                    "http-client-threads": 4
+                                },
+                                "peers": [
+                                    {
+                                        "name": "server3",
+                                        "url": "http://192.168.57.99:8000/",
+                                        "role": "primary",
+                                        "auto-failover": true
+                                    },
+                                    {
+                                        "name": "server4",
+                                        "url": "http://192.168.57.33:8000/",
+                                        "role": "standby",
+                                        "auto-failover": true
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                }
+            ],
+            "subnet6": [
+                {
+                    "id": 1,
+                    "subnet": "2001:db8:1::/64",
+                    "pools": [ { "pool": "2001:db8:1::/80" } ],
+                    "interface": "enp0s8",
+                    "user-context": {
+                        "ha-server-name": "server2"
+                    }
+                },
+                {
+                    "id": 2,
+                    "subnet": "2001:db8:2::/64",
+                    "pools": [ { "pool": "2001:db8:2::/80" } ],
+                    "interface": "enp0s9",
+                    "user-context": {
+                        "ha-server-name": "server4"
+                    }
+                }
+            ]
+        }
+    }
+
+
+
+
+The peer names in the relationships must be unique. The user context for each subnet contains
+the ``ha-server-name`` parameter associating a subnet with a relationship. The ``ha-server-name``
+can be any of the peer names in the relationship. Suppose a relationship contains peer names
+``server1`` and ``server2``. It doesn't matter whether the ``ha-server-name`` is ``server1`` or
+``server2``. In both cases, it associates a subnet with that relationship.
+
+It is not required to specify the ``ha-server-name`` in the branch servers, assuming that the
+branch servers only contain the subnets they serve. Consider the following configuration.
+
+.. code-block:: json
+
+    {
+        "Dhcp6": {
+            "interfaces-config": {
+                "interfaces": [ "enp0s8" ]
+            },
+            "hooks-libraries": [
+                {
+                    "library": "/usr/lib/kea/hooks/libdhcp_lease_cmds.so",
+                    "parameters": {}
+                },
+                {
+                    "library": "/usr/lib/kea/hooks/libdhcp_ha.so",
+                    "parameters": {
+                        "high-availability": [
+                            {
+                                "this-server-name": "server3",
+                                "mode": "hot-standby",
+                                "multi-threading": {
+                                    "enable-multi-threading": true,
+                                    "http-dedicated-listener": true,
+                                    "http-listener-threads": 4,
+                                    "http-client-threads": 4
+                                },
+                                "peers": [
+                                    {
+                                        "name": "server3",
+                                        "url": "http://192.168.57.99:8000/",
+                                        "role": "primary",
+                                        "auto-failover": true
+                                    },
+                                    {
+                                        "name": "server4",
+                                        "url": "http://192.168.57.33:8000/",
+                                        "role": "standby",
+                                        "auto-failover": true
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                }
+            ],
+            "subnet6": [
+                {
+                    "id": 2,
+                    "subnet": "2001:db8:2::/64",
+                    "pools": [
+                        {
+                            "pool": "2001:db8:2::/80"
+                        }
+                    ],
+                    "interface": "enp0s8",
+                    "user-context": {
+                        "ha-server-name": "server3"
+                    }
+                }
+            ]
+        }
+    }
+
+.. note::
+
+   Even though it is not required to include the ``ha-server-name`` user context parameters in the
+   branch servers, we recommend including them nevertheless. The servers fetch all leases from the
+   partners during the database synchronization. If the subnets are not explicitly associated with
+   the relationship, the branch server inserts all fetched leases from the central server (including
+   those from other relationships) into its database. Specifying ``ha-server-name`` parameter for
+   each configured subnet in the branch server guarantees that only the leases belonging to its
+   relationship are inserted into the branch server's database.
+
+.. note::
+
+   The peer names in the branch servers must match the peer names in the respective central
+   server's relationships because these names are used for signaling between the HA partners.
