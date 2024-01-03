@@ -1,3 +1,7 @@
+2199.	[func]		marcin
+	Added support for hub-and-spoke high availability configuration.
+	(Gitlab #3106, #3178)
+
 2198.	[func]		razvan
 	A new log message
 	DHCPSRV_CFGMGR_IP_RESERVATIONS_UNIQUE_DUPLICATES_DETECTED is
