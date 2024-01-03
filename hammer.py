@@ -547,9 +547,9 @@ def get_image_template(key, variant):
 def _get_full_repo_url(repository_url, system, revision, pkg_version):
     if not repository_url:
         return None
-    repo_name = 'kea-%s-%s-%s' % (pkg_version.rsplit('.', 1)[0], system, revision)
+    repo_name = 'kea-%s-%s' % (system, revision)
     repo_url = urljoin(repository_url, 'repository')
-    repo_url += '/%s-ci/' % repo_name
+    repo_url += '/%s/' % repo_name
     return repo_url
 
 
@@ -888,7 +888,9 @@ class VagrantEnv(object):
                 elif self.system == 'alpine':
                     upload_cmd += ' --upload-file %s '
                     file_ext = ''
-                    repo_url = urljoin(repo_url, '%s/v%s/x86_64/' % (pkg_isc_version, self.revision))
+                    _, arch = self.execute('arch', raise_error=False, capture=True)
+                    arch = arch.strip()
+                    repo_url = urljoin(repo_url, f'{pkg_isc_version}/v{self.revision}/{arch}/')
 
                 upload_cmd += ' ' + repo_url
 
@@ -897,7 +899,12 @@ class VagrantEnv(object):
                         continue
                     fp = os.path.join(pkgs_dir, fn)
                     cmd = upload_cmd % fp
-                    execute(cmd)
+                    exit_code, txt = execute(cmd, raise_error=False, capture=True, attempts=3)
+                    log.info('code: %s, txt: %s', exit_code, txt)
+                    # debian doc packages is arch "all" in both x86 and aarch so we want to ignore error
+                    # while second is uploaded
+                    if exit_code != 0 and "Repository does not allow updating assets" in txt:
+                        continue
 
         t1 = time.time()
         dt = int(t1 - t0)
@@ -1439,7 +1446,10 @@ def _change_postgresql_auth_method(connection_type, auth_method, hba_file):
 def _configure_pgsql(system, features, revision):
     """ Configure PostgreSQL DB """
 
-    # execute() calls will set cwd='/tmp' when switching user to postgres to
+    if system == 'freebsd':
+        execute('sudo sysrc postgresql_enable="yes"')
+
+    # Some execute() calls set cwd='/tmp' when switching user to postgres to
     # avoid the error:
     #   could not change as postgres user directory to "/home/jenkins": Permission denied
 
@@ -1452,6 +1462,10 @@ def _configure_pgsql(system, features, revision):
             else:
                 execute('sudo postgresql-setup --initdb --unit postgresql')
     elif system == 'freebsd':
+        # Trying to match e.g. /var/db/postgres/data13
+        if not glob.glob('/var/db/postgres/data*'):
+            execute('sudo service postgresql initdb')
+
         # Stop any hypothetical existing postgres service.
         execute('sudo service postgresql stop || true')
 
@@ -1912,6 +1926,9 @@ def prepare_system_local(features, check_times, ignore_errors_for):
 
         packages = ['autoconf', 'automake', 'libtool', 'openssl', 'log4cplus', 'boost-libs', 'wget']
 
+        if revision.startswith('14'):
+            packages.extend(['bash', 'pkgconf'])
+
         if 'docs' in features:
             # Get the python version from the remote repositories.
             pyv = _get_package_version('python')
@@ -1935,7 +1952,7 @@ def prepare_system_local(features, check_times, ignore_errors_for):
             packages.extend(['freeradius3', 'git'])
 
         if 'gssapi' in features:
-            packages.extend(['krb5', 'krb5-devel'])
+            packages.extend(['krb5-devel'])
             # FreeBSD comes with a Heimdal krb5-config by default. Make sure
             # it's deleted so that Kea uses the MIT packages added just above.
             execute('sudo rm -f /usr/bin/krb5-config')
@@ -2299,6 +2316,7 @@ def _build_rpm(system, revision, features, tarball_path, env, check_times, dry_r
     _append_to_file('freeradius-pkgs.txt', f'freeradius-client-devel-1.1.7-{frc_version}.x86_64.rpm')
 
     # unpack kea sources tarball
+    _, arch = execute('arch', capture=True)
     execute('sudo rm -rf kea-src', dry_run=dry_run)
     os.mkdir('kea-src')
     execute('tar -zxf %s' % tarball_path, cwd='kea-src', check_times=check_times, dry_run=dry_run)
@@ -2352,17 +2370,19 @@ def _build_rpm(system, revision, features, tarball_path, env, check_times, dry_r
     if 'install' in features:
         # install packages
         execute('rpm -qa | grep isc-kea | xargs sudo rpm -e', check_times=check_times, dry_run=dry_run, raise_error=False)
-        execute('sudo rpm -i %s/RPMS/x86_64/*rpm' % rpm_root_path, check_times=check_times, dry_run=dry_run)
+        execute(f'sudo rpm -i {rpm_root_path}/RPMS/{arch.strip()}/*rpm', check_times=check_times, dry_run=dry_run)
 
         # check if kea services can be started
         services_list = ['kea-dhcp4.service', 'kea-dhcp6.service', 'kea-dhcp-ddns.service', 'kea-ctrl-agent.service']
         _check_installed_rpm_or_debs(services_list)
 
-    execute('mv %s/RPMS/x86_64/*rpm pkgs' % rpm_root_path, check_times=check_times, dry_run=dry_run)
+    execute(f'mv {rpm_root_path}/RPMS/{arch.strip()}/*rpm pkgs', check_times=check_times, dry_run=dry_run)
 
 
 def _build_deb(system, revision, features, tarball_path, env, check_times, dry_run,
                pkg_version, pkg_isc_version, repository_url, repo_url):
+
+    _, arch = execute('arch', capture=True)
     if system == 'debian' and revision == '9':
         # debian 9 does not support apt-installing over https, so install proper transport
         install_pkgs('apt-transport-https', env=env, check_times=check_times)
@@ -2437,8 +2457,8 @@ def _build_deb(system, revision, features, tarball_path, env, check_times, dry_r
                 execute(cmd, cwd='kea-src/kea-%s/debian' % pkg_version, check_times=check_times, dry_run=dry_run)
 
     # do deb build
-    env['LIBRARY_PATH'] = '/usr/lib/x86_64-linux-gnu'
-    env['LD_LIBRARY_PATH'] = '/usr/lib/x86_64-linux-gnu'
+    env['LIBRARY_PATH'] = f'/usr/lib/{arch.strip()}-linux-gnu'
+    env['LD_LIBRARY_PATH'] = f'/usr/lib/{arch.strip()}-linux-gnu'
     cmd = 'debuild --preserve-envvar=LD_LIBRARY_PATH --preserve-envvar=LIBRARY_PATH --preserve-envvar=CCACHE_DIR --prepend-path=/usr/lib/ccache -i -us -uc -b'
     execute(cmd, env=env, cwd=src_path, timeout=60 * 40, check_times=check_times, dry_run=dry_run)
 
@@ -2451,6 +2471,7 @@ def _build_deb(system, revision, features, tarball_path, env, check_times, dry_r
 
 def _build_alpine_apk(system, revision, features, tarball_path, env, check_times, dry_run,
                       pkg_version, pkg_isc_version, repo_url):
+    _, arch = execute('arch', capture=True)
     # unpack tarball
     execute('sudo rm -rf kea-src packages', check_times=check_times, dry_run=dry_run)
     os.makedirs('kea-src/src')
@@ -2477,8 +2498,8 @@ def _build_alpine_apk(system, revision, features, tarball_path, env, check_times
 
     # copy packages from alpine specific dir with produced pkgs to common place
     alpine_repo_dir = os.path.basename(os.getcwd())
-    src_dir = '~/packages/%s/x86_64' % alpine_repo_dir
-    execute('cp %s/*.apk kea-pkg' % src_dir, check_times=check_times, dry_run=dry_run)
+    src_dir = f'~/packages/{alpine_repo_dir}/{arch.strip()}'
+    execute(f'cp {src_dir}/*.apk kea-pkg', check_times=check_times, dry_run=dry_run)
 
     if 'install' in features:
         # install packages
@@ -3071,7 +3092,9 @@ def upload_to_repo(args, pkgs_dir):
     elif system == 'alpine':
         upload_cmd += ' --upload-file %s '
         file_ext = ''
-        repo_url = urljoin(repo_url, '%s/v%s/x86_64/' % (args.pkg_isc_version, revision))
+        _, arch = execute('arch', raise_error=False, capture=True)
+        arch = arch.strip()
+        repo_url = urljoin(repo_url, f'{args.pkg_isc_version}/v{revision}/{arch}/')
 
     upload_cmd += ' ' + repo_url
 
@@ -3082,16 +3105,21 @@ def upload_to_repo(args, pkgs_dir):
             continue
         fp = os.path.join(pkgs_dir, fn)
         log.info("upload cmd: %s", upload_cmd)
-        log.info("fp: %s", fp)
+        log.info("file path: %s", fp)
         cmd = upload_cmd % fp
 
         attempts=4
         while attempts > 0:
-            exitcode, output = execute(cmd, capture=True)
+            exitcode, output = execute(cmd, capture=True, raise_error=False)
             if exitcode != 0 and '504 Gateway Time-out' in output:
                 log.info('Trying again after 8 seconds...')
                 attempts -= 1
                 time.sleep(8)
+            elif exitcode != 0 and "pository does not allow updating assets" in output:
+                log.info("Asset already exists in the repository. Skipping upload.")
+                break
+            elif exitcode != 0:
+                raise Exception('Upload failed: %s' % output)
             else:
                 break
 
