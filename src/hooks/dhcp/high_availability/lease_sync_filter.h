@@ -20,11 +20,11 @@ namespace ha {
 /// @brief Checks if a lease fetched from the other server should be
 /// synchronized into the local lease database.
 ///
-/// In a simple case when a pair of the servers have only one relationship,
+/// In a simple case when a pair of the servers has only one relationship,
 /// a server recovering from a crash fetches all leases from the partner
 /// during the database synchronization. If a server participates in more
 /// than one relationship or the server is connected to a server having
-/// more relationshins a decision whether a received lease should be stored
+/// more relationships a decision whether a received lease should be stored
 /// in a database has to be made based on the filtering rules implemented
 /// in this class.
 ///
