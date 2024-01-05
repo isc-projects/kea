@@ -102,6 +102,12 @@ public:
     void buffer4Receive(hooks::CalloutHandle& callout_handle);
 
     /// @brief Implementation of the "subnet4_select" callout.
+    ///
+    /// This callout decides whether the received packet should be processed
+    /// by the server when the server has multiple HA relationships. The
+    /// relationship selection is based on the selected subnet.
+    ///
+    /// @param callout_handle Callout handle provided to the callout.
     void subnet4Select(hooks::CalloutHandle& callout_handle);
 
     /// @brief Implementation of the "leases4_committed" callout.
@@ -137,6 +143,12 @@ public:
 
 
     /// @brief Implementation of the "subnet6_select" callout.
+    ///
+    /// This callout decides whether the received packet should be processed
+    /// by the server when the server has multiple HA relationships. The
+    /// relationship selection is based on the selected subnet.
+    ///
+    /// @param callout_handle Callout handle provided to the callout.
     void subnet6Select(hooks::CalloutHandle& callout_handle);
 
     /// @brief Implementation of the "leases6_committed" callout.
