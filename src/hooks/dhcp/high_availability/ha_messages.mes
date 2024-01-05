@@ -580,7 +580,7 @@ role of this server instance in this configuration.
 % HA_SUBNET4_SELECT_INVALID_HA_SERVER_NAME %1: invalid ha-server-name value for subnet %2
 This error message is issued when the received DHCPv4 query is dropped
 by this server because the specified ha-server-name value in the subnet's
-user context has non-string type or is empty. It is a server's misconifguration.
+user-context has non-string type or is empty. It is a server's misconifguration.
 The first argument is the client identification information. The second argument
 is a subnet prefix.
 
@@ -596,7 +596,7 @@ The second argument is the relationship name.
 This error message is issued when the received DHCPv4 query is dropped
 by this server because it was unable to determine the HA relationship to
 which the received query belongs. If there are multiple relationships,
-it is required to specify ha-server-name user context value at the subnet
+it is required to specify ha-server-name value in the user-context at the subnet
 or shared network level for each subnet and/or shared network. The server
 uses them as a relationship selector. If these selectors are unspecified
 for any of the subnets it is a configuration error. The first argument is
@@ -625,7 +625,7 @@ The argument contains a reason for the error.
 % HA_SUBNET6_SELECT_INVALID_HA_SERVER_NAME %1: invalid ha-server-name value for subnet %2
 This error message is issued when the received DHCPv6 query is dropped
 by this server because the specified ha-server-name value in the subnet's
-user context has non-string type or is empty. It is a server's misconifguration.
+user-context has non-string type or is empty. It is a server's misconifguration.
 The first argument is the client identification information. The second argument
 is a subnet prefix.
 
@@ -641,7 +641,7 @@ The second argument is the relationship name.
 This error message is issued when the received DHCPv6 query is dropped
 by this server because it was unable to determine the HA relationship to
 which the received query belongs. If there are multiple relationships,
-it is required to specify ha-server-name user context value at the subnet
+it is required to specify ha-server-name value in the user-context at the subnet
 or shared network level for each subnet and/or shared network. The server
 uses them as a relationship selector. If these selectors are unspecified
 for any of the subnets it is a configuration error. The first argument is
