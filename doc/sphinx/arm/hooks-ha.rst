@@ -2579,7 +2579,8 @@ can be any of the peer names in the relationship. Suppose a relationship contain
 ``server2``. In both cases, it associates a subnet with that relationship.
 
 It is not required to specify the ``ha-server-name`` in the branch servers, assuming that the
-branch servers only contain the subnets they serve. Consider the following configuration.
+branch servers only contain the subnets they serve. Consider the following configuration for
+branch ``server3``:
 
 .. code-block:: json
 
@@ -2646,7 +2647,7 @@ branch servers only contain the subnets they serve. Consider the following confi
 .. note::
 
    Even though it is not required to include the ``ha-server-name`` user context parameters in the
-   branch servers, we recommend including them nevertheless. The servers fetch all leases from the
+   branch servers, we recommend including them. The servers fetch all leases from the
    partners during the database synchronization. If the subnets are not explicitly associated with
    the relationship, the branch server inserts all fetched leases from the central server (including
    those from other relationships) into its database. Specifying ``ha-server-name`` parameter for
