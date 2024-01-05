@@ -1662,6 +1662,7 @@ HAService::processStatusGet() const {
         list->add(Element::create(scope));
     }
     local->set("scopes", list);
+    local->set("server-name", Element::create(config_->getThisServerName()));
     ha_servers->set("local", local);
 
     // Do not include remote server information if this is a backup server or
@@ -1682,6 +1683,7 @@ HAService::processStatusGet() const {
     } catch (...) {
         remote->set("role", Element::create(std::string()));
     }
+    remote->set("server-name", Element::create(config_->getFailoverPeerConfig()->getName()));
     ha_servers->set("remote", remote);
 
     return (ha_servers);

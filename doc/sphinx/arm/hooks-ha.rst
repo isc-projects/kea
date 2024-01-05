@@ -2172,7 +2172,8 @@ the HA status of two ``load-balancing`` servers:
                        "local": {
                            "role": "primary",
                            "scopes": [ "server1" ],
-                           "state": "load-balancing"
+                           "state": "load-balancing",
+                           "server-name": "server1"
                        },
                        "remote": {
                            "age": 10,
@@ -2184,7 +2185,8 @@ the HA status of two ``load-balancing`` servers:
                            "connecting-clients": 2,
                            "unacked-clients": 1,
                            "unacked-clients-left": 2,
-                           "analyzed-packets": 8
+                           "analyzed-packets": 8,
+                           "server-name": "server2"
                        }
                    }
                }
