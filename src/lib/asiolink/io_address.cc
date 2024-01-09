@@ -62,8 +62,7 @@ IOAddress
 IOAddress::fromBytes(short family, const uint8_t* data) {
     if (data == NULL) {
         isc_throw(BadValue, "NULL pointer received.");
-    } else
-    if ( (family != AF_INET) && (family != AF_INET6) ) {
+    } else if ((family != AF_INET) && (family != AF_INET6)) {
         isc_throw(BadValue, "Invalid family type. Only AF_INET and AF_INET6"
                   << "are supported");
     }

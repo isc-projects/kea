@@ -89,7 +89,7 @@ public:
     ///
     /// This constructor is intended to be used when constructing
     /// IPv4 address out of uint32_t type. Passed value must be in
-    /// network byte order
+    /// host byte order.
     ///
     /// @param v4address IPv4 address represented by uint32_t
     IOAddress(uint32_t v4address);
