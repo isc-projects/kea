@@ -20,15 +20,6 @@ typedef std::tuple<asiolink::IOAddress, uint8_t, asiolink::IOAddress> StaticRout
 /// @brief Represents DHCPv4 Classless Static Route %Option (code 121).
 class OptionClasslessStaticRoute : public Option {
 public:
-    /// @brief Constructor of the %Option with no static routes.
-    ///
-    /// This constructor creates an instance of the option with no static routes.
-    /// Any static routes must be added after. Intended use of this ctor are unit tests.
-    OptionClasslessStaticRoute()
-        : Option(V4, DHO_CLASSLESS_STATIC_ROUTE), static_routes_(), data_len_(0),
-          convenient_notation_(false) {
-    }
-
     /// @brief Constructor of the %Option from data in the buffer.
     ///
     /// This constructor creates an instance of the option using a buffer with
@@ -83,11 +74,6 @@ public:
     ///
     /// @return length of the option
     uint16_t len() const override;
-
-    /// @brief Adds static route to collection of all static routes.
-    ///
-    /// @param route A tuple defining new static route
-    void addRoute(const StaticRouteTuple& route);
 
 private:
     /// @brief Container holding all static routes.
@@ -146,10 +132,6 @@ private:
     /// subnet1 - router1 IP addr, subnet2 - router2 IP addr, ..., subnetN - routerN IP addr
     /// e.g.:
     /// 10.0.0.0/8 - 10.2.3.1, 10.229.0.128/25 - 10.1.0.3
-    ///
-    /// This notation may be used in the server config, thanks to the possibility of specifying
-    /// data for binary option as a single-quoted text string within double quotes
-    /// (@c csv-format flag must be set to @c false).
     ///
     /// @param config_txt convenient notation of the option data received as string
     ///

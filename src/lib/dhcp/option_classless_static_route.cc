@@ -87,15 +87,9 @@ OptionClasslessStaticRoute::toText(int indent) const {
 
 uint16_t
 OptionClasslessStaticRoute::len() const {
-    uint16_t len = OPTION4_HDR_LEN;
+    uint16_t len = getHeaderLen();
     len += data_len_;
     return (len);
-}
-
-void
-OptionClasslessStaticRoute::addRoute(const StaticRouteTuple& route) {
-    static_routes_.push_back(route);
-    calcDataLen();
 }
 
 std::vector<uint8_t>

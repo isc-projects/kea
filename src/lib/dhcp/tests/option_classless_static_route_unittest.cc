@@ -16,65 +16,6 @@ using namespace isc::asiolink;
 
 namespace {
 
-// This test verifies constructor of the empty OptionClasslessStaticRoute class.
-TEST(OptionClasslessStaticRouteTest, emptyCtor) {
-    // Create option instance. Check that constructor doesn't throw.
-    OptionClasslessStaticRoutePtr option;
-    EXPECT_NO_THROW(option.reset(new OptionClasslessStaticRoute()));
-    ASSERT_TRUE(option);
-
-    // Check if member variables were correctly set by ctor.
-    EXPECT_EQ(Option::V4, option->getUniverse());
-    EXPECT_EQ(DHO_CLASSLESS_STATIC_ROUTE, option->getType());
-}
-
-// This test verifies adding one route to OptionClasslessStaticRoute class.
-TEST(OptionClasslessStaticRouteTest, emptyCtorAddOneRoute) {
-    // Create option instance. Check that constructor doesn't throw.
-    OptionClasslessStaticRoutePtr option;
-    EXPECT_NO_THROW(option.reset(new OptionClasslessStaticRoute()));
-    ASSERT_TRUE(option);
-
-    // Add one static route.
-    StaticRouteTuple route = std::make_tuple(IOAddress("0.0.0.0"), 0, IOAddress("10.198.122.1"));
-    option->addRoute(route);
-
-    // Expected len: 2 (option code + option len headers) + 5 (1 dest descriptor + 4 router addr).
-    EXPECT_EQ(7, option->len());
-
-    // Verify toText() is working fine.
-    EXPECT_EQ("type=121(CLASSLESS_STATIC_ROUTE), len=5, Route 1 (subnet 0.0.0.0/0,"
-              " router IP 10.198.122.1)",
-              option->toText());
-}
-
-// This test verifies adding more routes to OptionClasslessStaticRoute class.
-TEST(OptionClasslessStaticRouteTest, emptyCtorAddMoreRoutes) {
-    // Create option instance. Check that constructor doesn't throw.
-    OptionClasslessStaticRoutePtr option;
-    EXPECT_NO_THROW(option.reset(new OptionClasslessStaticRoute()));
-    ASSERT_TRUE(option);
-
-    // Add 3 static routes.
-    StaticRouteTuple route1 = std::make_tuple(IOAddress("0.0.0.0"), 0, IOAddress("10.198.122.1"));
-    option->addRoute(route1);
-    StaticRouteTuple route2 = std::make_tuple(IOAddress("1.2.3.4"), 32, IOAddress("10.20.30.40"));
-    option->addRoute(route2);
-    StaticRouteTuple route3 = std::make_tuple(IOAddress("5.6.0.0"), 16, IOAddress("50.60.70.80"));
-    option->addRoute(route3);
-
-    // Expected len: 2 (option code + option len headers) + 5 (1 dest descriptor + 4 router addr)
-    // + 9 (5 d.d. + 4 r.a.) + 7 (3 d.d. + 4 r.a.).
-    EXPECT_EQ(23, option->len());
-
-    // Verify toText() is working fine.
-    EXPECT_EQ("type=121(CLASSLESS_STATIC_ROUTE), len=21, "
-              "Route 1 (subnet 0.0.0.0/0, router IP 10.198.122.1), "
-              "Route 2 (subnet 1.2.3.4/32, router IP 10.20.30.40), "
-              "Route 3 (subnet 5.6.0.0/16, router IP 50.60.70.80)",
-              option->toText());
-}
-
 // This test verifies constructor of the OptionClasslessStaticRoute class from config data.
 // Only one static route is defined.
 TEST(OptionClasslessStaticRouteTest, bufferFromStrCtorWithOneRoute) {
@@ -87,6 +28,10 @@ TEST(OptionClasslessStaticRouteTest, bufferFromStrCtorWithOneRoute) {
     OptionClasslessStaticRoutePtr option;
     EXPECT_NO_THROW(option.reset(new OptionClasslessStaticRoute(buf.begin(), buf.end(), true)));
     ASSERT_TRUE(option);
+
+    // Check if member variables were correctly set by ctor.
+    EXPECT_EQ(Option::V4, option->getUniverse());
+    EXPECT_EQ(DHO_CLASSLESS_STATIC_ROUTE, option->getType());
 
     // Expected len: 2 (option code + option len headers) + 6 (2 dest descriptor + 4 router addr).
     EXPECT_EQ(8, option->len());
@@ -288,15 +233,19 @@ TEST(OptionClasslessStaticRouteTest, bufferFromStrCtorDataTruncated) {
 TEST(OptionClasslessStaticRouteTest, wireDatabufferCtorWithOneRoute) {
     // Prepare data to decode - one route with mask width = 8.
     const OptionBuffer buf = {
-        8,               // mask width
-        10,              // significant subnet octet for 10.0.0.0/8
-        10, 45, 122, 1   // router IP address
+        8,              // mask width
+        10,             // significant subnet octet for 10.0.0.0/8
+        10, 45, 122, 1  // router IP address
     };
 
     // Create option instance. Check that constructor doesn't throw. Unpack is also tested here.
     OptionClasslessStaticRoutePtr option;
     EXPECT_NO_THROW(option.reset(new OptionClasslessStaticRoute(buf.begin(), buf.end())));
     ASSERT_TRUE(option);
+
+    // Check if member variables were correctly set by ctor.
+    EXPECT_EQ(Option::V4, option->getUniverse());
+    EXPECT_EQ(DHO_CLASSLESS_STATIC_ROUTE, option->getType());
 
     // Expected len: 2 (option code + option len headers) + 6 (2 dest descriptor + 4 router addr).
     EXPECT_EQ(8, option->len());
@@ -465,19 +414,23 @@ TEST(OptionClasslessStaticRouteTest, pack) {
 // This test verifies that pack() method throws an exception when option len to be packed is
 // bigger than 255 octets.
 TEST(OptionClasslessStaticRouteTest, packThrows) {
-    // Create option instance. Check that constructor doesn't throw.
-    OptionClasslessStaticRoutePtr option;
-    EXPECT_NO_THROW(option.reset(new OptionClasslessStaticRoute()));
-    ASSERT_TRUE(option);
-
     // Create 9 octets long static route.
-    StaticRouteTuple route = std::make_tuple(IOAddress("1.2.3.4"), 32, IOAddress("10.198.122.1"));
-    // Add 50 routes
-    uint8_t i = 0;
-    while (i < 50) {
-        option->addRoute(route);
-        ++i;
+    std::ostringstream stream;
+    stream << "1.2.3.4/32 - 10.198.122.1";
+
+    // Add 49 more such routes.
+    for (uint8_t i = 0; i < 49; ++i) {
+        stream << ", 1.2.3.4/32 - 10.198.122.1";
     }
+
+    const std::string config = stream.str();
+    OptionBuffer buf;
+    buf.assign(config.begin(), config.end());
+
+    // Create option instance from very long config. Check that constructor doesn't throw.
+    OptionClasslessStaticRoutePtr option;
+    EXPECT_NO_THROW(option.reset(new OptionClasslessStaticRoute(buf.begin(), buf.end(), true)));
+    ASSERT_TRUE(option);
 
     // Expected len: 2 (headers) + 50x9 = 452
     EXPECT_EQ(452, option->len());
