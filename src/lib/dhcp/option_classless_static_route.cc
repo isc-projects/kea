@@ -216,39 +216,39 @@ OptionClasslessStaticRoute::parseConfigData(const std::string& config_txt) {
                                        "example: 10.229.0.128/25 - 10.229.0.1");
         }
 
-        std::string txt_prefix = str::trim(parts[0]);
+        std::string txt_subnet_prefix = str::trim(parts[0]);
 
         // Is this prefix/len notation?
-        size_t pos = txt_prefix.find('/');
+        size_t pos = txt_subnet_prefix.find('/');
         if (pos == std::string::npos) {
             isc_throw(BadValue, "DHCPv4 OptionClasslessStaticRoute "
                                     << type_ << " has invalid value, provided IPv4 prefix "
-                                    << parts[0] << " is not valid.");
+                                    << txt_subnet_prefix << " is not valid.");
         }
 
-        std::string txt_subnet_nr = txt_prefix.substr(0, pos);
-        IOAddress subnet_nr = IOAddress("::");
+        std::string txt_subnet_addr = txt_subnet_prefix.substr(0, pos);
+        IOAddress subnet_addr = IOAddress("::");
         try {
-            subnet_nr = IOAddress(txt_subnet_nr);
-            if (!subnet_nr.isV4()) {
+            subnet_addr = IOAddress(txt_subnet_addr);
+            if (!subnet_addr.isV4()) {
                 isc_throw(IOError, "This is not IPv4 address.");
             }
         } catch (const IOError& e) {
             isc_throw(BadValue, "DHCPv4 OptionClasslessStaticRoute "
-                                    << type_ << " has invalid value, provided subnet_nr "
-                                    << txt_subnet_nr << " is not a valid IPv4 address. "
+                                    << type_ << " has invalid value, provided subnet_addr "
+                                    << txt_subnet_addr << " is not a valid IPv4 address. "
                                     << "Error: " << e.what());
         }
 
-        std::string txt_prefix_len = txt_prefix.substr(pos + 1);
-        int8_t len = 0;
+        std::string txt_prefix_len = txt_subnet_prefix.substr(pos + 1);
+        int8_t prefix_len = 0;
         try {
             // We should be able to lexically cast IPv4 prefix len to short int,
             // and then downcast it to signed char. After that len<=32 check is
             // also required.
-            len = boost::numeric_cast<int8_t>(boost::lexical_cast<int16_t>(txt_prefix_len));
-            if (len > 32) {
-                isc_throw(BadValue, "Provided IPv4 prefix is out of 0-32 range.");
+            prefix_len = boost::numeric_cast<int8_t>(boost::lexical_cast<int16_t>(txt_prefix_len));
+            if (prefix_len > 32) {
+                isc_throw(BadValue, "Provided IPv4 prefix len is out of 0-32 range.");
             }
         } catch (const std::exception& e) {
             isc_throw(BadValue, "DHCPv4 OptionClasslessStaticRoute "
@@ -271,7 +271,7 @@ OptionClasslessStaticRoute::parseConfigData(const std::string& config_txt) {
                                     << "Error: " << e.what());
         }
 
-        StaticRouteTuple route = std::make_tuple(subnet_nr, len, router_addr);
+        StaticRouteTuple route = std::make_tuple(subnet_addr, prefix_len, router_addr);
         static_routes_.push_back(route);
     }
 }

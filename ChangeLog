@@ -1,7 +1,8 @@
 2200.	[func]		piotrek
-	Kea now supports new DHCPv4 option code 121, Classless Static Route
-	option defined in RFC 3442. Option may be defined in binary format
-	and also as a string using convenient static route notation.
+	Kea now supports new DHCPv4 option code 121, Classless Static
+	Route option defined in RFC 3442.
+	Option may be defined in binary format and also as a string
+	using convenient static route notation.
 	(Gitlab #3074)
 
 2199.	[func]		marcin
