@@ -365,16 +365,14 @@ module kea-dhcp6-server {
   grouping option-data-list {
     description "Option data list grouping.";
     list option-data {
-      key "code space";
+      key "code space data";
       description "Option data entry.";
       leaf code {
         type uint16;
-        mandatory true;
         description "Option code.";
       }
       leaf space {
         type string;
-        mandatory true;
         description "Option space.";
       }
       uses dhcp:option-data-name;

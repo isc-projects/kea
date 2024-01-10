@@ -331,16 +331,14 @@ module kea-dhcp4-server {
   grouping option-data-list {
     description "Option data list grouping.";
     list option-data {
-      key "code space";
+      key "code space data";
       description "Option data entry.";
       leaf code {
         type uint8;
-        mandatory true;
         description "Option code.";
       }
       leaf space {
         type string;
-        mandatory true;
         description "Option space.";
       }
       uses dhcp:option-data-name;
