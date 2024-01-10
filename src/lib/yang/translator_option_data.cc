@@ -53,12 +53,18 @@ ElementPtr
 TranslatorOptionData::getOptionDataKea(DataNode const& data_node) {
     ElementPtr result = Element::createMap();
 
+    // Code and space must exist.
     getMandatoryLeaf(result, data_node, "code");
     getMandatoryLeaf(result, data_node, "space");
 
+    // Data must exist according to the YANG module too, but empty data is considered no data.
+    ElementPtr const& x(getItem(data_node, "data"));
+    if (x && !x->stringValue().empty()) {
+        result->set("data", x);
+    }
+
     checkAndGetLeaf(result, data_node, "always-send");
     checkAndGetLeaf(result, data_node, "csv-format");
-    checkAndGetLeaf(result, data_node, "data");
     checkAndGetLeaf(result, data_node, "name");
     checkAndGetLeaf(result, data_node, "never-send");
 
@@ -89,11 +95,14 @@ TranslatorOptionData::setOptionData(string const& xpath,
 void
 TranslatorOptionData::setOptionDataKea(string const& xpath,
                                        ConstElementPtr elem) {
-    // Skip keys "code" and "space".
+    // Set the list element. This is important in case we have no other elements except the keys.
+    setItem(xpath, ElementPtr(), LeafBaseType::Unknown);
+
+    // Skip keys "code", "space", and "data" since they were set with the
+    // list element in the call above with the LeafBaseType::Unknown parameter.
 
     checkAndSetLeaf(elem, xpath, "always-send", LeafBaseType::Bool);
     checkAndSetLeaf(elem, xpath, "csv-format", LeafBaseType::Bool);
-    checkAndSetLeaf(elem, xpath, "data", LeafBaseType::String);
     checkAndSetLeaf(elem, xpath, "name", LeafBaseType::String);
     checkAndSetLeaf(elem, xpath, "never-send", LeafBaseType::Bool);
 
@@ -161,17 +170,28 @@ TranslatorOptionDataList::setOptionDataListKea(string const& xpath,
                                                ConstElementPtr elem) {
     for (size_t i = 0; i < elem->size(); ++i) {
         ElementPtr option = elem->getNonConst(i);
+
+        // Code and space must exist in the input.
         if (!option->contains("code")) {
             isc_throw(BadValue, "option data without code: " << option->str());
         }
         unsigned code = static_cast<unsigned>(option->get("code")->intValue());
         if (!option->contains("space")) {
-            isc_throw(BadValue, "option data without space: " <<option->str());
+            isc_throw(BadValue, "option data without space: " << option->str());
         }
         string space = option->get("space")->stringValue();
+
+        // Data must exist according to the YANG module too, but no data in the input is allowed and
+        // converted to an empty string.
+        string data;
+        if (option->contains("data")) {
+            data = option->get("data")->stringValue();
+        }
+
         ostringstream keys;
-        keys << xpath << "/option-data[code='" << code
-             << "'][space='" << space << "']";
+        keys << xpath << "/option-data[code='" << code <<
+                "'][space='" << space <<
+                "'][data='" << data << "']";
         setOptionData(keys.str(), option);
     }
 }

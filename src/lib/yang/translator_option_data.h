@@ -58,19 +58,17 @@ namespace yang {
 /// @code
 ///  /kea-dhcp6-server:config (container)
 ///  /kea-dhcp6-server:config/
-///     option-data[code='100'][space='dns'] (list instance)
+///     option-data[code='100'][space='dns'][data='12121212'] (list instance)
 ///  /kea-dhcp6-server:config/
-///     option-data[code='100'][space='dns']/code = 100
+///     option-data[code='100'][space='dns'][data='12121212']/code = 100
 ///  /kea-dhcp6-server:config/
-///     option-data[code='100'][space='dns']/space = dns
+///     option-data[code='100'][space='dns'][data='12121212']/space = dns
 ///  /kea-dhcp6-server:config/
-///     option-data[code='100'][space='dns']/data = 12121212
+///     option-data[code='100'][space='dns'][data='12121212']/csv-format = false
 ///  /kea-dhcp6-server:config/
-///     option-data[code='100'][space='dns']/csv-format = false
+///     option-data[code='100'][space='dns'][data='12121212']/always-send = false
 ///  /kea-dhcp6-server:config/
-///     option-data[code='100'][space='dns']/always-send = false
-///  /kea-dhcp6-server:config/
-///     option-data[code='100'][space='dns']/never-send = false
+///     option-data[code='100'][space='dns'][data='12121212']/never-send = false
 /// @endcode
 
 /// @brief A translator class for converting an option data between

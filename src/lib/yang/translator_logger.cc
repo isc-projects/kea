@@ -100,7 +100,11 @@ TranslatorLogger::setLogger(string const& xpath, ConstElementPtr elem) {
 
 void
 TranslatorLogger::setLoggerKea(string const& xpath, ConstElementPtr elem) {
-    // Skip key "name".
+    // Set the list element. This is important in case we have no other elements except the key.
+    setItem(xpath, ElementPtr(), LeafBaseType::Unknown);
+
+    // Skip key "name" since it was set with the list element in the call above
+    // with the LeafBaseType::Unknown parameter.
 
     checkAndSetLeaf(elem, xpath, "debuglevel", LeafBaseType::Uint8);
     checkAndSetLeaf(elem, xpath, "severity", LeafBaseType::Enum);

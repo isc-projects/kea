@@ -88,7 +88,11 @@ TranslatorOptionDef::setOptionDef(string const& xpath, ConstElementPtr elem) {
 void
 TranslatorOptionDef::setOptionDefKea(string const& xpath,
                                      ConstElementPtr elem) {
-    // Skip keys "code" and "space".
+    // Set the list element. This is important in case we have no other elements except the keys.
+    setItem(xpath, ElementPtr(), LeafBaseType::Unknown);
+
+    // Skip keys "code" and "space" since they were set with the
+    // list element in the call above with the LeafBaseType::Unknown parameter.
 
     setMandatoryLeaf(elem, xpath, "name", LeafBaseType::String);
     setMandatoryLeaf(elem, xpath, "type", LeafBaseType::String);

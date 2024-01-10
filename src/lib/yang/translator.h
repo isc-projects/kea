@@ -11,6 +11,7 @@
 #include <yang/netconf_error.h>
 
 #include <sysrepo-cpp/Connection.hpp>
+#include <sysrepo-cpp/Enum.hpp>
 #include <sysrepo-cpp/Session.hpp>
 
 #include <unordered_map>
@@ -335,8 +336,8 @@ public:
     /// @param elem The JSON element.
     /// @param type The sysrepo type.
     void setItem(const std::string& xpath,
-                 isc::data::ConstElementPtr elem,
-                 libyang::LeafBaseType type);
+                 isc::data::ConstElementPtr const elem,
+                 libyang::LeafBaseType const type);
 
     /// @brief Get an element from given ElementPtr node and set it in sysrepo
     /// at given xpath.

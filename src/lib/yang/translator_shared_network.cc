@@ -160,7 +160,11 @@ void
 TranslatorSharedNetwork::setSharedNetworkKea(string const& xpath,
                                              ConstElementPtr elem,
                                              string const& subsel) {
-    // Skip key "name".
+    // Set the list element. This is important in case we have no other elements except the key.
+    setItem(xpath, ElementPtr(), LeafBaseType::Unknown);
+
+    // Skip key "name" since it was set with the list element in the call above
+    // with the LeafBaseType::Unknown parameter.
 
     checkAndSetLeaf(elem, xpath, "allocator", LeafBaseType::String);
     checkAndSetLeaf(elem, xpath, "cache-max-age", LeafBaseType::Uint32);

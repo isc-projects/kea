@@ -102,7 +102,11 @@ TranslatorHost::setHost(string const& xpath, ConstElementPtr elem) {
 
 void
 TranslatorHost::setHostKea(string const& xpath, ConstElementPtr elem) {
-    // Skip keys "identifier" and "identifier-type".
+    // Set the list element. This is important in case we have no other elements except the keys.
+    setItem(xpath, ElementPtr(), LeafBaseType::Unknown);
+
+    // Skip keys "identifier" and "identifier-type" since they were set with the
+    // list element in the call above with the LeafBaseType::Unknown parameter.
 
     checkAndSetLeaf(elem, xpath, "hostname", LeafBaseType::String);
 
