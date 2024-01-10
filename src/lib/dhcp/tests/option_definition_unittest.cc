@@ -2133,6 +2133,9 @@ TEST_F(OptionDefinitionTest, customOptionTypeString) {
     // Validate that option's fields were correctly parsed from strings.
     OptionClasslessStaticRoutePtr option_cast = boost::dynamic_pointer_cast<OptionClasslessStaticRoute>(option);
 
+    // Check that cast was successful.
+    ASSERT_TRUE(option_cast);
+
     // Expected len: 2 (option code + option len headers) + 5 (1 dest descriptor + 4 router addr)
     // + 9 (5 dest descriptor + 4 router addr) + 8 (4 dest descriptor + 4 router addr).
     EXPECT_EQ(24, option_cast->len());
@@ -2180,6 +2183,9 @@ TEST_F(OptionDefinitionTest, customOptionTypeBinary) {
 
     // Validate parsed values.
     OptionClasslessStaticRoutePtr option_cast = boost::dynamic_pointer_cast<OptionClasslessStaticRoute>(option);
+
+    // Check that cast was successful.
+    ASSERT_TRUE(option_cast);
 
     // Expected len: 2 (option code + option len headers) + 5 (1 dest descriptor + 4 router addr)
     // + 9 (5 dest descriptor + 4 router addr) + 8 (4 dest descriptor + 4 router addr).

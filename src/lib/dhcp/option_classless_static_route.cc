@@ -235,12 +235,11 @@ OptionClasslessStaticRoute::parseConfigData(const std::string& config_txt) {
         }
 
         std::string txt_prefix_len = txt_subnet_prefix.substr(pos + 1);
-        int8_t prefix_len = 0;
+        int16_t prefix_len = 0;
         try {
-            // We should be able to lexically cast IPv4 prefix len to short int,
-            // and then downcast it to signed char. After that len<=32 check is
-            // also required.
-            prefix_len = boost::numeric_cast<int8_t>(boost::lexical_cast<int16_t>(txt_prefix_len));
+            // We should be able to lexically cast IPv4 prefix len to short int.
+            // After that len<=32 check is also required.
+            prefix_len = boost::lexical_cast<int16_t>(txt_prefix_len);
             if (prefix_len > 32) {
                 isc_throw(BadValue, "Provided IPv4 prefix len is out of 0-32 range.");
             }

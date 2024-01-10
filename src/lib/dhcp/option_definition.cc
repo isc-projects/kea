@@ -187,7 +187,7 @@ OptionDefinition::optionFactory(Option::Universe u,
                                 uint16_t type,
                                 OptionBufferConstIter begin,
                                 OptionBufferConstIter end,
-                                bool custom_data) const {
+                                bool convenient_format) const {
 
     try {
         // Some of the options are represented by the specialized classes derived
@@ -196,7 +196,7 @@ OptionDefinition::optionFactory(Option::Universe u,
         // type to be returned. Therefore, we first check that if we are dealing
         // with such an option. If the instance is returned we just exit at this
         // point. If not, we will search for a generic option type to return.
-        OptionPtr option = factorySpecialFormatOption(u, begin, end, custom_data);
+        OptionPtr option = factorySpecialFormatOption(u, begin, end, convenient_format);
         if (option) {
             return (option);
         }
@@ -846,7 +846,7 @@ OptionPtr
 OptionDefinition::factorySpecialFormatOption(Option::Universe u,
                                              OptionBufferConstIter begin,
                                              OptionBufferConstIter end,
-                                             bool custom_data) const {
+                                             bool convenient_format) const {
     if ((u == Option::V6) && haveSpace(DHCP6_OPTION_SPACE)) {
         switch (getCode()) {
         case D6O_IA_NA:
@@ -908,7 +908,7 @@ OptionDefinition::factorySpecialFormatOption(Option::Universe u,
             return (OptionPtr(new Option4ClientFqdn(begin, end)));
 
         case DHO_CLASSLESS_STATIC_ROUTE:
-            return (OptionPtr(new OptionClasslessStaticRoute(begin, end, custom_data)));
+            return (OptionPtr(new OptionClasslessStaticRoute(begin, end, convenient_format)));
 
         case DHO_VIVCO_SUBOPTIONS:
             // Record of uint32 followed by binary.
