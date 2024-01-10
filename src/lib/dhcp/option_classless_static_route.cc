@@ -231,12 +231,13 @@ OptionClasslessStaticRoute::parseConfigData(const std::string& config_txt) {
         try {
             subnet_nr = IOAddress(txt_subnet_nr);
             if (!subnet_nr.isV4()) {
-                isc_throw(IOError, "");
+                isc_throw(IOError, "This is not IPv4 address.");
             }
         } catch (const IOError& e) {
             isc_throw(BadValue, "DHCPv4 OptionClasslessStaticRoute "
                                     << type_ << " has invalid value, provided subnet_nr "
-                                    << txt_subnet_nr << " is not a valid IPv4 address.");
+                                    << txt_subnet_nr << " is not a valid IPv4 address. "
+                                    << "Error: " << e.what());
         }
 
         std::string txt_prefix_len = txt_prefix.substr(pos + 1);
@@ -247,24 +248,27 @@ OptionClasslessStaticRoute::parseConfigData(const std::string& config_txt) {
             // also required.
             len = boost::numeric_cast<int8_t>(boost::lexical_cast<int16_t>(txt_prefix_len));
             if (len > 32) {
-                isc_throw(BadValue, "");
+                isc_throw(BadValue, "Provided IPv4 prefix is out of 0-32 range.");
             }
-        } catch (...) {
+        } catch (const std::exception& e) {
             isc_throw(BadValue, "DHCPv4 OptionClasslessStaticRoute "
                                     << type_ << " has invalid value, provided prefix len "
-                                    << txt_prefix_len << " is not valid.");
+                                    << txt_prefix_len << " is not valid. "
+                                    << "Error: " << e.what());
         }
 
         IOAddress router_addr = IOAddress("::");
+        std::string txt_router = str::trim(parts[1]);
         try {
-            router_addr = IOAddress(str::trim(parts[1]));
+            router_addr = IOAddress(txt_router);
             if (!router_addr.isV4()) {
-                isc_throw(IOError, "");
+                isc_throw(IOError, "This is not IPv4 address.");
             }
         } catch (const IOError& e) {
             isc_throw(BadValue, "DHCPv4 OptionClasslessStaticRoute "
                                     << type_ << " has invalid value, provided router address "
-                                    << parts[1] << " is not a valid IPv4 address.");
+                                    << txt_router << " is not a valid IPv4 address. "
+                                    << "Error: " << e.what());
         }
 
         StaticRouteTuple route = std::make_tuple(subnet_nr, len, router_addr);
