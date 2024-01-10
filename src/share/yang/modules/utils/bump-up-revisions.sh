@@ -72,4 +72,7 @@ done
 
 # Regenerate hashes.
 rm hashes/*
-./utils/check-hashes.sh -a
+./utils/check-hashes.sh -a 2> /dev/null || true
+
+# Check hashes were regenerated succesfully.
+./utils/check-hashes.sh
