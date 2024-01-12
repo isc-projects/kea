@@ -987,7 +987,7 @@ TEST_F(MemfileExtendedInfoTest, getLeases6ByRemoteIdMultiThreading) {
     testGetLeases6ByRemoteId();
 }
 
-/// @brief Verifies that getLeases6ByLink works as expected.
+/// @brief Verifies that paged getLeases6 by subnet id works as expected.
 void
 MemfileExtendedInfoTest::testGetLeases6ByLink() {
     // Lease manager is created with empty tables.
@@ -1007,13 +1007,13 @@ MemfileExtendedInfoTest::testGetLeases6ByLink() {
 
     Lease6Collection got;
     // Other link: nothing.
-    EXPECT_NO_THROW(got = lease_mgr_->getLeases6ByLink(10, zero,
-                                                       LeasePageSize(10)));
+    EXPECT_NO_THROW(got = lease_mgr_->getLeases6(10, zero,
+                                                 LeasePageSize(10)));
     EXPECT_EQ(0, got.size());
 
     // Link: 8 entries.
-    EXPECT_NO_THROW(got = lease_mgr_->getLeases6ByLink(1, zero,
-                                                       LeasePageSize(10)));
+    EXPECT_NO_THROW(got = lease_mgr_->getLeases6(1, zero,
+                                                 LeasePageSize(10)));
 
     ASSERT_EQ(8, got.size());
     Lease6Ptr lease;
@@ -1024,8 +1024,8 @@ MemfileExtendedInfoTest::testGetLeases6ByLink() {
     }
 
     // Link: initial partial: 4 entries.
-    EXPECT_NO_THROW(got = lease_mgr_->getLeases6ByLink(1, zero,
-                                                       LeasePageSize(4)));
+    EXPECT_NO_THROW(got = lease_mgr_->getLeases6(1, zero,
+                                                 LeasePageSize(4)));
     ASSERT_EQ(4, got.size());
     for (size_t i = 0; i < 4; ++i) {
         lease = got[i];
@@ -1034,8 +1034,8 @@ MemfileExtendedInfoTest::testGetLeases6ByLink() {
     }
 
     // Link: next partial: 4 entries.
-    EXPECT_NO_THROW(got = lease_mgr_->getLeases6ByLink(1, lease->addr_,
-                                                       LeasePageSize(4)));
+    EXPECT_NO_THROW(got = lease_mgr_->getLeases6(1, lease->addr_,
+                                                 LeasePageSize(4)));
     ASSERT_EQ(4, got.size());
     for (size_t i = 0; i < 4; ++i) {
         lease = got[i];
@@ -1044,8 +1044,8 @@ MemfileExtendedInfoTest::testGetLeases6ByLink() {
     }
 
     // Link: further partial: nothing.
-    EXPECT_NO_THROW(got = lease_mgr_->getLeases6ByLink(1, lease->addr_,
-                                                       LeasePageSize(4)));
+    EXPECT_NO_THROW(got = lease_mgr_->getLeases6(1, lease->addr_,
+                                                 LeasePageSize(4)));
     EXPECT_EQ(0, got.size());
 }
 

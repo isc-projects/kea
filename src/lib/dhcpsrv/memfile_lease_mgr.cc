@@ -1686,6 +1686,64 @@ Memfile_LeaseMgr::getLeases6(const asiolink::IOAddress& lower_bound_address,
     return (collection);
 }
 
+Lease6Collection
+Memfile_LeaseMgr::getLeases6Internal(SubnetID subnet_id,
+                                     const IOAddress& lower_bound_address,
+                                     const LeasePageSize& page_size) const {
+    Lease6Collection collection;
+    const Lease6StorageSubnetIdIndex& idx = storage6_.get<SubnetIdIndexTag>();
+    Lease6StorageSubnetIdIndex::const_iterator lb =
+        idx.lower_bound(boost::make_tuple(subnet_id, lower_bound_address));
+
+    // Return all leases being within the page size.
+    IOAddress last_addr = lower_bound_address;
+    for (auto it = lb; it != idx.end(); ++it) {
+        if ((*it)->addr_ == last_addr) {
+            // Already seen: skip it.
+            continue;
+        }
+        if ((*it)->subnet_id_ != subnet_id) {
+            // Gone after the subnet id index.
+            break;
+        }
+        last_addr = (*it)->addr_;
+        collection.push_back(Lease6Ptr(new Lease6(**it)));
+        if (collection.size() >= page_size.page_size_) {
+            break;
+        }
+    }
+    return (collection);
+}
+
+Lease6Collection
+Memfile_LeaseMgr::getLeases6(SubnetID subnet_id,
+                             const IOAddress& lower_bound_address,
+                             const LeasePageSize& page_size) const {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+              DHCPSRV_MEMFILE_GET_SUBID_PAGE6)
+        .arg(page_size.page_size_)
+        .arg(lower_bound_address.toText())
+        .arg(subnet_id);
+
+    // Expecting IPv6 valid address.
+    if (!lower_bound_address.isV6()) {
+        isc_throw(InvalidAddressFamily, "expected IPv6 address while "
+                  "retrieving leases from the lease database, got "
+                  << lower_bound_address);
+    }
+
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(*mutex_);
+        return (getLeases6Internal(subnet_id,
+                                   lower_bound_address,
+                                   page_size));
+    } else {
+        return (getLeases6Internal(subnet_id,
+                                   lower_bound_address,
+                                    page_size));
+    }
+}
+
 void
 Memfile_LeaseMgr::getExpiredLeases4Internal(Lease4Collection& expired_leases,
                                             const size_t max_leases) const {
@@ -3166,64 +3224,6 @@ Memfile_LeaseMgr::getLeases6ByRemoteIdInternal(const OptionBuffer& remote_id,
             if (collection.size() >= page_size.page_size_) {
                 break;
             }
-        }
-    }
-    return (collection);
-}
-
-Lease6Collection
-Memfile_LeaseMgr::getLeases6ByLink(SubnetID subnet_id,
-                                   const IOAddress& lower_bound_address,
-                                   const LeasePageSize& page_size) {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_MEMFILE_GET_LINKADDR6)
-        .arg(page_size.page_size_)
-        .arg(lower_bound_address.toText())
-        .arg(subnet_id);
-
-    // Expecting IPv6 valid address.
-    if (!lower_bound_address.isV6()) {
-        isc_throw(InvalidAddressFamily, "expected IPv6 address while "
-                  "retrieving leases from the lease database, got "
-                  << lower_bound_address);
-    }
-
-    if (MultiThreadingMgr::instance().getMode()) {
-        std::lock_guard<std::mutex> lock(*mutex_);
-        return (getLeases6ByLinkInternal(subnet_id,
-                                         lower_bound_address,
-                                         page_size));
-    } else {
-        return (getLeases6ByLinkInternal(subnet_id,
-                                         lower_bound_address,
-                                         page_size));
-    }
-}
-
-Lease6Collection
-Memfile_LeaseMgr::getLeases6ByLinkInternal(SubnetID subnet_id,
-                                           const IOAddress& lower_bound_address,
-                                           const LeasePageSize& page_size) {
-    Lease6Collection collection;
-    const Lease6StorageSubnetIdIndex& idx = storage6_.get<SubnetIdIndexTag>();
-    Lease6StorageSubnetIdIndex::const_iterator lb =
-        idx.lower_bound(boost::make_tuple(subnet_id, lower_bound_address));
-
-    // Return all leases being within the page size.
-    IOAddress last_addr = lower_bound_address;
-    for (auto it = lb; it != idx.end(); ++it) {
-        if ((*it)->addr_ == last_addr) {
-            // Already seen: skip it.
-            continue;
-        }
-        if ((*it)->subnet_id_ != subnet_id) {
-            // Gone after the subnet id index.
-            break;
-        }
-        last_addr = (*it)->addr_;
-        collection.push_back(Lease6Ptr(new Lease6(**it)));
-        if (collection.size() >= page_size.page_size_) {
-            break;
         }
     }
     return (collection);

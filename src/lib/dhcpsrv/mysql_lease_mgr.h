@@ -432,6 +432,19 @@ public:
     getLeases6(const asiolink::IOAddress& lower_bound_address,
                const LeasePageSize& page_size) const override;
 
+    /// @brief Returns a page of IPv6 leases for a  subnet identifier.
+    ///
+    /// @param subnet_id subnet identifier.
+    /// @param lower_bound_address IPv6 address used as lower bound for the
+    /// returned range.
+    /// @param page_size maximum size of the page returned.
+    ///
+    /// @return collection of IPv6 leases
+    virtual Lease6Collection
+    getLeases6(SubnetID subnet_id,
+               const asiolink::IOAddress& lower_bound_address,
+               const LeasePageSize& page_size) const override;
+
     /// @brief Returns a collection of expired DHCPv4 leases.
     ///
     /// This method returns at most @c max_leases expired leases. The leases
@@ -748,10 +761,10 @@ public:
         GET_LEASE6_PAGE,             // Get page of leases beginning with an address
         GET_LEASE6_UCTX_PAGE,        // Get page of leases with user context
         GET_LEASE6_SUBID,            // Get IPv6 leases by subnet ID
+        GET_LEASE6_SUBID_PAGE,       // Get page of IPv6 leases by subnet ID
         GET_LEASE6_DUID,             // Get IPv6 leases by DUID
         GET_LEASE6_HOSTNAME,         // Get IPv6 leases by hostname
         GET_LEASE6_EXPIRE,           // Get lease6 by expiration.
-        GET_LEASE6_LINK,             // Get page of lease6 by link
         INSERT_LEASE4,               // Add entry to lease4 table
         INSERT_LEASE6,               // Add entry to lease6 table
         UPDATE_LEASE4,               // Update a Lease4 entry
@@ -1138,19 +1151,6 @@ public:
     getLeases6ByRemoteId(const OptionBuffer& remote_id,
                          const asiolink::IOAddress& lower_bound_address,
                          const LeasePageSize& page_size) override;
-
-    /// @brief Returns existing IPv6 leases with on a given link.
-    ///
-    /// @param subnet_id subnet identifier.
-    /// @param lower_bound_address IPv4 address used as lower bound for the
-    /// returned range.
-    /// @param page_size maximum size of the page returned.
-    ///
-    /// @return collection of IPv6 leases
-    virtual Lease6Collection
-    getLeases6ByLink(SubnetID subnet_id,
-                     const asiolink::IOAddress& lower_bound_address,
-                     const LeasePageSize& page_size) override;
 
     /// @brief Upgrade extended info (v4).
     ///

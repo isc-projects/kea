@@ -113,7 +113,6 @@ extern const isc::log::MessageID DHCPSRV_MEMFILE_GET_HOSTNAME6 = "DHCPSRV_MEMFIL
 extern const isc::log::MessageID DHCPSRV_MEMFILE_GET_HWADDR = "DHCPSRV_MEMFILE_GET_HWADDR";
 extern const isc::log::MessageID DHCPSRV_MEMFILE_GET_IAID_DUID = "DHCPSRV_MEMFILE_GET_IAID_DUID";
 extern const isc::log::MessageID DHCPSRV_MEMFILE_GET_IAID_SUBID_DUID = "DHCPSRV_MEMFILE_GET_IAID_SUBID_DUID";
-extern const isc::log::MessageID DHCPSRV_MEMFILE_GET_LINKADDR6 = "DHCPSRV_MEMFILE_GET_LINKADDR6";
 extern const isc::log::MessageID DHCPSRV_MEMFILE_GET_PAGE4 = "DHCPSRV_MEMFILE_GET_PAGE4";
 extern const isc::log::MessageID DHCPSRV_MEMFILE_GET_PAGE6 = "DHCPSRV_MEMFILE_GET_PAGE6";
 extern const isc::log::MessageID DHCPSRV_MEMFILE_GET_RELAYID4 = "DHCPSRV_MEMFILE_GET_RELAYID4";
@@ -124,6 +123,7 @@ extern const isc::log::MessageID DHCPSRV_MEMFILE_GET_SUBID4 = "DHCPSRV_MEMFILE_G
 extern const isc::log::MessageID DHCPSRV_MEMFILE_GET_SUBID6 = "DHCPSRV_MEMFILE_GET_SUBID6";
 extern const isc::log::MessageID DHCPSRV_MEMFILE_GET_SUBID_CLIENTID = "DHCPSRV_MEMFILE_GET_SUBID_CLIENTID";
 extern const isc::log::MessageID DHCPSRV_MEMFILE_GET_SUBID_HWADDR = "DHCPSRV_MEMFILE_GET_SUBID_HWADDR";
+extern const isc::log::MessageID DHCPSRV_MEMFILE_GET_SUBID_PAGE6 = "DHCPSRV_MEMFILE_GET_SUBID_PAGE6";
 extern const isc::log::MessageID DHCPSRV_MEMFILE_GET_VERSION = "DHCPSRV_MEMFILE_GET_VERSION";
 extern const isc::log::MessageID DHCPSRV_MEMFILE_LEASE_FILE_LOAD = "DHCPSRV_MEMFILE_LEASE_FILE_LOAD";
 extern const isc::log::MessageID DHCPSRV_MEMFILE_LEASE_LOAD = "DHCPSRV_MEMFILE_LEASE_LOAD";
@@ -171,7 +171,6 @@ extern const isc::log::MessageID DHCPSRV_MYSQL_GET_HOSTNAME6 = "DHCPSRV_MYSQL_GE
 extern const isc::log::MessageID DHCPSRV_MYSQL_GET_HWADDR = "DHCPSRV_MYSQL_GET_HWADDR";
 extern const isc::log::MessageID DHCPSRV_MYSQL_GET_IAID_DUID = "DHCPSRV_MYSQL_GET_IAID_DUID";
 extern const isc::log::MessageID DHCPSRV_MYSQL_GET_IAID_SUBID_DUID = "DHCPSRV_MYSQL_GET_IAID_SUBID_DUID";
-extern const isc::log::MessageID DHCPSRV_MYSQL_GET_LINKADDR6 = "DHCPSRV_MYSQL_GET_LINKADDR6";
 extern const isc::log::MessageID DHCPSRV_MYSQL_GET_PAGE4 = "DHCPSRV_MYSQL_GET_PAGE4";
 extern const isc::log::MessageID DHCPSRV_MYSQL_GET_PAGE6 = "DHCPSRV_MYSQL_GET_PAGE6";
 extern const isc::log::MessageID DHCPSRV_MYSQL_GET_RELAYID4 = "DHCPSRV_MYSQL_GET_RELAYID4";
@@ -182,6 +181,7 @@ extern const isc::log::MessageID DHCPSRV_MYSQL_GET_SUBID4 = "DHCPSRV_MYSQL_GET_S
 extern const isc::log::MessageID DHCPSRV_MYSQL_GET_SUBID6 = "DHCPSRV_MYSQL_GET_SUBID6";
 extern const isc::log::MessageID DHCPSRV_MYSQL_GET_SUBID_CLIENTID = "DHCPSRV_MYSQL_GET_SUBID_CLIENTID";
 extern const isc::log::MessageID DHCPSRV_MYSQL_GET_SUBID_HWADDR = "DHCPSRV_MYSQL_GET_SUBID_HWADDR";
+extern const isc::log::MessageID DHCPSRV_MYSQL_GET_SUBID_PAGE6 = "DHCPSRV_MYSQL_GET_SUBID_PAGE6";
 extern const isc::log::MessageID DHCPSRV_MYSQL_GET_VERSION = "DHCPSRV_MYSQL_GET_VERSION";
 extern const isc::log::MessageID DHCPSRV_MYSQL_HOST_DB = "DHCPSRV_MYSQL_HOST_DB";
 extern const isc::log::MessageID DHCPSRV_MYSQL_HOST_DB_GET_VERSION = "DHCPSRV_MYSQL_HOST_DB_GET_VERSION";
@@ -231,7 +231,6 @@ extern const isc::log::MessageID DHCPSRV_PGSQL_GET_HOSTNAME6 = "DHCPSRV_PGSQL_GE
 extern const isc::log::MessageID DHCPSRV_PGSQL_GET_HWADDR = "DHCPSRV_PGSQL_GET_HWADDR";
 extern const isc::log::MessageID DHCPSRV_PGSQL_GET_IAID_DUID = "DHCPSRV_PGSQL_GET_IAID_DUID";
 extern const isc::log::MessageID DHCPSRV_PGSQL_GET_IAID_SUBID_DUID = "DHCPSRV_PGSQL_GET_IAID_SUBID_DUID";
-extern const isc::log::MessageID DHCPSRV_PGSQL_GET_LINKADDR6 = "DHCPSRV_PGSQL_GET_LINKADDR6";
 extern const isc::log::MessageID DHCPSRV_PGSQL_GET_PAGE4 = "DHCPSRV_PGSQL_GET_PAGE4";
 extern const isc::log::MessageID DHCPSRV_PGSQL_GET_PAGE6 = "DHCPSRV_PGSQL_GET_PAGE6";
 extern const isc::log::MessageID DHCPSRV_PGSQL_GET_RELAYID4 = "DHCPSRV_PGSQL_GET_RELAYID4";
@@ -242,6 +241,7 @@ extern const isc::log::MessageID DHCPSRV_PGSQL_GET_SUBID4 = "DHCPSRV_PGSQL_GET_S
 extern const isc::log::MessageID DHCPSRV_PGSQL_GET_SUBID6 = "DHCPSRV_PGSQL_GET_SUBID6";
 extern const isc::log::MessageID DHCPSRV_PGSQL_GET_SUBID_CLIENTID = "DHCPSRV_PGSQL_GET_SUBID_CLIENTID";
 extern const isc::log::MessageID DHCPSRV_PGSQL_GET_SUBID_HWADDR = "DHCPSRV_PGSQL_GET_SUBID_HWADDR";
+extern const isc::log::MessageID DHCPSRV_PGSQL_GET_SUBID_PAGE6 = "DHCPSRV_PGSQL_GET_SUBID_PAGE6";
 extern const isc::log::MessageID DHCPSRV_PGSQL_GET_VERSION = "DHCPSRV_PGSQL_GET_VERSION";
 extern const isc::log::MessageID DHCPSRV_PGSQL_HOST_DB = "DHCPSRV_PGSQL_HOST_DB";
 extern const isc::log::MessageID DHCPSRV_PGSQL_HOST_DB_GET_VERSION = "DHCPSRV_PGSQL_HOST_DB_GET_VERSION";
@@ -400,7 +400,6 @@ const char* values[] = {
     "DHCPSRV_MEMFILE_GET_HWADDR", "obtaining IPv4 leases for hardware address %1",
     "DHCPSRV_MEMFILE_GET_IAID_DUID", "obtaining IPv6 leases for IAID %1 and DUID %2 and lease type %3",
     "DHCPSRV_MEMFILE_GET_IAID_SUBID_DUID", "obtaining IPv6 leases for IAID %1, Subnet ID %2, DUID %3 and lease type %4",
-    "DHCPSRV_MEMFILE_GET_LINKADDR6", "obtaining at most %1 IPv6 leases starting from address %2 with link %3",
     "DHCPSRV_MEMFILE_GET_PAGE4", "obtaining at most %1 IPv4 leases starting from address %2",
     "DHCPSRV_MEMFILE_GET_PAGE6", "obtaining at most %1 IPv6 leases starting from address %2",
     "DHCPSRV_MEMFILE_GET_RELAYID4", "obtaining at most %1 IPv4 leases starting from address %2 with relay id %3 and cltt between %4 and %5",
@@ -411,6 +410,7 @@ const char* values[] = {
     "DHCPSRV_MEMFILE_GET_SUBID6", "obtaining IPv6 leases for subnet ID %1",
     "DHCPSRV_MEMFILE_GET_SUBID_CLIENTID", "obtaining IPv4 lease for subnet ID %1 and client ID %2",
     "DHCPSRV_MEMFILE_GET_SUBID_HWADDR", "obtaining IPv4 lease for subnet ID %1 and hardware address %2",
+    "DHCPSRV_MEMFILE_GET_SUBID_PAGE6", "obtaining at most %1 IPv6 leases starting from address %2 for subnet ID %3",
     "DHCPSRV_MEMFILE_GET_VERSION", "obtaining schema version information",
     "DHCPSRV_MEMFILE_LEASE_FILE_LOAD", "loading leases from file %1",
     "DHCPSRV_MEMFILE_LEASE_LOAD", "loading lease %1",
@@ -458,7 +458,6 @@ const char* values[] = {
     "DHCPSRV_MYSQL_GET_HWADDR", "obtaining IPv4 leases for hardware address %1",
     "DHCPSRV_MYSQL_GET_IAID_DUID", "obtaining IPv6 leases for IAID %1, DUID %2, lease type %3",
     "DHCPSRV_MYSQL_GET_IAID_SUBID_DUID", "obtaining IPv6 leases for IAID %1, Subnet ID %2, DUID %3, lease type %4",
-    "DHCPSRV_MYSQL_GET_LINKADDR6", "obtaining at most %1 IPv6 leases starting from address %2 with link %3",
     "DHCPSRV_MYSQL_GET_PAGE4", "obtaining at most %1 IPv4 leases starting from address %2",
     "DHCPSRV_MYSQL_GET_PAGE6", "obtaining at most %1 IPv6 leases starting from address %2",
     "DHCPSRV_MYSQL_GET_RELAYID4", "obtaining at most %1 IPv4 leases starting from address %2 with relay id %3 and cltt between %4 and %5",
@@ -469,6 +468,7 @@ const char* values[] = {
     "DHCPSRV_MYSQL_GET_SUBID6", "obtaining IPv6 leases for subnet ID %1",
     "DHCPSRV_MYSQL_GET_SUBID_CLIENTID", "obtaining IPv4 lease for subnet ID %1 and client ID %2",
     "DHCPSRV_MYSQL_GET_SUBID_HWADDR", "obtaining IPv4 lease for subnet ID %1 and hardware address %2",
+    "DHCPSRV_MYSQL_GET_SUBID_PAGE6", "obtaining at most %1 IPv6 leases starting from address %2 for subnet ID %3",
     "DHCPSRV_MYSQL_GET_VERSION", "obtaining schema version information",
     "DHCPSRV_MYSQL_HOST_DB", "opening MySQL hosts database: %1",
     "DHCPSRV_MYSQL_HOST_DB_GET_VERSION", "obtaining schema version information for the MySQL hosts database",
@@ -518,7 +518,6 @@ const char* values[] = {
     "DHCPSRV_PGSQL_GET_HWADDR", "obtaining IPv4 leases for hardware address %1",
     "DHCPSRV_PGSQL_GET_IAID_DUID", "obtaining IPv4 leases for IAID %1 and DUID %2, lease type %3",
     "DHCPSRV_PGSQL_GET_IAID_SUBID_DUID", "obtaining IPv4 leases for IAID %1, Subnet ID %2, DUID %3, and lease type %4",
-    "DHCPSRV_PGSQL_GET_LINKADDR6", "obtaining at most %1 IPv6 leases starting from address %2 with link %3",
     "DHCPSRV_PGSQL_GET_PAGE4", "obtaining at most %1 IPv4 leases starting from address %2",
     "DHCPSRV_PGSQL_GET_PAGE6", "obtaining at most %1 IPv6 leases starting from address %2",
     "DHCPSRV_PGSQL_GET_RELAYID4", "obtaining at most %1 IPv4 leases starting from address %2 with relay id %3 and cltt between %4 and %5",
@@ -529,6 +528,7 @@ const char* values[] = {
     "DHCPSRV_PGSQL_GET_SUBID6", "obtaining IPv6 leases for subnet ID %1",
     "DHCPSRV_PGSQL_GET_SUBID_CLIENTID", "obtaining IPv4 lease for subnet ID %1 and client ID %2",
     "DHCPSRV_PGSQL_GET_SUBID_HWADDR", "obtaining IPv4 lease for subnet ID %1 and hardware address %2",
+    "DHCPSRV_PGSQL_GET_SUBID_PAGE6", "obtaining at most %1 IPv6 leases starting from address %2 for subnet ID %3",
     "DHCPSRV_PGSQL_GET_VERSION", "obtaining schema version information",
     "DHCPSRV_PGSQL_HOST_DB", "opening PostgreSQL hosts database: %1",
     "DHCPSRV_PGSQL_HOST_DB_GET_VERSION", "obtaining schema version information for the PostgreSQL hosts database",

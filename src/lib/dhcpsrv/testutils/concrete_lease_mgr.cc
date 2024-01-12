@@ -125,6 +125,13 @@ ConcreteLeaseMgr::getLeases6(const IOAddress& /* lower_bound_address */,
     return (Lease6Collection());
 };
 
+Lease6Collection
+ConcreteLeaseMgr::getLeases6(SubnetID /* subnet_id */,
+                             const IOAddress& /* lower_bound_address */,
+                             const LeasePageSize& /* page_size */) const {
+    return (Lease6Collection());
+}
+
 void
 ConcreteLeaseMgr::getExpiredLeases6(Lease6Collection&, const size_t) const {
     isc_throw(NotImplemented, "ConcreteLeaseMgr::getExpiredLeases6 is not"
@@ -277,13 +284,6 @@ ConcreteLeaseMgr::getLeases6ByRemoteId(const OptionBuffer& /* remote_id */,
                                        const IOAddress& /* lower_bound_address */,
                                        const LeasePageSize& /* page_size*/) {
     isc_throw(NotImplemented, "ConcreteLeaseMgr::getLeases6ByRemoteId not implemented");
-}
-
-Lease6Collection
-ConcreteLeaseMgr::getLeases6ByLink(SubnetID /* subnet_id */,
-                                   const IOAddress& /* lower_bound_address */,
-                                   const LeasePageSize& /* page_size */) {
-    isc_throw(NotImplemented, "ConcreteLeaseMgr::getLeases6ByLink not implemented");
 }
 
 size_t

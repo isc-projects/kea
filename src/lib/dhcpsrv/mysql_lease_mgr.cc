@@ -359,6 +359,17 @@ tagged_statements = { {
                         "state, user_context, pool_id "
                             "FROM lease6 "
                             "WHERE subnet_id = ?"},
+    {MySqlLeaseMgr::GET_LEASE6_SUBID_PAGE,
+                    "SELECT address, duid, valid_lifetime, "
+                        "expire, subnet_id, pref_lifetime, "
+                        "lease_type, iaid, prefix_len, "
+                        "fqdn_fwd, fqdn_rev, hostname, "
+                        "hwaddr, hwtype, hwaddr_source, "
+                        "state, user_context, pool_id "
+                            "FROM lease6 "
+                            "WHERE subnet_id = ? AND address > ? "
+                            "ORDER BY address "
+                            "LIMIT ?"},
     {MySqlLeaseMgr::GET_LEASE6_DUID,
                     "SELECT address, duid, valid_lifetime, "
                         "expire, subnet_id, pref_lifetime, "
@@ -389,17 +400,6 @@ tagged_statements = { {
                             "AND valid_lifetime != 4294967295 "
                             "AND expire < ? "
                             "ORDER BY expire ASC "
-                            "LIMIT ?"},
-    {MySqlLeaseMgr::GET_LEASE6_LINK,
-                    "SELECT address, duid, valid_lifetime, "
-                        "expire, subnet_id, pref_lifetime, "
-                        "lease_type, iaid, prefix_len, "
-                        "fqdn_fwd, fqdn_rev, hostname, "
-                        "hwaddr, hwtype, hwaddr_source, "
-                        "state, user_context, pool_id "
-                            "FROM lease6 "
-                            "WHERE subnet_id = ? AND address > ? "
-                            "ORDER BY address "
                             "LIMIT ?"},
     {MySqlLeaseMgr::INSERT_LEASE4,
                     "INSERT INTO lease4(address, hwaddr, client_id, "
@@ -3042,6 +3042,60 @@ MySqlLeaseMgr::getLeases6(SubnetID subnet_id) const {
 }
 
 Lease6Collection
+MySqlLeaseMgr::getLeases6(SubnetID subnet_id,
+                          const IOAddress& lower_bound_address,
+                          const LeasePageSize& page_size) const {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+              DHCPSRV_MYSQL_GET_SUBID_PAGE6)
+        .arg(page_size.page_size_)
+        .arg(lower_bound_address.toText())
+        .arg(subnet_id);
+
+    // Expecting IPv6 valid address.
+    if (!lower_bound_address.isV6()) {
+        isc_throw(InvalidAddressFamily, "expected IPv6 start address while "
+                  "retrieving leases from the lease database, got "
+                  << lower_bound_address);
+    }
+
+    Lease6Collection result;
+    // Prepare WHERE clause
+    MYSQL_BIND inbind[3];
+    memset(inbind, 0, sizeof(inbind));
+
+    // Bind the subnet id.
+    inbind[0].buffer_type = MYSQL_TYPE_LONG;
+    inbind[0].buffer = reinterpret_cast<char*>(&subnet_id);
+    inbind[0].is_unsigned = MLM_TRUE;
+
+    // Bind the lower bound address.
+    std::vector<uint8_t> lb_addr_data = lower_bound_address.toBytes();
+    unsigned long lb_addr_size = lb_addr_data.size();
+    if (lb_addr_size != 16) {
+        isc_throw(DbOperationError, "lower bound address is not 16 bytes long");
+    }
+    inbind[1].buffer_type = MYSQL_TYPE_BLOB;
+    inbind[1].buffer = reinterpret_cast<char*>(&lb_addr_data[0]);
+    inbind[1].buffer_length = lb_addr_size;
+    inbind[1].length = &lb_addr_size;
+
+    // Bind page size value
+    uint32_t ps = static_cast<uint32_t>(page_size.page_size_);
+    inbind[2].buffer_type = MYSQL_TYPE_LONG;
+    inbind[2].buffer = reinterpret_cast<char*>(&ps);
+    inbind[2].is_unsigned = MLM_TRUE;
+
+    // Get a context
+    MySqlLeaseContextAlloc get_context(*this);
+    MySqlLeaseContextPtr ctx = get_context.ctx_;
+
+    // Get the leases
+    getLeaseCollection(ctx, GET_LEASE6_SUBID_PAGE, inbind, result);
+
+    return (result);
+}
+
+Lease6Collection
 MySqlLeaseMgr::getLeases6() const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MYSQL_GET6);
 
@@ -4463,60 +4517,6 @@ MySqlLeaseMgr::getLeases6ByRemoteId(const OptionBuffer& remote_id,
     Lease6Collection result;
 
     getLeaseCollection(ctx, GET_REMOTE_ID6, inbind, result);
-
-    return (result);
-}
-
-Lease6Collection
-MySqlLeaseMgr::getLeases6ByLink(SubnetID subnet_id,
-                                const IOAddress& lower_bound_address,
-                                const LeasePageSize& page_size) {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_MYSQL_GET_LINKADDR6)
-        .arg(page_size.page_size_)
-        .arg(lower_bound_address.toText())
-        .arg(subnet_id);
-
-    // Expecting IPv6 valid address.
-    if (!lower_bound_address.isV6()) {
-        isc_throw(InvalidAddressFamily, "expected IPv6 start address while "
-                  "retrieving leases from the lease database, got "
-                  << lower_bound_address);
-    }
-
-    Lease6Collection result;
-    // Prepare WHERE clause
-    MYSQL_BIND inbind[3];
-    memset(inbind, 0, sizeof(inbind));
-
-    // Bind the subnet id.
-    inbind[0].buffer_type = MYSQL_TYPE_LONG;
-    inbind[0].buffer = reinterpret_cast<char*>(&subnet_id);
-    inbind[0].is_unsigned = MLM_TRUE;
-
-    // Bind the lower bound address.
-    std::vector<uint8_t> lb_addr_data = lower_bound_address.toBytes();
-    unsigned long lb_addr_size = lb_addr_data.size();
-    if (lb_addr_size != 16) {
-        isc_throw(DbOperationError, "lower bound address is not 16 bytes long");
-    }
-    inbind[1].buffer_type = MYSQL_TYPE_BLOB;
-    inbind[1].buffer = reinterpret_cast<char*>(&lb_addr_data[0]);
-    inbind[1].buffer_length = lb_addr_size;
-    inbind[1].length = &lb_addr_size;
-
-    // Bind page size value
-    uint32_t ps = static_cast<uint32_t>(page_size.page_size_);
-    inbind[2].buffer_type = MYSQL_TYPE_LONG;
-    inbind[2].buffer = reinterpret_cast<char*>(&ps);
-    inbind[2].is_unsigned = MLM_TRUE;
-
-    // Get a context
-    MySqlLeaseContextAlloc get_context(*this);
-    MySqlLeaseContextPtr ctx = get_context.ctx_;
-
-    // Get the leases
-    getLeaseCollection(ctx, GET_LEASE6_LINK, inbind, result);
 
     return (result);
 }

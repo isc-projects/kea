@@ -189,7 +189,7 @@ public:
     /// @brief Test getLeases6ByRemoteId.
     void testGetLeases6ByRemoteId();
 
-    /// @brief Test getLeases6ByLink.
+    /// @brief Test paged getLeases6 by subnet id.
     void testGetLeases6ByLink();
 
     /// @brief Test upgradeExtendedInfo6.
@@ -1208,7 +1208,7 @@ GenericExtendedInfoTest<NakedLeaseMgrType>::testGetLeases6ByRemoteId() {
     EXPECT_EQ(lease_addr2, lease->addr_);
 }
 
-/// @brief Verifies that getLeases6ByLink works as expected.
+/// @brief Verifies that paged getLeases6 by subnet id works as expected.
 template<typename NakedLeaseMgrType> void
 GenericExtendedInfoTest<NakedLeaseMgrType>::testGetLeases6ByLink() {
     // Lease manager is created with empty tables.
@@ -1228,13 +1228,13 @@ GenericExtendedInfoTest<NakedLeaseMgrType>::testGetLeases6ByLink() {
 
     Lease6Collection got;
     // Other link: nothing.
-    EXPECT_NO_THROW(got = lease_mgr_->getLeases6ByLink(100, zero,
-                                                       LeasePageSize(10)));
+    EXPECT_NO_THROW(got = lease_mgr_->getLeases6(100, zero,
+                                                 LeasePageSize(10)));
     EXPECT_EQ(0, got.size());
 
     // Link: 8 entries.
-    EXPECT_NO_THROW(got = lease_mgr_->getLeases6ByLink(1, zero,
-                                                       LeasePageSize(10)));
+    EXPECT_NO_THROW(got = lease_mgr_->getLeases6(1, zero,
+                                                 LeasePageSize(10)));
 
     ASSERT_EQ(8, got.size());
     Lease6Ptr lease;
@@ -1245,8 +1245,8 @@ GenericExtendedInfoTest<NakedLeaseMgrType>::testGetLeases6ByLink() {
     }
 
     // Link: initial partial: 4 entries.
-    EXPECT_NO_THROW(got = lease_mgr_->getLeases6ByLink(1, zero,
-                                                       LeasePageSize(4)));
+    EXPECT_NO_THROW(got = lease_mgr_->getLeases6(1, zero,
+                                                 LeasePageSize(4)));
     ASSERT_EQ(4, got.size());
     for (size_t i = 0; i < 4; ++i) {
         lease = got[i];
@@ -1255,8 +1255,8 @@ GenericExtendedInfoTest<NakedLeaseMgrType>::testGetLeases6ByLink() {
     }
 
     // Link: next partial: 4 entries.
-    EXPECT_NO_THROW(got = lease_mgr_->getLeases6ByLink(1, lease->addr_,
-                                                       LeasePageSize(4)));
+    EXPECT_NO_THROW(got = lease_mgr_->getLeases6(1, lease->addr_,
+                                                 LeasePageSize(4)));
     ASSERT_EQ(4, got.size());
     for (size_t i = 0; i < 4; ++i) {
         lease = got[i];
@@ -1265,8 +1265,8 @@ GenericExtendedInfoTest<NakedLeaseMgrType>::testGetLeases6ByLink() {
     }
 
     // Link: further partial: nothing.
-    EXPECT_NO_THROW(got = lease_mgr_->getLeases6ByLink(1, lease->addr_,
-                                                       LeasePageSize(4)));
+    EXPECT_NO_THROW(got = lease_mgr_->getLeases6(1, lease->addr_,
+                                                 LeasePageSize(4)));
     EXPECT_EQ(0, got.size());
 }
 

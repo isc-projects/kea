@@ -220,6 +220,19 @@ public:
     getLeases6(const asiolink::IOAddress& /* lower_bound_address */,
                const LeasePageSize& /* page_size */) const override;
 
+    /// @brief Returns a page of IPv6 leases for a  subnet identifier.
+    ///
+    /// @param subnet_id subnet identifier.
+    /// @param lower_bound_address IPv6 address used as lower bound for the
+    /// returned range.
+    /// @param page_size maximum size of the page returned.
+    ///
+    /// @return collection of IPv6 leases
+    virtual Lease6Collection
+    getLeases6(SubnetID /* subnet_id */,
+               const asiolink::IOAddress& /* lower_bound_address */,
+               const LeasePageSize& /* page_size */) const override;
+
     /// @brief Returns expired DHCPv6 leases.
     ///
     /// This method is not implemented.
@@ -365,12 +378,6 @@ public:
     getLeases6ByRemoteId(const OptionBuffer& /* remote_id */,
                          const asiolink::IOAddress& /* lower_bound_address */,
                          const LeasePageSize& /* page_size*/) override;
-
-    /// @brief Stub implementation.
-    Lease6Collection
-    getLeases6ByLink(SubnetID /* subnet_id */,
-                     const asiolink::IOAddress& /* lower_bound_address */,
-                     const LeasePageSize& /* page_size */) override;
 
     /// @brief Stub implementation.
     virtual size_t

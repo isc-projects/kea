@@ -372,6 +372,19 @@ PgSqlTaggedStatement tagged_statements[] = {
       "FROM lease6 "
       "WHERE subnet_id = $1" },
 
+    // GET_LEASE6_SUBID_PAGE
+    { 3, { OID_INT8, OID_VARCHAR, OID_INT8 },
+      "get_lease6_subid_page",
+      "SELECT host(address), duid, valid_lifetime, "
+        "extract(epoch from expire)::bigint, subnet_id, pref_lifetime, "
+        "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname, "
+        "hwaddr, hwtype, hwaddr_source, "
+        "state, user_context, pool_id "
+      "FROM lease6 "
+      "WHERE subnet_id = $1 AND address > cast($2 as inet) "
+      "ORDER BY address "
+      "LIMIT $3" },
+
     // GET_LEASE6_DUID
     { 1, { OID_BYTEA },
       "get_lease6_duid",
@@ -406,19 +419,6 @@ PgSqlTaggedStatement tagged_statements[] = {
       "FROM lease6 "
       "WHERE state != $1 AND valid_lifetime != 4294967295 AND expire < $2 "
       "ORDER BY expire "
-      "LIMIT $3" },
-
-    // GET_LEASE6_LINK
-    { 3, { OID_INT8, OID_VARCHAR, OID_INT8 },
-      "get_lease6_link",
-      "SELECT host(address), duid, valid_lifetime, "
-        "extract(epoch from expire)::bigint, subnet_id, pref_lifetime, "
-        "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname, "
-        "hwaddr, hwtype, hwaddr_source, "
-        "state, user_context, pool_id "
-      "FROM lease6 "
-      "WHERE subnet_id = $1 AND address > cast($2 as inet) "
-      "ORDER BY address "
       "LIMIT $3" },
 
     // INSERT_LEASE4
@@ -2304,6 +2304,50 @@ PgSqlLeaseMgr::getLeases6(SubnetID subnet_id) const {
 }
 
 Lease6Collection
+PgSqlLeaseMgr::getLeases6(SubnetID subnet_id,
+                          const IOAddress& lower_bound_address,
+                          const LeasePageSize& page_size) const {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+              DHCPSRV_PGSQL_GET_SUBID_PAGE6)
+        .arg(page_size.page_size_)
+        .arg(lower_bound_address.toText())
+        .arg(subnet_id);
+
+    // Expecting IPv6 valid address.
+    if (!lower_bound_address.isV6()) {
+        isc_throw(InvalidAddressFamily, "expected IPv6 start address while "
+                  "retrieving leases from the lease database, got "
+                  << lower_bound_address);
+    }
+
+    Lease6Collection result;
+    // Prepare WHERE clause
+    PsqlBindArray bind_array;
+
+    // Bind subnet id.
+    std::string subnet_id_str = boost::lexical_cast<std::string>(subnet_id);
+    bind_array.add(subnet_id_str);
+
+    // Bind lower bound address
+    std::string lb_address_str = lower_bound_address.toText();
+    bind_array.add(lb_address_str);
+
+    // Bind page size value
+    std::string page_size_data =
+    boost::lexical_cast<std::string>(page_size.page_size_);
+    bind_array.add(page_size_data);
+
+    // Get a context
+    PgSqlLeaseContextAlloc get_context(*this);
+    PgSqlLeaseContextPtr ctx = get_context.ctx_;
+
+    // Get the leases
+    getLeaseCollection(ctx, GET_LEASE6_SUBID_PAGE, bind_array, result);
+
+    return (result);
+}
+
+Lease6Collection
 PgSqlLeaseMgr::getLeases6(const DUID& duid) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_PGSQL_GET_DUID)
         .arg(duid.toText());
@@ -3526,50 +3570,6 @@ PgSqlLeaseMgr::getLeases6ByRemoteId(const OptionBuffer& remote_id,
     Lease6Collection result;
 
     getLeaseCollection(ctx, GET_REMOTE_ID6, bind_array, result);
-    return (result);
-}
-
-Lease6Collection
-PgSqlLeaseMgr::getLeases6ByLink(SubnetID subnet_id,
-                                const IOAddress& lower_bound_address,
-                                const LeasePageSize& page_size) {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_PGSQL_GET_LINKADDR6)
-        .arg(page_size.page_size_)
-        .arg(lower_bound_address.toText())
-        .arg(subnet_id);
-
-    // Expecting IPv6 valid address.
-    if (!lower_bound_address.isV6()) {
-        isc_throw(InvalidAddressFamily, "expected IPv6 start address while "
-                  "retrieving leases from the lease database, got "
-                  << lower_bound_address);
-    }
-
-    Lease6Collection result;
-    // Prepare WHERE clause
-    PsqlBindArray bind_array;
-
-    // Bind subnet id.
-    std::string subnet_id_str = boost::lexical_cast<std::string>(subnet_id);
-    bind_array.add(subnet_id_str);
-
-    // Bind lower bound address
-    std::string lb_address_str = lower_bound_address.toText();
-    bind_array.add(lb_address_str);
-
-    // Bind page size value
-    std::string page_size_data =
-    boost::lexical_cast<std::string>(page_size.page_size_);
-    bind_array.add(page_size_data);
-
-    // Get a context
-    PgSqlLeaseContextAlloc get_context(*this);
-    PgSqlLeaseContextPtr ctx = get_context.ctx_;
-
-    // Get the leases
-    getLeaseCollection(ctx, GET_LEASE6_LINK, bind_array, result);
-
     return (result);
 }
 
