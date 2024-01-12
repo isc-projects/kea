@@ -12,8 +12,7 @@
 #include <cc/command_interpreter.h>
 #include <config/base_command_mgr.h>
 #include <util/encode/hex.h>
-
-#include <boost/foreach.hpp>
+#include <boost/range/adaptor/reversed.hpp>
 
 using namespace isc::asiolink;
 using namespace isc::config;
@@ -95,9 +94,8 @@ D2CfgContext::toElement() const {
     d2->set("reverse-ddns", reverse_ddns);
     // Set tsig-keys
     ElementPtr tsig_keys = Element::createList();
-    for (TSIGKeyInfoMap::const_iterator key = keys_->begin();
-         key != keys_->end(); ++key) {
-        tsig_keys->add(key->second->toElement());
+    for (auto const& key : *keys_) {
+        tsig_keys->add(key.second->toElement());
     }
     d2->set("tsig-keys", tsig_keys);
     // Set control-socket (skip if null as empty is not legal)
@@ -198,16 +196,8 @@ D2CfgMgr::reverseV4Address(const isc::asiolink::IOAddress& ioaddr) {
     // Walk backwards through vector outputting each octet and a dot.
     std::ostringstream stream;
 
-    // We have to set the following variable to get
-    // const_reverse_iterator type of rend(), otherwise Solaris GCC
-    // complains on operator!= by trying to use the non-const variant.
-    const ByteAddress::const_reverse_iterator end = bytes.rend();
-
-    for (ByteAddress::const_reverse_iterator rit = bytes.rbegin();
-         rit != end;
-         ++rit)
-    {
-        stream << static_cast<unsigned int>(*rit) << ".";
+    for (auto const& rit : boost::adaptors::reverse(bytes)) {
+        stream << static_cast<unsigned int>(rit) << ".";
     }
 
     // Tack on the suffix and we're done.
@@ -228,16 +218,8 @@ D2CfgMgr::reverseV6Address(const isc::asiolink::IOAddress& ioaddr) {
     // Walk backwards through string outputting each digits and a dot.
     std::ostringstream stream;
 
-    // We have to set the following variable to get
-    // const_reverse_iterator type of rend(), otherwise Solaris GCC
-    // complains on operator!= by trying to use the non-const variant.
-    const std::string::const_reverse_iterator end = digits.rend();
-
-    for (std::string::const_reverse_iterator rit = digits.rbegin();
-         rit != end;
-         ++rit)
-    {
-        stream << static_cast<char>(*rit) << ".";
+    for (auto const& rit : boost::adaptors::reverse(digits)) {
+        stream << static_cast<char>(rit) << ".";
     }
 
     // Tack on the suffix and we're done.

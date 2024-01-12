@@ -4077,13 +4077,12 @@ idToText(const OptionBuffer& id) {
     std::stringstream tmp;
     tmp << std::hex;
     bool delim = false;
-    for (std::vector<uint8_t>::const_iterator it = id.begin();
-         it != id.end(); ++it) {
+    for (auto const& it : id) {
         if (delim) {
             tmp << ":";
         }
         tmp << std::setw(2) << std::setfill('0')
-            << static_cast<unsigned int>(*it);
+            << static_cast<unsigned int>(it);
         delim = true;
     }
     return (tmp.str());

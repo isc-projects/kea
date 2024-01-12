@@ -64,10 +64,8 @@ decodeCheck(const string& input_string, vector<uint8_t>& output,
 }
 
 TEST_F(Base32HexTest, decode) {
-    for (vector<StringPair>::const_iterator it = test_sequence.begin();
-         it != test_sequence.end();
-         ++it) {
-        decodeCheck((*it).second, decoded_data, (*it).first);
+    for (auto const& it : test_sequence) {
+        decodeCheck(it.second, decoded_data, it.first);
     }
 
     // whitespace should be allowed
@@ -94,19 +92,15 @@ TEST_F(Base32HexTest, decode) {
 }
 
 TEST_F(Base32HexTest, decodeLower) {
-    for (vector<StringPair>::const_iterator it = test_sequence_lower.begin();
-         it != test_sequence_lower.end();
-         ++it) {
-        decodeCheck((*it).second, decoded_data, (*it).first);
+    for (auto const& it : test_sequence_lower) {
+        decodeCheck(it.second, decoded_data, it.first);
     }
 }
 
 TEST_F(Base32HexTest, encode) {
-    for (vector<StringPair>::const_iterator it = test_sequence.begin();
-         it != test_sequence.end();
-         ++it) {
-        decoded_data.assign((*it).first.begin(), (*it).first.end());
-        EXPECT_EQ((*it).second, encodeBase32Hex(decoded_data));
+    for (auto const& it : test_sequence) {
+        decoded_data.assign(it.first.begin(), it.first.end());
+        EXPECT_EQ(it.second, encodeBase32Hex(decoded_data));
     }
 }
 

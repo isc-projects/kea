@@ -8,7 +8,6 @@
 
 #include <dhcpsrv/parsers/simple_parser4.h>
 #include <cc/data.h>
-#include <boost/foreach.hpp>
 #include <iostream>
 
 using namespace isc::data;
@@ -428,7 +427,7 @@ size_t SimpleParser4::setAllDefaults(ElementPtr global) {
     // Now set option definition defaults for each specified option definition
     ConstElementPtr option_defs = global->get("option-def");
     if (option_defs) {
-        BOOST_FOREACH(ElementPtr option_def, option_defs->listValue()) {
+        for (auto const& option_def : option_defs->listValue()) {
             cnt += SimpleParser::setDefaults(option_def, OPTION4_DEF_DEFAULTS);
         }
     }
@@ -455,7 +454,7 @@ size_t SimpleParser4::setAllDefaults(ElementPtr global) {
     // Set defaults for shared networks
     ConstElementPtr shared = global->get("shared-networks");
     if (shared) {
-        BOOST_FOREACH(ElementPtr net, shared->listValue()) {
+        for (auto const& net : shared->listValue()) {
 
             cnt += setDefaults(net, SHARED_NETWORK4_DEFAULTS);
 
@@ -512,7 +511,7 @@ size_t SimpleParser4::deriveParameters(ElementPtr global) {
     // Now derive global parameters into subnets.
     ConstElementPtr subnets = global->get("subnet4");
     if (subnets) {
-        BOOST_FOREACH(ElementPtr single_subnet, subnets->listValue()) {
+        for (auto const& single_subnet : subnets->listValue()) {
             cnt += SimpleParser::deriveParams(global, single_subnet,
                                               INHERIT_TO_SUBNET4);
         }
@@ -523,7 +522,7 @@ size_t SimpleParser4::deriveParameters(ElementPtr global) {
     // subnets within derive from it.
     ConstElementPtr shared = global->get("shared-networks");
     if (shared) {
-        BOOST_FOREACH(ElementPtr net, shared->listValue()) {
+        for (auto const& net : shared->listValue()) {
             // First try to inherit the parameters from shared network,
             // if defined there.
             // Then try to inherit them from global.
@@ -533,7 +532,7 @@ size_t SimpleParser4::deriveParameters(ElementPtr global) {
             // Now we need to go thrugh all the subnets in this net.
             subnets = net->get("subnet4");
             if (subnets) {
-                BOOST_FOREACH(ElementPtr single_subnet, subnets->listValue()) {
+                for (auto const& single_subnet : subnets->listValue()) {
                     cnt += SimpleParser::deriveParams(net, single_subnet,
                                                       INHERIT_TO_SUBNET4);
                 }

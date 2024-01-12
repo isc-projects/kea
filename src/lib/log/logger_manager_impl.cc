@@ -295,10 +295,8 @@ void LoggerManagerImpl::setAppenderLayout(
 void LoggerManagerImpl::storeBufferAppenders() {
     // Walk through all loggers, and find any buffer appenders there
     log4cplus::LoggerList loggers = log4cplus::Logger::getCurrentLoggers();
-    log4cplus::LoggerList::iterator it;
-    for (it = loggers.begin(); it != loggers.end(); ++it) {
-        log4cplus::SharedAppenderPtr buffer_appender =
-            it->getAppender("buffer");
+    for (auto& it : loggers) {
+        log4cplus::SharedAppenderPtr buffer_appender = it.getAppender("buffer");
         if (buffer_appender) {
             buffer_appender_store_.push_back(buffer_appender);
         }
@@ -309,10 +307,8 @@ void LoggerManagerImpl::flushBufferAppenders() {
     std::vector<log4cplus::SharedAppenderPtr> copy;
     buffer_appender_store_.swap(copy);
 
-    std::vector<log4cplus::SharedAppenderPtr>::iterator it;
-    for (it = copy.begin(); it != copy.end(); ++it) {
-        internal::BufferAppender* app =
-            dynamic_cast<internal::BufferAppender*>(it->get());
+    for (auto const& it : copy) {
+        internal::BufferAppender* app = dynamic_cast<internal::BufferAppender*>(it.get());
         isc_throw_assert(app);
         app->flush();
     }

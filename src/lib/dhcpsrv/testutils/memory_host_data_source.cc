@@ -7,6 +7,7 @@
 #include <config.h>
 
 #include <dhcpsrv/testutils/memory_host_data_source.h>
+#include <boost/foreach.hpp>
 
 using namespace isc::db;
 using namespace std;
@@ -21,14 +22,14 @@ MemHostDataSource::getAll(const Host::IdentifierType& identifier_type,
                           const size_t identifier_len) const {
     vector<uint8_t> ident(identifier_begin, identifier_begin + identifier_len);
     ConstHostCollection hosts;
-    for (auto h = store_.begin(); h != store_.end(); ++h) {
+    for (auto const& h : store_) {
         // If identifier type do not match, it's not for us
-        if ((*h)->getIdentifierType() != identifier_type) {
+        if (h->getIdentifierType() != identifier_type) {
             continue;
         }
         // If the identifier matches, we found one!
-        if ((*h)->getIdentifier() == ident) {
-            hosts.push_back(*h);
+        if (h->getIdentifier() == ident) {
+            hosts.push_back(h);
         }
     }
     return (hosts);
@@ -37,10 +38,10 @@ MemHostDataSource::getAll(const Host::IdentifierType& identifier_type,
 ConstHostCollection
 MemHostDataSource::getAll4(const SubnetID& subnet_id) const {
     ConstHostCollection hosts;
-    for (auto h = store_.begin(); h != store_.end(); ++h) {
+    for (auto const& h : store_) {
         // Keep it when subnet_id matches.
-        if ((*h)->getIPv4SubnetID() == subnet_id) {
-            hosts.push_back(*h);
+        if (h->getIPv4SubnetID() == subnet_id) {
+            hosts.push_back(h);
         }
     }
     return (hosts);
@@ -49,10 +50,10 @@ MemHostDataSource::getAll4(const SubnetID& subnet_id) const {
 ConstHostCollection
 MemHostDataSource::getAll6(const SubnetID& subnet_id) const {
     ConstHostCollection hosts;
-    for (auto h = store_.begin(); h != store_.end(); ++h) {
+    for (auto const& h : store_) {
         // Keep it when subnet_id matches.
-        if ((*h)->getIPv6SubnetID() == subnet_id) {
-            hosts.push_back(*h);
+        if (h->getIPv6SubnetID() == subnet_id) {
+            hosts.push_back(h);
         }
     }
     return (hosts);
@@ -61,10 +62,10 @@ MemHostDataSource::getAll6(const SubnetID& subnet_id) const {
 ConstHostCollection
 MemHostDataSource::getAllbyHostname(const std::string& hostname) const {
     ConstHostCollection hosts;
-    for (auto h = store_.begin(); h != store_.end(); ++h) {
+    for (auto const& h : store_) {
         // Keep it when hostname matches.
-        if ((*h)->getLowerHostname() == hostname) {
-            hosts.push_back(*h);
+        if (h->getLowerHostname() == hostname) {
+            hosts.push_back(h);
         }
     }
     return (hosts);
@@ -74,11 +75,11 @@ ConstHostCollection
 MemHostDataSource::getAllbyHostname4(const std::string& hostname,
                                      const SubnetID& subnet_id) const {
     ConstHostCollection hosts;
-    for (auto h = store_.begin(); h != store_.end(); ++h) {
+    for (auto const& h : store_) {
         // Keep it when hostname and subnet_id match.
-        if (((*h)->getLowerHostname() == hostname) &&
-            ((*h)->getIPv4SubnetID() == subnet_id)) {
-            hosts.push_back(*h);
+        if ((h->getLowerHostname() == hostname) &&
+            (h->getIPv4SubnetID() == subnet_id)) {
+            hosts.push_back(h);
         }
     }
     return (hosts);
@@ -88,11 +89,11 @@ ConstHostCollection
 MemHostDataSource::getAllbyHostname6(const std::string& hostname,
                                      const SubnetID& subnet_id) const {
     ConstHostCollection hosts;
-    for (auto h = store_.begin(); h != store_.end(); ++h) {
+    for (auto const& h : store_) {
         // Keep it when hostname and subnet_id match.
-        if (((*h)->getLowerHostname() == hostname) &&
-            ((*h)->getIPv6SubnetID() == subnet_id)) {
-            hosts.push_back(*h);
+        if ((h->getLowerHostname() == hostname) &&
+            (h->getIPv6SubnetID() == subnet_id)) {
+            hosts.push_back(h);
         }
     }
     return (hosts);
@@ -104,15 +105,15 @@ MemHostDataSource::getPage4(const SubnetID& subnet_id,
                             uint64_t lower_host_id,
                             const HostPageSize& page_size) const {
     ConstHostCollection hosts;
-    for (auto h = store_.begin(); h != store_.end(); ++h) {
+    for (auto const& h : store_) {
         // Skip it when subnet_id does not match.
-        if ((*h)->getIPv4SubnetID() != subnet_id) {
+        if (h->getIPv4SubnetID() != subnet_id) {
             continue;
         }
-        if (lower_host_id && ((*h)->getHostId() <= lower_host_id)) {
+        if (lower_host_id && (h->getHostId() <= lower_host_id)) {
             continue;
         }
-        hosts.push_back(*h);
+        hosts.push_back(h);
         if (hosts.size() == page_size.page_size_) {
             break;
         }
@@ -126,15 +127,15 @@ MemHostDataSource::getPage6(const SubnetID& subnet_id,
                             uint64_t lower_host_id,
                             const HostPageSize& page_size) const {
     ConstHostCollection hosts;
-    for (auto h = store_.begin(); h != store_.end(); ++h) {
+    for (auto const& h : store_) {
         // Skip it when subnet_id does not match.
-        if ((*h)->getIPv6SubnetID() != subnet_id) {
+        if (h->getIPv6SubnetID() != subnet_id) {
             continue;
         }
-        if (lower_host_id && ((*h)->getHostId() <= lower_host_id)) {
+        if (lower_host_id && (h->getHostId() <= lower_host_id)) {
             continue;
         }
-        hosts.push_back(*h);
+        hosts.push_back(h);
         if (hosts.size() == page_size.page_size_) {
             break;
         }
@@ -147,11 +148,11 @@ MemHostDataSource::getPage4(size_t& /*source_index*/,
                             uint64_t lower_host_id,
                             const HostPageSize& page_size) const {
     ConstHostCollection hosts;
-    for (auto h = store_.begin(); h != store_.end(); ++h) {
-        if (lower_host_id && ((*h)->getHostId() <= lower_host_id)) {
+    for (auto const& h : store_) {
+        if (lower_host_id && (h->getHostId() <= lower_host_id)) {
             continue;
         }
-        hosts.push_back(*h);
+        hosts.push_back(h);
         if (hosts.size() == page_size.page_size_) {
             break;
         }
@@ -164,11 +165,11 @@ MemHostDataSource::getPage6(size_t& /*source_index*/,
                             uint64_t lower_host_id,
                             const HostPageSize& page_size) const {
     ConstHostCollection hosts;
-    for (auto h = store_.begin(); h != store_.end(); ++h) {
-        if (lower_host_id && ((*h)->getHostId() <= lower_host_id)) {
+    for (auto const& h : store_) {
+        if (lower_host_id && (h->getHostId() <= lower_host_id)) {
             continue;
         }
-        hosts.push_back(*h);
+        hosts.push_back(h);
         if (hosts.size() == page_size.page_size_) {
             break;
         }
@@ -179,7 +180,7 @@ MemHostDataSource::getPage6(size_t& /*source_index*/,
 ConstHostCollection
 MemHostDataSource::getAll4(const asiolink::IOAddress& address) const {
     ConstHostCollection hosts;
-    for (auto const & h : store_) {
+    for (auto const& h : store_) {
         if (h->getIPv4Reservation() == address) {
             hosts.push_back(h);
         }
@@ -194,16 +195,16 @@ MemHostDataSource::get4(const SubnetID& subnet_id,
                         const uint8_t* identifier_begin,
                         const size_t identifier_len) const {
     vector<uint8_t> ident(identifier_begin, identifier_begin + identifier_len);
-    for (auto h = store_.begin(); h != store_.end(); ++h) {
+    for (auto const& h : store_) {
         // If either subnet-id or identifier type do not match,
         // it's not our host
-        if (((*h)->getIPv4SubnetID() != subnet_id) ||
-            ((*h)->getIdentifierType() != identifier_type)) {
+        if ((h->getIPv4SubnetID() != subnet_id) ||
+            (h->getIdentifierType() != identifier_type)) {
             continue;
         }
         // If the identifier matches, we found it!
-        if ((*h)->getIdentifier() == ident) {
-            return (*h);
+        if (h->getIdentifier() == ident) {
+            return (h);
         }
     }
 
@@ -217,16 +218,16 @@ MemHostDataSource::get6(const SubnetID& subnet_id,
                         const uint8_t* identifier_begin,
                         const size_t identifier_len) const {
     vector<uint8_t> ident(identifier_begin, identifier_begin + identifier_len);
-    for (auto h = store_.begin(); h != store_.end(); ++h) {
+    for (auto const& h : store_) {
         // If either subnet-id or identifier type do not match,
         // it's not our host
-        if (((*h)->getIPv6SubnetID() != subnet_id) ||
-            ((*h)->getIdentifierType() != identifier_type)) {
+        if ((h->getIPv6SubnetID() != subnet_id) ||
+            (h->getIdentifierType() != identifier_type)) {
             continue;
         }
         // If the identifier matches, we found it!
-        if ((*h)->getIdentifier() == ident) {
-            return (*h);
+        if (h->getIdentifier() == ident) {
+            return (h);
         }
     }
 
@@ -236,10 +237,10 @@ MemHostDataSource::get6(const SubnetID& subnet_id,
 ConstHostPtr
 MemHostDataSource::get4(const SubnetID& subnet_id,
                         const asiolink::IOAddress& address) const {
-    for (auto h = store_.begin(); h != store_.end(); ++h) {
-        if ((*h)->getIPv4SubnetID() == subnet_id &&
-            (*h)->getIPv4Reservation() == address) {
-            return (*h);
+    for (auto const& h : store_) {
+        if (h->getIPv4SubnetID() == subnet_id &&
+            h->getIPv4Reservation() == address) {
+            return (h);
         }
     }
 
@@ -250,7 +251,7 @@ ConstHostCollection
 MemHostDataSource::getAll4(const SubnetID& subnet_id,
                            const asiolink::IOAddress& address) const {
     ConstHostCollection hosts;
-    for (auto const & h : store_) {
+    for (auto const& h : store_) {
         if (h->getIPv4SubnetID() == subnet_id &&
             h->getIPv4Reservation() == address) {
             hosts.push_back(h);
@@ -269,22 +270,22 @@ MemHostDataSource::get6(const asiolink::IOAddress& /*prefix*/,
 ConstHostPtr
 MemHostDataSource::get6(const SubnetID& subnet_id,
                         const asiolink::IOAddress& address) const {
-    for (auto h = store_.begin(); h != store_.end(); ++h) {
+    for (auto const& h : store_) {
 
         // Naive approach: check hosts one by one
 
         // First check: subnet-id must match.
-        if ((*h)->getIPv6SubnetID() != subnet_id) {
+        if (h->getIPv6SubnetID() != subnet_id) {
             // wrong subnet-id? ok, skip this one
             continue;
         }
 
         // Second check: the v6 reservation must much. This is very simple
         // as we ignore the reservation type.
-        auto resrvs = (*h)->getIPv6Reservations();
-        for (auto r = resrvs.first; r != resrvs.second; ++r) {
-            if ((*r).second.getPrefix() == address) {
-                return (*h);
+        auto const& resrvs = h->getIPv6Reservations();
+        BOOST_FOREACH(auto const& r, resrvs) {
+            if (r.second.getPrefix() == address) {
+                return (h);
             }
         }
     }
@@ -296,14 +297,14 @@ ConstHostCollection
 MemHostDataSource::getAll6(const SubnetID& subnet_id,
                            const asiolink::IOAddress& address) const {
     ConstHostCollection hosts;
-    for (auto const & h : store_) {
+    for (auto const& h : store_) {
         if (h->getIPv6SubnetID() != subnet_id) {
             continue;
         }
 
-        auto resrvs = h->getIPv6Reservations();
-        for (auto r = resrvs.first; r != resrvs.second; ++r) {
-            if ((*r).second.getPrefix() == address) {
+        auto const& resrvs = h->getIPv6Reservations();
+        BOOST_FOREACH(auto const& r, resrvs) {
+            if (r.second.getPrefix() == address) {
                 hosts.push_back(h);
             }
         }
@@ -315,10 +316,10 @@ MemHostDataSource::getAll6(const SubnetID& subnet_id,
 ConstHostCollection
 MemHostDataSource::getAll6(const asiolink::IOAddress& address) const {
     ConstHostCollection hosts;
-    for (auto const & h : store_) {
-        auto resrvs = h->getIPv6Reservations();
-        for (auto r = resrvs.first; r != resrvs.second; ++r) {
-            if ((*r).second.getPrefix() == address) {
+    for (auto const& h : store_) {
+        auto const& resrvs = h->getIPv6Reservations();
+        BOOST_FOREACH(auto const& r, resrvs) {
+            if (r.second.getPrefix() == address) {
                 hosts.push_back(h);
             }
         }
@@ -351,9 +352,9 @@ MemHostDataSource::del(const SubnetID& subnet_id,
 
             // Second check: the v6 reservation must much. This is very simple
             // as we ignore the reservation type.
-            auto resrvs = (*h)->getIPv6Reservations();
-            for (auto r = resrvs.first; r != resrvs.second; ++r) {
-                if ((*r).second.getPrefix() == addr) {
+            auto const& resrvs = (*h)->getIPv6Reservations();
+            BOOST_FOREACH(auto const& r, resrvs) {
+                if (r.second.getPrefix() == addr) {
                     store_.erase(h);
                     return (true);
                 }

@@ -923,11 +923,14 @@ ListElement::toJSON(std::ostream& ss) const {
     ss << "[ ";
 
     const std::vector<ElementPtr>& v = listValue();
-    for (auto it = v.begin(); it != v.end(); ++it) {
-        if (it != v.begin()) {
+    bool first = true;
+    for (auto const& it : v) {
+        if (!first) {
             ss << ", ";
+        } else {
+            first = false;
         }
-        (*it)->toJSON(ss);
+        it->toJSON(ss);
     }
     ss << " ]";
 }
@@ -936,13 +939,16 @@ void
 MapElement::toJSON(std::ostream& ss) const {
     ss << "{ ";
 
-    for (auto it = m.begin(); it != m.end(); ++it) {
-        if (it != m.begin()) {
+    bool first = true;
+    for (auto const& it : m) {
+        if (!first) {
             ss << ", ";
+        } else {
+            first = false;
         }
-        ss << "\"" << (*it).first << "\": ";
-        if ((*it).second) {
-            (*it).second->toJSON(ss);
+        ss << "\"" << it.first << "\": ";
+        if (it.second) {
+            it.second->toJSON(ss);
         } else {
             ss << "None";
         }
@@ -1218,14 +1224,14 @@ mergeDiffAdd(ElementPtr& element, ElementPtr& other,
         // Store new elements in a separate container so we don't overwrite
         // options as we add them (if there are duplicates).
         ElementPtr new_elements = Element::createList();
-        for (auto& right : other->listValue()) {
+        for (auto const& right : other->listValue()) {
             // Check if we have any description of the key in the configuration
             // hierarchy.
             auto f = hierarchy[idx].find(key);
             if (f != hierarchy[idx].end()) {
                 bool found = false;
                 ElementPtr mutable_right = boost::const_pointer_cast<Element>(right);
-                for (auto& left : element->listValue()) {
+                for (auto const& left : element->listValue()) {
                     ElementPtr mutable_left = boost::const_pointer_cast<Element>(left);
                     // Check if the elements refer to the same configuration
                     // entity.
@@ -1242,7 +1248,7 @@ mergeDiffAdd(ElementPtr& element, ElementPtr& other,
             }
         }
         // Finally add the new elements.
-        for (auto& right : new_elements->listValue()) {
+        for (auto const& right : new_elements->listValue()) {
             element->add(right);
         }
         return;
@@ -1367,13 +1373,13 @@ extend(const std::string& container, const std::string& extension,
     }
 
     if (element->getType() == Element::list) {
-        for (auto& right : other->listValue()) {
+        for (auto const& right : other->listValue()) {
             // Check if we have any description of the key in the configuration
             // hierarchy.
             auto f = hierarchy[idx].find(key);
             if (f != hierarchy[idx].end()) {
                 ElementPtr mutable_right = boost::const_pointer_cast<Element>(right);
-                for (auto& left : element->listValue()) {
+                for (auto const& left : element->listValue()) {
                     ElementPtr mutable_left = boost::const_pointer_cast<Element>(left);
                     if (container == key) {
                         alter = true;
@@ -1566,17 +1572,20 @@ prettyPrint(ConstElementPtr element, std::ostream& out,
 
         // iterate on items
         auto const& l = element->listValue();
-        for (auto it = l.begin(); it != l.end(); ++it) {
+        bool first = true;
+        for (auto const& it : l) {
             // add the separator if not the first item
-            if (it != l.begin()) {
+            if (!first) {
                 out << separator;
+            } else {
+                first = false;
             }
             // add indentation
             if (complex) {
                 out << std::string(indent + step, ' ');
             }
             // recursive call
-            prettyPrint(*it, out, indent + step, step);
+            prettyPrint(it, out, indent + step, step);
         }
 
         // close the list
@@ -1599,7 +1608,7 @@ prettyPrint(ConstElementPtr element, std::ostream& out,
         // iterate on keyword: value
         auto const& m = element->mapValue();
         bool first = true;
-        for (auto it = m.begin(); it != m.end(); ++it) {
+        for (auto const& it : m) {
             // add the separator if not the first item
             if (first) {
                 first = false;
@@ -1609,9 +1618,9 @@ prettyPrint(ConstElementPtr element, std::ostream& out,
             // add indentation
             out << std::string(indent + step, ' ');
             // add keyword:
-            out << "\"" << it->first << "\": ";
+            out << "\"" << it.first << "\": ";
             // recursive call
-            prettyPrint(it->second, out, indent + step, step);
+            prettyPrint(it.second, out, indent + step, step);
         }
 
         // close the map

@@ -126,6 +126,7 @@ TEST_F(Rdata_NSEC_Test, compare) {
     vector<generic::NSEC> compare_set;
     compare_set.push_back(generic::NSEC("a.example. A"));
     compare_set.push_back(generic::NSEC("example. A"));
+
     vector<generic::NSEC>::const_iterator it;
     const vector<generic::NSEC>::const_iterator it_end = compare_set.end();
     for (it = compare_set.begin(); it != it_end - 1; ++it) {

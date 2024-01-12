@@ -67,10 +67,10 @@ public:
         // we're interested in.
         if (l->getType() == isc::data::Element::list) {
             std::vector<isc::data::ElementPtr> e = l->listValue();
-            for (auto it = e.begin(); it != e.end(); ++it) {
-                isc::data::ConstElementPtr ip_address = (*it)->get("ip-address");
+            for (auto const& it : e) {
+                isc::data::ConstElementPtr ip_address = it->get("ip-address");
                 if (ip_address && ip_address->stringValue() == ip) {
-                    l = (*it);
+                    l = it;
                     break;
                 }
             }

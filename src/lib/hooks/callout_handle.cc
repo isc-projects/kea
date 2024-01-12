@@ -64,9 +64,8 @@ CalloutHandle::~CalloutHandle() {
 vector<string>
 CalloutHandle::getArgumentNames() const {
     vector<string> names;
-    for (ElementCollection::const_iterator i = arguments_.begin();
-         i != arguments_.end(); ++i) {
-        names.push_back(i->first);
+    for (auto const& i : arguments_) {
+        names.push_back(i.first);
     }
 
     return (names);
@@ -111,9 +110,8 @@ vector<string>
 CalloutHandle::getContextNames() const {
     vector<string> names;
     const ElementCollection& elements = getContextForLibrary();
-    for (ElementCollection::const_iterator i = elements.begin();
-         i != elements.end(); ++i) {
-        names.push_back(i->first);
+    for (auto const& i : elements) {
+        names.push_back(i.first);
     }
 
     return (names);

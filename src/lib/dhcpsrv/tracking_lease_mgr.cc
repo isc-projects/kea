@@ -10,6 +10,7 @@
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/tracking_lease_mgr.h>
 #include <util/multi_threading_mgr.h>
+#include <boost/foreach.hpp>
 #include <boost/tuple/tuple.hpp>
 
 using namespace isc::asiolink;
@@ -139,8 +140,7 @@ TrackingLeaseMgr::runCallbacksForSubnetID(CallbackType type, SubnetID subnet_id,
     if (cbs.first == cbs.second) {
         return;
     }
-    for (auto it = cbs.first; it != cbs.second; ++it) {
-        auto cb = *it;
+    BOOST_FOREACH(auto const& cb, cbs) {
         try {
             cb.fn(lease);
         } catch (const std::exception& ex) {

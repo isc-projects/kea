@@ -201,10 +201,8 @@ public:
         // The data length is equal to size of T.
         length += sizeof(T);;
         // length of all suboptions
-        for (OptionCollection::const_iterator it = options_.begin();
-             it != options_.end();
-             ++it) {
-            length += (*it).second->len();
+        for (auto const& it : options_) {
+            length += it.second->len();
         }
         return (length);
     }

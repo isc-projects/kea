@@ -209,10 +209,8 @@ public:
     /// \code
     /// PktList packets_collection();
     /// ...  # Add elements to the container
-    /// for (PktListIterator it = packets_collection.begin();
-    ///      it != packets_collection.end();
-    ///      ++it) {
-    ///          boost::shared_ptr<Pkt4> pkt = *it;
+    /// for (auto const& it : packets_collection) {
+    ///          boost::shared_ptr<Pkt4> pkt = it;
     ///          # Do something with packet;
     ///      }
     /// \endcode
@@ -778,10 +776,8 @@ public:
     ///
     // \return true, if packet drops occurred.
     bool droppedPackets() const {
-        for (ExchangesMapIterator it = exchanges_.begin();
-             it != exchanges_.end();
-             ++it) {
-            if (it->second->getDroppedPacketsNum() > 0) {
+        for (auto const& it : exchanges_) {
+            if (it.second->getDroppedPacketsNum() > 0) {
                 return (true);
             }
         }
@@ -1098,11 +1094,9 @@ public:
             isc_throw(isc::InvalidOperation,
                       "no exchange type added for tracking");
         }
-        for (ExchangesMapIterator it = exchanges_.begin();
-             it != exchanges_.end();
-             ++it) {
-            ExchangeStatsPtr xchg_stats = it->second;
-            std::cout << "***Statistics for: " << it->first
+        for (auto const& it : exchanges_) {
+            ExchangeStatsPtr xchg_stats = it.second;
+            std::cout << "***Statistics for: " << it.first
                       << "***" << std::endl;
             xchg_stats->printMainStats();
             std::cout << std::endl;
@@ -1126,35 +1120,36 @@ public:
         std::ostringstream stream_drops;
         std::ostringstream stream_reject;
         std::string sep("");
-        for (ExchangesMapIterator it = exchanges_.begin();
-             it != exchanges_.end(); ++it) {
-
-            if (it != exchanges_.begin()) {
+        bool first = true;
+        for (auto const& it : exchanges_) {
+            if (!first) {
                 if (clean_report) {
                     sep = clean_sep;
                 } else {
                     sep = "/";
                 }
+            } else {
+                first = false;
             }
-            stream_sent << sep << it->second->getSentPacketsNum();
-            stream_rcvd << sep << it->second->getRcvdPacketsNum();
-            stream_drops << sep << it->second->getDroppedPacketsNum();
-            stream_reject << sep << it->second->getRejLeasesNum();
+            stream_sent << sep << it.second->getSentPacketsNum();
+            stream_rcvd << sep << it.second->getRcvdPacketsNum();
+            stream_drops << sep << it.second->getDroppedPacketsNum();
+            stream_reject << sep << it.second->getRejLeasesNum();
         }
 
         if (clean_report) {
-        std::cout << stream_sent.str()
-                  << clean_sep << stream_rcvd.str()
-                  << clean_sep << stream_drops.str()
-                  << clean_sep << stream_reject.str()
-                  << std::endl;
+            std::cout << stream_sent.str()
+                      << clean_sep << stream_rcvd.str()
+                      << clean_sep << stream_drops.str()
+                      << clean_sep << stream_reject.str()
+                      << std::endl;
 
         } else {
-        std::cout << "sent: " << stream_sent.str()
-                  << "; received: " << stream_rcvd.str()
-                  << "; drops: " << stream_drops.str()
-                  << "; rejected: " << stream_reject.str()
-                  << std::endl;
+            std::cout << "sent: " << stream_sent.str()
+                      << "; received: " << stream_rcvd.str()
+                      << "; drops: " << stream_drops.str()
+                      << "; rejected: " << stream_reject.str()
+                      << std::endl;
         }
     }
 
@@ -1174,12 +1169,10 @@ public:
             isc_throw(isc::InvalidOperation,
                       "no exchange type added for tracking");
         }
-        for (ExchangesMapIterator it = exchanges_.begin();
-             it != exchanges_.end();
-             ++it) {
-            ExchangeStatsPtr xchg_stats = it->second;
+        for (auto const& it : exchanges_) {
+            ExchangeStatsPtr xchg_stats = it.second;
             std::cout << "***Timestamps for packets: "
-                      << it->first
+                      << it.first
                       << "***" << std::endl;
             xchg_stats->printTimestamps();
             std::cout << std::endl;
@@ -1199,19 +1192,19 @@ public:
         if (custom_counters_.empty()) {
             isc_throw(isc::InvalidOperation, "no custom counters specified");
         }
-        for (CustomCountersMapIterator it = custom_counters_.begin();
-             it != custom_counters_.end();
-             ++it) {
-            CustomCounterPtr counter = it->second;
+        for (auto const& it : custom_counters_) {
+            CustomCounterPtr counter = it.second;
             std::cout << counter->getName() << ": " << counter->getValue()
                       << std::endl;
         }
     }
 
-    std::tuple<typename ExchangeStats::PktListIterator, typename ExchangeStats::PktListIterator> getSentPackets(const ExchangeType xchg_type) const {
+    std::tuple<typename ExchangeStats::PktListIterator, typename ExchangeStats::PktListIterator>
+    getSentPackets(const ExchangeType xchg_type) const {
         ExchangeStatsPtr xchg_stats = getExchangeStats(xchg_type);
-        std::tuple<typename ExchangeStats::PktListIterator, typename ExchangeStats::PktListIterator> sent_packets_its = xchg_stats->getSentPackets();
-        return(sent_packets_its);
+        std::tuple<typename ExchangeStats::PktListIterator, typename ExchangeStats::PktListIterator> sent_packets_its =
+                xchg_stats->getSentPackets();
+        return (sent_packets_its);
     }
 
 private:

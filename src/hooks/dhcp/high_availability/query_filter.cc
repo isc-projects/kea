@@ -132,8 +132,8 @@ QueryFilter::QueryFilter(const HAConfigPtr& config)
 
     // The returned configurations are not ordered. Let's iterate over them
     // and put them in the desired order.
-    for (auto peer_pair = peers_map.begin(); peer_pair != peers_map.end(); ++peer_pair) {
-        auto peer = peer_pair->second;
+    for (auto const& peer_pair : peers_map) {
+        auto peer = peer_pair.second;
         // The primary server is always first on the list.
         if (peer->getRole() == HAConfig::PeerConfig::PRIMARY) {
             peers_.insert(peers_.begin(), peer);
@@ -275,16 +275,16 @@ QueryFilter::serveFailoverScopesInternal() {
 
     // Iterate over the roles of all servers to see which scope should
     // be enabled.
-    for (auto peer = peers_.begin(); peer != peers_.end(); ++peer) {
+    for (auto const& peer : peers_) {
         // The scope of the primary server must always be served. If we're
         // doing load balancing, the scope of the secondary server also
         // has to be served. Regardless if I am primary or secondary,
         // I will start serving queries from both scopes. If I am a
         // standby server, I will start serving the scope of the primary
         // server.
-        if (((*peer)->getRole() == HAConfig::PeerConfig::PRIMARY) ||
-            ((*peer)->getRole() == HAConfig::PeerConfig::SECONDARY)) {
-            serveScopeInternal((*peer)->getName());
+        if ((peer->getRole() == HAConfig::PeerConfig::PRIMARY) ||
+            (peer->getRole() == HAConfig::PeerConfig::SECONDARY)) {
+            serveScopeInternal(peer->getName());
         }
     }
 }
@@ -304,8 +304,8 @@ QueryFilter::serveNoScopesInternal() {
     scopes_.clear();
 
     // Disable scope for each peer in the configuration.
-    for (auto peer = peers_.begin(); peer != peers_.end(); ++peer) {
-        scopes_[(*peer)->getName()] = false;
+    for (auto const& peer : peers_) {
+        scopes_[peer->getName()] = false;
     }
 }
 

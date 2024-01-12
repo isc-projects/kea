@@ -122,8 +122,8 @@ void generateTestLeases(std::vector<Lease6Ptr>& leases) {
 template<typename LeasesVec>
 ConstElementPtr getLeasesAsJson(const LeasesVec& leases) {
     ElementPtr leases_json = Element::createList();
-    for (auto l = leases.begin(); l != leases.end(); ++l) {
-        leases_json->add((*l)->toElement());
+    for (auto const& l : leases) {
+        leases_json->add(l->toElement());
     }
     return (leases_json);
 }
@@ -258,13 +258,13 @@ public:
     findRequest(const std::string& str1, const std::string& str2,
                 const std::string& str3 = "") {
         std::lock_guard<std::mutex> lk(mutex_);
-        for (auto r = requests_.begin(); r < requests_.end(); ++r) {
-            std::string request_as_string = (*r)->toString();
+        for (auto const& r : requests_) {
+            std::string request_as_string = r->toString();
             if (request_as_string.find(str1) != std::string::npos) {
                 if (request_as_string.find(str2) != std::string::npos) {
                     if (str3.empty() ||
                         (request_as_string.find(str3) != std::string::npos))
-                    return (*r);
+                    return (r);
                 }
             }
         }

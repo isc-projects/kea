@@ -134,9 +134,8 @@ SrvConfig::copy(SrvConfig& new_config) const {
     // Replace configured hooks libraries.
     new_config.hooks_config_.clear();
     using namespace isc::hooks;
-    for (HookLibsCollection::const_iterator it = hooks_config_.get().begin();
-         it != hooks_config_.get().end(); ++it) {
-        new_config.hooks_config_.add(it->first, it->second);
+    for (auto const& it : hooks_config_.get()) {
+        new_config.hooks_config_.add(it.first, it.second);
     }
 }
 
@@ -401,10 +400,10 @@ SrvConfig::extractConfiguredGlobals(isc::data::ConstElementPtr config) {
     }
 
     const std::map<std::string, ConstElementPtr>& values = config->mapValue();
-    for (auto value = values.begin(); value != values.end(); ++value) {
-        if (value->second->getType() != Element::list &&
-            value->second->getType() != Element::map) {
-                addConfiguredGlobal(value->first, value->second);
+    for (auto const& value : values) {
+        if (value.second->getType() != Element::list &&
+            value.second->getType() != Element::map) {
+                addConfiguredGlobal(value.first, value.second);
         }
     }
 }
@@ -688,15 +687,14 @@ SrvConfig::toElement() const {
         // Get plain subnets
         ElementPtr plain_subnets = Element::createList();
         const Subnet4Collection* subnets = cfg_subnets4_->getAll();
-        for (Subnet4Collection::const_iterator subnet = subnets->cbegin();
-             subnet != subnets->cend(); ++subnet) {
+        for (auto const& subnet : *subnets) {
             // Skip subnets which are in a shared-network
             SharedNetwork4Ptr network;
-            (*subnet)->getSharedNetwork(network);
+            subnet->getSharedNetwork(network);
             if (network) {
                 continue;
             }
-            ElementPtr subnet_cfg = (*subnet)->toElement();
+            ElementPtr subnet_cfg = subnet->toElement();
             sn_list.push_back(subnet_cfg);
             plain_subnets->add(subnet_cfg);
         }
@@ -708,13 +706,11 @@ SrvConfig::toElement() const {
 
         // Get subnets in shared network subnet lists
         const std::vector<ElementPtr> networks = shared_networks->listValue();
-        for (auto network = networks.cbegin();
-             network != networks.cend(); ++network) {
+        for (auto const& network : networks) {
             const std::vector<ElementPtr> sh_list =
-                (*network)->get("subnet4")->listValue();
-            for (auto subnet = sh_list.cbegin();
-                 subnet != sh_list.cend(); ++subnet) {
-                sn_list.push_back(*subnet);
+                network->get("subnet4")->listValue();
+            for (auto const& subnet : sh_list) {
+                sn_list.push_back(subnet);
             }
         }
 
@@ -722,15 +718,14 @@ SrvConfig::toElement() const {
         // Get plain subnets
         ElementPtr plain_subnets = Element::createList();
         const Subnet6Collection* subnets = cfg_subnets6_->getAll();
-        for (Subnet6Collection::const_iterator subnet = subnets->cbegin();
-             subnet != subnets->cend(); ++subnet) {
+        for (auto const& subnet : *subnets) {
             // Skip subnets which are in a shared-network
             SharedNetwork6Ptr network;
-            (*subnet)->getSharedNetwork(network);
+            subnet->getSharedNetwork(network);
             if (network) {
                 continue;
             }
-            ElementPtr subnet_cfg = (*subnet)->toElement();
+            ElementPtr subnet_cfg = subnet->toElement();
             sn_list.push_back(subnet_cfg);
             plain_subnets->add(subnet_cfg);
         }
@@ -742,13 +737,11 @@ SrvConfig::toElement() const {
 
         // Get subnets in shared network subnet lists
         const std::vector<ElementPtr> networks = shared_networks->listValue();
-        for (auto network = networks.cbegin();
-             network != networks.cend(); ++network) {
+        for (auto const& network : networks) {
             const std::vector<ElementPtr> sh_list =
-                (*network)->get("subnet6")->listValue();
-            for (auto subnet = sh_list.cbegin();
-                 subnet != sh_list.cend(); ++subnet) {
-                sn_list.push_back(*subnet);
+                network->get("subnet6")->listValue();
+            for (auto const& subnet : sh_list) {
+                sn_list.push_back(subnet);
             }
         }
     }
@@ -764,15 +757,14 @@ SrvConfig::toElement() const {
     }
 
     // Insert subnet reservations
-    for (std::vector<ElementPtr>::const_iterator subnet = sn_list.cbegin();
-         subnet != sn_list.cend(); ++subnet) {
-        ConstElementPtr id = (*subnet)->get("id");
+    for (auto const& subnet : sn_list) {
+        ConstElementPtr id = subnet->get("id");
         if (isNull(id)) {
             isc_throw(ToElementError, "subnet has no id");
         }
         SubnetID subnet_id = id->intValue();
         ConstElementPtr resvs = resv_list.get(subnet_id);
-        (*subnet)->set("reservations", resvs);
+        subnet->set("reservations", resvs);
     }
 
     // Set expired-leases-processing

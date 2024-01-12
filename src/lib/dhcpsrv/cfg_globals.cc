@@ -84,18 +84,17 @@ struct CfgGlobalsChecks {
         // Build the name vector.
         std::vector<std::string> names;
         names.resize(CfgGlobals::SIZE);
-        for (auto it = CfgGlobals::nameToIndex.cbegin();
-             it != CfgGlobals::nameToIndex.cend(); ++it) {
-            int idx = it->second;
+        for (auto const& it : CfgGlobals::nameToIndex) {
+            int idx = it.second;
             if ((idx < 0) || (idx >= CfgGlobals::SIZE)) {
                 isc_throw(Unexpected, "invalid index " << idx
-                          << " for name " << it->first);
+                          << " for name " << it.first);
             }
             if (!names[idx].empty()) {
                 isc_throw(Unexpected, "duplicated names for " << idx
                           << " got " << names[idx]);
             }
-            names[idx] = it->first;
+            names[idx] = it.first;
         }
 
         // No name should be empty.
@@ -160,11 +159,11 @@ CfgGlobals::clear() {
 const CfgGlobals::MapType
 CfgGlobals::valuesMap() const {
     MapType map;
-    for (auto it = nameToIndex.cbegin(); it != nameToIndex.cend(); ++it) {
-        int idx = it->second;
+    for (auto const& it : nameToIndex) {
+        int idx = it.second;
         ConstElementPtr value = values_[idx];
         if (value) {
-            map.insert(make_pair(it->first, value));
+            map.insert(make_pair(it.first, value));
         }
     }
     return (map);
@@ -173,11 +172,11 @@ CfgGlobals::valuesMap() const {
 ElementPtr
 CfgGlobals::toElement() const {
     ElementPtr result = Element::createMap();
-    for (auto it = nameToIndex.cbegin(); it != nameToIndex.cend(); ++it) {
-        int idx = it->second;
+    for (auto const& it : nameToIndex) {
+        int idx = it.second;
         ConstElementPtr value = values_[idx];
         if (value) {
-            result->set(it->first, value);
+            result->set(it.first, value);
         }
     }
     return (result);

@@ -31,8 +31,6 @@
 
 #include <log/logger.h>
 
-#include <boost/foreach.hpp>
-
 using namespace std;
 using namespace isc::log;
 using namespace isc::util;
@@ -144,9 +142,8 @@ vector<string>
 sortedIdentifiers(MessageDictionary& dictionary) {
     vector<string> ident;
 
-    for (MessageDictionary::const_iterator i = dictionary.begin();
-         i != dictionary.end(); ++i) {
-        ident.push_back(i->first);
+    for (auto const& i : dictionary) {
+        ident.push_back(i.first);
     }
     sort(ident.begin(), ident.end());
 
@@ -267,9 +264,8 @@ writeHeaderFile(const string& file,
     writeOpeningNamespace(hfile, ns_components);
 
     vector<string> idents = sortedIdentifiers(dictionary);
-    for (vector<string>::const_iterator j = idents.begin();
-        j != idents.end(); ++j) {
-        hfile << "extern const isc::log::MessageID " << *j << ";\n";
+    for (auto const& j : idents) {
+        hfile << "extern const isc::log::MessageID " << j << ";\n";
     }
     hfile << "\n";
 
@@ -368,10 +364,9 @@ writeProgramFile(const string& file,
     writeOpeningNamespace(ccfile, ns_components);
 
     vector<string> idents = sortedIdentifiers(dictionary);
-    for (vector<string>::const_iterator j = idents.begin();
-        j != idents.end(); ++j) {
-        ccfile << "extern const isc::log::MessageID " << *j <<
-            " = \"" << *j << "\";\n";
+    for (auto const& j : idents) {
+        ccfile << "extern const isc::log::MessageID " << j <<
+            " = \"" << j << "\";\n";
     }
     ccfile << "\n";
 
@@ -386,10 +381,8 @@ writeProgramFile(const string& file,
 
     // Output the identifiers and the associated text.
     idents = sortedIdentifiers(dictionary);
-    for (vector<string>::const_iterator i = idents.begin();
-        i != idents.end(); ++i) {
-            ccfile << "    \"" << *i << "\", \"" <<
-                quoteString(dictionary.getText(*i)) << "\",\n";
+    for (auto const& i : idents) {
+        ccfile << "    \"" << i << "\", \"" << quoteString(dictionary.getText(i)) << "\",\n";
     }
 
     // ... and the postamble
@@ -431,9 +424,9 @@ errorDuplicates(MessageReader& reader) {
         sort(duplicates.begin(), duplicates.end());
         MessageReader::MessageIDCollection::iterator new_end =
             unique(duplicates.begin(), duplicates.end());
-        for (MessageReader::MessageIDCollection::iterator i = duplicates.begin();
-            i != new_end; ++i) {
-            cout << "    " << *i << "\n";
+        duplicates.erase(new_end, duplicates.end());
+        for (auto const& i : duplicates) {
+            cout << "    " << i << "\n";
         }
         exit(1);
     }

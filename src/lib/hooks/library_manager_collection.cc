@@ -10,6 +10,7 @@
 #include <hooks/hooks_manager.h>
 #include <hooks/library_manager.h>
 #include <hooks/library_manager_collection.h>
+#include <boost/range/adaptor/reversed.hpp>
 
 namespace isc {
 namespace hooks {
@@ -41,9 +42,8 @@ LibraryManagerCollection::LibraryManagerCollection(const HookLibsCollection& lib
     : library_info_(libraries) {
 
     // We need to split hook libs into library names and library parameters.
-    for (HookLibsCollection::const_iterator it = libraries.begin();
-         it != libraries.end(); ++it) {
-        library_names_.push_back(it->first);
+    for (auto const& it : libraries) {
+        library_names_.push_back(it.first);
     }
 }
 
@@ -122,8 +122,8 @@ bool
 LibraryManagerCollection::prepareUnloadLibraries() {
     bool result = true;
     // Iterate on library managers in reverse order.
-    for (auto lm = lib_managers_.rbegin(); lm != lib_managers_.rend(); ++lm) {
-        result = (*lm)->prepareUnloadLibrary() && result;
+    for (auto const& lm : boost::adaptors::reverse(lib_managers_)) {
+        result = lm->prepareUnloadLibrary() && result;
     }
     return (result);
 }

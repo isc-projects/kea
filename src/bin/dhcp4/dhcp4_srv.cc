@@ -65,6 +65,7 @@
 
 #include <boost/algorithm/string.hpp>
 #include <boost/foreach.hpp>
+#include <boost/range/adaptor/reversed.hpp>
 #include <boost/pointer_cast.hpp>
 #include <boost/shared_ptr.hpp>
 
@@ -402,8 +403,7 @@ Dhcpv4Exchange::setHostIdentifiers(AllocEngine::ClientContext4Ptr context) {
 
     // Collect host identifiers. The identifiers are stored in order of preference.
     // The server will use them in that order to search for host reservations.
-    BOOST_FOREACH(const Host::IdentifierType& id_type,
-                  cfg->getIdentifierTypes()) {
+    for (auto const& id_type : cfg->getIdentifierTypes()) {
         switch (id_type) {
         case Host::IDENT_HWADDR:
             if (context->hwaddr_ && !context->hwaddr_->hwaddr_.empty()) {
@@ -515,9 +515,8 @@ void
 Dhcpv4Exchange::setReservedClientClasses(AllocEngine::ClientContext4Ptr context) {
     if (context->currentHost() && context->query_) {
         const ClientClasses& classes = context->currentHost()->getClientClasses4();
-        for (ClientClasses::const_iterator cclass = classes.cbegin();
-             cclass != classes.cend(); ++cclass) {
-            context->query_->addClass(*cclass);
+        for (auto const& cclass : classes) {
+            context->query_->addClass(cclass);
         }
     }
 }
@@ -587,23 +586,22 @@ void Dhcpv4Exchange::evaluateClasses(const Pkt4Ptr& pkt, bool depend_on_known) {
     const ClientClassDictionaryPtr& dict =
         CfgMgr::instance().getCurrentCfg()->getClientClassDictionary();
     const ClientClassDefListPtr& defs_ptr = dict->getClasses();
-    for (ClientClassDefList::const_iterator it = defs_ptr->cbegin();
-         it != defs_ptr->cend(); ++it) {
+    for (auto const& it : *defs_ptr) {
         // Note second cannot be null
-        const ExpressionPtr& expr_ptr = (*it)->getMatchExpr();
+        const ExpressionPtr& expr_ptr = it->getMatchExpr();
         // Nothing to do without an expression to evaluate
         if (!expr_ptr) {
             continue;
         }
         // Not the right time if only when required
-        if ((*it)->getRequired()) {
+        if (it->getRequired()) {
             continue;
         }
         // Not the right pass.
-        if ((*it)->getDependOnKnown() != depend_on_known) {
+        if (it->getDependOnKnown() != depend_on_known) {
             continue;
         }
-        (*it)->test(pkt, expr_ptr);
+        it->test(pkt, expr_ptr);
     }
 }
 
@@ -664,9 +662,9 @@ void Dhcpv4Srv::setPacketStatisticsDefaults() {
     isc::stats::StatsMgr& stats_mgr = isc::stats::StatsMgr::instance();
 
     // Iterate over set of observed statistics
-    for (auto it = dhcp4_statistics.begin(); it != dhcp4_statistics.end(); ++it) {
+    for (auto const& it : dhcp4_statistics) {
         // Initialize them with default value 0
-        stats_mgr.setValue((*it), static_cast<int64_t>(0));
+        stats_mgr.setValue(it, static_cast<int64_t>(0));
     }
 }
 
@@ -827,7 +825,7 @@ Dhcpv4Srv::selectSubnet4o6(const Pkt4Ptr& query, bool& drop,
 
     // Initialize fields specific to relayed messages.
     if (query6 && !query6->relay_info_.empty()) {
-        BOOST_REVERSE_FOREACH(Pkt6::RelayInfo relay, query6->relay_info_) {
+        for (auto const& relay : boost::adaptors::reverse(query6->relay_info_)) {
             if (!relay.linkaddr_.isV6Zero() &&
                 !relay.linkaddr_.isV6LinkLocal()) {
                 selector.first_relay_linkaddr_ = relay.linkaddr_;
@@ -966,9 +964,8 @@ Dhcpv4Srv::earlyGHRLookup(const Pkt4Ptr& query,
 
             // Add classes from the global reservations.
             const ClientClasses& classes = global_host->getClientClasses4();
-            for (ClientClasses::const_iterator cclass = classes.cbegin();
-                 cclass != classes.cend(); ++cclass) {
-                query->addClass(*cclass);
+            for (auto const& cclass : classes) {
+                query->addClass(cclass);
             }
 
             // Evaluate classes before KNOWN.
@@ -1845,17 +1842,16 @@ Dhcpv4Srv::buildCfgOptionList(Dhcpv4Exchange& ex) {
 
     // Each class in the incoming packet
     const ClientClasses& classes = ex.getQuery()->getClasses();
-    for (ClientClasses::const_iterator cclass = classes.cbegin();
-         cclass != classes.cend(); ++cclass) {
+    for (auto const& cclass : classes) {
         // Find the client class definition for this class
         const ClientClassDefPtr& ccdef = CfgMgr::instance().getCurrentCfg()->
-            getClientClassDictionary()->findClass(*cclass);
+            getClientClassDictionary()->findClass(cclass);
         if (!ccdef) {
             // Not found: the class is built-in or not configured
-            if (!isClientClassBuiltIn(*cclass)) {
+            if (!isClientClassBuiltIn(cclass)) {
                 LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC, DHCP4_CLASS_UNCONFIGURED)
                     .arg(ex.getQuery()->getLabel())
-                    .arg(*cclass);
+                    .arg(cclass);
             }
             // Skip it
             continue;
@@ -1922,22 +1918,20 @@ Dhcpv4Srv::appendRequestedOptions(Dhcpv4Exchange& ex) {
         // Get persistent options.
         const OptionContainerPersistIndex& pidx = opts->get<2>();
         const OptionContainerPersistRange& prange = pidx.equal_range(true);
-        for (OptionContainerPersistIndex::const_iterator desc = prange.first;
-             desc != prange.second; ++desc) {
+        BOOST_FOREACH(auto const& desc, prange) {
             // Add the persistent option code to requested options.
-            if (desc->option_) {
-                uint8_t code = static_cast<uint8_t>(desc->option_->getType());
+            if (desc.option_) {
+                uint8_t code = static_cast<uint8_t>(desc.option_->getType());
                 static_cast<void>(requested_opts.insert(code));
             }
         }
         // Get cancelled options.
         const OptionContainerCancelIndex& cidx = opts->get<5>();
         const OptionContainerCancelRange& crange = cidx.equal_range(true);
-        for (OptionContainerCancelIndex::const_iterator desc = crange.first;
-             desc != crange.second; ++desc) {
+        BOOST_FOREACH(auto const& desc, crange) {
             // Add the cancelled option code to cancelled options.
-            if (desc->option_) {
-                uint8_t code = static_cast<uint8_t>(desc->option_->getType());
+            if (desc.option_) {
+                uint8_t code = static_cast<uint8_t>(desc.option_->getType());
                 static_cast<void>(cancelled_opts.insert(code));
             }
         }
@@ -2024,7 +2018,7 @@ Dhcpv4Srv::appendRequestedOptions(Dhcpv4Exchange& ex) {
         // Iterate on the configured option list
         for (auto const& copts : co_list) {
             for (auto const& desc : copts->getList(DHCP4_OPTION_SPACE,
-                                                        DHO_VIVSO_SUBOPTIONS)) {
+                                                   DHO_VIVSO_SUBOPTIONS)) {
                 if (!desc.option_) {
                     continue;
                 }
@@ -2153,11 +2147,10 @@ Dhcpv4Srv::appendRequestedVendorOptions(Dhcpv4Exchange& ex) {
             // Get persistent options.
             const OptionContainerPersistIndex& pidx = opts->get<2>();
             const OptionContainerPersistRange& prange = pidx.equal_range(true);
-            for (OptionContainerPersistIndex::const_iterator desc = prange.first;
-                 desc != prange.second; ++desc) {
+            BOOST_FOREACH(auto const& desc, prange) {
                 // Add the persistent option code to requested options.
-                if (desc->option_) {
-                    uint8_t code = static_cast<uint8_t>(desc->option_->getType());
+                if (desc.option_) {
+                    uint8_t code = static_cast<uint8_t>(desc.option_->getType());
                     static_cast<void>(requested_opts[vendor_id].insert(code));
                 }
             }
@@ -2165,11 +2158,10 @@ Dhcpv4Srv::appendRequestedVendorOptions(Dhcpv4Exchange& ex) {
             // Get cancelled options.
             const OptionContainerCancelIndex& cidx = opts->get<5>();
             const OptionContainerCancelRange& crange = cidx.equal_range(true);
-            for (OptionContainerCancelIndex::const_iterator desc = crange.first;
-                 desc != crange.second; ++desc) {
+            BOOST_FOREACH(auto const& desc, crange) {
                 // Add the cancelled option code to cancelled options.
-                if (desc->option_) {
-                    uint8_t code = static_cast<uint8_t>(desc->option_->getType());
+                if (desc.option_) {
+                    uint8_t code = static_cast<uint8_t>(desc.option_->getType());
                     static_cast<void>(cancelled_opts.insert(code));
                 }
             }
@@ -2762,9 +2754,9 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
                 // Among those returned try to find a lease that belongs to
                 // current shared network.
                 while (s) {
-                    for (auto l = leases_client_id.begin(); l != leases_client_id.end(); ++l) {
-                        if ((*l)->subnet_id_ == s->getID()) {
-                            lease = *l;
+                    for (auto const& l : leases_client_id) {
+                        if (l->subnet_id_ == s->getID()) {
+                            lease = l;
                             break;
                         }
                     }
@@ -2790,9 +2782,9 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
 
                 // Pick one that belongs to a subnet in this shared network.
                 while (s) {
-                    for (auto l = leases_hwaddr.begin(); l != leases_hwaddr.end(); ++l) {
-                        if ((*l)->subnet_id_ == s->getID()) {
-                            lease = *l;
+                    for (auto const& l : leases_hwaddr) {
+                        if (l->subnet_id_ == s->getID()) {
+                            lease = l;
                             break;
                         }
                     }
@@ -3400,10 +3392,13 @@ Dhcpv4Srv::setFixedFields(Dhcpv4Exchange& ex) {
         string sname;
         string filename;
         size_t found_cnt = 0;  // How many fields we have found.
-        for (ClientClasses::const_iterator name = classes.cbegin();
-             name != classes.cend() && found_cnt < 3; ++name) {
+        for (auto const& name : classes) {
 
-            ClientClassDefPtr cl = dict->findClass(*name);
+            if (found_cnt >= 3) {
+                break;
+            }
+
+            ClientClassDefPtr cl = dict->findClass(name);
             if (!cl) {
                 // Let's skip classes that don't have definitions. Currently
                 // these are automatic classes VENDOR_CLASS_something, but there
@@ -4365,11 +4360,10 @@ Dhcpv4Srv::acceptServerId(const Pkt4Ptr& query) const {
 
     // Check if the server identifier is configured at client class level.
     const ClientClasses& classes = query->getClasses();
-    for (ClientClasses::const_iterator cclass = classes.cbegin();
-         cclass != classes.cend(); ++cclass) {
+    for (auto const& cclass : classes) {
         // Find the client class definition for this class
         const ClientClassDefPtr& ccdef = CfgMgr::instance().getCurrentCfg()->
-            getClientClassDictionary()->findClass(*cclass);
+            getClientClassDictionary()->findClass(cclass);
         if (!ccdef) {
             continue;
         }
@@ -4453,17 +4447,15 @@ void Dhcpv4Srv::requiredClassify(Dhcpv4Exchange& ex) {
         subnet->getSharedNetwork(network);
         if (network) {
             const ClientClasses& to_add = network->getRequiredClasses();
-            for (ClientClasses::const_iterator cclass = to_add.cbegin();
-                 cclass != to_add.cend(); ++cclass) {
-                classes.insert(*cclass);
+            for (auto const& cclass : to_add) {
+                classes.insert(cclass);
             }
         }
 
         // Followed by the subnet
         const ClientClasses& to_add = subnet->getRequiredClasses();
-        for(ClientClasses::const_iterator cclass = to_add.cbegin();
-            cclass != to_add.cend(); ++cclass) {
-            classes.insert(*cclass);
+        for (auto const& cclass : to_add) {
+            classes.insert(cclass);
         }
 
         // And finish by the pool
@@ -4476,9 +4468,8 @@ void Dhcpv4Srv::requiredClassify(Dhcpv4Exchange& ex) {
             PoolPtr pool = subnet->getPool(Lease::TYPE_V4, addr, false);
             if (pool) {
                 const ClientClasses& to_add = pool->getRequiredClasses();
-                for (ClientClasses::const_iterator cclass = to_add.cbegin();
-                     cclass != to_add.cend(); ++cclass) {
-                    classes.insert(*cclass);
+                for (auto const& cclass : to_add) {
+                    classes.insert(cclass);
                 }
             }
         }
@@ -4490,19 +4481,18 @@ void Dhcpv4Srv::requiredClassify(Dhcpv4Exchange& ex) {
     // Note getClientClassDictionary() cannot be null
     const ClientClassDictionaryPtr& dict =
         CfgMgr::instance().getCurrentCfg()->getClientClassDictionary();
-    for (ClientClasses::const_iterator cclass = classes.cbegin();
-         cclass != classes.cend(); ++cclass) {
-        const ClientClassDefPtr class_def = dict->findClass(*cclass);
+    for (auto const& cclass : classes) {
+        const ClientClassDefPtr class_def = dict->findClass(cclass);
         if (!class_def) {
             LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC, DHCP4_CLASS_UNDEFINED)
-                .arg(*cclass);
+                .arg(cclass);
             continue;
         }
         const ExpressionPtr& expr_ptr = class_def->getMatchExpr();
         // Nothing to do without an expression to evaluate
         if (!expr_ptr) {
             LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC, DHCP4_CLASS_UNTESTABLE)
-                .arg(*cclass);
+                .arg(cclass);
             continue;
         }
         // Evaluate the expression which can return false (no match),
@@ -4511,22 +4501,22 @@ void Dhcpv4Srv::requiredClassify(Dhcpv4Exchange& ex) {
             bool status = evaluateBool(*expr_ptr, *query);
             if (status) {
                 LOG_INFO(dhcp4_logger, EVAL_RESULT)
-                    .arg(*cclass)
+                    .arg(cclass)
                     .arg("true");
                 // Matching: add the class
-                query->addClass(*cclass);
+                query->addClass(cclass);
             } else {
                 LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, EVAL_RESULT)
-                    .arg(*cclass)
+                    .arg(cclass)
                     .arg("false");
             }
         } catch (const Exception& ex) {
             LOG_ERROR(dhcp4_logger, EVAL_RESULT)
-                .arg(*cclass)
+                .arg(cclass)
                 .arg(ex.what());
         } catch (...) {
             LOG_ERROR(dhcp4_logger, EVAL_RESULT)
-                .arg(*cclass)
+                .arg(cclass)
                 .arg("get exception?");
         }
     }
@@ -4535,16 +4525,15 @@ void Dhcpv4Srv::requiredClassify(Dhcpv4Exchange& ex) {
 void
 Dhcpv4Srv::deferredUnpack(Pkt4Ptr& query) {
     // Iterate on the list of deferred option codes
-    BOOST_FOREACH(const uint16_t& code, query->getDeferredOptions()) {
+    for (auto const& code : query->getDeferredOptions()) {
         OptionDefinitionPtr def;
         // Iterate on client classes
         const ClientClasses& classes = query->getClasses();
-        for (ClientClasses::const_iterator cclass = classes.cbegin();
-             cclass != classes.cend(); ++cclass) {
+        for (auto const& cclass : classes) {
             // Get the client class definition for this class
             const ClientClassDefPtr& ccdef =
                 CfgMgr::instance().getCurrentCfg()->
-                getClientClassDictionary()->findClass(*cclass);
+                getClientClassDictionary()->findClass(cclass);
             // If not found skip it
             if (!ccdef) {
                 continue;

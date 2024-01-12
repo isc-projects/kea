@@ -88,9 +88,8 @@ SharedNetwork4Parser::parse(const data::ConstElementPtr& shared_network_data,
             parser->parse(subnets, json);
 
             // Add all returned subnets into shared network.
-            for (auto subnet = subnets.cbegin(); subnet != subnets.cend();
-                 ++subnet) {
-                shared_network->add(*subnet);
+            for (auto const& subnet : subnets) {
+                shared_network->add(subnet);
             }
         }
 
@@ -170,14 +169,13 @@ SharedNetwork4Parser::parse(const data::ConstElementPtr& shared_network_data,
         if (shared_network_data->contains("require-client-classes")) {
             const std::vector<data::ElementPtr>& class_list =
                 shared_network_data->get("require-client-classes")->listValue();
-            for (auto cclass = class_list.cbegin();
-                 cclass != class_list.cend(); ++cclass) {
-                if (((*cclass)->getType() != Element::string) ||
-                    (*cclass)->stringValue().empty()) {
+            for (auto const& cclass : class_list) {
+                if ((cclass->getType() != Element::string) ||
+                    cclass->stringValue().empty()) {
                     isc_throw(DhcpConfigError, "invalid class name ("
-                              << (*cclass)->getPosition() << ")");
+                              << cclass->getPosition() << ")");
                 }
-                shared_network->requireClientClass((*cclass)->stringValue());
+                shared_network->requireClientClass(cclass->stringValue());
             }
         }
 
@@ -344,14 +342,13 @@ SharedNetwork6Parser::parse(const data::ConstElementPtr& shared_network_data,
         if (shared_network_data->contains("require-client-classes")) {
             const std::vector<data::ElementPtr>& class_list =
                 shared_network_data->get("require-client-classes")->listValue();
-            for (auto cclass = class_list.cbegin();
-                 cclass != class_list.cend(); ++cclass) {
-                if (((*cclass)->getType() != Element::string) ||
-                    (*cclass)->stringValue().empty()) {
+            for (auto const& cclass : class_list) {
+                if ((cclass->getType() != Element::string) ||
+                    cclass->stringValue().empty()) {
                     isc_throw(DhcpConfigError, "invalid class name ("
-                              << (*cclass)->getPosition() << ")");
+                              << cclass->getPosition() << ")");
                 }
-                shared_network->requireClientClass((*cclass)->stringValue());
+                shared_network->requireClientClass(cclass->stringValue());
             }
         }
 
@@ -364,9 +361,8 @@ SharedNetwork6Parser::parse(const data::ConstElementPtr& shared_network_data,
             parser->parse(subnets, json);
 
             // Add all returned subnets into shared network.
-            for (auto subnet = subnets.cbegin(); subnet != subnets.cend();
-                 ++subnet) {
-                shared_network->add(*subnet);
+            for (auto const& subnet : subnets) {
+                shared_network->add(subnet);
             }
         }
 

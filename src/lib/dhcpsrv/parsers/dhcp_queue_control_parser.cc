@@ -10,7 +10,6 @@
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/parsers/dhcp_queue_control_parser.h>
 #include <util/multi_threading_mgr.h>
-#include <boost/foreach.hpp>
 #include <string>
 #include <sys/types.h>
 

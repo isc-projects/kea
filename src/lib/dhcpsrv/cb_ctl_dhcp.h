@@ -45,14 +45,14 @@ protected:
     void addGlobalsToConfig(SrvConfigPtr external_cfg,
                             data::StampedValueCollection& cb_globals) const {
         auto const& index = cb_globals.get<data::StampedValueNameIndexTag>();
-        for (auto cb_global = index.begin(); cb_global != index.end(); ++cb_global) {
+        for (auto const& cb_global : index) {
 
-            if ((*cb_global)->amNull()) {
+            if (cb_global->amNull()) {
                 continue;
             }
 
-            external_cfg->addConfiguredGlobal((*cb_global)->getName(),
-                                              (*cb_global)->getElementValue());
+            external_cfg->addConfiguredGlobal(cb_global->getName(),
+                                              cb_global->getElementValue());
         }
     }
 };

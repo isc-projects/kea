@@ -22,6 +22,7 @@
 #include <exceptions/isc_assert.h>
 #include <util/buffer.h>
 
+#include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/shared_array.hpp>
 #include <boost/shared_ptr.hpp>
@@ -694,9 +695,9 @@ extendVivco(OptionCollection& options) {
     typedef vector<OpaqueDataTuple> TuplesCollection;
     map<uint32_t, TuplesCollection> vendors_tuples;
     auto const& range = options.equal_range(DHO_VIVCO_SUBOPTIONS);
-    for (auto it = range.first; it != range.second; ++it) {
+    BOOST_FOREACH(auto const& it, range) {
         uint32_t offset = 0;
-        auto const& data = it->second->getData();
+        auto const& data = it.second->getData();
         size_t size;
         while ((size = data.size() - offset) != 0) {
             if (size < sizeof(uint32_t)) {
@@ -753,9 +754,9 @@ void
 extendVivso(OptionCollection& options) {
     map<uint32_t, OptionCollection> vendors_data;
     auto const& range = options.equal_range(DHO_VIVSO_SUBOPTIONS);
-    for (auto it = range.first; it != range.second; ++it) {
+    BOOST_FOREACH(auto const& it, range) {
         uint32_t offset = 0;
-        auto const& data = it->second->getData();
+        auto const& data = it.second->getData();
         size_t size;
         while ((size = data.size() - offset) != 0) {
             if (size < sizeof(uint32_t)) {

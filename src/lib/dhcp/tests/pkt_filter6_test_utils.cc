@@ -10,8 +10,6 @@
 #include <dhcp/pkt6.h>
 #include <dhcp/tests/pkt_filter6_test_utils.h>
 
-#include <boost/foreach.hpp>
-
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
@@ -181,7 +179,7 @@ PktFilter6Stub::openSocket(const Iface& iface, const isc::asiolink::IOAddress& a
                            const uint16_t port, const bool) {
     // Check if there is any other socket bound to the specified address
     // and port on this interface.
-    BOOST_FOREACH(SocketInfo socket, iface.getSockets()) {
+    for (auto const& socket : iface.getSockets()) {
         if ((socket.addr_ == addr) && (socket.port_ == port)) {
             isc_throw(SocketConfigError, "test socket bind error");
         }

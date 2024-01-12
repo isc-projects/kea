@@ -443,10 +443,10 @@ Observation::getJSON() const {
 
         // Iteration over all elements in the list
         // and adding alternately value and timestamp to the entry
-        for (std::list<IntegerSample>::iterator it = s.begin(); it != s.end(); ++it) {
+        for (auto const& it : s) {
             entry = isc::data::Element::createList();
-            value = isc::data::Element::create(static_cast<int64_t>((*it).first));
-            timestamp = isc::data::Element::create(isc::util::clockToText((*it).second));
+            value = isc::data::Element::create(static_cast<int64_t>(it.first));
+            timestamp = isc::data::Element::create(isc::util::clockToText(it.second));
 
             entry->add(value);
             entry->add(timestamp);
@@ -477,10 +477,10 @@ Observation::getJSON() const {
 
         // Iteration over all elements in the list
         // and adding alternately value and timestamp to the entry
-        for (std::list<FloatSample>::iterator it = s.begin(); it != s.end(); ++it) {
+        for (auto const& it : s) {
             entry = isc::data::Element::createList();
-            value = isc::data::Element::create((*it).first);
-            timestamp = isc::data::Element::create(isc::util::clockToText((*it).second));
+            value = isc::data::Element::create(it.first);
+            timestamp = isc::data::Element::create(isc::util::clockToText(it.second));
 
             entry->add(value);
             entry->add(timestamp);
@@ -494,10 +494,10 @@ Observation::getJSON() const {
 
         // Iteration over all elements in the list
         // and adding alternately value and timestamp to the entry
-        for (std::list<DurationSample>::iterator it = s.begin(); it != s.end(); ++it) {
+        for (auto const& it : s) {
             entry = isc::data::Element::createList();
-            value = isc::data::Element::create(isc::util::durationToText((*it).first));
-            timestamp = isc::data::Element::create(isc::util::clockToText((*it).second));
+            value = isc::data::Element::create(isc::util::durationToText(it.first));
+            timestamp = isc::data::Element::create(isc::util::clockToText(it.second));
 
             entry->add(value);
             entry->add(timestamp);
@@ -511,10 +511,10 @@ Observation::getJSON() const {
 
         // Iteration over all elements in the list
         // and adding alternately value and timestamp to the entry
-        for (std::list<StringSample>::iterator it = s.begin(); it != s.end(); ++it) {
+        for (auto const& it : s) {
             entry = isc::data::Element::createList();
-            value = isc::data::Element::create((*it).first);
-            timestamp = isc::data::Element::create(isc::util::clockToText((*it).second));
+            value = isc::data::Element::create(it.first);
+            timestamp = isc::data::Element::create(isc::util::clockToText(it.second));
 
             entry->add(value);
             entry->add(timestamp);

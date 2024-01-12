@@ -303,15 +303,15 @@ public:
                                             const Lease::Type& lease_type) {
 
         auto preferred_subnet = selected_subnet;
-        for (auto s = subnets.begin(); s != subnets.end(); ++s) {
+        for (auto const& s : subnets) {
             // It doesn't make sense to check the subnet against itself.
-            if (preferred_subnet == (*s)) {
+            if (preferred_subnet == s) {
                 continue;
             }
-            if ((*s)->getClientClass().get() != selected_subnet->getClientClass().get()) {
+            if (s->getClientClass().get() != selected_subnet->getClientClass().get()) {
                 continue;
             }
-            auto current_subnet_state = (*s)->getAllocationState(lease_type);
+            auto current_subnet_state = s->getAllocationState(lease_type);
             if (!current_subnet_state) {
                 continue;
             }
@@ -324,7 +324,7 @@ public:
             // instance.
             if (current_subnet_state->getLastAllocatedTime() >
                 preferred_subnet_state->getLastAllocatedTime()) {
-                preferred_subnet = (*s);
+                preferred_subnet = s;
             }
         }
         return (preferred_subnet);
@@ -378,9 +378,9 @@ SharedNetwork4::del(const SubnetID& subnet_id) {
 
 void
 SharedNetwork4::delAll() {
-    for (auto subnet = subnets_.cbegin(); subnet != subnets_.cend(); ++subnet) {
-        (*subnet)->setSharedNetwork(NetworkPtr());
-        (*subnet)->setSharedNetworkName("");
+    for (auto const& subnet : subnets_) {
+        subnet->setSharedNetwork(NetworkPtr());
+        subnet->setSharedNetworkName("");
     }
     subnets_.clear();
 }
@@ -429,8 +429,8 @@ SharedNetwork4::toElement() const {
     }
 
     ElementPtr subnet4 = Element::createList();
-    for (auto subnet = subnets_.cbegin(); subnet != subnets_.cend(); ++subnet) {
-        subnet4->add((*subnet)->toElement());
+    for (auto const& subnet : subnets_) {
+        subnet4->add(subnet->toElement());
     }
 
     map->set("subnet4", subnet4);
@@ -480,8 +480,8 @@ SharedNetwork6::del(const SubnetID& subnet_id) {
 
 void
 SharedNetwork6::delAll() {
-    for (auto subnet = subnets_.cbegin(); subnet != subnets_.cend(); ++subnet) {
-        (*subnet)->setSharedNetwork(NetworkPtr());
+    for (auto const& subnet : subnets_) {
+        subnet->setSharedNetwork(NetworkPtr());
     }
     subnets_.clear();
 }
@@ -518,8 +518,8 @@ SharedNetwork6::toElement() const {
     }
 
     ElementPtr subnet6 = Element::createList();
-    for (auto subnet = subnets_.cbegin(); subnet != subnets_.cend(); ++subnet) {
-        subnet6->add((*subnet)->toElement());
+    for (auto const& subnet : subnets_) {
+        subnet6->add(subnet->toElement());
     }
 
     map->set("subnet6", subnet6);

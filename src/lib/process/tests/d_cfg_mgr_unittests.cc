@@ -12,7 +12,6 @@
 #include <process/d_cfg_mgr.h>
 #include <process/redact_config.h>
 
-#include <boost/foreach.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <gtest/gtest.h>
 

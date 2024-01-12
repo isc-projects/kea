@@ -751,7 +751,7 @@ HostMgr::getAll6(const IOAddress& address, const HostMgrOperationTarget target) 
     }
 
     if (target & HostMgrOperationTarget::ALTERNATE_SOURCES) {
-        for (auto const&source : alternate_sources_) {
+        for (auto const& source : alternate_sources_) {
             ConstHostCollection hosts_plus = source->getAll6(address);
             hosts.insert(hosts.end(), hosts_plus.begin(), hosts_plus.end());
         }

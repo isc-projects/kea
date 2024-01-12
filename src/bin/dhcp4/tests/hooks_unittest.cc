@@ -3371,7 +3371,7 @@ TEST_F(LoadUnloadDhcpv4SrvTest, failLoadIncompatibleLibraries) {
 // Checks if callouts installed on the dhcp4_srv_configured ared indeed called
 // and all the necessary parameters are passed.
 TEST_F(LoadUnloadDhcpv4SrvTest, Dhcpv4SrvConfigured) {
-    for (const string& parameters : vector<string>{
+    for (auto const& parameters : vector<string>{
         "",
         R"(, "parameters": { "mode": "fail-without-error" } )",
         R"(, "parameters": { "mode": "fail-with-error" } )"}) {

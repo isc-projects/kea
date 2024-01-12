@@ -1446,22 +1446,20 @@ GenericHostDataSourceTest::testHostname(std::string name, int num) {
     }
 
     // Now add them all to the host data source.
-    for (vector<HostPtr>::const_iterator it = hosts.begin(); it != hosts.end();
-         ++it) {
+    for (auto const& it : hosts) {
         // Try to add both of the to the host data source.
-        ASSERT_NO_THROW(hdsptr_->add(*it));
+        ASSERT_NO_THROW(hdsptr_->add(it));
     }
 
     // And finally retrieve them one by one and check
     // if the hostname was preserved.
-    for (vector<HostPtr>::const_iterator it = hosts.begin(); it != hosts.end();
-         ++it) {
+    for (auto const& it : hosts) {
         ConstHostPtr from_hds;
-        ASSERT_NO_THROW(from_hds = hdsptr_->get4((*it)->getIPv4SubnetID(),
-                                                 (*it)->getIPv4Reservation()));
+        ASSERT_NO_THROW(from_hds = hdsptr_->get4(it->getIPv4SubnetID(),
+                                                 it->getIPv4Reservation()));
         ASSERT_TRUE(from_hds);
 
-        EXPECT_EQ((*it)->getHostname(), from_hds->getHostname());
+        EXPECT_EQ(it->getHostname(), from_hds->getHostname());
     }
 }
 
@@ -1542,10 +1540,9 @@ GenericHostDataSourceTest::testMultipleSubnets(int subnets,
 
     // Verify that the values returned are proper.
     int i = 0;
-    for (ConstHostCollection::const_iterator it = all_by_addr.begin();
-         it != all_by_addr.end(); ++it) {
-        EXPECT_EQ(IOAddress("192.0.2.1"), (*it)->getIPv4Reservation());
-        EXPECT_EQ(1000 + i++, (*it)->getIPv4SubnetID());
+    for (auto const& it : all_by_addr) {
+        EXPECT_EQ(IOAddress("192.0.2.1"), it->getIPv4Reservation());
+        EXPECT_EQ(1000 + i++, it->getIPv4SubnetID());
     }
 
     // Finally, check that the hosts can be retrieved by HW address or DUID
@@ -1555,10 +1552,9 @@ GenericHostDataSourceTest::testMultipleSubnets(int subnets,
 
     // Check that the returned values are as expected.
     i = 0;
-    for (ConstHostCollection::const_iterator it = all_by_id.begin();
-         it != all_by_id.end(); ++it) {
-        EXPECT_EQ(IOAddress("192.0.2.1"), (*it)->getIPv4Reservation());
-        EXPECT_EQ(1000 + i++, (*it)->getIPv4SubnetID());
+    for (auto const& it : all_by_id) {
+        EXPECT_EQ(IOAddress("192.0.2.1"), it->getIPv4Reservation());
+        EXPECT_EQ(1000 + i++, it->getIPv4SubnetID());
     }
 }
 
@@ -1678,10 +1674,9 @@ GenericHostDataSourceTest::testSubnetId6(int subnets, Host::IdentifierType id) {
 
     // Check that the returned values are as expected.
     int i = 0;
-    for (ConstHostCollection::const_iterator it = all_by_id.begin();
-         it != all_by_id.end(); ++it) {
-        EXPECT_EQ(IOAddress("0.0.0.0"), (*it)->getIPv4Reservation());
-        EXPECT_EQ(1000 + i++, (*it)->getIPv6SubnetID());
+    for (auto const& it : all_by_id) {
+        EXPECT_EQ(IOAddress("0.0.0.0"), it->getIPv4Reservation());
+        EXPECT_EQ(1000 + i++, it->getIPv6SubnetID());
     }
 }
 
@@ -2354,9 +2349,8 @@ GenericHostDataSourceTest::stressTest(unsigned int nOfHosts /* = 0xfffdU */) {
     start = (struct timespec){0, 0};
     end = (struct timespec){0, 0};
     clock_gettime(CLOCK_THREAD_CPUTIME_ID, &start);
-    for (std::vector<HostPtr>::const_iterator it = hosts.begin();
-         it != hosts.end(); it++) {
-        ASSERT_NO_THROW(hdsptr_->add(*it));
+    for (auto const& it : hosts) {
+        ASSERT_NO_THROW(hdsptr_->add(it));
     }
     clock_gettime(CLOCK_THREAD_CPUTIME_ID, &end);
     double s = static_cast<double>(end.tv_sec - start.tv_sec) +
@@ -2371,15 +2365,14 @@ GenericHostDataSourceTest::stressTest(unsigned int nOfHosts /* = 0xfffdU */) {
     start = (struct timespec){0, 0};
     end = (struct timespec){0, 0};
     clock_gettime(CLOCK_THREAD_CPUTIME_ID, &start);
-    for (std::vector<HostPtr>::const_iterator it = hosts.begin();
-         it != hosts.end(); it++) {
-        IPv6ResrvRange range = (*it)->getIPv6Reservations();
+    for (auto const& it : hosts) {
+        IPv6ResrvRange range = it->getIPv6Reservations();
         // This get6() call is particularly useful to test because it involves a
         // subquery for MySQL and PostgreSQL.
         ConstHostPtr from_hds =
             hdsptr_->get6(range.first->second.getPrefix(), 128);
         ASSERT_TRUE(from_hds);
-        HostDataSourceUtils::compareHosts(*it, from_hds);
+        HostDataSourceUtils::compareHosts(it, from_hds);
     }
     clock_gettime(CLOCK_THREAD_CPUTIME_ID, &end);
     s = static_cast<double>(end.tv_sec - start.tv_sec) +

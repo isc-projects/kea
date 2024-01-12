@@ -141,17 +141,15 @@ ConstElementPtr
 CommandCreator::createLease6BulkApply(const Lease6CollectionPtr& leases,
                                       const Lease6CollectionPtr& deleted_leases) {
     ElementPtr deleted_leases_list = Element::createList();
-    for (auto lease = deleted_leases->begin(); lease != deleted_leases->end();
-         ++lease) {
-        ElementPtr lease_as_json = (*lease)->toElement();
+    for (auto const& lease : *deleted_leases) {
+        ElementPtr lease_as_json = lease->toElement();
         insertLeaseExpireTime(lease_as_json);
         deleted_leases_list->add(lease_as_json);
     }
 
     ElementPtr leases_list = Element::createList();
-    for (auto lease = leases->begin(); lease != leases->end();
-         ++lease) {
-        ElementPtr lease_as_json = (*lease)->toElement();
+    for (auto const& lease : *leases) {
+        ElementPtr lease_as_json = lease->toElement();
         insertLeaseExpireTime(lease_as_json);
         leases_list->add(lease_as_json);
     }

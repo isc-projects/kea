@@ -183,9 +183,8 @@ BaseCommandMgr::listCommandsHandler(const std::string& /* name */,
                                     const isc::data::ConstElementPtr& ) {
     using namespace isc::data;
     ElementPtr commands = Element::createList();
-    for (HandlerContainer::const_iterator it = handlers_.begin();
-         it != handlers_.end(); ++it) {
-        commands->add(Element::create(it->first));
+    for (auto const& it : handlers_) {
+        commands->add(Element::create(it.first));
     }
     return (createAnswer(CONTROL_RESULT_SUCCESS, commands));
 }

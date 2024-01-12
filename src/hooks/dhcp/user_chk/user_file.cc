@@ -10,7 +10,6 @@
 #include <user.h>
 #include <user_file.h>
 
-#include <boost/foreach.hpp>
 #include <errno.h>
 #include <iostream>
 
@@ -87,7 +86,7 @@ UserFile::makeUser(const std::string& user_string) {
     // respective locals.  Anything else is assumed to be an option so
     // add it to the local property map.
     std::pair<std::string, isc::data::ConstElementPtr> element_pair;
-    BOOST_FOREACH (element_pair, elements->mapValue()) {
+    for (auto const& element_pair : elements->mapValue()) {
         // Get the element's label.
         std::string label = element_pair.first;
 

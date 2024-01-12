@@ -94,11 +94,11 @@ TEST(CfgOptionDefTest, getAllThenDelete) {
     // valid codes. Also, their order should be the same as they
     // were added (codes 100-109).
     uint16_t code = 100;
-    for (OptionDefContainer::const_iterator it = option_defs1->begin();
-         it != option_defs1->end(); ++it, ++code) {
-        OptionDefinitionPtr def(*it);
+    for (auto const& it : *option_defs1) {
+        OptionDefinitionPtr def(it);
         ASSERT_TRUE(def);
         EXPECT_EQ(code, def->getCode());
+        ++code;
     }
 
     // Sanity check that all 10 option definitions are there.
@@ -108,11 +108,11 @@ TEST(CfgOptionDefTest, getAllThenDelete) {
 
     // Check that the option codes are valid.
     code = 105;
-    for (OptionDefContainer::const_iterator it = option_defs2->begin();
-         it != option_defs2->end(); ++it, ++code) {
-        OptionDefinitionPtr def(*it);
+    for (auto const& it : *option_defs2) {
+        OptionDefinitionPtr def(it);
         ASSERT_TRUE(def);
         EXPECT_EQ(code, def->getCode());
+        ++code;
     }
 
     // Let's make one more check that the empty set is returned when

@@ -86,10 +86,8 @@ TcpConnectionPool::stopAll() {
 
 void
 TcpConnectionPool::stopAllInternal() {
-    for (auto connection = connections_.begin();
-         connection != connections_.end();
-         ++connection) {
-        (*connection)->close();
+    for (auto const& connection : connections_) {
+        connection->close();
     }
 
     size_t cnt = connections_.size();

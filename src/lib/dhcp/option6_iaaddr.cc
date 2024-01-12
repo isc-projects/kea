@@ -105,10 +105,8 @@ uint16_t Option6IAAddr::len() const {
     // length of all suboptions
     // TODO implement:
     // protected: unsigned short Option::lenHelper(int header_size);
-    for (OptionCollection::const_iterator it = options_.begin();
-         it != options_.end();
-         ++it) {
-        length += (*it).second->len();
+    for (auto const& it : options_) {
+        length += it.second->len();
     }
     return (length);
 }

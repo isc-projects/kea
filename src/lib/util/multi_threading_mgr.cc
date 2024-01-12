@@ -8,6 +8,8 @@
 
 #include <util/multi_threading_mgr.h>
 
+#include <boost/range/adaptor/reversed.hpp>
+
 namespace isc {
 namespace util {
 
@@ -178,9 +180,9 @@ void
 MultiThreadingMgr::callEntryCallbacks() {
     if (getMode()) {
         auto const& callbacks = cs_callbacks_.getCallbackSets();
-        for (auto cb_it = callbacks.begin(); cb_it != callbacks.end(); cb_it++) {
+        for (auto const& cb_it : callbacks) {
             try {
-                (cb_it->entry_cb_)();
+                (cb_it.entry_cb_)();
             } catch (...) {
                 // We can't log it and throwing could be chaos.
                 // We'll swallow it and tell people their callbacks
@@ -194,9 +196,9 @@ void
 MultiThreadingMgr::callExitCallbacks() {
     if (getMode()) {
         auto const& callbacks = cs_callbacks_.getCallbackSets();
-        for (auto cb_it = callbacks.rbegin(); cb_it != callbacks.rend(); cb_it++) {
+        for (auto const& cb_it : boost::adaptors::reverse(callbacks)) {
             try {
-                (cb_it->exit_cb_)();
+                (cb_it.exit_cb_)();
             } catch (...) {
                 // We can't log it and throwing could be chaos.
                 // We'll swallow it and tell people their callbacks

@@ -201,9 +201,7 @@ CtrlAgentProcess::garbageCollectListeners(size_t leaving) {
     // listeners except the most recently added.
     if (http_listeners_.size() > leaving) {
         // Stop no longer used listeners.
-        for (auto l = http_listeners_.begin();
-             l != http_listeners_.end() - leaving;
-             ++l) {
+        for (auto l = http_listeners_.begin(); l != http_listeners_.end() - leaving; ++l) {
             (*l)->stop();
         }
         // We have stopped listeners but there may be some pending handlers
@@ -214,7 +212,6 @@ CtrlAgentProcess::garbageCollectListeners(size_t leaving) {
                               http_listeners_.end() - leaving);
     }
 }
-
 
 CtrlAgentCfgMgrPtr
 CtrlAgentProcess::getCtrlAgentCfgMgr() {

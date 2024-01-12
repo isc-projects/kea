@@ -1010,8 +1010,8 @@ public:
         auto option_spaces = subnet->getCfgOption()->getOptionSpaceNames();
         for (auto const& option_space : option_spaces) {
             OptionContainerPtr options = subnet->getCfgOption()->getAll(option_space);
-            for (auto desc = options->begin(); desc != options->end(); ++desc) {
-                OptionDescriptorPtr desc_copy = OptionDescriptor::create(*desc);
+            for (auto const& desc : *options) {
+                OptionDescriptorPtr desc_copy = OptionDescriptor::create(desc);
                 desc_copy->space_name_ = option_space;
                 createUpdateOption4(server_selector, subnet->getID(), desc_copy,
                                     true);
@@ -1050,8 +1050,8 @@ public:
         auto option_spaces = pool->getCfgOption()->getOptionSpaceNames();
         for (auto const& option_space : option_spaces) {
             OptionContainerPtr options = pool->getCfgOption()->getAll(option_space);
-            for (auto desc = options->begin(); desc != options->end(); ++desc) {
-                OptionDescriptorPtr desc_copy = OptionDescriptor::create(*desc);
+            for (auto const& desc : *options) {
+                OptionDescriptorPtr desc_copy = OptionDescriptor::create(desc);
                 desc_copy->space_name_ = option_space;
                 createUpdateOption4(server_selector, pool_id, desc_copy, true);
             }
@@ -1576,8 +1576,8 @@ public:
         auto option_spaces = shared_network->getCfgOption()->getOptionSpaceNames();
         for (auto const& option_space : option_spaces) {
             OptionContainerPtr options = shared_network->getCfgOption()->getAll(option_space);
-            for (auto desc = options->begin(); desc != options->end(); ++desc) {
-                OptionDescriptorPtr desc_copy = OptionDescriptor::create(*desc);
+            for (auto const& desc : *options) {
+                OptionDescriptorPtr desc_copy = OptionDescriptor::create(desc);
                 desc_copy->space_name_ = option_space;
                 createUpdateOption4(server_selector, shared_network->getName(),
                                     desc_copy, true);
@@ -2550,8 +2550,8 @@ public:
             auto option_spaces = option_defs.getOptionSpaceNames();
             for (auto const& option_space : option_spaces) {
                 OptionDefContainerPtr defs = option_defs.getItems(option_space);
-                for (auto def = defs->begin(); def != defs->end(); ++def) {
-                    createUpdateOptionDef4(server_selector, *def, client_class->getName());
+                for (auto const& def : *defs) {
+                    createUpdateOptionDef4(server_selector, def, client_class->getName());
                 }
             }
         }
@@ -2560,8 +2560,8 @@ public:
         auto option_spaces = client_class->getCfgOption()->getOptionSpaceNames();
         for (auto const& option_space : option_spaces) {
             OptionContainerPtr options = client_class->getCfgOption()->getAll(option_space);
-            for (auto desc = options->begin(); desc != options->end(); ++desc) {
-                OptionDescriptorPtr desc_copy = OptionDescriptor::create(*desc);
+            for (auto const& desc : *options) {
+                OptionDescriptorPtr desc_copy = OptionDescriptor::create(desc);
                 desc_copy->space_name_ = option_space;
                 createUpdateOption4(server_selector, client_class, desc_copy);
             }

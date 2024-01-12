@@ -19,12 +19,11 @@ std::vector<std::string>
 extractNames(const isc::hooks::HookLibsCollection& libraries) {
     std::vector<std::string> names;
 
-    for (isc::hooks::HookLibsCollection::const_iterator it = libraries.begin();
-         it != libraries.end(); ++it) {
-        names.push_back(it->first);
+    for (auto const& it : libraries) {
+        names.push_back(it.first);
     }
     return (names);
 }
 
-};
-};
+}
+}

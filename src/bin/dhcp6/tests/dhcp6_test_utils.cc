@@ -1146,14 +1146,13 @@ NakedDhcpv6SrvTest::checkIA_NAStatusCode(
     // it will return it with zeroed lifetimes.
     if (check_addr) {
         dhcp::OptionCollection options = ia->getOptions();
-        for (isc::dhcp::OptionCollection::iterator opt = options.begin();
-             opt != options.end(); ++opt) {
-            if (opt->second->getType() != D6O_IAADDR) {
+        for (auto const& opt : options) {
+            if (opt.second->getType() != D6O_IAADDR) {
                 continue;
             }
 
             dhcp::Option6IAAddrPtr addr =
-                boost::dynamic_pointer_cast<isc::dhcp::Option6IAAddr>(opt->second);
+                boost::dynamic_pointer_cast<isc::dhcp::Option6IAAddr>(opt.second);
             ASSERT_TRUE(addr);
 
             EXPECT_EQ(0, addr->getPreferred());

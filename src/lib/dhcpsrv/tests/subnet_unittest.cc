@@ -1380,10 +1380,9 @@ TEST(Subnet6Test, addOptions) {
 
     // Validate codes of options added to dhcp6 option space.
     uint16_t expected_code = 100;
-    for (OptionContainer::const_iterator option_desc = options->begin();
-         option_desc != options->end(); ++option_desc) {
-        ASSERT_TRUE(option_desc->option_);
-        EXPECT_EQ(expected_code, option_desc->option_->getType());
+    for (auto const& option_desc : *options) {
+        ASSERT_TRUE(option_desc.option_);
+        EXPECT_EQ(expected_code, option_desc.option_->getType());
         ++expected_code;
     }
 
@@ -1393,10 +1392,9 @@ TEST(Subnet6Test, addOptions) {
 
     // Validate codes of options added to isc option space.
     expected_code = 105;
-    for (OptionContainer::const_iterator option_desc = options->begin();
-         option_desc != options->end(); ++option_desc) {
-        ASSERT_TRUE(option_desc->option_);
-        EXPECT_EQ(expected_code, option_desc->option_->getType());
+    for (auto const& option_desc : *options) {
+        ASSERT_TRUE(option_desc.option_);
+        EXPECT_EQ(expected_code, option_desc.option_->getType());
         ++expected_code;
     }
 
@@ -1435,10 +1433,9 @@ TEST(Subnet6Test, addNonUniqueOptions) {
         // have been returned for the particular code.
         ASSERT_EQ(2, distance(range.first, range.second));
         // Check that returned options actually have the expected option code.
-        for (OptionContainerTypeIndex::const_iterator option_desc = range.first;
-             option_desc != range.second; ++option_desc) {
-            ASSERT_TRUE(option_desc->option_);
-            EXPECT_EQ(code, option_desc->option_->getType());
+        BOOST_FOREACH(auto const& option_desc, range) {
+            ASSERT_TRUE(option_desc.option_);
+            EXPECT_EQ(code, option_desc.option_->getType());
         }
     }
 
@@ -1544,10 +1541,9 @@ TEST(Subnet6Test, addVendorOption) {
 
     // Validate codes of options added to dhcp6 option space.
     uint16_t expected_code = 100;
-    for (OptionContainer::const_iterator option_desc = options->begin();
-         option_desc != options->end(); ++option_desc) {
-        ASSERT_TRUE(option_desc->option_);
-        EXPECT_EQ(expected_code, option_desc->option_->getType());
+    for (auto const& option_desc : *options) {
+        ASSERT_TRUE(option_desc.option_);
+        EXPECT_EQ(expected_code, option_desc.option_->getType());
         ++expected_code;
     }
 
@@ -1557,10 +1553,9 @@ TEST(Subnet6Test, addVendorOption) {
 
     // Validate codes of options added to isc option space.
     expected_code = 105;
-    for (OptionContainer::const_iterator option_desc = options->begin();
-         option_desc != options->end(); ++option_desc) {
-        ASSERT_TRUE(option_desc->option_);
-        EXPECT_EQ(expected_code, option_desc->option_->getType());
+    for (auto const& option_desc : *options) {
+        ASSERT_TRUE(option_desc.option_);
+        EXPECT_EQ(expected_code, option_desc.option_->getType());
         ++expected_code;
     }
 

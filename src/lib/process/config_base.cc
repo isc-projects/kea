@@ -77,9 +77,8 @@ void
 ConfigBase::copy(ConfigBase& other) const {
     // We will entirely replace loggers in the new configuration.
     other.logging_info_.clear();
-    for (LoggingInfoStorage::const_iterator it = logging_info_.begin();
-         it != logging_info_.end(); ++it) {
-        other.addLoggingInfo(*it);
+    for (auto const& it : logging_info_) {
+        other.addLoggingInfo(it);
     }
 
     // Clone the config control info

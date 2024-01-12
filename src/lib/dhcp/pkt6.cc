@@ -18,7 +18,7 @@
 #include <exceptions/exceptions.h>
 #include <dhcp/duid.h>
 #include <dhcp/iface_mgr.h>
-
+#include <boost/foreach.hpp>
 #include <iterator>
 #include <iostream>
 #include <sstream>
@@ -227,10 +227,9 @@ Pkt6::getAllRelayOptions(const uint16_t option_code,
         // matching options, copy them and replace the original ones with new
         // instances.
         if (copy_retrieved_options_) {
-            for (OptionCollection::iterator opt_it = range.first;
-                 opt_it != range.second; ++opt_it) {
-                OptionPtr option_copy = opt_it->second->clone();
-                opt_it->second = option_copy;
+            BOOST_FOREACH(auto& opt_it, range) {
+                OptionPtr option_copy = opt_it.second->clone();
+                opt_it.second = option_copy;
             }
         }
         opts.insert(range.first, range.second);
@@ -312,10 +311,9 @@ Pkt6::getRelayOptions(const uint16_t opt_type,
     // matching options, copy them and replace the original ones with new
     // instances.
     if (copy_retrieved_options_) {
-        for (OptionCollection::iterator opt_it = range.first;
-             opt_it != range.second; ++opt_it) {
-            OptionPtr option_copy = opt_it->second->clone();
-            opt_it->second = option_copy;
+        BOOST_FOREACH(auto& opt_it, range) {
+            OptionPtr option_copy = opt_it.second->clone();
+            opt_it.second = option_copy;
         }
     }
     // Finally, return updated options. This can also be empty in some cases.
@@ -406,15 +404,14 @@ Pkt6::packUDP() {
             calculateRelaySizes();
 
             // Now for each relay, we need to...
-            for (vector<RelayInfo>::iterator relay = relay_info_.begin();
-                 relay != relay_info_.end(); ++relay) {
+            for (auto const& relay : relay_info_) {
 
                 // build relay-forw/relay-repl header (see RFC 8415, section 9)
-                buffer_out_.writeUint8(relay->msg_type_);
-                buffer_out_.writeUint8(relay->hop_count_);
-                buffer_out_.writeData(&(relay->linkaddr_.toBytes()[0]),
+                buffer_out_.writeUint8(relay.msg_type_);
+                buffer_out_.writeUint8(relay.hop_count_);
+                buffer_out_.writeData(&(relay.linkaddr_.toBytes()[0]),
                                      isc::asiolink::V6ADDRESS_LEN);
-                buffer_out_.writeData(&relay->peeraddr_.toBytes()[0],
+                buffer_out_.writeData(&relay.peeraddr_.toBytes()[0],
                                      isc::asiolink::V6ADDRESS_LEN);
 
                 // store every option in this relay scope. Usually that will be
@@ -422,7 +419,7 @@ Pkt6::packUDP() {
                 // present here as well (vendor-opts for Cable modems,
                 // subscriber-id, remote-id, options echoed back from Echo
                 // Request Option, etc.)
-                for (auto const& opt : relay->options_) {
+                for (auto const& opt : relay.options_) {
                     (opt.second)->pack(buffer_out_);
                 }
 
@@ -431,7 +428,7 @@ Pkt6::packUDP() {
                 // or outside the loop (if there are no more relays and the
                 // payload is a direct message)
                 buffer_out_.writeUint16(D6O_RELAY_MSG);
-                buffer_out_.writeUint16(relay->relay_msg_len_);
+                buffer_out_.writeUint16(relay.relay_msg_len_);
             }
 
         }

@@ -14,6 +14,7 @@
 #include <cc/user_context.h>
 #include <dhcpsrv/cfg_option_def.h>
 #include <dhcpsrv/key_from_key.h>
+#include <boost/foreach.hpp>
 #include <boost/multi_index_container.hpp>
 #include <boost/multi_index/hashed_index.hpp>
 #include <boost/multi_index/ordered_index.hpp>
@@ -516,7 +517,7 @@ public:
     /// there is no definition matching the option code in the given space, or
     /// if the definition factory invocation fails.
     static bool createDescriptorOption(CfgOptionDefPtr cfg_def, const std::string& space,
-                             OptionDescriptor& opt_desc);
+                                       OptionDescriptor& opt_desc);
 
     /// @brief Merges this configuration to another configuration.
     ///
@@ -646,9 +647,8 @@ public:
         const OptionContainerTypeIndex& idx = options->get<1>();
         OptionContainerTypeRange range = idx.equal_range(option_code);
         // This code copies descriptors and can be optimized not doing this.
-        for (OptionContainerTypeIndex::const_iterator od_itr = range.first;
-             od_itr != range.second; ++od_itr) {
-            list.push_back(*od_itr);
+        BOOST_FOREACH(auto const& od_itr, range) {
+            list.push_back(od_itr);
         }
 
         return (list);

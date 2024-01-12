@@ -17,7 +17,6 @@
 #include <dhcp/tests/packet_queue_testutils.h>
 #include <testutils/gtest_utils.h>
 
-#include <boost/foreach.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
 
@@ -167,11 +166,10 @@ public:
         // Check if there is any other socket bound to the specified address
         // and port on this interface.
         const Iface::SocketCollection& sockets = iface.getSockets();
-        for (Iface::SocketCollection::const_iterator socket = sockets.begin();
-             socket != sockets.end(); ++socket) {
-            if (((socket->addr_ == addr) ||
-                 ((socket->addr_ == IOAddress("::")) && join_multicast)) &&
-                socket->port_ == port) {
+        for (auto const& socket : sockets) {
+            if (((socket.addr_ == addr) ||
+                 ((socket.addr_ == IOAddress("::")) && join_multicast)) &&
+                socket.port_ == port) {
                 isc_throw(SocketConfigError, "test socket bind error");
             }
         }
@@ -308,14 +306,13 @@ public:
             return (false);
         }
         const Iface::SocketCollection& sockets = iface->getSockets();
-        for (Iface::SocketCollection::const_iterator sock = sockets.begin();
-             sock != sockets.end(); ++sock) {
-            if (sock->addr_ == IOAddress(addr)) {
+        for (auto const& sock : sockets) {
+            if (sock.addr_ == IOAddress(addr)) {
                 return (true);
 
-            } else if ((sock->addr_ == IOAddress("::")) &&
+            } else if ((sock.addr_ == IOAddress("::")) &&
                        (IOAddress(addr).isV6LinkLocal())) {
-                BOOST_FOREACH(Iface::Address a, iface->getAddresses()) {
+                for (auto const& a : iface->getAddresses()) {
                     if (a.get() == IOAddress(addr)) {
                         return (true);
                     }
@@ -336,7 +333,7 @@ public:
                        const bool up, const bool running,
                        const bool inactive4,
                        const bool inactive6) {
-        for (const IfacePtr& iface : ifaces_) {
+        for (auto const& iface : ifaces_) {
             if (iface->getName() == name) {
                 iface->flag_loopback_ = loopback;
                 iface->flag_up_ = up;
@@ -410,10 +407,9 @@ public:
         // Loop through sockets and try to find the ones which match the
         // specified type.
         int sockets_count = 0;
-        for (Iface::SocketCollection::const_iterator sock = sockets.begin();
-             sock != sockets.end(); ++sock) {
+        for (auto const& sock : sockets) {
             // Match found, increase the counter.
-            if (sock->family_ == family) {
+            if (sock.family_ == family) {
                 ++sockets_count;
             }
         }
@@ -432,10 +428,9 @@ public:
     const isc::dhcp::SocketInfo*
     getSocketByAddr(const isc::dhcp::Iface::SocketCollection& sockets,
                     const IOAddress& addr) {
-        for (isc::dhcp::Iface::SocketCollection::const_iterator s =
-                 sockets.begin(); s != sockets.end(); ++s) {
-            if (s->addr_ == addr) {
-                return (&(*s));
+        for (auto const& s : sockets) {
+            if (s.addr_ == addr) {
+                return (&s);
             }
         }
         return (NULL);
@@ -1121,7 +1116,7 @@ TEST_F(IfaceMgrTest, getIface) {
 
     cout << "There are " << ifacemgr->getIfacesLst().size()
          << " interfaces." << endl;
-    for (const IfacePtr& iface : ifacemgr->getIfacesLst()) {
+    for (auto const& iface : ifacemgr->getIfacesLst()) {
         cout << "  " << iface->getFullName() << endl;
     }
 
@@ -2894,7 +2889,7 @@ checkIfAddrs(const Iface & iface, struct ifaddrs *& ifptr) {
 
             IOAddress addrv4 = IOAddress::fromBytes(AF_INET, p);
 
-            BOOST_FOREACH(Iface::Address a, iface.getAddresses()) {
+            for (auto const& a :iface.getAddresses()) {
                 if(a.get().isV4() && (a.get()) == addrv4) {
                     return (true);
                 }
@@ -2909,7 +2904,7 @@ checkIfAddrs(const Iface & iface, struct ifaddrs *& ifptr) {
 
             IOAddress addrv6 = IOAddress::fromBytes(AF_INET6, p);
 
-            BOOST_FOREACH(Iface::Address a, iface.getAddresses()) {
+            for (auto const&  a : iface.getAddresses()) {
                 if (a.get().isV6() && (a.get() == addrv6)) {
                     return (true);
                 }

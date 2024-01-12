@@ -8,7 +8,6 @@
 
 #include <cc/simple_parser.h>
 #include <asiolink/io_address.h>
-#include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <cc/data.h>
 #include <string>
@@ -178,7 +177,7 @@ size_t SimpleParser::setDefaults(ElementPtr scope,
     const Element::Position pos("<default-value>", 0, 0);
 
     // Let's go over all parameters we have defaults for.
-    BOOST_FOREACH(SimpleDefault def_value, default_values) {
+    for (auto const& def_value : default_values) {
 
         // Try if such a parameter is there. If it is, let's
         // skip it, because user knows best *cough*.
@@ -245,7 +244,7 @@ size_t
 SimpleParser::setListDefaults(ConstElementPtr list,
                               const SimpleDefaults& default_values) {
     size_t cnt = 0;
-    BOOST_FOREACH(ElementPtr entry, list->listValue()) {
+    for (auto const& entry : list->listValue()) {
         cnt += setDefaults(entry, default_values);
     }
     return (cnt);
@@ -261,7 +260,7 @@ SimpleParser::deriveParams(ConstElementPtr parent,
     }
 
     size_t cnt = 0;
-    BOOST_FOREACH(string param, params) {
+    for (auto const& param : params) {
         ConstElementPtr x = parent->get(param);
         if (!x) {
             // Parent doesn't define this parameter, so there's

@@ -11,7 +11,6 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/parsers/expiration_config_parser.h>
 #include <dhcpsrv/parsers/dhcp_parsers.h>
-#include <boost/foreach.hpp>
 
 using namespace isc::data;
 

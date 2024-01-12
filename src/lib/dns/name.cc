@@ -359,8 +359,7 @@ Name::Name(const char* namedata, size_t data_len, const Name* origin,
         size_t offset_count = offsets_.size();
         offsets_.insert(offsets_.end(), origin->offsets_.begin(),
                         origin->offsets_.end());
-        for (NameOffsets::iterator it(offsets_.begin() + offset_count);
-             it != offsets_.end(); ++it) {
+        for (auto it(offsets_.begin() + offset_count); it != offsets_.end(); ++it) {
             *it += offset;
         }
 

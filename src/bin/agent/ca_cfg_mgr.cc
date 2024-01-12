@@ -77,8 +77,8 @@ CtrlAgentCfgMgr::getConfigSummary(const uint32_t /*selection*/) {
     // Finally, print the hook libraries names
     const isc::hooks::HookLibsCollection libs = ctx->getHooksConfig().get();
     s << ", " << libs.size() << " lib(s):";
-    for (auto lib = libs.begin(); lib != libs.end(); ++lib) {
-        s << lib->first << " ";
+    for (auto const& lib : libs) {
+        s << lib.first << " ";
     }
 
     return (s.str());
@@ -163,11 +163,11 @@ CtrlAgentCfgContext::setControlSocketInfo(const ConstElementPtr& control_socket,
 std::string
 CtrlAgentCfgContext::getControlSocketInfoSummary() const {
     std::ostringstream s;
-    for (auto si = ctrl_sockets_.cbegin(); si != ctrl_sockets_.end(); ++si) {
+    for (auto const& si : ctrl_sockets_) {
         if (s.tellp() != 0) {
             s << " ";
         }
-        s << si->first;
+        s << si.first;
     }
 
     if (s.tellp() == 0) {
@@ -200,9 +200,9 @@ CtrlAgentCfgContext::toElement() const {
     ca->set("hooks-libraries", hooks_config_.toElement());
     // Set control-sockets
     ElementPtr control_sockets = Element::createMap();
-    for (auto si = ctrl_sockets_.cbegin(); si != ctrl_sockets_.cend(); ++si) {
-        ConstElementPtr socket = UserContext::toElement(si->second);
-        control_sockets->set(si->first, socket);
+    for (auto const& si : ctrl_sockets_) {
+        ConstElementPtr socket = UserContext::toElement(si.second);
+        control_sockets->set(si.first, socket);
     }
     ca->set("control-sockets", control_sockets);
     // Set Control-agent

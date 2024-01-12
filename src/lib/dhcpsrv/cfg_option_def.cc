@@ -23,13 +23,11 @@ CfgOptionDef::copyTo(CfgOptionDef& new_config) const {
     new_config.option_definitions_.clearItems();
     const std::list<std::string>& names =
         option_definitions_.getOptionSpaceNames();
-    for (std::list<std::string>::const_iterator name = names.begin();
-         name != names.end(); ++name) {
-        OptionDefContainerPtr defs = getAll(*name);
-        for (OptionDefContainer::const_iterator def = defs->begin();
-             def != defs->end(); ++def) {
+    for (auto const& name : names) {
+        OptionDefContainerPtr defs = getAll(name);
+        for (auto const& def : *defs) {
             OptionDefinitionPtr new_def =
-                OptionDefinitionPtr(new OptionDefinition(**def));
+                OptionDefinitionPtr(new OptionDefinition(*def));
             new_config.add(new_def);
         }
     }
@@ -49,23 +47,20 @@ CfgOptionDef::equals(const CfgOptionDef& other) const {
     }
     // Iterate over all option space names and get the definitions for each
     // of them.
-    for (std::list<std::string>::const_iterator name = names.begin();
-         name != names.end(); ++name) {
+    for (auto const& name : names) {
         // Get all definitions.
-        OptionDefContainerPtr defs = getAll(*name);
-        OptionDefContainerPtr other_defs = other.getAll(*name);
+        OptionDefContainerPtr defs = getAll(name);
+        OptionDefContainerPtr other_defs = other.getAll(name);
         // Compare sizes. If they hold different number of definitions,
         // they are unequal.
         if (defs->size() != defs->size()) {
             return (false);
         }
         // For each option definition, try to find one in the other object.
-        for (OptionDefContainer::const_iterator def = defs->begin();
-             def != defs->end(); ++def) {
-            OptionDefinitionPtr
-                other_def = other.get(*name, (*def)->getCode());
+        for (auto const& def : *defs) {
+            OptionDefinitionPtr other_def = other.get(name, def->getCode());
             // Actually compare them.
-            if (!other_def || (*other_def != **def)) {
+            if (!other_def || (*other_def != *def)) {
                 return (false);
             }
         }
@@ -175,41 +170,40 @@ CfgOptionDef::toElementWithMetadata(const bool include_metadata) const {
     // Iterate through the container by names and definitions
     const std::list<std::string>& names =
         option_definitions_.getOptionSpaceNames();
-    for (std::list<std::string>::const_iterator name = names.begin();
-         name != names.end(); ++name) {
-        OptionDefContainerPtr defs = getAll(*name);
-        for (OptionDefContainer::const_iterator def = defs->begin();
-             def != defs->end(); ++def) {
+    for (auto const& name : names) {
+        OptionDefContainerPtr defs = getAll(name);
+        for (auto const& def : *defs) {
             // Get and fill the map for this definition
             ElementPtr map = Element::createMap();
             // Set user context
-            (*def)->contextToElement(map);
+            def->contextToElement(map);
             // Set space from parent iterator
-            map->set("space", Element::create(*name));
+            map->set("space", Element::create(name));
             // Set required items: name, code and type
-            map->set("name", Element::create((*def)->getName()));
-            map->set("code", Element::create((*def)->getCode()));
+            map->set("name", Element::create(def->getName()));
+            map->set("code", Element::create(def->getCode()));
             std::string data_type =
-                OptionDataTypeUtil::getDataTypeName((*def)->getType());
+                OptionDataTypeUtil::getDataTypeName(def->getType());
             map->set("type", Element::create(data_type));
             // Set the array type
-            bool array_type = (*def)->getArrayType();
+            bool array_type = def->getArrayType();
             map->set("array", Element::create(array_type));
             // Set the encapsulate space
-            std::string encapsulates = (*def)->getEncapsulatedSpace();
+            std::string encapsulates = def->getEncapsulatedSpace();
             map->set("encapsulate", Element::create(encapsulates));
             // Set the record field types
             OptionDefinition::RecordFieldsCollection fields =
-                (*def)->getRecordFields();
+                def->getRecordFields();
             if (!fields.empty()) {
                 std::ostringstream oss;
-                for (OptionDefinition::RecordFieldsCollection::const_iterator
-                         field = fields.begin();
-                     field != fields.end(); ++field) {
-                    if (field != fields.begin()) {
+                bool first = true;
+                for (auto const& field : fields) {
+                    if (!first) {
                         oss << ", ";
+                    } else {
+                        first = false;
                     }
-                    oss << OptionDataTypeUtil::getDataTypeName(*field);
+                    oss << OptionDataTypeUtil::getDataTypeName(field);
                 }
                 map->set("record-types", Element::create(oss.str()));
             } else {
@@ -218,7 +212,7 @@ CfgOptionDef::toElementWithMetadata(const bool include_metadata) const {
 
             // Include metadata if requested.
             if (include_metadata) {
-                map->set("metadata", (*def)->getMetadata());
+                map->set("metadata", def->getMetadata());
             }
 
             // Push on the list

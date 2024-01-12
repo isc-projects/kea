@@ -13,7 +13,7 @@
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/subnet_id.h>
 #include <stats/stats_mgr.h>
-#include <boost/foreach.hpp>
+#include <boost/range/adaptor/reversed.hpp>
 #include <string.h>
 #include <sstream>
 
@@ -210,7 +210,7 @@ CfgSubnets6::initSelector(const Pkt6Ptr& query) {
 
     // Initialize fields specific to relayed messages.
     if (!query->relay_info_.empty()) {
-        BOOST_REVERSE_FOREACH(Pkt6::RelayInfo relay, query->relay_info_) {
+        for (auto const& relay : boost::adaptors::reverse(query->relay_info_)) {
             if (!relay.linkaddr_.isV6Zero() &&
                 !relay.linkaddr_.isV6LinkLocal()) {
                 selector.first_relay_linkaddr_ = relay.linkaddr_;

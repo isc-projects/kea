@@ -657,9 +657,8 @@ public:
     ///
     /// Removes active HTTP clients.
     virtual ~HttpsListenerTest() {
-        for (auto client = clients_.begin(); client != clients_.end();
-             ++client) {
-            (*client)->close();
+        for (auto const& client : clients_) {
+            client->close();
         }
     }
 

@@ -638,7 +638,7 @@ MasterLoader::MasterLoaderImpl::generateForIter(const std::string& str,
 {
   std::string rstr;
 
-  for (std::string::const_iterator it = str.begin(); it != str.end();) {
+  for (auto it = str.begin(); it != str.end();) {
       switch (*it) {
       case '$':
           // This is the case when the '$' character is encountered in

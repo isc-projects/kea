@@ -57,10 +57,9 @@ public:
             const std::vector<data::ElementPtr>& networks_list =
                 shared_networks_list_data->listValue();
             // Iterate over all networks and do the parsing.
-            for (auto network_element = networks_list.cbegin();
-                 network_element != networks_list.cend(); ++network_element) {
+            for (auto const& network_element : networks_list) {
                 SharedNetworkParserType parser(check_iface_);
-                auto network = parser.parse(*network_element);
+                auto network = parser.parse(network_element);
                 cfg->add(network);
             }
         } catch (const DhcpConfigError&) {

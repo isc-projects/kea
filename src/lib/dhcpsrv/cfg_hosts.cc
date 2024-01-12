@@ -13,6 +13,7 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <exceptions/exceptions.h>
 #include <util/encode/hex.h>
+#include <boost/foreach.hpp>
 #include <ostream>
 #include <string>
 #include <vector>
@@ -618,13 +619,12 @@ CfgHosts::getAllInternal4(const IOAddress& address, Storage& storage) const {
     const HostContainerIndex1& idx = hosts_.get<1>();
     HostContainerIndex1Range r = idx.equal_range(address);
     // Append each Host object to the storage.
-    for (HostContainerIndex1::iterator host = r.first; host != r.second;
-         ++host) {
+    BOOST_FOREACH(auto const& host, r) {
         LOG_DEBUG(hosts_logger, HOSTS_DBG_TRACE_DETAIL_DATA,
                   HOSTS_CFG_GET_ALL_ADDRESS4_HOST)
             .arg(address.toText())
-            .arg((*host)->toText());
-        storage.push_back(*host);
+            .arg(host->toText());
+        storage.push_back(host);
     }
 
     LOG_DEBUG(hosts_logger, HOSTS_DBG_RESULTS, HOSTS_CFG_GET_ALL_ADDRESS4_COUNT)
@@ -647,13 +647,12 @@ CfgHosts::getAllInternal6(const IOAddress& address, Storage& storage) const {
     const HostContainer6Index4& idx = hosts6_.get<4>();
     HostContainer6Index4Range r = idx.equal_range(address);
     // Append each Host object to the storage.
-    for (HostContainer6Index4::iterator reservation = r.first; reservation != r.second;
-         ++reservation) {
+    BOOST_FOREACH(auto const& reservation, r) {
         LOG_DEBUG(hosts_logger, HOSTS_DBG_TRACE_DETAIL_DATA,
                   HOSTS_CFG_GET_ALL_ADDRESS6_HOST)
             .arg(address.toText())
-            .arg(reservation->host_->toText());
-        storage.push_back(reservation->host_);
+            .arg(reservation.host_->toText());
+        storage.push_back(reservation.host_);
     }
 
     LOG_DEBUG(hosts_logger, HOSTS_DBG_RESULTS, HOSTS_CFG_GET_ALL_ADDRESS6_COUNT)
@@ -685,15 +684,14 @@ CfgHosts::get4(const SubnetID& subnet_id, const IOAddress& address) const {
         .arg(subnet_id).arg(address.toText());
 
     ConstHostCollection hosts = getAll4(address);
-    for (ConstHostCollection::const_iterator host = hosts.begin();
-         host != hosts.end(); ++host) {
-        if ((*host)->getIPv4SubnetID() == subnet_id) {
+    for (auto const& host : hosts) {
+        if (host->getIPv4SubnetID() == subnet_id) {
             LOG_DEBUG(hosts_logger, HOSTS_DBG_RESULTS,
                       HOSTS_CFG_GET_ONE_SUBNET_ID_ADDRESS4_HOST)
                 .arg(subnet_id)
                 .arg(address.toText())
-                .arg((*host)->toText());
-            return (*host);
+                .arg(host->toText());
+            return (host);
         }
     }
 
@@ -822,15 +820,14 @@ CfgHosts::getHostInternal6(const asiolink::IOAddress& prefix,
     const HostContainer6Index0& idx = hosts6_.get<0>();
     HostContainer6Index0Range r = make_pair(idx.lower_bound(prefix),
                                             idx.upper_bound(prefix));
-    for (HostContainer6Index0::iterator resrv = r.first; resrv != r.second;
-         ++resrv) {
-        if (resrv->resrv_.getPrefixLen() == prefix_len) {
+    BOOST_FOREACH(auto const& resrv, r) {
+        if (resrv.resrv_.getPrefixLen() == prefix_len) {
             LOG_DEBUG(hosts_logger, HOSTS_DBG_TRACE_DETAIL_DATA,
                       HOSTS_CFG_GET_ONE_PREFIX_HOST)
                 .arg(prefix.toText())
                 .arg(static_cast<int>(prefix_len))
-                .arg(resrv->host_->toText());
-            return (resrv->host_);
+                .arg(resrv.host_->toText());
+            return (resrv.host_);
         }
     }
 
@@ -864,13 +861,13 @@ CfgHosts::getAllInternal6(const SubnetID& subnet_id,
     // in all sane cases, there will be only one such host. (Each host can have
     // multiple addresses reserved, but for each (address, subnet_id) there should
     // be at most one host reserving it).
-    for(HostContainer6Index1::iterator resrv = r.first; resrv != r.second; ++resrv) {
+    BOOST_FOREACH(auto const& resrv, r) {
         LOG_DEBUG(hosts_logger, HOSTS_DBG_TRACE_DETAIL_DATA,
                   HOSTS_CFG_GET_ALL_SUBNET_ID_ADDRESS6_HOST)
             .arg(subnet_id)
             .arg(address.toText())
-            .arg(resrv->host_->toText());
-        storage.push_back(resrv->host_);
+            .arg(resrv.host_->toText());
+        storage.push_back(resrv.host_);
     }
 
     LOG_DEBUG(hosts_logger, HOSTS_DBG_RESULTS,
@@ -901,11 +898,10 @@ CfgHosts::getHostInternal(const SubnetID& subnet_id, const bool subnet6,
     HostPtr host;
     // Iterate over the returned hosts and select those for which the
     // subnet id matches.
-    for (HostCollection::const_iterator host_it = hosts.begin();
-         host_it != hosts.end(); ++host_it) {
+    for (auto const& host_it : hosts) {
         // Check if this is IPv4 subnet or IPv6 subnet.
-        SubnetID host_subnet_id = subnet6 ? (*host_it)->getIPv6SubnetID() :
-            (*host_it)->getIPv4SubnetID();
+        SubnetID host_subnet_id = subnet6 ? host_it->getIPv6SubnetID() :
+            host_it->getIPv4SubnetID();
 
         if (subnet_id == host_subnet_id) {
             // If this is the first occurrence of the host for this subnet,
@@ -916,7 +912,7 @@ CfgHosts::getHostInternal(const SubnetID& subnet_id, const bool subnet6,
             // result, and we don't know which reservation we should choose.
             // Therefore, throw an exception.
             if (!host) {
-                host = *host_it;
+                host = host_it;
 
             } else {
                 isc_throw(DuplicateHost,  "more than one reservation found"
@@ -1066,22 +1062,21 @@ CfgHosts::add6(const HostPtr& host) {
     }
 
     // Now for each reservation, insert corresponding (address, host) tuple.
-    for (IPv6ResrvIterator it = reservations.first; it != reservations.second;
-         ++it) {
+    BOOST_FOREACH(auto const& it, reservations) {
 
         if (ip_reservations_unique_) {
             // If there's an entry for this (subnet-id, address), reject it.
-            if (get6(host->getIPv6SubnetID(), it->second.getPrefix())) {
+            if (get6(host->getIPv6SubnetID(), it.second.getPrefix())) {
                 isc_throw(DuplicateHost, "failed to add address reservation for "
                           << "host using the HW address '"
                           << (hwaddr ? hwaddr->toText(false) : "(null)")
                           << " and DUID '" << (duid ? duid->toText() : "(null)")
                           << "' to the IPv6 subnet id '" << host->getIPv6SubnetID()
-                          << "' for address/prefix " << it->second.getPrefix()
+                          << "' for address/prefix " << it.second.getPrefix()
                           << ": There's already reservation for this address/prefix");
             }
         }
-        hosts6_.insert(HostResrv6Tuple(it->second, host));
+        hosts6_.insert(HostResrv6Tuple(it.second, host));
     }
 }
 
@@ -1103,8 +1098,8 @@ CfgHosts::del(const SubnetID& subnet_id, const asiolink::IOAddress& addr) {
         auto const& range = idx6.equal_range(boost::make_tuple(subnet_id, addr));
         erased_addresses = boost::distance(range);
         // Delete hosts.
-        for (auto key = range.first; key != range.second; ++key) {
-            erased_hosts += idx.erase(key->host_->getHostId());
+        BOOST_FOREACH(auto const& key, range) {
+            erased_hosts += idx.erase(key.host_->getHostId());
         }
         idx6.erase(range.first, range.second);
     }
@@ -1137,8 +1132,8 @@ CfgHosts::del4(const SubnetID& subnet_id,
                const size_t identifier_len) {
     HostContainerIndex0& idx = hosts_.get<0>();
     auto const t = boost::make_tuple(std::vector<uint8_t>(identifier_begin,
-                                                    identifier_begin + identifier_len),
-                                                    identifier_type);
+                                                          identifier_begin + identifier_len),
+                                                          identifier_type);
     auto const& range = idx.equal_range(t);
     size_t erased = 0;
     for (auto key = range.first; key != range.second;) {
@@ -1241,14 +1236,13 @@ CfgHosts::toElement4() const {
     CfgHostsList result;
     // Iterate using arbitrary the index 0
     const HostContainerIndex0& idx = hosts_.get<0>();
-    for (HostContainerIndex0::const_iterator host = idx.begin();
-         host != idx.end(); ++host) {
+    for (auto const& host : idx) {
 
         // Convert host to element representation
-        ElementPtr map = (*host)->toElement4();
+        ElementPtr map = host->toElement4();
 
         // Push it on the list
-        SubnetID subnet_id = (*host)->getIPv4SubnetID();
+        SubnetID subnet_id = host->getIPv4SubnetID();
         result.add(subnet_id, map);
     }
     return (result.externalize());
@@ -1259,14 +1253,13 @@ CfgHosts::toElement6() const {
     CfgHostsList result;
     // Iterate using arbitrary the index 0
     const HostContainerIndex0& idx = hosts_.get<0>();
-    for (HostContainerIndex0::const_iterator host = idx.begin();
-         host != idx.end(); ++host) {
+    for (auto const& host : idx) {
 
         // Convert host to Element representation
-        ElementPtr map = (*host)->toElement6();
+        ElementPtr map = host->toElement6();
 
         // Push it on the list
-        SubnetID subnet_id = (*host)->getIPv6SubnetID();
+        SubnetID subnet_id = host->getIPv6SubnetID();
         result.add(subnet_id, map);
     }
     return (result.externalize());

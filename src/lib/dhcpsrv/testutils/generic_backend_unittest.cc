@@ -13,6 +13,8 @@
 #include <typeinfo>
 #include <testutils/gtest_utils.h>
 
+#include <boost/range/adaptor/reversed.hpp>
+
 using namespace isc::data;
 using namespace isc::db;
 
@@ -168,11 +170,13 @@ GenericBackendTest::testNewAuditEntry(const std::string& exp_object_type,
 
     // Iterate over specified number of entries starting from the most recent
     // one and check they have correct values.
-    for (auto audit_entry_it = mod_time_idx.rbegin();
-         ((std::distance(mod_time_idx.rbegin(), audit_entry_it) < new_entries_num) &&
-         (std::distance(mod_time_idx.rbegin(), audit_entry_it) < max_tested_entries));
-         ++audit_entry_it) {
-        auto audit_entry = *audit_entry_it;
+    size_t count = 0;
+    for (auto const& audit_entry_it : boost::adaptors::reverse(mod_time_idx)) {
+        if (count >= new_entries_num || count >= max_tested_entries) {
+            break;
+        }
+        count++;
+        auto audit_entry = audit_entry_it;
         EXPECT_EQ(exp_object_type, audit_entry->getObjectType())
                   << logExistingAuditEntries(tag);
         EXPECT_EQ(exp_modification_type, audit_entry->getModificationType())
@@ -219,11 +223,13 @@ GenericBackendTest::testNewAuditEntry(const std::vector<ExpAuditEntry>& exp_entr
     // Iterate over specified number of entries starting from the most recent
     // one and check they have correct values.
     auto exp_entry = exp_entries.rbegin();
-    for (auto audit_entry_it = mod_time_idx.rbegin();
-         ((std::distance(mod_time_idx.rbegin(), audit_entry_it) < new_entries_num));
-         ++audit_entry_it) {
-
-        auto audit_entry = *audit_entry_it;
+    size_t count = 0;
+    for (auto const& audit_entry_it : boost::adaptors::reverse(mod_time_idx)) {
+        if (count >= new_entries_num) {
+            break;
+        }
+        count++;
+        auto audit_entry = audit_entry_it;
         EXPECT_EQ((*exp_entry).object_type, audit_entry->getObjectType())
                   << logExistingAuditEntries(tag);
         EXPECT_EQ((*exp_entry).modification_type, audit_entry->getModificationType())
@@ -260,10 +266,8 @@ GenericBackendTest::logExistingAuditEntries(const std::string& server_tag) {
 
     auto& mod_time_idx = audit_entries_[server_tag].get<AuditEntryModificationTimeIdTag>();
 
-    for (auto audit_entry_it = mod_time_idx.begin();
-         audit_entry_it != mod_time_idx.end();
-         ++audit_entry_it) {
-        auto audit_entry = *audit_entry_it;
+    for (auto const& audit_entry_it : mod_time_idx) {
+        auto audit_entry = audit_entry_it;
         s << audit_entry->getObjectType() << ", "
           << audit_entry->getObjectId() << ", "
           << static_cast<int>(audit_entry->getModificationType()) << ", "

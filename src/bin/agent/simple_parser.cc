@@ -12,7 +12,6 @@
 #include <hooks/hooks_manager.h>
 #include <hooks/hooks_parser.h>
 #include <http/basic_auth_config.h>
-#include <boost/foreach.hpp>
 
 using namespace isc::data;
 
@@ -147,8 +146,8 @@ AgentSimpleParser::parse(const CtrlAgentCfgContextPtr& ctx,
     ConstElementPtr ctrl_sockets = config->get("control-sockets");
     if (ctrl_sockets) {
         auto const& sockets_map = ctrl_sockets->mapValue();
-        for (auto cs = sockets_map.cbegin(); cs != sockets_map.cend(); ++cs) {
-            ctx->setControlSocketInfo(cs->second, cs->first);
+        for (auto const& cs : sockets_map) {
+            ctx->setControlSocketInfo(cs.second, cs.first);
         }
     }
 

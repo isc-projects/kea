@@ -88,7 +88,7 @@ LoggingInfo::equals(const LoggingInfo& other) const {
     // that they are at the same index of the vectors.
     for (auto const& dest : destinations_) {
         bool match = false;
-        for (auto const &dest_other : other.destinations_) {
+        for (auto const& dest_other : other.destinations_) {
             if (dest.equals(dest_other)) {
                 match = true;
                 break;

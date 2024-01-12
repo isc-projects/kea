@@ -2898,7 +2898,7 @@ Dhcpv4SrvTest::loadConfigFile(const string& path) {
     removeTlsParameters(hosts);
     hosts = dhcp4->get("hosts-databases");
     if (hosts) {
-        for (auto& host : hosts->listValue()) {
+        for (auto const& host : hosts->listValue()) {
             removeTlsParameters(host);
         }
     }
@@ -2991,7 +2991,7 @@ Dhcpv4SrvTest::checkConfigFiles() {
         "with-ddns.json",
     };
     vector<string> files;
-    for (const string& example : examples) {
+    for (auto const& example : examples) {
         string file = path + "/" + example;
         files.push_back(file);
     }

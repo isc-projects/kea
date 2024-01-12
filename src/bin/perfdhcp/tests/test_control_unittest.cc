@@ -6,8 +6,8 @@
 
 #include <config.h>
 
-#include "command_options_helper.h"
-#include "../test_control.h"
+#include <command_options_helper.h>
+#include <test_control.h>
 
 #include <asiolink/io_address.h>
 #include <exceptions/exceptions.h>
@@ -19,7 +19,6 @@
 #include <dhcp/option6_iaprefix.h>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
-#include <boost/foreach.hpp>
 #include <boost/format.hpp>
 
 #include <algorithm>

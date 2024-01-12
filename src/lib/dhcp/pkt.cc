@@ -9,6 +9,7 @@
 #include <dhcp/pkt.h>
 #include <dhcp/iface_mgr.h>
 #include <dhcp/hwaddr.h>
+#include <boost/foreach.hpp>
 #include <vector>
 
 namespace isc {
@@ -90,10 +91,9 @@ Pkt::getOptions(const uint16_t opt_type) {
     // matching options, copy them and replace the original ones with new
     // instances.
     if (copy_retrieved_options_) {
-        for (OptionCollection::iterator opt_it = range.first;
-             opt_it != range.second; ++opt_it) {
-            OptionPtr option_copy = opt_it->second->clone();
-            opt_it->second = option_copy;
+        BOOST_FOREACH(auto& opt_it, range) {
+            OptionPtr option_copy = opt_it.second->clone();
+            opt_it.second = option_copy;
         }
     }
     // Finally, return updated options. This can also be empty in some cases.

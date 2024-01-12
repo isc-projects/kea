@@ -13,6 +13,7 @@
 #include <database/server_selector.h>
 #include <process/config_base.h>
 #include <process/config_ctl_info.h>
+#include <boost/foreach.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/date_time/gregorian/gregorian.hpp>
 #include <process/d_log.h>
@@ -271,9 +272,9 @@ protected:
         db::AuditEntryCollection result;
         auto const& index = audit_entries.get<db::AuditEntryObjectTypeTag>();
         auto range = index.equal_range(object_type);
-        for (auto it = range.first; it != range.second; ++it) {
-            if ((*it)->getModificationType() != db::AuditEntry::ModificationType::DELETE) {
-                result.insert(*it);
+        BOOST_FOREACH(auto const& it, range) {
+            if (it->getModificationType() != db::AuditEntry::ModificationType::DELETE) {
+                result.insert(it);
             }
         }
 

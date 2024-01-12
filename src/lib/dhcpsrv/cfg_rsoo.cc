@@ -42,9 +42,8 @@ ElementPtr
 CfgRSOO::toElement() const {
     ElementPtr result = Element::createList();
     // We can use LibDHCP::getOptionDef(DHCP6_OPTION_SPACE, *opt) too...
-    for (std::set<uint16_t>::const_iterator opt = rsoo_options_.cbegin();
-         opt != rsoo_options_.cend(); ++opt) {
-        const std::string& code = boost::lexical_cast<std::string>(*opt);
+    for (auto const& opt : rsoo_options_) {
+        const std::string& code = boost::lexical_cast<std::string>(opt);
         result->add(Element::create(code));
     }
     return (result);

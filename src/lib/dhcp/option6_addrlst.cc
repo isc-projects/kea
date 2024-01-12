@@ -68,15 +68,14 @@ void Option6AddrLst::pack(isc::util::OutputBuffer& buf, bool) const {
     // len field contains length without 4-byte option header
     buf.writeUint16(len() - getHeaderLen());
 
-    for (AddressContainer::const_iterator addr=addrs_.begin();
-         addr!=addrs_.end(); ++addr) {
-        if (!addr->isV6()) {
-            isc_throw(isc::BadValue, addr->toText()
+    for (auto const& addr : addrs_) {
+        if (!addr.isV6()) {
+            isc_throw(isc::BadValue, addr.toText()
                       << " is not an IPv6 address");
         }
         // If an address is IPv6 address it should have assumed
         // length of V6ADDRESS_LEN.
-        buf.writeData(&addr->toBytes()[0], V6ADDRESS_LEN);
+        buf.writeData(&addr.toBytes()[0], V6ADDRESS_LEN);
     }
 }
 
@@ -97,9 +96,8 @@ std::string Option6AddrLst::toText(int indent) const {
     stringstream output;
     output << headerToText(indent) << ":";
 
-    for (AddressContainer::const_iterator addr = addrs_.begin();
-         addr != addrs_.end(); ++addr) {
-        output << " " << *addr;
+    for (auto const& addr : addrs_) {
+        output << " " << addr;
     }
     return (output.str());
 }

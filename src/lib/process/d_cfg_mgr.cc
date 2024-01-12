@@ -15,7 +15,6 @@
 #include <util/encode/hex.h>
 #include <util/strutil.h>
 
-#include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string.hpp>
 

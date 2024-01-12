@@ -93,9 +93,8 @@ void Option4AddrLst::setAddresses(const AddressContainer& addrs) {
     // Do not copy it as a whole. addAddress() does sanity checks.
     // i.e. throw if someone tries to set IPv6 address.
     addrs_.clear();
-    for (AddressContainer::const_iterator addr = addrs.begin();
-         addr != addrs.end(); ++addr) {
-        addAddress(*addr);
+    for (auto const& addr : addrs) {
+        addAddress(addr);
     }
 }
 
@@ -116,9 +115,8 @@ std::string Option4AddrLst::toText(int indent) const {
     std::stringstream output;
     output << headerToText(indent) << ":";
 
-    for (AddressContainer::const_iterator addr = addrs_.begin();
-         addr != addrs_.end(); ++addr) {
-        output << " " << (*addr);
+    for (auto const& addr : addrs_) {
+        output << " " << addr;
     }
 
     return (output.str());

@@ -116,11 +116,10 @@ PktTransform::packOptions(const OptionBuffer& in_buffer,
         // If there are any options on the list, we will use provided
         // options offsets to override them in the output buffer
         // with new contents.
-        for (OptionCollection::const_iterator it = options.begin();
-             it != options.end(); ++it) {
+        for (auto const& it : options) {
             // Get options with their position (offset).
             boost::shared_ptr<LocalizedOption> option =
-                boost::dynamic_pointer_cast<LocalizedOption>(it->second);
+                boost::dynamic_pointer_cast<LocalizedOption>(it.second);
             if (option == NULL) {
                 isc_throw(isc::BadValue, "option is null");
             }
@@ -146,8 +145,7 @@ PktTransform::packOptions(const OptionBuffer& in_buffer,
                 out_buffer.writeUint8At(buf_data[i], offset + i);
             }
         }
-    }
-    catch (const Exception&) {
+    } catch (const Exception&) {
         isc_throw(isc::BadValue, "failed to pack options into buffer.");
     }
 }
@@ -155,11 +153,10 @@ PktTransform::packOptions(const OptionBuffer& in_buffer,
 void
 PktTransform::unpackOptions(const OptionBuffer& in_buffer,
                             const OptionCollection& options) {
-    for (OptionCollection::const_iterator it = options.begin();
-         it != options.end(); ++it) {
+    for (auto const& it : options) {
 
         boost::shared_ptr<LocalizedOption> option =
-            boost::dynamic_pointer_cast<LocalizedOption>(it->second);
+            boost::dynamic_pointer_cast<LocalizedOption>(it.second);
         if (option == NULL) {
             isc_throw(isc::BadValue, "option is null");
         }

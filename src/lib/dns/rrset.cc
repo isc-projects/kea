@@ -11,7 +11,6 @@
 #include <vector>
 
 #include <boost/shared_ptr.hpp>
-#include <boost/foreach.hpp>
 
 #include <util/buffer.h>
 #include <dns/messagerenderer.h>
@@ -202,7 +201,7 @@ BasicRRsetImpl::toWire(AbstractMessageRenderer& renderer, size_t limit) const {
 
     // sort the set of Rdata based on rrset-order and sortlist, and possible
     // other options.  Details to be considered.
-    BOOST_FOREACH(const ConstRdataPtr& rdata, rdatalist_) {
+    for (auto const& rdata : rdatalist_) {
         const size_t pos0 = renderer.getLength();
         assert(pos0 < 65536);
 

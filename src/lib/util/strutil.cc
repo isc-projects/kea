@@ -79,15 +79,15 @@ tokens(const std::string& text, const std::string& delim, bool escape) {
     string token;
     bool in_token = false;
     bool escaped = false;
-    for (auto c = text.cbegin(); c != text.cend(); ++c) {
-        if (delim.find(*c) != string::npos) {
+    for (auto const& c : text) {
+        if (delim.find(c) != string::npos) {
             // Current character is a delimiter
             if (!in_token) {
                 // Two or more delimiters, eat them
             } else if (escaped) {
                 // Escaped delimiter in a token: reset escaped and keep it
                 escaped = false;
-                token.push_back(*c);
+                token.push_back(c);
             } else {
                 // End of the current token: save it if not empty
                 if (!token.empty()) {
@@ -97,7 +97,7 @@ tokens(const std::string& text, const std::string& delim, bool escape) {
                 in_token = false;
                 token.clear();
             }
-        } else if (escape && (*c == '\\')) {
+        } else if (escape && (c == '\\')) {
             // Current character is the escape character
             if (!in_token) {
                 // The escape character is the first character of a new token
@@ -106,7 +106,7 @@ tokens(const std::string& text, const std::string& delim, bool escape) {
             if (escaped) {
                 // Escaped escape: reset escaped and keep one character
                 escaped = false;
-                token.push_back(*c);
+                token.push_back(c);
             } else {
                 // Remember to keep the next character
                 escaped = true;
@@ -121,10 +121,10 @@ tokens(const std::string& text, const std::string& delim, bool escape) {
                 // Escaped common character: as escape was false
                 escaped = false;
                 token.push_back('\\');
-                token.push_back(*c);
+                token.push_back(c);
             } else {
                 // The common case: keep it
-                token.push_back(*c);
+                token.push_back(c);
             }
         }
     }

@@ -158,11 +158,9 @@ ServerHooks::findIndex(const std::string& name) const {
 
 vector<string>
 ServerHooks::getHookNames() const {
-
     vector<string> names;
-    HookCollection::const_iterator i;
-    for (i = hooks_.begin(); i != hooks_.end(); ++i) {
-        names.push_back(i->first);
+    for (auto const& i : hooks_) {
+        names.push_back(i.first);
     }
 
     return (names);
@@ -214,8 +212,6 @@ ServerHooks::hookToCommandName(const std::string& hook_name) {
     }
     return ("");
 }
-
-
 
 } // namespace hooks
 } // namespace isc

@@ -85,14 +85,13 @@ UserId::toText(char delim_char) const {
     std::stringstream tmp;
     tmp << std::hex;
     bool delim = false;
-    for (std::vector<uint8_t>::const_iterator it = id_.begin();
-         it != id_.end(); ++it) {
+    for (auto const& it : id_) {
         if (delim_char && delim) {
             tmp << delim_char;
         }
 
         tmp << std::setw(2) << std::setfill('0')
-            << static_cast<unsigned int>(*it);
+            << static_cast<unsigned int>(it);
         delim = true;
     }
 

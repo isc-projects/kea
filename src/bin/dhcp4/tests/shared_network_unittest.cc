@@ -1165,10 +1165,9 @@ public:
     Subnet4Ptr getConfiguredSubnet(const IOAddress& address) {
         CfgSubnets4Ptr cfg = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4();
         const Subnet4Collection* subnets = cfg->getAll();
-        for (auto subnet_it = subnets->cbegin(); subnet_it != subnets->cend();
-             ++subnet_it) {
-            if ((*subnet_it)->inRange(address)) {
-                return (*subnet_it);
+        for (auto const& subnet_it : *subnets) {
+            if (subnet_it->inRange(address)) {
+                return (subnet_it);
             }
         }
         return (Subnet4Ptr());

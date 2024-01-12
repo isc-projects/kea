@@ -25,13 +25,13 @@ bool dependOnClass(const ExpressionPtr& expr, const std::string& name) {
     if (!expr) {
         return (false);
     }
-    for (auto it = expr->cbegin(); it != expr->cend(); ++it) {
-        if (dependOnClass(*it, name)) {
+    for (auto const& it : *expr) {
+        if (dependOnClass(it, name)) {
             return (true);
         }
     }
     return (false);
 }
 
-}; // end of isc::dhcp namespace
-}; // end of isc namespace
+} // end of isc::dhcp namespace
+} // end of isc namespace

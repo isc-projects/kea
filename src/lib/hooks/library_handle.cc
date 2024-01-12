@@ -120,12 +120,11 @@ LibraryHandle::getParameterNames() {
         return (names);
     }
     auto const& map = params->mapValue();
-    for (auto elem = map.begin(); elem != map.end(); ++elem) {
-        names.push_back(elem->first);
+    for (auto const& elem : map) {
+        names.push_back(elem.first);
     }
     return (names);
 }
-
 
 } // namespace util
 } // namespace isc

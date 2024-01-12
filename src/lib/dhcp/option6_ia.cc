@@ -108,10 +108,8 @@ uint16_t Option6IA::len() const {
         OPTION6_IA_LEN  /* option content (12) */;
 
     // length of all suboptions
-    for (OptionCollection::const_iterator it = options_.begin();
-         it != options_.end();
-         ++it) {
-        length += (*it).second->len();
+    for (auto const& it : options_) {
+        length += it.second->len();
     }
     return (length);
 }

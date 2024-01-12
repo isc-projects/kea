@@ -20,7 +20,7 @@
 #include <testutils/gtest_utils.h>
 #include <util/bigints.h>
 
-#include <boost/foreach.hpp>
+#include <boost/range/adaptor/reversed.hpp>
 #include <boost/scoped_ptr.hpp>
 
 #include <gtest/gtest.h>
@@ -575,20 +575,18 @@ GenericLeaseMgrTest::testGetLease4HWAddr2() {
 
     // Check the lease[5] (and only this one) has an user context.
     size_t contexts = 0;
-    for (Lease4Collection::const_iterator i = returned.begin();
-         i != returned.end(); ++i) {
-        if ((*i)->getContext()) {
+    for (auto const& i : returned) {
+        if (i->getContext()) {
             ++contexts;
-            EXPECT_EQ("{ \"foo\": true }", (*i)->getContext()->str());
+            EXPECT_EQ("{ \"foo\": true }", i->getContext()->str());
         }
     }
     EXPECT_EQ(1, contexts);
 
     // Easiest way to check is to look at the addresses.
     vector<string> addresses;
-    for (Lease4Collection::const_iterator i = returned.begin();
-         i != returned.end(); ++i) {
-        addresses.push_back((*i)->addr_.toText());
+    for (auto const& i : returned) {
+        addresses.push_back(i->addr_.toText());
     }
     sort(addresses.begin(), addresses.end());
     EXPECT_EQ(straddress4_[1], addresses[0]);
@@ -1172,20 +1170,18 @@ GenericLeaseMgrTest::testGetLease4ClientId2() {
 
     // Check the lease[5] (and only this one) has an user context.
     size_t contexts = 0;
-    for (Lease4Collection::const_iterator i = returned.begin();
-         i != returned.end(); ++i) {
-        if ((*i)->getContext()) {
+    for (auto const& i : returned) {
+        if (i->getContext()) {
             ++contexts;
-            EXPECT_EQ("{ \"foo\": true }", (*i)->getContext()->str());
+            EXPECT_EQ("{ \"foo\": true }", i->getContext()->str());
         }
     }
     EXPECT_EQ(1, contexts);
 
     // Easiest way to check is to look at the addresses.
     vector<string> addresses;
-    for (Lease4Collection::const_iterator i = returned.begin();
-         i != returned.end(); ++i) {
-        addresses.push_back((*i)->addr_.toText());
+    for (auto const& i : returned) {
+        addresses.push_back(i->addr_.toText());
     }
     sort(addresses.begin(), addresses.end());
     EXPECT_EQ(straddress4_[1], addresses[0]);
@@ -1335,7 +1331,7 @@ GenericLeaseMgrTest::testGetLeases4Paged() {
         Lease4Collection page = lmptr_->getLeases4(last_address, LeasePageSize(3));
 
         // Collect leases in a common structure. They may be out of order.
-        for (const Lease4Ptr& lease : page) {
+        for (auto const& lease : page) {
             all_leases.push_back(lease);
         }
 
@@ -1356,9 +1352,9 @@ GenericLeaseMgrTest::testGetLeases4Paged() {
 
     // Make sure that all leases that we stored in the lease database
     // have been retrieved.
-    for (const Lease4Ptr& lease : leases) {
+    for (auto const& lease : leases) {
         bool found = false;
-        for (const Lease4Ptr& returned_lease : all_leases) {
+        for (auto const& returned_lease : all_leases) {
             if (lease->addr_ == returned_lease->addr_) {
                 found = true;
                 break;
@@ -1421,7 +1417,7 @@ GenericLeaseMgrTest::testGetLeases6SubnetIdPaged() {
                                                    LeasePageSize(3));
 
         // Collect leases in a common structure.
-        for (Lease6Ptr lease : page) {
+        for (auto const& lease : page) {
             all_leases.push_back(lease);
         }
 
@@ -1440,12 +1436,12 @@ GenericLeaseMgrTest::testGetLeases6SubnetIdPaged() {
 
     // Make sure that all leases that we stored in the lease database
     // have been retrieved at the exception of the third.
-    for (Lease6Ptr lease : leases) {
+    for (auto const& lease : leases) {
         if (lease == leases[3]) {
             continue;
         }
         bool found = false;
-        for (Lease6Ptr returned_lease : all_leases) {
+        for (auto const& returned_lease : all_leases) {
             if (lease->addr_ == returned_lease->addr_) {
                 found = true;
                 break;
@@ -1517,7 +1513,7 @@ GenericLeaseMgrTest::testGetLeases6Paged() {
         Lease6Collection page = lmptr_->getLeases6(last_address, LeasePageSize(3));
 
         // Collect leases in a common structure. They may be out of order.
-        for (const Lease6Ptr& lease : page) {
+        for (auto const& lease : page) {
             all_leases.push_back(lease);
         }
 
@@ -1538,9 +1534,9 @@ GenericLeaseMgrTest::testGetLeases6Paged() {
 
     // Make sure that all leases that we stored in the lease database
     // have been retrieved.
-    for (const Lease6Ptr& lease : leases) {
+    for (auto const& lease : leases) {
         bool found = false;
-        for (const Lease6Ptr& returned_lease : all_leases) {
+        for (auto const& returned_lease : all_leases) {
             if (lease->addr_ == returned_lease->addr_) {
                 found = true;
                 break;
@@ -1576,9 +1572,8 @@ GenericLeaseMgrTest::testGetLeases6DuidIaid() {
 
     // Easiest way to check is to look at the addresses.
     vector<string> addresses;
-    for (Lease6Collection::const_iterator i = returned.begin();
-         i != returned.end(); ++i) {
-        addresses.push_back((*i)->addr_.toText());
+    for (auto const& i : returned) {
+        addresses.push_back(i->addr_.toText());
     }
     sort(addresses.begin(), addresses.end());
     EXPECT_EQ(straddress6_[1], addresses[0]);
@@ -1694,9 +1689,8 @@ GenericLeaseMgrTest::testLease6LeaseTypeCheck() {
         // Collection order returned is not guaranteed.
         // Easiest way to check is to look at the addresses.
         vector<string> addresses;
-        for (Lease6Collection::const_iterator it = returned.begin();
-            it != returned.end(); ++it) {
-            addresses.push_back((*it)->addr_.toText());
+        for (auto const& it : returned) {
+            addresses.push_back(it->addr_.toText());
         }
 
         auto compare_addr = [](const string& left, const string& right) {
@@ -2205,13 +2199,13 @@ GenericLeaseMgrTest::testGetExpiredLeases4() {
 
     // The expired leases should be returned from the most to least expired.
     // This matches the reverse order to which they have been added.
-    for (Lease4Collection::reverse_iterator lease = expired_leases.rbegin();
-         lease != expired_leases.rend(); ++lease) {
-        int index = static_cast<int>(std::distance(expired_leases.rbegin(), lease));
+    size_t count = 0;
+    for (auto const& lease : boost::adaptors::reverse(expired_leases)) {
+        int index = count++;
         // Multiple current index by two, because only leases with even indexes
         // should have been returned.
         ASSERT_LE(2 * index, leases.size());
-        EXPECT_EQ(leases[2 * index]->addr_, (*lease)->addr_);
+        EXPECT_EQ(leases[2 * index]->addr_, lease->addr_);
     }
 
     // Update current time for the next test.
@@ -2239,11 +2233,11 @@ GenericLeaseMgrTest::testGetExpiredLeases4() {
     ASSERT_EQ(static_cast<size_t>(leases.size() / 2), expired_leases.size());
 
     // This time leases should be returned in the non-reverse order.
-    for (Lease4Collection::iterator lease = expired_leases.begin();
-         lease != expired_leases.end(); ++lease) {
-        int index = static_cast<int>(std::distance(expired_leases.begin(), lease));
+    count = 0;
+    for (auto const& lease : expired_leases) {
+        int index = count++;
         ASSERT_LE(2 * index, leases.size());
-        EXPECT_EQ(leases[2 * index]->addr_, (*lease)->addr_);
+        EXPECT_EQ(leases[2 * index]->addr_, lease->addr_);
     }
 
     // Remember expired leases returned.
@@ -2259,11 +2253,11 @@ GenericLeaseMgrTest::testGetExpiredLeases4() {
     ASSERT_EQ(2, expired_leases.size());
 
     // Test that most expired leases have been returned.
-    for (Lease4Collection::iterator lease = expired_leases.begin();
-         lease != expired_leases.end(); ++lease) {
-        int index = static_cast<int>(std::distance(expired_leases.begin(), lease));
+    count = 0;
+    for (auto const& lease : expired_leases) {
+        int index = count++;
         ASSERT_LE(2 * index, leases.size());
-        EXPECT_EQ(leases[2 * index]->addr_, (*lease)->addr_);
+        EXPECT_EQ(leases[2 * index]->addr_, lease->addr_);
     }
 
     // Mark every other expired lease as reclaimed.
@@ -2284,10 +2278,10 @@ GenericLeaseMgrTest::testGetExpiredLeases4() {
 
     // Make sure that returned leases are those that are not reclaimed, i.e.
     // those that have even index.
-    for (Lease4Collection::iterator lease = expired_leases.begin();
-         lease != expired_leases.end(); ++lease) {
-        int index = static_cast<int>(std::distance(expired_leases.begin(), lease));
-        EXPECT_EQ(saved_expired_leases[2 * index]->addr_, (*lease)->addr_);
+    count = 0;
+    for (auto const& lease : expired_leases) {
+        int index = count++;
+        EXPECT_EQ(saved_expired_leases[2 * index]->addr_, lease->addr_);
     }
 }
 
@@ -2327,12 +2321,12 @@ GenericLeaseMgrTest::testGetExpiredLeases6() {
 
     // The expired leases should be returned from the most to least expired.
     // This matches the reverse order to which they have been added.
-    for (Lease6Collection::reverse_iterator lease = expired_leases.rbegin();
-         lease != expired_leases.rend(); ++lease) {
-        int index = static_cast<int>(std::distance(expired_leases.rbegin(), lease));
+    size_t count = 0;
+    for (auto const& lease : boost::adaptors::reverse(expired_leases)) {
+        int index = count++;
         // Multiple current index by two, because only leases with even indexes
         // should have been returned.
-        EXPECT_EQ(leases[2 * index]->addr_, (*lease)->addr_);
+        EXPECT_EQ(leases[2 * index]->addr_, lease->addr_);
     }
 
     // Update current time for the next test.
@@ -2361,10 +2355,10 @@ GenericLeaseMgrTest::testGetExpiredLeases6() {
     ASSERT_EQ(static_cast<size_t>(leases.size() / 2), expired_leases.size());
 
     // This time leases should be returned in the non-reverse order.
-    for (Lease6Collection::iterator lease = expired_leases.begin();
-         lease != expired_leases.end(); ++lease) {
-        int index = static_cast<int>(std::distance(expired_leases.begin(), lease));
-        EXPECT_EQ(leases[2 * index]->addr_, (*lease)->addr_);
+    count = 0;
+    for (auto const& lease : expired_leases) {
+        int index = count++;
+        EXPECT_EQ(leases[2 * index]->addr_, lease->addr_);
     }
 
     // Remember expired leases returned.
@@ -2380,10 +2374,10 @@ GenericLeaseMgrTest::testGetExpiredLeases6() {
     ASSERT_EQ(2, expired_leases.size());
 
     // Test that most expired leases have been returned.
-    for (Lease6Collection::iterator lease = expired_leases.begin();
-         lease != expired_leases.end(); ++lease) {
-        int index = static_cast<int>(std::distance(expired_leases.begin(), lease));
-        EXPECT_EQ(leases[2 * index]->addr_, (*lease)->addr_);
+    count = 0;
+    for (auto const& lease : expired_leases) {
+        int index = count++;
+        EXPECT_EQ(leases[2 * index]->addr_, lease->addr_);
     }
 
     // Mark every other expired lease as reclaimed.
@@ -2404,10 +2398,10 @@ GenericLeaseMgrTest::testGetExpiredLeases6() {
 
     // Make sure that returned leases are those that are not reclaimed, i.e.
     // those that have even index.
-    for (Lease6Collection::iterator lease = expired_leases.begin();
-         lease != expired_leases.end(); ++lease) {
-        int index = static_cast<int>(std::distance(expired_leases.begin(), lease));
-        EXPECT_EQ(saved_expired_leases[2 * index]->addr_, (*lease)->addr_);
+    count = 0;
+    for (auto const& lease : expired_leases) {
+        int index = count++;
+        EXPECT_EQ(saved_expired_leases[2 * index]->addr_, lease->addr_);
     }
 }
 
@@ -2708,17 +2702,17 @@ GenericLeaseMgrTest::testGetDeclinedLeases4() {
 
     // The expired leases should be returned from the most to least expired.
     // This matches the reverse order to which they have been added.
-    for (Lease4Collection::reverse_iterator lease = expired_leases.rbegin();
-         lease != expired_leases.rend(); ++lease) {
-        int index = static_cast<int>(std::distance(expired_leases.rbegin(), lease));
+    size_t count = 0;
+    for (auto const& lease : boost::adaptors::reverse(expired_leases)) {
+        int index = count++;
         // Multiple current index by two, because only leases with even indexes
         // should have been returned.
-        EXPECT_EQ(leases[2 * index]->addr_, (*lease)->addr_);
+        EXPECT_EQ(leases[2 * index]->addr_, lease->addr_);
 
         // Count leases in default and declined states
-        if ((*lease)->state_ == Lease::STATE_DEFAULT) {
+        if (lease->state_ == Lease::STATE_DEFAULT) {
             default_state++;
-        } else if ((*lease)->state_ == Lease::STATE_DECLINED) {
+        } else if (lease->state_ == Lease::STATE_DECLINED) {
             declined_state++;
         }
     }
@@ -2763,15 +2757,15 @@ GenericLeaseMgrTest::testGetDeclinedLeases4() {
     // This time leases should be returned in the non-reverse order.
     declined_state = 0;
     default_state = 0;
-    for (Lease4Collection::iterator lease = expired_leases.begin();
-         lease != expired_leases.end(); ++lease) {
-        int index = static_cast<int>(std::distance(expired_leases.begin(), lease));
-        EXPECT_EQ(leases[2 * index]->addr_, (*lease)->addr_);
+    count = 0;
+    for (auto const& lease : expired_leases) {
+        int index = count++;
+        EXPECT_EQ(leases[2 * index]->addr_, lease->addr_);
 
         // Count leases in default and declined states
-        if ((*lease)->state_ == Lease::STATE_DEFAULT) {
+        if (lease->state_ == Lease::STATE_DEFAULT) {
             default_state++;
-        } else if ((*lease)->state_ == Lease::STATE_DECLINED) {
+        } else if (lease->state_ == Lease::STATE_DECLINED) {
             declined_state++;
         }
     }
@@ -2790,10 +2784,10 @@ GenericLeaseMgrTest::testGetDeclinedLeases4() {
     ASSERT_EQ(2, expired_leases.size());
 
     // Test that most expired leases have been returned.
-    for (Lease4Collection::iterator lease = expired_leases.begin();
-         lease != expired_leases.end(); ++lease) {
-        int index = static_cast<int>(std::distance(expired_leases.begin(), lease));
-        EXPECT_EQ(leases[2 * index]->addr_, (*lease)->addr_);
+    count = 0;
+    for (auto const& lease : expired_leases) {
+        int index = count++;
+        EXPECT_EQ(leases[2 * index]->addr_, lease->addr_);
     }
 }
 
@@ -2858,17 +2852,17 @@ GenericLeaseMgrTest::testGetDeclinedLeases6() {
 
     // The expired leases should be returned from the most to least expired.
     // This matches the reverse order to which they have been added.
-    for (Lease6Collection::reverse_iterator lease = expired_leases.rbegin();
-         lease != expired_leases.rend(); ++lease) {
-        int index = static_cast<int>(std::distance(expired_leases.rbegin(), lease));
+    size_t count = 0;
+    for (auto const& lease : boost::adaptors::reverse(expired_leases)) {
+        int index = count++;
         // Multiple current index by two, because only leases with even indexes
         // should have been returned.
-        EXPECT_EQ(leases[2 * index]->addr_, (*lease)->addr_);
+        EXPECT_EQ(leases[2 * index]->addr_, lease->addr_);
 
         // Count leases in default and declined states
-        if ((*lease)->state_ == Lease::STATE_DEFAULT) {
+        if (lease->state_ == Lease::STATE_DEFAULT) {
             default_state++;
-        } else if ((*lease)->state_ == Lease::STATE_DECLINED) {
+        } else if (lease->state_ == Lease::STATE_DECLINED) {
             declined_state++;
         }
     }
@@ -2913,15 +2907,15 @@ GenericLeaseMgrTest::testGetDeclinedLeases6() {
     // This time leases should be returned in the non-reverse order.
     declined_state = 0;
     default_state = 0;
-    for (Lease6Collection::iterator lease = expired_leases.begin();
-         lease != expired_leases.end(); ++lease) {
-        int index = static_cast<int>(std::distance(expired_leases.begin(), lease));
-        EXPECT_EQ(leases[2 * index]->addr_, (*lease)->addr_);
+    count = 0;
+    for (auto const& lease : expired_leases) {
+        int index = count++;
+        EXPECT_EQ(leases[2 * index]->addr_, lease->addr_);
 
         // Count leases in default and declined states
-        if ((*lease)->state_ == Lease::STATE_DEFAULT) {
+        if (lease->state_ == Lease::STATE_DEFAULT) {
             default_state++;
-        } else if ((*lease)->state_ == Lease::STATE_DECLINED) {
+        } else if (lease->state_ == Lease::STATE_DECLINED) {
             declined_state++;
         }
     }
@@ -2940,10 +2934,10 @@ GenericLeaseMgrTest::testGetDeclinedLeases6() {
     ASSERT_EQ(2, expired_leases.size());
 
     // Test that most expired leases have been returned.
-    for (Lease6Collection::iterator lease = expired_leases.begin();
-         lease != expired_leases.end(); ++lease) {
-        int index = static_cast<int>(std::distance(expired_leases.begin(), lease));
-        EXPECT_EQ(leases[2 * index]->addr_, (*lease)->addr_);
+    count = 0;
+    for (auto const& lease : expired_leases) {
+        int index = count++;
+        EXPECT_EQ(leases[2 * index]->addr_, lease->addr_);
     }
 }
 
@@ -2955,7 +2949,7 @@ GenericLeaseMgrTest::checkLeaseStats(const StatValMapList& expectedStats) {
 
     // Iterate over all stats for each subnet
     for (int subnet_idx = 0; subnet_idx < expectedStats.size(); ++subnet_idx) {
-        BOOST_FOREACH(StatValPair expectedStat, expectedStats[subnet_idx]) {
+        for (auto const& expectedStat : expectedStats[subnet_idx]) {
             // Verify the per subnet value.
             checkStat(stats::StatsMgr::generateName("subnet", subnet_idx + 1,
                                                     expectedStat.first),
@@ -3886,9 +3880,9 @@ GenericLeaseMgrTest::checkLeaseRange(const Lease4Collection& returned,
                                      const std::vector<std::string>& expected_addresses) {
     ASSERT_EQ(expected_addresses.size(), returned.size());
 
-    for (auto a = returned.cbegin(); a != returned.cend(); ++a) {
-        EXPECT_EQ(expected_addresses[std::distance(returned.cbegin(), a)],
-                  (*a)->addr_.toText());
+    size_t count = 0;
+    for (auto const& a : returned) {
+        EXPECT_EQ(expected_addresses[count++], a->addr_.toText());
     }
 }
 

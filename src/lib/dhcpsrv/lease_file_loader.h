@@ -223,11 +223,9 @@ public:
         lease_file.open();
 
         // Iterate over the storage area writing out the leases
-        for (typename StorageType::const_iterator lease = storage.begin();
-             lease != storage.end();
-             ++lease) {
+        for (auto const& lease : storage) {
             try {
-                lease_file.append(**lease);
+                lease_file.append(*lease);
             } catch (const isc::Exception&) {
                 // Close the file
                 lease_file.close();

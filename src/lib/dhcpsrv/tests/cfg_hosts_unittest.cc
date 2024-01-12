@@ -475,9 +475,8 @@ TEST_F(CfgHostsTest, getAll4ByAddress) {
 
     HostCollection hosts = cfg.getAll4(IOAddress("192.0.2.10"));
     std::set<uint32_t> subnet_ids;
-    for (HostCollection::const_iterator host = hosts.begin(); host != hosts.end();
-         ++host) {
-        subnet_ids.insert((*host)->getIPv4SubnetID());
+    for (auto const& host : hosts) {
+        subnet_ids.insert(host->getIPv4SubnetID());
     }
     ASSERT_EQ(25, subnet_ids.size());
     EXPECT_EQ(1, *subnet_ids.begin());
@@ -726,9 +725,8 @@ TEST_F(CfgHostsTest, deleteAll4) {
     // Get all inserted hosts.
     HostCollection hosts = cfg.getAll4(IOAddress::IPV4_ZERO_ADDRESS());
     std::set<uint32_t> subnet_ids;
-    for (HostCollection::const_iterator host = hosts.begin(); host != hosts.end();
-         ++host) {
-        subnet_ids.insert((*host)->getIPv4SubnetID());
+    for (auto const& host : hosts) {
+        subnet_ids.insert(host->getIPv4SubnetID());
     }
     // Make sure there are two unique subnets: 1 and 2.
     ASSERT_EQ(2, subnet_ids.size());
@@ -741,9 +739,8 @@ TEST_F(CfgHostsTest, deleteAll4) {
     // Gather the host counts again.
     subnet_ids.clear();
     hosts = cfg.getAll4(IOAddress::IPV4_ZERO_ADDRESS());
-    for (HostCollection::const_iterator host = hosts.begin(); host != hosts.end();
-         ++host) {
-        subnet_ids.insert((*host)->getIPv4SubnetID());
+    for (auto const& host : hosts) {
+        subnet_ids.insert(host->getIPv4SubnetID());
     }
     // We should only have hosts for one subnet and it should be the subnet
     // with ID of 1.

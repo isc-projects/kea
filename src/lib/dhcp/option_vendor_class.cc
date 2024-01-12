@@ -40,14 +40,15 @@ OptionVendorClass::pack(isc::util::OutputBuffer& buf, bool check) const {
 
     buf.writeUint32(getVendorId());
 
-    for (TuplesCollection::const_iterator it = tuples_.begin();
-         it != tuples_.end(); ++it) {
+    bool first = true;
+    for (auto const& it : tuples_) {
         // For DHCPv4 V-I Vendor Class option, there is enterprise id before
         // every tuple.
-        if ((getUniverse() == V4) && (it != tuples_.begin())) {
+        if ((getUniverse() == V4) && (!first)) {
             buf.writeUint32(getVendorId());
         }
-        it->pack(buf);
+        first = false;
+        it.pack(buf);
 
     }
     // That's it. We don't pack any sub-options here, because this option
@@ -146,9 +147,8 @@ bool
 OptionVendorClass::hasTuple(const std::string& tuple_str) const {
     // Iterate over existing tuples (there shouldn't be many of them),
     // and try to match the searched one.
-    for (TuplesCollection::const_iterator it = tuples_.begin();
-         it != tuples_.end(); ++it) {
-        if (*it == tuple_str) {
+    for (auto const& it : tuples_) {
+        if (it == tuple_str) {
             return (true);
         }
     }
@@ -161,14 +161,15 @@ OptionVendorClass::len() const {
     // The option starts with the header and enterprise id.
     uint16_t length = getHeaderLen() + sizeof(uint32_t);
     // Now iterate over existing tuples and add their size.
-    for (TuplesCollection::const_iterator it = tuples_.begin();
-         it != tuples_.end(); ++it) {
+    bool first = true;
+    for (auto const& it : tuples_) {
         // For DHCPv4 V-I Vendor Class option, there is enterprise id before
         // every tuple.
-        if ((getUniverse() == V4) && (it != tuples_.begin())) {
+        if ((getUniverse() == V4) && (!first)) {
             length += sizeof(uint32_t);
         }
-        length += it->getTotalLength();
+        first = false;
+        length += it.getTotalLength();
 
     }
 

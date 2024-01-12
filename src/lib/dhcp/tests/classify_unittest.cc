@@ -86,19 +86,18 @@ TEST(ClassifyTest, ClientClassesIterator) {
     bool seenbeta = false;
     bool seengamma = false;
     bool seendelta = false;
-    for (ClientClasses::const_iterator it = classes.cbegin();
-         it != classes.cend(); ++it) {
+    for (auto const& it : classes) {
         ++count;
-        if (*it == "alpha") {
+        if (it == "alpha") {
             seenalpha = true;
-        } else if (*it == "beta") {
+        } else if (it == "beta") {
             seenbeta = true;
-        } else if (*it == "gamma") {
+        } else if (it == "gamma") {
             seengamma = true;
-        } else if (*it == "delta") {
+        } else if (it == "delta") {
             seendelta = true;
         } else {
-            ADD_FAILURE() << "Got unexpected " << *it;
+            ADD_FAILURE() << "Got unexpected " << it;
         }
     }
     EXPECT_EQ(count, classes.size());

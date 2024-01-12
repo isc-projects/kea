@@ -49,12 +49,11 @@ AdaptorHost::quoteIdentifier(ElementPtr host) {
     stringstream tmp;
     tmp << hex;
     bool delim = false;
-    for (vector<uint8_t>::const_iterator it = binary.begin();
-         it != binary.end(); ++it) {
+    for (auto const& it : binary) {
         if (delim) {
             tmp << ":";
         }
-        tmp << setw(2) << setfill('0') << static_cast<unsigned int>(*it);
+        tmp << setw(2) << setfill('0') << static_cast<unsigned int>(it);
         delim = true;
     }
     host->set("flex-id", Element::create(tmp.str()));

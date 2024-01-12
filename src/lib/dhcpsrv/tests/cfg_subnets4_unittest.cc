@@ -31,6 +31,7 @@
 #include <testutils/test_to_element.h>
 #include <util/doubles.h>
 
+#include <boost/range/adaptor/reversed.hpp>
 #include <gtest/gtest.h>
 #include <vector>
 
@@ -122,29 +123,29 @@ TEST(CfgSubnets4Test, getSpecificSubnet) {
     subnets.push_back(subnet3);
 
     // Add all subnets to the configuration.
-    for (auto subnet = subnets.cbegin(); subnet != subnets.cend(); ++subnet) {
-        ASSERT_NO_THROW(cfg.add(*subnet)) << "failed to add subnet with id: "
-            << (*subnet)->getID();
+    for (auto const& subnet : subnets) {
+        ASSERT_NO_THROW(cfg.add(subnet)) << "failed to add subnet with id: "
+            << subnet->getID();
     }
 
     // Iterate over all subnets and make sure they can be retrieved by
     // subnet identifier.
-    for (auto subnet = subnets.rbegin(); subnet != subnets.rend(); ++subnet) {
-        ConstSubnet4Ptr subnet_returned = cfg.getBySubnetId((*subnet)->getID());
+    for (auto const& subnet : boost::adaptors::reverse(subnets)) {
+        ConstSubnet4Ptr subnet_returned = cfg.getBySubnetId(subnet->getID());
         ASSERT_TRUE(subnet_returned) << "failed to return subnet with id: "
-            << (*subnet)->getID();
-        EXPECT_EQ((*subnet)->getID(), subnet_returned->getID());
-        EXPECT_EQ((*subnet)->toText(), subnet_returned->toText());
+            << subnet->getID();
+        EXPECT_EQ(subnet->getID(), subnet_returned->getID());
+        EXPECT_EQ(subnet->toText(), subnet_returned->toText());
     }
 
     // Repeat the previous test, but this time retrieve subnets by their
     // prefixes.
-    for (auto subnet = subnets.rbegin(); subnet != subnets.rend(); ++subnet) {
-        ConstSubnet4Ptr subnet_returned = cfg.getByPrefix((*subnet)->toText());
+    for (auto const& subnet : boost::adaptors::reverse(subnets)) {
+        ConstSubnet4Ptr subnet_returned = cfg.getByPrefix(subnet->toText());
         ASSERT_TRUE(subnet_returned) << "failed to return subnet with id: "
-            << (*subnet)->getID();
-        EXPECT_EQ((*subnet)->getID(), subnet_returned->getID());
-        EXPECT_EQ((*subnet)->toText(), subnet_returned->toText());
+            << subnet->getID();
+        EXPECT_EQ(subnet->getID(), subnet_returned->getID());
+        EXPECT_EQ(subnet->toText(), subnet_returned->toText());
     }
 
     // Make sure that null pointers are returned for non-existing subnets.
@@ -1368,14 +1369,14 @@ TEST(CfgSubnets4Test, teeTimePercentValidation) {
 
     // Iterate over the test scenarios, verifying each prescribed
     // outcome.
-    for (auto test = tests.begin(); test != tests.end(); ++test) {
+    for (auto const& test : tests) {
         {
-            SCOPED_TRACE("test: " + (*test).label);
+            SCOPED_TRACE("test: " + test.label);
 
             // Set this scenario's configuration parameters
-            elems->set("calculate-tee-times", data::Element::create((*test).calculate_tee_times));
-            elems->set("t1-percent", data::Element::create((*test).t1_percent));
-            elems->set("t2-percent", data::Element::create((*test).t2_percent));
+            elems->set("calculate-tee-times", data::Element::create(test.calculate_tee_times));
+            elems->set("t1-percent", data::Element::create(test.t1_percent));
+            elems->set("t2-percent", data::Element::create(test.t2_percent));
 
             Subnet4Ptr subnet;
             try {
@@ -1383,9 +1384,9 @@ TEST(CfgSubnets4Test, teeTimePercentValidation) {
                 Subnet4ConfigParser parser;
                 subnet = parser.parse(elems);
             } catch (const std::exception& ex) {
-                if (!(*test).error_message.empty()) {
+                if (!test.error_message.empty()) {
                     // We expected a failure, did we fail the correct way?
-                    EXPECT_EQ((*test).error_message, ex.what());
+                    EXPECT_EQ(test.error_message, ex.what());
                 } else {
                     // Should not have failed.
                     ADD_FAILURE() << "Scenario should not have failed: " << ex.what();
@@ -1396,9 +1397,9 @@ TEST(CfgSubnets4Test, teeTimePercentValidation) {
             }
 
             // We parsed correctly, make sure the values are right.
-            EXPECT_EQ((*test).calculate_tee_times, subnet->getCalculateTeeTimes());
-            EXPECT_TRUE(util::areDoublesEquivalent((*test).t1_percent, subnet->getT1Percent()));
-            EXPECT_TRUE(util::areDoublesEquivalent((*test).t2_percent, subnet->getT2Percent()));
+            EXPECT_EQ(test.calculate_tee_times, subnet->getCalculateTeeTimes());
+            EXPECT_TRUE(util::areDoublesEquivalent(test.t1_percent, subnet->getT1Percent()));
+            EXPECT_TRUE(util::areDoublesEquivalent(test.t2_percent, subnet->getT2Percent()));
         }
     }
 }
@@ -1779,12 +1780,12 @@ TEST(CfgSubnets4Test, cacheParamValidation) {
 
     // Iterate over the test scenarios, verifying each prescribed
     // outcome.
-    for (auto test = tests.begin(); test != tests.end(); ++test) {
+    for (auto const& test : tests) {
         {
-            SCOPED_TRACE("test: " + (*test).label);
+            SCOPED_TRACE("test: " + test.label);
 
             // Set this scenario's configuration parameters
-            elems->set("cache-threshold", data::Element::create((*test).threshold));
+            elems->set("cache-threshold", data::Element::create(test.threshold));
 
             Subnet4Ptr subnet;
             try {
@@ -1792,9 +1793,9 @@ TEST(CfgSubnets4Test, cacheParamValidation) {
                 Subnet4ConfigParser parser;
                 subnet = parser.parse(elems);
             } catch (const std::exception& ex) {
-                if (!(*test).error_message.empty()) {
+                if (!test.error_message.empty()) {
                     // We expected a failure, did we fail the correct way?
-                    EXPECT_EQ((*test).error_message, ex.what());
+                    EXPECT_EQ(test.error_message, ex.what());
                 } else {
                     // Should not have failed.
                     ADD_FAILURE() << "Scenario should not have failed: " << ex.what();
@@ -1805,7 +1806,7 @@ TEST(CfgSubnets4Test, cacheParamValidation) {
             }
 
             // We parsed correctly, make sure the values are right.
-            EXPECT_TRUE(util::areDoublesEquivalent((*test).threshold, subnet->getCacheThreshold()));
+            EXPECT_TRUE(util::areDoublesEquivalent(test.threshold, subnet->getCacheThreshold()));
         }
     }
 }

@@ -226,9 +226,8 @@ TEST_F(NameTest, fromText) {
     // decimal representation for "WWW"
     strnames.push_back("\\087\\087\\087.example.com");
 
-    vector<string>::const_iterator it;
-    for (it = strnames.begin(); it != strnames.end(); ++it) {
-        EXPECT_PRED_FORMAT2(UnitTestUtil::matchName, example_name, Name(*it));
+    for (auto const& it : strnames) {
+        EXPECT_PRED_FORMAT2(UnitTestUtil::matchName, example_name, Name(it));
     }
 
     // root names
@@ -595,13 +594,11 @@ TEST_F(NameTest, compare) {
                                        NameComparisonResult::EQUAL,
                                        0, 5));
 
-    vector<CompareParameters>::const_iterator it;
-    for (it = params.begin(); it != params.end(); ++it) {
-        NameComparisonResult result = (*it).name1.compare((*it).name2);
-        EXPECT_EQ((*it).reln, result.getRelation());
-        EXPECT_EQ((*it).order,
-                  CompareParameters::normalizeOrder(result.getOrder()));
-        EXPECT_EQ((*it).labels, result.getCommonLabels());
+    for (auto const& it : params) {
+        NameComparisonResult result = it.name1.compare(it.name2);
+        EXPECT_EQ(it.reln, result.getRelation());
+        EXPECT_EQ(it.order, CompareParameters::normalizeOrder(result.getOrder()));
+        EXPECT_EQ(it.labels, result.getCommonLabels());
     }
 }
 

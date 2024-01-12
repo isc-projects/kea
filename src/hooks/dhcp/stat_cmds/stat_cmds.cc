@@ -676,8 +676,8 @@ LeaseStatCmdsImpl::createResultSet(const ElementPtr &result_wrapper,
 
     // Create the list of column names and add it to the result set.
     ElementPtr columns = Element::createList();
-    for (auto label = column_labels.begin(); label != column_labels.end(); ++label) {
-        columns->add(Element::create(*label));
+    for (auto const& label : column_labels) {
+        columns->add(Element::create(label));
     }
     result_set->set("columns", columns);
 

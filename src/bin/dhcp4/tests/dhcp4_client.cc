@@ -137,9 +137,8 @@ Dhcp4Client::appendPRL() {
         // has been specified to be requested.
         OptionUint8ArrayPtr prl(new OptionUint8Array(Option::V4,
                                   DHO_DHCP_PARAMETER_REQUEST_LIST));
-        for (std::set<uint8_t>::const_iterator opt = requested_options_.begin();
-             opt != requested_options_.end(); ++opt) {
-            prl->addValue(*opt);
+        for (auto const& opt : requested_options_) {
+            prl->addValue(opt);
         }
         context_.query_->addOption(prl);
     }
@@ -235,20 +234,18 @@ void
 Dhcp4Client::appendExtraOptions() {
     // If there are any custom options specified, add them all to the message.
     if (!extra_options_.empty()) {
-        for (OptionCollection::iterator opt = extra_options_.begin();
-             opt != extra_options_.end(); ++opt) {
+        for (auto const& opt : extra_options_) {
             // Call base class function so that unittests can add multiple
             // options with the same code.
-            context_.query_->Pkt::addOption(opt->second);
+            context_.query_->Pkt::addOption(opt.second);
         }
     }
 }
 
 void
 Dhcp4Client::appendClasses() {
-    for (ClientClasses::const_iterator cclass = classes_.cbegin();
-         cclass != classes_.cend(); ++cclass) {
-        context_.query_->addClass(*cclass);
+    for (auto const& cclass : classes_) {
+        context_.query_->addClass(cclass);
     }
 }
 
@@ -556,9 +553,8 @@ Dhcp4Client::sendMsg(const Pkt4Ptr& msg) {
     msg_copy->setIndex(iface_index_);
     // Copy classes
     const ClientClasses& classes = msg->getClasses();
-    for (ClientClasses::const_iterator cclass = classes.cbegin();
-         cclass != classes.cend(); ++cclass) {
-        msg_copy->addClass(*cclass);
+    for (auto const& cclass : classes) {
+        msg_copy->addClass(cclass);
     }
     srv_->fakeReceive(msg_copy);
 

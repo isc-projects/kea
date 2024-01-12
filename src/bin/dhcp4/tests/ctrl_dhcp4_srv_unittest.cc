@@ -667,13 +667,16 @@ TEST_F(CtrlChannelDhcpv4SrvTest, controlChannelStats) {
     // preparing the schema which check if all statistics are set to zero
     std::ostringstream s;
     s << "{ \"arguments\": { ";
-    for (auto st = initial_stats.begin(); st != initial_stats.end();) {
-        s << "\"" << *st << "\": [ [ 0, \"";
-        s << isc::util::clockToText(StatsMgr::instance().getObservation(*st)->getInteger().second);
-        s << "\" ] ]";
-        if (++st != initial_stats.end()) {
+    bool first = true;
+    for (auto const& st : initial_stats) {
+        if (!first) {
             s << ", ";
+        } else {
+            first = false;
         }
+        s << "\"" << st << "\": [ [ 0, \"";
+        s << isc::util::clockToText(StatsMgr::instance().getObservation(st)->getInteger().second);
+        s << "\" ] ]";
     }
     s << " }, \"result\": 0 }";
 

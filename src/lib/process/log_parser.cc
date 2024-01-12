@@ -7,7 +7,6 @@
 #include <config.h>
 #include <cc/data.h>
 #include <process/log_parser.h>
-#include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <log/logger_specification.h>
 #include <log/logger_support.h>
@@ -33,7 +32,7 @@ void LogConfigParser::parseConfiguration(const isc::data::ConstElementPtr& logge
     verbose_ = verbose;
 
     // Iterate over all entries in "Server/loggers" list
-    BOOST_FOREACH(ConstElementPtr logger, loggers->listValue()) {
+    for (auto const& logger : loggers->listValue()) {
         parseConfigEntry(logger);
     }
 }
@@ -119,7 +118,7 @@ void LogConfigParser::parseOutputOptions(std::vector<LoggingDestination>& destin
         isc_throw(BadValue, "Missing 'output-options' structure in 'loggers'");
     }
 
-    BOOST_FOREACH(ConstElementPtr output_option, output_options->listValue()) {
+    for (auto const& output_option : output_options->listValue()) {
 
         LoggingDestination dest;
 

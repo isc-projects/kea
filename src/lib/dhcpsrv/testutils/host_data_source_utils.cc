@@ -8,9 +8,10 @@
 
 #include <dhcpsrv/testutils/host_data_source_utils.h>
 #include <asiolink/io_address.h>
-#include <boost/foreach.hpp>
 #include <cc/data.h>
 #include <gtest/gtest.h>
+
+#include <boost/foreach.hpp>
 
 using namespace std;
 using namespace isc::data;
@@ -128,8 +129,8 @@ HostDataSourceUtils::initializeHost6(std::string address,
 bool
 HostDataSourceUtils::reservationExists(const IPv6Resrv& resrv,
                                        const IPv6ResrvRange& range) {
-    for (IPv6ResrvIterator it = range.first; it != range.second; ++it) {
-        if (resrv == it->second) {
+    BOOST_FOREACH(auto const& it, range) {
+        if (resrv == it.second) {
             return true;
         }
     }
@@ -332,7 +333,7 @@ HostDataSourceUtils::compareOptions(const ConstCfgOptionPtr& cfg1,
     EXPECT_EQ(vendor_spaces.size(), cfg1->getVendorIdsSpaceNames().size());
 
     // Iterate over all option spaces existing in cfg2.
-    BOOST_FOREACH (std::string space, option_spaces) {
+    for (auto const& space : option_spaces) {
         // Retrieve options belonging to the current option space.
         OptionContainerPtr options1 = cfg1->getAll(space);
         OptionContainerPtr options2 = cfg2->getAll(space);
@@ -344,7 +345,7 @@ HostDataSourceUtils::compareOptions(const ConstCfgOptionPtr& cfg1,
             << "failed for option space " << space;
 
         // Iterate over all options within this option space.
-        BOOST_FOREACH (OptionDescriptor desc1, *options1) {
+        for (auto const& desc1 : *options1) {
             OptionDescriptor desc2 = cfg2->get(space, desc1.option_->getType());
             // Compare persistent flag.
             EXPECT_EQ(desc1.persistent_, desc2.persistent_)

@@ -12,7 +12,6 @@
 #include <vector>
 
 #include <boost/lexical_cast.hpp>
-#include <boost/foreach.hpp>
 
 #include <util/encode/base64.h>
 #include <util/buffer.h>

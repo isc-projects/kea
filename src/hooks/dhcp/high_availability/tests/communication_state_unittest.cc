@@ -954,7 +954,7 @@ CommunicationStateTest::getRejectedLeaseUpdatesCountFromContainerTest() {
     // expiring in the future. Even entries have lifetimes expiring in
     // the past.
     Entries entries;
-    for (auto i = 0; i < 1000; i++) {
+    for (auto i = 0; i < 1000; ++i) {
         entries.insert({i, time(NULL) + (i % 2 ? 100 + i : -1 - i)});
     }
     // Get the count of valid entries. It should remove the expiring

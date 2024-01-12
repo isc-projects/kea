@@ -14,7 +14,6 @@
 #include <sstream>
 #include <vector>
 
-#include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/shared_ptr.hpp>
 
@@ -527,7 +526,7 @@ Message::hasRRset(const Section section, const Name& name,
         isc_throw(OutOfRange, "Invalid message section: " << static_cast<int>(section));
     }
 
-    BOOST_FOREACH(ConstRRsetPtr r, impl_->rrsets_[section]) {
+    for (auto const& r : impl_->rrsets_[section]) {
         if (r->getClass() == rrclass &&
             r->getType() == rrtype &&
             r->getName() == name) {
@@ -551,8 +550,7 @@ Message::removeRRset(const Section section, RRsetIterator& iterator) {
     }
 
     bool removed = false;
-    for (vector<RRsetPtr>::iterator i = impl_->rrsets_[section].begin();
-            i != impl_->rrsets_[section].end(); ++i) {
+    for (auto i = impl_->rrsets_[section].begin(); i != impl_->rrsets_[section].end(); ++i) {
         if (((*i)->getName() == (*iterator)->getName()) &&
             ((*i)->getClass() == (*iterator)->getClass()) &&
             ((*i)->getType() == (*iterator)->getType())) {
@@ -1001,15 +999,11 @@ Message::appendSection(const Section section, const Message& source) {
     }
 
     if (section == SECTION_QUESTION) {
-        for (QuestionIterator qi = source.beginQuestion();
-             qi != source.endQuestion();
-             ++qi) {
+        for (auto qi = source.beginQuestion(); qi != source.endQuestion(); ++qi) {
             addQuestion(*qi);
         }
     } else {
-        for (RRsetIterator rrsi = source.beginSection(section);
-             rrsi != source.endSection(section);
-             ++rrsi) {
+        for (auto rrsi = source.beginSection(section); rrsi != source.endSection(section); ++rrsi) {
             addRRset(section, *rrsi);
         }
     }

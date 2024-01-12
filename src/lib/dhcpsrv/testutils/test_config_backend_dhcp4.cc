@@ -8,6 +8,7 @@
 
 #include <database/database_connection.h>
 #include <test_config_backend_dhcp4.h>
+#include <boost/foreach.hpp>
 #include <list>
 
 using namespace isc::data;
@@ -296,17 +297,15 @@ TestConfigBackendDHCPv4::getOptionDef4(const db::ServerSelector& server_selector
     auto const& index = option_defs_.get<1>();
     auto option_def_it_pair = index.equal_range(code);
 
-    for (auto option_def_it = option_def_it_pair.first;
-         option_def_it != option_def_it_pair.second;
-         ++option_def_it) {
-        if ((*option_def_it)->getOptionSpaceName() == space) {
+    BOOST_FOREACH(auto const& option_def_it, option_def_it_pair) {
+        if (option_def_it->getOptionSpaceName() == space) {
             for (auto const& tag : tags) {
-                if ((*option_def_it)->hasServerTag(ServerTag(tag))) {
-                    return (*option_def_it);
+                if (option_def_it->hasServerTag(ServerTag(tag))) {
+                    return (option_def_it);
                 }
             }
-            if ((*option_def_it)->hasAllServerTag()) {
-                candidate = *option_def_it;
+            if (option_def_it->hasAllServerTag()) {
+                candidate = option_def_it;
             }
         }
     }
@@ -378,16 +377,15 @@ TestConfigBackendDHCPv4::getOption4(const db::ServerSelector& server_selector,
     auto const& index = options_.get<1>();
     auto option_it_pair = index.equal_range(code);
 
-    for (auto option_it = option_it_pair.first; option_it != option_it_pair.second;
-         ++option_it) {
-        if (option_it->space_name_ == space) {
+    BOOST_FOREACH(auto const& option_it, option_it_pair) {
+        if (option_it.space_name_ == space) {
             for (auto const& tag : tags) {
-                if (option_it->hasServerTag(ServerTag(tag))) {
-                    return (OptionDescriptorPtr(new OptionDescriptor(*option_it)));
+                if (option_it.hasServerTag(ServerTag(tag))) {
+                    return (OptionDescriptorPtr(new OptionDescriptor(option_it)));
                 }
             }
-            if (option_it->hasAllServerTag()) {
-                candidate = OptionDescriptorPtr(new OptionDescriptor(*option_it));
+            if (option_it.hasAllServerTag()) {
+                candidate = OptionDescriptorPtr(new OptionDescriptor(option_it));
             }
         }
     }
@@ -451,15 +449,14 @@ TestConfigBackendDHCPv4::getGlobalParameter4(const db::ServerSelector& server_se
     auto candidate = StampedValuePtr();
     auto const& index = globals_.get<StampedValueNameIndexTag>();
     auto global_range = index.equal_range(name);
-    for (auto global_it = global_range.first; global_it != global_range.second;
-         ++global_it) {
+    BOOST_FOREACH(auto const& global_it, global_range) {
         for (auto const& tag : tags) {
-            if ((*global_it)->hasServerTag(ServerTag(tag))) {
-                return (*global_it);
+            if (global_it->hasServerTag(ServerTag(tag))) {
+                return (global_it);
             }
         }
-        if ((*global_it)->hasAllServerTag()) {
-            candidate = *global_it;
+        if (global_it->hasAllServerTag()) {
+            candidate = global_it;
         }
     }
 
@@ -1091,9 +1088,9 @@ TestConfigBackendDHCPv4::deleteSharedNetwork4(const db::ServerSelector& server_s
     }
 
     // Remove this shared network.
-    for (auto subnet = subnets_.begin(); subnet != subnets_.end(); ++subnet) {
-        if ((*subnet)->getSharedNetworkName() == name) {
-            (*subnet)->setSharedNetworkName("");
+    for (auto const& subnet : subnets_) {
+        if (subnet->getSharedNetworkName() == name) {
+            subnet->setSharedNetworkName("");
         }
     }
     (*network_it)->delAll();

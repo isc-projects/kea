@@ -80,8 +80,8 @@ public:
         // Iterate over existing hook points and for each of them remove
         // callouts registered.
         std::vector<std::string> hooks = ServerHooks::getServerHooksPtr()->getHookNames();
-        for (auto h = hooks.cbegin(); h != hooks.cend(); ++h) {
-            HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts(*h);
+        for (auto const& h : hooks) {
+            HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts(h);
         }
     }
 
@@ -418,9 +418,8 @@ TEST_F(CommandMgrTest, delegateListCommands) {
     const std::vector<ElementPtr>& commands_list = answer_arg->listValue();
     ASSERT_EQ(3, commands_list.size());
     std::vector<std::string> command_names_list;
-    for (auto cmd = commands_list.cbegin(); cmd != commands_list.cend();
-         ++cmd) {
-        command_names_list.push_back((*cmd)->stringValue());
+    for (auto const& cmd : commands_list) {
+        command_names_list.push_back(cmd->stringValue());
     }
     std::sort(command_names_list.begin(), command_names_list.end());
     EXPECT_EQ("list-commands", command_names_list[0]);

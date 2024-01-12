@@ -298,17 +298,17 @@ combineCommandsLists(const ConstElementPtr& response1,
         // Storing command names in a set guarantees that the non-unique
         // command names are aggregated.
         std::set<std::string> combined_set;
-        for (auto v = vec1.cbegin(); v != vec1.cend(); ++v) {
-            combined_set.insert((*v)->stringValue());
+        for (auto const& v : vec1) {
+            combined_set.insert(v->stringValue());
         }
-        for (auto v = vec2.cbegin(); v != vec2.cend(); ++v) {
-            combined_set.insert((*v)->stringValue());
+        for (auto const& v : vec2) {
+            combined_set.insert(v->stringValue());
         }
 
         // Create a combined list of commands.
         ElementPtr combined_list = Element::createList();
-        for (auto s = combined_set.cbegin(); s != combined_set.cend(); ++s) {
-            combined_list->add(Element::create(*s));
+        for (auto const& s : combined_set) {
+            combined_list->add(Element::create(s));
         }
         return (createAnswer(CONTROL_RESULT_SUCCESS, combined_list));
     }

@@ -20,8 +20,9 @@
 #include <dhcpsrv/parsers/host_reservation_parser.h>
 #include <dhcpsrv/testutils/config_result_check.h>
 #include <testutils/test_to_element.h>
-#include <boost/pointer_cast.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/foreach.hpp>
+#include <boost/pointer_cast.hpp>
 #include <gtest/gtest.h>
 #include <iterator>
 #include <sstream>
@@ -67,9 +68,8 @@ protected:
     /// in which the reservation will be searched.
     bool
     reservationExists(const IPv6Resrv& resrv, const IPv6ResrvRange& range) {
-        for (IPv6ResrvIterator it = range.first; it != range.second;
-             ++it) {
-            if (resrv == it->second) {
+        BOOST_FOREACH(auto const& it, range) {
+            if (resrv == it.second) {
                 return (true);
             }
         }

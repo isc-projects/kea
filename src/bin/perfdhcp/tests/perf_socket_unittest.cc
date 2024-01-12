@@ -6,8 +6,8 @@
 
 #include <config.h>
 
-#include "command_options_helper.h"
-#include "../perf_socket.h"
+#include <command_options_helper.h>
+#include <perf_socket.h>
 
 #include <asiolink/io_address.h>
 #include <exceptions/exceptions.h>
@@ -16,7 +16,6 @@
 #include <dhcp/iface_mgr.h>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
-#include <boost/foreach.hpp>
 
 #include <algorithm>
 #include <cstddef>

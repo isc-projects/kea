@@ -71,8 +71,8 @@ std::string trim(const std::string& instring);
 template<typename Iterator>
 Iterator
 seekTrimmed(Iterator begin, Iterator end, uint8_t trim_val) {
-    for ( ; end != begin && *(end - 1) == trim_val; --end);
-    return(end);
+    for (; end != begin && *(end - 1) == trim_val; --end);
+    return (end);
 }
 
 /// @brief Split String into Tokens

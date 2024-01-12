@@ -13,7 +13,6 @@
 #include <dhcpsrv/parsers/duid_config_parser.h>
 #include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <exceptions/exceptions.h>
-#include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 
 #include <string>

@@ -11,8 +11,6 @@
 #include <dns/rdata.h>
 #include <dns/rdataclass.h>
 
-#include <boost/foreach.hpp>
-
 #include <string>
 #include <string.h>
 
@@ -157,7 +155,7 @@ OPT::toText() const {
 
 void
 OPT::toWire(OutputBuffer& buffer) const {
-    BOOST_FOREACH(const PseudoRR& pseudo_rr, impl_->pseudo_rrs_) {
+    for (auto const& pseudo_rr : impl_->pseudo_rrs_) {
         buffer.writeUint16(pseudo_rr.getCode());
         const uint16_t length = pseudo_rr.getLength();
         buffer.writeUint16(length);
@@ -169,7 +167,7 @@ OPT::toWire(OutputBuffer& buffer) const {
 
 void
 OPT::toWire(AbstractMessageRenderer& renderer) const {
-    BOOST_FOREACH(const PseudoRR& pseudo_rr, impl_->pseudo_rrs_) {
+    for (auto const& pseudo_rr : impl_->pseudo_rrs_) {
         renderer.writeUint16(pseudo_rr.getCode());
         const uint16_t length = pseudo_rr.getLength();
         renderer.writeUint16(length);

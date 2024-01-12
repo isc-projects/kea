@@ -23,7 +23,6 @@
 #include <dhcp4/tests/dhcp4_test_utils.h>
 #include <dhcp4/tests/get_config_unittest.h>
 
-#include <boost/foreach.hpp>
 #include <boost/scoped_ptr.hpp>
 
 #include <iostream>

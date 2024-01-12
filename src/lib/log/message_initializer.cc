@@ -103,9 +103,8 @@ MessageInitializer::loadDictionary(bool ignore_duplicates) {
     const MessageDictionaryPtr& global = MessageDictionary::globalDictionary();
     const LoggerValuesListPtr& logger_values = getNonConstLoggerValues();
 
-    for (LoggerValuesList::const_iterator values = logger_values->begin();
-         values != logger_values->end(); ++values) {
-        std::vector<std::string> repeats = global->load(*values);
+    for (auto const& values : *logger_values) {
+        std::vector<std::string> repeats = global->load(values);
 
         // Append the IDs in the list just loaded (the "repeats") to the
         // global list of duplicate IDs.

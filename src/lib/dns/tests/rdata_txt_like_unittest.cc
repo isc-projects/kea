@@ -186,9 +186,8 @@ TYPED_TEST(Rdata_TXT_LIKE_Test, createMultiStringsFromText) {
     texts.push_back("Test-String\"Test-String\""); // and no space either
 
     std::stringstream ss;
-    for (std::vector<std::string >::const_iterator it = texts.begin();
-         it != texts.end(); ++it) {
-        ss << *it << "\n";
+    for (auto const& it : texts) {
+        ss << it << "\n";
     }
     this->lexer.pushSource(ss);
 
@@ -199,10 +198,9 @@ TYPED_TEST(Rdata_TXT_LIKE_Test, createMultiStringsFromText) {
 
     // Confirm we can construct the Rdata from the test text, both from
     // std::string and with lexer, and that matches the from-wire data.
-    for (std::vector<std::string >::const_iterator it = texts.begin();
-         it != texts.end(); ++it) {
-        SCOPED_TRACE(*it);
-        EXPECT_EQ(0, TypeParam(*it).compare(*rdata));
+    for (auto const& it : texts) {
+        SCOPED_TRACE(it);
+        EXPECT_EQ(0, TypeParam(it).compare(*rdata));
 
         EXPECT_EQ(0, TypeParam(this->lexer, NULL, MasterLoader::MANY_ERRORS,
                                this->loader_cb).compare(*rdata));

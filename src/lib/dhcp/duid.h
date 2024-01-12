@@ -85,7 +85,7 @@ public:
         std::stringstream tmp;
         tmp << std::hex;
         bool delim = false;
-        for (auto const data : data_) {
+        for (auto const& data : data_) {
             if (delim) {
                 tmp << ":";
             }

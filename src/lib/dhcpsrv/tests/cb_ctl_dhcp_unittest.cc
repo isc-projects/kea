@@ -23,6 +23,7 @@
 #include <hooks/callout_manager.h>
 #include <hooks/hooks_manager.h>
 #include <testutils/gtest_utils.h>
+#include <boost/foreach.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/make_shared.hpp>
 #include <gtest/gtest.h>
@@ -176,8 +177,8 @@ public:
         if (!audit_entries_.empty()) {
             auto const& index = audit_entries_.get<AuditEntryObjectTypeTag>();
             auto range = index.equal_range(object_type);
-            for (auto it = range.first; it != range.second; ++it) {
-                if (((*it)->getModificationType() != AuditEntry::ModificationType::DELETE)) {
+            BOOST_FOREACH(auto const& it, range) {
+                if (it->getModificationType() != AuditEntry::ModificationType::DELETE) {
                     return (true);
                 }
             }
@@ -198,8 +199,8 @@ public:
             auto const& index = audit_entries_.get<AuditEntryObjectTypeTag>();
             auto range = index.equal_range(boost::make_tuple(object_type,
                                                              AuditEntry::ModificationType::DELETE));
-            for (auto it = range.first; it != range.second; ++it) {
-                if ((*it)->getObjectId() == object_id) {
+            BOOST_FOREACH(auto const& it, range) {
+                if (it->getObjectId() == object_id) {
                     return (true);
                 }
             }

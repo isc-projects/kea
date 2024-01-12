@@ -41,9 +41,9 @@
 #include "dhcp6_test_utils.h"
 #include "get_config_unittest.h"
 
-#include <boost/foreach.hpp>
 #include <gtest/gtest.h>
 
+#include <boost/foreach.hpp>
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -595,8 +595,7 @@ public:
             "    \"subnet\": \"2001:db8:1::/64\", "
             "    \"option-data\": [ {";
         bool first = true;
-        typedef std::pair<std::string, std::string> ParamPair;
-        BOOST_FOREACH(ParamPair param, params) {
+        for (auto const& param : params) {
             if (!first) {
                 stream << ", ";
             } else {
@@ -2092,16 +2091,14 @@ TEST_F(Dhcp6ParserTest, badSubnetValues) {
     // Iterate over the list of scenarios.  Each should fail to parse with
     // a specific error message.
     for (auto const& scenario : scenarios) {
-        {
-            SCOPED_TRACE(scenario.description_);
-            ConstElementPtr config;
-            ASSERT_NO_THROW(config = parseDHCP6(scenario.config_json_))
-                            << "invalid json, broken test";
-            ConstElementPtr status;
-            EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, config));
-            checkResult(status, 1);
-            EXPECT_EQ(comment_->stringValue(), scenario.exp_error_msg_);
-        }
+        SCOPED_TRACE(scenario.description_);
+        ConstElementPtr config;
+        ASSERT_NO_THROW(config = parseDHCP6(scenario.config_json_))
+                        << "invalid json, broken test";
+        ConstElementPtr status;
+        EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, config));
+        checkResult(status, 1);
+        EXPECT_EQ(comment_->stringValue(), scenario.exp_error_msg_);
     }
 }
 
@@ -5424,9 +5421,8 @@ TEST_F(Dhcp6ParserTest, invalidD2ClientConfig) {
 /// @param range Range of reservations returned by the @c Host object
 /// in which the reservation will be searched.
 bool reservationExists(const IPv6Resrv& resrv, const IPv6ResrvRange& range) {
-    for (IPv6ResrvIterator it = range.first; it != range.second;
-         ++it) {
-        if (resrv == it->second) {
+    BOOST_FOREACH(auto const& it, range) {
+        if (resrv == it.second) {
             return (true);
         }
     }

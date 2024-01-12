@@ -80,10 +80,8 @@ HttpResponse::create() {
         }
 
         // Copy headers from the context.
-        for (auto header = context_->headers_.begin();
-             header != context_->headers_.end();
-             ++header) {
-            HttpHeaderPtr hdr(new HttpHeader(header->name_, header->value_));
+        for (auto const& header : context_->headers_) {
+            HttpHeaderPtr hdr(new HttpHeader(header.name_, header.value_));
             headers_[hdr->getLowerCaseName()] = hdr;
         }
 
@@ -98,19 +96,17 @@ HttpResponse::create() {
 
         // Iterate over required headers and check that they exist
         // in the HTTP response.
-        for (auto req_header = required_headers_.begin();
-             req_header != required_headers_.end();
-             ++req_header) {
-            auto header = headers_.find(req_header->first);
+        for (auto const& req_header : required_headers_) {
+            auto header = headers_.find(req_header.first);
             if (header == headers_.end()) {
-                isc_throw(BadValue, "required header " << req_header->first
+                isc_throw(BadValue, "required header " << req_header.first
                           << " not found in the HTTP response");
-            } else if (!req_header->second->getValue().empty() &&
-                       !header->second->isValueEqual(req_header->second->getValue())) {
+            } else if (!req_header.second->getValue().empty() &&
+                       !header->second->isValueEqual(req_header.second->getValue())) {
                 // If specific value is required for the header, check
                 // that the value in the HTTP response matches it.
                 isc_throw(BadValue, "required header's " << header->first
-                          << " value is " << req_header->second->getValue()
+                          << " value is " << req_header.second->getValue()
                           << ", but " << header->second->getValue() << " was found");
             }
         }
@@ -215,9 +211,8 @@ HttpResponse::toString() const {
     // HTTP version number and status code.
     s << toBriefString() << crlf;
 
-    for (auto header_it = headers_.cbegin(); header_it != headers_.cend();
-         ++header_it) {
-        s << header_it->second->getName() << ": " << header_it->second->getValue()
+    for (auto const& header_it : headers_) {
+        s << header_it.second->getName() << ": " << header_it.second->getValue()
           << crlf;
     }
 

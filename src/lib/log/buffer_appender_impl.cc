@@ -39,10 +39,9 @@ BufferAppender::flushStdout() {
     // be a good idea; as we can't reliably know whether in what
     // state the logger instance is now (or what the specific logger's
     // settings were).
-    LogEventList::const_iterator it;
-    for (it = stored_.begin(); it != stored_.end(); ++it) {
-        const std::string level(it->first);
-        LogEventPtr event(it->second);
+    for (auto const& it : stored_) {
+        const std::string level(it.first);
+        LogEventPtr event(it.second);
         std::printf("%s [%s]: %s\n", level.c_str(),
                     event->getLoggerName().c_str(),
                     event->getMessage().c_str());
@@ -55,9 +54,8 @@ BufferAppender::flush() {
     LogEventList stored_copy;
     stored_.swap(stored_copy);
 
-    LogEventList::const_iterator it;
-    for (it = stored_copy.begin(); it != stored_copy.end(); ++it) {
-        LogEventPtr event(it->second);
+    for (auto const& it : stored_copy) {
+        LogEventPtr event(it.second);
         log4cplus::Logger logger =
             log4cplus::Logger::getInstance(event->getLoggerName());
 

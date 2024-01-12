@@ -14,6 +14,7 @@
 #include <dhcp/pkt4.h>
 #include <perfdhcp/stats_mgr.h>
 #include <perfdhcp/test_control.h>
+#include <boost/foreach.hpp>
 
 using isc::dhcp::DHO_DHCP_CLIENT_IDENTIFIER;
 using isc::dhcp::DUID;
@@ -313,21 +314,16 @@ ExchangeStats::printTimestamps() {
     using namespace boost::posix_time;
 
     // Iterate through all received packets.
-    for (PktListIterator it = rcvd_packets_.begin();
-         it != rcvd_packets_.end();
-         ++it) {
-        PktPtr rcvd_packet = *it;
+    for (auto const& it : rcvd_packets_) {
+        PktPtr rcvd_packet = it;
         PktListTransidHashIndex& idx =
             archived_packets_.template get<1>();
         std::pair<PktListTransidHashIterator,
                   PktListTransidHashIterator> p =
             idx.equal_range(hashTransid(rcvd_packet));
-        for (PktListTransidHashIterator it_archived = p.first;
-             it_archived != p.second;
-             ++it_archived) {
-            if ((*it_archived)->getTransid() ==
-                rcvd_packet->getTransid()) {
-                PktPtr sent_packet = *it_archived;
+        BOOST_FOREACH(auto const& it_archived, p) {
+            if (it_archived->getTransid() == rcvd_packet->getTransid()) {
+                PktPtr sent_packet = it_archived;
                 // Get sent and received packet times.
                 ptime sent_time = sent_packet->getTimestamp();
                 ptime rcvd_time = rcvd_packet->getTimestamp();

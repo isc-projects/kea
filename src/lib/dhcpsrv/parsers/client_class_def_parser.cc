@@ -16,7 +16,6 @@
 #include <asiolink/io_address.h>
 #include <asiolink/io_error.h>
 
-#include <boost/foreach.hpp>
 #include <algorithm>
 #include <sstream>
 
@@ -131,7 +130,7 @@ ClientClassDefParser::parse(ClientClassDictionaryPtr& class_dictionary,
                 SimpleParser6::OPTION6_DEF_DEFAULTS);
 
         OptionDefParser parser(family);
-        BOOST_FOREACH(ConstElementPtr option_def, option_defs->listValue()) {
+        for (auto const& option_def : option_defs->listValue()) {
             OptionDefinitionPtr def = parser.parse(option_def);
 
             // Verify if the definition is for an option which is in a deferred
@@ -346,8 +345,7 @@ ClientClassDictionaryPtr
 ClientClassDefListParser::parse(ConstElementPtr client_class_def_list,
                                 uint16_t family, bool check_dependencies) {
     ClientClassDictionaryPtr dictionary(new ClientClassDictionary());
-    BOOST_FOREACH(ConstElementPtr client_class_def,
-                  client_class_def_list->listValue()) {
+    for (auto const& client_class_def : client_class_def_list->listValue()) {
         ClientClassDefParser parser;
         parser.parse(dictionary, client_class_def, family, true, check_dependencies);
     }

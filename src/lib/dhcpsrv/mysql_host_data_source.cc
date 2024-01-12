@@ -26,6 +26,7 @@
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/array.hpp>
+#include <boost/foreach.hpp>
 #include <boost/pointer_cast.hpp>
 #include <boost/static_assert.hpp>
 
@@ -3140,11 +3141,11 @@ MySqlHostDataSourceImpl::addOptions(MySqlHostContextPtr& ctx,
 
     // For each option space retrieve all options and insert them into the
     // database.
-    for (auto space = option_spaces.begin(); space != option_spaces.end(); ++space) {
-        OptionContainerPtr options = options_cfg->getAllCombined(*space);
+    for (auto const& space : option_spaces) {
+        OptionContainerPtr options = options_cfg->getAllCombined(space);
         if (options && !options->empty()) {
-            for (auto opt = options->begin(); opt != options->end(); ++opt) {
-                addOption(ctx, stindex, *opt, *space, Optional<SubnetID>(), host_id);
+            for (auto const& opt : *options) {
+                addOption(ctx, stindex, opt, space, Optional<SubnetID>(), host_id);
             }
         }
     }
@@ -3336,9 +3337,8 @@ MySqlHostDataSource::add(const HostPtr& host) {
     // Insert IPv6 reservations.
     IPv6ResrvRange v6resv = host->getIPv6Reservations();
     if (std::distance(v6resv.first, v6resv.second) > 0) {
-        for (IPv6ResrvIterator resv = v6resv.first; resv != v6resv.second;
-             ++resv) {
-            impl_->addResv(ctx, resv->second, host_id);
+        BOOST_FOREACH(auto const& resv, v6resv) {
+            impl_->addResv(ctx, resv.second, host_id);
         }
     }
 

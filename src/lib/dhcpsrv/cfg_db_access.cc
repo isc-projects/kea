@@ -13,7 +13,6 @@
 #include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <boost/algorithm/string.hpp>
-#include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <sstream>
 #include <vector>

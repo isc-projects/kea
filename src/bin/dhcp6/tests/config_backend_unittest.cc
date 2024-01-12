@@ -25,7 +25,6 @@
 #include <dhcp6/tests/dhcp6_test_utils.h>
 #include <dhcp6/tests/get_config_unittest.h>
 
-#include <boost/foreach.hpp>
 #include <boost/scoped_ptr.hpp>
 
 #include <iostream>

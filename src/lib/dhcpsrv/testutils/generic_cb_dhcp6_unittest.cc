@@ -808,9 +808,9 @@ GenericConfigBackendDHCPv6Test::globalParameters6WithServerTagsTest() {
     // Capture the returned values into the map so as we can check the
     // values against the servers.
     std::map<std::string, std::string> values;
-    for (auto g = returned_globals.begin(); g != returned_globals.end(); ++g) {
-        ASSERT_EQ(1, (*g)->getServerTags().size());
-        values[(*g)->getServerTags().begin()->get()] = ((*g)->getValue());
+    for (auto const& g : returned_globals) {
+        ASSERT_EQ(1, g->getServerTags().size());
+        values[g->getServerTags().begin()->get()] = g->getValue();
     }
 
     ASSERT_EQ(3, values.size());
@@ -927,10 +927,9 @@ GenericConfigBackendDHCPv6Test::getAllGlobalParameters6Test() {
     EXPECT_TRUE((*parameters_index.find("name4"))->getBoolValue());
     EXPECT_EQ(1.65, (*parameters_index.find("name5"))->getDoubleValue());
 
-    for (auto param = parameters_index.begin(); param != parameters_index.end();
-         ++param) {
-        ASSERT_EQ(1, (*param)->getServerTags().size());
-        EXPECT_EQ("all", (*param)->getServerTags().begin()->get());
+    for (auto const& param : parameters_index) {
+        ASSERT_EQ(1, param->getServerTags().size());
+        EXPECT_EQ("all", param->getServerTags().begin()->get());
     }
 
     // Should be able to fetch these parameters when explicitly providing
@@ -3127,17 +3126,17 @@ GenericConfigBackendDHCPv6Test::getAllOptionDefs6Test() {
     ASSERT_EQ(test_option_defs_.size() - updates_num, option_defs.size());
 
     // See if option definitions are returned ok.
-    for (auto def = option_defs.begin(); def != option_defs.end(); ++def) {
-        ASSERT_EQ(1, (*def)->getServerTags().size());
-        EXPECT_EQ("all", (*def)->getServerTags().begin()->get());
+    for (auto const& def : option_defs) {
+        ASSERT_EQ(1, def->getServerTags().size());
+        EXPECT_EQ("all", def->getServerTags().begin()->get());
         bool success = false;
         for (auto i = 1; i < test_option_defs_.size(); ++i) {
-            if ((*def)->equals(*test_option_defs_[i])) {
+            if (def->equals(*test_option_defs_[i])) {
                 success = true;
             }
         }
-        ASSERT_TRUE(success) << "failed for option definition " << (*def)->getCode()
-            << ", option space " << (*def)->getOptionSpaceName();
+        ASSERT_TRUE(success) << "failed for option definition " << def->getCode()
+            << ", option space " << def->getOptionSpaceName();
     }
 
     // Deleting non-existing option definition should return 0.
@@ -4761,12 +4760,13 @@ GenericConfigBackendDHCPv6Test::multipleAuditEntriesTest() {
 
     // Check that partial retrieves return the right count.
     auto& mod_time_idx = audit_entries.get<AuditEntryModificationTimeIdTag>();
-    for (auto it = mod_time_idx.begin(); it != mod_time_idx.end(); ++it) {
+    size_t distance = mod_time_idx.size();
+    for (auto const& it : mod_time_idx) {
         size_t partial_size =
             cbptr_->getRecentAuditEntries(server_selector,
-                                          (*it)->getModificationTime(),
-                                          (*it)->getRevisionId()).size();
-        EXPECT_EQ(partial_size + 1,
-                  std::distance(it, mod_time_idx.end()));
+                                          it->getModificationTime(),
+                                          it->getRevisionId()).size();
+        EXPECT_EQ(partial_size + 1, distance);
+        distance--;
     }
 }

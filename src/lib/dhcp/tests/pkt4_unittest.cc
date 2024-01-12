@@ -676,9 +676,8 @@ TEST_F(Pkt4Test, getOptions) {
     // in the packet.
     pkt->setCopyRetrievedOptions(false);
     OptionCollection options_modified = pkt->getOptions(1);
-    for (OptionCollection::const_iterator opt_it_modified = options_modified.begin();
-         opt_it_modified != options_modified.end(); ++opt_it_modified) {
-        opt_it = std::find(options.begin(), options.end(), *opt_it_modified);
+    for (auto const& opt_it_modified : options_modified) {
+        opt_it = std::find(options.begin(), options.end(), opt_it_modified);
         ASSERT_TRUE(opt_it != options.end());
     }
 

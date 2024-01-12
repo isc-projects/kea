@@ -1319,23 +1319,21 @@ LeaseCmdsImpl::leaseGetAllHandler(CalloutHandle& handle) {
             }
 
             const std::vector<ElementPtr>& subnet_ids = subnets->listValue();
-            for (auto subnet_id = subnet_ids.begin();
-                 subnet_id != subnet_ids.end();
-                 ++subnet_id) {
-                if ((*subnet_id)->getType() != Element::integer) {
+            for (auto const& subnet_id : subnet_ids) {
+                if (subnet_id->getType() != Element::integer) {
                     isc_throw(BadValue, "listed subnet identifiers must be numbers");
                 }
 
                 if (v4) {
                     Lease4Collection leases =
-                        LeaseMgrFactory::instance().getLeases4((*subnet_id)->intValue());
+                        LeaseMgrFactory::instance().getLeases4(subnet_id->intValue());
                     for (auto const& lease : leases) {
                         ElementPtr lease_json = lease->toElement();
                         leases_json->add(lease_json);
                     }
                 } else {
                     Lease6Collection leases =
-                        LeaseMgrFactory::instance().getLeases6((*subnet_id)->intValue());
+                        LeaseMgrFactory::instance().getLeases6(subnet_id->intValue());
                     for (auto const& lease : leases) {
                         ElementPtr lease_json = lease->toElement();
                         leases_json->add(lease_json);

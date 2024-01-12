@@ -94,14 +94,14 @@ public:
         std::vector<ElementPtr> answer_list = answer->listValue();
 
         ASSERT_EQ(expected_codes.size(), answer_list.size());
+        size_t count = 0;
         // Check all answers.
-        for (auto ans = answer_list.cbegin(); ans != answer_list.cend();
-             ++ans) {
+        for (auto const& ans : answer_list) {
             ConstElementPtr text;
-            ASSERT_NO_THROW(text = isc::config::parseAnswer(status_code, *ans));
-            EXPECT_EQ(expected_codes[std::distance(answer_list.cbegin(), ans)],
-                      status_code)
+            ASSERT_NO_THROW(text = isc::config::parseAnswer(status_code, ans));
+            EXPECT_EQ(expected_codes[count], status_code)
                 << "answer contains text: " << text->stringValue();
+            count++;
         }
     }
 

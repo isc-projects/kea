@@ -42,7 +42,6 @@
 #include "dhcp4_test_utils.h"
 #include "get_config_unittest.h"
 
-#include <boost/foreach.hpp>
 #include <boost/scoped_ptr.hpp>
 
 #include <iostream>
@@ -438,8 +437,7 @@ public:
             "    \"subnet\": \"192.0.2.0/24\", "
             "    \"option-data\": [ {";
         bool first = true;
-        typedef std::pair<std::string, std::string> ParamPair;
-        BOOST_FOREACH(ParamPair param, params) {
+        for (auto const& param : params) {
             if (!first) {
                 stream << ", ";
             } else {
@@ -2365,18 +2363,16 @@ TEST_F(Dhcp4ParserTest, badSubnetValues) {
 
     // Iterate over the list of scenarios.  Each should fail to parse with
     // a specific error message.
-    for (auto scenario = scenarios.begin(); scenario != scenarios.end(); ++scenario) {
-        {
-            SCOPED_TRACE((*scenario).description_);
-            ConstElementPtr config;
-            ASSERT_NO_THROW(config = parseDHCP4((*scenario).config_json_))
-                            << "invalid json, broken test";
-            ConstElementPtr status;
-            EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(*srv_, config));
-            checkResult(status, 1);
-            ASSERT_TRUE(comment_);
-            EXPECT_EQ(comment_->stringValue(), (*scenario).exp_error_msg_);
-        }
+    for (auto const& scenario : scenarios) {
+        SCOPED_TRACE(scenario.description_);
+        ConstElementPtr config;
+        ASSERT_NO_THROW(config = parseDHCP4(scenario.config_json_))
+                        << "invalid json, broken test";
+        ConstElementPtr status;
+        EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(*srv_, config));
+        checkResult(status, 1);
+        ASSERT_TRUE(comment_);
+        EXPECT_EQ(comment_->stringValue(), scenario.exp_error_msg_);
     }
 }
 

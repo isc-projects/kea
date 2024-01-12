@@ -50,10 +50,8 @@ decodeCheck(const string& input_string, vector<uint8_t>& output,
 }
 
 TEST_F(Base64Test, decode) {
-    for (vector<StringPair>::const_iterator it = test_sequence.begin();
-         it != test_sequence.end();
-         ++it) {
-        decodeCheck((*it).second, decoded_data, (*it).first);
+    for (auto const& it : test_sequence) {
+        decodeCheck(it.second, decoded_data, it.first);
     }
 
     // whitespace should be allowed
@@ -83,11 +81,9 @@ TEST_F(Base64Test, decode) {
 }
 
 TEST_F(Base64Test, encode) {
-    for (vector<StringPair>::const_iterator it = test_sequence.begin();
-         it != test_sequence.end();
-         ++it) {
-        decoded_data.assign((*it).first.begin(), (*it).first.end());
-        EXPECT_EQ((*it).second, encodeBase64(decoded_data));
+    for (auto const& it : test_sequence) {
+        decoded_data.assign(it.first.begin(), it.first.end());
+        EXPECT_EQ(it.second, encodeBase64(decoded_data));
     }
 }
 }

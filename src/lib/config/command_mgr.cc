@@ -262,9 +262,8 @@ public:
 
     /// @brief Stops all connections which are allowed to stop.
     void stopAll() {
-        for (auto conn = connections_.begin(); conn != connections_.end();
-             ++conn) {
-            (*conn)->stop();
+        for (auto const& conn : connections_) {
+            conn->stop();
         }
         connections_.clear();
     }

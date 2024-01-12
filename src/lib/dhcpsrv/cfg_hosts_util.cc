@@ -62,11 +62,10 @@ void CfgHostsList::internalize(ConstElementPtr list) {
 
 ElementPtr CfgHostsList::externalize() const {
     ElementPtr result = Element::createList();
-    for (CfgHostsMap::const_iterator item = map_.begin();
-         item != map_.end(); ++item) {
+    for (auto const& item : map_) {
         ElementPtr pair = Element::createMap();
-        pair->set("id", Element::create(static_cast<int64_t>(item->first)));
-        pair->set("reservations", item->second);
+        pair->set("id", Element::create(static_cast<int64_t>(item.first)));
+        pair->set("reservations", item.second);
         result->add(pair);
     }
     return (result);

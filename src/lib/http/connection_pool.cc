@@ -61,10 +61,8 @@ HttpConnectionPool::stopAll() {
 
 void
 HttpConnectionPool::stopAllInternal() {
-    for (auto connection = connections_.begin();
-         connection != connections_.end();
-         ++connection) {
-        (*connection)->close();
+    for (auto const& connection : connections_) {
+        connection->close();
     }
 
     connections_.clear();

@@ -1426,14 +1426,17 @@ TEST_F(CtrlChannelDhcpv6SrvTest, controlChannelStats) {
     };
 
     std::ostringstream s;
+    bool first = true;
     s << "{ \"arguments\": { ";
-    for (auto st = initial_stats.begin(); st != initial_stats.end();) {
-        s << "\"" << *st << "\": [ [ 0, \"";
-        s << isc::util::clockToText(StatsMgr::instance().getObservation(*st)->getInteger().second);
-        s << "\" ] ]";
-        if (++st != initial_stats.end()) {
+    for (auto const& st : initial_stats) {
+        if (!first) {
             s << ", ";
+        } else {
+            first = false;
         }
+        s << "\"" << st << "\": [ [ 0, \"";
+        s << isc::util::clockToText(StatsMgr::instance().getObservation(st)->getInteger().second);
+        s << "\" ] ]";
     }
     s << " }, \"result\": 0 }";
 

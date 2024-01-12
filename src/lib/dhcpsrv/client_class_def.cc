@@ -13,7 +13,6 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/parsers/client_class_def_parser.h>
-#include <boost/foreach.hpp>
 
 #include <queue>
 
@@ -55,7 +54,7 @@ ClientClassDef::ClientClassDef(const ClientClassDef& rhs)
 
     if (rhs.match_expr_) {
         match_expr_.reset(new Expression());
-        *match_expr_ = *(rhs.match_expr_);
+        *match_expr_ = *rhs.match_expr_;
     }
 
     if (rhs.cfg_option_def_) {
@@ -215,7 +214,7 @@ ClientClassDef::equals(const ClientClassDef& other) const {
     return ((name_ == other.name_) &&
         ((!match_expr_ && !other.match_expr_) ||
         (match_expr_ && other.match_expr_ &&
-         (*match_expr_ == *(other.match_expr_)))) &&
+         (*match_expr_ == *other.match_expr_))) &&
         ((!cfg_option_ && !other.cfg_option_) ||
         (cfg_option_ && other.cfg_option_ &&
          (*cfg_option_ == *other.cfg_option_))) &&
@@ -330,7 +329,7 @@ ClientClassDictionary::ClientClassDictionary()
 
 ClientClassDictionary::ClientClassDictionary(const ClientClassDictionary& rhs)
     : map_(new ClientClassDefMap()), list_(new ClientClassDefList()) {
-    BOOST_FOREACH(ClientClassDefPtr cclass, *(rhs.list_)) {
+    for (auto const& cclass : *rhs.list_) {
         ClientClassDefPtr copy(new ClientClassDef(*cclass));
         addClass(copy);
     }
@@ -444,15 +443,14 @@ ClientClassDictionary::dependOnClass(const std::string& name,
                                      std::string& dependent_class) const {
     // Skip previous classes as they should not depend on name.
     bool found = false;
-    for (ClientClassDefList::iterator this_class = list_->begin();
-         this_class != list_->end(); ++this_class) {
+    for (auto const& this_class : *list_) {
         if (found) {
-            if ((*this_class)->dependOnClass(name)) {
-                dependent_class = (*this_class)->getName();
+            if (this_class->dependOnClass(name)) {
+                dependent_class = this_class->getName();
                 return (true);
             }
         } else {
-            if ((*this_class)->getName() == name) {
+            if (this_class->getName() == name) {
                 found = true;
             }
         }
@@ -552,9 +550,8 @@ ElementPtr
 ClientClassDictionary::toElement() const {
     ElementPtr result = Element::createList();
     // Iterate on the map
-    for (ClientClassDefList::const_iterator this_class = list_->begin();
-         this_class != list_->cend(); ++this_class) {
-        result->add((*this_class)->toElement());
+    for (auto const& this_class : *list_) {
+        result->add(this_class->toElement());
     }
     return (result);
 }
@@ -564,7 +561,7 @@ ClientClassDictionary::operator=(const ClientClassDictionary& rhs) {
     if (this != &rhs) {
         list_->clear();
         map_->clear();
-        for (auto const& cclass : *(rhs.list_)) {
+        for (auto const& cclass : *rhs.list_) {
             ClientClassDefPtr copy(new ClientClassDef(*cclass));
             addClass(copy);
         }
@@ -597,20 +594,18 @@ builtinPrefixes = {
 
 bool
 isClientClassBuiltIn(const ClientClass& client_class) {
-    for (std::list<std::string>::const_iterator bn = builtinNames.cbegin();
-         bn != builtinNames.cend(); ++bn) {
-        if (client_class == *bn) {
+    for (auto const& bn : builtinNames) {
+        if (client_class == bn) {
             return true;
         }
     }
 
-    for (std::list<std::string>::const_iterator bt = builtinPrefixes.cbegin();
-         bt != builtinPrefixes.cend(); ++bt) {
-        if (client_class.size() <= bt->size()) {
+    for (auto const& bt : builtinPrefixes) {
+        if (client_class.size() <= bt.size()) {
             continue;
         }
-        auto mis = std::mismatch(bt->cbegin(), bt->cend(), client_class.cbegin());
-        if (mis.first == bt->cend()) {
+        auto mis = std::mismatch(bt.cbegin(), bt.cend(), client_class.cbegin());
+        if (mis.first == bt.cend()) {
             return true;
         }
     }

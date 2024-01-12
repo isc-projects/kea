@@ -11,7 +11,6 @@
 #include <cc/data.h>
 #include <hooks/hooks_manager.h>
 #include <hooks/hooks_parser.h>
-#include <boost/foreach.hpp>
 
 using namespace isc::data;
 using namespace isc::d2;
@@ -185,7 +184,7 @@ D2SimpleParser::setManagerDefaults(ElementPtr global,
         // manager is disabled.
         if (mgr->find("ddns-domains")) {
             ConstElementPtr domains = mgr->get("ddns-domains");
-            BOOST_FOREACH(ElementPtr domain, domains->listValue()) {
+            for (auto const& domain : domains->listValue()) {
                 // Set the domain's defaults.  We can't use setListDefaults()
                 // as this does not handle sub-lists or maps, like server list.
                 cnt += setDdnsDomainDefaults(domain, DDNS_DOMAIN_DEFAULTS);

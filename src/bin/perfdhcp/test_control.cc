@@ -549,9 +549,8 @@ TestControl::initPacketTemplates() {
     template_packets_v6_.clear();
     template_buffers_.clear();
     std::vector<std::string> template_files = options_.getTemplateFiles();
-    for (std::vector<std::string>::const_iterator it = template_files.begin();
-         it != template_files.end(); ++it) {
-        readPacketTemplate(*it);
+    for (auto const& it : template_files) {
+        readPacketTemplate(it);
     }
 }
 
@@ -750,13 +749,13 @@ std::string
 TestControl::vector2Hex(const std::vector<uint8_t>& vec,
                         const std::string& separator /* = "" */) {
     std::ostringstream stream;
-    for (std::vector<uint8_t>::const_iterator it = vec.begin();
-         it != vec.end();
-         ++it) {
-        if (it == vec.begin()) {
-            stream << byte2Hex(*it);
+    bool first = true;
+    for (auto const& it : vec) {
+        if (first) {
+            stream << byte2Hex(it);
+            first = false;
         } else {
-            stream << separator << byte2Hex(*it);
+            stream << separator << byte2Hex(it);
         }
     }
     return (stream.str());

@@ -36,7 +36,6 @@
 #include <testutils/test_to_element.h>
 
 #include <gtest/gtest.h>
-#include <boost/foreach.hpp>
 #include <boost/pointer_cast.hpp>
 
 #include <map>
@@ -197,12 +196,11 @@ public:
             return (answer);
         }
 
-        ConfigPair config_pair;
         try {
             // Iterate over the config elements.
             const std::map<std::string, ConstElementPtr>& values_map =
                                                       config_set->mapValue();
-            BOOST_FOREACH(config_pair, values_map) {
+            for (auto const& config_pair : values_map) {
 
                 // These are the simple parsers. No need to go through
                 // the ParserPtr hooplas with them.
@@ -337,14 +335,14 @@ public:
         // Now set option definition defaults for each specified option definition
         ConstElementPtr option_defs = global->get("option-def");
         if (option_defs) {
-            BOOST_FOREACH(ElementPtr single_def, option_defs->listValue()) {
+            for (auto const& single_def : option_defs->listValue()) {
                 cnt += SimpleParser::setDefaults(single_def, option_def_defaults);
             }
         }
 
         ConstElementPtr options = global->get("option-data");
         if (options) {
-            BOOST_FOREACH(ElementPtr single_option, options->listValue()) {
+            for (auto const& single_option : options->listValue()) {
                 cnt += SimpleParser::setDefaults(single_option, option_defaults);
             }
         }

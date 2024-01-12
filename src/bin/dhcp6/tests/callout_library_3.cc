@@ -56,8 +56,8 @@ dhcp6_srv_configured(CalloutHandle& handle) {
 
     // Append argument names.
     std::vector<std::string> args = handle.getArgumentNames();
-    for (auto arg = args.begin(); arg != args.end(); ++arg) {
-        if (appendArgument(SRV_CONFIG_MARKER_FILE, arg->c_str()) != 0) {
+    for (auto const& arg : args) {
+        if (appendArgument(SRV_CONFIG_MARKER_FILE, arg.c_str()) != 0) {
             return (1);
         }
     }

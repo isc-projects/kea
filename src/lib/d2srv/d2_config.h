@@ -17,8 +17,6 @@
 #include <exceptions/exceptions.h>
 #include <process/d_cfg_mgr.h>
 
-#include <boost/foreach.hpp>
-
 #include <stdint.h>
 #include <string>
 

@@ -12,6 +12,7 @@
 #include <cc/data.h>
 #include <exceptions/exceptions.h>
 #include <dhcpsrv/shared_network.h>
+#include <boost/foreach.hpp>
 #include <boost/shared_ptr.hpp>
 #include <string>
 
@@ -91,8 +92,8 @@ public:
 
         // For each shared network found, dereference the subnets belonging
         // to it.
-        for (auto it = sn_range.first; it != sn_range.second; ++it) {
-            (*it)->delAll();
+        BOOST_FOREACH(auto const& it, sn_range) {
+            it->delAll();
         }
 
         // Remove the shared networks.
@@ -123,9 +124,8 @@ public:
 
         // Insert shared networks sorted by their names into the list.
         auto const& index = networks_.template get<SharedNetworkNameIndexTag>();
-        for (auto shared_network = index.begin(); shared_network != index.end();
-             ++shared_network) {
-            list->add((*shared_network)->toElement());
+        for (auto const& shared_network : index) {
+            list->add(shared_network->toElement());
         }
         return (list);
     }
@@ -165,21 +165,20 @@ public:
         // Iterate over the subnets to be merged. They will replace the existing
         // subnets with the same id. All new subnets will be inserted into this
         // configuration.
-        auto other_networks = other.getAll();
-        for (auto other_network = other_networks->begin();
-            other_network != other_networks->end(); ++other_network) {
+        auto const& other_networks = other.getAll();
+        for (auto const& other_network : *other_networks) {
 
             // In theory we should drop subnet assignments from "other". The
             // idea being  those that come from the CB should not have subnets_
             // populated.  We will quietly throw them away, just in case.
-            (*other_network)->delAll();
+            other_network->delAll();
 
             // Check if the other network exists in this config.
-            auto existing_network = index.find((*other_network)->getName());
+            auto existing_network = index.find(other_network->getName());
             if (existing_network != index.end()) {
 
                 // Somehow the same instance is in both, skip it.
-                if (*existing_network == *other_network) {
+                if (*existing_network == other_network) {
                     continue;
                 }
 
@@ -189,9 +188,9 @@ public:
                 auto const subnets = (*existing_network)->getAllSubnets();
 
                 auto copy_subnets(*subnets);
-                for (auto subnet = copy_subnets.cbegin(); subnet != copy_subnets.cend(); ++subnet) {
-                    (*existing_network)->del((*subnet)->getID());
-                    (*other_network)->add(*subnet);
+                for (auto const& subnet : copy_subnets) {
+                    (*existing_network)->del(subnet->getID());
+                    other_network->add(subnet);
                 }
 
                 // Now we discard the existing copy of the network.
@@ -199,10 +198,10 @@ public:
             }
 
             // Create the network's options based on the given definitions.
-            (*other_network)->getCfgOption()->createOptions(cfg_def);
+            other_network->getCfgOption()->createOptions(cfg_def);
 
             // Add the new/updated nework.
-            static_cast<void>(networks_.push_back(*other_network));
+            static_cast<void>(networks_.push_back(other_network));
         }
     }
 

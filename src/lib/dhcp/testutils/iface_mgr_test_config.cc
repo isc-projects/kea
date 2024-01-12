@@ -13,8 +13,6 @@
 #include <dhcp/testutils/pkt_filter_test_stub.h>
 #include <dhcp/testutils/pkt_filter6_test_stub.h>
 
-#include <boost/foreach.hpp>
-
 using namespace isc::asiolink;
 
 namespace isc {
@@ -165,7 +163,7 @@ IfaceMgrTestConfig::socketOpen(const std::string& iface_name,
         isc_throw(Unexpected, "No such interface '" << iface_name << "'");
     }
 
-    BOOST_FOREACH(SocketInfo sock, iface->getSockets()) {
+    for (auto const& sock : iface->getSockets()) {
         if (sock.family_ == family) {
             return (true);
         }
@@ -181,7 +179,7 @@ IfaceMgrTestConfig::socketOpen(const std::string& iface_name,
         isc_throw(Unexpected, "No such interface '" << iface_name << "'");
     }
 
-    BOOST_FOREACH(SocketInfo sock, iface->getSockets()) {
+    for (auto const& sock : iface->getSockets()) {
         if ((sock.family_ == AF_INET) &&
             (sock.addr_ == IOAddress(address))) {
             return (true);
@@ -197,7 +195,7 @@ IfaceMgrTestConfig::unicastOpen(const std::string& iface_name) const {
         isc_throw(Unexpected, "No such interface '" << iface_name << "'");
     }
 
-    BOOST_FOREACH(SocketInfo sock, iface->getSockets()) {
+    for (auto const& sock : iface->getSockets()) {
         if ((!sock.addr_.isV6LinkLocal()) &&
             (!sock.addr_.isV6Multicast())) {
             return (true);

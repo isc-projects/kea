@@ -551,21 +551,21 @@ TEST_F(SrvConfigTest, configuredGlobals) {
 
     // Maps and lists should be excluded.
     auto globals = srv_globals->valuesMap();
-    for (auto global = globals.begin(); global != globals.end(); ++global) {
-        if (global->first == "comment") {
-            ASSERT_EQ(Element::string, global->second->getType());
-            EXPECT_EQ("okay", global->second->stringValue());
-        } else if (global->first == "valid-lifetime") {
-            ASSERT_EQ(Element::integer, global->second->getType());
-            EXPECT_EQ(444, global->second->intValue());
-        } else if (global->first == "store-extended-info") {
-            ASSERT_EQ(Element::boolean, global->second->getType());
-            EXPECT_TRUE(global->second->boolValue());
-        } else if (global->first == "t1-percent") {
-            ASSERT_EQ(Element::real, global->second->getType());
-            EXPECT_EQ(1.234, global->second->doubleValue());
+    for (auto const& global : globals) {
+        if (global.first == "comment") {
+            ASSERT_EQ(Element::string, global.second->getType());
+            EXPECT_EQ("okay", global.second->stringValue());
+        } else if (global.first == "valid-lifetime") {
+            ASSERT_EQ(Element::integer, global.second->getType());
+            EXPECT_EQ(444, global.second->intValue());
+        } else if (global.first == "store-extended-info") {
+            ASSERT_EQ(Element::boolean, global.second->getType());
+            EXPECT_TRUE(global.second->boolValue());
+        } else if (global.first == "t1-percent") {
+            ASSERT_EQ(Element::real, global.second->getType());
+            EXPECT_EQ(1.234, global.second->doubleValue());
         } else {
-            ADD_FAILURE() << "unexpected element found:" << global->first;
+            ADD_FAILURE() << "unexpected element found:" << global.first;
         }
     }
 

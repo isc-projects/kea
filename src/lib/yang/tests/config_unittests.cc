@@ -324,7 +324,7 @@ TEST_F(ConfigTestKeaV4, examples4) {
         "vivso.json",
         //"with-ddns.json",
     };
-    for (const string& file : examples) {
+    for (auto const& file : examples) {
         resetSession();
         string path = string(CFG_EXAMPLES) + "/kea4/" + file;
         SCOPED_TRACE("\n* Tested file: " + path);
@@ -367,7 +367,7 @@ TEST_F(ConfigTestKeaV6, examples6) {
         "tee-times.json",
         //"with-ddns.json",
     };
-    for (const string& file : examples) {
+    for (auto const& file : examples) {
         resetSession();
         string path = string(CFG_EXAMPLES) + "/kea6/" + file;
         SCOPED_TRACE("\n* Tested file: " + path);

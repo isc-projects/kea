@@ -267,7 +267,7 @@ Dhcpv6SrvTest::loadConfigFile(const string& path) {
     removeTlsParameters(hosts);
     hosts = dhcp6->get("hosts-databases");
     if (hosts) {
-        for (auto& host : hosts->listValue()) {
+        for (auto const& host : hosts->listValue()) {
             removeTlsParameters(host);
         }
     }
@@ -362,7 +362,7 @@ Dhcpv6SrvTest::checkConfigFiles() {
         "with-ddns.json",
     };
     vector<string> files;
-    for (const string& example : examples) {
+    for (auto const& example : examples) {
         string file = path + "/" + example;
         files.push_back(file);
     }
@@ -3365,15 +3365,14 @@ TEST_F(Dhcpv6SrvTest, rsoo2relays) {
     int count120 = 0; // Let's count how many times option 120 was echoed back
     int count130 = 0; // Let's count how many times option 130 was echoed back
     OptionPtr opt120;
-    for (OptionCollection::const_iterator it = client.config_.options_.begin();
-         it != client.config_.options_.end(); ++it) {
-        switch (it->second->getType()) {
+    for (auto const& it : client.config_.options_) {
+        switch (it.second->getType()) {
         case 110:
             count110++;
             break;
         case 120:
             count120++;
-            opt120 = it->second;
+            opt120 = it.second;
             break;
         case 130:
             count130++;

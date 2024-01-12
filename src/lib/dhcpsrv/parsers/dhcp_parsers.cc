@@ -52,7 +52,7 @@ MACSourcesListConfigParser::parse(CfgMACSource& mac_sources, ConstElementPtr val
     // If user specified anything, we need to get rid of that default.
     mac_sources.clear();
 
-    BOOST_FOREACH(ConstElementPtr source_elem, value->listValue()) {
+    for (auto const& source_elem : value->listValue()) {
         std::string source_str = source_elem->stringValue();
         try {
             source = CfgMACSource::MACSourceFromText(source_str);
@@ -204,11 +204,11 @@ OptionDefParser::parse(ConstElementPtr option_def) {
     isc::util::str::tokens(record_types, ",");
     // Iterate over each token and add a record type into
     // option definition.
-    BOOST_FOREACH(std::string record_type, record_tokens) {
+    for (auto const& record_type : record_tokens) {
         try {
-            boost::trim(record_type);
-            if (!record_type.empty()) {
-                    def->addRecordField(record_type);
+            auto const trim_rec = boost::trim_copy(record_type);
+            if (!trim_rec.empty()) {
+                def->addRecordField(trim_rec);
             }
         } catch (const Exception& ex) {
             isc_throw(DhcpConfigError, "invalid record type values"
@@ -246,7 +246,7 @@ OptionDefListParser::parse(CfgOptionDefPtr storage, ConstElementPtr option_def_l
     }
 
     OptionDefParser parser(address_family_);
-    BOOST_FOREACH(ConstElementPtr option_def, option_def_list->listValue()) {
+    for (auto const& option_def : option_def_list->listValue()) {
         OptionDefinitionPtr def = parser.parse(option_def);
         try {
             storage->add(def);
@@ -304,7 +304,7 @@ RelayInfoParser::parse(const isc::dhcp::Network::RelayInfoPtr& relay_info,
                   "(" << getPosition("ip-addresses", relay_elem) << ")");
     }
 
-    BOOST_FOREACH(ConstElementPtr address_element, addresses->listValue()) {
+    for (auto const& address_element : addresses->listValue()) {
         addAddress("ip-addresses", address_element->stringValue(),
                    relay_elem, relay_info);
     }
@@ -505,22 +505,20 @@ PoolParser::parse(PoolStoragePtr pools,
     ConstElementPtr class_list = pool_structure->get("require-client-classes");
     if (class_list) {
         const std::vector<data::ElementPtr>& classes = class_list->listValue();
-        for (auto cclass = classes.cbegin();
-             cclass != classes.cend(); ++cclass) {
-            if (((*cclass)->getType() != Element::string) ||
-                (*cclass)->stringValue().empty()) {
+        for (auto const& cclass : classes) {
+            if ((cclass->getType() != Element::string) ||
+                 cclass->stringValue().empty()) {
                 isc_throw(DhcpConfigError, "invalid class name ("
-                          << (*cclass)->getPosition() << ")");
+                          << cclass->getPosition() << ")");
             }
-            pool->requireClientClass((*cclass)->stringValue());
+            pool->requireClientClass(cclass->stringValue());
         }
     }
 }
 
 boost::shared_ptr<OptionDataListParser>
 PoolParser::createOptionDataListParser(const uint16_t address_family) const {
-    auto parser = boost::make_shared<OptionDataListParser>(address_family);
-    return (parser);
+    return (boost::make_shared<OptionDataListParser>(address_family));
 }
 
 //****************************** Pool4Parser *************************
@@ -540,16 +538,15 @@ Pool4Parser::poolMaker (IOAddress &min, IOAddress &max, int32_t) {
 void
 Pools4ListParser::parse(PoolStoragePtr pools, ConstElementPtr pools_list,
                         bool encapsulate_options) {
-    BOOST_FOREACH(ConstElementPtr pool, pools_list->listValue()) {
-        auto parser = createPoolConfigParser();
+    for (auto const& pool : pools_list->listValue()) {
+        auto const& parser = createPoolConfigParser();
         parser->parse(pools, pool, AF_INET, encapsulate_options);
     }
 }
 
 boost::shared_ptr<PoolParser>
 Pools4ListParser::createPoolConfigParser() const {
-    auto parser = boost::make_shared<Pool4Parser>();
-    return (parser);
+    return (boost::make_shared<Pool4Parser>());
 }
 
 //****************************** SubnetConfigParser *************************
@@ -682,8 +679,7 @@ SubnetConfigParser::createSubnet(ConstElementPtr params) {
 
 boost::shared_ptr<OptionDataListParser>
 SubnetConfigParser::createOptionDataListParser() const {
-    auto parser = boost::make_shared<OptionDataListParser>(address_family_);
-    return (parser);
+    return (boost::make_shared<OptionDataListParser>(address_family_));
 }
 
 //****************************** Subnet4ConfigParser *************************
@@ -700,7 +696,7 @@ Subnet4ConfigParser::parse(ConstElementPtr subnet, bool encapsulate_options) {
     /// Parse Pools first.
     ConstElementPtr pools = subnet->get("pools");
     if (pools) {
-        auto parser = createPoolsListParser();
+        auto const& parser = createPoolsListParser();
         parser->parse(pools_, pools, encapsulate_options);
     }
 
@@ -731,9 +727,9 @@ Subnet4ConfigParser::parse(ConstElementPtr subnet, bool encapsulate_options) {
         HostCollection hosts;
         HostReservationsListParser<HostReservationParser4> parser;
         parser.parse(subnet_->getID(), reservations, hosts);
-        for (auto h = hosts.begin(); h != hosts.end(); ++h) {
-            validateResv(sn4ptr, *h);
-            CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(*h);
+        for (auto const& h : hosts) {
+            validateResv(sn4ptr, h);
+            CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(h);
         }
     }
 
@@ -890,14 +886,13 @@ Subnet4ConfigParser::initSubnet(data::ConstElementPtr params,
     ConstElementPtr class_list = params->get("require-client-classes");
     if (class_list) {
         const std::vector<data::ElementPtr>& classes = class_list->listValue();
-        for (auto cclass = classes.cbegin();
-             cclass != classes.cend(); ++cclass) {
-            if (((*cclass)->getType() != Element::string) ||
-                (*cclass)->stringValue().empty()) {
+        for (auto const& cclass : classes) {
+            if ((cclass->getType() != Element::string) ||
+                cclass->stringValue().empty()) {
                 isc_throw(DhcpConfigError, "invalid class name ("
-                          << (*cclass)->getPosition() << ")");
+                          << cclass->getPosition() << ")");
             }
-            subnet4->requireClientClass((*cclass)->stringValue());
+            subnet4->requireClientClass(cclass->stringValue());
         }
     }
 
@@ -985,8 +980,7 @@ Subnet4ConfigParser::validateResv(const Subnet4Ptr& subnet, ConstHostPtr host) {
 
 boost::shared_ptr<PoolsListParser>
 Subnet4ConfigParser::createPoolsListParser() const {
-    auto parser = boost::make_shared<Pools4ListParser>();
-    return (parser);
+    return (boost::make_shared<Pools4ListParser>());
 }
 
 //**************************** Subnets4ListConfigParser **********************
@@ -1000,9 +994,9 @@ Subnets4ListConfigParser::parse(SrvConfigPtr cfg,
                                 ConstElementPtr subnets_list,
                                 bool encapsulate_options) {
     size_t cnt = 0;
-    BOOST_FOREACH(ConstElementPtr subnet_json, subnets_list->listValue()) {
+    for (auto const& subnet_json : subnets_list->listValue()) {
 
-        auto parser = createSubnetConfigParser();
+        auto const& parser = createSubnetConfigParser();
         Subnet4Ptr subnet = parser->parse(subnet_json, encapsulate_options);
         if (subnet) {
 
@@ -1026,9 +1020,9 @@ Subnets4ListConfigParser::parse(Subnet4Collection& subnets,
                                 data::ConstElementPtr subnets_list,
                                 bool encapsulate_options) {
     size_t cnt = 0;
-    BOOST_FOREACH(ConstElementPtr subnet_json, subnets_list->listValue()) {
+    for (auto const& subnet_json : subnets_list->listValue()) {
 
-        auto parser = createSubnetConfigParser();
+        auto const& parser = createSubnetConfigParser();
         Subnet4Ptr subnet = parser->parse(subnet_json, encapsulate_options);
         if (subnet) {
             try {
@@ -1049,8 +1043,7 @@ Subnets4ListConfigParser::parse(Subnet4Collection& subnets,
 
 boost::shared_ptr<Subnet4ConfigParser>
 Subnets4ListConfigParser::createSubnetConfigParser() const {
-    auto parser = boost::make_shared<Subnet4ConfigParser>(check_iface_);
-    return (parser);
+    return (boost::make_shared<Subnet4ConfigParser>(check_iface_));
 }
 
 //**************************** Pool6Parser *********************************
@@ -1075,16 +1068,15 @@ Pool6Parser::poolMaker(IOAddress &min, IOAddress &max, int32_t ptype)
 void
 Pools6ListParser::parse(PoolStoragePtr pools, ConstElementPtr pools_list,
                         bool encapsulate_options) {
-    BOOST_FOREACH(ConstElementPtr pool, pools_list->listValue()) {
-        auto parser = createPoolConfigParser();
+    for (auto const& pool : pools_list->listValue()) {
+        auto const& parser = createPoolConfigParser();
         parser->parse(pools, pool, AF_INET6, encapsulate_options);
     }
 }
 
 boost::shared_ptr<PoolParser>
 Pools6ListParser::createPoolConfigParser() const {
-    auto parser = boost::make_shared<Pool6Parser>();
-    return (parser);
+    return (boost::make_shared<Pool6Parser>());
 }
 
 //**************************** PdPoolParser ******************************
@@ -1167,14 +1159,13 @@ PdPoolParser::parse(PoolStoragePtr pools, ConstElementPtr pd_pool_,
 
     if (class_list) {
         const std::vector<data::ElementPtr>& classes = class_list->listValue();
-        for (auto cclass = classes.cbegin();
-             cclass != classes.cend(); ++cclass) {
-            if (((*cclass)->getType() != Element::string) ||
-                (*cclass)->stringValue().empty()) {
+        for (auto const& cclass : classes) {
+            if ((cclass->getType() != Element::string) ||
+                cclass->stringValue().empty()) {
                 isc_throw(DhcpConfigError, "invalid class name ("
-                          << (*cclass)->getPosition() << ")");
+                          << cclass->getPosition() << ")");
             }
-            pool_->requireClientClass((*cclass)->stringValue());
+            pool_->requireClientClass(cclass->stringValue());
         }
     }
 
@@ -1184,8 +1175,7 @@ PdPoolParser::parse(PoolStoragePtr pools, ConstElementPtr pd_pool_,
 
 boost::shared_ptr<OptionDataListParser>
 PdPoolParser::createOptionDataListParser() const {
-    auto parser = boost::make_shared<OptionDataListParser>(AF_INET6);
-    return (parser);
+    return (boost::make_shared<OptionDataListParser>(AF_INET6));
 }
 
 //**************************** PdPoolsListParser ************************
@@ -1193,16 +1183,15 @@ PdPoolParser::createOptionDataListParser() const {
 void
 PdPoolsListParser::parse(PoolStoragePtr pools, ConstElementPtr pd_pool_list) {
     // Loop through the list of pd pools.
-    BOOST_FOREACH(ConstElementPtr pd_pool, pd_pool_list->listValue()) {
-        auto parser = createPdPoolConfigParser();
+    for (auto const& pd_pool : pd_pool_list->listValue()) {
+        auto const& parser = createPdPoolConfigParser();
         parser->parse(pools, pd_pool);
     }
 }
 
 boost::shared_ptr<PdPoolParser>
 PdPoolsListParser::createPdPoolConfigParser() const {
-    auto parser = boost::make_shared<PdPoolParser>();
-    return (parser);
+    return (boost::make_shared<PdPoolParser>());
 }
 
 //**************************** Subnet6ConfigParser ***********************
@@ -1219,12 +1208,12 @@ Subnet6ConfigParser::parse(ConstElementPtr subnet, bool encapsulate_options) {
     /// Parse all pools first.
     ConstElementPtr pools = subnet->get("pools");
     if (pools) {
-        auto parser = createPoolsListParser();
+        auto const& parser = createPoolsListParser();
         parser->parse(pools_, pools, encapsulate_options);
     }
     ConstElementPtr pd_pools = subnet->get("pd-pools");
     if (pd_pools) {
-        auto parser = createPdPoolsListParser();
+        auto const& parser = createPdPoolsListParser();
         parser->parse(pools_, pd_pools);
     }
 
@@ -1255,9 +1244,9 @@ Subnet6ConfigParser::parse(ConstElementPtr subnet, bool encapsulate_options) {
         HostCollection hosts;
         HostReservationsListParser<HostReservationParser6> parser;
         parser.parse(subnet_->getID(), reservations, hosts);
-        for (auto h = hosts.begin(); h != hosts.end(); ++h) {
-            validateResvs(sn6ptr, *h);
-            CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(*h);
+        for (auto const& h : hosts) {
+            validateResvs(sn6ptr, h);
+            CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(h);
         }
     }
 
@@ -1417,14 +1406,13 @@ Subnet6ConfigParser::initSubnet(data::ConstElementPtr params,
         ConstElementPtr class_list = params->get("require-client-classes");
         if (class_list) {
             const std::vector<data::ElementPtr>& classes = class_list->listValue();
-            for (auto cclass = classes.cbegin();
-                 cclass != classes.cend(); ++cclass) {
-                if (((*cclass)->getType() != Element::string) ||
-                    (*cclass)->stringValue().empty()) {
+            for (auto const& cclass : classes) {
+                if ((cclass->getType() != Element::string) ||
+                    cclass->stringValue().empty()) {
                     isc_throw(DhcpConfigError, "invalid class name ("
-                              << (*cclass)->getPosition() << ")");
+                              << cclass->getPosition() << ")");
                 }
-                subnet6->requireClientClass((*cclass)->stringValue());
+                subnet6->requireClientClass(cclass->stringValue());
             }
         }
     }
@@ -1444,9 +1432,9 @@ Subnet6ConfigParser::initSubnet(data::ConstElementPtr params,
 
 void
 Subnet6ConfigParser::validateResvs(const Subnet6Ptr& subnet, ConstHostPtr host) {
-    IPv6ResrvRange range = host->getIPv6Reservations(IPv6Resrv::TYPE_NA);
-    for (auto it = range.first; it != range.second; ++it) {
-        const IOAddress& address = it->second.getPrefix();
+    const IPv6ResrvRange& range = host->getIPv6Reservations(IPv6Resrv::TYPE_NA);
+    BOOST_FOREACH(auto const& it, range) {
+        const IOAddress& address = it.second.getPrefix();
         if (!subnet->inRange(address)) {
             isc_throw(DhcpConfigError, "specified reservation '" << address
                       << "' is not within the IPv6 subnet '"
@@ -1457,14 +1445,12 @@ Subnet6ConfigParser::validateResvs(const Subnet6Ptr& subnet, ConstHostPtr host) 
 
 boost::shared_ptr<PoolsListParser>
 Subnet6ConfigParser::createPoolsListParser() const {
-    auto parser = boost::make_shared<Pools6ListParser>();
-    return (parser);
+    return (boost::make_shared<Pools6ListParser>());
 }
 
 boost::shared_ptr<PdPoolsListParser>
 Subnet6ConfigParser::createPdPoolsListParser() const {
-    auto parser = boost::make_shared<PdPoolsListParser>();
-    return (parser);
+    return (boost::make_shared<PdPoolsListParser>());
 }
 
 //**************************** Subnet6ListConfigParser ********************
@@ -1478,9 +1464,9 @@ Subnets6ListConfigParser::parse(SrvConfigPtr cfg,
                                 ConstElementPtr subnets_list,
                                 bool encapsulate_options) {
     size_t cnt = 0;
-    BOOST_FOREACH(ConstElementPtr subnet_json, subnets_list->listValue()) {
+    for (auto const& subnet_json : subnets_list->listValue()) {
 
-        auto parser = createSubnetConfigParser();
+        auto const& parser = createSubnetConfigParser();
         Subnet6Ptr subnet = parser->parse(subnet_json, encapsulate_options);
 
         // Adding a subnet to the Configuration Manager may fail if the
@@ -1502,9 +1488,9 @@ Subnets6ListConfigParser::parse(Subnet6Collection& subnets,
                                 ConstElementPtr subnets_list,
                                 bool encapsulate_options) {
     size_t cnt = 0;
-    BOOST_FOREACH(ConstElementPtr subnet_json, subnets_list->listValue()) {
+    for (auto const& subnet_json : subnets_list->listValue()) {
 
-        auto parser = createSubnetConfigParser();
+        auto const& parser = createSubnetConfigParser();
         Subnet6Ptr subnet = parser->parse(subnet_json, encapsulate_options);
         if (subnet) {
             try {
@@ -1525,8 +1511,7 @@ Subnets6ListConfigParser::parse(Subnet6Collection& subnets,
 
 boost::shared_ptr<Subnet6ConfigParser>
 Subnets6ListConfigParser::createSubnetConfigParser() const {
-    auto parser = boost::make_shared<Subnet6ConfigParser>(check_iface_);
-    return (parser);
+    return (boost::make_shared<Subnet6ConfigParser>(check_iface_));
 }
 
 //**************************** D2ClientConfigParser **********************

@@ -601,10 +601,8 @@ public:
         // Create JSON list of required classes.
         data::ElementPtr required_classes_element = data::Element::createList();
         auto const& required_classes = object->getRequiredClasses();
-        for (auto required_class = required_classes.cbegin();
-             required_class != required_classes.cend();
-             ++required_class) {
-            required_classes_element->add(data::Element::create(*required_class));
+        for (auto const& required_class : required_classes) {
+            required_classes_element->add(data::Element::create(required_class));
         }
 
         bindings.add(required_classes_element);

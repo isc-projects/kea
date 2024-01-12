@@ -144,9 +144,8 @@ LoggerManager::logDuplicatedMessages() {
         // There are duplicates present. This list itself may contain
         // duplicates; if so, the message ID is listed as many times as
         // there are duplicates.
-        for (list<string>::const_iterator i = duplicates.begin();
-             i != duplicates.end(); ++i) {
-            LOG_WARN(logger, LOG_DUPLICATE_MESSAGE_ID).arg(*i);
+        for (auto const& i : duplicates) {
+            LOG_WARN(logger, LOG_DUPLICATE_MESSAGE_ID).arg(i);
         }
         MessageInitializer::clearDuplicates();
     }

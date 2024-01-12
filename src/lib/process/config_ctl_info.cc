@@ -71,13 +71,11 @@ ConfigControlInfo::addConfigDatabase(const std::string& access_str) {
 const ConfigDbInfo&
 ConfigControlInfo::findConfigDb(const std::string& param_name,
                                 const std::string& param_value) {
-    for (ConfigDbInfoList::iterator db = db_infos_.begin();
-         db != db_infos_.end(); ++db) {
+    for (auto const& db : db_infos_) {
         std::string db_value;
-        if (db->getParameterValue(param_name, db_value) &&
-            (param_value == db_value)) {
-                return (*db);
-            }
+        if (db.getParameterValue(param_name, db_value) && (param_value == db_value)) {
+            return (db);
+        }
     }
 
     return (EMPTY_DB());

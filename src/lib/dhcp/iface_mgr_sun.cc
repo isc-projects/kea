@@ -114,14 +114,13 @@ IfaceMgr::detectIfaces(bool update_only) {
     freeifaddrs(iflist);
 
     // Interfaces registering
-    for (IfaceLst::const_iterator iface_iter = ifaces.begin();
-        iface_iter != ifaces.end(); ++iface_iter) {
+    for (auto const& iface_iter : ifaces) {
         IfacePtr iface;
         if (update_only) {
-            iface = getIface(iface_iter->first);
+            iface = getIface(iface_iter.first);
         }
         if (!iface) {
-            addInterface(iface_iter->second);
+            addInterface(iface_iter.second);
         }
     }
 }

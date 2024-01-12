@@ -55,12 +55,11 @@ std::string HWAddr::toText(bool include_htype) const {
     }
     tmp << std::hex;
     bool delim = false;
-    for (std::vector<uint8_t>::const_iterator it = hwaddr_.begin();
-         it != hwaddr_.end(); ++it) {
+    for (auto const& it : hwaddr_) {
         if (delim) {
             tmp << ":";
         }
-        tmp << std::setw(2) << std::setfill('0') << static_cast<unsigned int>(*it);
+        tmp << std::setw(2) << std::setfill('0') << static_cast<unsigned int>(it);
         delim = true;
     }
     return (tmp.str());

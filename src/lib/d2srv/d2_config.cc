@@ -12,7 +12,6 @@
 #include <exceptions/exceptions.h>
 #include <asiolink/io_error.h>
 
-#include <boost/foreach.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
@@ -270,9 +269,8 @@ DdnsDomain::toElement() const {
     result->set("name", Element::create(name_));
     // Set servers
     ElementPtr servers = Element::createList();
-    for (DnsServerInfoStorage::const_iterator server = servers_->begin();
-         server != servers_->end(); ++server) {
-        ElementPtr dns_server = (*server)->toElement();
+    for (auto const& server : *servers_) {
+        ElementPtr dns_server = server->toElement();
         servers->add(dns_server);
     }
     // the dns server list may not be empty
@@ -330,9 +328,8 @@ DdnsDomainListMgr::matchDomain(const std::string& fqdn, DdnsDomainPtr& domain) {
 
     size_t req_len = fqdn.size();
     size_t match_len = 0;
-    DdnsDomainMapPair map_pair;
     DdnsDomainPtr best_match;
-    BOOST_FOREACH (map_pair, *domains_) {
+    for (auto const& map_pair : *domains_) {
         std::string domain_name = map_pair.first;
         size_t dom_len = domain_name.size();
 
@@ -386,9 +383,8 @@ ElementPtr
 DdnsDomainListMgr::toElement() const {
     ElementPtr result = Element::createList();
     // Iterate on ddns domains
-    for (DdnsDomainMap::const_iterator domain = domains_->begin();
-         domain != domains_->end(); ++domain) {
-        ElementPtr ddns_domain = domain->second->toElement();
+    for (auto const& domain : *domains_) {
+        ElementPtr ddns_domain = domain.second->toElement();
         result->add(ddns_domain);
     }
 
@@ -457,9 +453,8 @@ TSIGKeyInfoParser::parse(ConstElementPtr key_config) {
 TSIGKeyInfoMapPtr
 TSIGKeyInfoListParser::parse(ConstElementPtr key_list) {
     TSIGKeyInfoMapPtr keys(new TSIGKeyInfoMap());
-    ConstElementPtr key_config;
     TSIGKeyInfoParser key_parser;
-    BOOST_FOREACH(key_config, key_list->listValue()) {
+    for (auto const& key_config : key_list->listValue()) {
         TSIGKeyInfoPtr key = key_parser.parse(key_config);
 
         // Duplicates are not allowed and should be flagged as an error.
@@ -574,9 +569,8 @@ DnsServerInfoListParser::parse(ConstElementPtr server_list,
                                ConstElementPtr domain_config,
                                const TSIGKeyInfoMapPtr keys) {
     DnsServerInfoStoragePtr servers(new DnsServerInfoStorage());
-    ConstElementPtr server_config;
     DnsServerInfoParser parser;
-    BOOST_FOREACH(server_config, server_list->listValue()) {
+    for (auto const& server_config : server_list->listValue()) {
         DnsServerInfoPtr server =
             parser.parse(server_config, domain_config, keys);
         servers->push_back(server);
@@ -627,8 +621,7 @@ DdnsDomainMapPtr DdnsDomainListParser::parse(ConstElementPtr domain_list,
                                              const TSIGKeyInfoMapPtr keys) {
     DdnsDomainMapPtr domains(new DdnsDomainMap());
     DdnsDomainParser parser;
-    ConstElementPtr domain_config;
-    BOOST_FOREACH(domain_config, domain_list->listValue()) {
+    for (auto const& domain_config : domain_list->listValue()) {
         DdnsDomainPtr domain = parser.parse(domain_config, keys);
 
         // Duplicates are not allowed

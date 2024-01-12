@@ -149,31 +149,30 @@ CalloutManager::callCallouts(int hook_index, CalloutHandle& callout_handle) {
             .arg(server_hooks_.getName(callout_handle.getCurrentHook()));
 
         // Call all the callouts.
-        for (CalloutVector::const_iterator i = hook_vector_[hook_index].begin();
-             i != hook_vector_[hook_index].end(); ++i) {
+        for (auto const& i : hook_vector_[hook_index]) {
             // In case the callout requires access to the context associated
             // with the library, set the current library index to the index
             // associated with the library that registered the callout being
             // called.
-            callout_handle.setCurrentLibrary(i->first);
+            callout_handle.setCurrentLibrary(i.first);
 
             // Call the callout
             try {
                 stopwatch.start();
-                int status = (*i->second)(callout_handle);
+                int status = (*i.second)(callout_handle);
                 stopwatch.stop();
                 if (status == 0) {
                     LOG_DEBUG(callouts_logger, HOOKS_DBG_EXTENDED_CALLS,
                               HOOKS_CALLOUT_CALLED)
                         .arg(callout_handle.getCurrentLibrary())
                         .arg(server_hooks_.getName(callout_handle.getCurrentHook()))
-                        .arg(PointerConverter(i->second).dlsymPtr())
+                        .arg(PointerConverter(i.second).dlsymPtr())
                         .arg(stopwatch.logFormatLastDuration());
                 } else {
                     LOG_ERROR(callouts_logger, HOOKS_CALLOUT_ERROR)
                         .arg(server_hooks_.getName(callout_handle.getCurrentHook()))
                         .arg(callout_handle.getCurrentLibrary())
-                        .arg(PointerConverter(i->second).dlsymPtr())
+                        .arg(PointerConverter(i.second).dlsymPtr())
                         .arg(stopwatch.logFormatLastDuration());
                 }
             } catch (const std::exception& e) {
@@ -184,7 +183,7 @@ CalloutManager::callCallouts(int hook_index, CalloutHandle& callout_handle) {
                 LOG_ERROR(callouts_logger, HOOKS_CALLOUT_EXCEPTION)
                     .arg(server_hooks_.getName(callout_handle.getCurrentHook()))
                     .arg(callout_handle.getCurrentLibrary())
-                    .arg(PointerConverter(i->second).dlsymPtr())
+                    .arg(PointerConverter(i.second).dlsymPtr())
                     .arg(e.what())
                     .arg(stopwatch.logFormatLastDuration());
                 callout_handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
@@ -196,7 +195,7 @@ CalloutManager::callCallouts(int hook_index, CalloutHandle& callout_handle) {
                 LOG_ERROR(callouts_logger, HOOKS_CALLOUT_EXCEPTION)
                     .arg(server_hooks_.getName(callout_handle.getCurrentHook()))
                     .arg(callout_handle.getCurrentLibrary())
-                    .arg(PointerConverter(i->second).dlsymPtr())
+                    .arg(PointerConverter(i.second).dlsymPtr())
                     .arg("Unspecified exception")
                     .arg(stopwatch.logFormatLastDuration());
                 callout_handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
