@@ -814,14 +814,7 @@ mysql_upgrade_18_to_19_test() {
     run_statement "ipv6_reservations_insert" "$qry" "3001::99"
 }
 
-mysql_upgrade_19_to_20_test() {
-    # The function, mysql_ddns_conflict_resolution_mode_update_test, is called explicitly
-    # and tests conversion of ddns-use-conflict-resolution to ddns-conflict-resolution-mode.
-}
-
-mysql_upgrade_20_to_21_test() {
-    # The function, mysql_ddns_conflict_resolution_mode_update_test, is called explicitly
-    # and tests conversion of ddns-use-conflict-resolution to ddns-conflict-resolution-mode.
+mysql_upgrade_19_to_21_test() {
     # For now this function only verifies version number.
     version=$("${kea_admin}" db-version mysql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}")
     assert_str_eq "21.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
@@ -1511,11 +1504,8 @@ SET @disable_audit = 0"
     # Check upgrade from 18.0 to 19.0.
     mysql_upgrade_18_to_19_test
 
-    # Check upgrade from 19.0 to 20.0.
-    mysql_upgrade_19_to_20_test
-
-    # Check upgrade from 20.0 to 21.0.
-    mysql_upgrade_20_to_21_test
+    # Check upgrade from 19.0 to 21.0.
+    mysql_upgrade_19_to_21_test
 
     # Let's wipe the whole database
     mysql_wipe
