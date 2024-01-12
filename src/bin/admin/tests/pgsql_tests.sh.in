@@ -143,7 +143,7 @@ pgsql_db_version_test() {
     run_command \
         "${kea_admin}" db-version pgsql -u "${db_user}" -p "${db_password}" -n "${db_name}"
     version="${OUTPUT}"
-    assert_str_eq "19.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
+    assert_str_eq "20.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
 
     # Let's wipe the whole database
     pgsql_wipe
@@ -891,6 +891,11 @@ pgsql_upgrade_18_to_19_test() {
     run_statement "lease6_remote_id_get" "$qry" "3001::99"
 }
 
+pgsql_upgrade_19_to_20_test() {
+    # For now this function only verifies version number.
+    version=$("${kea_admin}" db-version pgsql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}")
+    assert_str_eq "20.0" "${version}" 'Expected kea-admin to return %s, returned value was %s'
+}
 pgsql_upgrade_test() {
     test_start "pgsql.upgrade"
 
@@ -909,7 +914,7 @@ pgsql_upgrade_test() {
 
     # Verify upgraded schema reports the latest version.
     version=$("${kea_admin}" db-version pgsql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}")
-    assert_str_eq "19.0" "${version}" 'Expected kea-admin to return %s, returned value was %s'
+    assert_str_eq "20.0" "${version}" 'Expected kea-admin to return %s, returned value was %s'
 
     # Check 1.0 to 2.0 upgrade
     pgsql_upgrade_1_0_to_2_0_test
@@ -961,6 +966,9 @@ pgsql_upgrade_test() {
 
     # Check 18 to 19 upgrade
     pgsql_upgrade_18_to_19_test
+
+    # Check 19 to 20 upgrade
+    pgsql_upgrade_19_to_20_test
 
     # Let's wipe the whole database
     pgsql_wipe
@@ -2114,8 +2122,8 @@ pgsql_ddns_conflict_resolution_mode_update_test() {
     qry="select count(*) from dhcp6_global_parameter where name='ddns-use-conflict-resolution';"
     run_statement "#get 6_global parameter count before update" "$qry" 2
 
-    # Upgrade to schema 19.0
-    pgsql_upgrade_schema_to_version 19.0
+    # Upgrade to schema 20.0
+    pgsql_upgrade_schema_to_version 20.0
 
     # Verify we converted parameters correctly.
     qry="select count(*) from dhcp4_global_parameter where name='ddns-conflict-resolution-mode' and\

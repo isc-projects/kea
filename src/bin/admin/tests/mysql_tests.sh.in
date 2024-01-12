@@ -822,6 +822,14 @@ mysql_upgrade_19_to_20_test() {
     assert_str_eq "20.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
 }
 
+mysql_upgrade_20_to_21_test() {
+    # The function, mysql_ddns_conflict_resolution_mode_update_test, is called explicitly
+    # and tests conversion of ddns-use-conflict-resolution to ddns-conflict-resolution-mode.
+    # For now this function only verifies version number.
+    version=$("${kea_admin}" db-version mysql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}")
+    assert_str_eq "21.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
+}
+
 mysql_upgrade_test() {
 
     test_start "mysql.upgrade"
@@ -843,7 +851,7 @@ mysql_upgrade_test() {
 
     # Verify that the upgraded schema reports the latest version.
     version=$("${kea_admin}" db-version mysql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}")
-    assert_str_eq "20.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
+    assert_str_eq "21.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
 
     # Let's check that the new tables are indeed there.
 
@@ -1508,6 +1516,9 @@ SET @disable_audit = 0"
 
     # Check upgrade from 19.0 to 20.0.
     mysql_upgrade_19_to_20_test
+
+    # Check upgrade from 20.0 to 21.0.
+    mysql_upgrade_20_to_21_test
 
     # Let's wipe the whole database
     mysql_wipe
@@ -2913,8 +2924,8 @@ mysql_ddns_conflict_resolution_mode_update_test() {
     qry="select count(*) from dhcp6_global_parameter where name='ddns-use-conflict-resolution';"
     run_statement "#get 6_global parameter count before update" "$qry" 2
 
-    # Upgrade to schema 20.0
-    mysql_upgrade_schema_to_version 20.0
+    # Upgrade to schema 21.0
+    mysql_upgrade_schema_to_version 21.0
 
     # Verify we converted parameters correctly.
     qry="select count(*) from dhcp4_global_parameter where name='ddns-conflict-resolution-mode' and\
