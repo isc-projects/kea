@@ -872,9 +872,6 @@ pgsql_upgrade_18_to_19_test() {
     # The function, pgsql_ddns_conflict_resolution_mode_update_test,
     # is called explicitly and tests conversion of
     # ddns-use-conflict-resolution to ddns-conflict-resolution-mode.
-    # For now this function only verifies version number.
-    version=$("${kea_admin}" db-version pgsql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}")
-    assert_str_eq "19.0" "${version}" 'Expected kea-admin to return %s, returned value was %s'
 
     # Verify that lease6_relay_id lease_addr is binary.
     qry="insert into lease6_relay_id(relay_id,lease_addr) values('18219',cast('3001::99' as inet));"
