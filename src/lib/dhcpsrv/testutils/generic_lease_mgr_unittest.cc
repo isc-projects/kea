@@ -1397,6 +1397,71 @@ GenericLeaseMgrTest::testGetLeases6SubnetId() {
 }
 
 void
+GenericLeaseMgrTest::testGetLeases6SubnetIdPaged() {
+    // Get the leases to be used for the test.
+    vector<Lease6Ptr> leases = createLeases6();
+    // Put them in subnet 111 at the exception of the third.
+    for (size_t i = 0; i < leases.size(); ++i) {
+        if (i == 3) {
+            continue;
+        }
+        leases[i]->subnet_id_ = 111;
+    }
+    // Add them to the database.
+    for (size_t i = 0; i < leases.size(); ++i) {
+        EXPECT_TRUE(lmptr_->addLease(leases[i]));
+    }
+
+    // Code copied from testGetLeases6Paged.
+    Lease6Collection all_leases;
+
+    IOAddress last_address = IOAddress::IPV6_ZERO_ADDRESS();
+    for (auto i = 0; i < 4; ++i) {
+        Lease6Collection page = lmptr_->getLeases6(111, last_address,
+                                                   LeasePageSize(3));
+
+        // Collect leases in a common structure.
+        for (Lease6Ptr lease : page) {
+            all_leases.push_back(lease);
+        }
+
+        // Empty page means there are no more leases.
+        if (page.empty()) {
+            break;
+        } else {
+            // Record last returned address because it is going to be used
+            // as an argument for the next call.
+            last_address = page[page.size() - 1]->addr_;
+        }
+    }
+
+    // Make sure that we got exactly the expected number of leases.
+    EXPECT_EQ(leases.size(), all_leases.size() + 1);
+
+    // Make sure that all leases that we stored in the lease database
+    // have been retrieved at the exception of the third.
+    for (Lease6Ptr lease : leases) {
+        if (lease == leases[3]) {
+            continue;
+        }
+        bool found = false;
+        for (Lease6Ptr returned_lease : all_leases) {
+            if (lease->addr_ == returned_lease->addr_) {
+                found = true;
+                break;
+            }
+        }
+        EXPECT_TRUE(found) << "lease for address " << lease->addr_.toText()
+            << " was not returned in any of the pages";
+    }
+
+    // Only IPv6 address can be used.
+    EXPECT_THROW(lmptr_->getLeases6(111, IOAddress("192.0.2.0"),
+                                    LeasePageSize(3)),
+                 InvalidAddressFamily);
+}
+
+void
 GenericLeaseMgrTest::testGetLeases6Hostname() {
     // Get the leases to be used for the test and add to the database.
     vector<Lease6Ptr> leases = createLeases6();

@@ -264,6 +264,10 @@ public:
     /// @brief Test method which returns all IPv6 leases for Subnet ID.
     void testGetLeases6SubnetId();
 
+    /// @brief Test method which returns all IPv6 leases for Subnet ID
+    /// with paging.
+    void testGetLeases6SubnetIdPaged();
+
     /// @brief Test method which returns all IPv6 leases for Hostname.
     void testGetLeases6Hostname();
 

@@ -1103,6 +1103,21 @@ TEST_F(MemfileLeaseMgrTest, getLeases6SubnetIdMultiThread) {
     testGetLeases6SubnetId();
 }
 
+/// @brief This test checks that all IPv6 leases for a specified subnet id
+/// with paging are returned.
+TEST_F(MemfileLeaseMgrTest, getLeases6SubnetIdPaged) {
+    startBackend(V6);
+    testGetLeases6SubnetIdPaged();
+}
+
+/// @brief This test checks that all IPv6 leases for a specified subnet id
+/// with paging are returned.
+TEST_F(MemfileLeaseMgrTest, getLeases6SubnetIdPagedMultiThread) {
+    startBackend(V6);
+    MultiThreadingMgr::instance().setMode(true);
+    testGetLeases6SubnetIdPaged();
+}
+
 /// @brief This test checks that all IPv6 leases with a specified hostname are returned.
 TEST_F(MemfileLeaseMgrTest, getLeases6Hostname) {
     startBackend(V6);

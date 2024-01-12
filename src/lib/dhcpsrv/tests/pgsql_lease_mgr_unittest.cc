@@ -501,6 +501,19 @@ TEST_F(PgSqlLeaseMgrTest, getLeases6SubnetIdMultiThreading) {
     testGetLeases6SubnetId();
 }
 
+/// @brief This test checks that all IPv6 leases for a specified subnet id
+/// with paging are returned.
+TEST_F(PgSqlLeaseMgrTest, getLeases6SubnetIdPaged) {
+    testGetLeases6SubnetIdPaged();
+}
+
+/// @brief This test checks that all IPv6 leases for a specified subnet id
+/// with paging are returned.
+TEST_F(PgSqlLeaseMgrTest, getLeases6SubnetIdPagedMultiThreading) {
+    MultiThreadingTest mt(true);
+    testGetLeases6SubnetIdPaged();
+}
+
 /// @brief This test checks that all IPv6 leases with a specified hostname are returned.
 TEST_F(PgSqlLeaseMgrTest, getLeases6Hostname) {
     testGetLeases6Hostname();
