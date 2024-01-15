@@ -225,9 +225,9 @@ OptionClasslessStaticRoute::parseConfigData(const std::string& config_txt) {
         try {
             subnet_addr = IOAddress(txt_subnet_addr);
             if (!subnet_addr.isV4()) {
-                isc_throw(IOError, "This is not IPv4 address.");
+                isc_throw(BadValue, "This is not IPv4 address.");
             }
-        } catch (const IOError& e) {
+        } catch (const std::exception& e) {
             isc_throw(BadValue, "DHCPv4 OptionClasslessStaticRoute "
                                     << type_ << " has invalid value, provided subnet_addr "
                                     << txt_subnet_addr << " is not a valid IPv4 address. "
@@ -255,9 +255,9 @@ OptionClasslessStaticRoute::parseConfigData(const std::string& config_txt) {
         try {
             router_addr = IOAddress(txt_router);
             if (!router_addr.isV4()) {
-                isc_throw(IOError, "This is not IPv4 address.");
+                isc_throw(BadValue, "This is not IPv4 address.");
             }
-        } catch (const IOError& e) {
+        } catch (const std::exception& e) {
             isc_throw(BadValue, "DHCPv4 OptionClasslessStaticRoute "
                                     << type_ << " has invalid value, provided router address "
                                     << txt_router << " is not a valid IPv4 address. "

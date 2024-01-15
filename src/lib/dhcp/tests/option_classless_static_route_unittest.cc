@@ -46,6 +46,9 @@ TEST(OptionClasslessStaticRouteTest, bufferFromStrCtorWithOneRoute) {
 // 3 static routes are defined.
 TEST(OptionClasslessStaticRouteTest, bufferFromStrCtorWithMoreRoutes) {
     // Prepare data to decode - 3 static routes
+    // White space added/missing inconsistency is on purpose,
+    // it simulates real user typing inconsistent config.
+    // Trimming spaces in config is tested as well.
     const std::string config = "0.0.0.0/0 - 10.17.0.1,10.229.0.128/25-10.229.0.1, "
                                "10.27.129.0/24 - 10.27.129.1";
     OptionBuffer buf;
