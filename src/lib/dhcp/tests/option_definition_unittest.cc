@@ -2106,13 +2106,14 @@ TEST_F(OptionDefinitionTest, tuple6ArrayTokenized) {
     EXPECT_EQ("world", tuple2.getText());
 }
 
-// The purpose of this test is to verify creation of OPT_CUSTOM_TYPE option
+// The purpose of this test is to verify creation of OPT_INTERNAL_TYPE option
 // definition. OptionFactory is used which takes vector of string values as
-// data for the option. This is special case for OPT_CUSTOM_TYPE because it means
-// that custom data is provided in string values. Custom parsing is verified in this test.
-TEST_F(OptionDefinitionTest, customOptionTypeString) {
+// data for the option. This is special case for OPT_INTERNAL_TYPE because it means
+// that convenient notation option config is provided as string that needs special parsing.
+// Custom parsing is verified in this test.
+TEST_F(OptionDefinitionTest, internalOptionTypeString) {
     OptionDefinition opt_def("classless-static-route", DHO_CLASSLESS_STATIC_ROUTE,
-                             DHCP4_OPTION_SPACE, "custom", false);
+                             DHCP4_OPTION_SPACE, "internal", false);
 
     OptionPtr option;
 
@@ -2148,12 +2149,12 @@ TEST_F(OptionDefinitionTest, customOptionTypeString) {
               option_cast->toText());
 }
 
-// The purpose of this test is to verify creation of OPT_CUSTOM_TYPE option
+// The purpose of this test is to verify creation of OPT_INTERNAL_TYPE option
 // definition. OptionFactory is used which takes OptionBuffer as
 // data for the option. Binary data unpack is verified in this test.
-TEST_F(OptionDefinitionTest, customOptionTypeBinary) {
+TEST_F(OptionDefinitionTest, internalOptionTypeBinary) {
     OptionDefinition opt_def("classless-static-route", DHO_CLASSLESS_STATIC_ROUTE,
-                             DHCP4_OPTION_SPACE, "custom", false);
+                             DHCP4_OPTION_SPACE, "internal", false);
 
     OptionPtr option;
 

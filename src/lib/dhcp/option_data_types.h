@@ -59,7 +59,8 @@ enum OptionDataType {
     OPT_STRING_TYPE,
     OPT_TUPLE_TYPE,
     OPT_FQDN_TYPE,
-    OPT_CUSTOM_TYPE,
+    // Type to be used only internally. Allows convenient notation of the option config.
+    OPT_INTERNAL_TYPE,
     OPT_RECORD_TYPE,
     OPT_UNKNOWN_TYPE
 };

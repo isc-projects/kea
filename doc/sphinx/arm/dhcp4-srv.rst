@@ -2022,7 +2022,7 @@ types are given in :ref:`dhcp-types`.
    +----------------------------------------+------+---------------------------+-------------+-------------+
    | domain-search                          | 119  | fqdn                      | true        | false       |
    +----------------------------------------+------+---------------------------+-------------+-------------+
-   | classless-static-route                 | 121  | custom                    | false       | false       |
+   | classless-static-route                 | 121  | internal                  | false       | false       |
    +----------------------------------------+------+---------------------------+-------------+-------------+
    | vivco-suboptions                       | 124  | record (uint32, binary)   | false       | false       |
    +----------------------------------------+------+---------------------------+-------------+-------------+
@@ -2120,10 +2120,6 @@ what values are accepted for them.
    +-----------------+-------------------------------------------------------+
    | boolean         | A boolean value with allowed                          |
    |                 | values true or false.                                 |
-   +-----------------+-------------------------------------------------------+
-   | custom          | A custom value which is intended to be used only      |
-   |                 | internally. It is meant for options which provide     |
-   |                 | custom configuration syntax for users convenience.    |
    +-----------------+-------------------------------------------------------+
    | empty           | No value; data is carried in                          |
    |                 | sub-options.                                          |

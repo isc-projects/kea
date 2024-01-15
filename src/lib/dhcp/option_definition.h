@@ -433,10 +433,10 @@ public:
     /// @param type option type.
     /// @param begin beginning of the option buffer.
     /// @param end end of the option buffer.
-    /// @param convenient_format flag which indicates that the buffer contains option data
-    ///                          as a string formatted in user-friendly, convenient way.
-    ///                          The flag is propagated to the option constructor, so that
-    ///                          the data could be parsed properly. Defaults to false.
+    /// @param convenient_notation flag which indicates that the buffer contains option data
+    ///                            as a string formatted in user-friendly, convenient way.
+    ///                            The flag is propagated to the option constructor, so that
+    ///                            the data could be parsed properly. Defaults to false.
     ///
     /// @return instance of the DHCP option.
     /// @throw InvalidOptionValue if data for the option is invalid.
@@ -444,7 +444,7 @@ public:
                             uint16_t type,
                             OptionBufferConstIter begin,
                             OptionBufferConstIter end,
-                            bool convenient_format = false) const;
+                            bool convenient_notation = false) const;
 
     /// @brief Option factory.
     ///
@@ -676,10 +676,10 @@ private:
     /// @param u A universe (V4 or V6).
     /// @param begin beginning of the option buffer.
     /// @param end end of the option buffer.
-    /// @param convenient_format flag which indicates that the buffer contains option data
-    ///                          as a string formatted in user-friendly, convenient way.
-    ///                          The flag is propagated to the option constructor, so that
-    ///                          the data could be parsed properly. Defaults to false.
+    /// @param convenient_notation flag which indicates that the buffer contains option data
+    ///                            as a string formatted in user-friendly, convenient way.
+    ///                            The flag is propagated to the option constructor, so that
+    ///                            the data could be parsed properly. Defaults to false.
     ///
     /// @return An instance of the option having special format or NULL if
     /// such an option can't be created because an option with the given
@@ -687,7 +687,7 @@ private:
     OptionPtr factorySpecialFormatOption(Option::Universe u,
                                          OptionBufferConstIter begin,
                                          OptionBufferConstIter end,
-                                         bool convenient_format = false) const;
+                                         bool convenient_notation = false) const;
 
     /// @brief Check if specified type matches option definition type.
     ///

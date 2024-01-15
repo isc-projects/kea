@@ -187,7 +187,7 @@ OptionDefinition::optionFactory(Option::Universe u,
                                 uint16_t type,
                                 OptionBufferConstIter begin,
                                 OptionBufferConstIter end,
-                                bool convenient_format) const {
+                                bool convenient_notation) const {
 
     try {
         // Some of the options are represented by the specialized classes derived
@@ -196,7 +196,7 @@ OptionDefinition::optionFactory(Option::Universe u,
         // type to be returned. Therefore, we first check that if we are dealing
         // with such an option. If the instance is returned we just exit at this
         // point. If not, we will search for a generic option type to return.
-        OptionPtr option = factorySpecialFormatOption(u, begin, end, convenient_format);
+        OptionPtr option = factorySpecialFormatOption(u, begin, end, convenient_notation);
         if (option) {
             return (option);
         }
@@ -210,9 +210,9 @@ OptionDefinition::optionFactory(Option::Universe u,
             }
 
         case OPT_BINARY_TYPE:
-        // If this is Custom type, and it wasn't handled by factorySpecialFormatOption() before,
+        // If this is Internal type, and it wasn't handled by factorySpecialFormatOption() before,
         // let's treat it like normal Binary type.
-        case OPT_CUSTOM_TYPE:
+        case OPT_INTERNAL_TYPE:
             return (factoryGeneric(u, type, begin, end));
 
         case OPT_UINT8_TYPE:
@@ -312,10 +312,11 @@ OptionDefinition::optionFactory(Option::Universe u, uint16_t type,
             if (type_ != OPT_EMPTY_TYPE) {
                 isc_throw(InvalidOptionValue, "no option value specified");
             }
-        } else if (type_ == OPT_CUSTOM_TYPE) {
-            // If Custom type is used together with csv-format=true, let's treat it
-            // like String type. optionFactory() will be called with custom_data flag set to true,
-            // so that the factory will have a chance to handle it in a custom way.
+        } else if (type_ == OPT_INTERNAL_TYPE) {
+            // If an Option of type Internal is configured using csv-format=true, it means it is
+            // convenient notation option config that needs special parsing. Let's treat it like
+            // String type. optionFactory() will be called with convenient_notation flag set to
+            // true, so that the factory will have a chance to handle it in a special way.
             writeToBuffer(u, boost::algorithm::join(values, ","), OPT_STRING_TYPE, buf);
         } else {
             writeToBuffer(u, util::str::trim(values[0]), type_, buf);
@@ -341,7 +342,7 @@ OptionDefinition::optionFactory(Option::Universe u, uint16_t type,
             }
         }
     }
-    return (optionFactory(u, type, buf.begin(), buf.end(), (type_ == OPT_CUSTOM_TYPE)));
+    return (optionFactory(u, type, buf.begin(), buf.end(), (type_ == OPT_INTERNAL_TYPE)));
 }
 
 void
@@ -413,9 +414,9 @@ OptionDefinition::validate() const {
                             << " an option record.";
                     break;
                 }
-                // Custom type is not allowed within a record.
-                if (*it == OPT_CUSTOM_TYPE) {
-                    err_str << "custom data type can't be stored as a field in"
+                // Internal type is not allowed within a record.
+                if (*it == OPT_INTERNAL_TYPE) {
+                    err_str << "internal data type can't be stored as a field in"
                             << " an option record.";
                     break;
                 }
@@ -448,8 +449,8 @@ OptionDefinition::validate() const {
             err_str << "array of empty value is not"
                     << " a valid option definition.";
 
-        } else if (type_ == OPT_CUSTOM_TYPE) {
-            err_str << "array of custom type value is not"
+        } else if (type_ == OPT_INTERNAL_TYPE) {
+            err_str << "array of internal type value is not"
                     << " a valid option definition.";
 
         }
@@ -846,7 +847,7 @@ OptionPtr
 OptionDefinition::factorySpecialFormatOption(Option::Universe u,
                                              OptionBufferConstIter begin,
                                              OptionBufferConstIter end,
-                                             bool convenient_format) const {
+                                             bool convenient_notation) const {
     if ((u == Option::V6) && haveSpace(DHCP6_OPTION_SPACE)) {
         switch (getCode()) {
         case D6O_IA_NA:
@@ -908,7 +909,7 @@ OptionDefinition::factorySpecialFormatOption(Option::Universe u,
             return (OptionPtr(new Option4ClientFqdn(begin, end)));
 
         case DHO_CLASSLESS_STATIC_ROUTE:
-            return (OptionPtr(new OptionClasslessStaticRoute(begin, end, convenient_format)));
+            return (OptionPtr(new OptionClasslessStaticRoute(begin, end, convenient_notation)));
 
         case DHO_VIVCO_SUBOPTIONS:
             // Record of uint32 followed by binary.

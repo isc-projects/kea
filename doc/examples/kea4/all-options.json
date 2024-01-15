@@ -1318,7 +1318,7 @@
       Router 1...N          The IP address of the router that should
                             be used to reach that destination.
       */
-      // Type: custom
+      // Type: internal
       {
         "code": 121,
         // please mind the convenience notation used:
