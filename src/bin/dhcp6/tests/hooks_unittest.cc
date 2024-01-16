@@ -1745,7 +1745,9 @@ TEST_F(HooksDhcpv6SrvTest, subnet6SelectSimple) {
     AllocEngine::ClientContext6 ctx;
     bool drop = !srv_->earlyGHRLookup(sol, ctx);
     ASSERT_FALSE(drop);
-    srv_->initContext(sol, ctx, drop);
+    Subnet6Ptr subnet = srv_->selectSubnet(sol, drop);
+    ASSERT_FALSE(drop);
+    srv_->initContext(subnet, sol, ctx, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr adv = srv_->processSolicit(ctx);
 
@@ -1834,7 +1836,9 @@ TEST_F(HooksDhcpv6SrvTest, subnet6SelectChange) {
     AllocEngine::ClientContext6 ctx;
     bool drop = !srv_->earlyGHRLookup(sol, ctx);
     ASSERT_FALSE(drop);
-    srv_->initContext(sol, ctx, drop);
+    Subnet6Ptr subnet = srv_->selectSubnet(sol, drop);
+    ASSERT_FALSE(drop);
+    srv_->initContext(subnet, sol, ctx, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr adv = srv_->processSolicit(ctx);
 
@@ -1859,10 +1863,10 @@ TEST_F(HooksDhcpv6SrvTest, subnet6SelectChange) {
 
     // Advertised address must belong to the second pool (in subnet's range,
     // in dynamic pool)
-    auto subnet = subnets->begin();
-    ++subnet;
-    EXPECT_TRUE((*subnet)->inRange(addr_opt->getAddress()));
-    EXPECT_TRUE((*subnet)->inPool(Lease::TYPE_NA, addr_opt->getAddress()));
+    auto subnet6 = subnets->begin();
+    ++subnet6;
+    EXPECT_TRUE((*subnet6)->inRange(addr_opt->getAddress()));
+    EXPECT_TRUE((*subnet6)->inPool(Lease::TYPE_NA, addr_opt->getAddress()));
 
     // Check if the callout handle state was reset after the callout.
     checkCalloutHandleReset(sol);
@@ -5391,7 +5395,9 @@ TEST_F(HooksDhcpv6SrvTest, host6Identifier) {
     AllocEngine::ClientContext6 ctx;
     bool drop = !srv_->earlyGHRLookup(sol, ctx);
     ASSERT_FALSE(drop);
-    srv_->initContext(sol, ctx, drop);
+    Subnet6Ptr subnet = srv_->selectSubnet(sol, drop);
+    ASSERT_FALSE(drop);
+    srv_->initContext(subnet, sol, ctx, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr adv = srv_->processSolicit(ctx);
 
@@ -5475,7 +5481,9 @@ TEST_F(HooksDhcpv6SrvTest, host6IdentifierHWAddr) {
     AllocEngine::ClientContext6 ctx;
     bool drop = !srv_->earlyGHRLookup(sol, ctx);
     ASSERT_FALSE(drop);
-    srv_->initContext(sol, ctx, drop);
+    Subnet6Ptr subnet = srv_->selectSubnet(sol, drop);
+    ASSERT_FALSE(drop);
+    srv_->initContext(subnet, sol, ctx, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr adv = srv_->processSolicit(ctx);
 

@@ -215,7 +215,14 @@ public:
     Pkt6Ptr processSolicit(const Pkt6Ptr& solicit) {
         AllocEngine::ClientContext6 ctx;
         bool drop = !earlyGHRLookup(solicit, ctx);
-        initContext(solicit, ctx, drop);
+        if (drop) {
+            return (Pkt6Ptr());
+        }
+        Subnet6Ptr subnet = selectSubnet(solicit, drop);
+        if (drop) {
+            return (Pkt6Ptr());
+        }
+        initContext(subnet, solicit, ctx, drop);
         if (drop) {
             return (Pkt6Ptr());
         }
@@ -229,7 +236,14 @@ public:
     Pkt6Ptr processRequest(const Pkt6Ptr& request) {
         AllocEngine::ClientContext6 ctx;
         bool drop = !earlyGHRLookup(request, ctx);
-        initContext(request, ctx, drop);
+        if (drop) {
+            return (Pkt6Ptr());
+        }
+        Subnet6Ptr subnet = selectSubnet(request, drop);
+        if (drop) {
+            return (Pkt6Ptr());
+        }
+        initContext(subnet, request, ctx, drop);
         if (drop) {
             return (Pkt6Ptr());
         }
@@ -243,7 +257,14 @@ public:
     Pkt6Ptr processRenew(const Pkt6Ptr& renew) {
         AllocEngine::ClientContext6 ctx;
         bool drop = !earlyGHRLookup(renew, ctx);
-        initContext(renew, ctx, drop);
+        if (drop) {
+            return (Pkt6Ptr());
+        }
+        Subnet6Ptr subnet = selectSubnet(renew, drop);
+        if (drop) {
+            return (Pkt6Ptr());
+        }
+        initContext(subnet, renew, ctx, drop);
         if (drop) {
             return (Pkt6Ptr());
         }
@@ -257,7 +278,14 @@ public:
     Pkt6Ptr processRebind(const Pkt6Ptr& rebind) {
         AllocEngine::ClientContext6 ctx;
         bool drop = !earlyGHRLookup(rebind, ctx);
-        initContext(rebind, ctx, drop);
+        if (drop) {
+            return (Pkt6Ptr());
+        }
+        Subnet6Ptr subnet = selectSubnet(rebind, drop);
+        if (drop) {
+            return (Pkt6Ptr());
+        }
+        initContext(subnet, rebind, ctx, drop);
         if (drop) {
             return (Pkt6Ptr());
         }
@@ -271,7 +299,14 @@ public:
     Pkt6Ptr processRelease(const Pkt6Ptr& release) {
         AllocEngine::ClientContext6 ctx;
         bool drop = !earlyGHRLookup(release, ctx);
-        initContext(release, ctx, drop);
+        if (drop) {
+            return (Pkt6Ptr());
+        }
+        Subnet6Ptr subnet = selectSubnet(release, drop);
+        if (drop) {
+            return (Pkt6Ptr());
+        }
+        initContext(subnet, release, ctx, drop);
         if (drop) {
             return (Pkt6Ptr());
         }
@@ -285,7 +320,14 @@ public:
     Pkt6Ptr processDecline(const Pkt6Ptr& decline) {
         AllocEngine::ClientContext6 ctx;
         bool drop = !earlyGHRLookup(decline, ctx);
-        initContext(decline, ctx, drop);
+        if (drop) {
+            return (Pkt6Ptr());
+        }
+        Subnet6Ptr subnet = selectSubnet(decline, drop);
+        if (drop) {
+            return (Pkt6Ptr());
+        }
+        initContext(subnet, decline, ctx, drop);
         if (drop) {
             return (Pkt6Ptr());
         }

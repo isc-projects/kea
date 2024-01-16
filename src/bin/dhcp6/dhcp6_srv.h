@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -155,7 +155,7 @@ public:
     /// methods, generates appropriate answer, sends the answer to the client.
     ///
     /// @param query A pointer to the packet to be processed.
-    void processPacketAndSendResponse(Pkt6Ptr& query);
+    void processPacketAndSendResponse(Pkt6Ptr query);
 
     /// @brief Process a single incoming DHCPv6 packet and sends the response.
     ///
@@ -163,7 +163,7 @@ public:
     /// methods, generates appropriate answer, sends the answer to the client.
     ///
     /// @param query A pointer to the packet to be processed.
-    void processPacketAndSendResponseNoThrow(Pkt6Ptr& query);
+    void processPacketAndSendResponseNoThrow(Pkt6Ptr query);
 
     /// @brief Process an unparked DHCPv6 packet and sends the response.
     ///
@@ -171,7 +171,7 @@ public:
     /// @param query A pointer to the packet to be processed.
     /// @param rsp A pointer to the response.
     void sendResponseNoThrow(hooks::CalloutHandlePtr& callout_handle,
-                             Pkt6Ptr& query, Pkt6Ptr& rsp);
+                             Pkt6Ptr query, Pkt6Ptr& rsp);
 
     /// @brief Process a single incoming DHCPv6 packet.
     ///
@@ -179,16 +179,16 @@ public:
     /// methods, generates appropriate answer.
     ///
     /// @param query A pointer to the packet to be processed.
-    /// @param rsp A pointer to the response.
-    void processPacket(Pkt6Ptr& query, Pkt6Ptr& rsp);
+    /// @return A pointer to the response.
+    Pkt6Ptr processPacket(Pkt6Ptr query);
 
     /// @brief Process a single incoming DHCPv6 query.
     ///
     /// It calls per-type processXXX methods, generates appropriate answer.
     ///
     /// @param query A pointer to the packet to be processed.
-    /// @param rsp A pointer to the response.
-    void processDhcp6Query(Pkt6Ptr& query, Pkt6Ptr& rsp);
+    /// @return A pointer to the response.
+    Pkt6Ptr processDhcp6Query(Pkt6Ptr query);
 
     /// @brief Process a single incoming DHCPv6 query.
     ///
@@ -196,8 +196,7 @@ public:
     /// sends the answer to the client.
     ///
     /// @param query A pointer to the packet to be processed.
-    /// @param rsp A pointer to the response.
-    void processDhcp6QueryAndSendResponse(Pkt6Ptr& query, Pkt6Ptr& rsp);
+    void processDhcp6QueryAndSendResponse(Pkt6Ptr query);
 
     /// @brief Instructs the server to shut down.
     void shutdown() override;
@@ -905,7 +904,6 @@ protected:
     /// @brief Initializes client context for specified packet
     ///
     /// This method:
-    /// - Performs the subnet selection and stores the result in context
     /// - Extracts the duid from the packet and saves it to the context
     /// - Extracts the hardware address from the packet and saves it to
     /// the context
@@ -919,10 +917,12 @@ protected:
     /// the Rapid Commit option was included and that the server respects
     /// it.
     ///
+    /// @param subnet Selected subnet.
     /// @param pkt pointer to a packet for which context will be created.
     /// @param [out] ctx reference to context object to be initialized.
     /// @param [out] drop if it is true the packet will be dropped.
-    void initContext(const Pkt6Ptr& pkt,
+    void initContext(const Subnet6Ptr& subnet,
+                     const Pkt6Ptr& pkt,
                      AllocEngine::ClientContext6& ctx,
                      bool& drop);
 

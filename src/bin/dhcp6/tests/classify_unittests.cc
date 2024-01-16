@@ -657,19 +657,25 @@ TEST_F(ClassifyTest, matchClassification) {
     AllocEngine::ClientContext6 ctx1;
     bool drop = !srv.earlyGHRLookup(query1, ctx1);
     ASSERT_FALSE(drop);
-    srv.initContext(query1, ctx1, drop);
+    Subnet6Ptr subnet = srv_.selectSubnet(query1, drop);
+    ASSERT_FALSE(drop);
+    srv.initContext(subnet, query1, ctx1, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr response1 = srv.processSolicit(ctx1);
     AllocEngine::ClientContext6 ctx2;
     drop = !srv.earlyGHRLookup(query2, ctx2);
     ASSERT_FALSE(drop);
-    srv.initContext(query2, ctx2, drop);
+    subnet = srv_.selectSubnet(query2, drop);
+    ASSERT_FALSE(drop);
+    srv.initContext(subnet, query2, ctx2, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr response2 = srv.processSolicit(ctx2);
     AllocEngine::ClientContext6 ctx3;
     drop = !srv.earlyGHRLookup(query3, ctx3);
     ASSERT_FALSE(drop);
-    srv.initContext(query3, ctx3, drop);
+    subnet = srv_.selectSubnet(query3, drop);
+    ASSERT_FALSE(drop);
+    srv.initContext(subnet, query3, ctx3, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr response3 = srv.processSolicit(ctx3);
 
@@ -769,19 +775,25 @@ TEST_F(ClassifyTest, required) {
     AllocEngine::ClientContext6 ctx1;
     bool drop = !srv.earlyGHRLookup(query1, ctx1);
     ASSERT_FALSE(drop);
-    srv.initContext(query1, ctx1, drop);
+    Subnet6Ptr subnet = srv_.selectSubnet(query1, drop);
+    ASSERT_FALSE(drop);
+    srv.initContext(subnet, query1, ctx1, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr response1 = srv.processSolicit(ctx1);
     AllocEngine::ClientContext6 ctx2;
     drop = !srv.earlyGHRLookup(query2, ctx2);
     ASSERT_FALSE(drop);
-    srv.initContext(query2, ctx2, drop);
+    subnet = srv_.selectSubnet(query2, drop);
+    ASSERT_FALSE(drop);
+    srv.initContext(subnet, query2, ctx2, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr response2 = srv.processSolicit(ctx2);
     AllocEngine::ClientContext6 ctx3;
     drop = !srv.earlyGHRLookup(query3, ctx3);
     ASSERT_FALSE(drop);
-    srv.initContext(query3, ctx3, drop);
+    subnet = srv_.selectSubnet(query3, drop);
+    ASSERT_FALSE(drop);
+    srv.initContext(subnet, query3, ctx3, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr response3 = srv.processSolicit(ctx3);
 
@@ -878,19 +890,25 @@ TEST_F(ClassifyTest, requiredClassification) {
     AllocEngine::ClientContext6 ctx1;
     bool drop = !srv.earlyGHRLookup(query1, ctx1);
     ASSERT_FALSE(drop);
-    srv.initContext(query1, ctx1, drop);
+    Subnet6Ptr subnet = srv_.selectSubnet(query1, drop);
+    ASSERT_FALSE(drop);
+    srv.initContext(subnet, query1, ctx1, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr response1 = srv.processSolicit(ctx1);
     AllocEngine::ClientContext6 ctx2;
     drop = !srv.earlyGHRLookup(query2, ctx2);
     ASSERT_FALSE(drop);
-    srv.initContext(query2, ctx2, drop);
+    subnet = srv_.selectSubnet(query2, drop);
+    ASSERT_FALSE(drop);
+    srv.initContext(subnet, query2, ctx2, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr response2 = srv.processSolicit(ctx2);
     AllocEngine::ClientContext6 ctx3;
     drop = !srv.earlyGHRLookup(query3, ctx3);
     ASSERT_FALSE(drop);
-    srv.initContext(query3, ctx3, drop);
+    subnet = srv_.selectSubnet(query3, drop);
+    ASSERT_FALSE(drop);
+    srv.initContext(subnet, query3, ctx3, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr response3 = srv.processSolicit(ctx3);
 
@@ -970,7 +988,9 @@ TEST_F(ClassifyTest, subnetClassPriority) {
     AllocEngine::ClientContext6 ctx;
     bool drop = !srv.earlyGHRLookup(query, ctx);
     ASSERT_FALSE(drop);
-    srv.initContext(query, ctx,  drop);
+    Subnet6Ptr subnet = srv_.selectSubnet(query, drop);
+    ASSERT_FALSE(drop);
+    srv.initContext(subnet, query, ctx,  drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr response = srv.processSolicit(ctx);
 
@@ -1037,7 +1057,9 @@ TEST_F(ClassifyTest, subnetGlobalPriority) {
     AllocEngine::ClientContext6 ctx;
     bool drop = !srv.earlyGHRLookup(query, ctx);
     ASSERT_FALSE(drop);
-    srv.initContext(query, ctx,  drop);
+    Subnet6Ptr subnet = srv_.selectSubnet(query, drop);
+    ASSERT_FALSE(drop);
+    srv.initContext(subnet, query, ctx,  drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr response = srv.processSolicit(ctx);
 
@@ -1113,7 +1135,9 @@ TEST_F(ClassifyTest, classGlobalPriority) {
     AllocEngine::ClientContext6 ctx;
     bool drop = !srv.earlyGHRLookup(query, ctx);
     ASSERT_FALSE(drop);
-    srv.initContext(query, ctx,  drop);
+    Subnet6Ptr subnet = srv_.selectSubnet(query, drop);
+    ASSERT_FALSE(drop);
+    srv.initContext(subnet, query, ctx,  drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr response = srv.processSolicit(ctx);
 
@@ -1184,7 +1208,9 @@ TEST_F(ClassifyTest, classGlobalPersistency) {
     AllocEngine::ClientContext6 ctx;
     bool drop = !srv.earlyGHRLookup(query, ctx);
     ASSERT_FALSE(drop);
-    srv.initContext(query, ctx,  drop);
+    Subnet6Ptr subnet = srv_.selectSubnet(query, drop);
+    ASSERT_FALSE(drop);
+    srv.initContext(subnet, query, ctx,  drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr response = srv.processSolicit(ctx);
 
@@ -1254,7 +1280,9 @@ TEST_F(ClassifyTest, classNeverSend) {
     AllocEngine::ClientContext6 ctx;
     bool drop = !srv.earlyGHRLookup(query, ctx);
     ASSERT_FALSE(drop);
-    srv.initContext(query, ctx,  drop);
+    Subnet6Ptr subnet = srv_.selectSubnet(query, drop);
+    ASSERT_FALSE(drop);
+    srv.initContext(subnet, query, ctx,  drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr response = srv.processSolicit(ctx);
 
@@ -1374,7 +1402,9 @@ TEST_F(ClassifyTest, clientClassifyPool) {
     AllocEngine::ClientContext6 ctx1;
     bool drop = !srv.earlyGHRLookup(query1, ctx1);
     ASSERT_FALSE(drop);
-    srv.initContext(query1, ctx1,  drop);
+    Subnet6Ptr subnet = srv_.selectSubnet(query1, drop);
+    ASSERT_FALSE(drop);
+    srv.initContext(subnet, query1, ctx1,  drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr response1 = srv.processSolicit(ctx1);
     ASSERT_TRUE(response1);
@@ -1390,7 +1420,9 @@ TEST_F(ClassifyTest, clientClassifyPool) {
     AllocEngine::ClientContext6 ctx2;
     drop = !srv.earlyGHRLookup(query2, ctx2);
     ASSERT_FALSE(drop);
-    srv.initContext(query2, ctx2,  drop);
+    subnet = srv_.selectSubnet(query2, drop);
+    ASSERT_FALSE(drop);
+    srv.initContext(subnet, query2, ctx2,  drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr response2 = srv.processSolicit(ctx2);
     ASSERT_TRUE(response2);
@@ -1406,7 +1438,9 @@ TEST_F(ClassifyTest, clientClassifyPool) {
     AllocEngine::ClientContext6 ctx3;
     drop = !srv.earlyGHRLookup(query3, ctx3);
     ASSERT_FALSE(drop);
-    srv.initContext(query3, ctx3,  drop);
+    subnet = srv_.selectSubnet(query3, drop);
+    ASSERT_FALSE(drop);
+    srv.initContext(subnet, query3, ctx3,  drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr response3 = srv.processSolicit(ctx3);
     ASSERT_TRUE(response3);
@@ -1464,7 +1498,9 @@ TEST_F(ClassifyTest, clientClassifyPoolKnown) {
     AllocEngine::ClientContext6 ctx1;
     bool drop = !srv.earlyGHRLookup(query1, ctx1);
     ASSERT_FALSE(drop);
-    srv.initContext(query1, ctx1, drop);
+    Subnet6Ptr subnet = srv_.selectSubnet(query1, drop);
+    ASSERT_FALSE(drop);
+    srv.initContext(subnet, query1, ctx1, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr response1 = srv.processSolicit(ctx1);
     ASSERT_TRUE(response1);
@@ -1494,7 +1530,9 @@ TEST_F(ClassifyTest, clientClassifyPoolKnown) {
     AllocEngine::ClientContext6 ctx2;
     drop = !srv.earlyGHRLookup(query2, ctx2);
     ASSERT_FALSE(drop);
-    srv.initContext(query2, ctx2, drop);
+    subnet = srv_.selectSubnet(query2, drop);
+    ASSERT_FALSE(drop);
+    srv.initContext(subnet, query2, ctx2, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr response2 = srv.processSolicit(ctx2);
     ASSERT_TRUE(response2);
@@ -1795,19 +1833,25 @@ TEST_F(ClassifyTest, member) {
     AllocEngine::ClientContext6 ctx1;
     bool drop = !srv.earlyGHRLookup(query1, ctx1);
     ASSERT_FALSE(drop);
-    srv.initContext(query1, ctx1, drop);
+    Subnet6Ptr subnet = srv_.selectSubnet(query1, drop);
+    ASSERT_FALSE(drop);
+    srv.initContext(subnet, query1, ctx1, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr response1 = srv.processSolicit(ctx1);
     AllocEngine::ClientContext6 ctx2;
     drop = !srv.earlyGHRLookup(query2, ctx2);
     ASSERT_FALSE(drop);
-    srv.initContext(query2, ctx2, drop);
+    subnet = srv_.selectSubnet(query2, drop);
+    ASSERT_FALSE(drop);
+    srv.initContext(subnet, query2, ctx2, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr response2 = srv.processSolicit(ctx2);
     AllocEngine::ClientContext6 ctx3;
     drop = !srv.earlyGHRLookup(query3, ctx3);
     ASSERT_FALSE(drop);
-    srv.initContext(query3, ctx3, drop);
+    subnet = srv_.selectSubnet(query3, drop);
+    ASSERT_FALSE(drop);
+    srv.initContext(subnet, query3, ctx3, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr response3 = srv.processSolicit(ctx3);
 

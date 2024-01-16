@@ -492,19 +492,15 @@ Dhcpv6Srv::earlyGHRLookup(const Pkt6Ptr& query,
 }
 
 void
-Dhcpv6Srv::initContext(const Pkt6Ptr& pkt,
+Dhcpv6Srv::initContext(const Subnet6Ptr& subnet,
+		       const Pkt6Ptr& pkt,
                        AllocEngine::ClientContext6& ctx,
                        bool& drop) {
-    ctx.subnet_ = selectSubnet(pkt, drop);
+    ctx.subnet_ = subnet;
     ctx.fwd_dns_update_ = false;
     ctx.rev_dns_update_ = false;
     ctx.hostname_ = "";
     ctx.callout_handle_ = getCalloutHandle(pkt);
-
-    if (drop) {
-        // Caller will immediately drop the packet so simply return now.
-        return;
-    }
 
     // Collect host identifiers if host reservations enabled. The identifiers
     // are stored in order of preference. The server will use them in that
@@ -703,7 +699,7 @@ Dhcpv6Srv::runOne() {
 }
 
 void
-Dhcpv6Srv::processPacketAndSendResponseNoThrow(Pkt6Ptr& query) {
+Dhcpv6Srv::processPacketAndSendResponseNoThrow(Pkt6Ptr query) {
     try {
         processPacketAndSendResponse(query);
     } catch (const std::exception& e) {
@@ -715,9 +711,8 @@ Dhcpv6Srv::processPacketAndSendResponseNoThrow(Pkt6Ptr& query) {
 }
 
 void
-Dhcpv6Srv::processPacketAndSendResponse(Pkt6Ptr& query) {
-    Pkt6Ptr rsp;
-    processPacket(query, rsp);
+Dhcpv6Srv::processPacketAndSendResponse(Pkt6Ptr query) {
+    Pkt6Ptr rsp = processPacket(query);
     if (!rsp) {
         return;
     }
@@ -726,8 +721,8 @@ Dhcpv6Srv::processPacketAndSendResponse(Pkt6Ptr& query) {
     processPacketBufferSend(callout_handle, rsp);
 }
 
-void
-Dhcpv6Srv::processPacket(Pkt6Ptr& query, Pkt6Ptr& rsp) {
+Pkt6Ptr
+Dhcpv6Srv::processPacket(Pkt6Ptr query) {
     // All packets belong to ALL.
     query->addClass("ALL");
 
@@ -777,10 +772,14 @@ Dhcpv6Srv::processPacket(Pkt6Ptr& query, Pkt6Ptr& rsp) {
             // Increase the statistic of dropped packets.
             StatsMgr::instance().addValue("pkt6-receive-drop",
                                           static_cast<int64_t>(1));
-            return;
+            return (Pkt6Ptr());
         }
 
         callout_handle->getArgument("query6", query);
+        if (!query) {
+            // Please use the status instead of resetting query!
+            return (Pkt6Ptr());
+        }
     }
 
     // Unpack the packet information unless the buffer6_receive callouts
@@ -812,7 +811,7 @@ Dhcpv6Srv::processPacket(Pkt6Ptr& query, Pkt6Ptr& rsp) {
                                           static_cast<int64_t>(1));
             StatsMgr::instance().addValue("pkt6-receive-drop",
                                           static_cast<int64_t>(1));
-            return;
+            return (Pkt6Ptr());
         }
     }
 
@@ -829,7 +828,7 @@ Dhcpv6Srv::processPacket(Pkt6Ptr& query, Pkt6Ptr& rsp) {
 
         // Increase the statistic of dropped packets.
         StatsMgr::instance().addValue("pkt6-receive-drop", static_cast<int64_t>(1));
-        return;
+        return (Pkt6Ptr());
     }
 
     // Check if the received query has been sent to unicast or multicast.
@@ -839,7 +838,7 @@ Dhcpv6Srv::processPacket(Pkt6Ptr& query, Pkt6Ptr& rsp) {
 
         // Increase the statistic of dropped packets.
         StatsMgr::instance().addValue("pkt6-receive-drop", static_cast<int64_t>(1));
-        return;
+        return (Pkt6Ptr());
     }
 
     // Assign this packet to a class, if possible
@@ -887,15 +886,19 @@ Dhcpv6Srv::processPacket(Pkt6Ptr& query, Pkt6Ptr& rsp) {
             // Increase the statistic of dropped packets.
             StatsMgr::instance().addValue("pkt6-receive-drop",
                                           static_cast<int64_t>(1));
-            return;
+            return (Pkt6Ptr());
         }
 
         callout_handle->getArgument("query6", query);
+        if (!query) {
+            // Please use the status instead of resetting query!
+            return (Pkt6Ptr());
+        }
     }
 
     // Reject the message if it doesn't pass the sanity check.
     if (!sanityCheck(query)) {
-        return;
+        return (Pkt6Ptr());
     }
 
     // Check the DROP special class.
@@ -905,16 +908,16 @@ Dhcpv6Srv::processPacket(Pkt6Ptr& query, Pkt6Ptr& rsp) {
             .arg(query->toText());
         StatsMgr::instance().addValue("pkt6-receive-drop",
                                       static_cast<int64_t>(1));
-        return;
+        return (Pkt6Ptr());
     }
 
-    processDhcp6Query(query, rsp);
+    return (processDhcp6Query(query));
 }
 
 void
-Dhcpv6Srv::processDhcp6QueryAndSendResponse(Pkt6Ptr& query, Pkt6Ptr& rsp) {
+Dhcpv6Srv::processDhcp6QueryAndSendResponse(Pkt6Ptr query) {
     try {
-        processDhcp6Query(query, rsp);
+        Pkt6Ptr rsp = processDhcp6Query(query);
         if (!rsp) {
             return;
         }
@@ -929,8 +932,8 @@ Dhcpv6Srv::processDhcp6QueryAndSendResponse(Pkt6Ptr& query, Pkt6Ptr& rsp) {
     }
 }
 
-void
-Dhcpv6Srv::processDhcp6Query(Pkt6Ptr& query, Pkt6Ptr& rsp) {
+Pkt6Ptr
+Dhcpv6Srv::processDhcp6Query(Pkt6Ptr query) {
     // Create a client race avoidance RAII handler.
     ClientHandler client_handler;
 
@@ -944,36 +947,42 @@ Dhcpv6Srv::processDhcp6Query(Pkt6Ptr& query, Pkt6Ptr& rsp) {
          (query->getType() == DHCPV6_DECLINE))) {
         ContinuationPtr cont =
             makeContinuation(std::bind(&Dhcpv6Srv::processDhcp6QueryAndSendResponse,
-                                       this, query, rsp));
+                                       this, query));
         if (!client_handler.tryLock(query, cont)) {
-            return;
+            return (Pkt6Ptr());
         }
     }
 
     // Let's create a simplified client context here.
     AllocEngine::ClientContext6 ctx;
     if (!earlyGHRLookup(query, ctx)) {
-        return;
+        return (Pkt6Ptr());
     }
 
     if (query->getType() == DHCPV6_DHCPV4_QUERY) {
         // This call never throws. Should this change, this section must be
         // enclosed in try-catch.
         processDhcp4Query(query);
-        return;
+        return (Pkt6Ptr());
     }
 
     // Complete the client context initialization.
     bool drop = false;
-    initContext(query, ctx, drop);
-
-    // Stop here if initContext decided to drop the packet.
+    Subnet6Ptr subnet = selectSubnet(query, drop);
     if (drop) {
-        return;
+        // Caller will immediately drop the packet so simply return now.
+        return (Pkt6Ptr());
     }
 
     // Park point here.
 
+    initContext(subnet, query, ctx, drop);
+    // Stop here if initContext decided to drop the packet.
+    if (drop) {
+        return (Pkt6Ptr());
+    }
+
+    Pkt6Ptr rsp;
     try {
         switch (query->getType()) {
         case DHCPV6_SOLICIT:
@@ -1009,7 +1018,7 @@ Dhcpv6Srv::processDhcp6Query(Pkt6Ptr& query, Pkt6Ptr& rsp) {
             break;
 
         default:
-            return;
+            return (rsp);
         }
 
     } catch (const std::exception& e) {
@@ -1031,7 +1040,7 @@ Dhcpv6Srv::processDhcp6Query(Pkt6Ptr& query, Pkt6Ptr& rsp) {
     }
 
     if (!rsp) {
-        return;
+        return (rsp);
     }
 
     // Process relay-supplied options. It is important to call this very
@@ -1162,7 +1171,7 @@ Dhcpv6Srv::processDhcp6Query(Pkt6Ptr& query, Pkt6Ptr& rsp) {
                 isc::stats::StatsMgr::instance().addValue("pkt6-receive-drop",
                                                           static_cast<int64_t>(1));
                 rsp.reset();
-                return;
+                return (rsp);
             }
         }
 
@@ -1219,11 +1228,13 @@ Dhcpv6Srv::processDhcp6Query(Pkt6Ptr& query, Pkt6Ptr& rsp) {
     if (rsp) {
         processPacketPktSend(callout_handle, query, rsp);
     }
+
+    return (rsp);
 }
 
 void
 Dhcpv6Srv::sendResponseNoThrow(hooks::CalloutHandlePtr& callout_handle,
-                               Pkt6Ptr& query, Pkt6Ptr& rsp) {
+                               Pkt6Ptr query, Pkt6Ptr& rsp) {
     try {
             processPacketPktSend(callout_handle, query, rsp);
             processPacketBufferSend(callout_handle, rsp);
