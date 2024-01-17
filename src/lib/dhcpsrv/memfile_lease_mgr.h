@@ -373,7 +373,7 @@ public:
     getLeases6(const asiolink::IOAddress& lower_bound_address,
                const LeasePageSize& page_size) const override;
 
-    /// @brief Returns a page of IPv6 leases for a  subnet identifier.
+    /// @brief Returns a page of IPv6 leases for a subnet identifier.
     ///
     /// @param subnet_id subnet identifier.
     /// @param lower_bound_address IPv6 address used as lower bound for the
@@ -732,7 +732,7 @@ private:
                             const LeasePageSize& page_size,
                             Lease6Collection& collection) const;
 
-    /// @brief Returns a page of IPv6 leases for a  subnet identifier.
+    /// @brief Returns a page of IPv6 leases for a subnet identifier.
     ///
     /// @param subnet_id subnet identifier.
     /// @param lower_bound_address IPv6 address used as lower bound for the

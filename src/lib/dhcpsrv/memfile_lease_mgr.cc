@@ -1695,18 +1695,17 @@ Memfile_LeaseMgr::getLeases6Internal(SubnetID subnet_id,
     Lease6StorageSubnetIdIndex::const_iterator lb =
         idx.lower_bound(boost::make_tuple(subnet_id, lower_bound_address));
 
+    // Exclude the lower bound address specified by the caller.
+    if ((lb != idx.end()) && ((*lb)->addr_ == lower_bound_address)) {
+        ++lb;
+    }
+
     // Return all leases being within the page size.
-    IOAddress last_addr = lower_bound_address;
     for (auto it = lb; it != idx.end(); ++it) {
-        if ((*it)->addr_ == last_addr) {
-            // Already seen: skip it.
-            continue;
-        }
         if ((*it)->subnet_id_ != subnet_id) {
             // Gone after the subnet id index.
             break;
         }
-        last_addr = (*it)->addr_;
         collection.push_back(Lease6Ptr(new Lease6(**it)));
         if (collection.size() >= page_size.page_size_) {
             break;

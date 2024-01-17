@@ -125,7 +125,7 @@ typedef boost::multi_index_container<
 
         // Specification of the fourth index starts here.
         // This index sorts leases by SubnetID and address.
-        boost::multi_index::ordered_non_unique<
+        boost::multi_index::ordered_unique<
             boost::multi_index::tag<SubnetIdIndexTag>,
             boost::multi_index::composite_key<
                 Lease6,
