@@ -75,6 +75,13 @@ public:
         ALLOCATOR,
         DDNS_TTL_PERCENT,
         DDNS_CONFLICT_RESOLUTION_MODE,
+        COMPATIBILITY,
+        CONTROL_SOCKET,
+        DHCP_DDNS,
+        EXPIRED_LEASES_PROCESSING,
+        MULTI_THREADING,
+        SANITY_CHECKS,
+        DHCP_QUEUE_CONTROL,
 
         // DHCPv4 specific parameters.
         ECHO_CLIENT_ID,
@@ -91,6 +98,7 @@ public:
         MIN_PREFERRED_LIFETIME,
         MAX_PREFERRED_LIFETIME,
         PD_ALLOCATOR,
+        SERVER_ID,
 
         // Size sentinel.
         SIZE

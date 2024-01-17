@@ -18,11 +18,8 @@ namespace isc {
 namespace dhcp {
 
 void
-ExpirationConfigParser::parse(ConstElementPtr expiration_config) {
-    CfgExpirationPtr cfg = CfgMgr::instance().getStagingCfg()->getCfgExpiration();
-
+ExpirationConfigParser::parse(ConstElementPtr expiration_config, CfgExpirationPtr cfg) {
     std::string param;
-
     try {
         param = "reclaim-timer-wait-time";
         if (expiration_config->contains(param)) {

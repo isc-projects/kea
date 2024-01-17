@@ -34,16 +34,19 @@ public:
 
 protected:
 
-    /// @brief Adds globals fetched from config backend(s) to a SrvConfig instance
+    /// @brief It translates the top level map parameters from flat naming
+    /// format (e.g. map-name/element-name) to proper ElementMap objects and
+    /// adds all globals fetched from config backend(s) to a SrvConfig instance
     ///
-    /// Iterates over the given collection of global parameters and adds them to the
-    /// given configuration's list of configured globals.
+    /// Iterates over the given collection of global parameters and adds them to
+    /// the given configuration's list of configured globals.
+    ///
     ///
     /// @param external_cfg SrvConfig instance to update
     /// @param cb_globals collection of global parameters supplied by configuration
     /// backend
-    void addGlobalsToConfig(SrvConfigPtr external_cfg,
-                            data::StampedValueCollection& cb_globals) const {
+    void translateAndAddGlobalsToConfig(SrvConfigPtr external_cfg,
+                                        data::StampedValueCollection& cb_globals) const {
         auto const& index = cb_globals.get<data::StampedValueNameIndexTag>();
         for (auto const& cb_global : index) {
 
@@ -51,8 +54,21 @@ protected:
                 continue;
             }
 
-            external_cfg->addConfiguredGlobal(cb_global->getName(),
-                                              cb_global->getElementValue());
+            std::string name = cb_global->getName();
+            auto pos = name.find('/');
+            if (pos != std::string::npos) {
+                const std::string sub_elem(name.substr(pos + 1));
+                name = name.substr(0, pos);
+                data::ElementPtr sub_param = boost::const_pointer_cast<data::Element>(external_cfg->getConfiguredGlobal(name));
+                if (!sub_param) {
+                    sub_param = data::Element::createMap();
+                }
+                sub_param->set(sub_elem, cb_global->getElementValue());
+                external_cfg->addConfiguredGlobal(name, sub_param);
+            } else {
+                // Reuse name and value.
+                external_cfg->addConfiguredGlobal(name, cb_global->getElementValue());
+            }
         }
     }
 };

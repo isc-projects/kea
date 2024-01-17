@@ -52,6 +52,13 @@ CfgGlobals::nameToIndex = {
     { "allocator", ALLOCATOR },
     { "ddns-ttl-percent", DDNS_TTL_PERCENT },
     { "ddns-conflict-resolution-mode", DDNS_CONFLICT_RESOLUTION_MODE },
+    { "compatibility", COMPATIBILITY },
+    { "control-socket", CONTROL_SOCKET },
+    { "dhcp-ddns", DHCP_DDNS },
+    { "expired-leases-processing", EXPIRED_LEASES_PROCESSING },
+    { "multi-threading", MULTI_THREADING },
+    { "sanity-checks", SANITY_CHECKS },
+    { "dhcp-queue-control", DHCP_QUEUE_CONTROL },
 
     // DHCPv4 specific parameters.
     { "echo-client-id", ECHO_CLIENT_ID },
@@ -67,7 +74,8 @@ CfgGlobals::nameToIndex = {
     { "preferred-lifetime", PREFERRED_LIFETIME },
     { "min-preferred-lifetime", MIN_PREFERRED_LIFETIME },
     { "max-preferred-lifetime", MAX_PREFERRED_LIFETIME },
-    { "pd-allocator", PD_ALLOCATOR }
+    { "pd-allocator", PD_ALLOCATOR },
+    { "server-id", SERVER_ID }
 };
 
 // Load time sanity check.

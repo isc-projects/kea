@@ -1657,5 +1657,33 @@ D2ClientConfigParser::setAllDefaults(isc::data::ConstElementPtr d2_config) {
     return (SimpleParser::setDefaults(mutable_d2, D2_CLIENT_CONFIG_DEFAULTS));
 }
 
+void
+CompatibilityParser::parse(ConstElementPtr compatibility, SrvConfig& srv_cfg) {
+    if (compatibility) {
+        for (auto const& kv : compatibility->mapValue()) {
+            if (!kv.second || (kv.second->getType() != Element::boolean)) {
+                isc_throw(DhcpConfigError,
+                          "compatibility parameter values must be "
+                          << "boolean (" << kv.first << " at "
+                          << kv.second->getPosition() << ")");
+            }
+            if (kv.first == "lenient-option-parsing") {
+                srv_cfg.setLenientOptionParsing(kv.second->boolValue());
+            } else if (kv.first == "ignore-dhcp-server-identifier") {
+                srv_cfg.setIgnoreServerIdentifier(kv.second->boolValue());
+            } else if (kv.first == "ignore-rai-link-selection") {
+                srv_cfg.setIgnoreRAILinkSelection(kv.second->boolValue());
+            } else if (kv.first == "exclude-first-last-24") {
+                srv_cfg.setExcludeFirstLast24(kv.second->boolValue());
+            } else {
+                isc_throw(DhcpConfigError,
+                          "unsupported compatibility parameter: "
+                          << kv.first << " (" << kv.second->getPosition()
+                          << ")");
+            }
+        }
+    }
+}
+
 } // namespace dhcp
 } // namespace isc

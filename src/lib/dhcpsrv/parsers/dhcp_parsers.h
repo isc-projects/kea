@@ -1073,6 +1073,15 @@ private:
     getMode(isc::data::ConstElementPtr scope, const std::string& name);
 };
 
+class CompatibilityParser : public isc::data::SimpleParser {
+public:
+    /// @brief Parse compatibility flags
+    ///
+    /// @param cfg The configuration element to be parsed
+    /// @param srv_cfg The configuration where the parameters are stored
+    void parse(isc::data::ConstElementPtr cfg, isc::dhcp::SrvConfig& srv_cfg);
+};
+
 } // end of isc::dhcp namespace
 } // end of isc namespace
 

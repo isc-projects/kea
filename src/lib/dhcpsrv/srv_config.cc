@@ -5,10 +5,20 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+
+#include <cc/simple_parser.h>
 #include <exceptions/exceptions.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/parsers/base_network_parser.h>
+#include <dhcpsrv/parsers/dhcp_parsers.h>
+#include <dhcpsrv/parsers/expiration_config_parser.h>
+#include <dhcpsrv/parsers/multi_threading_config_parser.h>
+#include <dhcpsrv/parsers/sanity_checks_parser.h>
 #include <dhcpsrv/parsers/simple_parser4.h>
+#include <dhcpsrv/parsers/simple_parser6.h>
+#include <dhcpsrv/parsers/dhcp_queue_control_parser.h>
+#include <dhcpsrv/parsers/duid_config_parser.h>
+#include <dhcpsrv/cfg_multi_threading.h>
 #include <dhcpsrv/srv_config.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/dhcpsrv_log.h>
@@ -16,7 +26,7 @@
 #include <process/logging_info.h>
 #include <log/logger_manager.h>
 #include <log/logger_specification.h>
-#include <dhcp/pkt.h> // Needed for HWADDR_SOURCE_*
+#include <dhcp/pkt.h>
 #include <stats/stats_mgr.h>
 #include <util/strutil.h>
 
@@ -176,14 +186,17 @@ SrvConfig::merge(ConfigBase& other) {
         // Merge globals.
         mergeGlobals(other_srv_config);
 
+        // Merge global maps.
+        mergeGlobalMaps(other_srv_config);
+
         // Merge option defs. We need to do this next so we
         // pass these into subsequent merges so option instances
         // at each level can be created based on the merged
         // definitions.
-        cfg_option_def_->merge((*other_srv_config.getCfgOptionDef()));
+        cfg_option_def_->merge(*other_srv_config.getCfgOptionDef());
 
         // Merge options.
-        cfg_option_->merge(cfg_option_def_, (*other_srv_config.getCfgOption()));
+        cfg_option_->merge(cfg_option_def_, *other_srv_config.getCfgOption());
 
         if (!other_srv_config.getClientClassDictionary()->empty()) {
             // Client classes are complicated because they are ordered and may
@@ -278,10 +291,110 @@ SrvConfig::mergeGlobals(SrvConfig& other) {
 }
 
 void
+SrvConfig::mergeGlobalMaps(SrvConfig& other) {
+    ElementPtr config = Element::createMap();
+    for (auto const& other_global : other.getConfiguredGlobals()->valuesMap()) {
+        config->set(other_global.first, other_global.second);
+    }
+    std::string parameter_name;
+    try {
+        ConstElementPtr compatibility = config->get("compatibility");
+        parameter_name = "compatibility";
+        if (compatibility) {
+            CompatibilityParser parser;
+            parser.parse(compatibility, *this);
+            addConfiguredGlobal("compatibility", compatibility);
+        }
+        ConstElementPtr control_socket = config->get("control-socket");
+        parameter_name = "control-socket";
+        if (control_socket) {
+            ControlSocketParser parser;
+            parser.parse(*this, control_socket);
+            addConfiguredGlobal("control-socket", control_socket);
+        }
+        ElementPtr dhcp_ddns = boost::const_pointer_cast<Element>(config->get("dhcp-ddns"));
+        parameter_name = "dhcp-ddns";
+        if (dhcp_ddns) {
+            // Apply defaults
+            D2ClientConfigParser::setAllDefaults(dhcp_ddns);
+            D2ClientConfigParser parser;
+            // D2 client configuration.
+            D2ClientConfigPtr d2_client_cfg;
+            d2_client_cfg = parser.parse(dhcp_ddns);
+            if (!d2_client_cfg) {
+                d2_client_cfg.reset(new D2ClientConfig());
+            }
+            d2_client_cfg->validateContents();
+            setD2ClientConfig(d2_client_cfg);
+            addConfiguredGlobal("dhcp-ddns", dhcp_ddns);
+        }
+        ConstElementPtr expiration_cfg = config->get("expired-leases-processing");
+        parameter_name = "expired-leases-processing";
+        if (expiration_cfg) {
+            ExpirationConfigParser parser;
+            parser.parse(expiration_cfg, getCfgExpiration());
+            addConfiguredGlobal("expired-leases-processing", expiration_cfg);
+        }
+        ElementPtr multi_threading = boost::const_pointer_cast<Element>(config->get("multi-threading"));
+        parameter_name = "multi-threading";
+        if (multi_threading) {
+            if (CfgMgr::instance().getFamily() == AF_INET) {
+                SimpleParser::setDefaults(multi_threading, SimpleParser4::DHCP_MULTI_THREADING4_DEFAULTS);
+            } else {
+                SimpleParser::setDefaults(multi_threading, SimpleParser6::DHCP_MULTI_THREADING6_DEFAULTS);
+            }
+            MultiThreadingConfigParser parser;
+            parser.parse(*this, multi_threading);
+            addConfiguredGlobal("multi-threading", multi_threading);
+        }
+        bool multi_threading_enabled = true;
+        uint32_t thread_count = 0;
+        uint32_t queue_size = 0;
+        CfgMultiThreading::extract(getDHCPMultiThreading(),
+                                   multi_threading_enabled, thread_count, queue_size);
+        ElementPtr sanity_checks = boost::const_pointer_cast<Element>(config->get("sanity-checks"));
+        parameter_name = "sanity-checks";
+        if (sanity_checks) {
+            if (CfgMgr::instance().getFamily() == AF_INET) {
+                SimpleParser::setDefaults(sanity_checks, SimpleParser4::SANITY_CHECKS4_DEFAULTS);
+            } else {
+                SimpleParser::setDefaults(sanity_checks, SimpleParser6::SANITY_CHECKS6_DEFAULTS);
+            }
+            SanityChecksParser parser;
+            parser.parse(*this, sanity_checks);
+            addConfiguredGlobal("multi-threading", sanity_checks);
+        }
+        ConstElementPtr server_id = config->get("server-id");
+        parameter_name = "server-id";
+        if (server_id) {
+            DUIDConfigParser parser;
+            const CfgDUIDPtr& cfg = getCfgDUID();
+            parser.parse(cfg, server_id);
+            addConfiguredGlobal("server-id", server_id);
+        }
+        ElementPtr queue_control = boost::const_pointer_cast<Element>(config->get("dhcp-queue-control"));
+        parameter_name = "dhcp-queue-control";
+        if (queue_control) {
+            if (CfgMgr::instance().getFamily() == AF_INET) {
+                SimpleParser::setDefaults(queue_control, SimpleParser4::DHCP_QUEUE_CONTROL4_DEFAULTS);
+            } else {
+                SimpleParser::setDefaults(queue_control, SimpleParser6::DHCP_QUEUE_CONTROL6_DEFAULTS);
+            }
+            DHCPQueueControlParser parser;
+            setDHCPQueueControl(parser.parse(queue_control, multi_threading_enabled));
+            addConfiguredGlobal("dhcp-queue-control", queue_control);
+        }
+    } catch (const isc::Exception& ex) {
+        isc_throw(BadValue, "Invalid parameter " << parameter_name << " error: " << ex.what());
+    } catch (...) {
+        isc_throw(BadValue, "Invalid parameter " << parameter_name);
+    }
+}
+
+void
 SrvConfig::removeStatistics() {
     // Removes statistics for v4 and v6 subnets
     getCfgSubnets4()->removeStatistics();
-
     getCfgSubnets6()->removeStatistics();
 }
 
@@ -318,7 +431,6 @@ SrvConfig::updateStatistics() {
     if (LeaseMgrFactory::haveInstance()) {
         // Updates  statistics for v4 and v6 subnets
         getCfgSubnets4()->updateStatistics();
-
         getCfgSubnets6()->updateStatistics();
     }
 }

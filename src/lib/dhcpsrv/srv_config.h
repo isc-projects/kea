@@ -893,6 +893,17 @@ public:
     /// @c extractConfiguredGlobals should be called after.
     void clearConfiguredGlobals() {
         configured_globals_->clear();
+        lenient_option_parsing_ = false;
+        ignore_dhcp_server_identifier_ = false;
+        ignore_rai_link_selection_ = false;
+        exclude_first_last_24_ = false;
+        control_socket_.reset();
+        d2_client_config_.reset(new D2ClientConfig());
+        cfg_expiration_.reset(new CfgExpiration());
+        dhcp_multi_threading_.reset();
+        cfg_consist_.reset(new CfgConsistency());
+        cfg_duid_.reset(new CfgDUID());
+        dhcp_queue_control_.reset();
     }
 
     /// @brief Applies defaults to global parameters.
@@ -1097,6 +1108,30 @@ private:
     /// @param other An object holding the configuration to be merged
     /// into this configuration.
     void mergeGlobals(SrvConfig& other);
+
+    /// @brief Merges the global maps specified in the given configuration
+    /// into this configuration.
+    ///
+    /// Configurable global values may be specified either via JSON
+    /// configuration (e.g. "echo-client-id":true) or as global parameters
+    /// within a configuration back end.  Regardless of the source, these
+    /// values once provided, are stored in @c SrvConfig::configured_globals_.
+    /// Any such value that does not have an explicit specification should be
+    /// considered "unspecified" at the global scope.
+    ///
+    /// This function adds the configured globals from the "other" config
+    /// into this config's configured globals.  If a value already exists
+    /// in this config, it will be overwritten with the value from the
+    /// "other" config.
+    ///
+    /// It then iterates over this merged list of globals, setting
+    /// any of the corresponding SrvConfig members that map to a
+    /// a configurable parameter (e.g. c@ SrvConfig::echo_client_id_,
+    /// @c SrvConfig::server_tag_).
+    ///
+    /// @param other An object holding the configuration to be merged
+    /// into this configuration.
+    void mergeGlobalMaps(SrvConfig& other);
 
     /// @brief Sequence number identifying the configuration.
     uint32_t sequence_;

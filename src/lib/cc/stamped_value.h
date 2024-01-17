@@ -29,7 +29,7 @@ typedef boost::shared_ptr<StampedValue> StampedValuePtr;
 /// e.g. global parameter of the DHCP server.
 ///
 /// Global configuration elements having simple types, e.g. DHCP
-/// timers, need to be associatied with modification timestamps.
+/// timers, need to be associated with modification timestamps.
 /// This association is made by deriving from @c StampedElement.
 /// The values can be strings, integers, booleans or real numbers.
 ///
@@ -53,7 +53,7 @@ public:
     ///
     /// @throw BadValue if the value is null.
     /// @throw TypeError if the value is neither a string, integer,
-    /// bool nor real.
+    /// bool, real or a map with only one element of these types.
     StampedValue(const std::string& name, const ElementPtr& value);
 
     /// @brief Constructor creating a string value.
@@ -76,7 +76,7 @@ public:
     ///
     /// @throw BadValue if the value is null.
     /// @throw TypeError if the value is neither a string, integer,
-    /// bool nor real.
+    /// bool, real or a map with only one element of these types.
     static StampedValuePtr create(const std::string& name,
                                   const ElementPtr& value);
 
@@ -170,8 +170,8 @@ private:
     /// This is called from the constructors.
     ///
     /// @throw BadValue if the value is null.
-    /// @throw TypeError if the value type is neither a string,
-    /// integer, boolean nor real.
+    /// @throw TypeError if the value type is neither a string, integer,
+    /// boolean, real or a map with only one element of these types.
     void validateConstruct() const;
 
     /// @brief Checks if the value is accessed correctly.
