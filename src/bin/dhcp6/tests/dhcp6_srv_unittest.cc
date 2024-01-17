@@ -399,9 +399,9 @@ TEST_F(NakedDhcpv6SrvTest, SolicitNoSubnet) {
     AllocEngine::ClientContext6 ctx;
     bool drop = !srv.earlyGHRLookup(sol, ctx);
     ASSERT_FALSE(drop);
-    Subnet6Ptr subnet = srv.selectSubnet(sol, drop);
+    ctx.subnet_ = srv.selectSubnet(sol, drop);
     ASSERT_FALSE(drop);
-    srv.initContext(subnet, sol, ctx, drop);
+    srv.initContext(ctx, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr reply = srv.processSolicit(ctx);
 
@@ -628,9 +628,9 @@ TEST_F(Dhcpv6SrvTest, advertiseOptions) {
     AllocEngine::ClientContext6 ctx;
     bool drop = !srv_.earlyGHRLookup(sol, ctx);
     ASSERT_FALSE(drop);
-    Subnet6Ptr subnet = srv_.selectSubnet(sol, drop);
+    ctx.subnet_ = srv_.selectSubnet(sol, drop);
     ASSERT_FALSE(drop);
-    srv_.initContext(subnet, sol, ctx, drop);
+    srv_.initContext(ctx, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr adv = srv_.processSolicit(ctx);
 
@@ -659,9 +659,9 @@ TEST_F(Dhcpv6SrvTest, advertiseOptions) {
     AllocEngine::ClientContext6 ctx2;
     drop = !srv_.earlyGHRLookup(sol, ctx2);
     ASSERT_FALSE(drop);
-    subnet = srv_.selectSubnet(sol, drop);
+    ctx2.subnet_ = srv_.selectSubnet(sol, drop);
     ASSERT_FALSE(drop);
-    srv_.initContext(subnet, sol, ctx2, drop);
+    srv_.initContext(ctx2, drop);
     ASSERT_FALSE(drop);
     adv = srv_.processSolicit(ctx2);
     ASSERT_TRUE(adv);
@@ -727,9 +727,9 @@ TEST_F(Dhcpv6SrvTest, SolicitBasic) {
     AllocEngine::ClientContext6 ctx;
     bool drop = !srv.earlyGHRLookup(sol, ctx);
     ASSERT_FALSE(drop);
-    Subnet6Ptr subnet = srv.selectSubnet(sol, drop);
+    ctx.subnet_ = srv.selectSubnet(sol, drop);
     ASSERT_FALSE(drop);
-    srv.initContext(subnet, sol, ctx, drop);
+    srv.initContext(ctx, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr reply = srv.processSolicit(ctx);
 
@@ -778,9 +778,9 @@ TEST_F(Dhcpv6SrvTest, pdSolicitBasic) {
     AllocEngine::ClientContext6 ctx;
     bool drop = !srv.earlyGHRLookup(sol, ctx);
     ASSERT_FALSE(drop);
-    Subnet6Ptr subnet = srv.selectSubnet(sol, drop);
+    ctx.subnet_ = srv.selectSubnet(sol, drop);
     ASSERT_FALSE(drop);
-    srv.initContext(subnet, sol, ctx, drop);
+    srv.initContext(ctx, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr reply = srv.processSolicit(ctx);
 
@@ -823,9 +823,9 @@ TEST_F(Dhcpv6SrvTest, defaultLifetimeSolicit) {
     AllocEngine::ClientContext6 ctx;
     bool drop = !srv.earlyGHRLookup(sol, ctx);
     ASSERT_FALSE(drop);
-    Subnet6Ptr subnet = srv.selectSubnet(sol, drop);
+    ctx.subnet_ = srv.selectSubnet(sol, drop);
     ASSERT_FALSE(drop);
-    srv.initContext(subnet, sol, ctx, drop);
+    srv.initContext(ctx, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr reply = srv.processSolicit(ctx);
 
@@ -873,9 +873,9 @@ TEST_F(Dhcpv6SrvTest, hintZeroLifetimeSolicit) {
     AllocEngine::ClientContext6 ctx;
     bool drop = !srv.earlyGHRLookup(sol, ctx);
     ASSERT_FALSE(drop);
-    Subnet6Ptr subnet = srv.selectSubnet(sol, drop);
+    ctx.subnet_ = srv.selectSubnet(sol, drop);
     ASSERT_FALSE(drop);
-    srv.initContext(subnet, sol, ctx, drop);
+    srv.initContext(ctx, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr reply = srv.processSolicit(ctx);
 
@@ -925,9 +925,9 @@ TEST_F(Dhcpv6SrvTest, hintLifetimeSolicit) {
     AllocEngine::ClientContext6 ctx;
     bool drop = !srv.earlyGHRLookup(sol, ctx);
     ASSERT_FALSE(drop);
-    Subnet6Ptr subnet = srv.selectSubnet(sol, drop);
+    ctx.subnet_ = srv.selectSubnet(sol, drop);
     ASSERT_FALSE(drop);
-    srv.initContext(subnet, sol, ctx, drop);
+    srv.initContext(ctx, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr reply = srv.processSolicit(ctx);
 
@@ -975,9 +975,9 @@ TEST_F(Dhcpv6SrvTest, minLifetimeSolicit) {
     AllocEngine::ClientContext6 ctx;
     bool drop = !srv.earlyGHRLookup(sol, ctx);
     ASSERT_FALSE(drop);
-    Subnet6Ptr subnet = srv.selectSubnet(sol, drop);
+    ctx.subnet_ = srv.selectSubnet(sol, drop);
     ASSERT_FALSE(drop);
-    srv.initContext(subnet, sol, ctx, drop);
+    srv.initContext(ctx, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr reply = srv.processSolicit(ctx);
 
@@ -1027,9 +1027,9 @@ TEST_F(Dhcpv6SrvTest, maxLifetimeSolicit) {
     AllocEngine::ClientContext6 ctx;
     bool drop = !srv.earlyGHRLookup(sol, ctx);
     ASSERT_FALSE(drop);
-    Subnet6Ptr subnet = srv.selectSubnet(sol, drop);
+    ctx.subnet_ = srv.selectSubnet(sol, drop);
     ASSERT_FALSE(drop);
-    srv.initContext(subnet, sol, ctx, drop);
+    srv.initContext(ctx, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr reply = srv.processSolicit(ctx);
 
@@ -1089,9 +1089,9 @@ TEST_F(Dhcpv6SrvTest, SolicitHint) {
     AllocEngine::ClientContext6 ctx;
     bool drop = !srv.earlyGHRLookup(sol, ctx);
     ASSERT_FALSE(drop);
-    Subnet6Ptr subnet = srv.selectSubnet(sol, drop);
+    ctx.subnet_ = srv.selectSubnet(sol, drop);
     ASSERT_FALSE(drop);
-    srv.initContext(subnet, sol, ctx, drop);
+    srv.initContext(ctx, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr reply = srv.processSolicit(ctx);
 
@@ -1150,9 +1150,9 @@ TEST_F(Dhcpv6SrvTest, SolicitInvalidHint) {
     AllocEngine::ClientContext6 ctx;
     bool drop = !srv.earlyGHRLookup(sol, ctx);
     ASSERT_FALSE(drop);
-    Subnet6Ptr subnet = srv.selectSubnet(sol, drop);
+    ctx.subnet_ = srv.selectSubnet(sol, drop);
     ASSERT_FALSE(drop);
-    srv.initContext(subnet, sol, ctx, drop);
+    srv.initContext(ctx, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr reply = srv.processSolicit(ctx);
 
@@ -1218,25 +1218,25 @@ TEST_F(Dhcpv6SrvTest, ManySolicits) {
     AllocEngine::ClientContext6 ctx1;
     bool drop = !srv.earlyGHRLookup(sol1, ctx1);
     ASSERT_FALSE(drop);
-    Subnet6Ptr subnet = srv.selectSubnet(sol1, drop);
+    ctx1.subnet_ = srv.selectSubnet(sol1, drop);
     ASSERT_FALSE(drop);
-    srv.initContext(subnet, sol1, ctx1, drop);
+    srv.initContext(ctx1, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr reply1 = srv.processSolicit(ctx1);
     AllocEngine::ClientContext6 ctx2;
     drop = !srv.earlyGHRLookup(sol2, ctx2);
     ASSERT_FALSE(drop);
-    subnet = srv.selectSubnet(sol2, drop);
+    ctx2.subnet_ = srv.selectSubnet(sol2, drop);
     ASSERT_FALSE(drop);
-    srv.initContext(subnet, sol2, ctx2, drop);
+    srv.initContext(ctx2, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr reply2 = srv.processSolicit(ctx2);
     AllocEngine::ClientContext6 ctx3;
     drop = !srv.earlyGHRLookup(sol3, ctx3);
     ASSERT_FALSE(drop);
-    subnet = srv.selectSubnet(sol3, drop);
+    ctx3.subnet_ = srv.selectSubnet(sol3, drop);
     ASSERT_FALSE(drop);
-    srv.initContext(subnet, sol3, ctx3, drop);
+    srv.initContext(ctx3, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr reply3 = srv.processSolicit(ctx3);
 
@@ -1326,9 +1326,9 @@ TEST_F(Dhcpv6SrvTest, SolicitCache) {
     AllocEngine::ClientContext6 ctx;
     bool drop = !srv.earlyGHRLookup(sol, ctx);
     ASSERT_FALSE(drop);
-    Subnet6Ptr subnet = srv.selectSubnet(sol, drop);
+    ctx.subnet_ = srv.selectSubnet(sol, drop);
     ASSERT_FALSE(drop);
-    srv.initContext(subnet, sol, ctx, drop);
+    srv.initContext(ctx, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr reply = srv.processSolicit(ctx);
 
@@ -1400,9 +1400,9 @@ TEST_F(Dhcpv6SrvTest, pdSolicitCache) {
     AllocEngine::ClientContext6 ctx;
     bool drop = !srv.earlyGHRLookup(sol, ctx);
     ASSERT_FALSE(drop);
-    Subnet6Ptr subnet = srv.selectSubnet(sol, drop);
+    ctx.subnet_ = srv.selectSubnet(sol, drop);
     ASSERT_FALSE(drop);
-    srv.initContext(subnet, sol, ctx, drop);
+    srv.initContext(ctx, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr reply = srv.processSolicit(ctx);
 
@@ -1697,9 +1697,9 @@ TEST_F(Dhcpv6SrvTest, RequestCache) {
     AllocEngine::ClientContext6 ctx;
     bool drop = !srv.earlyGHRLookup(req, ctx);
     ASSERT_FALSE(drop);
-    Subnet6Ptr subnet = srv.selectSubnet(req, drop);
+    ctx.subnet_ = srv.selectSubnet(req, drop);
     ASSERT_FALSE(drop);
-    srv.initContext(subnet, req, ctx, drop);
+    srv.initContext(ctx, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr reply = srv.processRequest(ctx);
 
@@ -1771,9 +1771,9 @@ TEST_F(Dhcpv6SrvTest, pdRequestCache) {
     AllocEngine::ClientContext6 ctx;
     bool drop = !srv.earlyGHRLookup(req, ctx);
     ASSERT_FALSE(drop);
-    Subnet6Ptr subnet = srv.selectSubnet(req, drop);
+    ctx.subnet_ = srv.selectSubnet(req, drop);
     ASSERT_FALSE(drop);
-    srv.initContext(subnet, req, ctx, drop);
+    srv.initContext(ctx, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr reply = srv.processRequest(ctx);
 
@@ -1987,9 +1987,9 @@ TEST_F(Dhcpv6SrvTest, RenewCache) {
     AllocEngine::ClientContext6 ctx;
     bool drop = !srv.earlyGHRLookup(req, ctx);
     ASSERT_FALSE(drop);
-    Subnet6Ptr subnet = srv.selectSubnet(req, drop);
+    ctx.subnet_ = srv.selectSubnet(req, drop);
     ASSERT_FALSE(drop);
-    srv.initContext(subnet, req, ctx, drop);
+    srv.initContext(ctx, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr reply = srv.processRenew(ctx);
 
@@ -2061,9 +2061,9 @@ TEST_F(Dhcpv6SrvTest, pdRenewCache) {
     AllocEngine::ClientContext6 ctx;
     bool drop = !srv.earlyGHRLookup(req, ctx);
     ASSERT_FALSE(drop);
-    Subnet6Ptr subnet = srv.selectSubnet(req, drop);
+    ctx.subnet_ = srv.selectSubnet(req, drop);
     ASSERT_FALSE(drop);
-    srv.initContext(subnet, req, ctx, drop);
+    srv.initContext(ctx, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr reply = srv.processRenew(ctx);
 
@@ -3005,9 +3005,9 @@ TEST_F(Dhcpv6SrvTest, prlPersistency) {
     AllocEngine::ClientContext6 ctx;
     bool drop = !srv_.earlyGHRLookup(sol, ctx);
     ASSERT_FALSE(drop);
-    Subnet6Ptr subnet = srv_.selectSubnet(sol, drop);
+    ctx.subnet_ = srv_.selectSubnet(sol, drop);
     ASSERT_FALSE(drop);
-    srv_.initContext(subnet, sol, ctx, drop);
+    srv_.initContext(ctx, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr response = srv_.processSolicit(ctx);
 
@@ -3028,9 +3028,9 @@ TEST_F(Dhcpv6SrvTest, prlPersistency) {
     AllocEngine::ClientContext6 ctx2;
     drop = !srv_.earlyGHRLookup(sol, ctx2);
     ASSERT_FALSE(drop);
-    subnet = srv_.selectSubnet(sol, drop);
+    ctx2.subnet_ = srv_.selectSubnet(sol, drop);
     ASSERT_FALSE(drop);
-    srv_.initContext(subnet, sol, ctx2, drop);
+    srv_.initContext(ctx2, drop);
     ASSERT_FALSE(drop);
     response = srv_.processSolicit(ctx2);
 
@@ -3052,9 +3052,9 @@ TEST_F(Dhcpv6SrvTest, prlPersistency) {
     AllocEngine::ClientContext6 ctx3;
     drop = !srv_.earlyGHRLookup(sol, ctx3);
     ASSERT_FALSE(drop);
-    subnet = srv_.selectSubnet(sol, drop);
+    ctx3.subnet_ = srv_.selectSubnet(sol, drop);
     ASSERT_FALSE(drop);
-    srv_.initContext(subnet, sol, ctx3, drop);
+    srv_.initContext(ctx3, drop);
     ASSERT_FALSE(drop);
     response = srv_.processSolicit(ctx3);
 
@@ -3094,9 +3094,9 @@ TEST_F(Dhcpv6SrvTest, neverSend) {
     AllocEngine::ClientContext6 ctx;
     bool drop = !srv_.earlyGHRLookup(sol, ctx);
     ASSERT_FALSE(drop);
-    Subnet6Ptr subnet = srv_.selectSubnet(sol, drop);
+    ctx.subnet_ = srv_.selectSubnet(sol, drop);
     ASSERT_FALSE(drop);
-    srv_.initContext(subnet, sol, ctx, drop);
+    srv_.initContext(ctx, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr response = srv_.processSolicit(ctx);
 
@@ -3117,9 +3117,9 @@ TEST_F(Dhcpv6SrvTest, neverSend) {
     AllocEngine::ClientContext6 ctx2;
     drop = !srv_.earlyGHRLookup(sol, ctx2);
     ASSERT_FALSE(drop);
-    subnet = srv_.selectSubnet(sol, drop);
+    ctx2.subnet_ = srv_.selectSubnet(sol, drop);
     ASSERT_FALSE(drop);
-    srv_.initContext(subnet, sol, ctx2, drop);
+    srv_.initContext(ctx2, drop);
     ASSERT_FALSE(drop);
     response = srv_.processSolicit(ctx2);
 
@@ -3141,9 +3141,9 @@ TEST_F(Dhcpv6SrvTest, neverSend) {
     AllocEngine::ClientContext6 ctx3;
     drop = !srv_.earlyGHRLookup(sol, ctx3);
     ASSERT_FALSE(drop);
-    subnet = srv_.selectSubnet(sol, drop);
+    ctx3.subnet_ = srv_.selectSubnet(sol, drop);
     ASSERT_FALSE(drop);
-    srv_.initContext(subnet, sol, ctx3, drop);
+    srv_.initContext(ctx3, drop);
     ASSERT_FALSE(drop);
     response = srv_.processSolicit(ctx3);
 
@@ -3924,9 +3924,9 @@ TEST_F(Dhcpv6SrvTest, calculateTeeTimers) {
             AllocEngine::ClientContext6 ctx;
             bool drop = !srv.earlyGHRLookup(sol, ctx);
             ASSERT_FALSE(drop);
-            Subnet6Ptr subnet = srv.selectSubnet(sol, drop);
+            ctx.subnet_ = srv.selectSubnet(sol, drop);
             ASSERT_FALSE(drop);
-            srv.initContext(subnet, sol, ctx, drop);
+            srv.initContext(ctx, drop);
             ASSERT_FALSE(drop);
             Pkt6Ptr reply = srv.processSolicit(ctx);
 

@@ -458,9 +458,9 @@ public:
         AllocEngine::ClientContext6 ctx;
         bool drop = !srv_->earlyGHRLookup(query, ctx);
         ASSERT_FALSE(drop);
-        Subnet6Ptr subnet = srv_->selectSubnet(query, drop);
+        ctx.subnet_ = srv_->selectSubnet(query, drop);
         ASSERT_FALSE(drop);
-        srv_->initContext(subnet, query, ctx, drop);
+        srv_->initContext(ctx, drop);
 
         ASSERT_FALSE(drop);
         Pkt6Ptr answer = generateMessageWithIds(DHCPV6_ADVERTISE);
@@ -522,9 +522,9 @@ public:
         AllocEngine::ClientContext6 ctx;
         bool drop = !srv_->earlyGHRLookup(req, ctx);
         ASSERT_FALSE(drop);
-        Subnet6Ptr subnet = srv_->selectSubnet(req, drop);
+        ctx.subnet_ = srv_->selectSubnet(req, drop);
         ASSERT_FALSE(drop);
-        srv_->initContext(subnet, req, ctx, drop);
+        srv_->initContext(ctx, drop);
 
         ASSERT_FALSE(drop);
         if (msg_type == DHCPV6_SOLICIT) {

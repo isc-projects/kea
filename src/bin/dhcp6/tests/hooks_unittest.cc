@@ -1745,9 +1745,9 @@ TEST_F(HooksDhcpv6SrvTest, subnet6SelectSimple) {
     AllocEngine::ClientContext6 ctx;
     bool drop = !srv_->earlyGHRLookup(sol, ctx);
     ASSERT_FALSE(drop);
-    Subnet6Ptr subnet = srv_->selectSubnet(sol, drop);
+    ctx.subnet_ = srv_->selectSubnet(sol, drop);
     ASSERT_FALSE(drop);
-    srv_->initContext(subnet, sol, ctx, drop);
+    srv_->initContext(ctx, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr adv = srv_->processSolicit(ctx);
 
@@ -1836,9 +1836,9 @@ TEST_F(HooksDhcpv6SrvTest, subnet6SelectChange) {
     AllocEngine::ClientContext6 ctx;
     bool drop = !srv_->earlyGHRLookup(sol, ctx);
     ASSERT_FALSE(drop);
-    Subnet6Ptr subnet = srv_->selectSubnet(sol, drop);
+    ctx.subnet_ = srv_->selectSubnet(sol, drop);
     ASSERT_FALSE(drop);
-    srv_->initContext(subnet, sol, ctx, drop);
+    srv_->initContext(ctx, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr adv = srv_->processSolicit(ctx);
 
@@ -5395,9 +5395,9 @@ TEST_F(HooksDhcpv6SrvTest, host6Identifier) {
     AllocEngine::ClientContext6 ctx;
     bool drop = !srv_->earlyGHRLookup(sol, ctx);
     ASSERT_FALSE(drop);
-    Subnet6Ptr subnet = srv_->selectSubnet(sol, drop);
+    ctx.subnet_ = srv_->selectSubnet(sol, drop);
     ASSERT_FALSE(drop);
-    srv_->initContext(subnet, sol, ctx, drop);
+    srv_->initContext(ctx, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr adv = srv_->processSolicit(ctx);
 
@@ -5481,9 +5481,9 @@ TEST_F(HooksDhcpv6SrvTest, host6IdentifierHWAddr) {
     AllocEngine::ClientContext6 ctx;
     bool drop = !srv_->earlyGHRLookup(sol, ctx);
     ASSERT_FALSE(drop);
-    Subnet6Ptr subnet = srv_->selectSubnet(sol, drop);
+    ctx.subnet_ = srv_->selectSubnet(sol, drop);
     ASSERT_FALSE(drop);
-    srv_->initContext(subnet, sol, ctx, drop);
+    srv_->initContext(ctx, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr adv = srv_->processSolicit(ctx);
 

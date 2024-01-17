@@ -421,9 +421,9 @@ Dhcpv6Srv::setHostIdentifiers(AllocEngine::ClientContext6& ctx) {
     }
 }
 
-bool
-Dhcpv6Srv::earlyGHRLookup(const Pkt6Ptr& query,
-                          AllocEngine::ClientContext6& ctx) {
+void
+Dhcpv6Srv::initContext0(const Pkt6Ptr& query,
+                        AllocEngine::ClientContext6& ctx) {
     // Pointer to client's query.
     ctx.query_ = query;
 
@@ -432,6 +432,13 @@ Dhcpv6Srv::earlyGHRLookup(const Pkt6Ptr& query,
 
     // Hardware address.
     ctx.hwaddr_ = getMAC(query);
+}
+
+bool
+Dhcpv6Srv::earlyGHRLookup(const Pkt6Ptr& query,
+                          AllocEngine::ClientContext6& ctx) {
+    // First part of context initialization.
+    initContext0(query, ctx);
 
     // Get the early-global-reservations-lookup flag value.
     data::ConstElementPtr egrl = CfgMgr::instance().getCurrentCfg()->
@@ -492,15 +499,16 @@ Dhcpv6Srv::earlyGHRLookup(const Pkt6Ptr& query,
 }
 
 void
-Dhcpv6Srv::initContext(const Subnet6Ptr& subnet,
-		       const Pkt6Ptr& pkt,
-                       AllocEngine::ClientContext6& ctx,
-                       bool& drop) {
-    ctx.subnet_ = subnet;
+Dhcpv6Srv::initContext(AllocEngine::ClientContext6& ctx, bool& drop) {
+    // Sanity check.
+    if (!ctx.query_) {
+        drop = true;
+        return;
+    }
     ctx.fwd_dns_update_ = false;
     ctx.rev_dns_update_ = false;
     ctx.hostname_ = "";
-    ctx.callout_handle_ = getCalloutHandle(pkt);
+    ctx.callout_handle_ = getCalloutHandle(ctx.query_);
 
     // Collect host identifiers if host reservations enabled. The identifiers
     // are stored in order of preference. The server will use them in that
@@ -545,37 +553,37 @@ Dhcpv6Srv::initContext(const Subnet6Ptr& subnet,
         // a result, the first_class set via the host reservation will
         // replace the second_class because the second_class will this
         // time evaluate to false as desired.
-        removeDependentEvaluatedClasses(pkt);
-        setReservedClientClasses(pkt, ctx);
-        evaluateClasses(pkt, false);
+        removeDependentEvaluatedClasses(ctx.query_);
+        setReservedClientClasses(ctx.query_, ctx);
+        evaluateClasses(ctx.query_, false);
     }
 
     // Set KNOWN builtin class if something was found, UNKNOWN if not.
     if (!ctx.hosts_.empty()) {
-        pkt->addClass("KNOWN");
+        ctx.query_->addClass("KNOWN");
         LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_CLASS_ASSIGNED)
-          .arg(pkt->getLabel())
+          .arg(ctx.query_->getLabel())
           .arg("KNOWN");
     } else {
-        pkt->addClass("UNKNOWN");
+        ctx.query_->addClass("UNKNOWN");
         LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_CLASS_ASSIGNED)
-          .arg(pkt->getLabel())
+          .arg(ctx.query_->getLabel())
           .arg("UNKNOWN");
     }
 
     // Perform second pass of classification.
-    evaluateClasses(pkt, true);
+    evaluateClasses(ctx.query_, true);
 
-    const ClientClasses& classes = pkt->getClasses();
+    const ClientClasses& classes = ctx.query_->getClasses();
     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_CLASSES_ASSIGNED_AFTER_SUBNET_SELECTION)
-        .arg(pkt->getLabel())
+        .arg(ctx.query_->getLabel())
         .arg(classes.toText());
 
     // Check the DROP special class.
-    if (pkt->inClass("DROP")) {
+    if (ctx.query_->inClass("DROP")) {
         LOG_DEBUG(packet6_logger, DBGLVL_PKT_HANDLING, DHCP6_PACKET_DROP_DROP_CLASS2)
-            .arg(pkt->makeLabel(pkt->getClientId(), nullptr))
-            .arg(pkt->toText());
+            .arg(ctx.query_->makeLabel(ctx.query_->getClientId(), 0))
+            .arg(ctx.query_->toText());
         StatsMgr::instance().addValue("pkt6-receive-drop",
                                       static_cast<int64_t>(1));
         drop = true;
@@ -968,15 +976,39 @@ Dhcpv6Srv::processDhcp6Query(Pkt6Ptr query) {
 
     // Complete the client context initialization.
     bool drop = false;
-    Subnet6Ptr subnet = selectSubnet(query, drop);
+    ctx.subnet_ = selectSubnet(query, drop);
     if (drop) {
         // Caller will immediately drop the packet so simply return now.
         return (Pkt6Ptr());
     }
 
-    // Park point here.
+    return (processLocalizedQuery6(ctx));
+}
 
-    initContext(subnet, query, ctx, drop);
+void
+Dhcpv6Srv::processLocalizedQuery6AndSendResponse(Pkt6Ptr query,
+                                                 AllocEngine::ClientContext6& ctx) {
+    try {
+        Pkt6Ptr rsp = processLocalizedQuery6(ctx);
+        if (!rsp) {
+            return;
+        }
+
+        CalloutHandlePtr callout_handle = getCalloutHandle(query);
+        processPacketBufferSend(callout_handle, rsp);
+    } catch (const std::exception& e) {
+        LOG_ERROR(packet6_logger, DHCP6_PACKET_PROCESS_STD_EXCEPTION)
+            .arg(e.what());
+    } catch (...) {
+        LOG_ERROR(packet6_logger, DHCP6_PACKET_PROCESS_EXCEPTION);
+    }
+}
+
+Pkt6Ptr
+Dhcpv6Srv::processLocalizedQuery6(AllocEngine::ClientContext6& ctx) {
+    Pkt6Ptr query = ctx.query_;
+    bool drop  = false;
+    initContext(ctx, drop);
     // Stop here if initContext decided to drop the packet.
     if (drop) {
         return (Pkt6Ptr());

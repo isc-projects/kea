@@ -178,9 +178,9 @@ public:
         AllocEngine::ClientContext6 ctx;
         bool drop = !srv_.earlyGHRLookup(sol, ctx);
         ASSERT_FALSE(drop);
-        Subnet6Ptr subnet = srv_.selectSubnet(sol, drop);
+        ctx.subnet_ = srv_.selectSubnet(sol, drop);
         ASSERT_FALSE(drop);
-        srv_.initContext(subnet, sol, ctx, drop);
+        srv_.initContext(ctx, drop);
         ASSERT_FALSE(drop);
         Pkt6Ptr adv = srv_.processSolicit(ctx);
 
@@ -208,9 +208,9 @@ public:
         AllocEngine::ClientContext6 ctx2;
         drop = !srv_.earlyGHRLookup(sol, ctx2);
         ASSERT_FALSE(drop);
-        subnet = srv_.selectSubnet(sol, drop);
+        ctx2.subnet_ = srv_.selectSubnet(sol, drop);
         ASSERT_FALSE(drop);
-        srv_.initContext(subnet, sol, ctx2, drop);
+        srv_.initContext(ctx2, drop);
         ASSERT_FALSE(drop);
         adv = srv_.processSolicit(ctx2);
         ASSERT_TRUE(adv);
@@ -448,9 +448,9 @@ public:
         AllocEngine::ClientContext6 ctx;
         bool drop = !srv_.earlyGHRLookup(sol, ctx);
         ASSERT_FALSE(drop);
-        Subnet6Ptr subnet = srv_.selectSubnet(sol, drop);
+        ctx.subnet_ = srv_.selectSubnet(sol, drop);
         ASSERT_FALSE(drop);
-        srv_.initContext(subnet, sol, ctx, drop);
+        srv_.initContext(ctx, drop);
         ASSERT_FALSE(drop);
         Pkt6Ptr adv = srv_.processSolicit(ctx);
 
@@ -686,9 +686,9 @@ public:
         AllocEngine::ClientContext6 ctx;
         bool drop = !srv_.earlyGHRLookup(sol, ctx);
         ASSERT_FALSE(drop);
-        Subnet6Ptr subnet = srv_.selectSubnet(sol, drop);
+        ctx.subnet_ = srv_.selectSubnet(sol, drop);
         ASSERT_FALSE(drop);
-        srv_.initContext(subnet, sol, ctx, drop);
+        srv_.initContext(ctx, drop);
         ASSERT_FALSE(drop);
         Pkt6Ptr adv = srv_.processSolicit(ctx);
 
@@ -1391,9 +1391,9 @@ TEST_F(VendorOptsTest, vendorNeverSend) {
     AllocEngine::ClientContext6 ctx;
     bool drop = !srv_.earlyGHRLookup(sol, ctx);
     ASSERT_FALSE(drop);
-    Subnet6Ptr subnet = srv_.selectSubnet(sol, drop);
+    ctx.subnet_ = srv_.selectSubnet(sol, drop);
     ASSERT_FALSE(drop);
-    srv_.initContext(subnet, sol, ctx, drop);
+    srv_.initContext(ctx, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr adv = srv_.processSolicit(ctx);
 
@@ -1417,9 +1417,9 @@ TEST_F(VendorOptsTest, vendorNeverSend) {
     AllocEngine::ClientContext6 ctx3;
     drop = !srv_.earlyGHRLookup(sol, ctx3);
     ASSERT_FALSE(drop);
-    subnet = srv_.selectSubnet(sol, drop);
+    ctx3.subnet_ = srv_.selectSubnet(sol, drop);
     ASSERT_FALSE(drop);
-    srv_.initContext(subnet, sol, ctx3, drop);
+    srv_.initContext(ctx3, drop);
     ASSERT_FALSE(drop);
     adv = srv_.processSolicit(ctx3);
     ASSERT_TRUE(adv);

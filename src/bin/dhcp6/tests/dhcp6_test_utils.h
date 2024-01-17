@@ -218,11 +218,11 @@ public:
         if (drop) {
             return (Pkt6Ptr());
         }
-        Subnet6Ptr subnet = selectSubnet(solicit, drop);
+        ctx.subnet_ = selectSubnet(solicit, drop);
         if (drop) {
             return (Pkt6Ptr());
         }
-        initContext(subnet, solicit, ctx, drop);
+        initContext(ctx, drop);
         if (drop) {
             return (Pkt6Ptr());
         }
@@ -239,11 +239,11 @@ public:
         if (drop) {
             return (Pkt6Ptr());
         }
-        Subnet6Ptr subnet = selectSubnet(request, drop);
+        ctx.subnet_ = selectSubnet(request, drop);
         if (drop) {
             return (Pkt6Ptr());
         }
-        initContext(subnet, request, ctx, drop);
+        initContext(ctx, drop);
         if (drop) {
             return (Pkt6Ptr());
         }
@@ -260,11 +260,11 @@ public:
         if (drop) {
             return (Pkt6Ptr());
         }
-        Subnet6Ptr subnet = selectSubnet(renew, drop);
+        ctx.subnet_ = selectSubnet(renew, drop);
         if (drop) {
             return (Pkt6Ptr());
         }
-        initContext(subnet, renew, ctx, drop);
+        initContext(ctx, drop);
         if (drop) {
             return (Pkt6Ptr());
         }
@@ -281,11 +281,11 @@ public:
         if (drop) {
             return (Pkt6Ptr());
         }
-        Subnet6Ptr subnet = selectSubnet(rebind, drop);
+        ctx.subnet_ = selectSubnet(rebind, drop);
         if (drop) {
             return (Pkt6Ptr());
         }
-        initContext(subnet, rebind, ctx, drop);
+        initContext(ctx, drop);
         if (drop) {
             return (Pkt6Ptr());
         }
@@ -302,11 +302,11 @@ public:
         if (drop) {
             return (Pkt6Ptr());
         }
-        Subnet6Ptr subnet = selectSubnet(release, drop);
+        ctx.subnet_ = selectSubnet(release, drop);
         if (drop) {
             return (Pkt6Ptr());
         }
-        initContext(subnet, release, ctx, drop);
+        initContext(ctx, drop);
         if (drop) {
             return (Pkt6Ptr());
         }
@@ -323,11 +323,11 @@ public:
         if (drop) {
             return (Pkt6Ptr());
         }
-        Subnet6Ptr subnet = selectSubnet(decline, drop);
+        ctx.subnet_ = selectSubnet(decline, drop);
         if (drop) {
             return (Pkt6Ptr());
         }
-        initContext(subnet, decline, ctx, drop);
+        initContext(ctx, drop);
         if (drop) {
             return (Pkt6Ptr());
         }

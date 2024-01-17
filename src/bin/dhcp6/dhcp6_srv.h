@@ -175,8 +175,8 @@ public:
 
     /// @brief Process a single incoming DHCPv6 packet.
     ///
-    /// It verifies correctness of the passed packet, calls per-type processXXX
-    /// methods, generates appropriate answer.
+    /// It verifies correctness of the passed packet, localizes it,
+    /// calls per-type processXXX methods, generates appropriate answer.
     ///
     /// @param query A pointer to the packet to be processed.
     /// @return A pointer to the response.
@@ -184,7 +184,8 @@ public:
 
     /// @brief Process a single incoming DHCPv6 query.
     ///
-    /// It calls per-type processXXX methods, generates appropriate answer.
+    /// It localizes the query, calls per-type processXXX methods,
+    /// generates appropriate answer.
     ///
     /// @param query A pointer to the packet to be processed.
     /// @return A pointer to the response.
@@ -192,11 +193,29 @@ public:
 
     /// @brief Process a single incoming DHCPv6 query.
     ///
+    /// It localizes the query, calls per-type processXXX methods,
+    /// generates appropriate answer, sends the answer to the client.
+    ///
+    /// @param query A pointer to the packet to be processed.
+    void processDhcp6QueryAndSendResponse(Pkt6Ptr query);
+
+    /// @brief Process a localized incoming DHCPv6 query.
+    ///
+    /// It calls per-type processXXX methods, generates appropriate answer.
+    ///
+    /// @param ctx Pointer to The client context.
+    /// @return A pointer to the response.
+    Pkt6Ptr processLocalizedQuery6(AllocEngine::ClientContext6& ctx);
+
+    /// @brief Process a localized incoming DHCPv6 query.
+    ///
     /// It calls per-type processXXX methods, generates appropriate answer,
     /// sends the answer to the client.
     ///
     /// @param query A pointer to the packet to be processed.
-    void processDhcp6QueryAndSendResponse(Pkt6Ptr query);
+    /// @param ctx Pointer to The client context.
+    void processLocalizedQuery6AndSendResponse(Pkt6Ptr query,
+                                               AllocEngine::ClientContext6& ctx);
 
     /// @brief Instructs the server to shut down.
     void shutdown() override;
@@ -253,6 +272,13 @@ public:
     /// Clears the packet parking lots of all packets.
     /// Called during reconfigure and shutdown.
     void discardPackets();
+
+    /// @brief Initialize client context (first part).
+    ///
+    /// @param query The query message.
+    /// @param ctx Reference to client context.
+    void initContext0(const Pkt6Ptr& query,
+                      AllocEngine::ClientContext6& ctx);
 
     /// @brief Initialize client context and perform early global
     /// reservations lookup.
@@ -917,14 +943,9 @@ protected:
     /// the Rapid Commit option was included and that the server respects
     /// it.
     ///
-    /// @param subnet Selected subnet.
-    /// @param pkt pointer to a packet for which context will be created.
     /// @param [out] ctx reference to context object to be initialized.
     /// @param [out] drop if it is true the packet will be dropped.
-    void initContext(const Subnet6Ptr& subnet,
-                     const Pkt6Ptr& pkt,
-                     AllocEngine::ClientContext6& ctx,
-                     bool& drop);
+    void initContext(AllocEngine::ClientContext6& ctx, bool& drop);
 
     /// @brief this is a prefix added to the content of vendor-class option
     ///
