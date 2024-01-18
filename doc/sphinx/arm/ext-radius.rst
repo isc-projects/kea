@@ -181,7 +181,7 @@ Two services are supported:
 
 -  ``accounting`` - the accounting service.
 
-Configuration of services is divided into two parts:
+At the service level, three sections can be configured:
 
 -  Servers that define RADIUS services that the library is expected to
    contact. Each server may have the following items specified:
@@ -217,6 +217,16 @@ Configuration of services is divided into two parts:
    -  ``expr`` - the last of the three ways to specify the attribute content.
       It specifies an evaluation expression on the DHCP query packet.
       Currently this is restricted to the access service.
+
+    Attributes are supported only for the access service.
+
+- The ``peer-updates`` boolean flag controls whether lease updates coming from
+  an active High-Availability (HA) partner should result in an accounting
+  request. This may be desirable to remove duplicates if HA partners are
+  configured to send request to the same RADIUS server. The flag is enabled by
+  default and only supported by the accounting service. The lease
+  synchronization process at the startup of an HA node does not trigger a RADIUS
+  accounting request, regardless of the value of this flag.
 
 For example, to specify a single access server available on localhost
 that uses ``"xyz123"`` as a secret, and tell Kea to send three additional
