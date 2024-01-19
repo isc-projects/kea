@@ -1,3 +1,12 @@
+2201.	[func]		dhankins
+	New metrics pkt4-dhcp-disabled, pkt4-raw-received, disabled-by-db,
+	disabled-by-ha-local, disabled-by-ha-remote, disabled-by-user, and
+	disabled-globally provide monitoring level visibility into the network_state
+	manager, and closes a monitoring gap where packets dropped while disabled
+	are not counted by any metric.
+	While disabled, a WARN log is emitted every DISABLE_WARN_PACKET{4|6}(100)
+	dropped packets, in addition to the existing DEBUG log.
+
 2200.	[func]		piotrek
 	Kea now supports new DHCPv4 option code 121, Classless Static
 	Route option defined in RFC 3442.

@@ -623,18 +623,21 @@ TEST_F(InformTest, statisticsInform) {
     // Ok, let's check the statistics.
     using namespace isc::stats;
     StatsMgr& mgr = StatsMgr::instance();
+    ObservationPtr pkt4_raw_received = mgr.getObservation("pkt4-raw-received");
     ObservationPtr pkt4_received = mgr.getObservation("pkt4-received");
     ObservationPtr pkt4_inform_received = mgr.getObservation("pkt4-inform-received");
     ObservationPtr pkt4_ack_sent = mgr.getObservation("pkt4-ack-sent");
     ObservationPtr pkt4_sent = mgr.getObservation("pkt4-sent");
 
     // All expected statistics must be present.
+    ASSERT_TRUE(pkt4_raw_received);
     ASSERT_TRUE(pkt4_received);
     ASSERT_TRUE(pkt4_inform_received);
     ASSERT_TRUE(pkt4_ack_sent);
     ASSERT_TRUE(pkt4_sent);
 
     // And they must have expected values.
+    EXPECT_EQ(1, pkt4_raw_received->getInteger().first);
     EXPECT_EQ(1, pkt4_received->getInteger().first);
     EXPECT_EQ(1, pkt4_inform_received->getInteger().first);
     EXPECT_EQ(1, pkt4_ack_sent->getInteger().first);
@@ -648,6 +651,7 @@ TEST_F(InformTest, statisticsInform) {
     ASSERT_NO_THROW(client.doInform());
 
     // Let's see if the stats are properly updated.
+    EXPECT_EQ(5, pkt4_raw_received->getInteger().first);
     EXPECT_EQ(5, pkt4_received->getInteger().first);
     EXPECT_EQ(5, pkt4_inform_received->getInteger().first);
     EXPECT_EQ(5, pkt4_ack_sent->getInteger().first);

@@ -43,6 +43,8 @@
 namespace isc {
 namespace dhcp {
 
+static const int64_t DISABLE_WARN_PACKET6 = 100;
+
 /// @brief This exception is thrown when DHCP server hits the error which should
 /// result in discarding the message being processed.
 class DHCPv6DiscardMessageError : public Exception {

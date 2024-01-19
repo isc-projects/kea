@@ -142,6 +142,9 @@ public:
     /// from different origins and that it results in each timer being scheduled.
     void multipleDifferentOriginsDelayedEnableServiceTest();
 
+    /// @brief This test verifies that monitoring metrics are updated.
+    void monitoringMetricsUpdatedTest();
+
     /// @brief Runs IO service with a timeout.
     ///
     /// @param timeout_ms Timeout for running IO service in milliseconds.
@@ -603,6 +606,113 @@ NetworkStateTest::multipleDifferentOriginsDelayedEnableServiceTest() {
     EXPECT_FALSE(state.isDelayedEnableService());
 }
 
+void
+NetworkStateTest::monitoringMetricsUpdatedTest() {
+    NetworkState state(NetworkState::DHCPv4);
+    isc::stats::StatsMgr& mgr = isc::stats::StatsMgr::instance();
+    isc::stats::ObservationPtr disabled_globally = mgr.getObservation("disabled-globally");
+    isc::stats::ObservationPtr disabled_by_user = mgr.getObservation("disabled-by-user");
+    isc::stats::ObservationPtr disabled_by_ha_local = mgr.getObservation("disabled-by-ha-local");
+    isc::stats::ObservationPtr disabled_by_ha_remote = mgr.getObservation("disabled-by-ha-remote");
+    isc::stats::ObservationPtr disabled_by_db = mgr.getObservation("disabled-by-db");
+
+    ASSERT_TRUE(disabled_globally);
+    ASSERT_TRUE(disabled_by_user);
+    ASSERT_TRUE(disabled_by_ha_local);
+    ASSERT_TRUE(disabled_by_ha_remote);
+    ASSERT_TRUE(disabled_by_db);
+
+    // Initial state.
+    EXPECT_TRUE(state.isServiceEnabled());
+    EXPECT_EQ(0, disabled_globally->getInteger().first);
+    EXPECT_EQ(0, disabled_by_user->getInteger().first);
+    EXPECT_EQ(0, disabled_by_ha_local->getInteger().first);
+    EXPECT_EQ(0, disabled_by_ha_remote->getInteger().first);
+    EXPECT_EQ(0, disabled_by_db->getInteger().first);
+
+    // Disable by user.
+    state.disableService(NetworkState::Origin::USER_COMMAND);
+
+    EXPECT_FALSE(state.isServiceEnabled());
+    EXPECT_EQ(1, disabled_globally->getInteger().first);
+    EXPECT_EQ(1, disabled_by_user->getInteger().first);
+    EXPECT_EQ(0, disabled_by_ha_local->getInteger().first);
+    EXPECT_EQ(0, disabled_by_ha_remote->getInteger().first);
+    EXPECT_EQ(0, disabled_by_db->getInteger().first);
+
+    // Disable by ha local.
+    state.disableService(NetworkState::Origin::HA_LOCAL_COMMAND);
+
+    EXPECT_FALSE(state.isServiceEnabled());
+    EXPECT_EQ(1, disabled_globally->getInteger().first);
+    EXPECT_EQ(1, disabled_by_user->getInteger().first);
+    EXPECT_EQ(1, disabled_by_ha_local->getInteger().first);
+    EXPECT_EQ(0, disabled_by_ha_remote->getInteger().first);
+    EXPECT_EQ(0, disabled_by_db->getInteger().first);
+
+    // Disable by ha remote.
+    state.disableService(NetworkState::Origin::HA_REMOTE_COMMAND);
+
+    EXPECT_FALSE(state.isServiceEnabled());
+    EXPECT_EQ(1, disabled_globally->getInteger().first);
+    EXPECT_EQ(1, disabled_by_user->getInteger().first);
+    EXPECT_EQ(1, disabled_by_ha_local->getInteger().first);
+    EXPECT_EQ(1, disabled_by_ha_remote->getInteger().first);
+    EXPECT_EQ(0, disabled_by_db->getInteger().first);
+
+    // Enable by user.
+    state.enableService(NetworkState::Origin::USER_COMMAND);
+
+    EXPECT_FALSE(state.isServiceEnabled());
+    EXPECT_EQ(1, disabled_globally->getInteger().first);
+    EXPECT_EQ(0, disabled_by_user->getInteger().first);
+    EXPECT_EQ(1, disabled_by_ha_local->getInteger().first);
+    EXPECT_EQ(1, disabled_by_ha_remote->getInteger().first);
+    EXPECT_EQ(0, disabled_by_db->getInteger().first);
+
+    // Enable by ha.
+    state.enableService(NetworkState::Origin::HA_LOCAL_COMMAND);
+    state.enableService(NetworkState::Origin::HA_REMOTE_COMMAND);
+
+    EXPECT_TRUE(state.isServiceEnabled());
+    EXPECT_EQ(0, disabled_globally->getInteger().first);
+    EXPECT_EQ(0, disabled_by_user->getInteger().first);
+    EXPECT_EQ(0, disabled_by_ha_local->getInteger().first);
+    EXPECT_EQ(0, disabled_by_ha_remote->getInteger().first);
+    EXPECT_EQ(0, disabled_by_db->getInteger().first);
+
+    // DB connection disables are a counter.
+    state.disableService(NetworkState::Origin::DB_CONNECTION);
+    state.disableService(NetworkState::Origin::DB_CONNECTION);
+    state.disableService(NetworkState::Origin::DB_CONNECTION);
+
+    EXPECT_FALSE(state.isServiceEnabled());
+    EXPECT_EQ(1, disabled_globally->getInteger().first);
+    EXPECT_EQ(0, disabled_by_user->getInteger().first);
+    EXPECT_EQ(0, disabled_by_ha_local->getInteger().first);
+    EXPECT_EQ(0, disabled_by_ha_remote->getInteger().first);
+    EXPECT_EQ(3, disabled_by_db->getInteger().first);
+
+    state.enableService(NetworkState::Origin::DB_CONNECTION);
+    state.enableService(NetworkState::Origin::DB_CONNECTION);
+
+    EXPECT_FALSE(state.isServiceEnabled());
+    EXPECT_EQ(1, disabled_globally->getInteger().first);
+    EXPECT_EQ(0, disabled_by_user->getInteger().first);
+    EXPECT_EQ(0, disabled_by_ha_local->getInteger().first);
+    EXPECT_EQ(0, disabled_by_ha_remote->getInteger().first);
+    EXPECT_EQ(1, disabled_by_db->getInteger().first);
+
+    state.enableService(NetworkState::Origin::DB_CONNECTION);
+
+    EXPECT_TRUE(state.isServiceEnabled());
+    EXPECT_EQ(0, disabled_globally->getInteger().first);
+    EXPECT_EQ(0, disabled_by_user->getInteger().first);
+    EXPECT_EQ(0, disabled_by_ha_local->getInteger().first);
+    EXPECT_EQ(0, disabled_by_ha_remote->getInteger().first);
+    EXPECT_EQ(0, disabled_by_db->getInteger().first);
+}
+
 // Test invocations.
 
 TEST_F(NetworkStateTest, defaultTest) {
@@ -747,6 +857,10 @@ TEST_F(NetworkStateTest, multipleDifferentOriginsDelayedEnableServiceTest) {
 TEST_F(NetworkStateTest, multipleDifferentOriginsDelayedEnableServiceTestMultiThreading) {
     MultiThreadingMgr::instance().setMode(true);
     multipleDifferentOriginsDelayedEnableServiceTest();
+}
+
+TEST_F(NetworkStateTest, monitoringMetricsUpdatedTest) {
+    monitoringMetricsUpdatedTest();
 }
 
 } // end of anonymous namespace

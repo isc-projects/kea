@@ -13,6 +13,7 @@
 #include <boost/enable_shared_from_this.hpp>
 #include <functional>
 #include <sstream>
+#include <stats/stats_mgr.h>
 #include <string>
 #include <unordered_set>
 
@@ -31,6 +32,7 @@ public:
           disabled_subnets_(), disabled_networks_(),
           timer_mgr_(TimerMgr::instance()), disabled_by_origin_(),
           disabled_by_db_connection_(0) {
+        updateStats();
     }
 
     /// @brief Destructor.
@@ -76,6 +78,7 @@ public:
                 globally_disabled_ = false;
             }
         }
+        updateStats();
     }
 
     /// @brief Reset internal counters for a database connection origin.
@@ -86,6 +89,7 @@ public:
         if (disabled_by_origin_.empty()) {
             globally_disabled_ = false;
         }
+        updateStats();
     }
 
     /// @brief Enables DHCP service for an origin.
@@ -168,6 +172,26 @@ public:
     /// @brief Flag which indicates the state has been disabled by a DB
     /// connection loss.
     uint32_t disabled_by_db_connection_;
+
+private:
+    /// @private
+
+    /// @brief Update monitoring metrics to expose disable states.
+    ///
+    /// A 0 value is used for false, 1 for true.
+    void updateStats() {
+        isc::stats::StatsMgr::instance().setValue("disabled-globally",
+                static_cast<int64_t>(globally_disabled_));
+        isc::stats::StatsMgr::instance().setValue("disabled-by-user",
+                static_cast<int64_t>(disabled_by_origin_.contains(USER_COMMAND)));
+        isc::stats::StatsMgr::instance().setValue("disabled-by-ha-local",
+                static_cast<int64_t>(disabled_by_origin_.contains(HA_LOCAL_COMMAND)));
+        isc::stats::StatsMgr::instance().setValue("disabled-by-ha-remote",
+                static_cast<int64_t>(disabled_by_origin_.contains(HA_REMOTE_COMMAND)));
+        // Expose the disabled-by-db-connection counter by direct value.
+        isc::stats::StatsMgr::instance().setValue("disabled-by-db",
+                static_cast<int64_t>(disabled_by_db_connection_));
+    }
 };
 
 NetworkState::NetworkState(const NetworkState::ServerType& server_type)

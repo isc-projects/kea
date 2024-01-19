@@ -40,6 +40,8 @@
 namespace isc {
 namespace dhcp {
 
+static const int64_t DISABLE_WARN_PACKET4 = 100;
+
 /// @brief DHCPv4 message exchange.
 ///
 /// This class represents the DHCPv4 message exchange. The message exchange

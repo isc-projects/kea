@@ -634,11 +634,23 @@ TEST_F(CtrlChannelDhcpv4SrvTest, controlChannelStats) {
                     "  \"name\":\"bogus\" }}", response);
     EXPECT_EQ("{ \"arguments\": {  }, \"result\": 0 }", response);
 
+    // Set max sample count to 1 to match test expectation (disabled state
+    // gauges normally have 2 samples).
+    sendUnixCommand("{ \"command\" : \"statistic-sample-count-set-all\", "
+                    "  \"arguments\": { \"max-samples\": 1 }}", response);
+    EXPECT_EQ("{ \"result\": 0, \"text\": \"All statistics count limit are set.\" }", response);
     // Check statistic-get-all
     sendUnixCommand("{ \"command\" : \"statistic-get-all\", "
                     "  \"arguments\": {}}", response);
 
     std::set<std::string> initial_stats = {
+        "disabled-by-db",
+        "disabled-by-ha-local",
+        "disabled-by-ha-remote",
+        "disabled-by-user",
+        "disabled-globally",
+        "pkt4-dhcp-disabled",
+        "pkt4-raw-received",
         "pkt4-received",
         "pkt4-discover-received",
         "pkt4-offer-received",

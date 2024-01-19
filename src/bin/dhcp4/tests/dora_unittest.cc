@@ -2504,6 +2504,8 @@ DORATest::statisticsDORA() {
     // Ok, let's check the statistics.
     using namespace isc::stats;
     StatsMgr& mgr = StatsMgr::instance();
+    ObservationPtr pkt4_dhcp_disabled = mgr.getObservatoin("pkt4-dhcp-disabled");
+    ObservationPtr pkt4_raw_received = mgr.getObservation("pkt4-raw-received");
     ObservationPtr pkt4_received = mgr.getObservation("pkt4-received");
     ObservationPtr pkt4_discover_received = mgr.getObservation("pkt4-discover-received");
     ObservationPtr pkt4_offer_sent = mgr.getObservation("pkt4-offer-sent");
@@ -2512,6 +2514,8 @@ DORATest::statisticsDORA() {
     ObservationPtr pkt4_sent = mgr.getObservation("pkt4-sent");
 
     // All expected statistics must be present.
+    ASSERT_TRUE(pkt4_dhcp_disabled);
+    ASSERT_TRUE(pkt4_raw_received);
     ASSERT_TRUE(pkt4_received);
     ASSERT_TRUE(pkt4_discover_received);
     ASSERT_TRUE(pkt4_offer_sent);
@@ -2520,6 +2524,8 @@ DORATest::statisticsDORA() {
     ASSERT_TRUE(pkt4_sent);
 
     // They also must have expected values.
+    EXPECT_EQ(0, pkt4_dhcp_disabled->getInteger().first);
+    EXPECT_EQ(2, pkt4_raw_received->getInteger().first);
     EXPECT_EQ(2, pkt4_received->getInteger().first);
     EXPECT_EQ(1, pkt4_discover_received->getInteger().first);
     EXPECT_EQ(1, pkt4_offer_sent->getInteger().first);
@@ -2535,6 +2541,8 @@ DORATest::statisticsDORA() {
     ASSERT_NO_THROW(client.doRequest());
 
     // Let's see if the stats are properly updated.
+    EXPECT_EQ(0, pkt4_dhcp_disabled->getInteger().first);
+    EXPECT_EQ(5, pkt4_raw_received->getInteger().first);
     EXPECT_EQ(5, pkt4_received->getInteger().first);
     EXPECT_EQ(1, pkt4_discover_received->getInteger().first);
     EXPECT_EQ(1, pkt4_offer_sent->getInteger().first);
@@ -2576,6 +2584,7 @@ DORATest::statisticsNAK() {
 
     using namespace isc::stats;
     StatsMgr& mgr = StatsMgr::instance();
+    ObservationPtr pkt4_raw_received = mgr.getObservation("pkt4-raw-received");
     ObservationPtr pkt4_received = mgr.getObservation("pkt4-received");
     ObservationPtr pkt4_request_received = mgr.getObservation("pkt4-request-received");
     ObservationPtr pkt4_ack_sent = mgr.getObservation("pkt4-ack-sent");
@@ -2583,6 +2592,7 @@ DORATest::statisticsNAK() {
     ObservationPtr pkt4_sent = mgr.getObservation("pkt4-sent");
 
     // All expected statistics must be present.
+    ASSERT_TRUE(pkt4_raw_received);
     ASSERT_TRUE(pkt4_received);
     ASSERT_TRUE(pkt4_request_received);
     ASSERT_FALSE(pkt4_ack_sent); // No acks were sent, no such statistic expected.
@@ -2590,6 +2600,7 @@ DORATest::statisticsNAK() {
     ASSERT_TRUE(pkt4_sent);
 
     // They also must have expected values.
+    EXPECT_EQ(1, pkt4_raw_received->getInteger().first);
     EXPECT_EQ(1, pkt4_received->getInteger().first);
     EXPECT_EQ(1, pkt4_request_received->getInteger().first);
     EXPECT_EQ(1, pkt4_nak_sent->getInteger().first);

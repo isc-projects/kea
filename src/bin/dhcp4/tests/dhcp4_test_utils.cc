@@ -994,14 +994,17 @@ Dhcpv4SrvTest::pretendReceivingPkt(NakedDhcpv4Srv& srv, const std::string& confi
 
     using namespace isc::stats;
     StatsMgr& mgr = StatsMgr::instance();
+    ObservationPtr pkt4_raw_received = mgr.getObservation("pkt4-raw-received");
     ObservationPtr pkt4_rcvd = mgr.getObservation("pkt4-received");
     ObservationPtr tested_stat = mgr.getObservation(stat_name);
 
     // All expected statistics must be present.
+    ASSERT_TRUE(pkt4_raw_received);
     ASSERT_TRUE(pkt4_rcvd);
     ASSERT_TRUE(tested_stat);
 
     // They also must have expected values.
+    EXPECT_EQ(1, pkt4_raw_received->getInteger().first);
     EXPECT_EQ(1, pkt4_rcvd->getInteger().first);
     EXPECT_EQ(1, tested_stat->getInteger().first);
 }

@@ -249,6 +249,11 @@ public:
     /// @return number of recorded statistics.
     size_t count() const;
 
+    /// @brief Returns the most recent integer value for a monitoring variable.
+    ///
+    /// @return integer value as a 64 bit integer
+    int64_t getInteger(const std::string& name) const;
+
     /// @brief Returns a single statistic as a JSON structure.
     ///
     /// @return JSON structures representing a single statistic
@@ -712,6 +717,15 @@ private:
     ///
     /// @return number of recorded statistics.
     size_t countInternal() const;
+
+    /// @private
+
+    /// @brief Returns the most recent integer value for a monitoring variable.
+    ///
+    /// Should be called in a thread safe context.
+    ///
+    /// @return integer value as a 64 bit integer
+    int64_t getIntegerInternal(const std::string& name) const;
 
     /// @private
 

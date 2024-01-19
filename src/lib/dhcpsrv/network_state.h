@@ -200,6 +200,9 @@ public:
 
 private:
 
+    /// @brief Update monitoring metrics to expose disable states.
+    void updateStats();
+
     /// @brief Pointer to the @c NetworkState implementation.
     boost::shared_ptr<NetworkStateImpl> impl_;
 
