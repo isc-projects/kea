@@ -84,6 +84,7 @@ extern const isc::log::MessageID DHCP6_HOOK_PACKET_RCVD_SKIP = "DHCP6_HOOK_PACKE
 extern const isc::log::MessageID DHCP6_HOOK_PACKET_SEND_DROP = "DHCP6_HOOK_PACKET_SEND_DROP";
 extern const isc::log::MessageID DHCP6_HOOK_PACKET_SEND_SKIP = "DHCP6_HOOK_PACKET_SEND_SKIP";
 extern const isc::log::MessageID DHCP6_HOOK_SUBNET6_SELECT_DROP = "DHCP6_HOOK_SUBNET6_SELECT_DROP";
+extern const isc::log::MessageID DHCP6_HOOK_SUBNET6_SELECT_PARK = "DHCP6_HOOK_SUBNET6_SELECT_PARK";
 extern const isc::log::MessageID DHCP6_HOOK_SUBNET6_SELECT_SKIP = "DHCP6_HOOK_SUBNET6_SELECT_SKIP";
 extern const isc::log::MessageID DHCP6_INIT_FAIL = "DHCP6_INIT_FAIL";
 extern const isc::log::MessageID DHCP6_LEASE_ADVERT = "DHCP6_LEASE_ADVERT";
@@ -258,6 +259,7 @@ const char* values[] = {
     "DHCP6_HOOK_PACKET_SEND_DROP", "%1: prepared DHCPv6 response was not sent because a callout set the next ste to DROP",
     "DHCP6_HOOK_PACKET_SEND_SKIP", "%1: prepared DHCPv6 response is not built because a callout set the next step to SKIP",
     "DHCP6_HOOK_SUBNET6_SELECT_DROP", "%1: packet was dropped because a callout set the drop flag",
+    "DHCP6_HOOK_SUBNET6_SELECT_PARK", "%1: packet was parked",
     "DHCP6_HOOK_SUBNET6_SELECT_SKIP", "%1: no subnet was selected because a callout set the next step to SKIP",
     "DHCP6_INIT_FAIL", "failed to initialize Kea server: %1",
     "DHCP6_LEASE_ADVERT", "%1: lease for address %2 and iaid=%3 will be advertised",

@@ -85,6 +85,7 @@ extern const isc::log::MessageID DHCP6_HOOK_PACKET_RCVD_SKIP;
 extern const isc::log::MessageID DHCP6_HOOK_PACKET_SEND_DROP;
 extern const isc::log::MessageID DHCP6_HOOK_PACKET_SEND_SKIP;
 extern const isc::log::MessageID DHCP6_HOOK_SUBNET6_SELECT_DROP;
+extern const isc::log::MessageID DHCP6_HOOK_SUBNET6_SELECT_PARK;
 extern const isc::log::MessageID DHCP6_HOOK_SUBNET6_SELECT_SKIP;
 extern const isc::log::MessageID DHCP6_INIT_FAIL;
 extern const isc::log::MessageID DHCP6_LEASE_ADVERT;

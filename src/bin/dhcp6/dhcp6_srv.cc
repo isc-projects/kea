@@ -2013,6 +2013,15 @@ Dhcpv6Srv::selectSubnet(const Pkt6Ptr& question, bool& drop) {
             return (Subnet6Ptr());
         }
 
+        // Callouts parked the packet. Same as drop but callouts will resume
+        // processing or drop the packet later.
+        if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_PARK) {
+            LOG_DEBUG(hooks_logger, DBG_DHCP6_HOOKS, DHCP6_HOOK_SUBNET6_SELECT_PARK)
+                .arg(question->getLabel());
+            drop = true;
+            return (Subnet6Ptr());
+        }
+
         // Use whatever subnet was specified by the callout
         callout_handle->getArgument("subnet6", subnet);
     }
