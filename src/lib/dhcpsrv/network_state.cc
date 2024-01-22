@@ -183,11 +183,11 @@ private:
         isc::stats::StatsMgr::instance().setValue("disabled-globally",
                 static_cast<int64_t>(globally_disabled_));
         isc::stats::StatsMgr::instance().setValue("disabled-by-user",
-                static_cast<int64_t>(disabled_by_origin_.contains(USER_COMMAND)));
+                static_cast<int64_t>(disabled_by_origin_.contains(NetworkState::USER_COMMAND)));
         isc::stats::StatsMgr::instance().setValue("disabled-by-ha-local",
-                static_cast<int64_t>(disabled_by_origin_.contains(HA_LOCAL_COMMAND)));
+                static_cast<int64_t>(disabled_by_origin_.contains(NetworkState::HA_LOCAL_COMMAND)));
         isc::stats::StatsMgr::instance().setValue("disabled-by-ha-remote",
-                static_cast<int64_t>(disabled_by_origin_.contains(HA_REMOTE_COMMAND)));
+                static_cast<int64_t>(disabled_by_origin_.contains(NetworkState::HA_REMOTE_COMMAND)));
         // Expose the disabled-by-db-connection counter by direct value.
         isc::stats::StatsMgr::instance().setValue("disabled-by-db",
                 static_cast<int64_t>(disabled_by_db_connection_));
