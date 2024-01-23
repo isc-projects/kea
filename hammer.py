@@ -1467,7 +1467,7 @@ def _change_postgresql_auth_method(connection_type, auth_method, hba_file):
         connection_type, connection_type, auth_method, hba_file), cwd='/tmp')
 
 
-def _configure_pgsql(system, features, revision):
+def _configure_pgsql(system, revision, features):
     """ Configure PostgreSQL DB """
 
     if system == 'freebsd':
@@ -1618,16 +1618,30 @@ def require_minimum_package_version(package: str, minimum: str):
         raise Exception(message)
 
 
-def prepare_system_local(features, check_times, ignore_errors_for):
+def prepare_system_local(features, check_times, ignore_errors_for, just_configure):
     """Prepare local system for Kea development based on requested features."""
+    system, revision = get_system_revision()
+    log.info(f'Preparing deps for {system} {revision}...')
+
+    if not just_configure:
+        install_packages_local(system, revision, features, check_times, ignore_errors_for)
+
+    if 'mysql' in features:
+        _configure_mysql(system, revision, features)
+
+    if 'pgsql' in features:
+        _configure_pgsql(system, revision, features)
+
+    log.info('Preparing deps completed successfully.')
+
+
+def install_packages_local(system, revision, features, check_times, ignore_errors_for):
+    """Install packages for Kea development based on requested features."""
     env = os.environ.copy()
     env['LANGUAGE'] = env['LANG'] = env['LC_ALL'] = 'C'
 
     # Actions decided before installing packages, but run afterwards
     deferred_functions = []
-
-    system, revision = get_system_revision()
-    log.info('Preparing deps for %s %s', system, revision)
 
     # Check if package versions cannot be met.
     if 'netconf' in features and 'netconf' not in ignore_errors_for:
@@ -1997,16 +2011,6 @@ def prepare_system_local(features, check_times, ignore_errors_for):
     # Packages required by these functions have been installed. Now call them.
     for f in deferred_functions:
         f()
-
-    if 'mysql' in features:
-        _configure_mysql(system, revision, features)
-
-    if 'pgsql' in features:
-        _configure_pgsql(system, features, revision)
-
-    #execute('sudo rm -rf /usr/share/doc')
-
-    log.info('Preparing deps completed successfully.')
 
 
 def prepare_system_in_vagrant(provider, system, revision, features, dry_run, check_times,
@@ -2718,6 +2722,9 @@ def parse_args():
                                    "dependencies and pre-configure the system. build command always first calls "
                                    "prepare-system internally.",
                                    parents=[parent_parser1, parent_parser2])
+    parser.add_argument('--just-configure', action='store_true',
+                        help='Whether to prevent installation of packages and only proceed to set them up. '
+                             'Only has an effect when preparing system locally, as opposed to inside vagrant.')
     parser.add_argument('--ccache-dir', default=None,
                         help='Path to CCache directory on host system.')
     parser.add_argument('--repository-url', default=None,
@@ -2931,7 +2938,7 @@ def prepare_system_cmd(args):
     log.info('Enabled features: %s', ' '.join(features))
 
     if args.provider == 'local':
-        prepare_system_local(features, args.check_times, args.ignore_errors_for)
+        prepare_system_local(features, args.check_times, args.ignore_errors_for, args.just_configure)
         return
 
     ccache_dir = _prepare_ccache_dir(args.ccache_dir, args.system, args.revision)
