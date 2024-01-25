@@ -12,6 +12,7 @@
 #include <util/multi_threading_mgr.h>
 #include <gtest/gtest.h>
 #include <functional>
+#include <stats/stats_mgr.h>
 
 using namespace isc;
 using namespace isc::asiolink;
@@ -631,7 +632,7 @@ NetworkStateTest::monitoringMetricsUpdatedTest() {
     EXPECT_EQ(0, disabled_by_db->getInteger().first);
 
     // Disable by user.
-    state.disableService(NetworkState::Origin::USER_COMMAND);
+    state.disableService(NetworkState::USER_COMMAND);
 
     EXPECT_FALSE(state.isServiceEnabled());
     EXPECT_EQ(1, disabled_globally->getInteger().first);
@@ -641,7 +642,7 @@ NetworkStateTest::monitoringMetricsUpdatedTest() {
     EXPECT_EQ(0, disabled_by_db->getInteger().first);
 
     // Disable by ha local.
-    state.disableService(NetworkState::Origin::HA_LOCAL_COMMAND);
+    state.disableService(NetworkState::HA_LOCAL_COMMAND);
 
     EXPECT_FALSE(state.isServiceEnabled());
     EXPECT_EQ(1, disabled_globally->getInteger().first);
@@ -651,7 +652,7 @@ NetworkStateTest::monitoringMetricsUpdatedTest() {
     EXPECT_EQ(0, disabled_by_db->getInteger().first);
 
     // Disable by ha remote.
-    state.disableService(NetworkState::Origin::HA_REMOTE_COMMAND);
+    state.disableService(NetworkState::HA_REMOTE_COMMAND);
 
     EXPECT_FALSE(state.isServiceEnabled());
     EXPECT_EQ(1, disabled_globally->getInteger().first);
@@ -661,7 +662,7 @@ NetworkStateTest::monitoringMetricsUpdatedTest() {
     EXPECT_EQ(0, disabled_by_db->getInteger().first);
 
     // Enable by user.
-    state.enableService(NetworkState::Origin::USER_COMMAND);
+    state.enableService(NetworkState::USER_COMMAND);
 
     EXPECT_FALSE(state.isServiceEnabled());
     EXPECT_EQ(1, disabled_globally->getInteger().first);
@@ -671,8 +672,8 @@ NetworkStateTest::monitoringMetricsUpdatedTest() {
     EXPECT_EQ(0, disabled_by_db->getInteger().first);
 
     // Enable by ha.
-    state.enableService(NetworkState::Origin::HA_LOCAL_COMMAND);
-    state.enableService(NetworkState::Origin::HA_REMOTE_COMMAND);
+    state.enableService(NetworkState::HA_LOCAL_COMMAND);
+    state.enableService(NetworkState::HA_REMOTE_COMMAND);
 
     EXPECT_TRUE(state.isServiceEnabled());
     EXPECT_EQ(0, disabled_globally->getInteger().first);
@@ -682,9 +683,9 @@ NetworkStateTest::monitoringMetricsUpdatedTest() {
     EXPECT_EQ(0, disabled_by_db->getInteger().first);
 
     // DB connection disables are a counter.
-    state.disableService(NetworkState::Origin::DB_CONNECTION);
-    state.disableService(NetworkState::Origin::DB_CONNECTION);
-    state.disableService(NetworkState::Origin::DB_CONNECTION);
+    state.disableService(NetworkState::DB_CONNECTION);
+    state.disableService(NetworkState::DB_CONNECTION);
+    state.disableService(NetworkState::DB_CONNECTION);
 
     EXPECT_FALSE(state.isServiceEnabled());
     EXPECT_EQ(1, disabled_globally->getInteger().first);
@@ -693,8 +694,8 @@ NetworkStateTest::monitoringMetricsUpdatedTest() {
     EXPECT_EQ(0, disabled_by_ha_remote->getInteger().first);
     EXPECT_EQ(3, disabled_by_db->getInteger().first);
 
-    state.enableService(NetworkState::Origin::DB_CONNECTION);
-    state.enableService(NetworkState::Origin::DB_CONNECTION);
+    state.enableService(NetworkState::DB_CONNECTION);
+    state.enableService(NetworkState::DB_CONNECTION);
 
     EXPECT_FALSE(state.isServiceEnabled());
     EXPECT_EQ(1, disabled_globally->getInteger().first);
@@ -703,7 +704,7 @@ NetworkStateTest::monitoringMetricsUpdatedTest() {
     EXPECT_EQ(0, disabled_by_ha_remote->getInteger().first);
     EXPECT_EQ(1, disabled_by_db->getInteger().first);
 
-    state.enableService(NetworkState::Origin::DB_CONNECTION);
+    state.enableService(NetworkState::DB_CONNECTION);
 
     EXPECT_TRUE(state.isServiceEnabled());
     EXPECT_EQ(0, disabled_globally->getInteger().first);

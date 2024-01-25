@@ -2504,7 +2504,7 @@ DORATest::statisticsDORA() {
     // Ok, let's check the statistics.
     using namespace isc::stats;
     StatsMgr& mgr = StatsMgr::instance();
-    ObservationPtr pkt4_dhcp_disabled = mgr.getObservatoin("pkt4-dhcp-disabled");
+    ObservationPtr pkt4_dhcp_disabled = mgr.getObservation("pkt4-dhcp-disabled");
     ObservationPtr pkt4_raw_received = mgr.getObservation("pkt4-raw-received");
     ObservationPtr pkt4_received = mgr.getObservation("pkt4-received");
     ObservationPtr pkt4_discover_received = mgr.getObservation("pkt4-discover-received");
