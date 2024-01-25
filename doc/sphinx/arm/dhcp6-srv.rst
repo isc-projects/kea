@@ -1838,6 +1838,9 @@ processing, the support for those options is non-functional. However, it
 may be useful in some limited lab testing; hence the definition formats
 are listed here.
 
+Some options are more complex to configure than others. In particular, the Softwire46 family of options
+and DNR are discussed in separate sections below.
+
 Kea supports more options than those listed above. The following list is mostly useful for readers who
 want to understand whether Kea is able to support certain options. The following options are
 returned by the Kea engine itself and in general should not be configured manually.
@@ -2061,6 +2064,55 @@ Note that the second value in the example above specifies the PSID and
 PSID-length fields in the format of PSID/PSID length. This is equivalent
 to the values of ``PSID-len=4`` and ``PSID=12288`` conveyed in the S46 Port
 Parameters option.
+
+.. _dnr6-options:
+
+DNR (Discovery of Network-designated Resolvers) Options for DHCPv6
+------------------------------------------------------------------
+
+One of the more recently added option is Discovery of Network-designated Resolvers or DNR,
+introduced in `RFC 9463 <https://tools.ietf.org/html/rfc9463>`__. The goal of that RFC is
+to provide a way to communicate location of DNS resolvers available over other means than
+the classic DNS over UDP over port 53. At the time of this writing, the supported technologies
+are DoT (DNS-over-TLS), DoH (DNS-over-HTTPS), and DoQ (DNS-over-QUIC), but the option was
+designed to be extensible to also cover future extensions.
+
+Let's imagine an example that we want to convey a DoT server operating at dot1.example.org
+on a non-standard port 8530. An example option that would convey this information looks as follows:
+
+::
+
+      {
+        "name": "v6-dnr", // name of the option
+        // 100 - service priority
+        // 18 - length of the Authentication Domain Name (name of the resolver)
+        // the binary data has the following meaning:
+        // 00 10 - 16 octects is the length of the following IPv6 address
+        // 20 01 0d b8 00 00 00 01 00 00 00 00 00 00 00 01 - 2001:db8:1::1
+        // Remaining part is to be interpreted as svcParams field. In particular:
+        // 00 01 - next record is alpn
+        // 00 03 - length of the alpn-id field (3 octects)
+        // 64 6f 74 - "dot"
+        // 00 03 - next record is port
+        // 00 02 - length of the record is 2 octets
+        // 21 52 - the actual is 0x2152 or 8530 in decimal
+        "data": "100, 18, dot1.example.org., 00 10 20 01 0d b8 00 00 00 01 00 00 00 00 00 00 00 01 00 01 00 03 64 6f 74 00 03 00 02 21 52"
+      }
+
+A reader interested in configuring this option is encouraged to read the following materials:
+
+- `RFC 9463 <https://www.rfc-editor.org/rfc/rfc9463>`__ which provide option definitions. In terms of SvcParams, it states
+  that at `alpn` and `port` must be supported, and `dotpath` (used for DoT) is recommended to be supported.
+- Section 2.2 of `RFC 9460 <https://www.rfc-editor.org/rfc/rfc9460>`__, which define the on-wire format for SvcParams.
+- Sections 7.1, 7.2 of `RFC 9460 <https://www.rfc-editor.org/rfc/rfc9460>`__, which define the on-wire format for alpn and port.
+- Section 5 of  `RFC 9460 <https://www.rfc-editor.org/rfc/rfc9461#name-new-svcparamkey-dohpath>`__, which defines
+  on-wire format for `dohpath`.
+- A very nice set of examples is available in Section 7 of `RFC 9461 <https://www.rfc-editor.org/rfc/rfc9461#name-examples>`__.
+
+Further examples are provided in Kea sources in `dnr.json` and `all-options.json` files
+in the `doc/examples/kea6` directory. The DHCPv4 option is almost equivalent, and is described
+in :ref:`dnr4-options`.
+
 
 .. _dhcp6-custom-options:
 
@@ -7482,6 +7534,11 @@ The following standards are currently supported in Kea:
 -  *Captive-Portal Identification in DHCP and Router Advertisements (RAs)*, `RFC 8910
    <https://tools.ietf.org/html/rfc8910>`__: The Kea server can configure both v4
    and v6 versions of the captive portal options.
+
+-  *DHCP and Router Advertisement Options for the Discovery of Network-designated
+   Resolvers (DNR)*, `RFC 9463 <https://tools.ietf.org/html/rfc9463>`__. The Kea server
+   supports the DNR option. Part of its value (SvcParams) must be configured in
+   hex.
 
 .. _dhcp6-limit:
 

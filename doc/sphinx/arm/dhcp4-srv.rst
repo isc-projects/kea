@@ -4726,6 +4726,29 @@ and class levels. Choosing an appropriate value for ``offer-lifetime`` is extrem
 site-dependent, but a value between 60 and 120 seconds is a reasonable starting
 point.
 
+.. _dnr4-options:
+
+DNR (Discovery of Network-designated Resolvers) Options for DHCPv4
+------------------------------------------------------------------
+
+One of the more recently added option is Discovery of Network-designated Resolvers or DNR,
+introduced in `RFC 9463 <https://tools.ietf.org/html/rfc9463>`__. The goal of that RFC is
+to provide a way to communicate location of DNS resolvers available over other means than
+the classic DNS over UDP over port 53. At the time of this writing, the supported technologies
+are DoT (DNS-over-TLS), DoH (DNS-over-HTTPS), and DoQ (DNS-over-QUIC), but the option was
+designed to be extensible to also cover future extensions.
+
+The DHCPv4 option and its corresponding DHCPv6 options are almost exactly the same,
+with the exception of cardinality. Only one DHCPv4 option is allowed, while for DHCPv6
+multiple options are allowed. To be able to convey multiple entries, the DHCPv4 is an
+array that allows multiple DNS instances. Each instance is logically equal to one
+DHCPv6 option, except the minor difference of using IPv4 rather than IPv6 addresses.
+
+For detailed example how to configure DNR option, see :ref:`dnr6-options`.
+Examples for DNR DHCPv4 options are provided in the Kea sources in
+`dnr.json` and `all-options.json` in the `doc/examples/kea4` directory.
+
+
 .. _host-reservation-v4:
 
 Host Reservations in DHCPv4
@@ -7699,6 +7722,12 @@ The following standards are currently supported in Kea:
    <https://tools.ietf.org/html/rfc4703>`__: The DHCPv6 server uses a DHCP-DDNS
    server to resolve conflicts.
 
+-  *Server Identifier Override sub-option for the Relay Agent Option*, `RFC 5107
+   <https://tools.ietf.org/html/rfc5107>`__: The server identifier override
+   sub-option is supported. The implementation is not complete according to the
+   RFC, because the server does not store the RAI, but the functionality handles
+   expected use cases.
+
 -  *Client Identifier Option in DHCP Server Replies*, `RFC 6842
    <https://tools.ietf.org/html/rfc6842>`__: The server by default sends back
    the ``client-id`` option. That capability can be disabled. See
@@ -7718,11 +7747,10 @@ The following standards are currently supported in Kea:
    its pools and subnets as IPv6-Only Preferred and send back the
    ``v6-only-preferred`` option to clients that requested it.
 
--  *Server Identifier Override sub-option for the Relay Agent Option*, `RFC 5107
-   <https://tools.ietf.org/html/rfc5107>`__: The server identifier override
-   sub-option is supported. The implementation is not complete according to the
-   RFC, because the server does not store the RAI, but the functionality handles
-   expected use cases.
+-  *DHCP and Router Advertisement Options for the Discovery of Network-designated
+   Resolvers (DNR)*, `RFC 9463 <https://tools.ietf.org/html/rfc9463>`__. The Kea server
+   supports the DNR option. Part of its value (SvcParams) must be configured in
+   hex.
 
 Known RFC Violations
 --------------------
@@ -7759,11 +7787,6 @@ are clearly marked as such.
    the IEEE 802.3 standard, and assumes this data-link-layer header
    format for all interfaces. Thus, Kea does not work on interfaces
    which use different data-link-layer header formats (e.g. Infiniband).
-
--  The DHCPv4 server does not verify that an assigned address is unused.
-   According to `RFC 2131 <https://tools.ietf.org/html/rfc2131>`__, the
-   allocating server should verify that an address is not used by
-   sending an ICMP echo request.
 
 .. _dhcp4-srv-examples:
 
