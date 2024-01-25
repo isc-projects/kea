@@ -115,9 +115,25 @@ GenericBackendTest::checkConfiguredGlobal(const SrvConfigPtr& srv_cfg,
                                           const std::string &name,
                                           ConstElementPtr exp_value) {
     ConstCfgGlobalsPtr globals = srv_cfg->getConfiguredGlobals();
-    ConstElementPtr found_global = globals->get(name);
+    std::string name_elem = name;
+    std::string sub_elem;
+    auto pos = name_elem.find('/');
+    if (pos != std::string::npos) {
+        sub_elem = name_elem.substr(pos + 1);
+        name_elem = name_elem.substr(0, pos);
+    }
+
+    ConstElementPtr found_global = globals->get(name_elem);
     ASSERT_TRUE(found_global) << "expected global: "
-                              << name << " not found";
+                              << name_elem << " not found";
+
+    if (!sub_elem.empty()) {
+        ASSERT_EQ(Element::map, found_global->getType())
+            << "expected global: " << name_elem << " has wrong type";
+        found_global = found_global->get(sub_elem);
+        ASSERT_TRUE(found_global) << "expected global: "
+                                  << name << " not found";
+    }
 
     ASSERT_EQ(exp_value->getType(), found_global->getType())
         << "expected global: " << name << " has wrong type";
@@ -131,7 +147,6 @@ GenericBackendTest::checkConfiguredGlobal(const SrvConfigPtr& srv_cfg,
                                           StampedValuePtr& exp_global) {
     checkConfiguredGlobal(srv_cfg, exp_global->getName(), exp_global->getElementValue());
 }
-
 
 void
 GenericBackendTest::testNewAuditEntry(const std::string& exp_object_type,

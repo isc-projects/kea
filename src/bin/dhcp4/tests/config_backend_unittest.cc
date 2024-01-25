@@ -192,6 +192,8 @@ TEST_F(Dhcp4CBTest, mergeGlobals) {
     StampedValuePtr calc_tee_times(new StampedValue("calculate-tee-times", Element::create(bool(false))));
     StampedValuePtr t2_percent(new StampedValue("t2-percent", Element::create(0.75)));
     StampedValuePtr renew_timer(new StampedValue("renew-timer", Element::create(500)));
+    StampedValuePtr mt_enabled(new StampedValue("multi-threading/enable-multi-threading", Element::create(true)));
+    StampedValuePtr mt_pool_size(new StampedValue("multi-threading/thread-pool-size", Element::create(256)));
 
     // Let's add all of the globals to the second backend.  This will verify
     // we find them there.
@@ -200,6 +202,8 @@ TEST_F(Dhcp4CBTest, mergeGlobals) {
     db2_->createUpdateGlobalParameter4(ServerSelector::ALL(), calc_tee_times);
     db2_->createUpdateGlobalParameter4(ServerSelector::ALL(), t2_percent);
     db2_->createUpdateGlobalParameter4(ServerSelector::ALL(), renew_timer);
+    db2_->createUpdateGlobalParameter4(ServerSelector::ALL(), mt_enabled);
+    db2_->createUpdateGlobalParameter4(ServerSelector::ALL(), mt_pool_size);
 
     // Should parse and merge without error.
     ASSERT_NO_FATAL_FAILURE(configure(base_config, CONTROL_RESULT_SUCCESS, ""));
@@ -227,6 +231,8 @@ TEST_F(Dhcp4CBTest, mergeGlobals) {
     ASSERT_NO_FATAL_FAILURE(checkConfiguredGlobal(staging_cfg, calc_tee_times));
     ASSERT_NO_FATAL_FAILURE(checkConfiguredGlobal(staging_cfg, t2_percent));
     ASSERT_NO_FATAL_FAILURE(checkConfiguredGlobal(staging_cfg, renew_timer));
+    ASSERT_NO_FATAL_FAILURE(checkConfiguredGlobal(staging_cfg, mt_enabled));
+    ASSERT_NO_FATAL_FAILURE(checkConfiguredGlobal(staging_cfg, mt_pool_size));
 }
 
 // This test verifies that externally configured option definitions
