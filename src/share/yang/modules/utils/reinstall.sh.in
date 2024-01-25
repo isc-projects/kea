@@ -106,7 +106,7 @@ export LD_LIBRARY_PATH="${LD_LIBRARY_PATH-}:${sysrepo}/lib:${sysrepo}/lib64"
 # Check if module is installed.
 is_module_installed() {
   module=${1}
-  if test "$("${sysrepo}/bin/sysrepoctl" -l | grep -F '| I' | cut -d ' ' -f 1 | tail -n +7 | head -n -1 | grep -Ec "^${module}")" -eq 0; then
+  if test "$("${sysrepo}/bin/sysrepoctl" -l | grep -F '| I' | cut -d ' ' -f 1 | grep -Ec "^${module}")" -eq 0; then
     # not installed
     return 1
   fi
