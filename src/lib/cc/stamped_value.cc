@@ -187,7 +187,7 @@ StampedValue::validateConstruct() const {
                 (type != Element::boolean) &&
                 (type != Element::real)) {
                 isc_throw(BadValue, "StampedValue: provided value of the '"
-                          << name_ << "/" << value_->mapValue().begin()->first
+                          << name_ << "." << value_->mapValue().begin()->first
                           << "' parameter has invalid type: "
                           << Element::typeToName(type));
             }

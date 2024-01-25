@@ -8,6 +8,7 @@
 
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option_vendor.h>
+#include <dhcpsrv/cb_ctl_dhcp.h>
 #include <dhcpsrv/testutils/generic_backend_unittest.h>
 #include <util/buffer.h>
 #include <typeinfo>
@@ -115,22 +116,18 @@ GenericBackendTest::checkConfiguredGlobal(const SrvConfigPtr& srv_cfg,
                                           const std::string &name,
                                           ConstElementPtr exp_value) {
     ConstCfgGlobalsPtr globals = srv_cfg->getConfiguredGlobals();
-    std::string name_elem = name;
-    std::string sub_elem;
-    auto pos = name_elem.find('/');
-    if (pos != std::string::npos) {
-        sub_elem = name_elem.substr(pos + 1);
-        name_elem = name_elem.substr(0, pos);
-    }
+    std::string param_name;
+    std::string sub_param_name;
+    bool translated = CBControlDHCP<bool>::translateName(name, param_name, sub_param_name);
 
-    ConstElementPtr found_global = globals->get(name_elem);
+    ConstElementPtr found_global = globals->get(param_name);
     ASSERT_TRUE(found_global) << "expected global: "
-                              << name_elem << " not found";
+                              << param_name << " not found";
 
-    if (!sub_elem.empty()) {
+    if (translated) {
         ASSERT_EQ(Element::map, found_global->getType())
-            << "expected global: " << name_elem << " has wrong type";
-        found_global = found_global->get(sub_elem);
+            << "expected global: " << param_name << " has wrong type";
+        found_global = found_global->get(sub_param_name);
         ASSERT_TRUE(found_global) << "expected global: "
                                   << name << " not found";
     }

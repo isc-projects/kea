@@ -192,8 +192,8 @@ TEST_F(Dhcp4CBTest, mergeGlobals) {
     StampedValuePtr calc_tee_times(new StampedValue("calculate-tee-times", Element::create(bool(false))));
     StampedValuePtr t2_percent(new StampedValue("t2-percent", Element::create(0.75)));
     StampedValuePtr renew_timer(new StampedValue("renew-timer", Element::create(500)));
-    StampedValuePtr mt_enabled(new StampedValue("multi-threading/enable-multi-threading", Element::create(true)));
-    StampedValuePtr mt_pool_size(new StampedValue("multi-threading/thread-pool-size", Element::create(256)));
+    StampedValuePtr mt_enabled(new StampedValue("multi-threading.enable-multi-threading", Element::create(true)));
+    StampedValuePtr mt_pool_size(new StampedValue("multi-threading.thread-pool-size", Element::create(256)));
 
     // Let's add all of the globals to the second backend.  This will verify
     // we find them there.

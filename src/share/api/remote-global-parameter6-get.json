@@ -5,7 +5,7 @@
         "This command fetches the selected global parameter for the server from the specified database."
     ],
     "cmd-comment": [
-        "This command carries a list including exactly one name of the parameter to be fetched. If retrieving a map parameter, the ``map-name/parameter-name`` format must be used. The ``server-tags`` list is mandatory and must contain exactly one server tag. Specifying an empty list, a value of ``null``, or multiple server tags will result in an error. The server tag \"all\" is allowed; it fetches the global parameter value shared by all servers."
+        "This command carries a list including exactly one name of the parameter to be fetched. If retrieving a map parameter, the ``map-name.parameter-name`` format must be used. The ``server-tags`` list is mandatory and must contain exactly one server tag. Specifying an empty list, a value of ``null``, or multiple server tags will result in an error. The server tag \"all\" is allowed; it fetches the global parameter value shared by all servers."
     ],
     "cmd-syntax": [
         "{",

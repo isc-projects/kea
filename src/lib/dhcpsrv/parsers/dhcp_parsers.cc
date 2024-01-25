@@ -1660,6 +1660,7 @@ D2ClientConfigParser::setAllDefaults(isc::data::ConstElementPtr d2_config) {
 void
 CompatibilityParser::parse(ConstElementPtr compatibility, SrvConfig& srv_cfg) {
     if (compatibility) {
+        auto family = CfgMgr::instance().getFamily();
         for (auto const& kv : compatibility->mapValue()) {
             if (!kv.second || (kv.second->getType() != Element::boolean)) {
                 isc_throw(DhcpConfigError,
@@ -1669,12 +1670,19 @@ CompatibilityParser::parse(ConstElementPtr compatibility, SrvConfig& srv_cfg) {
             }
             if (kv.first == "lenient-option-parsing") {
                 srv_cfg.setLenientOptionParsing(kv.second->boolValue());
-            } else if (kv.first == "ignore-dhcp-server-identifier") {
-                srv_cfg.setIgnoreServerIdentifier(kv.second->boolValue());
-            } else if (kv.first == "ignore-rai-link-selection") {
-                srv_cfg.setIgnoreRAILinkSelection(kv.second->boolValue());
-            } else if (kv.first == "exclude-first-last-24") {
-                srv_cfg.setExcludeFirstLast24(kv.second->boolValue());
+            } else if (family == AF_INET) {
+                if (kv.first == "ignore-dhcp-server-identifier") {
+                    srv_cfg.setIgnoreServerIdentifier(kv.second->boolValue());
+                } else if (kv.first == "ignore-rai-link-selection") {
+                    srv_cfg.setIgnoreRAILinkSelection(kv.second->boolValue());
+                } else if (kv.first == "exclude-first-last-24") {
+                    srv_cfg.setExcludeFirstLast24(kv.second->boolValue());
+                } else {
+                    isc_throw(DhcpConfigError,
+                              "unsupported compatibility parameter: "
+                              << kv.first << " (" << kv.second->getPosition()
+                              << ")");
+                }
             } else {
                 isc_throw(DhcpConfigError,
                           "unsupported compatibility parameter: "

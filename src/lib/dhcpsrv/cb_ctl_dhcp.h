@@ -32,10 +32,34 @@ public:
         : process::CBControlBase<ConfigBackendMgrType>() {
     }
 
+    /// @brief It translates the top level map parameters from flat naming
+    /// format (e.g. param-name.sub-param-name) to the respective param-name and
+    /// sub-param-name. If the name does not contain '.', the param-name will
+    /// contain the initial name.
+    ///
+    /// @param name The name in flat format (e.g. map-name.element-name).
+    /// @param[out] param_name The resulting top level param name.
+    /// @param[out] sub_param_name The resulting sub param name inside the map.
+    ///
+    /// @return The function returns true if any conversion is done, false
+    /// otherwise.
+    static bool translateName(std::string const& name, std::string& param_name,
+                              std::string& sub_param_name) {
+        param_name = name;
+        sub_param_name = std::string();
+        auto pos = param_name.find('.');
+        if (pos != std::string::npos) {
+            sub_param_name = param_name.substr(pos + 1);
+            param_name = param_name.substr(0, pos);
+            return (true);
+        }
+        return (false);
+    }
+
 protected:
 
     /// @brief It translates the top level map parameters from flat naming
-    /// format (e.g. map-name/element-name) to proper ElementMap objects and
+    /// format (e.g. param-name.sub-param-name) to proper ElementMap objects and
     /// adds all globals fetched from config backend(s) to a SrvConfig instance
     ///
     /// Iterates over the given collection of global parameters and adds them to
@@ -54,20 +78,18 @@ protected:
                 continue;
             }
 
-            std::string name = cb_global->getName();
-            auto pos = name.find('/');
-            if (pos != std::string::npos) {
-                const std::string sub_elem(name.substr(pos + 1));
-                name = name.substr(0, pos);
-                data::ElementPtr sub_param = boost::const_pointer_cast<data::Element>(external_cfg->getConfiguredGlobal(name));
+            std::string param_name;
+            std::string sub_param_name;
+            if (translateName(cb_global->getName(), param_name, sub_param_name)) {
+                data::ElementPtr sub_param = boost::const_pointer_cast<data::Element>(external_cfg->getConfiguredGlobal(param_name));
                 if (!sub_param) {
                     sub_param = data::Element::createMap();
                 }
-                sub_param->set(sub_elem, cb_global->getElementValue());
-                external_cfg->addConfiguredGlobal(name, sub_param);
+                sub_param->set(sub_param_name, cb_global->getElementValue());
+                external_cfg->addConfiguredGlobal(param_name, sub_param);
             } else {
                 // Reuse name and value.
-                external_cfg->addConfiguredGlobal(name, cb_global->getElementValue());
+                external_cfg->addConfiguredGlobal(param_name, cb_global->getElementValue());
             }
         }
     }
