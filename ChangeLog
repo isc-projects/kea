@@ -1,3 +1,11 @@
+2202.	[func]		razvan
+	The Configuration Backend now supports scalar parameters
+	contained by top level global maps: 'compatibility',
+	'control-socket', 'dhcp-ddns', 'expired-leases-processing',
+	'multi-threading', 'sanity-checks', 'server-id' and
+	'dhcp-queue-control'.
+	(Gitlab #1790)
+
 2201.	[func]		andrei
 	To facilitate setting multiple option-data entries with same code
 	and space, but different data, the set of keys for the
