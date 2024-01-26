@@ -9,6 +9,7 @@
 #include <gtest/gtest.h>
 
 #include <testutils/io_utils.h>
+#include <testutils/test_to_element.h>
 #include <testutils/user_context_utils.h>
 #include <yang/tests/json_configs.h>
 #include <yang/tests/sysrepo_setup.h>
@@ -24,34 +25,12 @@
 using namespace std;
 using namespace isc;
 using namespace isc::data;
+using namespace isc::test;
 using namespace isc::yang;
 using namespace isc::yang::test;
 using namespace sysrepo;
 
 namespace {
-
-/// @brief Return the difference between two strings
-///
-/// Use the gtest >= 1.8.0 tool which builds the difference between
-/// two vectors of lines.
-///
-/// @param left left string
-/// @param right right string
-/// @return the unified diff between left and right
-#ifdef HAVE_CREATE_UNIFIED_DIFF
-string generateDiff(string left, string right) {
-    vector<string> left_lines;
-    boost::split(left_lines, left, boost::is_any_of("\n"));
-    vector<string> right_lines;
-    boost::split(right_lines, right, boost::is_any_of("\n"));
-    using namespace testing::internal;
-    return (edit_distance::CreateUnifiedDiff(left_lines, right_lines));
-}
-#else
-string generateDiff(string, string) {
-    return ("");
-}
-#endif
 
 /// @brief Test Fixture class for Yang <-> JSON configs.
 class ConfigTest : public ::testing::Test {
@@ -159,9 +138,7 @@ public:
         string got = prettyPrint(content);
         cerr << "Expected:\n" << wanted << "\n"
              << "Actual:\n" << got
-#ifdef HAVE_CREATE_UNIFIED_DIFF
              << "\nDiff:\n" << generateDiff(wanted, got)
-#endif
              << "\n";
         return (false);
     }

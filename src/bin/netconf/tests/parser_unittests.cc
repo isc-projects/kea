@@ -38,13 +38,7 @@ namespace test {
 /// @param a first to be compared
 /// @param b second to be compared
 void compareJSON(ConstElementPtr a, ConstElementPtr b) {
-    ASSERT_TRUE(a);
-    ASSERT_TRUE(b);
-    EXPECT_EQ(a->str(), b->str())
-#ifdef HAVE_CREATE_UNIFIED_DIFF
-        << "\nDiff:\n" << generateDiff(prettyPrint(a), prettyPrint(b)) << "\n"
-#endif
-    ;
+    expectEqWithDiff(a, b);
 }
 
 /// @brief Tests if the input string can be parsed with specific parser

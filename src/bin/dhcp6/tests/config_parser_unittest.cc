@@ -60,6 +60,7 @@ using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 using namespace isc::hooks;
+using namespace isc::test;
 using namespace std;
 
 namespace {
@@ -8039,11 +8040,7 @@ TEST_F(Dhcp6ParserTest, dhcpQueueControl) {
             }
 
             // Verify that the staged queue control equals the expected queue control.
-            EXPECT_TRUE(staged_control->equals(*exp_control))
-#ifdef HAVE_CREATE_UNIFIED_DIFF
-                << "\nDiff:\n" << isc::test::generateDiff(prettyPrint(staged_control), prettyPrint(exp_control)) << "\n"
-#endif
-            ;
+            expectEqWithDiff(staged_control, exp_control);
         }
     }
 }

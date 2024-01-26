@@ -8,6 +8,7 @@
 
 #include <gtest/gtest.h>
 
+#include <testutils/test_to_element.h>
 #include <yang/tests/sysrepo_setup.h>
 #include <yang/translator_option_data.h>
 #include <yang/yang_models.h>
@@ -17,6 +18,7 @@
 using namespace std;
 using namespace isc;
 using namespace isc::data;
+using namespace isc::test;
 using namespace isc::yang;
 using namespace isc::yang::test;
 using namespace sysrepo;
@@ -100,7 +102,7 @@ TEST_F(TranslatorOptionDataListTestv4, get) {
     ASSERT_TRUE(options);
     ASSERT_EQ(Element::list, options->getType());
     EXPECT_EQ(1, options->size());
-    EXPECT_TRUE(option->equals(*options->get(0)));
+    expectEqWithDiff(option, options->get(0));
 }
 
 // This test verifies that one option data can be properly translated
@@ -138,7 +140,7 @@ TEST_F(TranslatorOptionDataListTestv6, get) {
     ASSERT_TRUE(options);
     ASSERT_EQ(Element::list, options->getType());
     EXPECT_EQ(1, options->size());
-    EXPECT_TRUE(option->equals(*options->get(0)));
+    expectEqWithDiff(option, options->get(0));
 }
 
 // This test verifies that an empty option data list can be properly
@@ -211,7 +213,7 @@ TEST_F(TranslatorOptionDataListTestv4, set) {
     EXPECT_NO_THROW_LOG(got = translator_->getOptionDataListFromAbsoluteXpath(xpath));
     ASSERT_TRUE(got);
     ASSERT_EQ(1, got->size());
-    EXPECT_TRUE(option->equals(*got->get(0)));
+    expectEqWithDiff(option, options->get(0));
 }
 
 // This test verifies that one option data can be properly translated
@@ -256,10 +258,10 @@ TEST_F(TranslatorOptionDataListTestv6, set) {
     EXPECT_NO_THROW_LOG(got = translator_->getOptionDataListFromAbsoluteXpath(xpath));
     ASSERT_TRUE(got);
     ASSERT_EQ(1, got->size());
-    EXPECT_TRUE(option->equals(*got->get(0)));
+    expectEqWithDiff(option, options->get(0));
 }
 
-// This test verifies that multiple options of smae code and space but different data can be
+// This test verifies that multiple options of same code and space but different data can be
 // configured for v4.
 TEST_F(TranslatorOptionDataListTestv4, optionsSameCodeAndSpace) {
     string const xpath("/kea-dhcp4-server:config");
@@ -289,7 +291,7 @@ TEST_F(TranslatorOptionDataListTestv4, optionsSameCodeAndSpace) {
     EXPECT_NO_THROW_LOG(got = translator_->getOptionDataListFromAbsoluteXpath(xpath));
     ASSERT_TRUE(got);
     EXPECT_EQ(2, got->size());
-    EXPECT_TRUE(options->equals(*got));
+    expectEqWithDiff(options, got);
 
     // Now with keys only.
     options = Element::createList();
@@ -309,11 +311,11 @@ TEST_F(TranslatorOptionDataListTestv4, optionsSameCodeAndSpace) {
     EXPECT_NO_THROW_LOG(got = translator_->getOptionDataListFromAbsoluteXpath(xpath));
     ASSERT_TRUE(got);
     EXPECT_EQ(4, got->size());
-    EXPECT_TRUE(options->get(0)->equals(*got->get(2)));
-    EXPECT_TRUE(options->get(1)->equals(*got->get(3)));
+    expectEqWithDiff(options->get(0), got->get(2));
+    expectEqWithDiff(options->get(1), got->get(3));
 }
 
-// This test verifies that multiple options of smae code and space but different data can be
+// This test verifies that multiple options of same code and space but different data can be
 // configured for v6.
 TEST_F(TranslatorOptionDataListTestv6, optionsSameCodeAndSpace) {
     string const xpath("/kea-dhcp6-server:config");
@@ -343,7 +345,7 @@ TEST_F(TranslatorOptionDataListTestv6, optionsSameCodeAndSpace) {
     EXPECT_NO_THROW_LOG(got = translator_->getOptionDataListFromAbsoluteXpath(xpath));
     ASSERT_TRUE(got);
     EXPECT_EQ(2, got->size());
-    EXPECT_TRUE(options->equals(*got));
+    expectEqWithDiff(options, got);
 
     // Now with keys only.
     options = Element::createList();
@@ -363,8 +365,8 @@ TEST_F(TranslatorOptionDataListTestv6, optionsSameCodeAndSpace) {
     EXPECT_NO_THROW_LOG(got = translator_->getOptionDataListFromAbsoluteXpath(xpath));
     ASSERT_TRUE(got);
     EXPECT_EQ(4, got->size());
-    EXPECT_TRUE(options->get(0)->equals(*got->get(2)));
-    EXPECT_TRUE(options->get(1)->equals(*got->get(3)));
+    expectEqWithDiff(options->get(0), got->get(2));
+    expectEqWithDiff(options->get(1), got->get(3));
 }
 
 }  // namespace
