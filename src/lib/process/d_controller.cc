@@ -254,6 +254,10 @@ DControllerBase::parseArgs(int argc, char* argv[]) {
     opterr = 0;
     optind = 1;
     std::string opts("dvVWc:t:" + getCustomOpts());
+
+    // Defer exhausting of arguments to the end.
+    ExhaustOptions e(argc, argv, opts);
+
     while ((ch = getopt(argc, argv, opts.c_str())) != -1) {
         switch (ch) {
         case 'd':
@@ -297,10 +301,6 @@ DControllerBase::parseArgs(int argc, char* argv[]) {
             char const saved_optopt(optopt);
             std::string const saved_optarg(optarg ? optarg : std::string());
 
-            // Exhaust all remaining options in case parseArgs() is called again.
-            while (getopt(argc, argv, opts.c_str()) != -1) {
-            }
-
             // We hit an invalid option.
             isc_throw(InvalidUsage, "unsupported option: -" << saved_optopt <<
                       (saved_optarg.empty() ? std::string() : " " + saved_optarg));
@@ -313,10 +313,6 @@ DControllerBase::parseArgs(int argc, char* argv[]) {
             if (!customOption(ch, optarg)) {
                 char const saved_optopt(optopt);
                 std::string const saved_optarg(optarg ? optarg : std::string());
-
-                // Exhaust all remaining options in case parseArgs() is called again.
-                while (getopt(argc, argv, opts.c_str()) != -1) {
-                }
 
                 // We hit an invalid option.
                 isc_throw(InvalidUsage, "unsupported option: -" << saved_optopt <<

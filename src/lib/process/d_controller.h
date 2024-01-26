@@ -652,9 +652,25 @@ private:
     /// @brief Singleton instance value.
     static DControllerBasePtr controller_;
 
-// DControllerTest is named a friend class to facilitate unit testing while
-// leaving the intended member scopes intact.
-friend class DControllerTest;
+    // DControllerTest is named a friend class to facilitate unit testing while
+    // leaving the intended member scopes intact.
+    friend class DControllerTest;
+
+    /// @brief Structure used in parseArgs() to reset arguments in case parseArgs() is called again.
+    struct ExhaustOptions {
+        ExhaustOptions(int argc, char* argv[], std::string opts)
+            : argc_(argc), argv_(argv), opts_(opts) {
+        }
+        ~ExhaustOptions() {
+            while (getopt(argc_, argv_, opts_.c_str()) != -1) {
+            }
+        }
+
+    private:
+        int argc_;
+        char** argv_;
+        std::string opts_;
+    };
 };
 
 }  // namespace process
