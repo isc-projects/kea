@@ -1,3 +1,8 @@
+2203.	[build]		razvan
+	The library version numbers have been bumped up for the Kea 2.5.5
+	development release.
+	(Gitlab #3235)
+
 2202.	[func]		razvan
 	The Configuration Backend now supports scalar parameters
 	contained by top level global maps: 'compatibility',
