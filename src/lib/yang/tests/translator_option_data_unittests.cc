@@ -369,4 +369,188 @@ TEST_F(TranslatorOptionDataListTestv6, optionsSameCodeAndSpace) {
     expectEqWithDiff(options->get(1), got->get(3));
 }
 
+// This test verifies that multiple options with empty option data can be
+// configured for v4.
+TEST_F(TranslatorOptionDataListTestv4, emptyData) {
+    string const xpath("/kea-dhcp4-server:config");
+
+    // Set two options with empty data.
+    ElementPtr const options(Element::fromJSON(R"([
+      {
+        "code": 100,
+        "space": "dns",
+        "csv-format": false,
+        "data": "",
+        "always-send": false,
+        "never-send": false
+      },
+      {
+        "code": 101,
+        "space": "dns",
+        "csv-format": false,
+        "data": "",
+        "always-send": false,
+        "never-send": false
+      }
+    ])"));
+    EXPECT_NO_THROW_LOG(translator_->setOptionDataList(xpath, options));
+
+    // Get them back.
+    ConstElementPtr got;
+    EXPECT_NO_THROW_LOG(got = translator_->getOptionDataListFromAbsoluteXpath(xpath));
+    ASSERT_TRUE(got);
+    EXPECT_EQ(2, got->size());
+
+    // Expect no "data" whatsoever. This is the same as empty "data" to the Kea DHCP server.
+    ElementPtr const expected(Element::fromJSON(R"([
+      {
+        "code": 100,
+        "space": "dns",
+        "csv-format": false,
+        "always-send": false,
+        "never-send": false
+      },
+      {
+        "code": 101,
+        "space": "dns",
+        "csv-format": false,
+        "always-send": false,
+        "never-send": false
+      }
+    ])"));
+    expectEqWithDiff(expected, got);
+}
+
+// This test verifies that multiple options with all keys and empty option data can be
+// configured for v4.
+TEST_F(TranslatorOptionDataListTestv4, emptyDataKeysOnly) {
+    string const xpath("/kea-dhcp4-server:config");
+
+    // Set two options with empty data.
+    ElementPtr const options(Element::fromJSON(R"([
+      {
+        "code": 100,
+        "space": "dns",
+        "data": ""
+      },
+      {
+        "code": 101,
+        "space": "dns",
+        "data": ""
+      }
+    ])"));
+    EXPECT_NO_THROW_LOG(translator_->setOptionDataList(xpath, options));
+
+    // Get them back.
+    ConstElementPtr got;
+    EXPECT_NO_THROW_LOG(got = translator_->getOptionDataListFromAbsoluteXpath(xpath));
+    ASSERT_TRUE(got);
+    EXPECT_EQ(2, got->size());
+
+    // Expect no "data" whatsoever. This is the same as empty "data" to the Kea DHCP server.
+    ElementPtr const expected(Element::fromJSON(R"([
+      {
+        "code": 100,
+        "space": "dns"
+      },
+      {
+        "code": 101,
+        "space": "dns"
+      }
+    ])"));
+    expectEqWithDiff(expected, got);
+}
+
+// This test verifies that multiple options with empty option data can be
+// configured for v6.
+TEST_F(TranslatorOptionDataListTestv6, emptyData) {
+    string const xpath("/kea-dhcp6-server:config");
+
+    // Set two options with empty data.
+    ElementPtr const options(Element::fromJSON(R"([
+      {
+        "code": 100,
+        "space": "dns",
+        "csv-format": false,
+        "data": "",
+        "always-send": false,
+        "never-send": false
+      },
+      {
+        "code": 101,
+        "space": "dns",
+        "csv-format": false,
+        "data": "",
+        "always-send": false,
+        "never-send": false
+      }
+    ])"));
+    EXPECT_NO_THROW_LOG(translator_->setOptionDataList(xpath, options));
+
+    // Get them back.
+    ConstElementPtr got;
+    EXPECT_NO_THROW_LOG(got = translator_->getOptionDataListFromAbsoluteXpath(xpath));
+    ASSERT_TRUE(got);
+    EXPECT_EQ(2, got->size());
+
+    // Expect no "data" whatsoever. This is the same as empty "data" to the Kea DHCP server.
+    ElementPtr const expected(Element::fromJSON(R"([
+      {
+        "code": 100,
+        "space": "dns",
+        "csv-format": false,
+        "always-send": false,
+        "never-send": false
+      },
+      {
+        "code": 101,
+        "space": "dns",
+        "csv-format": false,
+        "always-send": false,
+        "never-send": false
+      }
+    ])"));
+    expectEqWithDiff(expected, got);
+}
+
+// This test verifies that multiple options with all keys and empty option data can be
+// configured for v6.
+TEST_F(TranslatorOptionDataListTestv6, emptyDataKeysOnly) {
+    string const xpath("/kea-dhcp6-server:config");
+
+    // Set two options with empty data.
+    ElementPtr const options(Element::fromJSON(R"([
+      {
+        "code": 100,
+        "space": "dns",
+        "data": ""
+      },
+      {
+        "code": 101,
+        "space": "dns",
+        "data": ""
+      }
+    ])"));
+    EXPECT_NO_THROW_LOG(translator_->setOptionDataList(xpath, options));
+
+    // Get them back.
+    ConstElementPtr got;
+    EXPECT_NO_THROW_LOG(got = translator_->getOptionDataListFromAbsoluteXpath(xpath));
+    ASSERT_TRUE(got);
+    EXPECT_EQ(2, got->size());
+
+    // Expect no "data" whatsoever. This is the same as empty "data" to the Kea DHCP server.
+    ElementPtr const expected(Element::fromJSON(R"([
+      {
+        "code": 100,
+        "space": "dns"
+      },
+      {
+        "code": 101,
+        "space": "dns"
+      }
+    ])"));
+    expectEqWithDiff(expected, got);
+}
+
 }  // namespace
