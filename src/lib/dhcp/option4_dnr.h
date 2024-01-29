@@ -15,9 +15,30 @@
 #include <dns/name.h>
 
 #include <unordered_set>
+#include <string>
+#include <map>
 
 namespace isc {
 namespace dhcp {
+
+
+/// @brief Service parameters, used in DNR options in DHCPv4 and DHCPv6, but also in RA and DNS
+///
+/// The IANA registry is maintained at https://www.iana.org/assignments/dns-svcb/dns-svcb.xhtml
+const std::map<std::string, uint16_t> SVC_PARAMS =
+{
+    { "mandatory", 0},       // RFC 9460, Section 14.3.2, not used in DNR
+    { "alpn", 1 },           // RFC 9460, Section 14.3.2, mandatory in DNR
+    { "no-default-alpn", 2}, // RFC 9460, Section 14.3.2, not used in DNR
+    { "port", 3},            // RFC 9460, Section 14.3.2, optional in DNR
+    { "ipv4hint", 4},        // RFC 9460, Section 14.3.2, forbidden in DNR
+    { "ech", 5},             // RFC 9460, Section 14.3.2, not used in DNR
+    { "ipv6hint", 6},        // RFC 9460, Section 14.3.2, forbidden in DNR
+    { "dotpath", 7},         // RFC 9461, optional in DNR
+    { "ohttp", 8}            // https://datatracker.ietf.org/doc/draft-ietf-ohai-svcb-config,
+                             // not used in DNR
+};
+
 
 /// @brief Exception thrown when invalid domain name is specified.
 class InvalidOptionDnrDomainName : public Exception {
