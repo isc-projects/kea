@@ -10,7 +10,7 @@
 #include <dhcp/option.h>
 #include <dhcp/option_space.h>
 #include <exceptions/exceptions.h>
-#include <util/encode/hex.h>
+#include <util/encode/encode.h>
 #include <util/io_utilities.h>
 
 #include <boost/make_shared.hpp>

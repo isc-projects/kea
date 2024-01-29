@@ -28,7 +28,7 @@
 #include <boost/range/adaptor/reversed.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <boost/pointer_cast.hpp>
-#include <util/encode/hex.h>
+#include <util/encode/encode.h>
 #include <gtest/gtest.h>
 
 #include <algorithm>

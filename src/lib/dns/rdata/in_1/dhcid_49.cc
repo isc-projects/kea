@@ -12,7 +12,7 @@
 #include <exceptions/exceptions.h>
 
 #include <util/buffer.h>
-#include <util/encode/base64.h>
+#include <util/encode/encode.h>
 #include <dns/exceptions.h>
 #include <dns/messagerenderer.h>
 #include <dns/rdata.h>

@@ -9,7 +9,7 @@
 #include <string>
 
 #include <util/buffer.h>
-#include <util/encode/hex.h>
+#include <util/encode/encode.h>
 
 #include <dns/messagerenderer.h>
 #include <dns/rdata.h>

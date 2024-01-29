@@ -10,7 +10,7 @@
 #include <dhcp/dhcp6.h>
 #include <dhcp/option6_pdexclude.h>
 #include <exceptions/exceptions.h>
-#include <util/encode/hex.h>
+#include <util/encode/encode.h>
 #include <util/io_utilities.h>
 
 #include <boost/dynamic_bitset.hpp>

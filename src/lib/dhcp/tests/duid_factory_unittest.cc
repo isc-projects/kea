@@ -9,7 +9,7 @@
 #include <dhcp/duid_factory.h>
 #include <dhcp/testutils/iface_mgr_test_config.h>
 #include <testutils/io_utils.h>
-#include <util/encode/hex.h>
+#include <util/encode/encode.h>
 #include <util/range_utilities.h>
 #include <boost/algorithm/string.hpp>
 #include <gtest/gtest.h>

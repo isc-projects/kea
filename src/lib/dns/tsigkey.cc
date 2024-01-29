@@ -16,7 +16,7 @@
 #include <cryptolink/cryptolink.h>
 
 #include <dns/name.h>
-#include <util/encode/base64.h>
+#include <util/encode/encode.h>
 #include <dns/tsigkey.h>
 
 #include <boost/lexical_cast.hpp>

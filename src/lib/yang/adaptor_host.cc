@@ -6,7 +6,7 @@
 
 #include <config.h>
 
-#include <util/encode/hex.h>
+#include <util/encode/encode.h>
 #include <util/strutil.h>
 #include <yang/adaptor_host.h>
 

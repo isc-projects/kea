@@ -20,7 +20,7 @@
 #include <boost/lexical_cast.hpp>
 
 #include <util/buffer.h>
-#include <util/encode/base64.h>
+#include <util/encode/encode.h>
 
 #include <dns/messagerenderer.h>
 #include <dns/name.h>
@@ -1291,7 +1291,7 @@ CNAME::getCname() const {
 #include <string>
 
 #include <util/buffer.h>
-#include <util/encode/hex.h>
+#include <util/encode/encode.h>
 
 #include <dns/messagerenderer.h>
 #include <dns/rdata.h>
@@ -1550,7 +1550,7 @@ DNAME::getDname() const {
 
 #include <boost/lexical_cast.hpp>
 
-#include <util/encode/base64.h>
+#include <util/encode/encode.h>
 #include <util/buffer.h>
 #include <dns/messagerenderer.h>
 #include <dns/name.h>
@@ -1865,7 +1865,7 @@ DNSKEY::getAlgorithm() const {
 #include <string>
 
 #include <util/buffer.h>
-#include <util/encode/hex.h>
+#include <util/encode/encode.h>
 
 #include <dns/messagerenderer.h>
 #include <dns/rdata.h>
@@ -2846,8 +2846,7 @@ NS::getNSName() const {
 
 #include <boost/lexical_cast.hpp>
 
-#include <util/encode/base32hex.h>
-#include <util/encode/hex.h>
+#include <util/encode/encode.h>
 #include <util/buffer.h>
 
 #include <dns/exceptions.h>
@@ -3185,7 +3184,7 @@ NSEC3::getNext() const {
 #include <config.h>
 
 #include <util/buffer.h>
-#include <util/encode/hex.h>
+#include <util/encode/encode.h>
 
 #include <dns/messagerenderer.h>
 #include <dns/rdata.h>
@@ -3425,7 +3424,7 @@ NSEC3PARAM::getSalt() const {
 #include <sstream>
 #include <vector>
 
-#include <util/encode/base64.h>
+#include <util/encode/encode.h>
 #include <util/buffer.h>
 #include <dns/exceptions.h>
 #include <dns/messagerenderer.h>
@@ -4160,7 +4159,7 @@ RP::compare(const Rdata& other) const {
 
 #include <boost/lexical_cast.hpp>
 
-#include <util/encode/base64.h>
+#include <util/encode/encode.h>
 #include <util/buffer.h>
 #include <util/time_utilities.h>
 #include <dns/messagerenderer.h>
@@ -4852,7 +4851,7 @@ SPF::compare(const Rdata& other) const {
 #include <exceptions/exceptions.h>
 
 #include <util/buffer.h>
-#include <util/encode/hex.h>
+#include <util/encode/encode.h>
 #include <dns/name.h>
 #include <dns/messagerenderer.h>
 #include <dns/rdata.h>
@@ -5156,7 +5155,7 @@ SSHFP::getFingerprintLength() const {
 #include <boost/lexical_cast.hpp>
 
 #include <util/buffer.h>
-#include <util/encode/base64.h>
+#include <util/encode/encode.h>
 #include <util/time_utilities.h>
 
 #include <dns/messagerenderer.h>
@@ -5771,7 +5770,7 @@ TKEY::getOtherData() const {
 #include <exceptions/exceptions.h>
 
 #include <util/buffer.h>
-#include <util/encode/hex.h>
+#include <util/encode/encode.h>
 #include <dns/name.h>
 #include <dns/messagerenderer.h>
 #include <dns/rdata.h>
@@ -6620,7 +6619,7 @@ AAAA::compare(const Rdata& other) const {
 #include <exceptions/exceptions.h>
 
 #include <util/buffer.h>
-#include <util/encode/base64.h>
+#include <util/encode/encode.h>
 #include <dns/exceptions.h>
 #include <dns/messagerenderer.h>
 #include <dns/rdata.h>

@@ -8,7 +8,7 @@
 
 #include <gtest/gtest.h>
 
-#include <util/encode/hex.h>
+#include <util/encode/encode.h>
 
 #include <cryptolink/cryptolink.h>
 #include <cryptolink/crypto_rng.h>

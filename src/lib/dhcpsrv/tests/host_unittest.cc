@@ -9,7 +9,7 @@
 #include <dhcpsrv/host.h>
 #include <dhcp/option_space.h>
 #include <testutils/gtest_utils.h>
-#include <util/encode/hex.h>
+#include <util/encode/encode.h>
 #include <util/range_utilities.h>
 #include <boost/foreach.hpp>
 #include <boost/scoped_ptr.hpp>
@@ -1443,7 +1443,7 @@ TEST(AuthKeyTest, basicTest) {
     ASSERT_EQ(key16ByteStr, defaultTestKey.toText());
     ASSERT_EQ(key16ByteBin, defaultTestKey.getAuthKey());
 
-    string expected = "bad auth key: attempt to decode a value not in base16 char set";
+    string expected = "bad auth key: attempt to decode a value not in base16 char set: 0123456789abcdefgh";
     ASSERT_THROW_MSG(defaultTestKey.setAuthKey(key18ByteStr),
                      BadValue, expected);
 }

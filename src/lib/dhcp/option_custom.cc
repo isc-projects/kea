@@ -9,7 +9,7 @@
 #include <dhcp/option_data_types.h>
 #include <dhcp/option_custom.h>
 #include <exceptions/isc_assert.h>
-#include <util/encode/hex.h>
+#include <util/encode/encode.h>
 
 using namespace isc::asiolink;
 

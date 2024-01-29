@@ -28,7 +28,7 @@
 #include <dhcp/option_string.h>
 #include <dhcp/option_vendor.h>
 #include <dhcp/option_vendor_class.h>
-#include <util/encode/hex.h>
+#include <util/encode/encode.h>
 #include <dns/labelsequence.h>
 #include <dns/name.h>
 #include <util/strutil.h>

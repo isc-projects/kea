@@ -28,7 +28,7 @@
 #include <hooks/hooks_manager.h>
 #include <dhcpsrv/callout_handle_store.h>
 #include <stats/stats_mgr.h>
-#include <util/encode/hex.h>
+#include <util/encode/encode.h>
 #include <util/stopwatch.h>
 #include <hooks/server_hooks.h>
 

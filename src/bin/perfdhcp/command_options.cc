@@ -14,7 +14,7 @@
 #include <dhcp/duid.h>
 #include <dhcp/option.h>
 #include <process/cfgrpt/config_report.h>
-#include <util/encode/hex.h>
+#include <util/encode/encode.h>
 
 #include <boost/lexical_cast.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>

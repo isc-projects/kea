@@ -13,7 +13,7 @@
 #include <dhcpsrv/lease_mgr.h>
 #include <exceptions/exceptions.h>
 #include <stats/stats_mgr.h>
-#include <util/encode/hex.h>
+#include <util/encode/encode.h>
 
 #include <boost/algorithm/string.hpp>
 

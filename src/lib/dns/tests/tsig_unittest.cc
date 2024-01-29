@@ -18,7 +18,7 @@
 #include <exceptions/exceptions.h>
 
 #include <util/buffer.h>
-#include <util/encode/base64.h>
+#include <util/encode/encode.h>
 #include <util/unittests/newhook.h>
 #include <util/time_utilities.h>
 

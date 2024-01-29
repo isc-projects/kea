@@ -8,7 +8,7 @@
 
 #include <dhcp/pkt6.h>
 #include <dhcp/testutils/pkt_captures.h>
-#include <util/encode/hex.h>
+#include <util/encode/encode.h>
 
 #include <string>
 

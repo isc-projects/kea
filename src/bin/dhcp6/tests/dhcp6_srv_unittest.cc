@@ -35,7 +35,7 @@
 #include <testutils/gtest_utils.h>
 #include <util/buffer.h>
 #include <util/range_utilities.h>
-#include <util/encode/hex.h>
+#include <util/encode/encode.h>
 
 #ifdef HAVE_MYSQL
 #include <mysql/testutils/mysql_schema.h>

@@ -19,7 +19,7 @@
 #include <exceptions/exceptions.h>
 #include <testutils/gtest_utils.h>
 #include <util/buffer.h>
-#include <util/encode/hex.h>
+#include <util/encode/encode.h>
 
 #include <boost/shared_array.hpp>
 #include <boost/shared_ptr.hpp>

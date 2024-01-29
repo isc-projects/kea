@@ -26,7 +26,7 @@
 #include <hooks/hooks_manager.h>
 #include <process/cfgrpt/config_report.h>
 #include <stats/stats_mgr.h>
-#include <util/encode/hex.h>
+#include <util/encode/encode.h>
 #include <util/multi_threading_mgr.h>
 
 #include <signal.h>

@@ -8,7 +8,7 @@
 
 #include <dhcp/duid_factory.h>
 #include <dhcpsrv/cfg_duid.h>
-#include <util/encode/hex.h>
+#include <util/encode/encode.h>
 #include <util/strutil.h>
 #include <iostream>
 #include <string>

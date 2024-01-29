@@ -12,7 +12,7 @@
 #include <dhcpsrv/hosts_log.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <exceptions/exceptions.h>
-#include <util/encode/hex.h>
+#include <util/encode/encode.h>
 #include <boost/foreach.hpp>
 #include <ostream>
 #include <string>

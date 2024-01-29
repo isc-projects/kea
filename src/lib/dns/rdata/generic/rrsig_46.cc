@@ -14,7 +14,7 @@
 
 #include <boost/lexical_cast.hpp>
 
-#include <util/encode/base64.h>
+#include <util/encode/encode.h>
 #include <util/buffer.h>
 #include <util/time_utilities.h>
 #include <dns/messagerenderer.h>

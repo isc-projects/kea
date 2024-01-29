@@ -7,7 +7,7 @@
 #include <config.h>
 
 #include <http/basic_auth.h>
-#include <util/encode/base64.h>
+#include <util/encode/encode.h>
 #include <util/encode/utf8.h>
 
 using namespace isc::util::encode;

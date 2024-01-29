@@ -11,7 +11,7 @@
 #include <dhcp/option_space.h>
 #include <exceptions/exceptions.h>
 #include <util/io_utilities.h>
-#include <util/encode/hex.h>
+#include <util/encode/encode.h>
 
 #include <sstream>
 #include <stdint.h>

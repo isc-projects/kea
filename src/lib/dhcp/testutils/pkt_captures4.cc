@@ -8,7 +8,7 @@
 
 #include <asiolink/io_address.h>
 #include <dhcp/testutils/pkt_captures.h>
-#include <util/encode/hex.h>
+#include <util/encode/encode.h>
 
 #include <string>
 

@@ -12,7 +12,7 @@
 #include <cryptolink/crypto_hash.h>
 #include <hooks/callout_handle.h>
 #include <hooks/hooks_manager.h>
-#include <util/encode/hex.h>
+#include <util/encode/encode.h>
 #include <util/buffer.h>
 #include <functional>
 #include <vector>

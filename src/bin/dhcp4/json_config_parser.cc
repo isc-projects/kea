@@ -40,7 +40,7 @@
 #include <hooks/hooks_manager.h>
 #include <hooks/hooks_parser.h>
 #include <process/config_ctl_parser.h>
-#include <util/encode/hex.h>
+#include <util/encode/encode.h>
 #include <util/multi_threading_mgr.h>
 #include <util/strutil.h>
 

@@ -15,7 +15,7 @@
 #include <dns/nsec3hash.h>
 #include <dns/labelsequence.h>
 #include <dns/rdataclass.h>
-#include <util/encode/hex.h>
+#include <util/encode/encode.h>
 
 using boost::scoped_ptr;
 using namespace std;

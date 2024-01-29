@@ -10,7 +10,7 @@
 #include <dhcpsrv/cfg_option.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/option_space.h>
-#include <util/encode/hex.h>
+#include <util/encode/encode.h>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/make_shared.hpp>

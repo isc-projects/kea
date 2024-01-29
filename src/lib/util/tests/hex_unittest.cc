@@ -13,7 +13,8 @@
 
 #include <exceptions/exceptions.h>
 
-#include <util/encode/hex.h>
+#include <util/encode/encode.h>
+#include <testutils/gtest_utils.h>
 
 #include <gtest/gtest.h>
 
@@ -94,7 +95,12 @@ TEST_F(HexTest, decodeMap) {
         const char ch = toupper(i);
         const size_t pos = encoding_chars.find(ch);
         if (pos == string::npos) {
-            EXPECT_THROW(decodeHex(input, decoded_data), BadValue);
+            if (!std::isspace(ch)) {
+                EXPECT_THROW(decodeHex(input, decoded_data), BadValue) << "input:" << input;
+            } else {
+                EXPECT_NO_THROW_LOG(decodeHex(input, decoded_data));
+                EXPECT_EQ(0, decoded_data.size());
+            }
         } else {
             decodeHex(input, decoded_data);
             EXPECT_EQ(1, decoded_data.size());

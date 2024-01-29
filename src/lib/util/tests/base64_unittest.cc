@@ -12,7 +12,7 @@
 
 #include <exceptions/exceptions.h>
 
-#include <util/encode/base64.h>
+#include <util/encode/encode.h>
 
 #include <gtest/gtest.h>
 

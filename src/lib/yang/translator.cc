@@ -6,7 +6,7 @@
 
 #include <config.h>
 
-#include <util/encode/base64.h>
+#include <util/encode/encode.h>
 #include <yang/adaptor.h>
 #include <yang/translator.h>
 

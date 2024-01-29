@@ -15,7 +15,7 @@
 #include <dhcpsrv/testutils/config_result_check.h>
 #include <process/testutils/d_test_stubs.h>
 #include <test_data_files_config.h>
-#include <util/encode/base64.h>
+#include <util/encode/encode.h>
 
 #include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>

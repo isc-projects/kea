@@ -15,7 +15,7 @@
 
 #include <exceptions/exceptions.h>
 
-#include <util/encode/base32hex.h>
+#include <util/encode/encode.h>
 
 #include <gtest/gtest.h>
 

@@ -40,12 +40,7 @@ libkea_util_la_SOURCES += unlock_guard.h
 libkea_util_la_SOURCES += versioned_csv_file.h versioned_csv_file.cc
 libkea_util_la_SOURCES += watch_socket.cc watch_socket.h
 libkea_util_la_SOURCES += watched_thread.cc watched_thread.h
-libkea_util_la_SOURCES += encode/base16_from_binary.h
-libkea_util_la_SOURCES += encode/base32hex.h encode/base64.h
-libkea_util_la_SOURCES += encode/base32hex_from_binary.h
-libkea_util_la_SOURCES += encode/base_n.cc encode/hex.h
-libkea_util_la_SOURCES += encode/binary_from_base32hex.h
-libkea_util_la_SOURCES += encode/binary_from_base16.h
+libkea_util_la_SOURCES += encode/encode.cc encode/encode.h
 libkea_util_la_SOURCES += encode/utf8.cc encode/utf8.h
 
 libkea_util_la_LIBADD = $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
@@ -94,13 +89,7 @@ libkea_util_include_HEADERS = \
 
 libkea_util_encode_includedir = $(pkgincludedir)/util/encode
 libkea_util_encode_include_HEADERS = \
-	encode/base16_from_binary.h \
-	encode/base32hex.h \
-	encode/base32hex_from_binary.h \
-	encode/base64.h \
-	encode/binary_from_base16.h \
-	encode/binary_from_base32hex.h \
-	encode/hex.h \
+	encode/encode.h \
 	encode/utf8.h
 
 libkea_util_io_includedir = $(pkgincludedir)/util/io

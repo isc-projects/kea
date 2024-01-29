@@ -12,7 +12,7 @@
 #include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <dhcpsrv/testutils/config_result_check.h>
 #include <testutils/test_to_element.h>
-#include <util/encode/hex.h>
+#include <util/encode/encode.h>
 #include <gtest/gtest.h>
 #include <limits>
 #include <sstream>

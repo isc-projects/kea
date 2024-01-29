@@ -15,7 +15,7 @@
 #include <dhcpsrv/parsers/option_data_parser.h>
 #include <dhcpsrv/parsers/simple_parser4.h>
 #include <dhcpsrv/parsers/simple_parser6.h>
-#include <util/encode/hex.h>
+#include <util/encode/encode.h>
 #include <util/strutil.h>
 #include <boost/make_shared.hpp>
 #include <limits>

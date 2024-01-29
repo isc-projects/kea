@@ -13,7 +13,7 @@
 #include <hooks/hooks_manager.h>
 #include <log/logger.h>
 #include <log/logger_support.h>
-#include <util/encode/hex.h>
+#include <util/encode/encode.h>
 #include <process/daemon.h>
 #include <process/d_log.h>
 #include <process/d_controller.h>

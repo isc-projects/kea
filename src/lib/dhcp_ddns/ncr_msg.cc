@@ -11,7 +11,7 @@
 #include <asiolink/io_error.h>
 #include <cryptolink/cryptolink.h>
 #include <cryptolink/crypto_hash.h>
-#include <util/encode/hex.h>
+#include <util/encode/encode.h>
 
 #include <boost/algorithm/string/predicate.hpp>
 

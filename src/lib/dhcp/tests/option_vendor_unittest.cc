@@ -15,7 +15,7 @@
 #include <dhcp/option_int_array.h>
 #include <exceptions/exceptions.h>
 #include <util/buffer.h>
-#include <util/encode/hex.h>
+#include <util/encode/encode.h>
 
 #include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>

@@ -9,7 +9,7 @@
 #include <eval/token.h>
 #include <eval/eval_log.h>
 #include <eval/eval_context.h>
-#include <util/encode/hex.h>
+#include <util/encode/encode.h>
 #include <util/io_utilities.h>
 #include <asiolink/io_address.h>
 #include <dhcp/pkt4.h>

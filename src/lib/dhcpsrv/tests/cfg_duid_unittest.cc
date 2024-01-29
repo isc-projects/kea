@@ -11,7 +11,7 @@
 #include <exceptions/exceptions.h>
 #include <testutils/io_utils.h>
 #include <testutils/test_to_element.h>
-#include <util/encode/hex.h>
+#include <util/encode/encode.h>
 #include <gtest/gtest.h>
 #include <stdint.h>
 #include <stdio.h>

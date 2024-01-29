@@ -28,7 +28,7 @@
 #include <dhcp/option_vendor.h>
 #include <dhcp/option_vendor_class.h>
 #include <util/buffer.h>
-#include <util/encode/hex.h>
+#include <util/encode/encode.h>
 #include <util/thread_pool.h>
 
 #include <boost/pointer_cast.hpp>

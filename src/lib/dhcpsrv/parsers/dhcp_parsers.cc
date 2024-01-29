@@ -18,7 +18,7 @@
 #include <dhcpsrv/parsers/simple_parser4.h>
 #include <dhcpsrv/parsers/simple_parser6.h>
 #include <dhcpsrv/cfg_mac_source.h>
-#include <util/encode/hex.h>
+#include <util/encode/encode.h>
 #include <util/strutil.h>
 
 #include <boost/algorithm/string.hpp>

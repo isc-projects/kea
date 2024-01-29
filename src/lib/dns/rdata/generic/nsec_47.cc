@@ -11,7 +11,7 @@
 #include <sstream>
 #include <vector>
 
-#include <util/encode/base64.h>
+#include <util/encode/encode.h>
 #include <util/buffer.h>
 #include <dns/exceptions.h>
 #include <dns/messagerenderer.h>

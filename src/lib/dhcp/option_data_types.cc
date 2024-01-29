@@ -10,7 +10,7 @@
 #include <dns/labelsequence.h>
 #include <dns/name.h>
 #include <util/strutil.h>
-#include <util/encode/hex.h>
+#include <util/encode/encode.h>
 #include <algorithm>
 #include <limits>
 

@@ -886,7 +886,7 @@ TEST_F(ExtendedInfoChecksTest, badEncodingRemoteId4strict) {
            { "DHCPSRV_LEASE4_EXTENDED_INFO_SANITY_FAIL"
              " extended info for lease 192.168.1.1 failed checks"
              " (in remote-id a problem was found:"
-             " attempt to decode a value not in base16 char set)" });
+             " attempt to decode a value not in base16 char set: foo)" });
 }
 
 // Empty remote-id entry is right up to the fix sanity level.
@@ -965,7 +965,7 @@ TEST_F(ExtendedInfoChecksTest, badEncodingRelayId4strict) {
            { "DHCPSRV_LEASE4_EXTENDED_INFO_SANITY_FAIL"
              " extended info for lease 192.168.1.1 failed checks"
              " (in relay-id a problem was found:"
-             " attempt to decode a value not in base16 char set)" });
+             " attempt to decode a value not in base16 char set: foo)" });
 }
 
 // Empty relay-id entry is right up to the fix sanity level.
@@ -1409,7 +1409,7 @@ TEST_F(ExtendedInfoChecksTest, badEncodingRemoteId6strict) {
            { "DHCPSRV_LEASE6_EXTENDED_INFO_SANITY_FAIL"
              " extended info for lease 2001::1 failed checks"
              " (in remote-id [relay#0] a problem was found:"
-             " attempt to decode a value not in base16 char set)" });
+             " attempt to decode a value not in base16 char set: foo)" });
 }
 
 // Empty remote-id entry is dropped at strict or higher sanity levels.
@@ -1470,7 +1470,7 @@ TEST_F(ExtendedInfoChecksTest, badEncodingRelayId6strict) {
            { "DHCPSRV_LEASE6_EXTENDED_INFO_SANITY_FAIL"
              " extended info for lease 2001::1 failed checks"
              " (in relay-id [relay#0] a problem was found:"
-             " attempt to decode a value not in base16 char set)" });
+             " attempt to decode a value not in base16 char set: foo)" });
 }
 
 // Empty relay-id entry is dropped at strict or higher sanity levels.

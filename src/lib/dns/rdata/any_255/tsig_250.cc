@@ -13,7 +13,7 @@
 #include <boost/lexical_cast.hpp>
 
 #include <util/buffer.h>
-#include <util/encode/base64.h>
+#include <util/encode/encode.h>
 
 #include <dns/messagerenderer.h>
 #include <dns/name.h>

@@ -15,8 +15,7 @@
 
 #include <boost/lexical_cast.hpp>
 
-#include <util/encode/base32hex.h>
-#include <util/encode/hex.h>
+#include <util/encode/encode.h>
 #include <util/buffer.h>
 
 #include <dns/exceptions.h>

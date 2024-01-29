@@ -34,7 +34,7 @@
 #include <dhcpsrv/host_mgr.h>
 #include <stats/stats_mgr.h>
 #include <testutils/gtest_utils.h>
-#include <util/encode/hex.h>
+#include <util/encode/encode.h>
 
 #ifdef HAVE_MYSQL
 #include <mysql/testutils/mysql_schema.h>

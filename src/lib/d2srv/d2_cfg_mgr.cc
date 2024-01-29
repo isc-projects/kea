@@ -11,7 +11,7 @@
 #include <d2srv/d2_simple_parser.h>
 #include <cc/command_interpreter.h>
 #include <config/base_command_mgr.h>
-#include <util/encode/hex.h>
+#include <util/encode/encode.h>
 #include <boost/range/adaptor/reversed.hpp>
 
 using namespace isc::asiolink;

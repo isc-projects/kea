@@ -11,7 +11,7 @@
 #include <d2srv/testutils/nc_test_utils.h>
 #include <dns/messagerenderer.h>
 #include <dns/opcode.h>
-#include <util/encode/base64.h>
+#include <util/encode/encode.h>
 
 #include <gtest/gtest.h>
 

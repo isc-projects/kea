@@ -12,7 +12,7 @@
 #include <exceptions/exceptions.h>
 #include <dhcp/option6_pdexclude.h>
 #include <util/buffer.h>
-#include <util/encode/hex.h>
+#include <util/encode/encode.h>
 #include <gtest/gtest.h>
 
 using namespace isc;

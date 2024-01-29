@@ -12,7 +12,7 @@
 #include <process/d_cfg_mgr.h>
 #include <process/daemon.h>
 #include <process/redact_config.h>
-#include <util/encode/hex.h>
+#include <util/encode/encode.h>
 #include <util/strutil.h>
 
 #include <boost/lexical_cast.hpp>

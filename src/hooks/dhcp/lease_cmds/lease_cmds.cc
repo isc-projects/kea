@@ -27,7 +27,7 @@
 #include <lease_parser.h>
 #include <lease_cmds_log.h>
 #include <stats/stats_mgr.h>
-#include <util/encode/hex.h>
+#include <util/encode/encode.h>
 #include <util/multi_threading_mgr.h>
 #include <util/strutil.h>
 
