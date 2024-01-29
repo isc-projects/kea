@@ -36,7 +36,7 @@ OpenSSL or Botan) for compilation.  Optional backends (MySQL and PostgreSQL)
 have additional dependencies. For detailed installation directions, see the
 documentation in doc/sphinx/arm/install.rst text file or on the Kea online
 docs: https://kea.readthedocs.io/.
-Other optional dependencies is Sysrepo, a system for providing YANG/NETCONF
+Another optional dependency is Sysrepo, a system for providing YANG/NETCONF
 interface.
 
 You can find current OS-specific build/installation
