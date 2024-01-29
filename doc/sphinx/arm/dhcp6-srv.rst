@@ -2073,33 +2073,56 @@ DNR (Discovery of Network-designated Resolvers) Options for DHCPv6
 One of the more recently added option is Discovery of Network-designated Resolvers or DNR,
 introduced in `RFC 9463 <https://tools.ietf.org/html/rfc9463>`__. The goal of that RFC is
 to provide a way to communicate location of DNS resolvers available over other means than
-the classic DNS over UDP over port 53. At the time of this writing, the supported technologies
+the classic DNS over UDP port 53. At the time of this writing, the supported technologies
 are DoT (DNS-over-TLS), DoH (DNS-over-HTTPS), and DoQ (DNS-over-QUIC), but the option was
 designed to be extensible to also cover future extensions.
 
 Let's imagine an example that we want to convey a DoT server operating at dot1.example.org
-on a non-standard port 8530. An example option that would convey this information looks as follows:
+(which resolves to two IPv6 addresses: 2001:db8::1 2001:db8::2) on a non-standard port 8530.
+An example option that would convey this information looks as follows:
 
 ::
 
       {
         "name": "v6-dnr", // name of the option
+
+        // The following fields should be specified:
+        // - service priority (unsigned 16 bit integer)
+        // - authentication-domain-name (fqdn of the encrypted resolver)
+        // - a list of zero or more IPv6 addresses
+        // - list of parameters in key=value format, space separated
+        "data": "100, dot1.example.org., 2001:db8::1 2001:db8::2, alpn=dot port=8530"
+
+        // The above option will be encoded on-wire as follows:
         // 100 - service priority
         // 18 - length of the Authentication Domain Name (name of the resolver)
-        // the binary data has the following meaning:
-        // 00 10 - 16 octects is the length of the following IPv6 address
+        // 00 20 - 32 octets is the length of the following two IPv6 addresses
         // 20 01 0d b8 00 00 00 01 00 00 00 00 00 00 00 01 - 2001:db8:1::1
+        // 20 01 0d b8 00 00 00 01 00 00 00 00 00 00 00 02 - 2001:db8:1::2
         // Remaining part is to be interpreted as svcParams field. In particular:
         // 00 01 - next record is alpn
-        // 00 03 - length of the alpn-id field (3 octects)
-        // 64 6f 74 - "dot"
+        // 00 03 - length of the alpn-id field (3 octets)
+        // 64 6f 74 - "dot" - value of the alpn
         // 00 03 - next record is port
         // 00 02 - length of the record is 2 octets
         // 21 52 - the actual is 0x2152 or 8530 in decimal
-        "data": "100, 18, dot1.example.org., 00 10 20 01 0d b8 00 00 00 01 00 00 00 00 00 00 00 01 00 01 00 03 64 6f 74 00 03 00 02 21 52"
       }
 
+The only strictly mandatory key in the SvcParams field is the ``ALPN`` (Application-Layer Protocol Negotiation)
+parameter. It defines the protocol how the encrypted resolver could be reached. The most common values are
+``dot``, ``doq``, ``h2`` (meaning HTTP/2.0 over TLS, used in DoH). In case of DoH, the path also needs to be specified
+using the ``dotpath`` parameter. For example, when advertising DoH resolver available at
+``https://doh1.example.org/query{?dns}``, the ``dotpath`` should be set to ``query{?dns}``.
+
 A reader interested in configuring this option is encouraged to read the following materials:
+
+- A very nice set of examples is available in Section 7 of `RFC 9461
+  <https://www.rfc-editor.org/rfc/rfc9461#name-examples>`__.
+- List of all currently defined service parameters is maintained on `IANA registry
+  <https://www.iana.org/assignments/dns-svcb/dns-svcb.xhtml>`__. This specifies records that can be
+  stored in the svcParams field of the DNR option.
+- List of currently allowed protocols in the ALPN parameter is maintained on `another IANA registry
+  <https://www.iana.org/assignments/tls-extensiontype-values/tls-extensiontype-values.xhtml#alpn-protocol-ids>`__.
 
 - `RFC 9463 <https://www.rfc-editor.org/rfc/rfc9463>`__ which provide option definitions. In terms of SvcParams, it states
   that at `alpn` and `port` must be supported, and `dotpath` (used for DoT) is recommended to be supported.
@@ -2107,10 +2130,24 @@ A reader interested in configuring this option is encouraged to read the followi
 - Sections 7.1, 7.2 of `RFC 9460 <https://www.rfc-editor.org/rfc/rfc9460>`__, which define the on-wire format for alpn and port.
 - Section 5 of  `RFC 9460 <https://www.rfc-editor.org/rfc/rfc9461#name-new-svcparamkey-dohpath>`__, which defines
   on-wire format for `dohpath`.
-- A very nice set of examples is available in Section 7 of `RFC 9461 <https://www.rfc-editor.org/rfc/rfc9461#name-examples>`__.
 
-Further examples are provided in Kea sources in `dnr.json` and `all-options.json` files
-in the `doc/examples/kea6` directory. The DHCPv4 option is almost equivalent, and is described
+Kea currently supports the following service parameters:
+
+   +-----------------+------+------------------------------------------------------------------------+
+   | Name            | Code | Description                                                            |
+   +=================+======+========================================================================+
+   | alpn            | 1    | Specifies coma separated protocol types (DoT, DoH, etc.)               |
+   +-----------------+------+------------------------------------------------------------------------+
+   | port            | 3    | Unsigned 16 bit integer. Indicated non-standard TCP or UDP port.       |
+   +-----------------+------+------------------------------------------------------------------------+
+   | dotpath         | 7    | Mandatory for DoT. Contains URL path for the DoT resolver.             |
+   +-----------------+------+------------------------------------------------------------------------+
+
+Other currently defined service parameters: mandatory (0), no-default-alpn (2), ipv4hint (4), ech (5),
+ipv6hint (6), and ohttp (8) are not usable in the DNR option.
+
+Further examples are provided in Kea sources in ``dnr.json`` and ``all-options.json`` files
+in the ``doc/examples/kea6`` directory. The DHCPv4 option is almost equivalent, and is described
 in :ref:`dnr4-options`.
 
 
