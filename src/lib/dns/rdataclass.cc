@@ -5,7 +5,7 @@
 ///////////////
 ///////////////
 
-// Copyright (C) 2010-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -576,7 +576,7 @@ TSIG::getOtherData() const {
 } // end of namespace "rdata"
 } // end of namespace "dns"
 } // end of namespace "isc"
-// Copyright (C) 2010-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -644,7 +644,7 @@ A::compare(const Rdata&) const {
 } // end of namespace "rdata"
 } // end of namespace "dns"
 } // end of namespace "isc"
-// Copyright (C) 2011-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -849,7 +849,7 @@ AFSDB::getSubtype() const {
 } // end of namespace "rdata"
 } // end of namespace "dns"
 } // end of namespace "isc"
-// Copyright (C) 2014-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -1151,7 +1151,7 @@ CAA::getValue() const {
 } // end of namespace "rdata"
 } // end of namespace "dns"
 } // end of namespace "isc"
-// Copyright (C) 2010-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -1280,7 +1280,7 @@ CNAME::getCname() const {
 } // end of namespace "rdata"
 } // end of namespace "dns"
 } // end of namespace "isc"
-// Copyright (C) 2011-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -1404,7 +1404,7 @@ DLV::getTag() const {
 } // end of namespace "rdata"
 } // end of namespace "dns"
 } // end of namespace "isc"
-// Copyright (C) 2010-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -1535,7 +1535,7 @@ DNAME::getDname() const {
 } // end of namespace "rdata"
 } // end of namespace "dns"
 } // end of namespace "isc"
-// Copyright (C) 2010-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -1854,7 +1854,7 @@ DNSKEY::getAlgorithm() const {
 } // end of namespace "rdata"
 } // end of namespace "dns"
 } // end of namespace "isc"
-// Copyright (C) 2011-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -1948,7 +1948,7 @@ DS::getTag() const {
 } // end of namespace "rdata"
 } // end of namespace "dns"
 } // end of namespace "isc"
-// Copyright (C) 2011-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -2103,7 +2103,7 @@ HINFO::toWireHelper(T& outputer) const {
 } // end of namespace "rdata"
 } // end of namespace "dns"
 } // end of namespace "isc"
-// Copyright (C) 2011-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -2280,7 +2280,7 @@ MINFO::compare(const Rdata& other) const {
 } // end of namespace "rdata"
 } // end of namespace "dns"
 } // end of namespace "isc"
-// Copyright (C) 2010-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -2444,7 +2444,7 @@ MX::getMXPref() const {
 } // end of namespace "rdata"
 } // end of namespace "dns"
 } // end of namespace "isc"
-// Copyright (C) 2011-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -2704,7 +2704,7 @@ NAPTR::toWireHelper(T& outputer) const {
 } // end of namespace "rdata"
 } // end of namespace "dns"
 } // end of namespace "isc"
-// Copyright (C) 2010-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -2829,7 +2829,7 @@ NS::getNSName() const {
 } // end of namespace "rdata"
 } // end of namespace "dns"
 } // end of namespace "isc"
-// Copyright (C) 2010-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -3176,7 +3176,7 @@ NSEC3::getNext() const {
 } // end of namespace "rdata"
 } // end of namespace "dns"
 } // end of namespace "isc"
-// Copyright (C) 2010-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -3412,7 +3412,7 @@ NSEC3PARAM::getSalt() const {
 } // end of namespace "rdata"
 } // end of namespace "dns"
 } // end of namespace "isc"
-// Copyright (C) 2010-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -3632,7 +3632,7 @@ NSEC::compare(const Rdata& other) const {
 } // end of namespace "rdata"
 } // end of namespace "dns"
 } // end of namespace "isc"
-// Copyright (C) 2010-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -3853,7 +3853,7 @@ OPT::getPseudoRRs() const {
 } // end of namespace "rdata"
 } // end of namespace "dns"
 } // end of namespace "isc"
-// Copyright (C) 2010-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -3980,7 +3980,7 @@ PTR::getPTRName() const {
 } // end of namespace "rdata"
 } // end of namespace "dns"
 } // end of namespace "isc"
-// Copyright (C) 2011-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -4144,7 +4144,7 @@ RP::compare(const Rdata& other) const {
 } // end of namespace "rdata"
 } // end of namespace "dns"
 } // end of namespace "isc"
-// Copyright (C) 2010-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -4482,7 +4482,7 @@ RRSIG::typeCovered() const {
 } // end of namespace "rdata"
 } // end of namespace "dns"
 } // end of namespace "isc"
-// Copyright (C) 2010-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -4696,7 +4696,7 @@ SOA::compare(const Rdata& other) const {
 } // end of namespace "rdata"
 } // end of namespace "dns"
 } // end of namespace "isc"
-// Copyright (C) 2010-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -4839,7 +4839,7 @@ SPF::compare(const Rdata& other) const {
 } // end of namespace "rdata"
 } // end of namespace "dns"
 } // end of namespace "isc"
-// Copyright (C) 2012-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -5141,7 +5141,7 @@ SSHFP::getFingerprintLength() const {
 } // end of namespace "rdata"
 } // end of namespace "dns"
 } // end of namespace "isc"
-// Copyright (C) 2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2021-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -5758,7 +5758,7 @@ TKEY::getOtherData() const {
 } // end of namespace "rdata"
 } // end of namespace "dns"
 } // end of namespace "isc"
-// Copyright (C) 2014-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6104,7 +6104,7 @@ TLSA::getDataLength() const {
 } // end of namespace "rdata"
 } // end of namespace "dns"
 } // end of namespace "isc"
-// Copyright (C) 2010-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6203,7 +6203,7 @@ TXT::compare(const Rdata& other) const {
 } // end of namespace "rdata"
 } // end of namespace "dns"
 } // end of namespace "isc"
-// Copyright (C) 2010-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6271,7 +6271,7 @@ A::compare(const Rdata&) const {
 } // end of namespace "rdata"
 } // end of namespace "dns"
 } // end of namespace "isc"
-// Copyright (C) 2010-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6449,7 +6449,7 @@ A::compare(const Rdata& other) const {
 } // end of namespace "rdata"
 } // end of namespace "dns"
 } // end of namespace "isc"
-// Copyright (C) 2010-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6606,7 +6606,7 @@ AAAA::compare(const Rdata& other) const {
 } // end of namespace "rdata"
 } // end of namespace "dns"
 } // end of namespace "isc"
-// Copyright (C) 2011-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6771,7 +6771,7 @@ DHCID::getDigest() const {
 } // end of namespace "rdata"
 } // end of namespace "dns"
 } // end of namespace "isc"
-// Copyright (C) 2011-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this

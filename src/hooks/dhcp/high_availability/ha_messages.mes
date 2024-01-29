@@ -1,4 +1,4 @@
-# Copyright (C) 2017-2023 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
 
 $NAMESPACE isc::ha
 
@@ -268,11 +268,23 @@ and this server is not running in the load balancing mode. The server may only
 transition to the load-balancing state when it runs in the load balancing mode.
 The HA mode of both servers must be the same.
 
+% HA_LEASE4_SERVER_DECLINE_FAILED lease4_server_decline callout failed: %1
+This error message is issued when the callout for the lease4_server_decline hook
+point failed. This includes unexpected errors like wrong arguments provided to
+the callout by the DHCP server (unlikely internal server error).
+The argument contains a reason for the error.
+
 % HA_LEASES4_COMMITTED_FAILED leases4_committed callout failed: %1
 This error message is issued when the callout for the leases4_committed hook
 point failed. This includes unexpected errors like wrong arguments provided to
 the callout by the DHCP server (unlikely internal server error).
 The argument contains a reason for the error.
+
+% HA_LEASES4_COMMITTED_NOTHING_TO_UPDATE %1: leases4_committed callout was invoked without any leases
+This debug message is issued when the "leases4_committed" callout returns
+because there are neither new leases nor deleted leases for which updates
+should be sent. The sole argument specifies the details of the client
+which sent the packet.
 
 % HA_LEASES4_COMMITTED_NO_RELATIONSHIP %1: HA relationship not found: %2
 This error message is issued when the relationship for the server name provided
@@ -281,17 +293,17 @@ highly unlikely and rather indicates some programming error. The first argument
 is the client identification information. The second argument holds a more
 detailed error message.
 
-% HA_LEASES4_COMMITTED_NOTHING_TO_UPDATE %1: leases4_committed callout was invoked without any leases
-This debug message is issued when the "leases4_committed" callout returns
-because there are neither new leases nor deleted leases for which updates
-should be sent. The sole argument specifies the details of the client
-which sent the packet.
-
 % HA_LEASES6_COMMITTED_FAILED leases6_committed callout failed: %1
 This error message is issued when the callout for the leases6_committed hook
 point failed. This includes unexpected errors like wrong arguments provided to
 the callout by the DHCP server (unlikely internal server error).
 The argument contains a reason for the error.
+
+% HA_LEASES6_COMMITTED_NOTHING_TO_UPDATE %1: leases6_committed callout was invoked without any leases
+This debug message is issued when the "leases6_committed" callout returns
+because there are neither new leases nor deleted leases for which updates
+should be sent. The sole argument specifies the details of the client
+which sent the packet.
 
 % HA_LEASES6_COMMITTED_NO_RELATIONSHIP %1: HA relationship not found: %2
 This error message is issued when the relationship for the server name provided
@@ -299,12 +311,6 @@ by the earlier callouts was not found in the HA configuration. This error is
 highly unlikely and rather indicates some programming error. The first argument
 is the client identification information. The second argument holds a more
 detailed error message.
-
-% HA_LEASES6_COMMITTED_NOTHING_TO_UPDATE %1: leases6_committed callout was invoked without any leases
-This debug message is issued when the "leases6_committed" callout returns
-because there are neither new leases nor deleted leases for which updates
-should be sent. The sole argument specifies the details of the client
-which sent the packet.
 
 % HA_LEASES_BACKLOG_COMMUNICATIONS_FAILED %1: failed to communicate with %2 while sending lease updates backlog: %3
 This error message is issued to indicate that there was a communication error
@@ -577,12 +583,50 @@ of server startup or reconfiguration. The first argument specifies a local serve
 name. The second argument provides the HA mode. The third argument specifies the
 role of this server instance in this configuration.
 
+% HA_STATE_MACHINE_CONTINUED %1: state machine is un-paused
+This informational message is issued when the HA state machine is un-paused.
+This unlocks the server from the current state. It may transition to any
+other state if it needs to do so, e.g. 'partner-down' if its partner appears
+to be offline. The server may also remain in the current state if the HA
+setup state warrants such behavior.
+
+% HA_STATE_MACHINE_PAUSED %1: state machine paused in state %2
+This informational message is issued when the HA state machine is paused.
+HA state machine may be paused in certain states specified in the HA hooks library
+configuration. When the state machine is paused, the server remains in the given
+state until it is explicitly unpaused (via the ha-continue command). If the state
+machine is paused, the server operates normally but cannot transition to any
+other state.
+
+% HA_STATE_TRANSITION %1: server transitions from %2 to %3 state, partner state is %4
+This informational message is issued when the server transitions to a new
+state as a result of some interaction (or lack of thereof) with its partner.
+The arguments specify local server name, initial server state, new server state
+and the partner's state.
+
+% HA_STATE_TRANSITION_PASSIVE_BACKUP %1: server transitions from %2 to %3 state
+This informational message is issued when the server in passive-backup
+mode transitions to a new state. The arguments specify local server name, initial
+server state and a new server state.
+
+% HA_SUBNET4_SELECT_FAILED subnet4_select callout failed: %1
+This error message is issued when the callout for the subnet4_select hook
+point failed. This may occur as a result of an internal server error.
+The argument contains a reason for the error.
+
 % HA_SUBNET4_SELECT_INVALID_HA_SERVER_NAME %1: invalid ha-server-name value for subnet %2
 This error message is issued when the received DHCPv4 query is dropped
 by this server because the specified ha-server-name value in the subnet's
 user-context has non-string type or is empty. It is a server's misconifguration.
 The first argument is the client identification information. The second argument
 is a subnet prefix.
+
+% HA_SUBNET4_SELECT_NOT_FOR_US %1: dropping query in relationship %2 to be processed by another server
+This debug message is issued when the received DHCPv4 query is dropped
+by this server because it should be served by another server. This
+is the case when a remote primary server is operational. The first argument
+is the client identification information. The second argument is the
+relationship name.
 
 % HA_SUBNET4_SELECT_NO_RELATIONSHIP_FOR_SUBNET %1: HA relationship not found for %2
 This error message is issued when the received DHCPv4 query is dropped
@@ -610,15 +654,8 @@ Selecting the subnet is required to find a suitable HA relationship.
 This message is not emitted when the server has only one relationship.
 The argument is the client identification information.
 
-% HA_SUBNET4_SELECT_NOT_FOR_US %1: dropping query in relationship %2 to be processed by another server
-This debug message is issued when the received DHCPv4 query is dropped
-by this server because it should be served by another server. This
-is the case when a remote primary server is operational. The first argument
-is the client identification information. The second argument is the
-relationship name.
-
-% HA_SUBNET4_SELECT_FAILED subnet4_select callout failed: %1
-This error message is issued when the callout for the subnet4_select hook
+% HA_SUBNET6_SELECT_FAILED subnet6_select callout failed: %1
+This error message is issued when the callout for the subnet6_select hook
 point failed. This may occur as a result of an internal server error.
 The argument contains a reason for the error.
 
@@ -629,7 +666,14 @@ user-context has non-string type or is empty. It is a server's misconifguration.
 The first argument is the client identification information. The second argument
 is a subnet prefix.
 
-% HA_SUBNET6_SELECT_NO_RELATIONSHIP_FOR_SUBNET %1: HA relationship not found for %2 
+% HA_SUBNET6_SELECT_NOT_FOR_US %1: dropping query in relationship %2 to be processed by another server
+This debug message is issued when the received DHCPv6 query is dropped
+by this server because it should be served by another server. This
+is the case when a remote primary server is operational. The first argument
+is the client identification information. The second argument is the
+relationship name.
+
+% HA_SUBNET6_SELECT_NO_RELATIONSHIP_FOR_SUBNET %1: HA relationship not found for %2
 This error message is issued when the received DHCPv6 query is dropped
 by this server because the server could not find a relationship matching
 the specified ha-server-name for a subnet. The server name matches no
@@ -654,44 +698,6 @@ by this server because it could not select a subnet for this client.
 Selecting the subnet is required to find a suitable HA relationship.
 This message is not emitted when the server has only one relationship.
 The argument is the client identification information.
-
-% HA_SUBNET6_SELECT_NOT_FOR_US %1: dropping query in relationship %2 to be processed by another server
-This debug message is issued when the received DHCPv6 query is dropped
-by this server because it should be served by another server. This
-is the case when a remote primary server is operational. The first argument
-is the client identification information. The second argument is the
-relationship name.
-
-% HA_SUBNET6_SELECT_FAILED subnet6_select callout failed: %1
-This error message is issued when the callout for the subnet6_select hook
-point failed. This may occur as a result of an internal server error.
-The argument contains a reason for the error.
-
-% HA_STATE_MACHINE_CONTINUED %1: state machine is un-paused
-This informational message is issued when the HA state machine is un-paused.
-This unlocks the server from the current state. It may transition to any
-other state if it needs to do so, e.g. 'partner-down' if its partner appears
-to be offline. The server may also remain in the current state if the HA
-setup state warrants such behavior.
-
-% HA_STATE_MACHINE_PAUSED %1: state machine paused in state %2
-This informational message is issued when the HA state machine is paused.
-HA state machine may be paused in certain states specified in the HA hooks library
-configuration. When the state machine is paused, the server remains in the given
-state until it is explicitly unpaused (via the ha-continue command). If the state
-machine is paused, the server operates normally but cannot transition to any
-other state.
-
-% HA_STATE_TRANSITION %1: server transitions from %2 to %3 state, partner state is %4
-This informational message is issued when the server transitions to a new
-state as a result of some interaction (or lack of thereof) with its partner.
-The arguments specify local server name, initial server state, new server state
-and the partner's state.
-
-% HA_STATE_TRANSITION_PASSIVE_BACKUP %1: server transitions from %2 to %3 state
-This informational message is issued when the server in passive-backup
-mode transitions to a new state. The arguments specify local server name, initial
-server state and a new server state.
 
 % HA_SYNC_COMPLETE_NOTIFY_COMMUNICATIONS_FAILED %1: failed to send ha-sync-complete-notify to %2: %3
 This warning message indicates that there was a problem in communication with an
@@ -743,10 +749,3 @@ This informational message is issued when the server has been restarted after
 correcting the clock skew. The partner server is still in the terminated
 state. The partner must be restarted before the server can synchronize the
 database and start normal operation.
-
-% HA_LEASE4_SERVER_DECLINE_FAILED lease4_server_decline callout failed: %1
-This error message is issued when the callout for the lease4_server_decline hook
-point failed. This includes unexpected errors like wrong arguments provided to
-the callout by the DHCP server (unlikely internal server error).
-The argument contains a reason for the error.
-

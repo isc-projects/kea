@@ -326,6 +326,7 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
                        | max_reconnect_tries
                        | reconnect_wait_time
                        | on_fail
+                       | retry_on_startup
                        | max_row_errors
                        | trust_anchor
                        | cert_file
@@ -372,6 +373,8 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
      on_fail_mode ::= "stop-retry-exit"
                  | "serve-retry-exit"
                  | "serve-retry-continue"
+
+     retry_on_startup ::= "retry-on-startup" ":" BOOLEAN
 
      max_row_errors ::= "max-row-errors" ":" INTEGER
 
