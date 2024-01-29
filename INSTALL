@@ -36,8 +36,8 @@ OpenSSL or Botan) for compilation.  Optional backends (MySQL and PostgreSQL)
 have additional dependencies. For detailed installation directions, see the
 documentation in doc/sphinx/arm/install.rst text file or on the Kea online
 docs: https://kea.readthedocs.io/.
-Other optional dependencies are FreeRADIUS client (this requires a subscriber
-only RADIUS hook) and Sysrepo, a system for providing YANG/NETCONF interface.
+Other optional dependencies is Sysrepo, a system for providing YANG/NETCONF
+interface.
 
 You can find current OS-specific build/installation
 instructions in our knowledge base at https://kb.isc.org/docs/installing-kea
