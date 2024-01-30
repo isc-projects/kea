@@ -180,16 +180,36 @@ private:
     ///
     /// A 0 value is used for false, 1 for true.
     void updateStats() {
-        isc::stats::StatsMgr::instance().setValue("disabled-globally",
+        isc::stats::StatsMgr& stats_mgr = isc::stats::StatsMgr::instance();
+
+        stats_mgr.setValue("disabled-globally",
                 static_cast<int64_t>(globally_disabled_));
-        isc::stats::StatsMgr::instance().setValue("disabled-by-user",
-                static_cast<int64_t>(disabled_by_origin_.count(NetworkState::USER_COMMAND)));
-        isc::stats::StatsMgr::instance().setValue("disabled-by-ha-local",
-                static_cast<int64_t>(disabled_by_origin_.count(NetworkState::HA_LOCAL_COMMAND)));
-        isc::stats::StatsMgr::instance().setValue("disabled-by-ha-remote",
-                static_cast<int64_t>(disabled_by_origin_.count(NetworkState::HA_REMOTE_COMMAND)));
+
+        bool user = false, ha_local = false, ha_remote = false;
+        for (auto origin : disabled_by_origin_) {
+            switch (origin) {
+                case NetworkState::USER_COMMAND:
+                    user = true;
+                    break;
+                default:
+                    if ((NetworkState::HA_LOCAL_COMMAND <= origin) &&
+                        (origin < NetworkState::HA_REMOTE_COMMAND)) {
+                        ha_local = true;
+                    } else if ((NetworkState::HA_LOCAL_COMMAND <= origin) &&
+                        (origin < NetworkState::DB_CONNECTION)) {
+                        ha_remote = true;
+                    }
+                    break;
+            }
+        }
+        stats_mgr.setValue("disabled-by-user", static_cast<int64_t>(user));
+        stats_mgr.setValue("disabled-by-ha-local",
+                static_cast<int64_t>(ha_local));
+        stats_mgr.setValue("disabled-by-ha-remote",
+                static_cast<int64_t>(ha_remote));
+
         // Expose the disabled-by-db-connection counter by direct value.
-        isc::stats::StatsMgr::instance().setValue("disabled-by-db",
+        stats_mgr.setValue("disabled-by-db",
                 static_cast<int64_t>(disabled_by_db_connection_));
     }
 };
