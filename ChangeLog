@@ -6,6 +6,7 @@
 	are not counted by any metric.
 	While disabled, a WARN log is emitted every DISABLE_WARN_PACKET{4|6}(100)
 	dropped packets, in addition to the existing DEBUG log.
+	(Gitlab #3228)
 
 2200.	[func]		piotrek
 	Kea now supports new DHCPv4 option code 121, Classless Static
