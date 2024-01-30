@@ -1,4 +1,4 @@
-// Copyright (C) 2021-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2021-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -67,7 +67,7 @@ namespace {
 string
 join(const ProcessEnvVars& vars) {
     string result;
-    for (auto var : vars) {
+    for (auto const& var : vars) {
         result += var + "\n";
     }
     return (result);

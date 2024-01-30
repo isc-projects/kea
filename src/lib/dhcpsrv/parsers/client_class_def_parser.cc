@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -16,7 +16,6 @@
 #include <asiolink/io_address.h>
 #include <asiolink/io_error.h>
 
-#include <boost/foreach.hpp>
 #include <algorithm>
 #include <sstream>
 
@@ -131,7 +130,7 @@ ClientClassDefParser::parse(ClientClassDictionaryPtr& class_dictionary,
                 SimpleParser6::OPTION6_DEF_DEFAULTS);
 
         OptionDefParser parser(family);
-        BOOST_FOREACH(ConstElementPtr option_def, option_defs->listValue()) {
+        for (auto const& option_def : option_defs->listValue()) {
             OptionDefinitionPtr def = parser.parse(option_def);
 
             // Verify if the definition is for an option which is in a deferred
@@ -251,7 +250,7 @@ ClientClassDefParser::parse(ClientClassDictionaryPtr& class_dictionary,
     }
 
     // Sanity checks on built-in classes
-    for (auto bn : builtinNames) {
+    for (auto const& bn : builtinNames) {
         if (name == bn) {
             if (required) {
                 isc_throw(DhcpConfigError, "built-in class '" << name
@@ -321,7 +320,7 @@ ClientClassDefParser::checkParametersSupported(const ConstElementPtr& class_def_
                                                          "max-preferred-lifetime" };
 
     // Iterate over the specified parameters and check if they are all supported.
-    for (auto name_value_pair : class_def_cfg->mapValue()) {
+    for (auto const& name_value_pair : class_def_cfg->mapValue()) {
         if ((supported_params.count(name_value_pair.first) > 0) ||
             ((family == AF_INET) && (supported_params_v4.count(name_value_pair.first) > 0)) ||
             ((family != AF_INET) && (supported_params_v6.count(name_value_pair.first) > 0))) {
@@ -346,8 +345,7 @@ ClientClassDictionaryPtr
 ClientClassDefListParser::parse(ConstElementPtr client_class_def_list,
                                 uint16_t family, bool check_dependencies) {
     ClientClassDictionaryPtr dictionary(new ClientClassDictionary());
-    BOOST_FOREACH(ConstElementPtr client_class_def,
-                  client_class_def_list->listValue()) {
+    for (auto const& client_class_def : client_class_def_list->listValue()) {
         ClientClassDefParser parser;
         parser.parse(dictionary, client_class_def, family, true, check_dependencies);
     }

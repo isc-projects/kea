@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -58,7 +58,7 @@ DbAccessParser::parse(std::string& access_string,
     int64_t max_row_errors = 0;
 
     // 2. Update the copy with the passed keywords.
-    for (std::pair<std::string, ConstElementPtr> param : database_config->mapValue()) {
+    for (auto const& param : database_config->mapValue()) {
         try {
             if ((param.first == "persist") ||
                 (param.first == "readonly") ||
@@ -270,7 +270,7 @@ DbAccessParser::getDbAccessString() const {
     // Construct the database access string from all keywords and values in the
     // parameter map where the value is not null.
     string dbaccess;
-    for (auto keyval : values_) {
+    for (auto const& keyval : values_) {
         if (!keyval.second.empty()) {
 
             // Separate keyword/value pair from predecessor (if there is one).

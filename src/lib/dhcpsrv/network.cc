@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -128,8 +128,8 @@ Network::toElement() const {
     ElementPtr relay_map = Element::createMap();
     ElementPtr address_list = Element::createList();
     const IOAddressList addresses = getRelayAddresses();
-    for (auto address = addresses.begin(); address != addresses.end(); ++address) {
-        address_list->add(Element::create((*address).toText()));
+    for (auto const& address : addresses) {
+        address_list->add(Element::create(address.toText()));
     }
 
     relay_map->set("ip-addresses", address_list);
@@ -144,9 +144,8 @@ Network::toElement() const {
     const ClientClasses& classes = getRequiredClasses();
     if (!classes.empty()) {
         ElementPtr class_list = Element::createList();
-        for (ClientClasses::const_iterator it = classes.cbegin();
-             it != classes.cend(); ++it) {
-            class_list->add(Element::create(*it));
+        for (auto const& it : classes) {
+            class_list->add(Element::create(it));
         }
         map->set("require-client-classes", class_list);
     }

@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -221,7 +221,7 @@ CSVLeaseFile6::readCltt(const CSVRow& row) {
     time_t cltt =
         static_cast<time_t>(row.readAndConvertAt<uint64_t>(getColumnIndex("expire"))
                             - readValid(row));
-    return (cltt);
+    return (static_cast<uint32_t>(cltt));
 }
 
 SubnetID

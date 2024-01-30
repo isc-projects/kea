@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -142,16 +142,15 @@ public:
 
         // Check that the keywords and keyword values are the same: loop
         // through the keywords in the database access string.
-        for (DatabaseConnection::ParameterMap::const_iterator actual = parameters.begin();
-             actual != parameters.end(); ++actual) {
+        for (auto const& actual : parameters) {
 
             // Does the keyword exist in the set of expected keywords?
             std::map<string, string>::iterator corresponding =
-                expected.find(actual->first);
+                expected.find(actual.first);
             ASSERT_TRUE(corresponding != expected.end());
 
             // Keyword exists, is the value the same?
-            EXPECT_EQ(corresponding->second, actual->second);
+            EXPECT_EQ(corresponding->second, actual.second);
         }
     }
 

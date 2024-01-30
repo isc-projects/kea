@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -154,10 +154,9 @@ TEST_F(RRsetCollectionTest, iteratorTest) {
 
     // Here, we just count the records and do some basic tests on them.
     size_t count = 0;
-    for (RRsetCollection::Iterator it = collection.begin();
-         it != collection.end(); ++it) {
+    for (auto const& it : collection) {
          ++count;
-         const AbstractRRset& rrset = *it;
+         const AbstractRRset& rrset = it;
          EXPECT_EQ(rrclass, rrset.getClass());
          EXPECT_EQ(RRTTL(3600), rrset.getTTL());
     }

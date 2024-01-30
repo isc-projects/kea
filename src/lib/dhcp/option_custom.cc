@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -180,10 +180,9 @@ OptionCustom::createBuffers() {
         const OptionDefinition::RecordFieldsCollection fields =
             definition_.getRecordFields();
 
-        for (OptionDefinition::RecordFieldsConstIter field = fields.begin();
-             field != fields.end(); ++field) {
+        for (auto const& field : fields) {
             OptionBuffer buf;
-            createBuffer(buf, *field);
+            createBuffer(buf, field);
             // We have the buffer with default value prepared so we
             // add it to the set of buffers.
             buffers.push_back(buf);
@@ -291,9 +290,8 @@ OptionCustom::createBuffers(const OptionBuffer& data_buf) {
             definition_.getRecordFields();
 
         // Go over all data fields within a record.
-        for (OptionDefinition::RecordFieldsConstIter field = fields.begin();
-             field != fields.end(); ++field) {
-            size_t data_size = bufferLength(*field, false,
+        for (auto const& field : fields) {
+            size_t data_size = bufferLength(field, false,
                                             data, data_buf.end());
 
             // Our data field requires that there is a certain chunk of
@@ -458,13 +456,12 @@ OptionCustom::pack(isc::util::OutputBuffer& buf, bool check) const {
     packHeader(buf, check);
 
     // Write data from buffers.
-    for (std::vector<OptionBuffer>::const_iterator it = buffers_.begin();
-         it != buffers_.end(); ++it) {
+    for (auto const& it : buffers_) {
         // In theory the createBuffers function should have taken
         // care that there are no empty buffers added to the
         // collection but it is almost always good to make sure.
-        if (!it->empty()) {
-            buf.writeData(&(*it)[0], it->size());
+        if (!it.empty()) {
+            buf.writeData(&it[0], it.size());
         }
     }
 
@@ -662,16 +659,13 @@ OptionCustom::len() const {
     size_t length = getHeaderLen();
 
     // ... lengths of all buffers that hold option data ...
-    for (std::vector<OptionBuffer>::const_iterator buf = buffers_.begin();
-         buf != buffers_.end(); ++buf) {
-        length += buf->size();
+    for (auto const& buf : buffers_) {
+        length += buf.size();
     }
 
     // ... and lengths of all suboptions
-    for (OptionCollection::const_iterator it = options_.begin();
-         it != options_.end();
-         ++it) {
-        length += (*it).second->len();
+    for (auto const& it : options_) {
+        length += it.second->len();
     }
 
     return (static_cast<uint16_t>(length));
@@ -699,10 +693,10 @@ std::string OptionCustom::toText(int indent) const {
         // For record types we iterate over fields defined in
         // option definition and match the appropriate buffer
         // with them.
-        for (OptionDefinition::RecordFieldsConstIter field = fields.begin();
-             field != fields.end(); ++field) {
-            output << " " << dataFieldToText(*field, std::distance(fields.begin(),
-                                                                   field));
+        size_t j = 0;
+        for (auto const& field : fields) {
+            output << " " << dataFieldToText(field, j);
+            j++;
         }
 
         // If the last record field is an array iterate on extra buffers

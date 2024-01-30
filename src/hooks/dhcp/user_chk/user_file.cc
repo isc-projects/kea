@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,7 +10,6 @@
 #include <user.h>
 #include <user_file.h>
 
-#include <boost/foreach.hpp>
 #include <errno.h>
 #include <iostream>
 
@@ -87,7 +86,7 @@ UserFile::makeUser(const std::string& user_string) {
     // respective locals.  Anything else is assumed to be an option so
     // add it to the local property map.
     std::pair<std::string, isc::data::ConstElementPtr> element_pair;
-    BOOST_FOREACH (element_pair, elements->mapValue()) {
+    for (auto const& element_pair : elements->mapValue()) {
         // Get the element's label.
         std::string label = element_pair.first;
 

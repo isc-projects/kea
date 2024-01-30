@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -187,7 +187,7 @@ public:
 
     /// @brief Remove other files.
     void removeOtherFiles() const {
-        for (const auto& file : extra_files_) {
+        for (auto const& file : extra_files_) {
             LeaseFileIO io(file);
             io.removeFile();
         }
@@ -2765,7 +2765,7 @@ TEST_F(MemfileLeaseMgrTest, classLeaseRecount4) {
     };
 
     // Bake all the leases.
-    for ( auto recipe : recipes ) {
+    for (auto const& recipe : recipes) {
         ElementPtr ctx = makeContextWithClasses(recipe.classes_);
         ASSERT_TRUE(makeLease4(recipe.address_, 777, recipe.state_, ctx));
     }
@@ -2844,7 +2844,7 @@ TEST_F(MemfileLeaseMgrTest, classLeaseRecount6) {
     };
 
     // Bake all the leases.
-    for ( auto recipe : recipes ) {
+    for (auto const& recipe : recipes) {
         ElementPtr ctx = makeContextWithClasses(recipe.classes_);
         ASSERT_TRUE(makeLease6(recipe.ltype_, recipe.address_, recipe.prefix_len_, 777, recipe.state_, ctx));
     }

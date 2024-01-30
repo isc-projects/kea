@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -96,7 +96,7 @@ TEST_F(DHCPQueueControlParserTest, validContent) {
     // Iterate over the valid scenarios and verify they succeed.
     ConstElementPtr config_elems;
     ConstElementPtr queue_control;
-    for (auto scenario : scenarios) {
+    for (auto const& scenario : scenarios) {
         SCOPED_TRACE(scenario.description_);
         {
             // Construct the config JSON
@@ -161,7 +161,7 @@ TEST_F(DHCPQueueControlParserTest, invalidContent) {
     // Iterate over the valid scenarios and verify they succeed.
     ConstElementPtr config_elems;
     ConstElementPtr queue_control;
-    for (auto scenario : scenarios) {
+    for (auto const& scenario : scenarios) {
         SCOPED_TRACE(scenario.description_);
         {
             // Construct the config JSON

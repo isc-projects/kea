@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -177,24 +177,23 @@ public:
     /// @param cms a vector of string with command names
     void testCommands(const std::vector<std::string> cmds) {
         // The commands should not be registered yet.
-        for (auto cmd = cmds.begin(); cmd != cmds.end(); ++cmd) {
-            checkCommandRegistered(*cmd, false);
+        for (auto const& cmd : cmds) {
+            checkCommandRegistered(cmd, false);
         }
 
         loadLib();
 
         // The commands should be available after library was loaded.
-        for (auto cmd = cmds.begin(); cmd != cmds.end(); ++cmd) {
-            checkCommandRegistered(*cmd, true);
+        for (auto const& cmd : cmds) {
+            checkCommandRegistered(cmd, true);
         }
 
         unloadLibs();
 
         // and the commands should be gone now.
-        for (auto cmd = cmds.begin(); cmd != cmds.end(); ++cmd) {
-            checkCommandRegistered(*cmd, false);
+        for (auto const& cmd : cmds) {
+            checkCommandRegistered(cmd, false);
         }
-
     }
 
     // Check that the library can be loaded and unloaded multiple times.

@@ -1,4 +1,4 @@
-// Copyright (C) 2021-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2021-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -52,6 +52,13 @@ CfgGlobals::nameToIndex = {
     { "allocator", ALLOCATOR },
     { "ddns-ttl-percent", DDNS_TTL_PERCENT },
     { "ddns-conflict-resolution-mode", DDNS_CONFLICT_RESOLUTION_MODE },
+    { "compatibility", COMPATIBILITY },
+    { "control-socket", CONTROL_SOCKET },
+    { "dhcp-ddns", DHCP_DDNS },
+    { "expired-leases-processing", EXPIRED_LEASES_PROCESSING },
+    { "multi-threading", MULTI_THREADING },
+    { "sanity-checks", SANITY_CHECKS },
+    { "dhcp-queue-control", DHCP_QUEUE_CONTROL },
 
     // DHCPv4 specific parameters.
     { "echo-client-id", ECHO_CLIENT_ID },
@@ -67,7 +74,8 @@ CfgGlobals::nameToIndex = {
     { "preferred-lifetime", PREFERRED_LIFETIME },
     { "min-preferred-lifetime", MIN_PREFERRED_LIFETIME },
     { "max-preferred-lifetime", MAX_PREFERRED_LIFETIME },
-    { "pd-allocator", PD_ALLOCATOR }
+    { "pd-allocator", PD_ALLOCATOR },
+    { "server-id", SERVER_ID }
 };
 
 // Load time sanity check.
@@ -84,18 +92,17 @@ struct CfgGlobalsChecks {
         // Build the name vector.
         std::vector<std::string> names;
         names.resize(CfgGlobals::SIZE);
-        for (auto it = CfgGlobals::nameToIndex.cbegin();
-             it != CfgGlobals::nameToIndex.cend(); ++it) {
-            int idx = it->second;
+        for (auto const& it : CfgGlobals::nameToIndex) {
+            int idx = it.second;
             if ((idx < 0) || (idx >= CfgGlobals::SIZE)) {
                 isc_throw(Unexpected, "invalid index " << idx
-                          << " for name " << it->first);
+                          << " for name " << it.first);
             }
             if (!names[idx].empty()) {
                 isc_throw(Unexpected, "duplicated names for " << idx
                           << " got " << names[idx]);
             }
-            names[idx] = it->first;
+            names[idx] = it.first;
         }
 
         // No name should be empty.
@@ -160,11 +167,11 @@ CfgGlobals::clear() {
 const CfgGlobals::MapType
 CfgGlobals::valuesMap() const {
     MapType map;
-    for (auto it = nameToIndex.cbegin(); it != nameToIndex.cend(); ++it) {
-        int idx = it->second;
+    for (auto const& it : nameToIndex) {
+        int idx = it.second;
         ConstElementPtr value = values_[idx];
         if (value) {
-            map.insert(make_pair(it->first, value));
+            map.insert(make_pair(it.first, value));
         }
     }
     return (map);
@@ -173,11 +180,11 @@ CfgGlobals::valuesMap() const {
 ElementPtr
 CfgGlobals::toElement() const {
     ElementPtr result = Element::createMap();
-    for (auto it = nameToIndex.cbegin(); it != nameToIndex.cend(); ++it) {
-        int idx = it->second;
+    for (auto const& it : nameToIndex) {
+        int idx = it.second;
         ConstElementPtr value = values_[idx];
         if (value) {
-            result->set(it->first, value);
+            result->set(it.first, value);
         }
     }
     return (result);

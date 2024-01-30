@@ -1,4 +1,4 @@
-// Copyright (C) 2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2023-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -24,11 +24,11 @@ void
 LeaseSyncFilter::apply() {
     subnet_ids_.clear();
     if (server_type_ == HAServerType::DHCPv4) {
-        for (auto subnet : *CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll()) {
+        for (auto const& subnet : *CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll()) {
             conditionallyApplySubnetFilter(subnet);
         }
     } else {
-        for (auto subnet : *CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getAll()) {
+        for (auto const& subnet : *CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getAll()) {
             conditionallyApplySubnetFilter(subnet);
         }
     }
@@ -44,7 +44,7 @@ LeaseSyncFilter::conditionallyApplySubnetFilter(const SubnetPtr& subnet) {
     try {
         auto server_name = HAConfig::getSubnetServerName(subnet);
         if (!server_name.empty()) {
-            for (auto peer : config_->getAllServersConfig()) {
+            for (auto const& peer : config_->getAllServersConfig()) {
                 if (peer.first == server_name) {
                     subnet_ids_.insert(subnet->getID());
                     return;

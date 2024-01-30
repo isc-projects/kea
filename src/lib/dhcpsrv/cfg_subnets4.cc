@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -155,7 +155,7 @@ CfgSubnets4::merge(CfgOptionDefPtr cfg_def, CfgSharedNetworks4Ptr networks,
         other_subnet->getCfgOption()->createOptions(cfg_def);
 
         // Create the options for pool based on the given definitions.
-        for (const auto& pool : other_subnet->getPoolsWritable(Lease::TYPE_V4)) {
+        for (auto const& pool : other_subnet->getPoolsWritable(Lease::TYPE_V4)) {
             pool->getCfgOption()->createOptions(cfg_def);
         }
 
@@ -185,21 +185,21 @@ CfgSubnets4::merge(CfgOptionDefPtr cfg_def, CfgSharedNetworks4Ptr networks,
 
 ConstSubnet4Ptr
 CfgSubnets4::getBySubnetId(const SubnetID& subnet_id) const {
-    const auto& index = subnets_.get<SubnetSubnetIdIndexTag>();
+    auto const& index = subnets_.get<SubnetSubnetIdIndexTag>();
     auto subnet_it = index.find(subnet_id);
     return ((subnet_it != index.cend()) ? (*subnet_it) : ConstSubnet4Ptr());
 }
 
 ConstSubnet4Ptr
 CfgSubnets4::getByPrefix(const std::string& subnet_text) const {
-    const auto& index = subnets_.get<SubnetPrefixIndexTag>();
+    auto const& index = subnets_.get<SubnetPrefixIndexTag>();
     auto subnet_it = index.find(subnet_text);
     return ((subnet_it != index.cend()) ? (*subnet_it) : ConstSubnet4Ptr());
 }
 
 bool
 CfgSubnets4::hasSubnetWithServerId(const asiolink::IOAddress& server_id) const {
-    const auto& index = subnets_.get<SubnetServerIdIndexTag>();
+    auto const& index = subnets_.get<SubnetServerIdIndexTag>();
     auto subnet_it = index.find(server_id);
     return (subnet_it != index.cend());
 }
@@ -535,7 +535,7 @@ CfgSubnets4::removeStatistics() {
         stats_mgr.del(StatsMgr::generateName("subnet", subnet_id,
                                              "reclaimed-leases"));
 
-        for (const auto& pool : subnet4->getPools(Lease::TYPE_V4)) {
+        for (auto const& pool : subnet4->getPools(Lease::TYPE_V4)) {
             stats_mgr.del(StatsMgr::generateName("subnet", subnet_id,
                                                  StatsMgr::generateName("pool", pool->getID(),
                                                                         "total-addresses")));
@@ -592,7 +592,7 @@ CfgSubnets4::updateStatistics() {
             stats_mgr.setValue(name_conflicts, static_cast<int64_t>(0));
         }
 
-        for (const auto& pool : subnet4->getPools(Lease::TYPE_V4)) {
+        for (auto const& pool : subnet4->getPools(Lease::TYPE_V4)) {
             const std::string& name_total(StatsMgr::generateName("subnet", subnet_id,
                                                                  StatsMgr::generateName("pool", pool->getID(),
                                                                                         "total-addresses")));
@@ -619,7 +619,7 @@ CfgSubnets4::updateStatistics() {
 
 void
 CfgSubnets4::initAllocatorsAfterConfigure() {
-    for (auto subnet : subnets_) {
+    for (auto const& subnet : subnets_) {
         subnet->initAllocatorsAfterConfigure();
     }
 }

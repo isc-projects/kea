@@ -21,7 +21,7 @@
     "hook": "cb_cmds",
     "name": "remote-global-parameter4-get-all",
     "resp-comment": [
-        "The returned response contains a list of maps. Each map contains a global parameter name/value pair. The value may be a JSON string, integer, real, or boolean. The metadata is appended to each parameter and provides database-specific information associated with the returned objects. If the server tag \"all\" is included in the command, the response contains the global parameters shared among all servers. It excludes server-specific global parameters. If an explicit server tag is included in the command, the response contains all global parameters directly associated with the given server, and the global parameters associated with all servers when server-specific values are not present."
+        "The returned response contains a list of maps. Each map contains a global parameter name:value pair. The value may be a JSON string, integer, real, boolean or a map containing only one of these types. The metadata is appended to each parameter and provides database-specific information associated with the returned objects. If the server tag \"all\" is included in the command, the response contains the global parameters shared among all servers. It excludes server-specific global parameters. If an explicit server tag is included in the command, the response contains all global parameters directly associated with the given server, and the global parameters associated with all servers when server-specific values are not present."
     ],
     "resp-syntax": [
         "{",

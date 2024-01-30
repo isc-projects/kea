@@ -1,4 +1,4 @@
-// Copyright (C) 2022-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2022-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -808,9 +808,9 @@ GenericConfigBackendDHCPv6Test::globalParameters6WithServerTagsTest() {
     // Capture the returned values into the map so as we can check the
     // values against the servers.
     std::map<std::string, std::string> values;
-    for (auto g = returned_globals.begin(); g != returned_globals.end(); ++g) {
-        ASSERT_EQ(1, (*g)->getServerTags().size());
-        values[(*g)->getServerTags().begin()->get()] = ((*g)->getValue());
+    for (auto const& g : returned_globals) {
+        ASSERT_EQ(1, g->getServerTags().size());
+        values[g->getServerTags().begin()->get()] = g->getValue();
     }
 
     ASSERT_EQ(3, values.size());
@@ -918,7 +918,7 @@ GenericConfigBackendDHCPv6Test::getAllGlobalParameters6Test() {
     auto parameters = cbptr_->getAllGlobalParameters6(ServerSelector::ALL());
     ASSERT_EQ(5, parameters.size());
 
-    const auto& parameters_index = parameters.get<StampedValueNameIndexTag>();
+    auto const& parameters_index = parameters.get<StampedValueNameIndexTag>();
 
     // Verify their values.
     EXPECT_EQ("value1", (*parameters_index.find("name1"))->getValue());
@@ -927,10 +927,9 @@ GenericConfigBackendDHCPv6Test::getAllGlobalParameters6Test() {
     EXPECT_TRUE((*parameters_index.find("name4"))->getBoolValue());
     EXPECT_EQ(1.65, (*parameters_index.find("name5"))->getDoubleValue());
 
-    for (auto param = parameters_index.begin(); param != parameters_index.end();
-         ++param) {
-        ASSERT_EQ(1, (*param)->getServerTags().size());
-        EXPECT_EQ("all", (*param)->getServerTags().begin()->get());
+    for (auto const& param : parameters_index) {
+        ASSERT_EQ(1, param->getServerTags().size());
+        EXPECT_EQ("all", param->getServerTags().begin()->get());
     }
 
     // Should be able to fetch these parameters when explicitly providing
@@ -971,7 +970,7 @@ GenericConfigBackendDHCPv6Test::getModifiedGlobalParameters6Test() {
     auto parameters = cbptr_->getModifiedGlobalParameters6(ServerSelector::ALL(),
                                                            timestamps_["after today"]);
 
-    const auto& parameters_index = parameters.get<StampedValueNameIndexTag>();
+    auto const& parameters_index = parameters.get<StampedValueNameIndexTag>();
 
     // It should be the one modified "tomorrow".
     ASSERT_EQ(1, parameters_index.size());
@@ -1340,7 +1339,7 @@ void
 GenericConfigBackendDHCPv6Test::getAllSubnets6Test() {
     // Insert test subnets into the database. Note that the second subnet will
     // overwrite the first subnet as they use the same ID.
-    for (auto subnet : test_subnets_) {
+    for (auto const& subnet : test_subnets_) {
         cbptr_->createUpdateSubnet6(ServerSelector::ALL(), subnet);
 
         // That subnet overrides the first subnet so the audit entry should
@@ -1868,12 +1867,12 @@ GenericConfigBackendDHCPv6Test::getSharedNetworkSubnets6Test() {
     test_subnets_[3]->setSharedNetworkName("level2");
 
     // Store shared networks in the database.
-    for (auto network : test_networks_) {
+    for (auto const& network : test_networks_) {
         cbptr_->createUpdateSharedNetwork6(ServerSelector::ALL(), network);
     }
 
     // Store subnets in the database.
-    for (auto subnet : test_subnets_) {
+    for (auto const& subnet : test_subnets_) {
         cbptr_->createUpdateSubnet6(ServerSelector::ALL(), subnet);
     }
 
@@ -2290,7 +2289,7 @@ void
 GenericConfigBackendDHCPv6Test::getAllSharedNetworks6Test() {
     // Insert test shared networks into the database. Note that the second shared
     // network will overwrite the first shared network as they use the same name.
-    for (auto network : test_networks_) {
+    for (auto const& network : test_networks_) {
         cbptr_->createUpdateSharedNetwork6(ServerSelector::ALL(), network);
 
         // That shared network overrides the first one so the audit entry should
@@ -3096,7 +3095,7 @@ GenericConfigBackendDHCPv6Test::getAllOptionDefs6Test() {
     // option definition will overwrite the first option definition as they use
     // the same code and space.
     size_t updates_num = 0;
-    for (auto option_def : test_option_defs_) {
+    for (auto const& option_def : test_option_defs_) {
         cbptr_->createUpdateOptionDef6(ServerSelector::ALL(), option_def);
 
         // That option definition overrides the first one so the audit entry should
@@ -3127,17 +3126,17 @@ GenericConfigBackendDHCPv6Test::getAllOptionDefs6Test() {
     ASSERT_EQ(test_option_defs_.size() - updates_num, option_defs.size());
 
     // See if option definitions are returned ok.
-    for (auto def = option_defs.begin(); def != option_defs.end(); ++def) {
-        ASSERT_EQ(1, (*def)->getServerTags().size());
-        EXPECT_EQ("all", (*def)->getServerTags().begin()->get());
+    for (auto const& def : option_defs) {
+        ASSERT_EQ(1, def->getServerTags().size());
+        EXPECT_EQ("all", def->getServerTags().begin()->get());
         bool success = false;
         for (auto i = 1; i < test_option_defs_.size(); ++i) {
-            if ((*def)->equals(*test_option_defs_[i])) {
+            if (def->equals(*test_option_defs_[i])) {
                 success = true;
             }
         }
-        ASSERT_TRUE(success) << "failed for option definition " << (*def)->getCode()
-            << ", option space " << (*def)->getOptionSpaceName();
+        ASSERT_TRUE(success) << "failed for option definition " << def->getCode()
+            << ", option space " << def->getOptionSpaceName();
     }
 
     // Deleting non-existing option definition should return 0.
@@ -4072,7 +4071,7 @@ GenericConfigBackendDHCPv6Test::subnetOptionIdOrderTest() {
     ASSERT_EQ(2, subnets.size());
 
     // Verify that the subnets returned are as expected.
-    for (auto subnet : subnets) {
+    for (auto const& subnet : subnets) {
         ASSERT_EQ(1, subnet->getServerTags().size());
         EXPECT_EQ("all", subnet->getServerTags().begin()->get());
         if (subnet->getID() == 1024) {
@@ -4761,12 +4760,13 @@ GenericConfigBackendDHCPv6Test::multipleAuditEntriesTest() {
 
     // Check that partial retrieves return the right count.
     auto& mod_time_idx = audit_entries.get<AuditEntryModificationTimeIdTag>();
-    for (auto it = mod_time_idx.begin(); it != mod_time_idx.end(); ++it) {
+    size_t distance = mod_time_idx.size();
+    for (auto const& it : mod_time_idx) {
         size_t partial_size =
             cbptr_->getRecentAuditEntries(server_selector,
-                                          (*it)->getModificationTime(),
-                                          (*it)->getRevisionId()).size();
-        EXPECT_EQ(partial_size + 1,
-                  std::distance(it, mod_time_idx.end()));
+                                          it->getModificationTime(),
+                                          it->getRevisionId()).size();
+        EXPECT_EQ(partial_size + 1, distance);
+        distance--;
     }
 }

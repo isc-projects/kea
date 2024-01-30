@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -92,7 +92,7 @@ TEST_F(AdaptorConfigTest, loadExamples4) {
 
     ElementPtr x;
 
-    for (int i = 0; i<configs.size(); i++) {
+    for (int i = 0; i < configs.size(); i++) {
         x.reset();
         testFile(string(CFG_EXAMPLES) + "/kea4/" + configs[i], false, x);
         ASSERT_TRUE(x);

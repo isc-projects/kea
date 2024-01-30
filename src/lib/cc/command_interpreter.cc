@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -212,8 +212,8 @@ parseCommand(ConstElementPtr& arg, ConstElementPtr command) {
     }
 
     // Make sure that all specified parameters are supported.
-    auto command_params = command->mapValue();
-    for (auto param : command_params) {
+    auto const& command_params = command->mapValue();
+    for (auto const& param : command_params) {
         if ((param.first != CONTROL_COMMAND) &&
             (param.first != CONTROL_ARGUMENTS) &&
             (param.first != CONTROL_SERVICE) &&
@@ -298,17 +298,17 @@ combineCommandsLists(const ConstElementPtr& response1,
         // Storing command names in a set guarantees that the non-unique
         // command names are aggregated.
         std::set<std::string> combined_set;
-        for (auto v = vec1.cbegin(); v != vec1.cend(); ++v) {
-            combined_set.insert((*v)->stringValue());
+        for (auto const& v : vec1) {
+            combined_set.insert(v->stringValue());
         }
-        for (auto v = vec2.cbegin(); v != vec2.cend(); ++v) {
-            combined_set.insert((*v)->stringValue());
+        for (auto const& v : vec2) {
+            combined_set.insert(v->stringValue());
         }
 
         // Create a combined list of commands.
         ElementPtr combined_list = Element::createList();
-        for (auto s = combined_set.cbegin(); s != combined_set.cend(); ++s) {
-            combined_list->add(Element::create(*s));
+        for (auto const& s : combined_set) {
+            combined_list->add(Element::create(s));
         }
         return (createAnswer(CONTROL_RESULT_SUCCESS, combined_list));
     }

@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -602,7 +602,7 @@ TEST(ClientClassDictionary, initMatchExprError) {
     ASSERT_THROW(dictionary->initMatchExpr(AF_INET), std::exception);
 
     // Ensure that no classes have their match expressions modified.
-    for (auto c : (*dictionary->getClasses())) {
+    for (auto const& c : *dictionary->getClasses()) {
         EXPECT_FALSE(c->getMatchExpr());
     }
 }
@@ -1448,7 +1448,7 @@ TEST(ClientClassDictionary, templateInitMatchExprError) {
     ASSERT_THROW(dictionary->initMatchExpr(AF_INET), std::exception);
 
     // Ensure that no classes have their match expressions modified.
-    for (auto c : (*dictionary->getClasses())) {
+    for (auto const& c : *dictionary->getClasses()) {
         EXPECT_FALSE(c->getMatchExpr());
     }
 }

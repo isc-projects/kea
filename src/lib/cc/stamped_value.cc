@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -163,13 +163,35 @@ StampedValue::validateConstruct() const {
                   << name_ << "' parameter is NULL");
     }
 
-    if ((value_->getType() != Element::string) &&
-        (value_->getType() != Element::integer) &&
-        (value_->getType() != Element::boolean) &&
-        (value_->getType() != Element::real)) {
+    auto type = value_->getType();
+    if ((type != Element::string) &&
+        (type != Element::integer) &&
+        (type != Element::boolean) &&
+        (type != Element::real) &&
+        (type != Element::map)) {
         isc_throw(TypeError, "StampedValue: provided value of the '"
                   << name_ << "' parameter has invalid type: "
-                  << Element::typeToName(value_->getType()));
+                  << Element::typeToName(type));
+    }
+
+    if (type == Element::map) {
+        size_t count = value_->mapValue().size();
+        if (count > 1) {
+            isc_throw(BadValue, "StampedValue: provided value of the '"
+                      << name_ << "' parameter has more than one element in the map");
+        }
+        if (count == 1) {
+            type = value_->mapValue().begin()->second->getType();
+            if ((type != Element::string) &&
+                (type != Element::integer) &&
+                (type != Element::boolean) &&
+                (type != Element::real)) {
+                isc_throw(BadValue, "StampedValue: provided value of the '"
+                          << name_ << "." << value_->mapValue().begin()->first
+                          << "' parameter has invalid type: "
+                          << Element::typeToName(type));
+            }
+        }
     }
 }
 

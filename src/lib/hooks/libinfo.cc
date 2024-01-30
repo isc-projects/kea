@@ -1,4 +1,4 @@
-// Copyright (C) 2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -19,12 +19,11 @@ std::vector<std::string>
 extractNames(const isc::hooks::HookLibsCollection& libraries) {
     std::vector<std::string> names;
 
-    for (isc::hooks::HookLibsCollection::const_iterator it = libraries.begin();
-         it != libraries.end(); ++it) {
-        names.push_back(it->first);
+    for (auto const& it : libraries) {
+        names.push_back(it.first);
     }
     return (names);
 }
 
-};
-};
+}
+}

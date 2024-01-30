@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -156,10 +156,9 @@ TEST(Pool4Test, addOptions) {
 
     // Validate codes of options added to dhcp4 option space.
     uint16_t expected_code = 100;
-    for (OptionContainer::const_iterator option_desc = options->begin();
-         option_desc != options->end(); ++option_desc) {
-        ASSERT_TRUE(option_desc->option_);
-        EXPECT_EQ(expected_code, option_desc->option_->getType());
+    for (auto const& option_desc : *options) {
+        ASSERT_TRUE(option_desc.option_);
+        EXPECT_EQ(expected_code, option_desc.option_->getType());
         ++expected_code;
     }
 
@@ -169,10 +168,9 @@ TEST(Pool4Test, addOptions) {
 
     // Validate codes of options added to isc option space.
     expected_code = 105;
-    for (OptionContainer::const_iterator option_desc = options->begin();
-         option_desc != options->end(); ++option_desc) {
-        ASSERT_TRUE(option_desc->option_);
-        EXPECT_EQ(expected_code, option_desc->option_->getType());
+    for (auto const& option_desc : *options) {
+        ASSERT_TRUE(option_desc.option_);
+        EXPECT_EQ(expected_code, option_desc.option_->getType());
         ++expected_code;
     }
 
@@ -562,10 +560,9 @@ TEST(Pool6Test, addOptions) {
 
     // Validate codes of options added to dhcp6 option space.
     uint16_t expected_code = 100;
-    for (OptionContainer::const_iterator option_desc = options->begin();
-         option_desc != options->end(); ++option_desc) {
-        ASSERT_TRUE(option_desc->option_);
-        EXPECT_EQ(expected_code, option_desc->option_->getType());
+    for (auto const& option_desc : *options) {
+        ASSERT_TRUE(option_desc.option_);
+        EXPECT_EQ(expected_code, option_desc.option_->getType());
         ++expected_code;
     }
 
@@ -575,10 +572,9 @@ TEST(Pool6Test, addOptions) {
 
     // Validate codes of options added to isc option space.
     expected_code = 105;
-    for (OptionContainer::const_iterator option_desc = options->begin();
-         option_desc != options->end(); ++option_desc) {
-        ASSERT_TRUE(option_desc->option_);
-        EXPECT_EQ(expected_code, option_desc->option_->getType());
+    for (auto const& option_desc : *options) {
+        ASSERT_TRUE(option_desc.option_);
+        EXPECT_EQ(expected_code, option_desc.option_->getType());
         ++expected_code;
     }
 

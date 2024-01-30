@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -71,8 +71,8 @@ std::string trim(const std::string& instring);
 template<typename Iterator>
 Iterator
 seekTrimmed(Iterator begin, Iterator end, uint8_t trim_val) {
-    for ( ; end != begin && *(end - 1) == trim_val; --end);
-    return(end);
+    for (; end != begin && *(end - 1) == trim_val; --end);
+    return (end);
 }
 
 /// @brief Split String into Tokens
@@ -365,7 +365,7 @@ typedef boost::shared_ptr<StringSanitizer> StringSanitizerPtr;
 /// @return True if empty or contains only printable characters, False otherwise
 inline bool
 isPrintable(const std::string& content) {
-    for (const auto& ch : content) {
+    for (auto const& ch : content) {
         if (isprint(static_cast<int>(ch)) == 0) {
             return (false);
         }
@@ -380,7 +380,7 @@ isPrintable(const std::string& content) {
 /// @return True if empty or contains only printable characters, False otherwise
 inline bool
 isPrintable(const std::vector<uint8_t>& content) {
-    for (const auto& ch : content) {
+    for (auto const& ch : content) {
         if (isprint(static_cast<int>(ch)) == 0) {
             return (false);
         }

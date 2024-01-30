@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -17,7 +17,6 @@
 #include <dhcpsrv/cfg_option.h>
 #include <testutils/gtest_utils.h>
 #include <testutils/test_to_element.h>
-#include <boost/foreach.hpp>
 #include <boost/pointer_cast.hpp>
 #include <gtest/gtest.h>
 #include <iterator>
@@ -278,10 +277,9 @@ TEST_F(CfgOptionTest, add) {
 
     // Validate codes of options added to dhcp6 option space.
     uint16_t expected_code = 100;
-    for (OptionContainer::const_iterator option_desc = options->begin();
-         option_desc != options->end(); ++option_desc) {
-        ASSERT_TRUE(option_desc->option_);
-        EXPECT_EQ(expected_code, option_desc->option_->getType());
+    for (auto const& option_desc : *options) {
+        ASSERT_TRUE(option_desc.option_);
+        EXPECT_EQ(expected_code, option_desc.option_->getType());
         ++expected_code;
     }
 
@@ -292,10 +290,9 @@ TEST_F(CfgOptionTest, add) {
 
     // Validate codes of options added to isc option space.
     expected_code = 105;
-    for (OptionContainer::const_iterator option_desc = options->begin();
-         option_desc != options->end(); ++option_desc) {
-        ASSERT_TRUE(option_desc->option_);
-        EXPECT_EQ(expected_code, option_desc->option_->getType());
+    for (auto const& option_desc : *options) {
+        ASSERT_TRUE(option_desc.option_);
+        EXPECT_EQ(expected_code, option_desc.option_->getType());
         ++expected_code;
     }
 
@@ -720,8 +717,7 @@ TEST_F(CfgOptionTest, encapsulate) {
         ASSERT_EQ(19, first_level.size());
 
         // Iterate over all first level sub-options.
-        std::pair<unsigned int, OptionPtr> first_level_opt;
-        BOOST_FOREACH(first_level_opt, first_level) {
+        for (auto const& first_level_opt : first_level) {
             // Each option in this test comprises a single one byte field and
             // should cast to OptionUint8 type.
             OptionUint8Ptr first_level_uint8 = boost::dynamic_pointer_cast<
@@ -744,8 +740,7 @@ TEST_F(CfgOptionTest, encapsulate) {
 
             // Iterate over sub-options and make sure they include the expected
             // values.
-            std::pair<unsigned int, OptionPtr> second_level_opt;
-            BOOST_FOREACH(second_level_opt, second_level) {
+            for (auto const& second_level_opt : second_level) {
                 OptionUint8Ptr second_level_uint8 = boost::dynamic_pointer_cast<
                     OptionUint8>(second_level_opt.second);
                 ASSERT_TRUE(second_level_uint8);
@@ -1060,10 +1055,9 @@ TEST_F(CfgOptionTest, addNonUniqueOptions) {
         // have been returned for the particular code.
         ASSERT_EQ(2, distance(range.first, range.second));
         // Check that returned options actually have the expected option code.
-        for (OptionContainerTypeIndex::const_iterator option_desc = range.first;
-             option_desc != range.second; ++option_desc) {
-            ASSERT_TRUE(option_desc->option_);
-            EXPECT_EQ(code, option_desc->option_->getType());
+        BOOST_FOREACH(auto const& option_desc, range) {
+            ASSERT_TRUE(option_desc.option_);
+            EXPECT_EQ(code, option_desc.option_->getType());
         }
     }
 
@@ -1186,10 +1180,9 @@ TEST_F(CfgOptionTest, addVendorOptions) {
 
     // Validate codes of options added to dhcp6 option space.
     uint16_t expected_code = 100;
-    for (OptionContainer::const_iterator option_desc = options->begin();
-         option_desc != options->end(); ++option_desc) {
-        ASSERT_TRUE(option_desc->option_);
-        EXPECT_EQ(expected_code, option_desc->option_->getType());
+    for (auto const& option_desc : *options) {
+        ASSERT_TRUE(option_desc.option_);
+        EXPECT_EQ(expected_code, option_desc.option_->getType());
         ++expected_code;
     }
 
@@ -1199,10 +1192,9 @@ TEST_F(CfgOptionTest, addVendorOptions) {
 
     // Validate codes of options added to isc option space.
     expected_code = 105;
-    for (OptionContainer::const_iterator option_desc = options->begin();
-         option_desc != options->end(); ++option_desc) {
-        ASSERT_TRUE(option_desc->option_);
-        EXPECT_EQ(expected_code, option_desc->option_->getType());
+    for (auto const& option_desc : *options) {
+        ASSERT_TRUE(option_desc.option_);
+        EXPECT_EQ(expected_code, option_desc.option_->getType());
         ++expected_code;
     }
 
@@ -1236,13 +1228,12 @@ TEST_F(CfgOptionTest, getVendorIdsSpaceNames) {
     ASSERT_EQ(10, space_names.size());
 
     // Check that the option space names for those vendor ids are correct.
-    for (std::list<std::string>::iterator name = space_names.begin();
-         name != space_names.end(); ++name) {
-        uint16_t id = static_cast<uint16_t>(std::distance(space_names.begin(),
-                                                          name));
+    size_t id = 0;
+    for (auto const& name : space_names) {
         std::ostringstream s;
         s << "vendor-" << (100 + id);
-        EXPECT_EQ(s.str(), *name);
+        EXPECT_EQ(s.str(), name);
+        id++;
     }
 }
 

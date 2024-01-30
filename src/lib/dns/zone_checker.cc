@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -42,8 +42,7 @@ checkSOA(const Name& zone_name, const RRClass& zone_class,
     size_t count = 0;
     if (rrset) {
         for (RdataIteratorPtr rit = rrset->getRdataIterator();
-             !rit->isLast();
-             rit->next(), ++count) {
+             !rit->isLast(); rit->next(), ++count) {
             if (dynamic_cast<const rdata::generic::SOA*>(&rit->getCurrent()) ==
                 NULL) {
                 isc_throw(Unexpected, "Zone checker found bad RDATA in SOA");
@@ -102,8 +101,7 @@ checkNSNames(const Name& zone_name, const RRClass& zone_class,
     }
 
     for (RdataIteratorPtr rit = ns_rrset->getRdataIterator();
-         !rit->isLast();
-         rit->next()) {
+         !rit->isLast(); rit->next()) {
         const rdata::generic::NS* ns_data =
             dynamic_cast<const rdata::generic::NS*>(&rit->getCurrent());
         if (ns_data == NULL) {

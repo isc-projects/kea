@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -14,7 +14,7 @@ namespace dhcp {
 
 bool
 CfgSharedNetworks4::hasNetworkWithServerId(const IOAddress& server_id) const {
-    const auto& index = networks_.get<SharedNetworkServerIdIndexTag>();
+    auto const& index = networks_.get<SharedNetworkServerIdIndexTag>();
     auto network_it = index.find(server_id);
     return (network_it != index.cend());
 }

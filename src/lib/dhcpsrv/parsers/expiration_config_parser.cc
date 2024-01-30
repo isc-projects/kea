@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,7 +11,6 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/parsers/expiration_config_parser.h>
 #include <dhcpsrv/parsers/dhcp_parsers.h>
-#include <boost/foreach.hpp>
 
 using namespace isc::data;
 
@@ -19,11 +18,8 @@ namespace isc {
 namespace dhcp {
 
 void
-ExpirationConfigParser::parse(ConstElementPtr expiration_config) {
-    CfgExpirationPtr cfg = CfgMgr::instance().getStagingCfg()->getCfgExpiration();
-
+ExpirationConfigParser::parse(ConstElementPtr expiration_config, CfgExpirationPtr cfg) {
     std::string param;
-
     try {
         param = "reclaim-timer-wait-time";
         if (expiration_config->contains(param)) {

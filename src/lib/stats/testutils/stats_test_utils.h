@@ -1,4 +1,4 @@
-// Copyright (C) 2020-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2020-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -61,7 +61,7 @@ inline void checkNoStat(const std::string& name) {
 ///
 /// @param expected_stats Map of expected static names and values.
 inline void checkStats(const StatMap& expected_stats) {
-    for (const auto& it : expected_stats) {
+    for (auto const& it : expected_stats) {
         checkStat(it.first, it.second);
     }
 }

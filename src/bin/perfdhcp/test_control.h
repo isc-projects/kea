@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -615,10 +615,9 @@ protected:
     void addUniqeAddr(const std::set<std::string>& current, ExchangeType xchg_type) {
         switch(xchg_type) {
             case ExchangeType::SA: {
-                for (auto current_it = current.begin();
-                     current_it != current.end(); ++current_it) {
+                for (auto const& current_it : current) {
                     // addresses should be unique cross packets
-                    auto ret = unique_address_.emplace(*current_it);
+                    auto ret = unique_address_.emplace(current_it);
                     if (!ret.second) {
                         stats_mgr_.updateNonUniqueAddrNum(ExchangeType::SA);
                     }
@@ -626,10 +625,9 @@ protected:
                 break;
             }
             case ExchangeType::RR: {
-                for (auto current_it = current.begin();
-                     current_it != current.end(); ++current_it) {
+                for (auto const& current_it : current) {
                     // addresses should be unique cross packets
-                    auto ret = unique_reply_address_.emplace(*current_it);
+                    auto ret = unique_reply_address_.emplace(current_it);
                     if (!ret.second) {
                         stats_mgr_.updateNonUniqueAddrNum(ExchangeType::RR);
                     }
@@ -642,10 +640,9 @@ protected:
                 break;
             }
             case ExchangeType::DO: {
-                for (auto current_it = current.begin();
-                     current_it != current.end(); ++current_it) {
+                for (auto const& current_it : current) {
                     // addresses should be unique cross packets
-                    auto ret = unique_address_.emplace(*current_it);
+                    auto ret = unique_address_.emplace(current_it);
                     if (!ret.second) {
                         stats_mgr_.updateNonUniqueAddrNum(ExchangeType::DO);
                     }
@@ -653,10 +650,9 @@ protected:
                 break;
             }
             case ExchangeType::RA: {
-                for (auto current_it = current.begin();
-                     current_it != current.end(); ++current_it) {
+                for (auto const& current_it : current) {
                     // addresses should be unique cross packets
-                    auto ret = unique_reply_address_.emplace(*current_it);
+                    auto ret = unique_reply_address_.emplace(current_it);
                     if (!ret.second) {
                         stats_mgr_.updateNonUniqueAddrNum(ExchangeType::RA);
                     }
@@ -677,13 +673,13 @@ protected:
     ///
     /// \param addr holding value of unique address.
     void removeUniqueAddr(const std::set<std::string>& addr) {
-        for (auto addr_it = addr.begin(); addr_it != addr.end(); ++addr_it) {
-            auto it = unique_address_.find(*addr_it);
+        for (auto const& addr_it : addr) {
+            auto it = unique_address_.find(addr_it);
             if (it != unique_address_.end()) {
                 unique_address_.erase(it);
             }
 
-            auto it2 = unique_reply_address_.find(*addr_it);
+            auto it2 = unique_reply_address_.find(addr_it);
             if (it2 != unique_reply_address_.end()) {
                 unique_reply_address_.erase(it2);
             }

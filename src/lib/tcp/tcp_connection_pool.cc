@@ -1,4 +1,4 @@
-// Copyright (C) 2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2022-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -86,10 +86,8 @@ TcpConnectionPool::stopAll() {
 
 void
 TcpConnectionPool::stopAllInternal() {
-    for (auto connection = connections_.begin();
-         connection != connections_.end();
-         ++connection) {
-        (*connection)->close();
+    for (auto const& connection : connections_) {
+        connection->close();
     }
 
     size_t cnt = connections_.size();
@@ -113,8 +111,8 @@ TcpConnectionPool::usedByRemoteIpInternal(const IOAddress& remote_ip,
                                           size_t& total_connections) {
     total_connections = connections_.size();
     size_t cnt = 0;
-    for (const auto& conn : connections_) {
-        const auto& ep = conn->getRemoteEndpoint();
+    for (auto const& conn : connections_) {
+        auto const& ep = conn->getRemoteEndpoint();
         if ((ep != TcpConnection::NO_ENDPOINT()) &&
             (IOAddress(ep.address()) == remote_ip)) {
             ++cnt;

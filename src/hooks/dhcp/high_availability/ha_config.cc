@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -257,9 +257,9 @@ HAConfig::getPeerConfig(const std::string& name) const {
 HAConfig::PeerConfigPtr
 HAConfig::getFailoverPeerConfig() const {
     PeerConfigMap servers = getOtherServersConfig();
-    for (auto peer = servers.begin(); peer != servers.end(); ++peer) {
-        if (peer->second->getRole() != HAConfig::PeerConfig::BACKUP) {
-            return (peer->second);
+    for (auto const& peer : servers) {
+        if (peer.second->getRole() != HAConfig::PeerConfig::BACKUP) {
+            return (peer.second);
         }
     }
 
@@ -289,28 +289,28 @@ HAConfig::validate() {
 
     // Gather all the roles and see how many occurrences of each role we get.
     std::map<PeerConfig::Role, unsigned> peers_cnt;
-    for (auto p = peers_.begin(); p != peers_.end(); ++p) {
-        if (!p->second->getUrl().isValid()) {
+    for (auto const& p : peers_) {
+        if (!p.second->getUrl().isValid()) {
             isc_throw(HAConfigValidationError, "invalid URL: "
-                      << p->second->getUrl().getErrorMessage()
-                      << " for server " << p->second->getName());
+                      << p.second->getUrl().getErrorMessage()
+                      << " for server " << p.second->getName());
         }
 
         // The hostname must be an address, not a name.
         IOAddress addr("::");
         try {
-            addr = IOAddress(p->second->getUrl().getStrippedHostname());
+            addr = IOAddress(p.second->getUrl().getStrippedHostname());
         } catch (const IOError& ex) {
             isc_throw(HAConfigValidationError, "bad url '"
-                      << p->second->getUrl().toText()
+                      << p.second->getUrl().toText()
                       << "': " << ex.what()
-                      << " for server " << p->second->getName());
+                      << " for server " << p.second->getName());
         }
 
         // Check TLS setup.
-        Optional<std::string> ca = p->second->getTrustAnchor();
-        Optional<std::string> cert = p->second->getCertFile();
-        Optional<std::string> key = p->second->getKeyFile();
+        Optional<std::string> ca = p.second->getTrustAnchor();
+        Optional<std::string> cert = p.second->getCertFile();
+        Optional<std::string> key = p.second->getKeyFile();
         // When not configured get the value from the global level.
         if (ca.unspecified()) {
             ca = trust_anchor_;
@@ -346,11 +346,11 @@ HAConfig::validate() {
                 TlsRole tls_role = TlsRole::CLIENT;
                 bool cert_required = true;
                 // The peer entry for myself will be used for the server side.
-                if (p->second->getName() == getThisServerName()) {
+                if (p.second->getName() == getThisServerName()) {
                     tls_role = TlsRole::SERVER;
                     cert_required = getRequireClientCerts();
                 }
-                TlsContext::configure(p->second->tls_context_,
+                TlsContext::configure(p.second->tls_context_,
                                       tls_role,
                                       ca.get(),
                                       cert.get(),
@@ -358,20 +358,20 @@ HAConfig::validate() {
                                       cert_required);
             } catch (const isc::Exception& ex) {
                 isc_throw(HAConfigValidationError, "bad TLS config for server "
-                          << p->second->getName() << ": " << ex.what());
+                          << p.second->getName() << ": " << ex.what());
             }
         } else {
             // Refuse HTTPS scheme when TLS is not enabled.
-            if (p->second->getUrl().getScheme() == Url::HTTPS) {
+            if (p.second->getUrl().getScheme() == Url::HTTPS) {
                 isc_throw(HAConfigValidationError, "bad url '"
-                          << p->second->getUrl().toText()
+                          << p.second->getUrl().toText()
                           << "': https scheme is not supported"
-                          << " for server " << p->second->getName()
+                          << " for server " << p.second->getName()
                           << " where TLS is disabled");
             }
         }
 
-        ++peers_cnt[p->second->getRole()];
+        ++peers_cnt[p.second->getRole()];
     }
 
     // Only one primary server allowed.

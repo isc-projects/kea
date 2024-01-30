@@ -1,4 +1,4 @@
-// Copyright (C) 2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2023-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -34,7 +34,7 @@ void
 OptionClasslessStaticRoute::pack(isc::util::OutputBuffer& buf, bool check) const {
     // Header = option code and length.
     packHeader(buf, check);
-    for (const auto& route : static_routes_) {
+    for (auto const& route : static_routes_) {
         // 1-5 octets of destination descriptor
         auto dest = encodeDestinationDescriptor(route);
         buf.writeData(&dest[0], dest.size());
@@ -76,7 +76,7 @@ OptionClasslessStaticRoute::toText(int indent) const {
     stream << in << "type=" << type_ << "(CLASSLESS_STATIC_ROUTE), "
            << "len=" << (len() - getHeaderLen());
     int i = 0;
-    for (const auto& route : static_routes_) {
+    for (auto const& route : static_routes_) {
         stream << ", Route " << ++i << " (subnet " << std::get<0>(route).toText() << "/"
                << static_cast<int>(std::get<1>(route)) << ", router IP "
                << std::get<2>(route).toText() << ")";
@@ -119,7 +119,7 @@ OptionClasslessStaticRoute::calcSignificantOctets(const uint8_t& mask_width) {
 void
 OptionClasslessStaticRoute::calcDataLen() {
     uint16_t len = 0;
-    for (const auto& route : static_routes_) {
+    for (auto const& route : static_routes_) {
         // 1-5 octets of destination descriptor
         len += calcSignificantOctets(std::get<1>(route)) + 1;
         // IP address of the router
@@ -200,7 +200,7 @@ void
 OptionClasslessStaticRoute::parseConfigData(const std::string& config_txt) {
     // this option allows more than one static route, so let's separate them using comma
     std::vector<std::string> tokens = str::tokens(config_txt, std::string(","));
-    for (const auto& route_str : tokens) {
+    for (auto const& route_str : tokens) {
         std::vector<std::string> parts = str::tokens(str::trim(route_str), std::string("-"));
         if (parts.size() != 2) {
             isc_throw(BadValue, "DHCPv4 OptionClasslessStaticRoute "

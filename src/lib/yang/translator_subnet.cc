@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -204,7 +204,11 @@ TranslatorSubnet::setSubnet(string const& xpath, ConstElementPtr elem) {
 
 void
 TranslatorSubnet::setSubnetIetf6(string const& xpath, ConstElementPtr elem) {
-    /// Skip key "id".
+    // Set the list element. This is important in case we have no other elements except the key.
+    setItem(xpath, ElementPtr(), LeafBaseType::Unknown);
+
+    // Skip key "id" since it was set with the list element in the call above
+    // with the LeafBaseType::Unknown parameter.
 
     setMandatoryDivergingLeaf(elem, xpath, "subnet", "network-prefix", LeafBaseType::String);
 
@@ -236,7 +240,11 @@ TranslatorSubnet::setSubnetIetf6(string const& xpath, ConstElementPtr elem) {
 
 void
 TranslatorSubnet::setSubnetKea(string const& xpath, ConstElementPtr elem) {
-    /// Skip key "id".
+    // Set the list element. This is important in case we have no other elements except the key.
+    setItem(xpath, ElementPtr(), LeafBaseType::Unknown);
+
+    // Skip key "id" since it was set with the list element in the call above
+    // with the LeafBaseType::Unknown parameter.
 
     ConstElementPtr subnet = elem->get("subnet");
     if (!subnet) {

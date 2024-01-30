@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -12,7 +12,6 @@
 #include <hooks/hooks_manager.h>
 #include <hooks/hooks_parser.h>
 #include <http/basic_auth_config.h>
-#include <boost/foreach.hpp>
 
 using namespace isc::data;
 
@@ -146,9 +145,9 @@ AgentSimpleParser::parse(const CtrlAgentCfgContextPtr& ctx,
     // Control sockets are third.
     ConstElementPtr ctrl_sockets = config->get("control-sockets");
     if (ctrl_sockets) {
-        auto sockets_map = ctrl_sockets->mapValue();
-        for (auto cs = sockets_map.cbegin(); cs != sockets_map.cend(); ++cs) {
-            ctx->setControlSocketInfo(cs->second, cs->first);
+        auto const& sockets_map = ctrl_sockets->mapValue();
+        for (auto const& cs : sockets_map) {
+            ctx->setControlSocketInfo(cs.second, cs.first);
         }
     }
 

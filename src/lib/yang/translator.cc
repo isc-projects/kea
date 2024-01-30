@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -228,7 +228,9 @@ Translator::schemaNodeExists(string const& xpath) const {
 }
 
 void
-Translator::setItem(const string& xpath, ConstElementPtr elem, LeafBaseType type) {
+Translator::setItem(const string& xpath,
+                    ConstElementPtr const elem,
+                    LeafBaseType const type) {
     optional<string> const value(translateToYang(elem, type));
     try {
         session_.setItem(xpath, value);
@@ -346,7 +348,7 @@ Translator::initializeDeserializer() {
     for (LeafBaseType const& i :
          {LeafBaseType::Bits, LeafBaseType::Empty, LeafBaseType::Enum, LeafBaseType::IdentityRef,
           LeafBaseType::InstanceIdentifier, LeafBaseType::Leafref, LeafBaseType::String,
-          LeafBaseType::Union, LeafBaseType::Unknown}) {
+          LeafBaseType::Union}) {
         result.emplace(i, [](string const& value) -> ElementPtr const {
             return Element::create(value);
         });

@@ -1,4 +1,4 @@
-// Copyright (C) 2021-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2021-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -213,7 +213,7 @@ public:
         }
 
         // Stop all listeners.
-        for (const auto& listener : listeners_) {
+        for (auto const& listener : listeners_) {
             listener->stop();
         }
 
@@ -518,7 +518,7 @@ public:
         ASSERT_NO_THROW(client_->stop());
 
         // Listeners should stop without issue.
-        for (const auto& listener : listeners_) {
+        for (auto const& listener : listeners_) {
             ASSERT_NO_THROW(listener->stop());
         }
 
@@ -713,7 +713,7 @@ public:
         ASSERT_NO_THROW(client_->stop());
 
         // Listeners should stop without issue.
-        for (const auto& listener : listeners_) {
+        for (auto const& listener : listeners_) {
             ASSERT_NO_THROW(listener->stop());
         }
 

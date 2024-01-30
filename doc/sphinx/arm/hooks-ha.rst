@@ -2422,7 +2422,7 @@ The optional ``server-name`` parameter specifies a name of one of the partners b
 to the HA relationship this command pertains to. This parameter can be omitted if the
 server receiving this command has only one HA relationship in the configuration.
 
-The `origin` is used to select the HA service for which the receiving server should
+The ``origin`` parameter is used to select the HA service for which the receiving server should
 enable the DHCP service when it receives this notification. This is the same origin the
 sending server used previously to disable the DHCP service before synchronization.
 

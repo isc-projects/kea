@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -119,13 +119,12 @@ LibraryHandle::getParameterNames() {
         (params->size() == 0)) {
         return (names);
     }
-    auto map = params->mapValue();
-    for (auto elem = map.begin(); elem != map.end(); ++elem) {
-        names.push_back(elem->first);
+    auto const& map = params->mapValue();
+    for (auto const& elem : map) {
+        names.push_back(elem.first);
     }
     return (names);
 }
-
 
 } // namespace util
 } // namespace isc

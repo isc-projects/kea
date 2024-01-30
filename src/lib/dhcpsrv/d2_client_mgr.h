@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -499,12 +499,15 @@ D2ClientMgr::adjustDomainName(const T& fqdn, T& fqdn_resp, const DdnsParams& ddn
             std::vector<std::string> labels;
             boost::algorithm::split(labels, raw_name, boost::is_any_of("."));
             std::stringstream ss;
-            for (auto label = labels.begin(); label != labels.end(); ++label ) {
-                if (label != labels.begin()) {
+            bool first = true;
+            for (auto const& label : labels) {
+                if (!first) {
                     ss << ".";
+                } else {
+                    first = false;
                 }
 
-                ss << sanitizer->scrub(*label);
+                ss << sanitizer->scrub(label);
             }
 
             client_name = ss.str();

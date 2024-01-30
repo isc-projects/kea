@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -47,7 +47,7 @@ ConfigDbInfo::getParameterValue(const std::string& name, std::string& value) con
 
 ConfigControlInfo::ConfigControlInfo(const ConfigControlInfo& other)
     : config_fetch_wait_time_(other.config_fetch_wait_time_) {
-    for (auto db : other.db_infos_) {
+    for (auto const& db : other.db_infos_) {
         addConfigDatabase(db.getAccessString());
     }
 }
@@ -57,7 +57,7 @@ ConfigControlInfo::addConfigDatabase(const std::string& access_str) {
     ConfigDbInfo new_db;
     new_db.setAccessString(access_str);
 
-    for (auto db : db_infos_) {
+    for (auto const& db : db_infos_) {
         if (new_db == db) {
             // we have a duplicate!
             isc_throw(BadValue, "database with access parameters: "
@@ -71,13 +71,11 @@ ConfigControlInfo::addConfigDatabase(const std::string& access_str) {
 const ConfigDbInfo&
 ConfigControlInfo::findConfigDb(const std::string& param_name,
                                 const std::string& param_value) {
-    for (ConfigDbInfoList::iterator db = db_infos_.begin();
-         db != db_infos_.end(); ++db) {
+    for (auto const& db : db_infos_) {
         std::string db_value;
-        if (db->getParameterValue(param_name, db_value) &&
-            (param_value == db_value)) {
-                return (*db);
-            }
+        if (db.getParameterValue(param_name, db_value) && (param_value == db_value)) {
+            return (db);
+        }
     }
 
     return (EMPTY_DB());
@@ -106,7 +104,7 @@ ElementPtr
 ConfigControlInfo::toElement() const {
     ElementPtr result = Element::createMap();
     ElementPtr db_list = Element::createList();
-    for (auto db_info : db_infos_) {
+    for (auto const& db_info : db_infos_) {
         db_list->add(db_info.toElement());
     }
 

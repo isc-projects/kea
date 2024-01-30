@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -142,9 +142,8 @@ Pkt6Ptr Dhcp4o6IpcBase::receive() {
 
     // Get all vendor option and look for the one with the ISC enterprise id.
     OptionCollection vendor_options = pkt->getOptions(D6O_VENDOR_OPTS);
-    for (OptionCollection::const_iterator opt = vendor_options.begin();
-         opt != vendor_options.end(); ++opt) {
-        option_vendor = boost::dynamic_pointer_cast<OptionVendor>(opt->second);
+    for (auto const& opt : vendor_options) {
+        option_vendor = boost::dynamic_pointer_cast<OptionVendor>(opt.second);
         if (option_vendor) {
             if (option_vendor->getVendorId() == ENTERPRISE_ID_ISC) {
                 break;
@@ -244,9 +243,8 @@ void Dhcp4o6IpcBase::send(const Pkt6Ptr& pkt) {
 
     // Get all vendor option and look for the one with the ISC enterprise id.
     OptionCollection vendor_options = pkt->getOptions(D6O_VENDOR_OPTS);
-    for (OptionCollection::const_iterator opt = vendor_options.begin();
-         opt != vendor_options.end(); ++opt) {
-        option_vendor = boost::dynamic_pointer_cast<OptionVendor>(opt->second);
+    for (auto const& opt : vendor_options) {
+        option_vendor = boost::dynamic_pointer_cast<OptionVendor>(opt.second);
         if (option_vendor) {
             if (option_vendor->getVendorId() == ENTERPRISE_ID_ISC) {
                 break;

@@ -1,4 +1,4 @@
-// Copyright (C) 2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2021-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -37,7 +37,7 @@ void
 D2TsigKey::initStats() {
     StatsMgr& stats_mgr = StatsMgr::instance();
     const string& kname = getKeyName().toText();
-    for (const auto& name : D2Stats::key) {
+    for (auto const& name : D2Stats::key) {
         const string& sname = StatsMgr::generateName("key", kname, name);
         stats_mgr.setValue(sname, static_cast<int64_t>(0));
     }
@@ -47,7 +47,7 @@ void
 D2TsigKey::removeStats() {
     StatsMgr& stats_mgr = StatsMgr::instance();
     const string& kname = getKeyName().toText();
-    for (const auto& name : D2Stats::key) {
+    for (auto const& name : D2Stats::key) {
         string sname = StatsMgr::generateName("key", kname, name);
         stats_mgr.del(sname);
     }
@@ -57,7 +57,7 @@ void
 D2TsigKey::resetStats() {
     StatsMgr& stats_mgr = StatsMgr::instance();
     const string& kname = getKeyName().toText();
-    for (const auto& name : D2Stats::key) {
+    for (auto const& name : D2Stats::key) {
         string sname = StatsMgr::generateName("key", kname, name);
         stats_mgr.reset(sname);
     }

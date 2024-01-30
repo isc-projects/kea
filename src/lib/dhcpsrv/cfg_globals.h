@@ -1,4 +1,4 @@
-// Copyright (C) 2021-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2021-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -75,6 +75,13 @@ public:
         ALLOCATOR,
         DDNS_TTL_PERCENT,
         DDNS_CONFLICT_RESOLUTION_MODE,
+        COMPATIBILITY,
+        CONTROL_SOCKET,
+        DHCP_DDNS,
+        EXPIRED_LEASES_PROCESSING,
+        MULTI_THREADING,
+        SANITY_CHECKS,
+        DHCP_QUEUE_CONTROL,
 
         // DHCPv4 specific parameters.
         ECHO_CLIENT_ID,
@@ -91,6 +98,7 @@ public:
         MIN_PREFERRED_LIFETIME,
         MAX_PREFERRED_LIFETIME,
         PD_ALLOCATOR,
+        SERVER_ID,
 
         // Size sentinel.
         SIZE

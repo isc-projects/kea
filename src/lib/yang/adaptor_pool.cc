@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -21,7 +21,7 @@ void
 AdaptorPool::canonizePool(ElementPtr pool) {
     const string& orig = pool->get("pool")->stringValue();
     vector<char> v;
-    for (char ch : orig) {
+    for (auto ch : orig) {
         if ((ch == ' ') || (ch == '\t') || (ch == '\n')) {
             continue;
         } else if (ch == '-') {

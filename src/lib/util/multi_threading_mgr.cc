@@ -1,4 +1,4 @@
-// Copyright (C) 2019-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2019-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,6 +7,8 @@
 #include <config.h>
 
 #include <util/multi_threading_mgr.h>
+
+#include <boost/range/adaptor/reversed.hpp>
 
 namespace isc {
 namespace util {
@@ -154,7 +156,7 @@ MultiThreadingMgr::apply(bool enabled, uint32_t thread_count, uint32_t queue_siz
 void
 MultiThreadingMgr::checkCallbacksPermissions() {
     if (getMode()) {
-        for (const auto& cb : cs_callbacks_.getCallbackSets()) {
+        for (auto const& cb : cs_callbacks_.getCallbackSets()) {
             try {
                 (cb.check_cb_)();
             } catch (const isc::MultiThreadingInvalidOperation& ex) {
@@ -177,10 +179,10 @@ MultiThreadingMgr::checkCallbacksPermissions() {
 void
 MultiThreadingMgr::callEntryCallbacks() {
     if (getMode()) {
-        const auto& callbacks = cs_callbacks_.getCallbackSets();
-        for (auto cb_it = callbacks.begin(); cb_it != callbacks.end(); cb_it++) {
+        auto const& callbacks = cs_callbacks_.getCallbackSets();
+        for (auto const& cb_it : callbacks) {
             try {
-                (cb_it->entry_cb_)();
+                (cb_it.entry_cb_)();
             } catch (...) {
                 // We can't log it and throwing could be chaos.
                 // We'll swallow it and tell people their callbacks
@@ -193,10 +195,10 @@ MultiThreadingMgr::callEntryCallbacks() {
 void
 MultiThreadingMgr::callExitCallbacks() {
     if (getMode()) {
-        const auto& callbacks = cs_callbacks_.getCallbackSets();
-        for (auto cb_it = callbacks.rbegin(); cb_it != callbacks.rend(); cb_it++) {
+        auto const& callbacks = cs_callbacks_.getCallbackSets();
+        for (auto const& cb_it : boost::adaptors::reverse(callbacks)) {
             try {
-                (cb_it->exit_cb_)();
+                (cb_it.exit_cb_)();
             } catch (...) {
                 // We can't log it and throwing could be chaos.
                 // We'll swallow it and tell people their callbacks

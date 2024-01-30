@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -334,9 +334,8 @@ TimerMgrImpl::unregisterTimersInternal() {
     TimerInfoMap registered_timers_copy(registered_timers_);
 
     // Iterate over the existing timers and unregister them.
-    for (TimerInfoMap::iterator timer_info_it = registered_timers_copy.begin();
-         timer_info_it != registered_timers_copy.end(); ++timer_info_it) {
-        unregisterTimerInternal(timer_info_it->first);
+    for (auto const& timer_info_it : registered_timers_copy) {
+        unregisterTimerInternal(timer_info_it.first);
     }
 }
 

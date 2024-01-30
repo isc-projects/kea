@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -22,7 +22,7 @@ using namespace isc::asiolink;
 TEST(IOAddressHashTest, hashIPv4) {
     IOAddress::Hash hash;
     std::unordered_set<size_t> results;
-    for (uint32_t i = 0; i < 10; i++) {
+    for (uint32_t i = 0; i < 10; ++i) {
         IOAddress address(i);
         auto result = hash(address);
         results.insert(result);
@@ -35,7 +35,7 @@ TEST(IOAddressHashTest, hashIPv4) {
 TEST(IOAddressHashTest, hashIPv6) {
     IOAddress::Hash hash;
     std::unordered_set<size_t> results;
-    for (auto i = 0; i < 10; i++) {
+    for (auto i = 0; i < 10; ++i) {
         std::ostringstream s;
         s << "2001:db8:" << i << "::ffff";
         IOAddress address(s.str());

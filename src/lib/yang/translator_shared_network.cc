@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -160,7 +160,11 @@ void
 TranslatorSharedNetwork::setSharedNetworkKea(string const& xpath,
                                              ConstElementPtr elem,
                                              string const& subsel) {
-    // Skip key "name".
+    // Set the list element. This is important in case we have no other elements except the key.
+    setItem(xpath, ElementPtr(), LeafBaseType::Unknown);
+
+    // Skip key "name" since it was set with the list element in the call above
+    // with the LeafBaseType::Unknown parameter.
 
     checkAndSetLeaf(elem, xpath, "allocator", LeafBaseType::String);
     checkAndSetLeaf(elem, xpath, "cache-max-age", LeafBaseType::Uint32);

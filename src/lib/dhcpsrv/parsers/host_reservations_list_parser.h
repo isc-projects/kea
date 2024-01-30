@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,7 +11,6 @@
 #include <cc/simple_parser.h>
 #include <dhcpsrv/host.h>
 #include <dhcpsrv/subnet_id.h>
-#include <boost/foreach.hpp>
 
 namespace isc {
 namespace dhcp {
@@ -39,7 +38,7 @@ public:
     void parse(const SubnetID& subnet_id, isc::data::ConstElementPtr hr_list,
                HostCollection& hosts_list) {
         HostCollection hosts;
-        BOOST_FOREACH(data::ConstElementPtr reservation, hr_list->listValue()) {
+        for (auto const& reservation : hr_list->listValue()) {
             HostReservationParserType parser;
             hosts.push_back(parser.parse(subnet_id, reservation));
         }

@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -277,7 +277,7 @@ TEST_F(D2SimpleParserTest, globalD2Defaults) {
     EXPECT_EQ(num, 8);
 
     // Let's go over all parameters we have defaults for.
-    BOOST_FOREACH(SimpleDefault deflt, D2SimpleParser::D2_GLOBAL_DEFAULTS) {
+    for (auto const& deflt : D2SimpleParser::D2_GLOBAL_DEFAULTS) {
         ConstElementPtr x;
         ASSERT_NO_THROW(x = empty->get(deflt.name_));
 
@@ -569,7 +569,7 @@ public:
         size_t cnt = 0;
         // We don't use SimpleParser::setListDefaults() as this does
         // not handle sub-lists or sub-maps
-        BOOST_FOREACH(ElementPtr domain, config->listValue()) {
+        for (auto const& domain : config->listValue()) {
             cnt += D2SimpleParser::
                    setDdnsDomainDefaults(domain, D2SimpleParser::
                                                  DDNS_DOMAIN_DEFAULTS);

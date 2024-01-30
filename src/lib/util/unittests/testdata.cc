@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -34,9 +34,8 @@ addTestDataPath(const string& path) {
 
 void
 openTestData(const char* const datafile, ifstream& ifs) {
-    vector<string>::const_iterator it = getDataPaths().begin();
-    for (; it != getDataPaths().end(); ++it) {
-        string data_path = *it;
+    for (auto const& it : getDataPaths()) {
+        string data_path = it;
         if (data_path.empty() || *data_path.rbegin() != '/') {
             data_path.push_back('/');
         }

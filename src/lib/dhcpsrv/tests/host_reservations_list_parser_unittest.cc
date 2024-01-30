@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2018,2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -173,8 +173,8 @@ TEST_F(HostReservationsListParserTest, ipv4Reservations) {
     HostReservationsListParser<HostReservationParser4> parser;
     ASSERT_NO_THROW(parser.parse(SubnetID(1), config_element, hosts));
 
-    for (auto h = hosts.begin(); h != hosts.end(); ++h) {
-        CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(*h);
+    for (auto const& h : hosts) {
+        CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(h);
     }
 
     CfgHostsPtr cfg_hosts = CfgMgr::instance().getStagingCfg()->getCfgHosts();
@@ -248,8 +248,8 @@ TEST_F(HostReservationsListParserTest, duplicatedIdentifierValue4) {
         HostReservationsListParser<HostReservationParser4> parser;
         EXPECT_THROW({
                 parser.parse(SubnetID(1), config_element, hosts);
-                for (auto h = hosts.begin(); h != hosts.end(); ++h) {
-                    CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(*h);
+                for (auto const& h : hosts) {
+                    CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(h);
                 }
             }, DuplicateHost);
         // The code threw exception, because the second insertion failed.
@@ -285,8 +285,8 @@ TEST_F(HostReservationsListParserTest, ipv6Reservations) {
     HostReservationsListParser<HostReservationParser6> parser;
     ASSERT_NO_THROW(parser.parse(SubnetID(2), config_element, hosts));
 
-    for (auto h = hosts.begin(); h != hosts.end(); ++h) {
-        CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(*h);
+    for (auto const& h : hosts) {
+        CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(h);
     }
 
     CfgHostsPtr cfg_hosts = CfgMgr::instance().getStagingCfg()->getCfgHosts();
@@ -378,8 +378,8 @@ TEST_F(HostReservationsListParserTest, duplicatedIdentifierValue6) {
         HostReservationsListParser<HostReservationParser6> parser;
         EXPECT_THROW({
             parser.parse(SubnetID(1), config_element, hosts);
-            for (auto h = hosts.begin(); h != hosts.end(); ++h) {
-                CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(*h);
+            for (auto const& h : hosts) {
+                CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(h);
             }
         }, DuplicateHost);
     }

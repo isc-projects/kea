@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -18,7 +18,7 @@
 #include <exceptions/exceptions.h>
 #include <dhcp/duid.h>
 #include <dhcp/iface_mgr.h>
-
+#include <boost/foreach.hpp>
 #include <iterator>
 #include <iostream>
 #include <sstream>
@@ -44,7 +44,7 @@ std::string Pkt6::RelayInfo::toText() const {
         << "link-address=" << linkaddr_.toText()
         << ", peer-address=" << peeraddr_.toText() << ", "
         << options_.size() << " option(s)" << endl;
-    for (const auto& option : options_) {
+    for (auto const& option : options_) {
         tmp << option.second->toText() << endl;
     }
     return (tmp.str());
@@ -227,10 +227,9 @@ Pkt6::getAllRelayOptions(const uint16_t option_code,
         // matching options, copy them and replace the original ones with new
         // instances.
         if (copy_retrieved_options_) {
-            for (OptionCollection::iterator opt_it = range.first;
-                 opt_it != range.second; ++opt_it) {
-                OptionPtr option_copy = opt_it->second->clone();
-                opt_it->second = option_copy;
+            BOOST_FOREACH(auto& opt_it, range) {
+                OptionPtr option_copy = opt_it.second->clone();
+                opt_it.second = option_copy;
             }
         }
         opts.insert(range.first, range.second);
@@ -312,10 +311,9 @@ Pkt6::getRelayOptions(const uint16_t opt_type,
     // matching options, copy them and replace the original ones with new
     // instances.
     if (copy_retrieved_options_) {
-        for (OptionCollection::iterator opt_it = range.first;
-             opt_it != range.second; ++opt_it) {
-            OptionPtr option_copy = opt_it->second->clone();
-            opt_it->second = option_copy;
+        BOOST_FOREACH(auto& opt_it, range) {
+            OptionPtr option_copy = opt_it.second->clone();
+            opt_it.second = option_copy;
         }
     }
     // Finally, return updated options. This can also be empty in some cases.
@@ -346,7 +344,7 @@ uint16_t Pkt6::getRelayOverhead(const RelayInfo& relay) const {
     uint16_t len = DHCPV6_RELAY_HDR_LEN // fixed header
         + Option::OPTION6_HDR_LEN; // header of the relay-msg option
 
-    for (const auto& opt : relay.options_) {
+    for (auto const& opt : relay.options_) {
         len += (opt.second)->len();
     }
 
@@ -368,7 +366,7 @@ uint16_t Pkt6::calculateRelaySizes() {
 uint16_t Pkt6::directLen() const {
     uint16_t length = DHCPV6_PKT_HDR_LEN; // DHCPv6 header
 
-    for (const auto& it : options_) {
+    for (auto const& it : options_) {
         length += it.second->len();
     }
 
@@ -406,15 +404,14 @@ Pkt6::packUDP() {
             calculateRelaySizes();
 
             // Now for each relay, we need to...
-            for (vector<RelayInfo>::iterator relay = relay_info_.begin();
-                 relay != relay_info_.end(); ++relay) {
+            for (auto const& relay : relay_info_) {
 
                 // build relay-forw/relay-repl header (see RFC 8415, section 9)
-                buffer_out_.writeUint8(relay->msg_type_);
-                buffer_out_.writeUint8(relay->hop_count_);
-                buffer_out_.writeData(&(relay->linkaddr_.toBytes()[0]),
+                buffer_out_.writeUint8(relay.msg_type_);
+                buffer_out_.writeUint8(relay.hop_count_);
+                buffer_out_.writeData(&(relay.linkaddr_.toBytes()[0]),
                                      isc::asiolink::V6ADDRESS_LEN);
-                buffer_out_.writeData(&relay->peeraddr_.toBytes()[0],
+                buffer_out_.writeData(&relay.peeraddr_.toBytes()[0],
                                      isc::asiolink::V6ADDRESS_LEN);
 
                 // store every option in this relay scope. Usually that will be
@@ -422,7 +419,7 @@ Pkt6::packUDP() {
                 // present here as well (vendor-opts for Cable modems,
                 // subscriber-id, remote-id, options echoed back from Echo
                 // Request Option, etc.)
-                for (const auto& opt : relay->options_) {
+                for (auto const& opt : relay.options_) {
                     (opt.second)->pack(buffer_out_);
                 }
 
@@ -431,7 +428,7 @@ Pkt6::packUDP() {
                 // or outside the loop (if there are no more relays and the
                 // payload is a direct message)
                 buffer_out_.writeUint16(D6O_RELAY_MSG);
-                buffer_out_.writeUint16(relay->relay_msg_len_);
+                buffer_out_.writeUint16(relay.relay_msg_len_);
             }
 
         }
@@ -738,7 +735,7 @@ Pkt6::toText() const {
 
     if (!options_.empty()) {
         tmp << "," << endl << "options:";
-        for (const auto& opt : options_) {
+        for (auto const& opt : options_) {
             try {
                 tmp << endl << opt.second->toText(2);
             } catch (...) {
@@ -754,7 +751,7 @@ Pkt6::toText() const {
     if (!relay_info_.empty()) {
         tmp << endl << relay_info_.size() << " relay(s):" << endl;
         int cnt = 0;
-        for (const auto& relay : relay_info_) {
+        for (auto const& relay : relay_info_) {
             tmp << "relay[" << cnt++ << "]: " << relay.toText();
         }
     } else {
@@ -948,7 +945,7 @@ HWAddrPtr
 Pkt6::getMACFromDocsisModem() {
     HWAddrPtr mac;
     OptionVendorPtr vendor;
-    for (auto opt : getNonCopiedOptions(D6O_VENDOR_OPTS)) {
+    for (auto const& opt : getNonCopiedOptions(D6O_VENDOR_OPTS)) {
         if (opt.first != D6O_VENDOR_OPTS) {
             continue;
         }
@@ -982,8 +979,8 @@ Pkt6::getMACFromDocsisCMTS() {
     // CMTS-specific options in it.
     HWAddrPtr mac;
     OptionVendorPtr vendor;
-    for (auto opt : getAllRelayOptions(D6O_VENDOR_OPTS,
-                                       RELAY_SEARCH_FROM_CLIENT)) {
+    for (auto const& opt : getAllRelayOptions(D6O_VENDOR_OPTS,
+                                              RELAY_SEARCH_FROM_CLIENT)) {
         if (opt.first != D6O_VENDOR_OPTS) {
             continue;
         }

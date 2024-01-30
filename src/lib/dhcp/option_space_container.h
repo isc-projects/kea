@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -111,7 +111,7 @@ public:
     /// @return Number of deleted options or option definitions.
     uint64_t deleteItems(const uint64_t id) {
         uint64_t num_deleted = 0;
-        for (auto space : option_space_map_) {
+        for (auto const& space : option_space_map_) {
             auto container = space.second;
             auto& index = container->template get<OptionIdIndexTag>();
             num_deleted += index.erase(id);

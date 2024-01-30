@@ -1,4 +1,4 @@
-// Copyright (C) 2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2022-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -85,7 +85,7 @@ public:
     std::list<AuditEntry> getConnectionTrail(size_t connection_id) {
         std::unique_lock<std::mutex> lck(mutex_);
         std::list<AuditEntry> conn_entries;
-        for (auto entry : entries_) {
+        for (auto const& entry : entries_) {
             if (entry.connection_id_ == connection_id) {
                 conn_entries.push_back(entry);
             }
@@ -98,7 +98,7 @@ public:
     std::string dump() {
         std::unique_lock<std::mutex> lck(mutex_);
         std::stringstream ss;
-        for (auto entry : entries_) {
+        for (auto const& entry : entries_) {
             ss << entry << std::endl;
         }
 

@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -67,10 +67,10 @@ public:
         // we're interested in.
         if (l->getType() == isc::data::Element::list) {
             std::vector<isc::data::ElementPtr> e = l->listValue();
-            for (auto it = e.begin(); it != e.end(); ++it) {
-                isc::data::ConstElementPtr ip_address = (*it)->get("ip-address");
+            for (auto const& it : e) {
+                isc::data::ConstElementPtr ip_address = it->get("ip-address");
                 if (ip_address && ip_address->stringValue() == ip) {
-                    l = (*it);
+                    l = it;
                     break;
                 }
             }
@@ -1541,7 +1541,7 @@ void Lease4CmdsTest::testLease4GetPaged() {
             EXPECT_EQ(2, page_count->intValue());
 
             // Go over each lease and verify its correctness.
-            for (ConstElementPtr lease : leases->listValue()) {
+            for (auto const& lease : leases->listValue()) {
                 ASSERT_EQ(Element::map, lease->getType());
                 ASSERT_TRUE(lease->contains("ip-address"));
                 ConstElementPtr ip_address = lease->get("ip-address");
@@ -3128,7 +3128,7 @@ void Lease4CmdsTest::testLease4ResendDdnsEnabled() {
     // Expected response string.
     string exp_rsp = "NCR generated for: 192.0.2.1, hostname: myhost.example.com.";
 
-    for (auto scenario : scenarios) {
+    for (auto const& scenario : scenarios) {
         SCOPED_TRACE(scenario.description_);
 
         // Fetch the lease so we can update the DDNS direction flags.
@@ -3220,7 +3220,7 @@ void Lease4CmdsTest::testLease4DnsRemoveD2Enabled() {
         },
     };
 
-    for (auto scenario : scenarios) {
+    for (auto const& scenario : scenarios) {
         SCOPED_TRACE(scenario.description_);
 
         // Let's create a lease with scenario attributes.

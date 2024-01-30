@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -123,9 +123,13 @@ stringToCharStringData(const MasterToken::StringRegion& str_region,
 std::string
 charStringToString(const CharString& char_string) {
     std::string s;
-    for (CharString::const_iterator it = char_string.begin() + 1;
-         it != char_string.end(); ++it) {
-        const uint8_t ch = *it;
+    bool first = true;
+    for (auto const& it : char_string) {
+        if (first) {
+            first = false;
+            continue;
+        }
+        const uint8_t ch = it;
         if ((ch < 0x20) || (ch >= 0x7f)) {
             // convert to escaped \xxx (decimal) format
             s.push_back('\\');
@@ -146,9 +150,8 @@ charStringToString(const CharString& char_string) {
 std::string
 charStringDataToString(const CharStringData& char_string) {
     std::string s;
-    for (CharString::const_iterator it = char_string.begin();
-         it != char_string.end(); ++it) {
-        const uint8_t ch = *it;
+    for (auto const& it : char_string) {
+        const uint8_t ch = it;
         if ((ch < 0x20) || (ch >= 0x7f)) {
             // convert to escaped \xxx (decimal) format
             s.push_back('\\');

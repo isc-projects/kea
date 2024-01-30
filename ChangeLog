@@ -1,4 +1,4 @@
-2201.	[func]		dhankins
+2204.	[func]		dhankins
 	New metrics pkt4-dhcp-disabled, pkt4-raw-received, disabled-by-db,
 	disabled-by-ha-local, disabled-by-ha-remote, disabled-by-user, and
 	disabled-globally provide monitoring level visibility into the network_state
@@ -7,6 +7,28 @@
 	While disabled, a WARN log is emitted every DISABLE_WARN_PACKET{4|6}(100)
 	dropped packets, in addition to the existing DEBUG log.
 	(Gitlab #3228)
+
+Kea 2.5.5 (development) released on January 31, 2024
+
+2203.	[build]		razvan
+	The library version numbers have been bumped up for the Kea 2.5.5
+	development release.
+	(Gitlab #3235)
+
+2202.	[func]		razvan
+	The Configuration Backend now supports scalar parameters
+	contained by top level global maps: 'compatibility',
+	'control-socket', 'dhcp-ddns', 'expired-leases-processing',
+	'multi-threading', 'sanity-checks', 'server-id' and
+	'dhcp-queue-control'.
+	(Gitlab #1790)
+
+2201.	[func]		andrei
+	To facilitate setting multiple option-data entries with same code
+	and space, but different data, the set of keys for the
+	option-data list was extended with the "data" leaf in YANG
+	modules.
+	(Gitlab #3198)
 
 2200.	[func]		piotrek
 	Kea now supports new DHCPv4 option code 121, Classless Static

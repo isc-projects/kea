@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -17,7 +17,6 @@
 #include <test_data_files_config.h>
 #include <util/encode/base64.h>
 
-#include <boost/foreach.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
 
@@ -583,8 +582,7 @@ TEST_F(D2CfgMgrTest, fullConfig) {
     // NOTE that since prior tests have validated server parsing, we are are
     // assuming that the servers did in fact parse correctly if the correct
     // number of them are there.
-    DdnsDomainMapPair domain_pair;
-    BOOST_FOREACH(domain_pair, (*domains)) {
+    for (auto const& domain_pair : *domains) {
         DdnsDomainPtr domain = domain_pair.second;
         DnsServerInfoStoragePtr servers = domain->getServers();
         count = servers->size();
@@ -606,7 +604,7 @@ TEST_F(D2CfgMgrTest, fullConfig) {
     // NOTE that since prior tests have validated server parsing, we are are
     // assuming that the servers did in fact parse correctly if the correct
     // number of them are there.
-    BOOST_FOREACH(domain_pair, (*domains)) {
+    for (auto const& domain_pair : *domains) {
         DdnsDomainPtr domain = domain_pair.second;
         DnsServerInfoStoragePtr servers = domain->getServers();
         count = servers->size();
@@ -933,7 +931,7 @@ TEST_F(D2CfgMgrTest, configPermutations) {
     //  5. submit JSON for parsing
     isc::data::ConstElementPtr test;
     ASSERT_TRUE(tests->get("test-list"));
-    BOOST_FOREACH(test, tests->get("test-list")->listValue()) {
+    for (auto const& test : tests->get("test-list")->listValue()) {
         // Grab the description.
         std::string description = "<no desc>";
         isc::data::ConstElementPtr elem = test->get("description");

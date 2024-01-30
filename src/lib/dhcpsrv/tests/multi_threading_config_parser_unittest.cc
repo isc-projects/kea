@@ -1,4 +1,4 @@
-// Copyright (C) 2020-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2020-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -84,7 +84,7 @@ TEST_F(MultiThreadingConfigParserTest, validContent) {
     // Iterate over the valid scenarios and verify they succeed.
     ConstElementPtr config_elems;
     ConstElementPtr multi_threading_config;
-    for (auto scenario : scenarios) {
+    for (auto const& scenario : scenarios) {
         SCOPED_TRACE(scenario.description_);
         {
             SrvConfig srv_config;
@@ -172,7 +172,7 @@ TEST_F(MultiThreadingConfigParserTest, invalidContent) {
     // Iterate over the valid scenarios and verify they succeed.
     ConstElementPtr config_elems;
     ConstElementPtr queue_control;
-    for (auto scenario : scenarios) {
+    for (auto const& scenario : scenarios) {
         SCOPED_TRACE(scenario.description_);
         {
             SrvConfig srv_config;

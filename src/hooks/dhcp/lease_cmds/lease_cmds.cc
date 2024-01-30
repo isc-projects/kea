@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -483,7 +483,7 @@ LeaseCmdsImpl::updateStatsOnAdd(const Lease4Ptr& lease) {
             static_cast<int64_t>(1));
 
         PoolPtr pool;
-        const auto& subnet = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getBySubnetId(lease->subnet_id_);
+        auto const& subnet = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getBySubnetId(lease->subnet_id_);
         if (subnet) {
             pool = subnet->getPool(Lease::TYPE_V4, lease->addr_, false);
             if (pool) {
@@ -524,7 +524,7 @@ LeaseCmdsImpl::updateStatsOnAdd(const Lease6Ptr& lease) {
             static_cast<int64_t>(1));
 
         PoolPtr pool;
-        const auto& subnet = CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getBySubnetId(lease->subnet_id_);
+        auto const& subnet = CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getBySubnetId(lease->subnet_id_);
         if (subnet) {
             pool = subnet->getPool(lease->type_, lease->addr_, false);
             if (pool) {
@@ -653,7 +653,7 @@ LeaseCmdsImpl::updateStatsOnUpdate(const Lease4Ptr& existing,
                 static_cast<int64_t>(1));
 
             PoolPtr pool;
-            const auto& subnet = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getBySubnetId(lease->subnet_id_);
+            auto const& subnet = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getBySubnetId(lease->subnet_id_);
             if (subnet) {
                 pool = subnet->getPool(Lease::TYPE_V4, lease->addr_, false);
                 if (pool) {
@@ -789,7 +789,7 @@ LeaseCmdsImpl::updateStatsOnUpdate(const Lease6Ptr& existing,
                 static_cast<int64_t>(1));
 
             PoolPtr pool;
-            const auto& subnet = CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getBySubnetId(lease->subnet_id_);
+            auto const& subnet = CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getBySubnetId(lease->subnet_id_);
             if (subnet) {
                 pool = subnet->getPool(lease->type_, lease->addr_, false);
                 if (pool) {
@@ -833,7 +833,7 @@ LeaseCmdsImpl::updateStatsOnDelete(const Lease4Ptr& lease) {
             static_cast<int64_t>(-1));
 
         PoolPtr pool;
-        const auto& subnet = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getBySubnetId(lease->subnet_id_);
+        auto const& subnet = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getBySubnetId(lease->subnet_id_);
         if (subnet) {
             pool = subnet->getPool(Lease::TYPE_V4, lease->addr_, false);
             if (pool) {
@@ -874,7 +874,7 @@ LeaseCmdsImpl::updateStatsOnDelete(const Lease6Ptr& lease) {
             static_cast<int64_t>(-1));
 
         PoolPtr pool;
-        const auto& subnet = CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getBySubnetId(lease->subnet_id_);
+        auto const& subnet = CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getBySubnetId(lease->subnet_id_);
         if (subnet) {
             pool = subnet->getPool(lease->type_, lease->addr_, false);
             if (pool) {
@@ -1319,24 +1319,22 @@ LeaseCmdsImpl::leaseGetAllHandler(CalloutHandle& handle) {
             }
 
             const std::vector<ElementPtr>& subnet_ids = subnets->listValue();
-            for (auto subnet_id = subnet_ids.begin();
-                 subnet_id != subnet_ids.end();
-                 ++subnet_id) {
-                if ((*subnet_id)->getType() != Element::integer) {
+            for (auto const& subnet_id : subnet_ids) {
+                if (subnet_id->getType() != Element::integer) {
                     isc_throw(BadValue, "listed subnet identifiers must be numbers");
                 }
 
                 if (v4) {
                     Lease4Collection leases =
-                        LeaseMgrFactory::instance().getLeases4((*subnet_id)->intValue());
-                    for (auto lease : leases) {
+                        LeaseMgrFactory::instance().getLeases4(subnet_id->intValue());
+                    for (auto const& lease : leases) {
                         ElementPtr lease_json = lease->toElement();
                         leases_json->add(lease_json);
                     }
                 } else {
                     Lease6Collection leases =
-                        LeaseMgrFactory::instance().getLeases6((*subnet_id)->intValue());
-                    for (auto lease : leases) {
+                        LeaseMgrFactory::instance().getLeases6(subnet_id->intValue());
+                    for (auto const& lease : leases) {
                         ElementPtr lease_json = lease->toElement();
                         leases_json->add(lease_json);
                     }
@@ -1347,13 +1345,13 @@ LeaseCmdsImpl::leaseGetAllHandler(CalloutHandle& handle) {
             // There is no 'subnets' argument so let's return all leases.
             if (v4) {
                 Lease4Collection leases = LeaseMgrFactory::instance().getLeases4();
-                for (auto lease : leases) {
+                for (auto const& lease : leases) {
                     ElementPtr lease_json = lease->toElement();
                     leases_json->add(lease_json);
                 }
             } else {
                 Lease6Collection leases = LeaseMgrFactory::instance().getLeases6();
-                for (auto lease : leases) {
+                for (auto const& lease : leases) {
                     ElementPtr lease_json = lease->toElement();
                     leases_json->add(lease_json);
                 }
@@ -1456,7 +1454,7 @@ LeaseCmdsImpl::leaseGetPageHandler(CalloutHandle& handle) {
                                                        LeasePageSize(page_limit_value));
 
             // Convert leases into JSON list.
-            for (auto lease : leases) {
+            for (auto const& lease : leases) {
                 ElementPtr lease_json = lease->toElement();
                 leases_json->add(lease_json);
             }
@@ -1467,7 +1465,7 @@ LeaseCmdsImpl::leaseGetPageHandler(CalloutHandle& handle) {
                 LeaseMgrFactory::instance().getLeases6(*from_address,
                                                        LeasePageSize(page_limit_value));
             // Convert leases into JSON list.
-            for (auto lease : leases) {
+            for (auto const& lease : leases) {
                 ElementPtr lease_json = lease->toElement();
                 leases_json->add(lease_json);
             }
@@ -1526,7 +1524,7 @@ LeaseCmdsImpl::leaseGetByHwAddressHandler(CalloutHandle& handle) {
         Lease4Collection leases =
             LeaseMgrFactory::instance().getLease4(hwaddr);
         ElementPtr leases_json = Element::createList();
-        for (auto lease : leases) {
+        for (auto const& lease : leases) {
             ElementPtr lease_json = lease->toElement();
             leases_json->add(lease_json);
         }
@@ -1576,7 +1574,7 @@ LeaseCmdsImpl::leaseGetByClientIdHandler(CalloutHandle& handle) {
         Lease4Collection leases =
             LeaseMgrFactory::instance().getLease4(*clientid);
         ElementPtr leases_json = Element::createList();
-        for (auto lease : leases) {
+        for (auto const& lease : leases) {
             ElementPtr lease_json = lease->toElement();
             leases_json->add(lease_json);
         }
@@ -1626,7 +1624,7 @@ LeaseCmdsImpl::leaseGetByDuidHandler(CalloutHandle& handle) {
         Lease6Collection leases =
             LeaseMgrFactory::instance().getLeases6(duid_);
         ElementPtr leases_json = Element::createList();
-        for (auto lease : leases) {
+        for (auto const& lease : leases) {
             ElementPtr lease_json = lease->toElement();
             leases_json->add(lease_json);
         }
@@ -1685,7 +1683,7 @@ LeaseCmdsImpl::leaseGetByHostnameHandler(CalloutHandle& handle) {
             Lease4Collection leases =
                 LeaseMgrFactory::instance().getLeases4(hostname_);
 
-            for (auto lease : leases) {
+            for (auto const& lease : leases) {
                 ElementPtr lease_json = lease->toElement();
                 leases_json->add(lease_json);
             }
@@ -1693,7 +1691,7 @@ LeaseCmdsImpl::leaseGetByHostnameHandler(CalloutHandle& handle) {
             Lease6Collection leases =
                 LeaseMgrFactory::instance().getLeases6(hostname_);
 
-            for (auto lease : leases) {
+            for (auto const& lease : leases) {
                 ElementPtr lease_json = lease->toElement();
                 leases_json->add(lease_json);
             }
@@ -1836,7 +1834,7 @@ LeaseCmdsImpl::lease6BulkApplyHandler(CalloutHandle& handle) {
             auto leases_list = deleted_leases->listValue();
 
             // Iterate over leases to be deleted.
-            for (auto lease_params : leases_list) {
+            for (auto const& lease_params : leases_list) {
                 // Parsing the lease may throw and it means that the lease
                 // information is malformed.
                 Parameters p = getParameters(true, lease_params);
@@ -1853,7 +1851,7 @@ LeaseCmdsImpl::lease6BulkApplyHandler(CalloutHandle& handle) {
 
             // Iterate over all leases.
             auto leases_list = leases->listValue();
-            for (auto lease_params : leases_list) {
+            for (auto const& lease_params : leases_list) {
 
                 Lease6Parser parser;
                 bool force_update;
@@ -1872,7 +1870,7 @@ LeaseCmdsImpl::lease6BulkApplyHandler(CalloutHandle& handle) {
         if (!parsed_deleted_list.empty()) {
 
             // Iterate over leases to be deleted.
-            for (auto lease_params_pair : parsed_deleted_list) {
+            for (auto const& lease_params_pair : parsed_deleted_list) {
 
                 // This part is outside of the try-catch because an exception
                 // indicates that the command is malformed.
@@ -1924,7 +1922,7 @@ LeaseCmdsImpl::lease6BulkApplyHandler(CalloutHandle& handle) {
             ConstSrvConfigPtr config = CfgMgr::instance().getCurrentCfg();
 
             // Iterate over all leases.
-            for (auto lease : parsed_leases_list) {
+            for (auto const& lease : parsed_leases_list) {
 
                 auto result = CONTROL_RESULT_SUCCESS;
                 std::ostringstream text;
@@ -2244,7 +2242,7 @@ LeaseCmdsImpl::lease4WipeHandler(CalloutHandle& handle) {
 
             auto const& sub = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getBySubnetId(id);
             if (sub) {
-                for (const auto& pool : sub->getPools(Lease::TYPE_V4)) {
+                for (auto const& pool : sub->getPools(Lease::TYPE_V4)) {
                     const std::string& name_aa(StatsMgr::generateName("subnet", sub->getID(),
                                                                       StatsMgr::generateName("pool", pool->getID(),
                                                                                              "assigned-addresses")));
@@ -2269,7 +2267,7 @@ LeaseCmdsImpl::lease4WipeHandler(CalloutHandle& handle) {
             const Subnet4Collection* subs = subnets->getAll();
 
             // Go over all subnets and wipe leases in each of them.
-            for (auto sub : *subs) {
+            for (auto const& sub : *subs) {
                 num += LeaseMgrFactory::instance().wipeLeases4(sub->getID());
                 ids << " " << sub->getID();
                 StatsMgr::instance().setValue(
@@ -2280,7 +2278,7 @@ LeaseCmdsImpl::lease4WipeHandler(CalloutHandle& handle) {
                     StatsMgr::generateName("subnet", sub->getID(), "declined-addresses"),
                     static_cast<int64_t>(0));
 
-                for (const auto& pool : sub->getPools(Lease::TYPE_V4)) {
+                for (auto const& pool : sub->getPools(Lease::TYPE_V4)) {
                     const std::string& name_aa(StatsMgr::generateName("subnet", sub->getID(),
                                                                       StatsMgr::generateName("pool", pool->getID(),
                                                                                              "assigned-addresses")));
@@ -2367,7 +2365,7 @@ LeaseCmdsImpl::lease6WipeHandler(CalloutHandle& handle) {
 
             auto const& sub = CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getBySubnetId(id);
             if (sub) {
-                for (const auto& pool : sub->getPools(Lease::TYPE_NA)) {
+                for (auto const& pool : sub->getPools(Lease::TYPE_NA)) {
                     const std::string& name_anas(StatsMgr::generateName("subnet", sub->getID(),
                                                                         StatsMgr::generateName("pool", pool->getID(),
                                                                                                "assigned-nas")));
@@ -2383,7 +2381,7 @@ LeaseCmdsImpl::lease6WipeHandler(CalloutHandle& handle) {
                     }
                 }
 
-                for (const auto& pool : sub->getPools(Lease::TYPE_PD)) {
+                for (auto const& pool : sub->getPools(Lease::TYPE_PD)) {
                     const std::string& name_apds(StatsMgr::generateName("subnet", sub->getID(),
                                                                         StatsMgr::generateName("pd-pool", pool->getID(),
                                                                                                "assigned-pds")));
@@ -2401,7 +2399,7 @@ LeaseCmdsImpl::lease6WipeHandler(CalloutHandle& handle) {
             const Subnet6Collection* subs = subnets->getAll();
 
             // Go over all subnets and wipe leases in each of them.
-            for (auto sub : *subs) {
+            for (auto const& sub : *subs) {
                 num += LeaseMgrFactory::instance().wipeLeases6(sub->getID());
                 ids << " " << sub->getID();
                 StatsMgr::instance().setValue(
@@ -2416,7 +2414,7 @@ LeaseCmdsImpl::lease6WipeHandler(CalloutHandle& handle) {
                     StatsMgr::generateName("subnet", sub->getID(), "declined-addresses"),
                     static_cast<int64_t>(0));
 
-                for (const auto& pool : sub->getPools(Lease::TYPE_NA)) {
+                for (auto const& pool : sub->getPools(Lease::TYPE_NA)) {
                     const std::string& name_anas(StatsMgr::generateName("subnet", sub->getID(),
                                                                         StatsMgr::generateName("pool", pool->getID(),
                                                                                                "assigned-nas")));
@@ -2432,7 +2430,7 @@ LeaseCmdsImpl::lease6WipeHandler(CalloutHandle& handle) {
                     }
                 }
 
-                for (const auto& pool : sub->getPools(Lease::TYPE_PD)) {
+                for (auto const& pool : sub->getPools(Lease::TYPE_PD)) {
                     const std::string& name_apds(StatsMgr::generateName("subnet", sub->getID(),
                                                                         StatsMgr::generateName("pd-pool", pool->getID(),
                                                                                                "assigned-pds")));

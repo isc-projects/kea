@@ -835,7 +835,7 @@ To populate this new configuration:
 
 .. code-block:: console
 
-    $ sysrepocfg -d startup -f xml -m kea-dhcp6-server --edit=startup.xml
+    $ sysrepocfg -d startup -f xml -m kea-dhcp6-server --import=startup.xml
 
 :iscman:`kea-netconf` pushes the configuration found in the Sysrepo startup
 datastore to all Kea servers during its initialization phase, after it
@@ -900,7 +900,7 @@ It is directly rejected by ``sysrepocfg``:
 
 .. code-block:: console
 
-    $ sysrepocfg -d running -f xml -m kea-dhcp6-server --edit=BAD-schema.xml
+    $ sysrepocfg -d running -f xml -m kea-dhcp6-server --import=BAD-schema.xml
 
 In the second case, the configuration is rejected by :iscman:`kea-netconf`.
 For example, consider this ``BAD-translator.xml`` file:
@@ -993,7 +993,7 @@ This configuration is installed by:
 
 .. code-block:: console
 
-    $ sysrepocfg -d running -f xml -m kea-dhcp6-server --edit=twopools.xml
+    $ sysrepocfg -d running -f xml -m kea-dhcp6-server --import=twopools.xml
 
 .. _operation-example-2subnets:
 
@@ -1036,7 +1036,7 @@ This configuration is installed by:
 
 .. code-block:: console
 
-    $ sysrepocfg -d running -f xml -m kea-dhcp6-server --edit=twosubnets.xml
+    $ sysrepocfg -d running -f xml -m kea-dhcp6-server --import=twosubnets.xml
 
 .. _operation-example-logging:
 
@@ -1155,5 +1155,5 @@ are done at the same configuration state and that no change happens between expo
 
 .. code-block:: console
 
-    $ sysrepocfg --datastore running --edit=save.xml
-    $ sysrepocfg --datastore startup --edit=save.xml
+    $ sysrepocfg --datastore running --import=save.xml
+    $ sysrepocfg --datastore startup --import=save.xml

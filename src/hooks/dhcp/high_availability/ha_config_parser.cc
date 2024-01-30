@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -100,11 +100,11 @@ HAConfigParser::parseAll(const HAConfigMapperPtr& config_storage,
     }
 
     // Get the HA configuration.
-    const auto& config_vec = config->listValue();
+    auto const& config_vec = config->listValue();
     if (config_vec.empty()) {
         isc_throw(ConfigError, "a list of HA configurations must not be empty");
     }
-    for (auto config : config_vec) {
+    for (auto const& config : config_vec) {
         parseOne(config_storage, config);
     }
 }
@@ -258,60 +258,60 @@ HAConfigParser::parseOne(const HAConfigMapperPtr& config_storage,
     rel_config->setRestrictCommands(getBoolean(config, "restrict-commands"));
 
     // Peers configuration parsing.
-    const auto& peers_vec = peers->listValue();
+    auto const& peers_vec = peers->listValue();
 
     // Go over configuration of each peer.
-    for (auto p = peers_vec.begin(); p != peers_vec.end(); ++p) {
+    for (auto const& p : peers_vec) {
 
         // Peer configuration is held in a map.
-        if ((*p)->getType() != Element::map) {
+        if (p->getType() != Element::map) {
             isc_throw(ConfigError, "peer configuration must be a map");
         }
 
-        setDefaults(*p, HA_CONFIG_PEER_DEFAULTS);
+        setDefaults(p, HA_CONFIG_PEER_DEFAULTS);
 
         // Server name.
-        auto cfg = rel_config->selectNextPeerConfig(getString(*p, "name"));
+        auto cfg = rel_config->selectNextPeerConfig(getString(p, "name"));
 
         // URL.
-        cfg->setUrl(Url(getString((*p), "url")));
+        cfg->setUrl(Url(getString(p, "url")));
 
         // Optional trust anchor.
-        if ((*p)->contains("trust-anchor")) {
-            cfg->setTrustAnchor(getString(*p, ("trust-anchor")));
+        if (p->contains("trust-anchor")) {
+            cfg->setTrustAnchor(getString(p, ("trust-anchor")));
         }
 
         // Optional certificate file.
-        if ((*p)->contains("cert-file")) {
-            cfg->setCertFile(getString(*p, ("cert-file")));
+        if (p->contains("cert-file")) {
+            cfg->setCertFile(getString(p, ("cert-file")));
         }
 
         // Optional private key file.
-        if ((*p)->contains("key-file")) {
-            cfg->setKeyFile(getString(*p, ("key-file")));
+        if (p->contains("key-file")) {
+            cfg->setKeyFile(getString(p, ("key-file")));
         }
 
         // Role.
-        cfg->setRole(getString(*p, "role"));
+        cfg->setRole(getString(p, "role"));
 
         // Auto failover configuration.
-        cfg->setAutoFailover(getBoolean(*p, "auto-failover"));
+        cfg->setAutoFailover(getBoolean(p, "auto-failover"));
 
         // Basic HTTP authentication password.
         std::string password;
-        if ((*p)->contains("basic-auth-password")) {
-            if ((*p)->contains("basic-auth-password-file")) {
+        if (p->contains("basic-auth-password")) {
+            if (p->contains("basic-auth-password-file")) {
                 isc_throw(dhcp::DhcpConfigError, "only one of "
                           << "basic-auth-password and "
                           << "basic-auth-password-file parameter can be "
                           << "configured in peer '"
                           << cfg->getName() << "'");
             }
-            password = getString((*p), "basic-auth-password");
+            password = getString(p, "basic-auth-password");
         }
-        if ((*p)->contains("basic-auth-password-file")) {
+        if (p->contains("basic-auth-password-file")) {
             std::string password_file =
-                getString((*p), "basic-auth-password-file");
+                getString(p, "basic-auth-password-file");
             try {
                 password = util::file::getContent(password_file);
             } catch (const std::exception& ex) {
@@ -321,8 +321,8 @@ HAConfigParser::parseOne(const HAConfigMapperPtr& config_storage,
         }
 
         // Basic HTTP authentication user.
-        if ((*p)->contains("basic-auth-user")) {
-            std::string user = getString((*p), "basic-auth-user");
+        if (p->contains("basic-auth-user")) {
+            std::string user = getString(p, "basic-auth-user");
             BasicHttpAuthPtr& auth = cfg->getBasicAuth();
             try {
                 if (!user.empty()) {
@@ -338,22 +338,22 @@ HAConfigParser::parseOne(const HAConfigMapperPtr& config_storage,
 
     // Per state configuration is optional.
     if (states_list) {
-        const auto& states_vec = states_list->listValue();
+        auto const& states_vec = states_list->listValue();
 
         std::set<int> configured_states;
 
         // Go over per state configurations.
-        for (auto s = states_vec.begin(); s != states_vec.end(); ++s) {
+        for (auto const& s : states_vec) {
 
             // State configuration is held in map.
-            if ((*s)->getType() != Element::map) {
+            if (s->getType() != Element::map) {
                 isc_throw(ConfigError, "state configuration must be a map");
             }
 
-            setDefaults(*s, HA_CONFIG_STATE_DEFAULTS);
+            setDefaults(s, HA_CONFIG_STATE_DEFAULTS);
 
             // Get state name and set per state configuration.
-            std::string state_name = getString(*s, "state");
+            std::string state_name = getString(s, "state");
 
             int state = stringToState(state_name);
             // Check that this configuration doesn't duplicate existing configuration.
@@ -364,7 +364,7 @@ HAConfigParser::parseOne(const HAConfigMapperPtr& config_storage,
             configured_states.insert(state);
 
             rel_config->getStateMachineConfig()->
-                getStateConfig(state)->setPausing(getString(*s, "pause"));
+                getStateConfig(state)->setPausing(getString(s, "pause"));
         }
     }
 
@@ -374,7 +374,7 @@ HAConfigParser::parseOne(const HAConfigMapperPtr& config_storage,
     rel_config->validate();
 
     auto peer_configs = rel_config->getAllServersConfig();
-    for (auto peer_config : peer_configs) {
+    for (auto const& peer_config : peer_configs) {
         try {
             config_storage->map(peer_config.first, rel_config);
 
@@ -404,7 +404,7 @@ void
 HAConfigParser::logConfigStatus(const HAConfigMapperPtr& config_storage) {
     LOG_INFO(ha_logger, HA_CONFIGURATION_SUCCESSFUL);
 
-    for (auto config : config_storage->getAll()) {
+    for (auto const& config : config_storage->getAll()) {
         // If lease updates are disabled, we want to make sure that the user
         // realizes that and that he has configured some other mechanism to
         // populate leases.
@@ -449,7 +449,7 @@ HAConfigParser::validateRelationships(const HAConfigMapperPtr& config_storage) {
         return;
     }
     std::unordered_set<std::string> server_names;
-    for (auto config : configs) {
+    for (auto const& config : configs) {
         // Only the hot-standby mode is supported for multiple relationships.
         if (config->getHAMode() != HAConfig::HOT_STANDBY) {
             isc_throw(HAConfigValidationError, "multiple HA relationships are only supported for 'hot-standby' mode");

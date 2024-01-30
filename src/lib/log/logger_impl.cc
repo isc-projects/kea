@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -212,7 +212,7 @@ LoggerImpl::hasAppender(OutputOption::Destination const destination) {
         appenders = log4cplus::Logger::getInstance(getRootLoggerName()).getAllAppenders();
     }
 
-    for (log4cplus::helpers::SharedObjectPtr<log4cplus::Appender> logger : appenders) {
+    for (const log4cplus::helpers::SharedObjectPtr<log4cplus::Appender>& logger : appenders) {
         if (destination == OutputOption::DEST_CONSOLE &&
             dynamic_cast<log4cplus::ConsoleAppender*>(logger.get())) {
             return true;

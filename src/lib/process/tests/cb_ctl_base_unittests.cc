@@ -1,4 +1,4 @@
-// Copyright (C) 2019-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2019-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -51,7 +51,7 @@ public:
         db::AuditEntryCollection filtered_entries;
 
         // Use the index which orders the audit entries by timestamps.
-        const auto& index = audit_entries_.get<AuditEntryModificationTimeIdTag>();
+        auto const& index = audit_entries_.get<AuditEntryModificationTimeIdTag>();
 
         // Locate the first audit entry after the last one having the
         // specified modification time and id.
@@ -493,7 +493,7 @@ TEST_F(CBControlBaseTest, fetchConfigElement) {
     EXPECT_EQ(2, updated.size());
     bool saw_create = false;
     bool saw_update =  false;
-    for (auto entry : updated) {
+    for (auto const& entry : updated) {
         EXPECT_EQ("my_object_type", entry->getObjectType());
         EXPECT_EQ(5678, entry->getObjectId());
         if (AuditEntry::ModificationType::CREATE == entry->getModificationType()) {

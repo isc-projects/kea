@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,7 +10,6 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/parsers/host_reservation_parser.h>
 #include <dhcpsrv/parsers/option_data_parser.h>
-#include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <algorithm>
 #include <sys/socket.h>
@@ -119,7 +118,7 @@ HostReservationParser::parseInternal(const SubnetID&,
     try {
         // Gather those parameters that are common for both IPv4 and IPv6
         // reservations.
-        BOOST_FOREACH(auto element, reservation_data->mapValue()) {
+        for (auto const& element : reservation_data->mapValue()) {
             // Check if we support this parameter.
             if (!isSupportedParameter(element.first)) {
                 isc_throw(DhcpConfigError, "unsupported configuration"
@@ -148,7 +147,7 @@ HostReservationParser::parseInternal(const SubnetID&,
             // error message and include the information what identifiers
             // are supported.
             std::ostringstream s;
-            BOOST_FOREACH(std::string param_name, getSupportedParameters(true)) {
+            for (auto const& param_name : getSupportedParameters(true)) {
                 if (s.tellp() != std::streampos(0)) {
                     s << ", ";
                 }
@@ -196,7 +195,7 @@ HostReservationParser4::parseInternal(const SubnetID& subnet_id,
 
     host->setIPv4SubnetID(subnet_id);
 
-    BOOST_FOREACH(auto element, reservation_data->mapValue()) {
+    for (auto const& element : reservation_data->mapValue()) {
         // For 'option-data' element we will use another parser which
         // already returns errors with position appended, so don't
         // surround it with try-catch.
@@ -209,8 +208,8 @@ HostReservationParser4::parseInternal(const SubnetID& subnet_id,
             OptionDataListParser parser(AF_INET);
             parser.parse(cfg_option, element.second, encapsulate_options);
 
-       // Everything else should be surrounded with try-catch to append
-       // position.
+        // Everything else should be surrounded with try-catch to append
+        // position.
         } else {
             try {
                 if (element.first == "ip-address") {
@@ -226,8 +225,7 @@ HostReservationParser4::parseInternal(const SubnetID& subnet_id,
                     host->setBootFileName(element.second->stringValue());
 
                 } else if (element.first == "client-classes") {
-                    BOOST_FOREACH(ConstElementPtr class_element,
-                                  element.second->listValue()) {
+                    for (auto const& class_element : element.second->listValue()) {
                         host->addClientClass4(class_element->stringValue());
                     }
                 }
@@ -257,7 +255,7 @@ HostReservationParser6::parseInternal(const SubnetID& subnet_id,
 
     host->setIPv6SubnetID(subnet_id);
 
-    BOOST_FOREACH(auto element, reservation_data->mapValue()) {
+    for (auto const& element : reservation_data->mapValue()) {
         // Parse option values. Note that the configuration option parser
         // returns errors with position information appended, so there is no
         // need to surround it with try-clause (and rethrow with position
@@ -272,8 +270,7 @@ HostReservationParser6::parseInternal(const SubnetID& subnet_id,
             parser.parse(cfg_option, element.second, encapsulate_options);
 
         } else if (element.first == "ip-addresses" || element.first == "prefixes") {
-            BOOST_FOREACH(ConstElementPtr prefix_element,
-                          element.second->listValue()) {
+            for (auto const& prefix_element : element.second->listValue()) {
                 try {
                     // For the IPv6 address the prefix length is 128 and the
                     // value specified in the list is a reserved address.
@@ -351,8 +348,7 @@ HostReservationParser6::parseInternal(const SubnetID& subnet_id,
 
         } else if (element.first == "client-classes") {
             try {
-                BOOST_FOREACH(ConstElementPtr class_element,
-                              element.second->listValue()) {
+                for (auto const& class_element : element.second->listValue()) {
                     host->addClientClass6(class_element->stringValue());
                 }
             } catch (const std::exception& ex) {
@@ -385,7 +381,7 @@ HostReservationIdsParser::parseInternal(isc::data::ConstElementPtr ids_list) {
     // Remove existing identifier types.
     staging_cfg_->clearIdentifierTypes();
 
-    BOOST_FOREACH(ConstElementPtr element, ids_list->listValue()) {
+    for (auto const& element : ids_list->listValue()) {
         std::string id_name = element->stringValue();
         try {
             if (id_name != "auto") {

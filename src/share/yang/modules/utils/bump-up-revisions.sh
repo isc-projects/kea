@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright (C) 2023 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2023-2024 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -72,4 +72,7 @@ done
 
 # Regenerate hashes.
 rm hashes/*
-./utils/check-hashes.sh -a
+./utils/check-hashes.sh -a 2> /dev/null || true
+
+# Check hashes were regenerated succesfully.
+./utils/check-hashes.sh

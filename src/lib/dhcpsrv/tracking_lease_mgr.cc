@@ -1,4 +1,4 @@
-// Copyright (C) 2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2023-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,6 +10,7 @@
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/tracking_lease_mgr.h>
 #include <util/multi_threading_mgr.h>
+#include <boost/foreach.hpp>
 #include <boost/tuple/tuple.hpp>
 
 using namespace isc::asiolink;
@@ -139,8 +140,7 @@ TrackingLeaseMgr::runCallbacksForSubnetID(CallbackType type, SubnetID subnet_id,
     if (cbs.first == cbs.second) {
         return;
     }
-    for (auto it = cbs.first; it != cbs.second; ++it) {
-        auto cb = *it;
+    BOOST_FOREACH(auto const& cb, cbs) {
         try {
             cb.fn(lease);
         } catch (const std::exception& ex) {

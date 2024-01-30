@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -450,7 +450,7 @@ public:
         checkUnusable();
         // Extract native input bindings.
         std::vector<MYSQL_BIND> in_bind_vec;
-        for (MySqlBindingPtr in_binding : in_bindings) {
+        for (const MySqlBindingPtr& in_binding : in_bindings) {
             in_bind_vec.push_back(in_binding->getMySqlBinding());
         }
 
@@ -464,7 +464,7 @@ public:
 
         // Bind variables that will receive results as well.
         std::vector<MYSQL_BIND> out_bind_vec;
-        for (MySqlBindingPtr out_binding : out_bindings) {
+        for (const MySqlBindingPtr& out_binding : out_bindings) {
             out_bind_vec.push_back(out_binding->getMySqlBinding());
         }
         if (!out_bind_vec.empty()) {
@@ -527,7 +527,7 @@ public:
                      const MySqlBindingCollection& in_bindings) {
         checkUnusable();
         std::vector<MYSQL_BIND> in_bind_vec;
-        for (MySqlBindingPtr in_binding : in_bindings) {
+        for (const MySqlBindingPtr& in_binding : in_bindings) {
             in_bind_vec.push_back(in_binding->getMySqlBinding());
         }
 
@@ -571,7 +571,7 @@ public:
                                const MySqlBindingCollection& in_bindings) {
         checkUnusable();
         std::vector<MYSQL_BIND> in_bind_vec;
-        for (MySqlBindingPtr in_binding : in_bindings) {
+        for (const MySqlBindingPtr& in_binding : in_bindings) {
             in_bind_vec.push_back(in_binding->getMySqlBinding());
         }
 

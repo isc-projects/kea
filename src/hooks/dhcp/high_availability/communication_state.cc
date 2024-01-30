@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -548,7 +548,7 @@ CommunicationState::getReport() const {
     }
 
     auto list = Element::createList();
-    for (auto scope : getPartnerScopes()) {
+    for (auto const& scope : getPartnerScopes()) {
         list->add(Element::create(scope));
     }
     report->set("last-scopes", list);

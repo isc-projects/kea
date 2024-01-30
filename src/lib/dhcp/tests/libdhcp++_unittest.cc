@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -1603,7 +1603,8 @@ TEST_F(LibDhcpTest, fuseLongOptionWithLongSuboption) {
     ASSERT_EQ(1, col.size());
     ASSERT_EQ(1, col.begin()->second->getOptions().size());
     uint8_t index = 0;
-    for (auto const& option : col.begin()->second->getOptions()) {
+    auto const& options = col.begin()->second->getOptions();
+    for (auto const& option : options) {
         for (auto const& value : option.second->getData()) {
             ASSERT_EQ(index, value);
             index++;
@@ -3217,12 +3218,11 @@ TEST_F(LibDhcpTest, getOptionDefByName6) {
     // Get all definitions.
     const OptionDefContainerPtr defs = LibDHCP::getOptionDefs(DHCP6_OPTION_SPACE);
     // For each definition try to find it using option name.
-    for (OptionDefContainer::const_iterator def = defs->begin();
-         def != defs->end(); ++def) {
+    for (auto const& def : *defs) {
         OptionDefinitionPtr def_by_name =
-            LibDHCP::getOptionDef(DHCP6_OPTION_SPACE, (*def)->getName());
+            LibDHCP::getOptionDef(DHCP6_OPTION_SPACE, def->getName());
         ASSERT_TRUE(def_by_name);
-        ASSERT_TRUE(**def == *def_by_name);
+        ASSERT_TRUE(*def == *def_by_name);
     }
 }
 
@@ -3232,12 +3232,11 @@ TEST_F(LibDhcpTest, getOptionDefByName4) {
     // Get all definitions.
     const OptionDefContainerPtr defs = LibDHCP::getOptionDefs(DHCP4_OPTION_SPACE);
     // For each definition try to find it using option name.
-    for (OptionDefContainer::const_iterator def = defs->begin();
-         def != defs->end(); ++def) {
+    for (auto const& def : *defs) {
         OptionDefinitionPtr def_by_name =
-            LibDHCP::getOptionDef(DHCP4_OPTION_SPACE, (*def)->getName());
+            LibDHCP::getOptionDef(DHCP4_OPTION_SPACE, def->getName());
         ASSERT_TRUE(def_by_name);
-        ASSERT_TRUE(**def == *def_by_name);
+        ASSERT_TRUE(*def == *def_by_name);
     }
 }
 
@@ -3247,13 +3246,12 @@ TEST_F(LibDhcpTest, getVendorOptionDefByName6) {
     const OptionDefContainerPtr& defs =
         LibDHCP::getVendorOptionDefs(Option::V6, VENDOR_ID_CABLE_LABS);
     ASSERT_TRUE(defs);
-    for (OptionDefContainer::const_iterator def = defs->begin();
-         def != defs->end(); ++def) {
+    for (auto const& def : *defs) {
         OptionDefinitionPtr def_by_name =
             LibDHCP::getVendorOptionDef(Option::V6, VENDOR_ID_CABLE_LABS,
-                                        (*def)->getName());
+                                        def->getName());
         ASSERT_TRUE(def_by_name);
-        ASSERT_TRUE(**def == *def_by_name);
+        ASSERT_TRUE(*def == *def_by_name);
     }
 }
 
@@ -3263,13 +3261,12 @@ TEST_F(LibDhcpTest, getVendorOptionDefByName4) {
     const OptionDefContainerPtr& defs =
         LibDHCP::getVendorOptionDefs(Option::V4, VENDOR_ID_CABLE_LABS);
     ASSERT_TRUE(defs);
-    for (OptionDefContainer::const_iterator def = defs->begin();
-         def != defs->end(); ++def) {
+    for (auto const& def : *defs) {
         OptionDefinitionPtr def_by_name =
             LibDHCP::getVendorOptionDef(Option::V4, VENDOR_ID_CABLE_LABS,
-                                        (*def)->getName());
+                                        def->getName());
         ASSERT_TRUE(def_by_name);
-        ASSERT_TRUE(**def == *def_by_name);
+        ASSERT_TRUE(*def == *def_by_name);
     }
 }
 

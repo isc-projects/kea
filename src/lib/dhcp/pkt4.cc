@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -60,7 +60,7 @@ Pkt4::len() {
     size_t length = DHCPV4_PKT_HDR_LEN; // DHCPv4 header
 
     // ... and sum of lengths of all options
-    for (const auto& it : options_) {
+    for (auto const& it : options_) {
         length += it.second->len();
     }
 
@@ -447,7 +447,7 @@ Pkt4::toText() const {
 
     if (!options_.empty()) {
         tmp << "," << endl << "options:";
-        for (const auto& opt : options_) {
+        for (auto const& opt : options_) {
             try {
                 tmp << endl << opt.second->toText(2);
             } catch (...) {

@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -676,9 +676,8 @@ TEST_F(Pkt4Test, getOptions) {
     // in the packet.
     pkt->setCopyRetrievedOptions(false);
     OptionCollection options_modified = pkt->getOptions(1);
-    for (OptionCollection::const_iterator opt_it_modified = options_modified.begin();
-         opt_it_modified != options_modified.end(); ++opt_it_modified) {
-        opt_it = std::find(options.begin(), options.end(), *opt_it_modified);
+    for (auto const& opt_it_modified : options_modified) {
+        opt_it = std::find(options.begin(), options.end(), opt_it_modified);
         ASSERT_TRUE(opt_it != options.end());
     }
 

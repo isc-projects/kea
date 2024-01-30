@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -409,9 +409,8 @@ public:
     ///
     /// Removes active HTTP clients.
     virtual ~HttpListenerTest() {
-        for (auto client = clients_.begin(); client != clients_.end();
-             ++client) {
-            (*client)->close();
+        for (auto const& client : clients_) {
+            client->close();
         }
     }
 

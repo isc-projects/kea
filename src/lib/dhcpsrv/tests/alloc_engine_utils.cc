@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -277,18 +277,18 @@ AllocEngine6Test::allocateTest(AllocEngine& engine, const Pool6Ptr& pool,
     findReservation(engine, ctx);
     EXPECT_NO_THROW(leases = engine.allocateLeases6(ctx));
 
-    for (Lease6Collection::iterator it = leases.begin(); it != leases.end(); ++it) {
+    for (auto const& it : leases) {
 
         // Do all checks on the lease
-        checkLease6(duid_, *it, type, expected_len, in_pool, in_pool);
+        checkLease6(duid_, it, type, expected_len, in_pool, in_pool);
 
         // Check that context has been updated with allocated addresses or
         // prefixes.
-        checkAllocatedResources(*it, ctx);
+        checkAllocatedResources(it, ctx);
 
         // Check that the lease is indeed in LeaseMgr
         Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(type,
-                                                                   (*it)->addr_);
+                                                                   it->addr_);
         if (!fake) {
             // This is a real (REQUEST) allocation, the lease must be in the DB
             EXPECT_TRUE(from_mgr) << "Lease " << from_mgr->addr_.toText()
@@ -299,7 +299,7 @@ AllocEngine6Test::allocateTest(AllocEngine& engine, const Pool6Ptr& pool,
             }
 
             // Now check that the lease in LeaseMgr has the same parameters
-            detailCompareLease(*it, from_mgr);
+            detailCompareLease(it, from_mgr);
         } else {
             // This is a fake (SOLICIT) allocation, the lease must not be in DB
             EXPECT_FALSE(from_mgr) << "Lease " << from_mgr->addr_.toText()
@@ -459,18 +459,18 @@ AllocEngine6Test::renewTest(AllocEngine& engine, const Pool6Ptr& pool,
     findReservation(engine, ctx);
     Lease6Collection leases = engine.renewLeases6(ctx);
 
-    for (Lease6Collection::iterator it = leases.begin(); it != leases.end(); ++it) {
+    for (auto const& it : leases) {
 
         // Do all checks on the lease
-        checkLease6(duid_, *it, type, expected_len, in_subnet, in_pool);
+        checkLease6(duid_, it, type, expected_len, in_subnet, in_pool);
 
         // Check that context has been updated with allocated addresses or
         // prefixes.
-        checkAllocatedResources(*it, ctx);
+        checkAllocatedResources(it, ctx);
 
         // Check that the lease is indeed in LeaseMgr
         Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(type,
-                                                                   (*it)->addr_);
+                                                                   it->addr_);
 
         // This is a real (REQUEST) allocation, the lease must be in the DB
         EXPECT_TRUE(from_mgr) << "Lease " << from_mgr->addr_.toText()
@@ -481,7 +481,7 @@ AllocEngine6Test::renewTest(AllocEngine& engine, const Pool6Ptr& pool,
         }
 
         // Now check that the lease in LeaseMgr has the same parameters
-        detailCompareLease(*it, from_mgr);
+        detailCompareLease(it, from_mgr);
     }
 
     return (leases);

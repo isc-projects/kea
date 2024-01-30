@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -954,7 +954,7 @@ CommunicationStateTest::getRejectedLeaseUpdatesCountFromContainerTest() {
     // expiring in the future. Even entries have lifetimes expiring in
     // the past.
     Entries entries;
-    for (auto i = 0; i < 1000; i++) {
+    for (auto i = 0; i < 1000; ++i) {
         entries.insert({i, time(NULL) + (i % 2 ? 100 + i : -1 - i)});
     }
     // Get the count of valid entries. It should remove the expiring
@@ -964,7 +964,7 @@ CommunicationStateTest::getRejectedLeaseUpdatesCountFromContainerTest() {
     EXPECT_EQ(500, entries.size());
 
     // Validate that we removed expired entries, not the valid ones.
-    for (auto entry : entries) {
+    for (auto const& entry : entries) {
         EXPECT_EQ(1, entry.ordinal_ % 2);
     }
 }

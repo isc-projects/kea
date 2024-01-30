@@ -1,4 +1,4 @@
-// Copyright (C) 2022-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2022-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -1170,23 +1170,23 @@ public:
                                server_selector, attach_bindings);
 
         // (Re)create pools.
-        for (auto pool : subnet->getPools(Lease::TYPE_NA)) {
+        for (auto const& pool : subnet->getPools(Lease::TYPE_NA)) {
             createPool6(server_selector, boost::dynamic_pointer_cast<Pool6>(pool),
                         subnet);
         }
 
         // (Re)create pd pools.
-        for (auto pd_pool : subnet->getPools(Lease::TYPE_PD)) {
+        for (auto const& pd_pool : subnet->getPools(Lease::TYPE_PD)) {
             createPdPool6(server_selector, boost::dynamic_pointer_cast<Pool6>(pd_pool),
                           subnet);
         }
 
         // (Re)create options.
         auto option_spaces = subnet->getCfgOption()->getOptionSpaceNames();
-        for (auto option_space : option_spaces) {
+        for (auto const& option_space : option_spaces) {
             OptionContainerPtr options = subnet->getCfgOption()->getAll(option_space);
-            for (auto desc = options->begin(); desc != options->end(); ++desc) {
-                OptionDescriptorPtr desc_copy = OptionDescriptor::create(*desc);
+            for (auto const& desc : *options) {
+                OptionDescriptorPtr desc_copy = OptionDescriptor::create(desc);
                 desc_copy->space_name_ = option_space;
                 createUpdateOption6(server_selector, subnet->getID(), desc_copy,
                                     true);
@@ -1223,10 +1223,10 @@ public:
 
         // Add the pool's options.
         auto option_spaces = pool->getCfgOption()->getOptionSpaceNames();
-        for (auto option_space : option_spaces) {
+        for (auto const& option_space : option_spaces) {
             OptionContainerPtr options = pool->getCfgOption()->getAll(option_space);
-            for (auto desc = options->begin(); desc != options->end(); ++desc) {
-                OptionDescriptorPtr desc_copy = OptionDescriptor::create(*desc);
+            for (auto const& desc : *options) {
+                OptionDescriptorPtr desc_copy = OptionDescriptor::create(desc);
                 desc_copy->space_name_ = option_space;
                 createUpdateOption6(server_selector, Lease::TYPE_NA,
                                     pool_id, desc_copy, true);
@@ -1277,10 +1277,10 @@ public:
 
         // Add the pool's options.
         auto option_spaces = pd_pool->getCfgOption()->getOptionSpaceNames();
-        for (auto option_space : option_spaces) {
+        for (auto const& option_space : option_spaces) {
             OptionContainerPtr options = pd_pool->getCfgOption()->getAll(option_space);
-            for (auto desc = options->begin(); desc != options->end(); ++desc) {
-                OptionDescriptorPtr desc_copy = OptionDescriptor::create(*desc);
+            for (auto const& desc : *options) {
+                OptionDescriptorPtr desc_copy = OptionDescriptor::create(desc);
                 desc_copy->space_name_ = option_space;
                 createUpdateOption6(server_selector, Lease::TYPE_PD,
                                     pd_pool_id, desc_copy, true);
@@ -1811,10 +1811,10 @@ public:
 
         // (Re)create options.
         auto option_spaces = shared_network->getCfgOption()->getOptionSpaceNames();
-        for (auto option_space : option_spaces) {
+        for (auto const& option_space : option_spaces) {
             OptionContainerPtr options = shared_network->getCfgOption()->getAll(option_space);
-            for (auto desc = options->begin(); desc != options->end(); ++desc) {
-                OptionDescriptorPtr desc_copy = OptionDescriptor::create(*desc);
+            for (auto const& desc : *options) {
+                OptionDescriptorPtr desc_copy = OptionDescriptor::create(desc);
                 desc_copy->space_name_ = option_space;
                 createUpdateOption6(server_selector, shared_network->getName(),
                                     desc_copy, true);
@@ -2663,7 +2663,7 @@ public:
 
         tossNonMatchingElements(server_selector, class_list);
 
-        for (auto c : class_list) {
+        for (auto const& c : class_list) {
             client_classes.addClass(c);
         }
     }
@@ -2844,7 +2844,7 @@ public:
                                server_selector, attach_bindings);
 
         // Iterate over the captured dependencies and try to insert them into the database.
-        for (auto dependency : dependencies) {
+        for (auto const& dependency : dependencies) {
             try {
                 PsqlBindArray in_dependency_bindings;
                 in_dependency_bindings.add(class_name);
@@ -2870,20 +2870,20 @@ public:
         if (client_class->getCfgOptionDef()) {
             auto option_defs = client_class->getCfgOptionDef()->getContainer();
             auto option_spaces = option_defs.getOptionSpaceNames();
-            for (auto option_space : option_spaces) {
+            for (auto const& option_space : option_spaces) {
                 OptionDefContainerPtr defs = option_defs.getItems(option_space);
-                for (auto def = defs->begin(); def != defs->end(); ++def) {
-                    createUpdateOptionDef6(server_selector, *def, client_class->getName());
+                for (auto const& def : *defs) {
+                    createUpdateOptionDef6(server_selector, def, client_class->getName());
                 }
             }
         }
 
         // (Re)create options.
         auto option_spaces = client_class->getCfgOption()->getOptionSpaceNames();
-        for (auto option_space : option_spaces) {
+        for (auto const& option_space : option_spaces) {
             OptionContainerPtr options = client_class->getCfgOption()->getAll(option_space);
-            for (auto desc = options->begin(); desc != options->end(); ++desc) {
-                OptionDescriptorPtr desc_copy = OptionDescriptor::create(*desc);
+            for (auto const& desc : *options) {
+                OptionDescriptorPtr desc_copy = OptionDescriptor::create(desc);
                 desc_copy->space_name_ = option_space;
                 createUpdateOption6(server_selector, client_class, desc_copy);
             }
@@ -3047,7 +3047,7 @@ public:
             }
 
             // Iterate over the configured DBs and instantiate them.
-            for (auto db : config_ctl->getConfigDatabases()) {
+            for (auto const& db : config_ctl->getConfigDatabases()) {
                 const std::string& access = db.getAccessString();
                 auto parameters = db.getParameters();
                 if (ConfigBackendDHCPv6Mgr::instance().delBackend(parameters["type"], access, true)) {

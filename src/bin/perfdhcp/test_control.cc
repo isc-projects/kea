@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -549,9 +549,8 @@ TestControl::initPacketTemplates() {
     template_packets_v6_.clear();
     template_buffers_.clear();
     std::vector<std::string> template_files = options_.getTemplateFiles();
-    for (std::vector<std::string>::const_iterator it = template_files.begin();
-         it != template_files.end(); ++it) {
-        readPacketTemplate(*it);
+    for (auto const& it : template_files) {
+        readPacketTemplate(it);
     }
 }
 
@@ -750,13 +749,13 @@ std::string
 TestControl::vector2Hex(const std::vector<uint8_t>& vec,
                         const std::string& separator /* = "" */) {
     std::ostringstream stream;
-    for (std::vector<uint8_t>::const_iterator it = vec.begin();
-         it != vec.end();
-         ++it) {
-        if (it == vec.begin()) {
-            stream << byte2Hex(*it);
+    bool first = true;
+    for (auto const& it : vec) {
+        if (first) {
+            stream << byte2Hex(it);
+            first = false;
         } else {
-            stream << separator << byte2Hex(*it);
+            stream << separator << byte2Hex(it);
         }
     }
     return (stream.str());
@@ -861,7 +860,7 @@ TestControl::address6Uniqueness(const Pkt6Ptr& pkt6, ExchangeType xchg_type) {
         std::set<std::string> current;
         // addresses were already checked in validateIA
         // we can safely assume that those are correct
-        for (const auto& opt : pkt6->options_) {
+        for (auto const& opt : pkt6->options_) {
             switch (opt.second->getType()) {
             case D6O_IA_PD: {
                 // add address and check if it has not been already assigned
@@ -1924,7 +1923,7 @@ void
 TestControl::addExtraOpts(const Pkt4Ptr& pkt) {
     // Add all extra options that the user may have specified.
     const dhcp::OptionCollection& extra_opts = options_.getExtraOpts();
-    for (auto entry : extra_opts) {
+    for (auto const& entry : extra_opts) {
         mergeOptionIntoPacket(pkt, entry.second);
     }
 }
@@ -1933,7 +1932,7 @@ void
 TestControl::addExtraOpts(const Pkt6Ptr& pkt) {
     // Add all extra options that the user may have specified.
     const dhcp::OptionCollection& extra_opts = options_.getExtraOpts();
-    for (auto entry : extra_opts) {
+    for (auto const& entry : extra_opts) {
         pkt->addOption(entry.second);
     }
 }

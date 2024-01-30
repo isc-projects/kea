@@ -1,4 +1,4 @@
-// Copyright (C) 2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2023-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -71,7 +71,7 @@ public:
     ///
     /// Removes active clients.
     virtual ~TlsListenerTest() {
-        for (auto client : clients_) {
+        for (auto const& client : clients_) {
             client->close();
         }
     }
@@ -359,7 +359,7 @@ TEST_F(TlsListenerTest, multipleClientsListen) {
     ASSERT_EQ(num_clients, clients_.size());
 
     size_t connection_id = 1;
-    for (auto client : clients_) {
+    for (auto const& client : clients_) {
         EXPECT_TRUE(client->receiveDone());
         EXPECT_FALSE(client->expectedEof());
         // Create the list of expected entries.
@@ -403,7 +403,7 @@ TEST_F(TlsListenerTest, multipleRequetsPerClients) {
     std::list<std::string>expected_responses{ "echo one", "echo two",
                                               "echo three", "good bye"};
     size_t connection_id = 1;
-    for (auto client : clients_) {
+    for (auto const& client : clients_) {
         EXPECT_TRUE(client->receiveDone());
         EXPECT_FALSE(client->expectedEof());
         EXPECT_EQ(expected_responses, client->getResponses());
@@ -458,7 +458,7 @@ TEST_F(TlsListenerTest, filterClientsTest) {
     ASSERT_EQ(num_clients, clients_.size());
 
     size_t i = 0;
-    for (auto client : clients_) {
+    for (auto const& client : clients_) {
         if (i % 2 == 0) {
             // These clients should have been accepted and received responses.
             EXPECT_TRUE(client->receiveDone());

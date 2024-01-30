@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015,2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -12,7 +12,6 @@
 #include <dns/master_lexer_inputsource.h>
 #include <dns/master_lexer_state.h>
 
-#include <boost/foreach.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/lexical_cast.hpp>
 
@@ -213,7 +212,7 @@ MasterLexer::getTotalSourceSize() const {
 size_t
 MasterLexer::getPosition() const {
     size_t position = impl_->popped_size_;
-    BOOST_FOREACH(InputSourcePtr& src, impl_->sources_) {
+    for (auto const& src : impl_->sources_) {
         position += src->getPosition();
     }
     return (position);

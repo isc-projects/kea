@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -54,11 +54,14 @@ ClientClasses::contains(const ClientClass& x) const {
 std::string
 ClientClasses::toText(const std::string& separator) const {
     std::stringstream s;
-    for (const_iterator class_it = cbegin(); class_it != cend(); ++class_it) {
-        if (class_it != cbegin()) {
+    bool first = true;
+    for (auto const& class_it : *this) {
+        if (!first) {
             s << separator;
+        } else {
+            first = false;
         }
-        s << *class_it;
+        s << class_it;
     }
     return (s.str());
 }
@@ -66,7 +69,7 @@ ClientClasses::toText(const std::string& separator) const {
 ElementPtr
 ClientClasses::toElement() const {
     ElementPtr result(Element::createList());
-    for (ClientClass c : container_) {
+    for (auto const& c : container_) {
         result->add(Element::create(c));
     }
     return (result);

@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -4077,13 +4077,12 @@ idToText(const OptionBuffer& id) {
     std::stringstream tmp;
     tmp << std::hex;
     bool delim = false;
-    for (std::vector<uint8_t>::const_iterator it = id.begin();
-         it != id.end(); ++it) {
+    for (auto const& it : id) {
         if (delim) {
             tmp << ":";
         }
         tmp << std::setw(2) << std::setfill('0')
-            << static_cast<unsigned int>(*it);
+            << static_cast<unsigned int>(it);
         delim = true;
     }
     return (tmp.str());
@@ -4363,7 +4362,7 @@ MySqlLeaseMgr::upgradeExtendedInfo4(const LeasePageSize& page_size) {
 
         ++pages;
         start_addr = leases.back()->addr_;
-        for (auto lease : leases) {
+        for (auto const& lease : leases) {
             ConstElementPtr previous_user_context = lease->getContext();
             vector<uint8_t> previous_relay_id = lease->relay_id_;
             vector<uint8_t> previous_remote_id = lease->remote_id_;
@@ -4580,7 +4579,7 @@ MySqlLeaseMgr::upgradeExtendedInfo6(const LeasePageSize& page_size) {
 
         ++pages;
         start_addr = leases.back()->addr_;
-        for (auto lease : leases) {
+        for (auto const& lease : leases) {
             try {
                 bool modified = upgradeLease6ExtendedInfo(lease, check);
                 if (modified) {

@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -22,6 +22,7 @@
 #include <exceptions/isc_assert.h>
 #include <util/buffer.h>
 
+#include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/shared_array.hpp>
 #include <boost/shared_ptr.hpp>
@@ -693,10 +694,10 @@ void
 extendVivco(OptionCollection& options) {
     typedef vector<OpaqueDataTuple> TuplesCollection;
     map<uint32_t, TuplesCollection> vendors_tuples;
-    const auto& range = options.equal_range(DHO_VIVCO_SUBOPTIONS);
-    for (auto it = range.first; it != range.second; ++it) {
+    auto const& range = options.equal_range(DHO_VIVCO_SUBOPTIONS);
+    BOOST_FOREACH(auto const& it, range) {
         uint32_t offset = 0;
-        auto const& data = it->second->getData();
+        auto const& data = it.second->getData();
         size_t size;
         while ((size = data.size() - offset) != 0) {
             if (size < sizeof(uint32_t)) {
@@ -752,10 +753,10 @@ extendVivco(OptionCollection& options) {
 void
 extendVivso(OptionCollection& options) {
     map<uint32_t, OptionCollection> vendors_data;
-    const auto& range = options.equal_range(DHO_VIVSO_SUBOPTIONS);
-    for (auto it = range.first; it != range.second; ++it) {
+    auto const& range = options.equal_range(DHO_VIVSO_SUBOPTIONS);
+    BOOST_FOREACH(auto const& it, range) {
         uint32_t offset = 0;
-        auto const& data = it->second->getData();
+        auto const& data = it.second->getData();
         size_t size;
         while ((size = data.size() - offset) != 0) {
             if (size < sizeof(uint32_t)) {
@@ -1126,7 +1127,7 @@ LibDHCP::splitOptions4(OptionCollection& options,
                     // parent option will be created for each suboption.
                     // This will guarantee that none of the options plus
                     // suboptions will have more than 255 bytes.
-                    for (auto sub_option : candidate->getMutableOptions()) {
+                    for (auto const& sub_option : candidate->getMutableOptions()) {
                         OptionPtr data_sub_option(new Option(candidate->getUniverse(),
                                                              candidate->getType(),
                                                              OptionBuffer(0)));

@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -265,7 +265,7 @@ void applyDown(ConstElementPtr path, ConstElementPtr actions, ElementPtr scope,
             if (name.empty()) {
                 return;
             }
-            for (ElementPtr down : downs) {
+            for (ElementPtr& down : downs) {
                 if (!down || (down->getType() != Element::map)) {
                     continue;
                 }
@@ -280,7 +280,7 @@ void applyDown(ConstElementPtr path, ConstElementPtr actions, ElementPtr scope,
         }
         int index = step->intValue();
         if (index == -1) {
-            for (ElementPtr down : downs) {
+            for (ElementPtr& down : downs) {
                 applyDown(path, actions, down, next);
             }
         } else if ((index >= 0) && (index < scope->size())) {

@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -130,7 +130,7 @@ public:
         // signal threads that are waiting
         signalThreads();
         // wait for all test threads to exit
-        for (auto thread : threads_) {
+        for (auto const& thread : threads_) {
             thread->join();
         }
         // reset all threads
@@ -172,7 +172,7 @@ public:
     void checkRunHistory(uint32_t items_count) {
         uint32_t count = 0;
         // iterate over all threads history and count all the processed tasks
-        for (auto element : history_) {
+        for (auto const& element : history_) {
             count += element.second.size();
         }
         ASSERT_EQ(count, items_count);

@@ -1,4 +1,4 @@
-// Copyright (C) 2019-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2019-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -23,7 +23,6 @@
 #include <dhcp4/tests/dhcp4_test_utils.h>
 #include <dhcp4/tests/get_config_unittest.h>
 
-#include <boost/foreach.hpp>
 #include <boost/scoped_ptr.hpp>
 
 #include <iostream>
@@ -193,6 +192,8 @@ TEST_F(Dhcp4CBTest, mergeGlobals) {
     StampedValuePtr calc_tee_times(new StampedValue("calculate-tee-times", Element::create(bool(false))));
     StampedValuePtr t2_percent(new StampedValue("t2-percent", Element::create(0.75)));
     StampedValuePtr renew_timer(new StampedValue("renew-timer", Element::create(500)));
+    StampedValuePtr mt_enabled(new StampedValue("multi-threading.enable-multi-threading", Element::create(true)));
+    StampedValuePtr mt_pool_size(new StampedValue("multi-threading.thread-pool-size", Element::create(256)));
 
     // Let's add all of the globals to the second backend.  This will verify
     // we find them there.
@@ -201,6 +202,8 @@ TEST_F(Dhcp4CBTest, mergeGlobals) {
     db2_->createUpdateGlobalParameter4(ServerSelector::ALL(), calc_tee_times);
     db2_->createUpdateGlobalParameter4(ServerSelector::ALL(), t2_percent);
     db2_->createUpdateGlobalParameter4(ServerSelector::ALL(), renew_timer);
+    db2_->createUpdateGlobalParameter4(ServerSelector::ALL(), mt_enabled);
+    db2_->createUpdateGlobalParameter4(ServerSelector::ALL(), mt_pool_size);
 
     // Should parse and merge without error.
     ASSERT_NO_FATAL_FAILURE(configure(base_config, CONTROL_RESULT_SUCCESS, ""));
@@ -228,6 +231,8 @@ TEST_F(Dhcp4CBTest, mergeGlobals) {
     ASSERT_NO_FATAL_FAILURE(checkConfiguredGlobal(staging_cfg, calc_tee_times));
     ASSERT_NO_FATAL_FAILURE(checkConfiguredGlobal(staging_cfg, t2_percent));
     ASSERT_NO_FATAL_FAILURE(checkConfiguredGlobal(staging_cfg, renew_timer));
+    ASSERT_NO_FATAL_FAILURE(checkConfiguredGlobal(staging_cfg, mt_enabled));
+    ASSERT_NO_FATAL_FAILURE(checkConfiguredGlobal(staging_cfg, mt_pool_size));
 }
 
 // This test verifies that externally configured option definitions

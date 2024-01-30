@@ -1,4 +1,4 @@
-// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,7 +10,6 @@
 #include <cc/dhcp_config_error.h>
 #include <hooks/hooks_parser.h>
 #include <boost/algorithm/string.hpp>
-#include <boost/foreach.hpp>
 #include <util/strutil.h>
 #include <vector>
 
@@ -34,7 +33,7 @@ HooksLibrariesParser::parse(HooksConfig& libraries, ConstElementPtr value) {
     }
 
     // This is the new syntax.  Iterate through it and get each map.
-    BOOST_FOREACH(ConstElementPtr library_entry, value->listValue()) {
+    for (auto const& library_entry : value->listValue()) {
         ConstElementPtr parameters;
 
         // Is it a map?
@@ -54,7 +53,7 @@ HooksLibrariesParser::parse(HooksConfig& libraries, ConstElementPtr value) {
         // values from the previous loop round.
         parameters.reset();
 
-        BOOST_FOREACH(auto entry_item, library_entry->mapValue()) {
+        for (auto const& entry_item : library_entry->mapValue()) {
             if (entry_item.first == "library") {
                 if (entry_item.second->getType() != Element::string) {
                     isc_throw(DhcpConfigError, "hooks library configuration"

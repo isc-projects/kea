@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -523,9 +523,21 @@ TEST_F(TranslatorTest, setItem) {
 
     ElementPtr element;
     string xpath;
+    optional<DataNode> data_node;
+
+    // List.
+    xpath = "/keatest-module:list[key='value']";
+    element = Element::create("value");
+    EXPECT_NO_THROW_LOG(translator->setItem(xpath, ElementPtr(), LeafBaseType::Unknown));
+    EXPECT_NO_THROW_LOG(translator->setItem(xpath, ElementPtr(), LeafBaseType::Unknown));
+    EXPECT_NO_THROW_LOG(data_node = sess.getData(xpath + "/key"));
+    ASSERT_TRUE(data_node);
+    EXPECT_NO_THROW_LOG(data_node = data_node->findPath(xpath + "/key"));
+    ASSERT_TRUE(data_node);
+    ASSERT_EQ(LeafBaseType::String, data_node->schema().asLeaf().valueType().base());
+    EXPECT_EQ(element->stringValue(), string(data_node->asTerm().valueStr()));
 
     // String.
-    optional<DataNode> data_node;
     xpath = "/keatest-module:main/string";
     element = Element::create("str");
     EXPECT_NO_THROW_LOG(translator->setItem(xpath, element, LeafBaseType::String));

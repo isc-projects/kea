@@ -1,4 +1,4 @@
-// Copyright (C) 2019-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2019-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -24,7 +24,7 @@ ServerSelector::MULTIPLE(const std::set<std::string>& server_tags) {
     std::set<ServerTag> tags;
 
     // Create a set of tags from strings.
-    for (auto tag : server_tags) {
+    for (auto const& tag : server_tags) {
         tags.insert(ServerTag(tag));
     }
 

@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -63,8 +63,8 @@
 #endif
 #include <dhcpsrv/memfile_lease_mgr.h>
 
-#include <boost/foreach.hpp>
 #include <boost/tokenizer.hpp>
+#include <boost/foreach.hpp>
 #include <boost/algorithm/string/erase.hpp>
 #include <boost/algorithm/string/join.hpp>
 #include <boost/algorithm/string/split.hpp>
@@ -263,9 +263,9 @@ void Dhcpv6Srv::setPacketStatisticsDefaults() {
     isc::stats::StatsMgr& stats_mgr = isc::stats::StatsMgr::instance();
 
     // Iterate over set of observed statistics
-    for (auto it = dhcp6_statistics.begin(); it != dhcp6_statistics.end(); ++it) {
+    for (auto const& it : dhcp6_statistics) {
         // Initialize them with default value 0
-        stats_mgr.setValue((*it), static_cast<int64_t>(0));
+        stats_mgr.setValue(it, static_cast<int64_t>(0));
     }
 }
 
@@ -366,8 +366,7 @@ void
 Dhcpv6Srv::setHostIdentifiers(AllocEngine::ClientContext6& ctx) {
     const ConstCfgHostOperationsPtr cfg =
         CfgMgr::instance().getCurrentCfg()->getCfgHostOperations6();
-    BOOST_FOREACH(const Host::IdentifierType& id_type,
-                  cfg->getIdentifierTypes()) {
+    for (auto const& id_type : cfg->getIdentifierTypes()) {
         switch (id_type) {
         case Host::IDENT_DUID:
             if (ctx.duid_) {
@@ -457,9 +456,8 @@ Dhcpv6Srv::earlyGHRLookup(const Pkt6Ptr& query,
 
             // Add classes from the global reservations.
             const ClientClasses& classes = global_host->getClientClasses6();
-            for (ClientClasses::const_iterator cclass = classes.cbegin();
-                 cclass != classes.cend(); ++cclass) {
-                query->addClass(*cclass);
+            for (auto const& cclass : classes) {
+                query->addClass(cclass);
             }
 
             // Evaluate classes before KNOWN.
@@ -1125,7 +1123,7 @@ Dhcpv6Srv::processDhcp6Query(Pkt6Ptr& query, Pkt6Ptr& rsp) {
         Lease6CollectionPtr new_leases(new Lease6Collection());
         if (!ctx.new_leases_.empty()) {
             // Filter out reused leases as they were not committed.
-            for (auto new_lease : ctx.new_leases_) {
+            for (auto const& new_lease : ctx.new_leases_) {
                 if (new_lease->reuseable_valid_lft_ == 0) {
                     new_leases->push_back(new_lease);
                 }
@@ -1138,7 +1136,7 @@ Dhcpv6Srv::processDhcp6Query(Pkt6Ptr& query, Pkt6Ptr& rsp) {
         // Do per IA lists
         for (auto const& iac : ctx.ias_) {
             if (!iac.old_leases_.empty()) {
-                for (auto old_lease : iac.old_leases_) {
+                for (auto const& old_lease : iac.old_leases_) {
                     if (ctx.new_leases_.empty()) {
                         deleted_leases->push_back(old_lease);
                         continue;
@@ -1169,7 +1167,7 @@ Dhcpv6Srv::processDhcp6Query(Pkt6Ptr& query, Pkt6Ptr& rsp) {
         }
 
         if (parked_packet_limit) {
-            const auto& parking_lot = ServerHooks::getServerHooks().
+            auto const& parking_lot = ServerHooks::getServerHooks().
                 getParkingLotPtr("leases6_committed");
             if (parking_lot && (parking_lot->size() >= parked_packet_limit)) {
                 // We can't park it so we're going to throw it on the floor.
@@ -1394,11 +1392,11 @@ Dhcpv6Srv::duidToString(const OptionPtr& opt) {
     OptionBuffer data = opt->getData();
 
     bool colon = false;
-    for (OptionBufferConstIter it = data.begin(); it != data.end(); ++it) {
+    for (auto const& it : data) {
         if (colon) {
             tmp << ":";
         }
-        tmp << hex << setw(2) << setfill('0') << static_cast<uint16_t>(*it);
+        tmp << hex << setw(2) << setfill('0') << static_cast<uint16_t>(it);
         if (!colon) {
             colon = true;
         }
@@ -1442,7 +1440,7 @@ Dhcpv6Srv::buildCfgOptionList(const Pkt6Ptr& question,
     // Secondly, pool specific options. Pools are defined within a subnet, so
     // if there is no subnet, there is nothing to do.
     if (ctx.subnet_) {
-        for (auto resource : ctx.allocated_resources_) {
+        for (auto const& resource : ctx.allocated_resources_) {
             PoolPtr pool =
                 ctx.subnet_->getPool(resource.getPrefixLength() == 128 ?
                                      Lease::TYPE_NA : Lease::TYPE_PD,
@@ -1468,17 +1466,16 @@ Dhcpv6Srv::buildCfgOptionList(const Pkt6Ptr& question,
 
     // Each class in the incoming packet
     const ClientClasses& classes = question->getClasses();
-    for (ClientClasses::const_iterator cclass = classes.cbegin();
-         cclass != classes.cend(); ++cclass) {
+    for (auto const& cclass : classes) {
         // Find the client class definition for this class
         const ClientClassDefPtr& ccdef = CfgMgr::instance().getCurrentCfg()->
-            getClientClassDictionary()->findClass(*cclass);
+            getClientClassDictionary()->findClass(cclass);
         if (!ccdef) {
             // Not found: the class is built-in or not configured
-            if (!isClientClassBuiltIn(*cclass)) {
+            if (!isClientClassBuiltIn(cclass)) {
                 LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_CLASS_UNCONFIGURED)
                     .arg(question->getLabel())
-                    .arg(*cclass);
+                    .arg(cclass);
             }
             // Skip it
             continue;
@@ -1532,22 +1529,20 @@ Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer,
         // Get persistent options.
         const OptionContainerPersistIndex& pidx = opts->get<2>();
         const OptionContainerPersistRange& prange = pidx.equal_range(true);
-        for (OptionContainerPersistIndex::const_iterator desc = prange.first;
-             desc != prange.second; ++desc) {
+        BOOST_FOREACH(auto const& desc, prange) {
             // Add the persistent option code to requested options.
-            if (desc->option_) {
-                uint16_t code = desc->option_->getType();
+            if (desc.option_) {
+                uint16_t code = desc.option_->getType();
                 static_cast<void>(requested_opts.insert(code));
             }
         }
         // Get cancelled options.
         const OptionContainerCancelIndex& cidx = opts->get<5>();
         const OptionContainerCancelRange& crange = cidx.equal_range(true);
-        for (OptionContainerCancelIndex::const_iterator desc = crange.first;
-             desc != crange.second; ++desc) {
+        BOOST_FOREACH(auto const& desc, crange) {
             // Add the cancelled option code to the cancelled options.
-            if (desc->option_) {
-                uint16_t code = desc->option_->getType();
+            if (desc.option_) {
+                uint16_t code = desc.option_->getType();
                 static_cast<void>(cancelled_opts.insert(code));
             }
         }
@@ -1586,7 +1581,7 @@ Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer,
         // D6O_VENDOR_CLASS options at most once per vendor.
         set<uint32_t> vendor_ids;
         // Get what already exists in the response.
-        for (auto opt : answer->getOptions(D6O_VENDOR_CLASS)) {
+        for (auto const& opt : answer->getOptions(D6O_VENDOR_CLASS)) {
             OptionVendorClassPtr vendor_class;
             vendor_class = boost::dynamic_pointer_cast<OptionVendorClass>(opt.second);
             if (vendor_class) {
@@ -1596,8 +1591,7 @@ Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer,
         }
         // Iterate on the configured option list.
         for (auto const& copts : co_list) {
-            for (OptionDescriptor desc : copts->getList(DHCP6_OPTION_SPACE,
-                                                        D6O_VENDOR_CLASS)) {
+            for (auto const& desc : copts->getList(DHCP6_OPTION_SPACE, D6O_VENDOR_CLASS)) {
                 if (!desc.option_) {
                     continue;
                 }
@@ -1624,7 +1618,7 @@ Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer,
         // D6O_VENDOR_OPTS options at most once per vendor.
         set<uint32_t> vendor_ids;
         // Get what already exists in the response.
-        for (auto opt : answer->getOptions(D6O_VENDOR_OPTS)) {
+        for (auto const& opt : answer->getOptions(D6O_VENDOR_OPTS)) {
             OptionVendorPtr vendor_opts;
             vendor_opts = boost::dynamic_pointer_cast<OptionVendor>(opt.second);
             if (vendor_opts) {
@@ -1634,8 +1628,7 @@ Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer,
         }
         // Iterate on the configured option list
         for (auto const& copts : co_list) {
-            for (OptionDescriptor desc : copts->getList(DHCP6_OPTION_SPACE,
-                                                        D6O_VENDOR_OPTS)) {
+            for (auto const& desc : copts->getList(DHCP6_OPTION_SPACE, D6O_VENDOR_OPTS)) {
                 if (!desc.option_) {
                     continue;
                 }
@@ -1681,7 +1674,7 @@ Dhcpv6Srv::appendRequestedVendorOptions(const Pkt6Ptr& question,
     // The server could have provided the option using client classification or
     // hooks. If there're vendor info options in the response already, use them.
     map<uint32_t, OptionVendorPtr> vendor_rsps;
-    for (auto opt : answer->getOptions(D6O_VENDOR_OPTS)) {
+    for (auto const& opt : answer->getOptions(D6O_VENDOR_OPTS)) {
         OptionVendorPtr vendor_rsp;
         vendor_rsp = boost::dynamic_pointer_cast<OptionVendor>(opt.second);
         if (vendor_rsp) {
@@ -1694,7 +1687,7 @@ Dhcpv6Srv::appendRequestedVendorOptions(const Pkt6Ptr& question,
     // Next, try to get the vendor-id from the client packet's
     // vendor-specific information option (17).
     map<uint32_t, OptionVendorPtr> vendor_reqs;
-    for (auto opt : question->getOptions(D6O_VENDOR_OPTS)) {
+    for (auto const& opt : question->getOptions(D6O_VENDOR_OPTS)) {
         OptionVendorPtr vendor_req;
         vendor_req = boost::dynamic_pointer_cast<OptionVendor>(opt.second);
         if (vendor_req) {
@@ -1706,7 +1699,7 @@ Dhcpv6Srv::appendRequestedVendorOptions(const Pkt6Ptr& question,
 
     // Finally, try to get the vendor-id from the client packet's vendor-class
     // option (16).
-    for (auto opt : question->getOptions(D6O_VENDOR_CLASS)) {
+    for (auto const& opt : question->getOptions(D6O_VENDOR_CLASS)) {
         OptionVendorClassPtr vendor_class;
         vendor_class = boost::dynamic_pointer_cast<OptionVendorClass>(opt.second);
         if (vendor_class) {
@@ -1759,25 +1752,23 @@ Dhcpv6Srv::appendRequestedVendorOptions(const Pkt6Ptr& question,
             // Get persistent options.
             const OptionContainerPersistIndex& pidx = opts->get<2>();
             const OptionContainerPersistRange& prange = pidx.equal_range(true);
-            for (OptionContainerPersistIndex::const_iterator desc = prange.first;
-                 desc != prange.second; ++desc) {
-                if (!desc->option_) {
+            BOOST_FOREACH(auto const& desc, prange) {
+                if (!desc.option_) {
                     continue;
                 }
                 // Add the persistent option code to requested options
-                uint16_t code = desc->option_->getType();
+                uint16_t code = desc.option_->getType();
                 static_cast<void>(requested_opts[vendor_id].insert(code));
             }
             // Get cancelled options.
             const OptionContainerCancelIndex& cidx = opts->get<5>();
             const OptionContainerCancelRange& crange = cidx.equal_range(true);
-            for (OptionContainerCancelIndex::const_iterator desc = crange.first;
-                 desc != crange.second; ++desc) {
-                if (!desc->option_) {
+            BOOST_FOREACH(auto const& desc, crange) {
+                if (!desc.option_) {
                     continue;
                 }
                 // Add the cancelled option code to cancelled options
-                uint16_t code = desc->option_->getType();
+                uint16_t code = desc.option_->getType();
                 static_cast<void>(cancelled_opts[vendor_id].insert(code));
             }
         }
@@ -2037,7 +2028,7 @@ Dhcpv6Srv::assignLeases(const Pkt6Ptr& question, Pkt6Ptr& answer,
     // responses in answer message (ADVERTISE or REPLY).
     //
     // @todo: IA_TA once we implement support for temporary addresses.
-    for (const auto& opt : question->options_) {
+    for (auto const& opt : question->options_) {
         switch (opt.second->getType()) {
         case D6O_IA_NA: {
             OptionPtr answer_opt = assignIA_NA(question, ctx,
@@ -2256,7 +2247,7 @@ Dhcpv6Srv::createNameChangeRequests(const Pkt6Ptr& answer,
 
     // Get all IAs from the answer. For each IA, holding an address we will
     // create a corresponding NameChangeRequest.
-    for (auto answer_ia : answer->getOptions(D6O_IA_NA)) {
+    for (auto const& answer_ia : answer->getOptions(D6O_IA_NA)) {
         /// @todo IA_NA may contain multiple addresses. We should process
         /// each address individually. Currently we get only one.
         Option6IAAddrPtr iaaddr = boost::static_pointer_cast<
@@ -2272,22 +2263,21 @@ Dhcpv6Srv::createNameChangeRequests(const Pkt6Ptr& answer,
         // to determine if the changes included changes to the FQDN. If so
         // then we may need to do a CHG_REMOVE.
         bool extended_only = false;
-        for (Lease6Collection::const_iterator l = ctx.currentIA().changed_leases_.begin();
-             l != ctx.currentIA().changed_leases_.end(); ++l) {
+        for (auto const& l : ctx.currentIA().changed_leases_) {
 
-            if ((*l)->addr_ == iaaddr->getAddress()) {
+            if (l->addr_ == iaaddr->getAddress()) {
                 // The address is the same so this must be renewal. If we're not
                 // always updating on renew, then we only renew if DNS info has
                 // changed.
                 if (!ctx.getDdnsParams()->getUpdateOnRenew() &&
-                    ((*l)->hostname_ == opt_fqdn->getDomainName() &&
-                     (*l)->fqdn_fwd_ == do_fwd && (*l)->fqdn_rev_ == do_rev)) {
+                    (l->hostname_ == opt_fqdn->getDomainName() &&
+                     l->fqdn_fwd_ == do_fwd && l->fqdn_rev_ == do_rev)) {
                     extended_only = true;
                 } else {
                     // Queue a CHG_REMOVE of the old data.
                     // NCR will only be created if the lease hostname is not
                     // empty and at least one of the direction flags is true
-                    queueNCR(CHG_REMOVE, *l);
+                    queueNCR(CHG_REMOVE, l);
                 }
 
                 break;
@@ -2335,9 +2325,8 @@ Dhcpv6Srv::getMAC(const Pkt6Ptr& pkt) {
     CfgMACSources mac_sources = CfgMgr::instance().getCurrentCfg()->
         getMACSources().get();
     HWAddrPtr hwaddr;
-    for (CfgMACSources::const_iterator it = mac_sources.begin();
-         it != mac_sources.end(); ++it) {
-        hwaddr = pkt->getMAC(*it);
+    for (auto const& it : mac_sources) {
+        hwaddr = pkt->getMAC(it);
         if (hwaddr) {
             return (hwaddr);
         }
@@ -2555,57 +2544,56 @@ Dhcpv6Srv::assignIA_PD(const Pkt6Ptr& query,
         uint32_t min_preferred_lft = (*leases.begin())->preferred_lft_;
 
         const bool pd_exclude_requested = requestedInORO(query, D6O_PD_EXCLUDE);
-        for (Lease6Collection::iterator l = leases.begin();
-             l != leases.end(); ++l) {
+        for (auto const& l : leases) {
 
             // We have a lease! Let's wrap its content into IA_PD option
             // with IAADDR suboption.
             if (ctx.fake_allocation_) {
                 LOG_INFO(lease6_logger, DHCP6_PD_LEASE_ADVERT)
                     .arg(query->getLabel())
-                    .arg((*l)->addr_.toText())
-                    .arg(static_cast<int>((*l)->prefixlen_))
+                    .arg(l->addr_.toText())
+                    .arg(static_cast<int>(l->prefixlen_))
                     .arg(ia->getIAID());
-            } else if ((*l)->reuseable_valid_lft_ == 0) {
+            } else if (l->reuseable_valid_lft_ == 0) {
                 LOG_INFO(lease6_logger, DHCP6_PD_LEASE_ALLOC)
                     .arg(query->getLabel())
-                    .arg((*l)->addr_.toText())
-                    .arg(static_cast<int>((*l)->prefixlen_))
+                    .arg(l->addr_.toText())
+                    .arg(static_cast<int>(l->prefixlen_))
                     .arg(ia->getIAID())
-                    .arg(Lease::lifetimeToText((*l)->valid_lft_));
+                    .arg(Lease::lifetimeToText(l->valid_lft_));
             } else {
-                (*l)->valid_lft_ = (*l)->reuseable_valid_lft_;
-                (*l)->preferred_lft_ = (*l)->reuseable_preferred_lft_;
+                l->valid_lft_ = l->reuseable_valid_lft_;
+                l->preferred_lft_ = l->reuseable_preferred_lft_;
                 LOG_INFO(lease6_logger, DHCP6_PD_LEASE_REUSE)
                     .arg(query->getLabel())
-                    .arg((*l)->addr_.toText())
-                    .arg(static_cast<int>((*l)->prefixlen_))
+                    .arg(l->addr_.toText())
+                    .arg(static_cast<int>(l->prefixlen_))
                     .arg(ia->getIAID())
-                    .arg(Lease::lifetimeToText((*l)->valid_lft_));
+                    .arg(Lease::lifetimeToText(l->valid_lft_));
 
                 // Increment the reuse statistics.
                 StatsMgr::instance().addValue("v6-ia-pd-lease-reuses", int64_t(1));
-                StatsMgr::instance().addValue(StatsMgr::generateName("subnet", (*l)->subnet_id_,
+                StatsMgr::instance().addValue(StatsMgr::generateName("subnet", l->subnet_id_,
                                                                     "v6-ia-pd-lease-reuses"),
                                             int64_t(1));
             }
 
             // Check for new minimum lease time
-            if (((*l)->preferred_lft_ > 0) && (min_preferred_lft > (*l)->preferred_lft_)) {
-                min_preferred_lft = (*l)->preferred_lft_;
+            if ((l->preferred_lft_ > 0) && (min_preferred_lft > l->preferred_lft_)) {
+                min_preferred_lft = l->preferred_lft_;
             }
 
             boost::shared_ptr<Option6IAPrefix>
-                addr(new Option6IAPrefix(D6O_IAPREFIX, (*l)->addr_,
-                                         (*l)->prefixlen_, (*l)->preferred_lft_,
-                                         (*l)->valid_lft_));
+                addr(new Option6IAPrefix(D6O_IAPREFIX, l->addr_,
+                                         l->prefixlen_, l->preferred_lft_,
+                                         l->valid_lft_));
             ia_rsp->addOption(addr);
 
             if (pd_exclude_requested) {
                 // PD exclude option has been requested via ORO, thus we need to
                 // include it if the pool configuration specifies this option.
                 Pool6Ptr pool = boost::dynamic_pointer_cast<
-                    Pool6>(subnet->getPool(Lease::TYPE_PD, (*l)->addr_));
+                    Pool6>(subnet->getPool(Lease::TYPE_PD, l->addr_));
                 if (pool) {
                     Option6PDExcludePtr pd_exclude_option = pool->getPrefixExcludeOption();
                     if (pd_exclude_option) {
@@ -2678,12 +2666,11 @@ Dhcpv6Srv::extendIA_NA(const Pkt6Ptr& query,
 
     // Extract the addresses that the client is trying to obtain.
     OptionCollection addrs = ia->getOptions();
-    for (OptionCollection::const_iterator it = addrs.begin();
-         it != addrs.end(); ++it) {
-        if (it->second->getType() != D6O_IAADDR) {
+    for (auto const& it : addrs) {
+        if (it.second->getType() != D6O_IAADDR) {
             continue;
         }
-        Option6IAAddrPtr iaaddr = boost::dynamic_pointer_cast<Option6IAAddr>(it->second);
+        Option6IAAddrPtr iaaddr = boost::dynamic_pointer_cast<Option6IAAddr>(it.second);
         if (!iaaddr) {
             // That's weird. Option code was ok, but the object type was not.
             // This should never happen. The only case would be with badly
@@ -2713,82 +2700,80 @@ Dhcpv6Srv::extendIA_NA(const Pkt6Ptr& query,
     uint32_t min_preferred_lft = std::numeric_limits<uint32_t>::max();
 
     // For all leases we have now, add the IAADDR with non-zero lifetimes.
-    for (Lease6Collection::iterator l = leases.begin(); l != leases.end(); ++l) {
-        if ((*l)->reuseable_valid_lft_ == 0) {
+    for (auto const& l : leases) {
+        if (l->reuseable_valid_lft_ == 0) {
             LOG_INFO(lease6_logger, DHCP6_LEASE_RENEW)
                 .arg(query->getLabel())
-                .arg((*l)->addr_.toText())
+                .arg(l->addr_.toText())
                 .arg(ia->getIAID());
         } else {
-            (*l)->valid_lft_ = (*l)->reuseable_valid_lft_;
-            (*l)->preferred_lft_ = (*l)->reuseable_preferred_lft_;
+            l->valid_lft_ = l->reuseable_valid_lft_;
+            l->preferred_lft_ = l->reuseable_preferred_lft_;
             LOG_INFO(lease6_logger, DHCP6_LEASE_REUSE)
                 .arg(query->getLabel())
-                .arg((*l)->addr_.toText())
+                .arg(l->addr_.toText())
                 .arg(ia->getIAID())
-                .arg(Lease::lifetimeToText((*l)->valid_lft_));
+                .arg(Lease::lifetimeToText(l->valid_lft_));
 
             // Increment the reuse statistics.
             StatsMgr::instance().addValue("v6-ia-na-lease-reuses", int64_t(1));
-            StatsMgr::instance().addValue(StatsMgr::generateName("subnet", (*l)->subnet_id_,
+            StatsMgr::instance().addValue(StatsMgr::generateName("subnet", l->subnet_id_,
                                                                  "v6-ia-na-lease-reuses"),
                                           int64_t(1));
         }
 
         Option6IAAddrPtr iaaddr(new Option6IAAddr(D6O_IAADDR,
-                                (*l)->addr_, (*l)->preferred_lft_, (*l)->valid_lft_));
+                                l->addr_, l->preferred_lft_, l->valid_lft_));
         ia_rsp->addOption(iaaddr);
 
         // Check for new minimum lease time
-        if (((*l)->preferred_lft_ > 0) && (min_preferred_lft > (*l)->preferred_lft_)) {
-            min_preferred_lft = (*l)->preferred_lft_;
+        if ((l->preferred_lft_ > 0) && (min_preferred_lft > l->preferred_lft_)) {
+            min_preferred_lft = l->preferred_lft_;
         }
 
         // Now remove this address from the hints list.
-        AllocEngine::Resource hint_type((*l)->addr_);
+        AllocEngine::Resource hint_type(l->addr_);
         hints.erase(std::remove(hints.begin(), hints.end(), hint_type),
                     hints.end());
     }
 
     // For the leases that we just retired, send the addresses with 0 lifetimes.
-    for (Lease6Collection::iterator l = ctx.currentIA().old_leases_.begin();
-         l != ctx.currentIA().old_leases_.end(); ++l) {
+    for (auto const& l : ctx.currentIA().old_leases_) {
 
         // Send an address with zero lifetimes only when this lease belonged to
         // this client. Do not send it when we're reusing an old lease that belonged
         // to someone else.
-        if (equalValues(query->getClientId(), (*l)->duid_)) {
+        if (equalValues(query->getClientId(), l->duid_)) {
             Option6IAAddrPtr iaaddr(new Option6IAAddr(D6O_IAADDR,
-                                                      (*l)->addr_, 0, 0));
+                                                      l->addr_, 0, 0));
             ia_rsp->addOption(iaaddr);
         }
 
         // Now remove this address from the hints list.
-        AllocEngine::Resource hint_type((*l)->addr_);
+        AllocEngine::Resource hint_type(l->addr_);
         hints.erase(std::remove(hints.begin(), hints.end(), hint_type), hints.end());
 
         // If the new FQDN settings have changed for the lease, we need to
         // delete any existing FQDN records for this lease.
-        if (((*l)->hostname_ != ctx.hostname_) || ((*l)->fqdn_fwd_ != ctx.fwd_dns_update_) ||
-            ((*l)->fqdn_rev_ != ctx.rev_dns_update_)) {
+        if ((l->hostname_ != ctx.hostname_) || (l->fqdn_fwd_ != ctx.fwd_dns_update_) ||
+            (l->fqdn_rev_ != ctx.rev_dns_update_)) {
             LOG_DEBUG(ddns6_logger, DBG_DHCP6_DETAIL,
                       DHCP6_DDNS_REMOVE_OLD_LEASE_FQDN)
                 .arg(query->getLabel())
-                .arg((*l)->toText())
+                .arg(l->toText())
                 .arg(ctx.hostname_)
                 .arg(ctx.rev_dns_update_ ? "true" : "false")
                 .arg(ctx.fwd_dns_update_ ? "true" : "false");
 
-            queueNCR(CHG_REMOVE, *l);
+            queueNCR(CHG_REMOVE, l);
         }
     }
 
     // Finally, if there are any addresses requested that we haven't dealt with
     // already, inform the client that he can't have them.
-    for (AllocEngine::HintContainer::const_iterator hint = hints.begin();
-         hint != hints.end(); ++hint) {
+    for (auto const& hint : hints) {
         Option6IAAddrPtr iaaddr(new Option6IAAddr(D6O_IAADDR,
-                                                  hint->getAddress(), 0, 0));
+                                                  hint.getAddress(), 0, 0));
         ia_rsp->addOption(iaaddr);
     }
 
@@ -2866,12 +2851,11 @@ Dhcpv6Srv::extendIA_PD(const Pkt6Ptr& query,
 
     // Extract prefixes that the client is trying to renew.
     OptionCollection addrs = ia->getOptions();
-    for (OptionCollection::const_iterator it = addrs.begin();
-         it != addrs.end(); ++it) {
-        if (it->second->getType() != D6O_IAPREFIX) {
+    for (auto const& it : addrs) {
+        if (it.second->getType() != D6O_IAPREFIX) {
             continue;
         }
-        Option6IAPrefixPtr prf = boost::dynamic_pointer_cast<Option6IAPrefix>(it->second);
+        Option6IAPrefixPtr prf = boost::dynamic_pointer_cast<Option6IAPrefix>(it.second);
         if (!prf) {
             // That's weird. Option code was ok, but the object type was not.
             // This should never happen. The only case would be with badly
@@ -2907,40 +2891,40 @@ Dhcpv6Srv::extendIA_PD(const Pkt6Ptr& query,
     // for calculating T1 and T2.
     uint32_t min_preferred_lft = std::numeric_limits<uint32_t>::max();
 
-    for (Lease6Collection::iterator l = leases.begin(); l != leases.end(); ++l) {
-        if ((*l)->reuseable_valid_lft_ == 0) {
+    for (auto const& l : leases) {
+        if (l->reuseable_valid_lft_ == 0) {
             LOG_INFO(lease6_logger, DHCP6_PD_LEASE_RENEW)
                 .arg(query->getLabel())
-                .arg((*l)->addr_.toText())
-                .arg(static_cast<int>((*l)->prefixlen_))
+                .arg(l->addr_.toText())
+                .arg(static_cast<int>(l->prefixlen_))
                 .arg(ia->getIAID());
         } else {
-            (*l)->valid_lft_ = (*l)->reuseable_valid_lft_;
-            (*l)->preferred_lft_ = (*l)->reuseable_preferred_lft_;
+            l->valid_lft_ = l->reuseable_valid_lft_;
+            l->preferred_lft_ = l->reuseable_preferred_lft_;
             LOG_INFO(lease6_logger, DHCP6_PD_LEASE_REUSE)
                 .arg(query->getLabel())
-                .arg((*l)->addr_.toText())
-                .arg(static_cast<int>((*l)->prefixlen_))
+                .arg(l->addr_.toText())
+                .arg(static_cast<int>(l->prefixlen_))
                 .arg(ia->getIAID())
-                .arg(Lease::lifetimeToText((*l)->valid_lft_));
+                .arg(Lease::lifetimeToText(l->valid_lft_));
 
             // Increment the reuse statistics.
             StatsMgr::instance().addValue("v6-ia-pd-lease-reuses", int64_t(1));
-            StatsMgr::instance().addValue(StatsMgr::generateName("subnet", (*l)->subnet_id_,
+            StatsMgr::instance().addValue(StatsMgr::generateName("subnet", l->subnet_id_,
                                                                  "v6-ia-pd-lease-reuses"),
                                           int64_t(1));
         }
 
         Option6IAPrefixPtr prf(new Option6IAPrefix(D6O_IAPREFIX,
-                               (*l)->addr_, (*l)->prefixlen_,
-                               (*l)->preferred_lft_, (*l)->valid_lft_));
+                               l->addr_, l->prefixlen_,
+                               l->preferred_lft_, l->valid_lft_));
         ia_rsp->addOption(prf);
 
         if (pd_exclude_requested) {
             // PD exclude option has been requested via ORO, thus we need to
             // include it if the pool configuration specifies this option.
             Pool6Ptr pool = boost::dynamic_pointer_cast<
-                Pool6>(subnet->getPool(Lease::TYPE_PD, (*l)->addr_));
+                Pool6>(subnet->getPool(Lease::TYPE_PD, l->addr_));
 
             if (pool) {
                 Option6PDExcludePtr pd_exclude_option = pool->getPrefixExcludeOption();
@@ -2951,46 +2935,44 @@ Dhcpv6Srv::extendIA_PD(const Pkt6Ptr& query,
         }
 
         // Check for new minimum lease time
-        if (((*l)->preferred_lft_ > 0) && ((*l)->preferred_lft_ < min_preferred_lft)) {
-            min_preferred_lft = (*l)->preferred_lft_;
+        if ((l->preferred_lft_ > 0) && (l->preferred_lft_ < min_preferred_lft)) {
+            min_preferred_lft = l->preferred_lft_;
         }
 
         // Now remove this prefix from the hints list.
-        AllocEngine::Resource hint_type((*l)->addr_, (*l)->prefixlen_);
+        AllocEngine::Resource hint_type(l->addr_, l->prefixlen_);
         hints.erase(std::remove(hints.begin(), hints.end(), hint_type),
                     hints.end());
     }
 
     /// For the leases that we just retired, send the prefixes with 0 lifetimes.
-    for (Lease6Collection::iterator l = ctx.currentIA().old_leases_.begin();
-         l != ctx.currentIA().old_leases_.end(); ++l) {
+    for (auto const& l : ctx.currentIA().old_leases_) {
 
         // Send a prefix with zero lifetimes only when this lease belonged to
         // this client. Do not send it when we're reusing an old lease that belonged
         // to someone else.
-        if (equalValues(query->getClientId(), (*l)->duid_)) {
-            Option6IAPrefixPtr prefix(new Option6IAPrefix(D6O_IAPREFIX, (*l)->addr_,
-                                                          (*l)->prefixlen_, 0, 0));
+        if (equalValues(query->getClientId(), l->duid_)) {
+            Option6IAPrefixPtr prefix(new Option6IAPrefix(D6O_IAPREFIX, l->addr_,
+                                                          l->prefixlen_, 0, 0));
             ia_rsp->addOption(prefix);
         }
 
         // Now remove this prefix from the hints list.
-        AllocEngine::Resource hint_type((*l)->addr_, (*l)->prefixlen_);
+        AllocEngine::Resource hint_type(l->addr_, l->prefixlen_);
         hints.erase(std::remove(hints.begin(), hints.end(), hint_type), hints.end());
     }
 
     // Finally, if there are any prefixes requested that we haven't dealt with
     // already, inform the client that he can't have them.
-    for (AllocEngine::HintContainer::const_iterator prefix = hints.begin();
-         prefix != hints.end(); ++prefix) {
+    for (auto const& prefix : hints) {
 
         // Send the prefix with the zero lifetimes only if the prefix
         // contains non-zero value. A zero value indicates that the hint was
         // for the prefix length.
-        if (!prefix->getAddress().isV6Zero()) {
+        if (!prefix.getAddress().isV6Zero()) {
             OptionPtr prefix_opt(new Option6IAPrefix(D6O_IAPREFIX,
-                                                     prefix->getAddress(),
-                                                     prefix->getPrefixLength(),
+                                                     prefix.getAddress(),
+                                                     prefix.getPrefixLength(),
                                                      0, 0));
             ia_rsp->addOption(prefix_opt);
         }
@@ -3027,7 +3009,7 @@ Dhcpv6Srv::extendLeases(const Pkt6Ptr& query, Pkt6Ptr& reply,
     // Save the originally selected subnet.
     Subnet6Ptr orig_subnet = ctx.subnet_;
 
-    for (const auto& opt : query->options_) {
+    for (auto const& opt : query->options_) {
         switch (opt.second->getType()) {
         case D6O_IA_NA: {
             OptionPtr answer_opt = extendIA_NA(query, ctx,
@@ -3079,7 +3061,7 @@ Dhcpv6Srv::releaseLeases(const Pkt6Ptr& release, Pkt6Ptr& reply,
     // handled properly. Therefore the releaseIA_NA and releaseIA_PD options
     // may turn the status code to some error, but can't turn it back to success.
     int general_status = STATUS_Success;
-    for (const auto& opt : release->options_) {
+    for (auto const& opt : release->options_) {
         Lease6Ptr old_lease;
         switch (opt.second->getType()) {
         case D6O_IA_NA: {
@@ -3307,9 +3289,9 @@ Dhcpv6Srv::releaseIA_NA(const DuidPtr& duid, const Pkt6Ptr& query,
                 StatsMgr::generateName("subnet", lease->subnet_id_, "assigned-nas"),
                 static_cast<int64_t>(-1));
 
-            const auto& subnet = CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getBySubnetId(lease->subnet_id_);
+            auto const& subnet = CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getBySubnetId(lease->subnet_id_);
             if (subnet) {
-                const auto& pool = subnet->getPool(Lease::TYPE_NA, lease->addr_, false);
+                auto const& pool = subnet->getPool(Lease::TYPE_NA, lease->addr_, false);
                 if (pool) {
                     StatsMgr::instance().addValue(
                         StatsMgr::generateName("subnet", subnet->getID(),
@@ -3515,9 +3497,9 @@ Dhcpv6Srv::releaseIA_PD(const DuidPtr& duid, const Pkt6Ptr& query,
                 StatsMgr::generateName("subnet", lease->subnet_id_, "assigned-pds"),
                 static_cast<int64_t>(-1));
 
-            const auto& subnet = CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getBySubnetId(lease->subnet_id_);
+            auto const& subnet = CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getBySubnetId(lease->subnet_id_);
             if (subnet) {
-                const auto& pool = subnet->getPool(Lease::TYPE_PD, lease->addr_, false);
+                auto const& pool = subnet->getPool(Lease::TYPE_PD, lease->addr_, false);
                 if (pool) {
                     StatsMgr::instance().addValue(
                         StatsMgr::generateName("subnet", subnet->getID(),
@@ -3759,16 +3741,14 @@ Dhcpv6Srv::processConfirm(AllocEngine::ClientContext6& ctx) {
     // over the IA_NA options to check if they hold any addresses. If there
     // are no, the Confirm is discarded.
     // Check addresses in IA_NA options and make sure they are appropriate.
-    for (OptionCollection::const_iterator ia = ias.begin();
-         ia != ias.end(); ++ia) {
-        const OptionCollection& opts = ia->second->getOptions();
-        for (OptionCollection::const_iterator opt = opts.begin();
-             opt != opts.end(); ++opt) {
+    for (auto const& ia : ias) {
+        const OptionCollection& opts = ia.second->getOptions();
+        for (auto const& opt : opts) {
             // Ignore options other than IAAddr.
-            if (opt->second->getType() == D6O_IAADDR) {
+            if (opt.second->getType() == D6O_IAADDR) {
                 // Check that the address is in range in the subnet selected.
                 Option6IAAddrPtr iaaddr = boost::dynamic_pointer_cast<
-                    Option6IAAddr>(opt->second);
+                    Option6IAAddr>(opt.second);
                 // If there is subnet selected and the address has been included
                 // in IA_NA, mark it verified and verify that it belongs to the
                 // subnet.
@@ -3894,7 +3874,7 @@ Dhcpv6Srv::declineLeases(const Pkt6Ptr& decline, Pkt6Ptr& reply,
     // may turn the status code to some error, but can't turn it back to success.
     int general_status = STATUS_Success;
 
-    for (const auto& opt : decline->options_) {
+    for (auto const& opt : decline->options_) {
         switch (opt.second->getType()) {
         case D6O_IA_NA: {
             OptionPtr answer_opt = declineIA(decline, ctx.duid_, general_status,
@@ -3945,16 +3925,15 @@ Dhcpv6Srv::declineIA(const Pkt6Ptr& decline, const DuidPtr& duid,
 
     const OptionCollection& opts = ia->getOptions();
     int total_addrs = 0; // Let's count the total number of addresses.
-    for (OptionCollection::const_iterator opt = opts.begin(); opt != opts.end();
-         ++opt) {
+    for (auto const& opt : opts) {
 
         // Let's ignore nested options other than IAADDR (there shouldn't be anything
         // else in IA_NA in Decline message, but let's be on the safe side).
-        if (opt->second->getType() != D6O_IAADDR) {
+        if (opt.second->getType() != D6O_IAADDR) {
             continue;
         }
         Option6IAAddrPtr decline_addr = boost::dynamic_pointer_cast<Option6IAAddr>
-            (opt->second);
+            (opt.second);
         if (!decline_addr) {
             continue;
         }
@@ -4143,9 +4122,9 @@ Dhcpv6Srv::declineLease(const Pkt6Ptr& decline, const Lease6Ptr lease,
         StatsMgr::generateName("subnet", lease->subnet_id_, "declined-addresses"),
         static_cast<int64_t>(1));
 
-    const auto& subnet = CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getBySubnetId(lease->subnet_id_);
+    auto const& subnet = CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getBySubnetId(lease->subnet_id_);
     if (subnet) {
-        const auto& pool = subnet->getPool(Lease::TYPE_NA, lease->addr_, false);
+        auto const& pool = subnet->getPool(Lease::TYPE_NA, lease->addr_, false);
         if (pool) {
             StatsMgr::instance().addValue(
                 StatsMgr::generateName("subnet", subnet->getID(),
@@ -4227,7 +4206,7 @@ Dhcpv6Srv::processDhcp4Query(const Pkt6Ptr& dhcp4_query) {
 
 void Dhcpv6Srv::classifyByVendor(const Pkt6Ptr& pkt) {
     OptionVendorClassPtr vclass;
-    for (auto opt : pkt->getOptions(D6O_VENDOR_CLASS)) {
+    for (auto const& opt : pkt->getOptions(D6O_VENDOR_CLASS)) {
         vclass = boost::dynamic_pointer_cast<OptionVendorClass>(opt.second);
         if (!vclass || vclass->getTuplesNum() == 0) {
             continue;
@@ -4261,23 +4240,22 @@ void Dhcpv6Srv::evaluateClasses(const Pkt6Ptr& pkt, bool depend_on_known) {
     const ClientClassDictionaryPtr& dict =
         CfgMgr::instance().getCurrentCfg()->getClientClassDictionary();
     const ClientClassDefListPtr& defs_ptr = dict->getClasses();
-    for (ClientClassDefList::const_iterator it = defs_ptr->cbegin();
-         it != defs_ptr->cend(); ++it) {
+    for (auto const& it : *defs_ptr) {
         // Note second cannot be null
-        const ExpressionPtr& expr_ptr = (*it)->getMatchExpr();
+        const ExpressionPtr& expr_ptr = it->getMatchExpr();
         // Nothing to do without an expression to evaluate
         if (!expr_ptr) {
             continue;
         }
         // Not the right time if only when required
-        if ((*it)->getRequired()) {
+        if (it->getRequired()) {
             continue;
         }
         // Not the right pass.
-        if ((*it)->getDependOnKnown() != depend_on_known) {
+        if (it->getDependOnKnown() != depend_on_known) {
             continue;
         }
-        (*it)->test(pkt, expr_ptr);
+        it->test(pkt, expr_ptr);
     }
 }
 
@@ -4286,7 +4264,7 @@ Dhcpv6Srv::removeDependentEvaluatedClasses(const Pkt6Ptr& pkt) {
     const ClientClassDictionaryPtr& dict =
         CfgMgr::instance().getCurrentCfg()->getClientClassDictionary();
     const ClientClassDefListPtr& defs_ptr = dict->getClasses();
-    for (auto def : *defs_ptr) {
+    for (auto const& def : *defs_ptr) {
         // Only remove evaluated classes. Other classes can be
         // assigned via hooks libraries and we should not remove
         // them because there is no way they can be added back.
@@ -4301,9 +4279,8 @@ Dhcpv6Srv::setReservedClientClasses(const Pkt6Ptr& pkt,
                                     const AllocEngine::ClientContext6& ctx) {
     if (ctx.currentHost() && pkt) {
         const ClientClasses& classes = ctx.currentHost()->getClientClasses6();
-        for (ClientClasses::const_iterator cclass = classes.cbegin();
-             cclass != classes.cend(); ++cclass) {
-            pkt->addClass(*cclass);
+        for (auto const& cclass : classes) {
+            pkt->addClass(cclass);
         }
     }
 }
@@ -4335,21 +4312,19 @@ Dhcpv6Srv::requiredClassify(const Pkt6Ptr& pkt, AllocEngine::ClientContext6& ctx
         subnet->getSharedNetwork(network);
         if (network) {
             const ClientClasses& to_add = network->getRequiredClasses();
-            for (ClientClasses::const_iterator cclass = to_add.cbegin();
-                 cclass != to_add.cend(); ++cclass) {
-                classes.insert(*cclass);
+            for (auto const& cclass : to_add) {
+                classes.insert(cclass);
             }
         }
 
         // Followed by the subnet
         const ClientClasses& to_add = subnet->getRequiredClasses();
-        for (ClientClasses::const_iterator cclass = to_add.cbegin();
-             cclass != to_add.cend(); ++cclass) {
-            classes.insert(*cclass);
+        for (auto const& cclass : to_add) {
+            classes.insert(cclass);
         }
 
         // And finish by pools
-        for (auto resource : ctx.allocated_resources_) {
+        for (auto const& resource : ctx.allocated_resources_) {
             PoolPtr pool =
                 ctx.subnet_->getPool(resource.getPrefixLength() == 128 ?
                                      Lease::TYPE_NA : Lease::TYPE_PD,
@@ -4357,9 +4332,8 @@ Dhcpv6Srv::requiredClassify(const Pkt6Ptr& pkt, AllocEngine::ClientContext6& ctx
                                      false);
             if (pool) {
                 const ClientClasses& to_add = pool->getRequiredClasses();
-                for (ClientClasses::const_iterator cclass = to_add.cbegin();
-                     cclass != to_add.cend(); ++cclass) {
-                    classes.insert(*cclass);
+                for (auto const& cclass : to_add) {
+                    classes.insert(cclass);
                 }
             }
         }
@@ -4371,19 +4345,18 @@ Dhcpv6Srv::requiredClassify(const Pkt6Ptr& pkt, AllocEngine::ClientContext6& ctx
     // Note getClientClassDictionary() cannot be null
     const ClientClassDictionaryPtr& dict =
         CfgMgr::instance().getCurrentCfg()->getClientClassDictionary();
-    for (ClientClasses::const_iterator cclass = classes.cbegin();
-         cclass != classes.cend(); ++cclass) {
-        const ClientClassDefPtr class_def = dict->findClass(*cclass);
+    for (auto const& cclass : classes) {
+        const ClientClassDefPtr class_def = dict->findClass(cclass);
         if (!class_def) {
             LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_CLASS_UNDEFINED)
-                .arg(*cclass);
+                .arg(cclass);
             continue;
         }
         const ExpressionPtr& expr_ptr = class_def->getMatchExpr();
         // Nothing to do without an expression to evaluate
         if (!expr_ptr) {
             LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_CLASS_UNTESTABLE)
-                .arg(*cclass);
+                .arg(cclass);
             continue;
         }
         // Evaluate the expression which can return false (no match),
@@ -4392,22 +4365,22 @@ Dhcpv6Srv::requiredClassify(const Pkt6Ptr& pkt, AllocEngine::ClientContext6& ctx
             bool status = evaluateBool(*expr_ptr, *pkt);
             if (status) {
                 LOG_INFO(dhcp6_logger, EVAL_RESULT)
-                    .arg(*cclass)
+                    .arg(cclass)
                     .arg("true");
                 // Matching: add the class
-                pkt->addClass(*cclass);
+                pkt->addClass(cclass);
             } else {
                 LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, EVAL_RESULT)
-                    .arg(*cclass)
+                    .arg(cclass)
                     .arg("false");
             }
         } catch (const Exception& ex) {
             LOG_ERROR(dhcp6_logger, EVAL_RESULT)
-                .arg(*cclass)
+                .arg(cclass)
                 .arg(ex.what());
         } catch (...) {
             LOG_ERROR(dhcp6_logger, EVAL_RESULT)
-                .arg(*cclass)
+                .arg(cclass)
                 .arg("get exception?");
         }
     }
@@ -4500,7 +4473,7 @@ Dhcpv6Srv::generateFqdn(const Pkt6Ptr& answer,
         // our notion of client's FQDN in the Client FQDN option.
         if (answer->getType() != DHCPV6_ADVERTISE) {
             Lease6Ptr lease;
-            for (auto l : ctx.new_leases_) {
+            for (auto const& l : ctx.new_leases_) {
                 if ((l->type_ == Lease::TYPE_NA) && (l->addr_ == addr)) {
                     lease = l;
                     break;
@@ -4611,14 +4584,13 @@ void Dhcpv6Srv::processRSOO(const Pkt6Ptr& query, const Pkt6Ptr& rsp) {
             // and if it's RSOO-enabled and there's no such option provided yet,
             // copy it to the server's response
             const OptionCollection& rsoo = rsoo_container->getOptions();
-            for (OptionCollection::const_iterator opt = rsoo.begin();
-                 opt != rsoo.end(); ++opt) {
+            for (auto const& opt : rsoo) {
 
                 // Echo option if it is RSOO enabled option and there is no such
                 // option added yet.
-                if (cfg_rsoo->enabled(opt->second->getType()) &&
-                    !rsp->getOption(opt->second->getType())) {
-                    rsp->addOption(opt->second);
+                if (cfg_rsoo->enabled(opt.second->getType()) &&
+                    !rsp->getOption(opt.second->getType())) {
+                    rsp->addOption(opt.second);
                 }
             }
         }
@@ -4820,13 +4792,12 @@ Dhcpv6Srv::checkDynamicSubnetChange(const Pkt6Ptr& question, Pkt6Ptr& answer,
         ((prev_hostname != ctx.hostname_) ||
         (prev_fwd_dns_update != ctx.fwd_dns_update_) ||
         (prev_rev_dns_update != ctx.rev_dns_update_))) {
-        for (Lease6Collection::const_iterator l = ctx.new_leases_.begin();
-            l != ctx.new_leases_.end(); ++l) {
-            (*l)->hostname_ = ctx.hostname_;
-            (*l)->fqdn_fwd_ = ctx.fwd_dns_update_;
-            (*l)->fqdn_rev_ = ctx.rev_dns_update_;
-            (*l)->reuseable_valid_lft_ = 0;
-            LeaseMgrFactory::instance().updateLease6(*l);
+        for (auto const& l : ctx.new_leases_) {
+            l->hostname_ = ctx.hostname_;
+            l->fqdn_fwd_ = ctx.fwd_dns_update_;
+            l->fqdn_rev_ = ctx.rev_dns_update_;
+            l->reuseable_valid_lft_ = 0;
+            LeaseMgrFactory::instance().updateLease6(l);
         }
     }
 }

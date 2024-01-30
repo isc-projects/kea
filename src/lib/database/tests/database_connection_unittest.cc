@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -626,7 +626,7 @@ TEST(DatabaseConnection, DISABLED_toElementDbAccessStringInvalid) {
         "readonly=not-boolean"
     };
 
-    for (auto access_str : access_strs) {
+    for (auto const& access_str : access_strs) {
         /// @todo: verify that an ERROR is logged.
         ASSERT_NO_THROW(DatabaseConnection::toElementDbAccessString(access_str));
     }

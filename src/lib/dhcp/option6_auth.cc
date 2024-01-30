@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -58,7 +58,7 @@ Option6Auth::pack(isc::util::OutputBuffer& buf, bool) const {
     // authentication information for reconfig msg
     // should have zero
 
-    for (auto i : auth_info_) {
+    for (auto const& i : auth_info_) {
         buf.writeUint8(i);
     }
 }

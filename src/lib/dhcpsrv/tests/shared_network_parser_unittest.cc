@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -92,10 +92,9 @@ public:
         ASSERT_EQ(test.addresses_.size(), network.getRelayAddresses().size());
 
         // Are the expected addresses in the list?
-        for (auto exp_address = test.addresses_.begin(); exp_address != test.addresses_.end();
-             ++exp_address) {
-            EXPECT_TRUE(network.hasRelayAddress(*exp_address))
-                        << " expected address: " << (*exp_address).toText() << " not found" ;
+        for (auto const& exp_address : test.addresses_) {
+            EXPECT_TRUE(network.hasRelayAddress(exp_address))
+                        << " expected address: " << exp_address.toText() << " not found" ;
         }
     }
 
@@ -451,11 +450,9 @@ TEST_F(SharedNetwork4ParserTest, relayInfoTests) {
 
     // Iterate over the test scenarios, verifying each prescribed
     // outcome.
-    for (auto test = tests.begin(); test != tests.end(); ++test) {
-        {
-            SCOPED_TRACE((*test).description_);
-            relayTest(*test);
-        }
+    for (auto const& test : tests) {
+        SCOPED_TRACE(test.description_);
+        relayTest(test);
     }
 }
 
@@ -1030,11 +1027,9 @@ TEST_F(SharedNetwork6ParserTest, relayInfoTests) {
 
     // Iterate over the test scenarios, verifying each prescribed
     // outcome.
-    for (auto test = tests.begin(); test != tests.end(); ++test) {
-        {
-            SCOPED_TRACE((*test).description_);
-            relayTest(*test);
-        }
+    for (auto const& test : tests) {
+        SCOPED_TRACE(test.description_);
+        relayTest(test);
     }
 }
 

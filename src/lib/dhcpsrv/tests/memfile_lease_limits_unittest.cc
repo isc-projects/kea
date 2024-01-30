@@ -1,4 +1,4 @@
-// Copyright (C) 2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2022-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -58,7 +58,7 @@ public:
         ElementPtr ctx = Element::createMap();
         if (classes.size()) {
             ElementPtr clist = Element::createList();
-            for (auto client_class : classes ) {
+            for (auto const& client_class : classes ) {
                 clist->add(Element::create(client_class));
             }
 
@@ -119,7 +119,7 @@ public:
 
         EXPECT_EQ(classes.size(), clc_.size(ltype));
         auto expected_count = expected_counts.begin();
-        for (auto client_class : classes) {
+        for (auto const& client_class : classes) {
             size_t count;
             ASSERT_NO_THROW_LOG(count = clc_.getClassCount(client_class, ltype));
             EXPECT_EQ(count, *expected_count) << ", count is wrong for client_class: " << client_class;
@@ -213,7 +213,7 @@ public:
                          std::list<size_t> expected_new_counts, const Lease::Type& ltype) {
         // Start the map with a count of one for all the old classes.
         clc_.clear();
-        for (auto client_class : old_classes) {
+        for (auto const& client_class : old_classes) {
             ASSERT_NO_THROW_LOG(clc_.setClassCount(client_class, 1, ltype));
         }
 
@@ -231,7 +231,7 @@ public:
 
         // Verify class counts for the old lease's classes are right.
         auto expected_count = expected_old_counts.begin();
-        for (auto client_class : old_classes) {
+        for (auto const& client_class : old_classes) {
             size_t count;
             ASSERT_NO_THROW_LOG(count = clc_.getClassCount(client_class, ltype));
             EXPECT_EQ(count, *expected_count)
@@ -241,7 +241,7 @@ public:
 
         // Verify class counts for the new lease's classes are right.
         expected_count = expected_new_counts.begin();
-        for (auto client_class : new_classes) {
+        for (auto const& client_class : new_classes) {
             size_t count;
             ASSERT_NO_THROW_LOG(count = clc_.getClassCount(client_class, ltype));
             EXPECT_EQ(count, *expected_count)
@@ -503,7 +503,7 @@ TEST_F(ClassLeaseCounterTest, getLeaseClientClassesTest) {
     };
 
     // Iterate over the invalid scenarios.
-    for (auto scenario : invalid_scenarios) {
+    for (auto const& scenario : invalid_scenarios) {
         // Construct the lease and context.
         lease = leaseFactory(Lease::TYPE_V4);
         ElementPtr ctx;
@@ -546,7 +546,7 @@ TEST_F(ClassLeaseCounterTest, getLeaseClientClassesTest) {
     };
 
     // Iterate over the scenarios.
-    for (auto scenario : valid_scenarios) {
+    for (auto const& scenario : valid_scenarios) {
         // Construct the lease and context.
         lease = leaseFactory(Lease::TYPE_V4);
         if (!scenario.ctx_json_.empty()) {

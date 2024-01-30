@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -176,7 +176,11 @@ TranslatorPool::setPoolIetf6(string const& xpath, ConstElementPtr elem) {
 
 void
 TranslatorPool::setPoolKea(string const& xpath, ConstElementPtr elem) {
-    // Skip keys "start-address" and "end-address".
+    // Set the list element. This is important in case we have no other elements except the keys.
+    setItem(xpath, ElementPtr(), LeafBaseType::Unknown);
+
+    // Skip keys "start-address" and "end-address" since they were set with the
+    // list element in the call above with the LeafBaseType::Unknown parameter.
 
     ConstElementPtr pool = elem->get("pool");
     if (!pool) {

@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -1198,21 +1198,21 @@ HAService::asyncSendLeaseUpdates(const dhcp::Pkt4Ptr& query,
     size_t sent_num = 0;
 
     // Schedule sending lease updates to each peer.
-    for (auto p = peers_configs.begin(); p != peers_configs.end(); ++p) {
-        HAConfig::PeerConfigPtr conf = p->second;
+    for (auto const& p : peers_configs) {
+        HAConfig::PeerConfigPtr conf = p.second;
 
         // Check if the lease updates should be queued. This is the case when the
         // server is in the communication-recovery state. Queued lease updates may
         // be sent when the communication is re-established.
         if (shouldQueueLeaseUpdates(conf)) {
             // Lease updates for deleted leases.
-            for (auto l = deleted_leases->begin(); l != deleted_leases->end(); ++l) {
-                lease_update_backlog_.push(LeaseUpdateBacklog::DELETE, *l);
+            for (auto const& l : *deleted_leases) {
+                lease_update_backlog_.push(LeaseUpdateBacklog::DELETE, l);
             }
 
             // Lease updates for new allocations and updated leases.
-            for (auto l = leases->begin(); l != leases->end(); ++l) {
-                lease_update_backlog_.push(LeaseUpdateBacklog::ADD, *l);
+            for (auto const& l : *leases) {
+                lease_update_backlog_.push(LeaseUpdateBacklog::ADD, l);
             }
 
             continue;
@@ -1233,14 +1233,14 @@ HAService::asyncSendLeaseUpdates(const dhcp::Pkt4Ptr& query,
         }
 
         // Lease updates for deleted leases.
-        for (auto l = deleted_leases->begin(); l != deleted_leases->end(); ++l) {
-            asyncSendLeaseUpdate(query, conf, CommandCreator::createLease4Delete(**l),
+        for (auto const& l : *deleted_leases) {
+            asyncSendLeaseUpdate(query, conf, CommandCreator::createLease4Delete(*l),
                                  parking_lot);
         }
 
         // Lease updates for new allocations and updated leases.
-        for (auto l = leases->begin(); l != leases->end(); ++l) {
-            asyncSendLeaseUpdate(query, conf, CommandCreator::createLease4Update(**l),
+        for (auto const& l : *leases) {
+            asyncSendLeaseUpdate(query, conf, CommandCreator::createLease4Update(*l),
                                  parking_lot);
         }
 
@@ -1278,20 +1278,20 @@ HAService::asyncSendLeaseUpdates(const dhcp::Pkt6Ptr& query,
     size_t sent_num = 0;
 
     // Schedule sending lease updates to each peer.
-    for (auto p = peers_configs.begin(); p != peers_configs.end(); ++p) {
-        HAConfig::PeerConfigPtr conf = p->second;
+    for (auto const& p : peers_configs) {
+        HAConfig::PeerConfigPtr conf = p.second;
 
         // Check if the lease updates should be queued. This is the case when the
         // server is in the communication-recovery state. Queued lease updates may
         // be sent when the communication is re-established.
         if (shouldQueueLeaseUpdates(conf)) {
-            for (auto l = deleted_leases->begin(); l != deleted_leases->end(); ++l) {
-                lease_update_backlog_.push(LeaseUpdateBacklog::DELETE, *l);
+            for (auto const& l : *deleted_leases) {
+                lease_update_backlog_.push(LeaseUpdateBacklog::DELETE, l);
             }
 
             // Lease updates for new allocations and updated leases.
-            for (auto l = leases->begin(); l != leases->end(); ++l) {
-                lease_update_backlog_.push(LeaseUpdateBacklog::ADD, *l);
+            for (auto const& l : *leases) {
+                lease_update_backlog_.push(LeaseUpdateBacklog::ADD, l);
             }
 
             continue;
@@ -1658,7 +1658,7 @@ HAService::processStatusGet() const {
     }
     std::set<std::string> scopes = query_filter_.getServedScopes();
     ElementPtr list = Element::createList();
-    for (std::string scope : scopes) {
+    for (auto const& scope : scopes) {
         list->add(Element::create(scope));
     }
     local->set("scopes", list);
@@ -1700,7 +1700,7 @@ HAService::processHeartbeat() {
 
     auto scopes = query_filter_.getServedScopes();
     ElementPtr scopes_list = Element::createList();
-    for (auto scope : scopes) {
+    for (auto const& scope : scopes) {
         scopes_list->add(Element::create(scope));
     }
     arguments->set("scopes", scopes_list);
@@ -2195,7 +2195,7 @@ HAService::asyncSyncLeasesInternal(http::HttpClient& http_client,
                     }
 
                     // Iterate over the leases and update the database as appropriate.
-                    const auto& leases_element = leases->listValue();
+                    auto const& leases_element = leases->listValue();
 
                     LOG_INFO(ha_logger, HA_LEASES_SYNC_LEASE_PAGE_RECEIVED)
                         .arg(config_->getThisServerName())

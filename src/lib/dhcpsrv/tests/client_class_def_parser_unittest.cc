@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -1955,7 +1955,7 @@ TEST_F(ClientClassDefParserTest, validLifetimeTests) {
         }
     };
 
-    for (auto scenario : scenarios) {
+    for (auto const& scenario : scenarios) {
         SCOPED_TRACE(scenario.desc_); {
             std::stringstream oss;
             oss << "{ \"name\": \"foo\"";
@@ -2018,7 +2018,7 @@ TEST_F(ClientClassDefParserTest, preferredLifetimeTests) {
         }
     };
 
-    for (auto scenario : scenarios) {
+    for (auto const& scenario : scenarios) {
         SCOPED_TRACE(scenario.desc_); {
             std::stringstream oss;
             oss << "{ \"name\": \"foo\"";

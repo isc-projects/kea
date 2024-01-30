@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -295,12 +295,12 @@ TimerMgrTest::testUnregisterTimers() {
     doWait(500);
 
     // Make sure that all timers have been executed at least once.
-    for (CallsCount::iterator it = calls_count_.begin();
-         it != calls_count_.end(); ++it) {
-        unsigned int calls_count = it->second;
+    size_t count = 0;
+    for (auto const& it : calls_count_) {
+        unsigned int calls_count = it.second;
         ASSERT_GT(calls_count, 0)
-            << "expected calls counter for timer"
-            << (std::distance(calls_count_.begin(), it) + 1)
+            << "expected calls counter for timer "
+            << ++count
             << " greater than 0";
     }
 

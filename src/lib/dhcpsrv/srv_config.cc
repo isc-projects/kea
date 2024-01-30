@@ -1,14 +1,24 @@
-// Copyright (C) 2014-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+
+#include <cc/simple_parser.h>
 #include <exceptions/exceptions.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/parsers/base_network_parser.h>
+#include <dhcpsrv/parsers/dhcp_parsers.h>
+#include <dhcpsrv/parsers/expiration_config_parser.h>
+#include <dhcpsrv/parsers/multi_threading_config_parser.h>
+#include <dhcpsrv/parsers/sanity_checks_parser.h>
 #include <dhcpsrv/parsers/simple_parser4.h>
+#include <dhcpsrv/parsers/simple_parser6.h>
+#include <dhcpsrv/parsers/dhcp_queue_control_parser.h>
+#include <dhcpsrv/parsers/duid_config_parser.h>
+#include <dhcpsrv/cfg_multi_threading.h>
 #include <dhcpsrv/srv_config.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/dhcpsrv_log.h>
@@ -16,7 +26,7 @@
 #include <process/logging_info.h>
 #include <log/logger_manager.h>
 #include <log/logger_specification.h>
-#include <dhcp/pkt.h> // Needed for HWADDR_SOURCE_*
+#include <dhcp/pkt.h>
 #include <stats/stats_mgr.h>
 #include <util/strutil.h>
 
@@ -134,9 +144,8 @@ SrvConfig::copy(SrvConfig& new_config) const {
     // Replace configured hooks libraries.
     new_config.hooks_config_.clear();
     using namespace isc::hooks;
-    for (HookLibsCollection::const_iterator it = hooks_config_.get().begin();
-         it != hooks_config_.get().end(); ++it) {
-        new_config.hooks_config_.add(it->first, it->second);
+    for (auto const& it : hooks_config_.get()) {
+        new_config.hooks_config_.add(it.first, it.second);
     }
 }
 
@@ -177,14 +186,17 @@ SrvConfig::merge(ConfigBase& other) {
         // Merge globals.
         mergeGlobals(other_srv_config);
 
+        // Merge global maps.
+        mergeGlobalMaps(other_srv_config);
+
         // Merge option defs. We need to do this next so we
         // pass these into subsequent merges so option instances
         // at each level can be created based on the merged
         // definitions.
-        cfg_option_def_->merge((*other_srv_config.getCfgOptionDef()));
+        cfg_option_def_->merge(*other_srv_config.getCfgOptionDef());
 
         // Merge options.
-        cfg_option_->merge(cfg_option_def_, (*other_srv_config.getCfgOption()));
+        cfg_option_->merge(cfg_option_def_, *other_srv_config.getCfgOption());
 
         if (!other_srv_config.getClientClassDictionary()->empty()) {
             // Client classes are complicated because they are ordered and may
@@ -243,7 +255,7 @@ SrvConfig::mergeGlobals(SrvConfig& other) {
     }
     // Iterate over the "other" globals, adding/overwriting them into
     // this config's list of globals.
-    for (auto other_global : other.getConfiguredGlobals()->valuesMap()) {
+    for (auto const& other_global : other.getConfiguredGlobals()->valuesMap()) {
         addConfiguredGlobal(other_global.first, other_global.second);
     }
 
@@ -252,7 +264,7 @@ SrvConfig::mergeGlobals(SrvConfig& other) {
 
     // A handful of values are stored as members in SrvConfig. So we'll
     // iterate over the merged globals, setting appropriate members.
-    for (auto merged_global : getConfiguredGlobals()->valuesMap()) {
+    for (auto const& merged_global : getConfiguredGlobals()->valuesMap()) {
         std::string name = merged_global.first;
         ConstElementPtr element = merged_global.second;
         try {
@@ -279,10 +291,110 @@ SrvConfig::mergeGlobals(SrvConfig& other) {
 }
 
 void
+SrvConfig::mergeGlobalMaps(SrvConfig& other) {
+    ElementPtr config = Element::createMap();
+    for (auto const& other_global : other.getConfiguredGlobals()->valuesMap()) {
+        config->set(other_global.first, other_global.second);
+    }
+    std::string parameter_name;
+    try {
+        ConstElementPtr compatibility = config->get("compatibility");
+        parameter_name = "compatibility";
+        if (compatibility) {
+            CompatibilityParser parser;
+            parser.parse(compatibility, *this);
+            addConfiguredGlobal("compatibility", compatibility);
+        }
+        ConstElementPtr control_socket = config->get("control-socket");
+        parameter_name = "control-socket";
+        if (control_socket) {
+            ControlSocketParser parser;
+            parser.parse(*this, control_socket);
+            addConfiguredGlobal("control-socket", control_socket);
+        }
+        ElementPtr dhcp_ddns = boost::const_pointer_cast<Element>(config->get("dhcp-ddns"));
+        parameter_name = "dhcp-ddns";
+        if (dhcp_ddns) {
+            // Apply defaults
+            D2ClientConfigParser::setAllDefaults(dhcp_ddns);
+            D2ClientConfigParser parser;
+            // D2 client configuration.
+            D2ClientConfigPtr d2_client_cfg;
+            d2_client_cfg = parser.parse(dhcp_ddns);
+            if (!d2_client_cfg) {
+                d2_client_cfg.reset(new D2ClientConfig());
+            }
+            d2_client_cfg->validateContents();
+            setD2ClientConfig(d2_client_cfg);
+            addConfiguredGlobal("dhcp-ddns", dhcp_ddns);
+        }
+        ConstElementPtr expiration_cfg = config->get("expired-leases-processing");
+        parameter_name = "expired-leases-processing";
+        if (expiration_cfg) {
+            ExpirationConfigParser parser;
+            parser.parse(expiration_cfg, getCfgExpiration());
+            addConfiguredGlobal("expired-leases-processing", expiration_cfg);
+        }
+        ElementPtr multi_threading = boost::const_pointer_cast<Element>(config->get("multi-threading"));
+        parameter_name = "multi-threading";
+        if (multi_threading) {
+            if (CfgMgr::instance().getFamily() == AF_INET) {
+                SimpleParser::setDefaults(multi_threading, SimpleParser4::DHCP_MULTI_THREADING4_DEFAULTS);
+            } else {
+                SimpleParser::setDefaults(multi_threading, SimpleParser6::DHCP_MULTI_THREADING6_DEFAULTS);
+            }
+            MultiThreadingConfigParser parser;
+            parser.parse(*this, multi_threading);
+            addConfiguredGlobal("multi-threading", multi_threading);
+        }
+        bool multi_threading_enabled = true;
+        uint32_t thread_count = 0;
+        uint32_t queue_size = 0;
+        CfgMultiThreading::extract(getDHCPMultiThreading(),
+                                   multi_threading_enabled, thread_count, queue_size);
+        ElementPtr sanity_checks = boost::const_pointer_cast<Element>(config->get("sanity-checks"));
+        parameter_name = "sanity-checks";
+        if (sanity_checks) {
+            if (CfgMgr::instance().getFamily() == AF_INET) {
+                SimpleParser::setDefaults(sanity_checks, SimpleParser4::SANITY_CHECKS4_DEFAULTS);
+            } else {
+                SimpleParser::setDefaults(sanity_checks, SimpleParser6::SANITY_CHECKS6_DEFAULTS);
+            }
+            SanityChecksParser parser;
+            parser.parse(*this, sanity_checks);
+            addConfiguredGlobal("multi-threading", sanity_checks);
+        }
+        ConstElementPtr server_id = config->get("server-id");
+        parameter_name = "server-id";
+        if (server_id) {
+            DUIDConfigParser parser;
+            const CfgDUIDPtr& cfg = getCfgDUID();
+            parser.parse(cfg, server_id);
+            addConfiguredGlobal("server-id", server_id);
+        }
+        ElementPtr queue_control = boost::const_pointer_cast<Element>(config->get("dhcp-queue-control"));
+        parameter_name = "dhcp-queue-control";
+        if (queue_control) {
+            if (CfgMgr::instance().getFamily() == AF_INET) {
+                SimpleParser::setDefaults(queue_control, SimpleParser4::DHCP_QUEUE_CONTROL4_DEFAULTS);
+            } else {
+                SimpleParser::setDefaults(queue_control, SimpleParser6::DHCP_QUEUE_CONTROL6_DEFAULTS);
+            }
+            DHCPQueueControlParser parser;
+            setDHCPQueueControl(parser.parse(queue_control, multi_threading_enabled));
+            addConfiguredGlobal("dhcp-queue-control", queue_control);
+        }
+    } catch (const isc::Exception& ex) {
+        isc_throw(BadValue, "Invalid parameter " << parameter_name << " error: " << ex.what());
+    } catch (...) {
+        isc_throw(BadValue, "Invalid parameter " << parameter_name);
+    }
+}
+
+void
 SrvConfig::removeStatistics() {
     // Removes statistics for v4 and v6 subnets
     getCfgSubnets4()->removeStatistics();
-
     getCfgSubnets6()->removeStatistics();
 }
 
@@ -319,7 +431,6 @@ SrvConfig::updateStatistics() {
     if (LeaseMgrFactory::haveInstance()) {
         // Updates  statistics for v4 and v6 subnets
         getCfgSubnets4()->updateStatistics();
-
         getCfgSubnets6()->updateStatistics();
     }
 }
@@ -333,7 +444,7 @@ SrvConfig::applyDefaultsConfiguredGlobals(const SimpleDefaults& defaults) {
     const Element::Position pos("<default-value>", 0, 0);
 
     // Let's go over all parameters we have defaults for.
-    for (auto def_value : defaults) {
+    for (auto const& def_value : defaults) {
 
         // Try if such a parameter is there. If it is, let's
         // skip it, because user knows best *cough*.
@@ -401,10 +512,10 @@ SrvConfig::extractConfiguredGlobals(isc::data::ConstElementPtr config) {
     }
 
     const std::map<std::string, ConstElementPtr>& values = config->mapValue();
-    for (auto value = values.begin(); value != values.end(); ++value) {
-        if (value->second->getType() != Element::list &&
-            value->second->getType() != Element::map) {
-                addConfiguredGlobal(value->first, value->second);
+    for (auto const& value : values) {
+        if (value.second->getType() != Element::list &&
+            value.second->getType() != Element::map) {
+                addConfiguredGlobal(value.first, value.second);
         }
     }
 }
@@ -688,15 +799,14 @@ SrvConfig::toElement() const {
         // Get plain subnets
         ElementPtr plain_subnets = Element::createList();
         const Subnet4Collection* subnets = cfg_subnets4_->getAll();
-        for (Subnet4Collection::const_iterator subnet = subnets->cbegin();
-             subnet != subnets->cend(); ++subnet) {
+        for (auto const& subnet : *subnets) {
             // Skip subnets which are in a shared-network
             SharedNetwork4Ptr network;
-            (*subnet)->getSharedNetwork(network);
+            subnet->getSharedNetwork(network);
             if (network) {
                 continue;
             }
-            ElementPtr subnet_cfg = (*subnet)->toElement();
+            ElementPtr subnet_cfg = subnet->toElement();
             sn_list.push_back(subnet_cfg);
             plain_subnets->add(subnet_cfg);
         }
@@ -708,13 +818,11 @@ SrvConfig::toElement() const {
 
         // Get subnets in shared network subnet lists
         const std::vector<ElementPtr> networks = shared_networks->listValue();
-        for (auto network = networks.cbegin();
-             network != networks.cend(); ++network) {
+        for (auto const& network : networks) {
             const std::vector<ElementPtr> sh_list =
-                (*network)->get("subnet4")->listValue();
-            for (auto subnet = sh_list.cbegin();
-                 subnet != sh_list.cend(); ++subnet) {
-                sn_list.push_back(*subnet);
+                network->get("subnet4")->listValue();
+            for (auto const& subnet : sh_list) {
+                sn_list.push_back(subnet);
             }
         }
 
@@ -722,15 +830,14 @@ SrvConfig::toElement() const {
         // Get plain subnets
         ElementPtr plain_subnets = Element::createList();
         const Subnet6Collection* subnets = cfg_subnets6_->getAll();
-        for (Subnet6Collection::const_iterator subnet = subnets->cbegin();
-             subnet != subnets->cend(); ++subnet) {
+        for (auto const& subnet : *subnets) {
             // Skip subnets which are in a shared-network
             SharedNetwork6Ptr network;
-            (*subnet)->getSharedNetwork(network);
+            subnet->getSharedNetwork(network);
             if (network) {
                 continue;
             }
-            ElementPtr subnet_cfg = (*subnet)->toElement();
+            ElementPtr subnet_cfg = subnet->toElement();
             sn_list.push_back(subnet_cfg);
             plain_subnets->add(subnet_cfg);
         }
@@ -742,13 +849,11 @@ SrvConfig::toElement() const {
 
         // Get subnets in shared network subnet lists
         const std::vector<ElementPtr> networks = shared_networks->listValue();
-        for (auto network = networks.cbegin();
-             network != networks.cend(); ++network) {
+        for (auto const& network : networks) {
             const std::vector<ElementPtr> sh_list =
-                (*network)->get("subnet6")->listValue();
-            for (auto subnet = sh_list.cbegin();
-                 subnet != sh_list.cend(); ++subnet) {
-                sn_list.push_back(*subnet);
+                network->get("subnet6")->listValue();
+            for (auto const& subnet : sh_list) {
+                sn_list.push_back(subnet);
             }
         }
     }
@@ -764,15 +869,14 @@ SrvConfig::toElement() const {
     }
 
     // Insert subnet reservations
-    for (std::vector<ElementPtr>::const_iterator subnet = sn_list.cbegin();
-         subnet != sn_list.cend(); ++subnet) {
-        ConstElementPtr id = (*subnet)->get("id");
+    for (auto const& subnet : sn_list) {
+        ConstElementPtr id = subnet->get("id");
         if (isNull(id)) {
             isc_throw(ToElementError, "subnet has no id");
         }
         SubnetID subnet_id = id->intValue();
         ConstElementPtr resvs = resv_list.get(subnet_id);
-        (*subnet)->set("reservations", resvs);
+        subnet->set("reservations", resvs);
     }
 
     // Set expired-leases-processing
@@ -890,7 +994,7 @@ SrvConfig::moveDdnsParams(isc::data::ElementPtr srv_elem) {
         { "hostname-char-replacement", "hostname-char-replacement" }
     };
 
-    for (auto param : params) {
+    for (auto const& param : params) {
         if (d2_elem->contains(param.from_name)) {
             if (!srv_elem->contains(param.to_name)) {
                 // No global value for it already, so let's add it.

@@ -1,4 +1,4 @@
-// Copyright (C) 2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2023-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -41,7 +41,7 @@ Option6Dnr::pack(util::OutputBuffer& buf, bool check) const {
 
 void
 Option6Dnr::packAddresses(util::OutputBuffer& buf) const {
-    for (const auto& address : ip_addresses_) {
+    for (auto const& address : ip_addresses_) {
         if (!address.isV6()) {
             isc_throw(isc::BadValue, getLogPrefix()
                                          << address.toText() << " is not an IPv6 address");

@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015,2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -55,9 +55,8 @@ uint32_t CfgMACSource::MACSourceFromText(const std::string& name) {
 }
 
 void CfgMACSource::add(uint32_t source) {
-    for (CfgMACSources::const_iterator it = mac_sources_.begin();
-         it != mac_sources_.end(); ++it) {
-        if (*it == source) {
+    for (auto const& it : mac_sources_) {
+        if (it == source) {
             isc_throw(InvalidParameter, "mac-source parameter " << source
                       << "' specified twice.");
         }
@@ -67,17 +66,16 @@ void CfgMACSource::add(uint32_t source) {
 
 ElementPtr CfgMACSource::toElement() const {
     ElementPtr result = Element::createList();
-    for (CfgMACSources::const_iterator source = mac_sources_.cbegin();
-         source != mac_sources_.cend(); ++source) {
+    for (auto const& source : mac_sources_) {
         std::string name;
         for (unsigned i = 0; i < sizeof(sources)/sizeof(sources[0]); ++i) {
-            if (sources[i].type == *source) {
+            if (sources[i].type == source) {
                 name = sources[i].name;
                 break;
             }
         }
         if (name.empty()) {
-            isc_throw(ToElementError, "invalid MAC source: " << *source);
+            isc_throw(ToElementError, "invalid MAC source: " << source);
         }
         result->add(Element::create(name));
     }
@@ -85,5 +83,5 @@ ElementPtr CfgMACSource::toElement() const {
     return (result);
 }
 
-};
-};
+}
+}

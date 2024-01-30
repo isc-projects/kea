@@ -1,4 +1,4 @@
-// Copyright (C) 2021-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2021-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -162,7 +162,7 @@ public:
     /// @param insert_rows Collection of rows of data to insert. Note that
     /// each row is inserted as a separate statement execution.
     void testInsert(const TestRowSet& insert_rows) {
-        for (auto row : insert_rows ) {
+        for (auto const& row : insert_rows) {
             // Set the insert parameters based on the current insert row.
             PsqlBindArray in_bindings;
             in_bindings.add(row.int_col);
@@ -238,7 +238,7 @@ public:
     /// @param update_rows Collection of rows of data to update.
     void testUpdate(const TestRowSet& update_rows) {
         size_t update_count = 0;
-        for (auto row : update_rows ) {
+        for (auto const& row : update_rows) {
             // Set the text value and where clause parameters based on the
             // this row's values.
             PsqlBindArray in_bindings;

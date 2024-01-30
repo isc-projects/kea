@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -13,7 +13,7 @@
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/subnet_id.h>
 #include <stats/stats_mgr.h>
-#include <boost/foreach.hpp>
+#include <boost/range/adaptor/reversed.hpp>
 #include <string.h>
 #include <sstream>
 
@@ -152,12 +152,12 @@ CfgSubnets6::merge(CfgOptionDefPtr cfg_def, CfgSharedNetworks6Ptr networks,
         other_subnet->getCfgOption()->createOptions(cfg_def);
 
         // Create the options for pool based on the given definitions.
-        for (const auto& pool : other_subnet->getPoolsWritable(Lease::TYPE_NA)) {
+        for (auto const& pool : other_subnet->getPoolsWritable(Lease::TYPE_NA)) {
             pool->getCfgOption()->createOptions(cfg_def);
         }
 
         // Create the options for pd pool based on the given definitions.
-        for (const auto& pool : other_subnet->getPoolsWritable(Lease::TYPE_PD)) {
+        for (auto const& pool : other_subnet->getPoolsWritable(Lease::TYPE_PD)) {
             pool->getCfgOption()->createOptions(cfg_def);
         }
 
@@ -187,14 +187,14 @@ CfgSubnets6::merge(CfgOptionDefPtr cfg_def, CfgSharedNetworks6Ptr networks,
 
 ConstSubnet6Ptr
 CfgSubnets6::getBySubnetId(const SubnetID& subnet_id) const {
-    const auto& index = subnets_.get<SubnetSubnetIdIndexTag>();
+    auto const& index = subnets_.get<SubnetSubnetIdIndexTag>();
     auto subnet_it = index.find(subnet_id);
     return ((subnet_it != index.cend()) ? (*subnet_it) : ConstSubnet6Ptr());
 }
 
 ConstSubnet6Ptr
 CfgSubnets6::getByPrefix(const std::string& subnet_text) const {
-    const auto& index = subnets_.get<SubnetPrefixIndexTag>();
+    auto const& index = subnets_.get<SubnetPrefixIndexTag>();
     auto subnet_it = index.find(subnet_text);
     return ((subnet_it != index.cend()) ? (*subnet_it) : ConstSubnet6Ptr());
 }
@@ -210,7 +210,7 @@ CfgSubnets6::initSelector(const Pkt6Ptr& query) {
 
     // Initialize fields specific to relayed messages.
     if (!query->relay_info_.empty()) {
-        BOOST_REVERSE_FOREACH(Pkt6::RelayInfo relay, query->relay_info_) {
+        for (auto const& relay : boost::adaptors::reverse(query->relay_info_)) {
             if (!relay.linkaddr_.isV6Zero() &&
                 !relay.linkaddr_.isV6LinkLocal()) {
                 selector.first_relay_linkaddr_ = relay.linkaddr_;
@@ -433,7 +433,7 @@ CfgSubnets6::removeStatistics() {
         stats_mgr.del(StatsMgr::generateName("subnet", subnet_id,
                                              "reclaimed-leases"));
 
-        for (const auto& pool : subnet6->getPools(Lease::TYPE_NA)) {
+        for (auto const& pool : subnet6->getPools(Lease::TYPE_NA)) {
             stats_mgr.del(StatsMgr::generateName("subnet", subnet_id,
                                                  StatsMgr::generateName("pool", pool->getID(),
                                                                         "total-nas")));
@@ -459,7 +459,7 @@ CfgSubnets6::removeStatistics() {
                                                                         "reclaimed-leases")));
         }
 
-        for (const auto& pool : subnet6->getPools(Lease::TYPE_PD)) {
+        for (auto const& pool : subnet6->getPools(Lease::TYPE_PD)) {
             stats_mgr.del(StatsMgr::generateName("subnet", subnet_id,
                                                  StatsMgr::generateName("pd-pool", pool->getID(),
                                                                         "total-pds")));
@@ -520,7 +520,7 @@ CfgSubnets6::updateStatistics() {
             stats_mgr.setValue(name_ia_pd_reuses, int64_t(0));
         }
 
-        for (const auto& pool : subnet6->getPools(Lease::TYPE_NA)) {
+        for (auto const& pool : subnet6->getPools(Lease::TYPE_NA)) {
             const std::string& name_total_nas(StatsMgr::generateName("subnet", subnet_id,
                                                                      StatsMgr::generateName("pool", pool->getID(),
                                                                                             "total-nas")));
@@ -538,7 +538,7 @@ CfgSubnets6::updateStatistics() {
             }
         }
 
-        for (const auto& pool : subnet6->getPools(Lease::TYPE_PD)) {
+        for (auto const& pool : subnet6->getPools(Lease::TYPE_PD)) {
             const std::string& name_total_pds(StatsMgr::generateName("subnet", subnet_id,
                                                                      StatsMgr::generateName("pd-pool", pool->getID(),
                                                                                             "total-pds")));
@@ -565,7 +565,7 @@ CfgSubnets6::updateStatistics() {
 
 void
 CfgSubnets6::initAllocatorsAfterConfigure() {
-    for (auto subnet : subnets_) {
+    for (auto const& subnet : subnets_) {
         subnet->initAllocatorsAfterConfigure();
     }
 }

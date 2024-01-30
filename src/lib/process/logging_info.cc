@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -88,7 +88,7 @@ LoggingInfo::equals(const LoggingInfo& other) const {
     // that they are at the same index of the vectors.
     for (auto const& dest : destinations_) {
         bool match = false;
-        for (auto const &dest_other : other.destinations_) {
+        for (auto const& dest_other : other.destinations_) {
             if (dest.equals(dest_other)) {
                 match = true;
                 break;

@@ -17,9 +17,9 @@ Regularly Tested Platforms
 Kea is officially supported on Alpine, Debian, Fedora, FreeBSD, RHEL, and Ubuntu
 systems. Kea-|release| builds have been tested on:
 
-* Alpine — 3.16, 3.17
+* Alpine — 3.16, 3.17, 3.18, 3.19
 * Debian — 10, 11, 12
-* Fedora — 36, 37, 38
+* Fedora — 36, 37, 38, 39
 * FreeBSD — 13
 * RHEL — 8, 9
 * Ubuntu — 18.04, 20.04, 22.04
@@ -104,12 +104,6 @@ Some optional features of Kea have additional dependencies.
 -  To store lease information in a PostgreSQL database, Kea
    requires PostgreSQL headers and libraries. This is an optional
    dependency; Kea can be built without PostgreSQL support.
-
--  Integration with RADIUS is provided in Kea via the hook library
-   available to ISC's paid support customers. Use of this library requires
-   the FreeRADIUS-client library to be present on the system where Kea
-   is running. This is an optional dependency; Kea can be built
-   without RADIUS support.
 
 -  Kea provides a NETCONF interface with the ``kea-netconf`` agent. This Kea module
    requires Sysrepo software when used. Building Kea with NETCONF support

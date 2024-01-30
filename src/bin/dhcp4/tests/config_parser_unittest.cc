@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -42,7 +42,6 @@
 #include "dhcp4_test_utils.h"
 #include "get_config_unittest.h"
 
-#include <boost/foreach.hpp>
 #include <boost/scoped_ptr.hpp>
 
 #include <iostream>
@@ -57,6 +56,7 @@ using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 using namespace isc::hooks;
+using namespace isc::test;
 using namespace std;
 
 namespace {
@@ -438,8 +438,7 @@ public:
             "    \"subnet\": \"192.0.2.0/24\", "
             "    \"option-data\": [ {";
         bool first = true;
-        typedef std::pair<std::string, std::string> ParamPair;
-        BOOST_FOREACH(ParamPair param, params) {
+        for (auto const& param : params) {
             if (!first) {
                 stream << ", ";
             } else {
@@ -764,7 +763,7 @@ public:
     checkSubnet(const CollectionType& col, std::string subnet,
                 uint32_t t1, uint32_t t2, uint32_t valid,
                 uint32_t min_valid = 0, uint32_t max_valid = 0) {
-        const auto& index = col.template get<SubnetPrefixIndexTag>();
+        auto const& index = col.template get<SubnetPrefixIndexTag>();
         auto subnet_it = index.find(subnet);
         if (subnet_it == index.cend()) {
             ADD_FAILURE() << "Unable to find expected subnet " << subnet;
@@ -2365,18 +2364,16 @@ TEST_F(Dhcp4ParserTest, badSubnetValues) {
 
     // Iterate over the list of scenarios.  Each should fail to parse with
     // a specific error message.
-    for (auto scenario = scenarios.begin(); scenario != scenarios.end(); ++scenario) {
-        {
-            SCOPED_TRACE((*scenario).description_);
-            ConstElementPtr config;
-            ASSERT_NO_THROW(config = parseDHCP4((*scenario).config_json_))
-                            << "invalid json, broken test";
-            ConstElementPtr status;
-            EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(*srv_, config));
-            checkResult(status, 1);
-            ASSERT_TRUE(comment_);
-            EXPECT_EQ(comment_->stringValue(), (*scenario).exp_error_msg_);
-        }
+    for (auto const& scenario : scenarios) {
+        SCOPED_TRACE(scenario.description_);
+        ConstElementPtr config;
+        ASSERT_NO_THROW(config = parseDHCP4(scenario.config_json_))
+                        << "invalid json, broken test";
+        ConstElementPtr status;
+        EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(*srv_, config));
+        checkResult(status, 1);
+        ASSERT_TRUE(comment_);
+        EXPECT_EQ(comment_->stringValue(), scenario.exp_error_msg_);
     }
 }
 
@@ -3784,7 +3781,7 @@ TEST_F(Dhcp4ParserTest, optionDataValidHexLiterals) {
         "0xA0B0C0D"     // 0x prefix
     };
 
-    for (auto valid_hex : valid_hexes) {
+    for (auto const& valid_hex : valid_hexes) {
         ConstElementPtr x;
         std::string config = createConfigWithOption(valid_hex, "data");
         ConstElementPtr json;
@@ -7421,7 +7418,7 @@ TEST_F(Dhcp4ParserTest, dhcpQueueControl) {
 
     // Iterate over the valid scenarios and verify they succeed.
     data::ElementPtr exp_control;
-    for (auto scenario : scenarios) {
+    for (auto const& scenario : scenarios) {
         SCOPED_TRACE(scenario.description_);
         {
             // Clear the config
@@ -7469,11 +7466,7 @@ TEST_F(Dhcp4ParserTest, dhcpQueueControl) {
             }
 
             // Verify that the staged queue control equals the expected queue control.
-            EXPECT_TRUE(staged_control->equals(*exp_control))
-#ifdef HAVE_CREATE_UNIFIED_DIFF
-                << "\nDiff:\n" << isc::test::generateDiff(prettyPrint(staged_control), prettyPrint(exp_control)) << "\n"
-#endif
-            ;
+            expectEqWithDiff(staged_control, exp_control);
         }
     }
 }
@@ -7522,7 +7515,7 @@ TEST_F(Dhcp4ParserTest, dhcpQueueControlInvalid) {
     // Iterate over the incorrect scenarios and verify they
     // fail as expected. Note, we use parseDHCP4() directly
     // as all of the errors above are enforced by the grammar.
-    for (auto scenario : scenarios) {
+    for (auto const& scenario : scenarios) {
         SCOPED_TRACE(scenario.description_);
         {
             // Construct the config JSON

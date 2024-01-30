@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,6 +9,7 @@
 #include <dhcp/pkt.h>
 #include <dhcp/iface_mgr.h>
 #include <dhcp/hwaddr.h>
+#include <boost/foreach.hpp>
 #include <vector>
 
 namespace isc {
@@ -53,7 +54,7 @@ Pkt::addOption(const OptionPtr& opt) {
 
 OptionPtr
 Pkt::getNonCopiedOption(const uint16_t type) const {
-    const auto& x = options_.find(type);
+    auto const& x = options_.find(type);
     if (x != options_.end()) {
         return (x->second);
     }
@@ -62,7 +63,7 @@ Pkt::getNonCopiedOption(const uint16_t type) const {
 
 OptionPtr
 Pkt::getOption(const uint16_t type) {
-    const auto& x = options_.find(type);
+    auto const& x = options_.find(type);
     if (x != options_.end()) {
         if (copy_retrieved_options_) {
             OptionPtr option_copy = x->second->clone();
@@ -90,10 +91,9 @@ Pkt::getOptions(const uint16_t opt_type) {
     // matching options, copy them and replace the original ones with new
     // instances.
     if (copy_retrieved_options_) {
-        for (OptionCollection::iterator opt_it = range.first;
-             opt_it != range.second; ++opt_it) {
-            OptionPtr option_copy = opt_it->second->clone();
-            opt_it->second = option_copy;
+        BOOST_FOREACH(auto& opt_it, range) {
+            OptionPtr option_copy = opt_it.second->clone();
+            opt_it.second = option_copy;
         }
     }
     // Finally, return updated options. This can also be empty in some cases.
@@ -102,7 +102,7 @@ Pkt::getOptions(const uint16_t opt_type) {
 
 bool
 Pkt::delOption(uint16_t type) {
-    const auto& x = options_.find(type);
+    auto const& x = options_.find(type);
     if (x != options_.end()) {
         options_.erase(x);
         return (true); // delete successful

@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -128,17 +128,17 @@ void testCopyAssign(const OpType& op_type,
 
     // Iterate over source options.
     OptionCollection::const_iterator it_copy = option_copy_subs.begin();
-    for (OptionCollection::const_iterator it = option_subs.begin();
-         it != option_subs.end(); ++it, ++it_copy) {
+    for (auto const& it : option_subs) {
         // The option codes should be equal in both containers.
-        EXPECT_EQ(it->first, it_copy->first);
+        EXPECT_EQ(it.first, it_copy->first);
         // Pointers must be unequal because the expectation is that options
         // are copied, rather than pointers.
-        EXPECT_NE(it->second, it_copy->second);
-        Option* opt_ptr = it->second.get();
+        EXPECT_NE(it.second, it_copy->second);
+        Option* opt_ptr = it.second.get();
         Option* opt_copy_ptr = it_copy->second.get();
         // The C++ types must match.
         EXPECT_TRUE(typeid(*opt_ptr) == typeid(*opt_copy_ptr));
+        ++it_copy;
     }
 
     // Final check is to compare their binary representations.

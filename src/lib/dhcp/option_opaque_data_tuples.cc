@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -44,9 +44,8 @@ void
 OptionOpaqueDataTuples::pack(isc::util::OutputBuffer& buf, bool check) const {
     packHeader(buf, check);
 
-    for (TuplesCollection::const_iterator it = tuples_.begin();
-         it != tuples_.end(); ++it) {
-        it->pack(buf);
+    for (auto const& it : tuples_) {
+        it.pack(buf);
     }
     // That's it. We don't pack any sub-options here, because this option
     // must not contain sub-options.
@@ -113,9 +112,8 @@ bool
 OptionOpaqueDataTuples::hasTuple(const std::string& tuple_str) const {
     // Iterate over existing tuples (there shouldn't be many of them),
     // and try to match the searched one.
-    for (TuplesCollection::const_iterator it = tuples_.begin();
-         it != tuples_.end(); ++it) {
-        if (*it == tuple_str) {
+    for (auto const& it : tuples_) {
+        if (it == tuple_str) {
             return (true);
         }
     }
@@ -127,9 +125,8 @@ OptionOpaqueDataTuples::len() const {
     // The option starts with the header.
     uint16_t length = getHeaderLen();
     // Now iterate over existing tuples and add their size.
-    for (TuplesCollection::const_iterator it = tuples_.begin();
-         it != tuples_.end(); ++it) {
-        length += it->getTotalLength();
+    for (auto const& it : tuples_) {
+        length += it.getTotalLength();
     }
 
     return (length);

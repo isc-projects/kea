@@ -1,4 +1,4 @@
-// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -22,6 +22,16 @@
 namespace isc {
 namespace test {
 
+/// @brief Expect two element pointers to be equal. Order of elements
+/// in a list or a map is also checked by default.
+/// @{
+void
+expectEqWithDiff(isc::data::ConstElementPtr const& left, isc::data::ConstElementPtr const& right);
+
+void
+expectEqWithDiff(isc::data::ElementPtr const& left, isc::data::ElementPtr const& right);
+/// @}
+
 /// @brief Return the difference between two strings
 ///
 /// Use the gtest >= 1.8.0 tool which builds the difference between
@@ -30,15 +40,17 @@ namespace test {
 /// @param left left string
 /// @param right right string
 /// @return the unified diff between left and right
-std::string generateDiff(std::string left, std::string right);
+std::string
+generateDiff(std::string left, std::string right);
 
 /// @brief Run a test using toElement() method with a string
 ///
 /// @tparam Cfg the class implementing the toElement() method
 /// @param expected the expected textual value
 /// @param cfg an instance of the Cfg class
-template<typename Cfg>
-void runToElementTest(const std::string& expected, const Cfg& cfg) {
+template <typename Cfg>
+void
+runToElementTest(const std::string& expected, const Cfg& cfg) {
     using namespace isc::data;
 #ifdef HAVE_IS_BASE_OF
     static_assert(std::is_base_of<CfgToElement, Cfg>::value,
@@ -53,9 +65,7 @@ void runToElementTest(const std::string& expected, const Cfg& cfg) {
         std::string got = prettyPrint(unparsed);
         ADD_FAILURE() << "Expected:\n" << wanted << "\n"
                       << "Actual:\n" << got
-#ifdef HAVE_CREATE_UNIFIED_DIFF
                       << "\nDiff:\n" << generateDiff(wanted, got)
-#endif
                       << "\n";
     }
 }
@@ -78,14 +88,12 @@ void runToElementTest(isc::data::ConstElementPtr expected, const Cfg& cfg) {
         std::string got = prettyPrint(unparsed);
         ADD_FAILURE() << "Expected:\n" << wanted << "\n"
                       << "Actual:\n" << got
-#ifdef HAVE_CREATE_UNIFIED_DIFF
                       << "\nDiff:\n" << generateDiff(wanted, got)
-#endif
                       << "\n";
     }
 }
 
-}; // end of isc::test namespace
-}; // end of isc namespace
+}  // namespace test
+}  // namespace isc
 
 #endif // TEST_TO_ELEMENT_H

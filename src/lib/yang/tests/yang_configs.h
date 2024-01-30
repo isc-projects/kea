@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -406,25 +406,25 @@ const YRTree subnetOptionsTreeKeaDhcp4 = YangRepr::buildTreeFromVector({
     { "/kea-dhcp4-server:config/subnet4[id='111']/id",
       "111", libyang::LeafBaseType::Uint32, false },
     { "/kea-dhcp4-server:config/subnet4[id='111']/"
-      "option-data[code='100'][space='dns']",
+      "option-data[code='100'][space='dns'][data='12121212']",
       std::nullopt, libyang::LeafBaseType::Unknown, false },
     { "/kea-dhcp4-server:config/subnet4[id='111']/"
-      "option-data[code='100'][space='dns']/code",
+      "option-data[code='100'][space='dns'][data='12121212']/code",
       "100", libyang::LeafBaseType::Uint8, false },
     { "/kea-dhcp4-server:config/subnet4[id='111']/"
-      "option-data[code='100'][space='dns']/space",
+      "option-data[code='100'][space='dns'][data='12121212']/space",
       "dns", libyang::LeafBaseType::String, false },
     { "/kea-dhcp4-server:config/subnet4[id='111']/"
-      "option-data[code='100'][space='dns']/data",
-      "12121212", libyang::LeafBaseType::String, true },
+      "option-data[code='100'][space='dns'][data='12121212']/data",
+      "12121212", libyang::LeafBaseType::String, false },
     { "/kea-dhcp4-server:config/subnet4[id='111']/"
-      "option-data[code='100'][space='dns']/csv-format",
+      "option-data[code='100'][space='dns'][data='12121212']/csv-format",
       "false", libyang::LeafBaseType::Bool, true },
     { "/kea-dhcp4-server:config/subnet4[id='111']/"
-      "option-data[code='100'][space='dns']/always-send",
+      "option-data[code='100'][space='dns'][data='12121212']/always-send",
       "false", libyang::LeafBaseType::Bool, true },
     { "/kea-dhcp4-server:config/subnet4[id='111']/"
-      "option-data[code='100'][space='dns']/never-send",
+      "option-data[code='100'][space='dns'][data='12121212']/never-send",
       "false", libyang::LeafBaseType::Bool, true },
     { "/kea-dhcp4-server:config/subnet4[id='111']/"
       "pool[start-address='10.0.1.0'][end-address='10.0.1.255']",
@@ -485,31 +485,31 @@ const YRTree subnetOptionsTreeKeaDhcp6 = YangRepr::buildTreeFromVector({
       "2001:db8::1:0/112", libyang::LeafBaseType::String, true },
     { "/kea-dhcp6-server:config/subnet6[id='111']/"
       "pool[start-address='2001:db8::1:0'][end-address='2001:db8::1:ffff']/"
-      "option-data[code='100'][space='dns']",
+      "option-data[code='100'][space='dns'][data='12121212']",
       std::nullopt, libyang::LeafBaseType::Unknown, false },
     { "/kea-dhcp6-server:config/subnet6[id='111']/"
       "pool[start-address='2001:db8::1:0'][end-address='2001:db8::1:ffff']/"
-      "option-data[code='100'][space='dns']/code",
+      "option-data[code='100'][space='dns'][data='12121212']/code",
       "100", libyang::LeafBaseType::Uint16, false },
     { "/kea-dhcp6-server:config/subnet6[id='111']/"
       "pool[start-address='2001:db8::1:0'][end-address='2001:db8::1:ffff']/"
-      "option-data[code='100'][space='dns']/space",
+      "option-data[code='100'][space='dns'][data='12121212']/space",
       "dns", libyang::LeafBaseType::String, false },
     { "/kea-dhcp6-server:config/subnet6[id='111']/"
       "pool[start-address='2001:db8::1:0'][end-address='2001:db8::1:ffff']/"
-      "option-data[code='100'][space='dns']/data",
-      "12121212", libyang::LeafBaseType::String, true },
+      "option-data[code='100'][space='dns'][data='12121212']/data",
+      "12121212", libyang::LeafBaseType::String, false },
     { "/kea-dhcp6-server:config/subnet6[id='111']/"
       "pool[start-address='2001:db8::1:0'][end-address='2001:db8::1:ffff']/"
-      "option-data[code='100'][space='dns']/csv-format",
+      "option-data[code='100'][space='dns'][data='12121212']/csv-format",
       "false", libyang::LeafBaseType::Bool, true },
     { "/kea-dhcp6-server:config/subnet6[id='111']/"
       "pool[start-address='2001:db8::1:0'][end-address='2001:db8::1:ffff']/"
-      "option-data[code='100'][space='dns']/always-send",
+      "option-data[code='100'][space='dns'][data='12121212']/always-send",
       "false", libyang::LeafBaseType::Bool, true },
     { "/kea-dhcp6-server:config/subnet6[id='111']/"
       "pool[start-address='2001:db8::1:0'][end-address='2001:db8::1:ffff']/"
-      "option-data[code='100'][space='dns']/never-send",
+      "option-data[code='100'][space='dns'][data='12121212']/never-send",
       "false", libyang::LeafBaseType::Bool, true },
     { "/kea-dhcp6-server:config/subnet6[id='111']/subnet",
       "2001:db8::/48", libyang::LeafBaseType::String, true },

@@ -1,4 +1,4 @@
-// Copyright (C) 2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2023-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -380,7 +380,7 @@ DnrInstance::getDnrInstanceAsText() const {
            << "adn='" << getAdnAsText() << "'";
     if (!adn_only_mode_) {
         stream << ", addr_length=" << addr_length_ << ", address(es):";
-        for (const auto& address : ip_addresses_) {
+        for (auto const& address : ip_addresses_) {
             stream << " " << address.toText();
         }
 

@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -249,22 +249,22 @@ public:
     void testCommands(const std::vector<string> cmds) {
 
         // The commands should not be registered yet.
-        for (auto cmd = cmds.begin(); cmd != cmds.end(); ++cmd) {
-            checkCommandRegistered(*cmd, false);
+        for (auto const& cmd : cmds) {
+            checkCommandRegistered(cmd, false);
         }
 
         loadLib();
 
         // The commands should be available after library was loaded.
-        for (auto cmd = cmds.begin(); cmd != cmds.end(); ++cmd) {
-            checkCommandRegistered(*cmd, true);
+        for (auto const& cmd : cmds) {
+            checkCommandRegistered(cmd, true);
         }
 
         unloadLibs();
 
         // and the commands should be gone now.
-        for (auto cmd = cmds.begin(); cmd != cmds.end(); ++cmd) {
-            checkCommandRegistered(*cmd, false);
+        for (auto const& cmd : cmds) {
+            checkCommandRegistered(cmd, false);
         }
 
     }
@@ -630,7 +630,7 @@ struct TestScenario {
     std::string description_;
     std::string command_txt_;
     std::string exp_response_;
-    std::string exp_result_json;
+    std::string exp_result_json_;
 };
 
 // Verifies detection of invalid v4 input parameters.
@@ -792,11 +792,9 @@ TEST_F(StatCmdsTest, StatLease4GetBadParams) {
         }
     };
 
-    for (auto test = tests.begin(); test != tests.end(); ++test) {
-        {
-        SCOPED_TRACE((*test).description_);
-        testCommand((*test).command_txt_, CONTROL_RESULT_ERROR,(*test).exp_response_);
-        }
+    for (auto const& test : tests) {
+        SCOPED_TRACE(test.description_);
+        testCommand(test.command_txt_, CONTROL_RESULT_ERROR, test.exp_response_);
     }
 }
 
@@ -990,14 +988,11 @@ TEST_F(StatCmdsTest, statLease4GetValid) {
         }
     };
 
-    for (auto test = tests.begin(); test != tests.end(); ++test) {
-        {
-        SCOPED_TRACE((*test).description_);
-        testCommand((*test).command_txt_, CONTROL_RESULT_SUCCESS,
-                    (*test).exp_response_, (*test).exp_result_json);
-        }
+    for (auto const& test : tests) {
+        SCOPED_TRACE(test.description_);
+        testCommand(test.command_txt_, CONTROL_RESULT_SUCCESS,
+                    test.exp_response_, test.exp_result_json_);
     }
-
 }
 
 // Verifies result content for valid v4 statistic commands that
@@ -1052,14 +1047,11 @@ TEST_F(StatCmdsTest, statLease4GetSubnetsNotFound) {
         }
     };
 
-    for (auto test = tests.begin(); test != tests.end(); ++test) {
-        {
-        SCOPED_TRACE((*test).description_);
-        testCommand((*test).command_txt_, CONTROL_RESULT_EMPTY,
-                    (*test).exp_response_, (*test).exp_result_json);
+    for (auto const& test : tests) {
+        SCOPED_TRACE(test.description_);
+        testCommand(test.command_txt_, CONTROL_RESULT_EMPTY,
+                    test.exp_response_, test.exp_result_json_);
         }
-    }
-
 }
 
 // Verifies detection of invalid v6 input parameters.
@@ -1221,11 +1213,9 @@ TEST_F(StatCmdsTest, StatLease6GetBadParams) {
         }
     };
 
-    for (auto test = tests.begin(); test != tests.end(); ++test) {
-        {
-        SCOPED_TRACE((*test).description_);
-        testCommand((*test).command_txt_, CONTROL_RESULT_ERROR,(*test).exp_response_);
-        }
+    for (auto const& test : tests) {
+        SCOPED_TRACE(test.description_);
+        testCommand(test.command_txt_, CONTROL_RESULT_ERROR, test.exp_response_);
     }
 }
 
@@ -1426,12 +1416,10 @@ TEST_F(StatCmdsTest, statLease6GetValid) {
         }
     };
 
-    for (auto test = tests.begin(); test != tests.end(); ++test) {
-        {
-        SCOPED_TRACE((*test).description_);
-        testCommand((*test).command_txt_, CONTROL_RESULT_SUCCESS,
-                    (*test).exp_response_, (*test).exp_result_json);
-        }
+    for (auto const& test : tests) {
+        SCOPED_TRACE(test.description_);
+        testCommand(test.command_txt_, CONTROL_RESULT_SUCCESS,
+                    test.exp_response_, test.exp_result_json_);
     }
 
 }
@@ -1488,12 +1476,10 @@ TEST_F(StatCmdsTest, statLease6GetSubnetsNotFound) {
         }
     };
 
-    for (auto test = tests.begin(); test != tests.end(); ++test) {
-        {
-        SCOPED_TRACE((*test).description_);
-        testCommand((*test).command_txt_, CONTROL_RESULT_EMPTY,
-                    (*test).exp_response_, (*test).exp_result_json);
-        }
+    for (auto const& test : tests) {
+        SCOPED_TRACE(test.description_);
+        testCommand(test.command_txt_, CONTROL_RESULT_EMPTY,
+                    test.exp_response_, test.exp_result_json_);
     }
 }
 
@@ -1540,12 +1526,10 @@ TEST_F(StatCmdsTest, statLease4OrphanedStats) {
         }
     };
 
-    for (auto test = tests.begin(); test != tests.end(); ++test) {
-        {
-        SCOPED_TRACE((*test).description_);
-        testCommand((*test).command_txt_, CONTROL_RESULT_SUCCESS,
-                    (*test).exp_response_, (*test).exp_result_json);
-        }
+    for (auto const& test : tests) {
+        SCOPED_TRACE(test.description_);
+        testCommand(test.command_txt_, CONTROL_RESULT_SUCCESS,
+                    test.exp_response_, test.exp_result_json_);
     }
 }
 
@@ -1593,12 +1577,10 @@ TEST_F(StatCmdsTest, statLease6OrphanedStats) {
         }
     };
 
-    for (auto test = tests.begin(); test != tests.end(); ++test) {
-        {
-        SCOPED_TRACE((*test).description_);
-        testCommand((*test).command_txt_, CONTROL_RESULT_SUCCESS,
-                    (*test).exp_response_, (*test).exp_result_json);
-        }
+    for (auto const& test : tests) {
+        SCOPED_TRACE(test.description_);
+        testCommand(test.command_txt_, CONTROL_RESULT_SUCCESS,
+                    test.exp_response_, test.exp_result_json_);
     }
 }
 

@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -1227,7 +1227,7 @@ TEST_F(NameDhcpv4SrvTest, createNameChangeRequestsUpdateOnRenew) {
     };
 
     // Iterate over test scenarios.
-    for (auto scenario : scenarios) {
+    for (auto const& scenario : scenarios) {
         SCOPED_TRACE(scenario.description_); {
             // Set and verify DDNS params flags
             subnet_->setDdnsSendUpdates(scenario.send_updates_);
@@ -2164,7 +2164,7 @@ TEST_F(NameDhcpv4SrvTest, sanitizeHostDefault) {
 
     Pkt4Ptr resp;
     OptionStringPtr hostname;
-    for (auto scenario : scenarios) {
+    for (auto const& scenario : scenarios) {
         SCOPED_TRACE((scenario).description_);
         {
             // Set the hostname option.
@@ -2233,7 +2233,7 @@ TEST_F(NameDhcpv4SrvTest, sanitizeHost) {
 
     Pkt4Ptr resp;
     OptionStringPtr hostname;
-    for (auto scenario : scenarios) {
+    for (auto const& scenario : scenarios) {
         SCOPED_TRACE((scenario).description_);
         {
             // Set the hostname option.
@@ -2295,7 +2295,7 @@ TEST_F(NameDhcpv4SrvTest, sanitizeHostGlobal) {
 
     Pkt4Ptr resp;
     OptionStringPtr hostname;
-    for (auto scenario : scenarios) {
+    for (auto const& scenario : scenarios) {
         SCOPED_TRACE((scenario).description_);
         {
             // Set the hostname option.
@@ -2363,12 +2363,12 @@ TEST_F(NameDhcpv4SrvTest, sanitizeFqdn) {
 
     Pkt4Ptr resp;
     Option4ClientFqdnPtr fqdn;
-    for (auto scenario = scenarios.begin(); scenario != scenarios.end(); ++scenario) {
-        SCOPED_TRACE((*scenario).description_);
+    for (auto const& scenario : scenarios) {
+        SCOPED_TRACE(scenario.description_);
         {
         // Set the hostname option.
-        ASSERT_NO_THROW(client.includeHostname((*scenario).original_));
-        ASSERT_NO_THROW(client.includeFQDN(0, (*scenario).original_, (*scenario).name_type_));
+        ASSERT_NO_THROW(client.includeHostname(scenario.original_));
+        ASSERT_NO_THROW(client.includeFQDN(0, scenario.original_, scenario.name_type_));
 
         // Send the DHCPDISCOVER and make sure that the server responded.
         ASSERT_NO_THROW(client.doDiscover());
@@ -2379,7 +2379,7 @@ TEST_F(NameDhcpv4SrvTest, sanitizeFqdn) {
         // Make sure the response fqdn is what we expect.
         fqdn = boost::dynamic_pointer_cast<Option4ClientFqdn>(resp->getOption(DHO_FQDN));
         ASSERT_TRUE(fqdn);
-        EXPECT_EQ((*scenario).sanitized_, fqdn->getDomainName());
+        EXPECT_EQ(scenario.sanitized_, fqdn->getDomainName());
         }
     }
 }
@@ -2437,12 +2437,12 @@ TEST_F(NameDhcpv4SrvTest, sanitizeFqdnGlobal) {
 
     Pkt4Ptr resp;
     Option4ClientFqdnPtr fqdn;
-    for (auto scenario = scenarios.begin(); scenario != scenarios.end(); ++scenario) {
-        SCOPED_TRACE((*scenario).description_);
+    for (auto const& scenario : scenarios) {
+        SCOPED_TRACE(scenario.description_);
         {
         // Set the hostname option.
-        ASSERT_NO_THROW(client.includeHostname((*scenario).original_));
-        ASSERT_NO_THROW(client.includeFQDN(0, (*scenario).original_, (*scenario).name_type_));
+        ASSERT_NO_THROW(client.includeHostname(scenario.original_));
+        ASSERT_NO_THROW(client.includeFQDN(0, scenario.original_, scenario.name_type_));
 
         // Send the DHCPDISCOVER and make sure that the server responded.
         ASSERT_NO_THROW(client.doDiscover());
@@ -2453,7 +2453,7 @@ TEST_F(NameDhcpv4SrvTest, sanitizeFqdnGlobal) {
         // Make sure the response fqdn is what we expect.
         fqdn = boost::dynamic_pointer_cast<Option4ClientFqdn>(resp->getOption(DHO_FQDN));
         ASSERT_TRUE(fqdn);
-        EXPECT_EQ((*scenario).sanitized_, fqdn->getDomainName());
+        EXPECT_EQ(scenario.sanitized_, fqdn->getDomainName());
         }
     }
 }
@@ -2588,7 +2588,7 @@ TEST_F(NameDhcpv4SrvTest, processReuseExpired) {
         }
     };
 
-    for (auto scenario : scenarios) {
+    for (auto const& scenario : scenarios) {
         SCOPED_TRACE(scenario.label_);
         {
             // Create the original leasing client.

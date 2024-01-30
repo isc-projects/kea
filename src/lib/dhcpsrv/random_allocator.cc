@@ -1,4 +1,4 @@
-// Copyright (C) 2022-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2022-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -28,7 +28,7 @@ RandomAllocator::pickAddressInternal(const ClientClasses& client_classes,
                                      const IdentifierBaseTypePtr&,
                                      const IOAddress&) {
     auto subnet = subnet_.lock();
-    const auto& pools = subnet->getPools(pool_type_);
+    auto const& pools = subnet->getPools(pool_type_);
 
     // Let's first iterate over the pools and identify the ones that
     // meet client class criteria. Then, segregate these pools into
@@ -65,7 +65,7 @@ RandomAllocator::pickAddressInternal(const ClientClasses& client_classes,
         // All pools have been exhausted. We will start offering the same
         // addresses from these pools. We need to reset the permutations
         // of the exhausted pools.
-        for (auto e : exhausted) {
+        for (auto const& e : exhausted) {
             getPoolState(pools[e])->getPermutation()->reset();
         }
         // Get random pool from those we just reset.
@@ -91,7 +91,7 @@ RandomAllocator::pickPrefixInternal(const ClientClasses& client_classes,
                                     const IOAddress&,
                                     uint8_t hint_prefix_length) {
     auto subnet = subnet_.lock();
-    const auto& pools = subnet->getPools(pool_type_);
+    auto const& pools = subnet->getPools(pool_type_);
 
     // Let's first iterate over the pools and identify the ones that
     // meet client class criteria. Then, segragate these pools into
@@ -132,7 +132,7 @@ RandomAllocator::pickPrefixInternal(const ClientClasses& client_classes,
         // All pools have been exhausted. We will start offering the same
         // prefixes from these pools. We need to reset the permutations
         // of the exhausted pools.
-        for (auto e : exhausted) {
+        for (auto const& e : exhausted) {
             getPoolState(pools[e])->getPermutation()->reset();
         }
         // Get random pool from those we just reset.

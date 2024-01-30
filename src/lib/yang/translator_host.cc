@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -102,7 +102,11 @@ TranslatorHost::setHost(string const& xpath, ConstElementPtr elem) {
 
 void
 TranslatorHost::setHostKea(string const& xpath, ConstElementPtr elem) {
-    // Skip keys "identifier" and "identifier-type".
+    // Set the list element. This is important in case we have no other elements except the keys.
+    setItem(xpath, ElementPtr(), LeafBaseType::Unknown);
+
+    // Skip keys "identifier" and "identifier-type" since they were set with the
+    // list element in the call above with the LeafBaseType::Unknown parameter.
 
     checkAndSetLeaf(elem, xpath, "hostname", LeafBaseType::String);
 

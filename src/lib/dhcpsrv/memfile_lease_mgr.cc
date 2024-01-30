@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -20,6 +20,7 @@
 #include <util/multi_threading_mgr.h>
 #include <util/pid_file.h>
 
+#include <boost/foreach.hpp>
 #include <cstdio>
 #include <cstring>
 #include <errno.h>
@@ -1168,8 +1169,8 @@ Memfile_LeaseMgr::getLease4Internal(const HWAddr& hwaddr,
               Lease4StorageHWAddressSubnetIdIndex::const_iterator> l
         = idx.equal_range(boost::make_tuple(hwaddr.hwaddr_));
 
-    for (auto lease = l.first; lease != l.second; ++lease) {
-        collection.push_back(Lease4Ptr(new Lease4(**lease)));
+    BOOST_FOREACH(auto const& lease, l) {
+        collection.push_back(Lease4Ptr(new Lease4(*lease)));
     }
 }
 
@@ -1233,8 +1234,8 @@ Memfile_LeaseMgr::getLease4Internal(const ClientId& client_id,
               Lease4StorageClientIdSubnetIdIndex::const_iterator> l
         = idx.equal_range(boost::make_tuple(client_id.getClientId()));
 
-    for (auto lease = l.first; lease != l.second; ++lease) {
-        collection.push_back(Lease4Ptr(new Lease4(**lease)));
+    BOOST_FOREACH(auto const& lease, l) {
+        collection.push_back(Lease4Ptr(new Lease4(*lease)));
     }
 }
 
@@ -1294,8 +1295,8 @@ Memfile_LeaseMgr::getLeases4Internal(SubnetID subnet_id,
               Lease4StorageSubnetIdIndex::const_iterator> l =
         idx.equal_range(subnet_id);
 
-    for (auto lease = l.first; lease != l.second; ++lease) {
-        collection.push_back(Lease4Ptr(new Lease4(**lease)));
+    BOOST_FOREACH(auto const& lease, l) {
+        collection.push_back(Lease4Ptr(new Lease4(*lease)));
     }
 }
 
@@ -1323,8 +1324,8 @@ Memfile_LeaseMgr::getLeases4Internal(const std::string& hostname,
               Lease4StorageHostnameIndex::const_iterator> l =
         idx.equal_range(hostname);
 
-    for (auto lease = l.first; lease != l.second; ++lease) {
-        collection.push_back(Lease4Ptr(new Lease4(**lease)));
+    BOOST_FOREACH(auto const& lease, l) {
+        collection.push_back(Lease4Ptr(new Lease4(*lease)));
     }
 }
 
@@ -1346,8 +1347,8 @@ Memfile_LeaseMgr::getLeases4(const std::string& hostname) const {
 
 void
 Memfile_LeaseMgr::getLeases4Internal(Lease4Collection& collection) const {
-   for (auto lease = storage4_.begin(); lease != storage4_.end(); ++lease) {
-       collection.push_back(Lease4Ptr(new Lease4(**lease)));
+   for (auto const& lease : storage4_) {
+       collection.push_back(Lease4Ptr(new Lease4(*lease)));
    }
 }
 
@@ -1540,8 +1541,8 @@ Memfile_LeaseMgr::getLeases6Internal(SubnetID subnet_id,
               Lease6StorageSubnetIdIndex::const_iterator> l =
         idx.equal_range(subnet_id);
 
-    for (auto lease = l.first; lease != l.second; ++lease) {
-        collection.push_back(Lease6Ptr(new Lease6(**lease)));
+    BOOST_FOREACH(auto const& lease, l) {
+        collection.push_back(Lease6Ptr(new Lease6(*lease)));
     }
 }
 
@@ -1569,8 +1570,8 @@ Memfile_LeaseMgr::getLeases6Internal(const std::string& hostname,
               Lease6StorageHostnameIndex::const_iterator> l =
         idx.equal_range(hostname);
 
-    for (auto lease = l.first; lease != l.second; ++lease) {
-        collection.push_back(Lease6Ptr(new Lease6(**lease)));
+    BOOST_FOREACH(auto const& lease, l) {
+        collection.push_back(Lease6Ptr(new Lease6(*lease)));
     }
 }
 
@@ -1592,8 +1593,8 @@ Memfile_LeaseMgr::getLeases6(const std::string& hostname) const {
 
 void
 Memfile_LeaseMgr::getLeases6Internal(Lease6Collection& collection) const {
-   for (auto lease = storage6_.begin(); lease != storage6_.end(); ++lease) {
-       collection.push_back(Lease6Ptr(new Lease6(**lease)));
+   for (auto const& lease : storage6_) {
+       collection.push_back(Lease6Ptr(new Lease6(*lease)));
    }
 }
 
@@ -1620,8 +1621,8 @@ Memfile_LeaseMgr::getLeases6Internal(const DUID& duid,
               Lease6StorageDuidIndex::const_iterator> l =
         idx.equal_range(duid.getDuid());
 
-    for (auto lease = l.first; lease != l.second; ++lease) {
-        collection.push_back(Lease6Ptr(new Lease6(**lease)));
+    BOOST_FOREACH(auto const& lease, l) {
+        collection.push_back(Lease6Ptr(new Lease6(*lease)));
     }
 }
 
@@ -2589,13 +2590,13 @@ Memfile_LeaseMgr::wipeLeases4(const SubnetID& subnet_id) {
 
     // Let's collect all leases.
     Lease4Collection leases;
-    for (auto lease = l.first; lease != l.second; ++lease) {
-        leases.push_back(*lease);
+    BOOST_FOREACH(auto const& lease, l) {
+        leases.push_back(lease);
     }
 
     size_t num = leases.size();
-    for (auto l = leases.begin(); l != leases.end(); ++l) {
-        deleteLease(*l);
+    for (auto const& l : leases) {
+        deleteLease(l);
     }
     LOG_INFO(dhcpsrv_logger, DHCPSRV_MEMFILE_WIPE_LEASES4_FINISHED)
         .arg(subnet_id).arg(num);
@@ -2618,13 +2619,13 @@ Memfile_LeaseMgr::wipeLeases6(const SubnetID& subnet_id) {
 
     // Let's collect all leases.
     Lease6Collection leases;
-    for (auto lease = l.first; lease != l.second; ++lease) {
-        leases.push_back(*lease);
+    BOOST_FOREACH(auto const& lease, l) {
+        leases.push_back(lease);
     }
 
     size_t num = leases.size();
-    for (auto l = leases.begin(); l != leases.end(); ++l) {
-        deleteLease(*l);
+    for (auto const& l : leases) {
+        deleteLease(l);
     }
     LOG_INFO(dhcpsrv_logger, DHCPSRV_MEMFILE_WIPE_LEASES6_FINISHED)
         .arg(subnet_id).arg(num);
@@ -2635,10 +2636,10 @@ Memfile_LeaseMgr::wipeLeases6(const SubnetID& subnet_id) {
 void
 Memfile_LeaseMgr::recountClassLeases4() {
     class_lease_counter_.clear();
-    for (auto lease = storage4_.begin(); lease != storage4_.end(); ++lease) {
+    for (auto const& lease : storage4_) {
         // Bump the appropriate accumulator
-        if ((*lease)->state_ == Lease::STATE_DEFAULT) {
-            class_lease_counter_.addLease(*lease);
+        if (lease->state_ == Lease::STATE_DEFAULT) {
+            class_lease_counter_.addLease(lease);
         }
     }
 }
@@ -2646,10 +2647,10 @@ Memfile_LeaseMgr::recountClassLeases4() {
 void
 Memfile_LeaseMgr::recountClassLeases6() {
     class_lease_counter_.clear();
-    for (auto lease = storage6_.begin(); lease != storage6_.end(); ++lease) {
+    for (auto const& lease : storage6_) {
         // Bump the appropriate accumulator
-        if ((*lease)->state_ == Lease::STATE_DEFAULT) {
-            class_lease_counter_.addLease(*lease);
+        if (lease->state_ == Lease::STATE_DEFAULT) {
+            class_lease_counter_.addLease(lease);
         }
     }
 }
@@ -2899,13 +2900,12 @@ idToText(const OptionBuffer& id) {
     std::stringstream tmp;
     tmp << std::hex;
     bool delim = false;
-    for (std::vector<uint8_t>::const_iterator it = id.begin();
-         it != id.end(); ++it) {
+    for (auto const& it : id) {
         if (delim) {
             tmp << ":";
         }
         tmp << std::setw(2) << std::setfill('0')
-            << static_cast<unsigned int>(*it);
+            << static_cast<unsigned int>(it);
         delim = true;
     }
     return (tmp.str());
@@ -3058,25 +3058,25 @@ Memfile_LeaseMgr::getLeases4ByRemoteIdInternal(const OptionBuffer& remote_id,
     const Lease4StorageRemoteIdIndex& idx = storage4_.get<RemoteIdIndexTag>();
     Lease4StorageRemoteIdRange er = idx.equal_range(remote_id);
     // Store all convenient leases being within the page size.
-    for (auto it = er.first; it != er.second; ++it) {
-        const IOAddress& addr = (*it)->addr_;
+    BOOST_FOREACH(auto const& it, er) {
+        const IOAddress& addr = it->addr_;
         if (addr <= lower_bound_address) {
             // Not greater than lower_bound_address.
             continue;
         }
-        if ((qry_start_time > 0) && ((*it)->cltt_ < qry_start_time)) {
+        if ((qry_start_time > 0) && (it->cltt_ < qry_start_time)) {
             // Too old.
             continue;
         }
-        if ((qry_end_time > 0) && ((*it)->cltt_ > qry_end_time)) {
+        if ((qry_end_time > 0) && (it->cltt_ > qry_end_time)) {
             // Too young.
             continue;
         }
-        sorted[addr] = *it;
+        sorted[addr] = it;
     }
 
     // Return all leases being within the page size.
-    for (auto it : sorted) {
+    for (auto const& it : sorted) {
         collection.push_back(Lease4Ptr(new Lease4(*it.second)));
         if (collection.size() >= page_size.page_size_) {
             break;
@@ -3207,8 +3207,8 @@ Memfile_LeaseMgr::getLeases6ByRemoteIdInternal(const OptionBuffer& remote_id,
     const RemoteIdIndex& idx = remote_id6_.get<RemoteIdIndexTag>();
     RemoteIdIndexRange er = idx.equal_range(remote_id);
     // Store all addresses greater than lower_bound_address.
-    for (auto it = er.first; it != er.second; ++it) {
-        const IOAddress& addr = (*it)->lease_addr_;
+    BOOST_FOREACH(auto const& it, er) {
+        const IOAddress& addr = it->lease_addr_;
         if (addr <= lower_bound_address) {
             continue;
         }
@@ -3321,7 +3321,7 @@ Memfile_LeaseMgr::buildExtendedInfoTables6() {
     size_t modified = 0;
     size_t processed = 0;
 
-    for (auto lease : storage6_) {
+    for (auto const& lease : storage6_) {
         ++leases;
         try {
             if (upgradeLease6ExtendedInfo(lease, check)) {
@@ -3397,7 +3397,7 @@ Memfile_LeaseMgr::writeLeases4Internal(const std::string& filename) {
         ::rename(filename.c_str(), old.str().c_str());
         CSVLeaseFile4 backup(filename);
         backup.open();
-        for (const auto& lease : storage4_) {
+        for (auto const& lease : storage4_) {
             backup.append(*lease);
         }
         backup.close();
@@ -3434,7 +3434,7 @@ Memfile_LeaseMgr::writeLeases6Internal(const std::string& filename) {
         ::rename(filename.c_str(), old.str().c_str());
         CSVLeaseFile6 backup(filename);
         backup.open();
-        for (const auto& lease : storage6_) {
+        for (auto const& lease : storage6_) {
             backup.append(*lease);
         }
         backup.close();

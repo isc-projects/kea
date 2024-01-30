@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -2074,7 +2074,7 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestRenew) {
     subnet_->setDdnsReplaceClientNameMode(D2ClientConfig::RCM_NEVER);
 
     // Iterate over test scenarios.
-    for (auto scenario : scenarios) {
+    for (auto const& scenario : scenarios) {
         SCOPED_TRACE(scenario.description_); {
             // Make sure the lease does not exist.
             ASSERT_FALSE(LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA,

@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -406,7 +406,7 @@ const PoolPtr Subnet::getPool(Lease::Type type, const isc::asiolink::IOAddress& 
     // check if the type is valid (and throw if it isn't)
     checkType(type);
 
-    const auto& pools = getPools(type);
+    auto const& pools = getPools(type);
 
     PoolPtr candidate;
 
@@ -442,7 +442,7 @@ const PoolPtr Subnet::getPool(Lease::Type type, const isc::asiolink::IOAddress& 
 
 void
 Subnet::initAllocatorsAfterConfigure() {
-    for (auto allocator : allocators_) {
+    for (auto const& allocator : allocators_) {
         allocator.second->initAfterConfigure();
     }
 }
@@ -453,7 +453,7 @@ const PoolPtr Subnet::getPool(Lease::Type type,
     // check if the type is valid (and throw if it isn't)
     checkType(type);
 
-    const auto& pools = getPools(type);
+    auto const& pools = getPools(type);
 
     PoolPtr candidate;
 
@@ -543,8 +543,8 @@ Subnet::inPool(Lease::Type type, const isc::asiolink::IOAddress& addr) const {
         return (false);
     }
 
-    const auto& pools = getPools(type);
-    for (const auto& pool : pools) {
+    auto const& pools = getPools(type);
+    for (auto const& pool : pools) {
         if (pool->inRange(addr)) {
             return (true);
         }
@@ -563,8 +563,8 @@ Subnet::inPool(Lease::Type type,
         return (false);
     }
 
-    const auto& pools = getPools(type);
-    for (const auto& pool : pools) {
+    auto const& pools = getPools(type);
+    for (auto const& pool : pools) {
         if (!pool->clientSupported(client_classes)) {
             continue;
         }
@@ -578,7 +578,7 @@ Subnet::inPool(Lease::Type type,
 
 bool
 Subnet::poolOverlaps(const Lease::Type& pool_type, const PoolPtr& pool) const {
-    const auto& pools = getPools(pool_type);
+    auto const& pools = getPools(pool_type);
 
     // If no pools, we don't overlap. Nothing to do.
     if (pools.empty()) {
@@ -599,7 +599,7 @@ Subnet::poolOverlaps(const Lease::Type& pool_type, const PoolPtr& pool) const {
     // greater than F2). prefixLessThanPoolAddress with the first argument
     // set to "true" is the custom comparison function for upper_bound, which
     // compares F2 with the first addresses of the existing pools.
-    const auto pool3_it =
+    auto const pool3_it =
         std::upper_bound(pools.begin(), pools.end(), pool->getFirstAddress(),
                          prefixLessThanFirstAddress);
 
@@ -770,7 +770,7 @@ Subnet4::createAllocators() {
                      (Lease::TYPE_V4, shared_from_this()));
         setAllocationState(Lease::TYPE_V4, SubnetAllocationStatePtr());
 
-        for (auto pool : pools_) {
+        for (auto const& pool : pools_) {
             pool->setAllocationState(PoolRandomAllocationState::create(pool));
         }
 
@@ -780,7 +780,7 @@ Subnet4::createAllocators() {
                      (Lease::TYPE_V4, shared_from_this()));
         setAllocationState(Lease::TYPE_V4, SubnetAllocationStatePtr());
 
-        for (auto pool : pools_) {
+        for (auto const& pool : pools_) {
             pool->setAllocationState(PoolFreeLeaseQueueAllocationState::create(pool));
         }
 
@@ -791,7 +791,7 @@ Subnet4::createAllocators() {
         setAllocationState(Lease::TYPE_V4,
                            SubnetIterativeAllocationState::create(shared_from_this()));
 
-        for (auto pool : pools_) {
+        for (auto const& pool : pools_) {
             pool->setAllocationState(PoolIterativeAllocationState::create(pool));
         }
     }
@@ -810,9 +810,9 @@ Subnet4::toElement() const {
     isc::data::merge(map, d4o6.toElement());
 
     // Set pools
-    const auto& pools = getPools(Lease::TYPE_V4);
+    auto const& pools = getPools(Lease::TYPE_V4);
     ElementPtr pool_list = Element::createList();
-    for (const auto& pool : pools) {
+    for (auto const& pool : pools) {
         // Add the formatted pool to the list
         pool_list->add(pool->toElement());
     }
@@ -882,7 +882,7 @@ Subnet6::createAllocators() {
         setAllocationState(Lease::TYPE_PD, SubnetIterativeAllocationState::create(shared_from_this()));
     }
     // Create allocation states for NA pools.
-    for (auto pool : pools_) {
+    for (auto const& pool : pools_) {
         if (allocator_type == "random") {
             pool->setAllocationState(PoolRandomAllocationState::create(pool));
         } else {
@@ -890,7 +890,7 @@ Subnet6::createAllocators() {
         }
     }
     // Create allocation states for TA pools.
-    for (auto pool : pools_ta_) {
+    for (auto const& pool : pools_ta_) {
         if (allocator_type == "random") {
             pool->setAllocationState(PoolRandomAllocationState::create(pool));
         } else {
@@ -898,7 +898,7 @@ Subnet6::createAllocators() {
         }
     }
     // Create allocation states for PD pools.
-    for (auto pool : pools_pd_) {
+    for (auto const& pool : pools_pd_) {
         if (pd_allocator_type == "random") {
             pool->setAllocationState(PoolRandomAllocationState::create(pool));
         } else if (pd_allocator_type == "flq") {
@@ -918,18 +918,18 @@ Subnet6::toElement() const {
     merge(map, network_map);
 
     // Set pools
-    const auto& pools = getPools(Lease::TYPE_NA);
+    auto const& pools = getPools(Lease::TYPE_NA);
     ElementPtr pool_list = Element::createList();
-    for (const auto& pool : pools) {
+    for (auto const& pool : pools) {
         // Add the formatted pool to the list
         pool_list->add(pool->toElement());
     }
     map->set("pools", pool_list);
 
     // Set pd-pools
-    const auto& pdpools = getPools(Lease::TYPE_PD);
+    auto const& pdpools = getPools(Lease::TYPE_PD);
     ElementPtr pdpool_list = Element::createList();
-    for (const auto& pool : pdpools) {
+    for (auto const& pool : pdpools) {
         // Add the formatted pool to the list
         pdpool_list->add(pool->toElement());
     }

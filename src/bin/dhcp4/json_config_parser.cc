@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -45,7 +45,6 @@
 #include <util/strutil.h>
 
 #include <boost/algorithm/string.hpp>
-#include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 
 #include <iomanip>
@@ -157,10 +156,10 @@ public:
         }
 
         // Let's go through all the networks one by one
-        for (auto net = networks->begin(); net != networks->end(); ++net) {
+        for (auto const& net : *networks) {
 
             // For each network go through all the subnets in it.
-            const Subnet4SimpleCollection* subnets = (*net)->getAllSubnets();
+            const Subnet4SimpleCollection* subnets = net->getAllSubnets();
             if (!subnets) {
                 // Shared network without subnets it weird, but we decided to
                 // accept such configurations.
@@ -168,8 +167,8 @@ public:
             }
 
             // For each subnet, add it to a list of regular subnets.
-            for (auto subnet = subnets->begin(); subnet != subnets->end(); ++subnet) {
-                dest->add(*subnet);
+            for (auto const& subnet : *subnets) {
+                dest->add(subnet);
             }
         }
     }
@@ -216,61 +215,61 @@ public:
         std::set<string> names;
 
         // Let's go through all the networks one by one
-        for (auto net = networks.begin(); net != networks.end(); ++net) {
+        for (auto const& net : networks) {
             string txt;
 
             // Let's check if all subnets have either the same interface
             // or don't have the interface specified at all.
-            bool authoritative = (*net)->getAuthoritative();
-            string iface = (*net)->getIface();
+            bool authoritative = net->getAuthoritative();
+            string iface = net->getIface();
 
-            const Subnet4SimpleCollection* subnets = (*net)->getAllSubnets();
+            const Subnet4SimpleCollection* subnets = net->getAllSubnets();
             if (subnets) {
                 // For each subnet, add it to a list of regular subnets.
-                for (auto subnet = subnets->begin(); subnet != subnets->end(); ++subnet) {
-                    if ((*subnet)->getAuthoritative() != authoritative) {
+                for (auto const& subnet : *subnets) {
+                    if (subnet->getAuthoritative() != authoritative) {
                         isc_throw(DhcpConfigError, "Subnet " << boolalpha
-                                  << (*subnet)->toText()
+                                  << subnet->toText()
                                   << " has different authoritative setting "
-                                  << (*subnet)->getAuthoritative()
+                                  << subnet->getAuthoritative()
                                   << " than the shared-network itself: "
                                   << authoritative);
                     }
 
                     if (iface.empty()) {
-                        iface = (*subnet)->getIface();
+                        iface = subnet->getIface();
                         continue;
                     }
 
-                    if ((*subnet)->getIface().empty()) {
+                    if (subnet->getIface().empty()) {
                         continue;
                     }
 
-                    if ((*subnet)->getIface() != iface) {
-                        isc_throw(DhcpConfigError, "Subnet " << (*subnet)->toText()
-                                  << " has specified interface " << (*subnet)->getIface()
+                    if (subnet->getIface() != iface) {
+                        isc_throw(DhcpConfigError, "Subnet " << subnet->toText()
+                                  << " has specified interface " << subnet->getIface()
                                   << ", but earlier subnet in the same shared-network"
                                   << " or the shared-network itself used " << iface);
                     }
 
                     // Let's collect the subnets in case we later find out the
                     // subnet doesn't have a mandatory name.
-                    txt += (*subnet)->toText() + " ";
+                    txt += subnet->toText() + " ";
                 }
             }
 
             // Next, let's check name of the shared network.
-            if ((*net)->getName().empty()) {
+            if (net->getName().empty()) {
                 isc_throw(DhcpConfigError, "Shared-network with subnets "
                           << txt << " is missing mandatory 'name' parameter");
             }
 
             // Is it unique?
-            if (names.find((*net)->getName()) != names.end()) {
+            if (names.find(net->getName()) != names.end()) {
                 isc_throw(DhcpConfigError, "A shared-network with "
-                          "name " << (*net)->getName() << " defined twice.");
+                          "name " << net->getName() << " defined twice.");
             }
-            names.insert((*net)->getName());
+            names.insert(net->getName());
 
         }
     }
@@ -460,7 +459,7 @@ processDhcp4Config(isc::data::ConstElementPtr config_set) {
         if (expiration_cfg) {
             parameter_name = "expired-leases-processing";
             ExpirationConfigParser parser;
-            parser.parse(expiration_cfg);
+            parser.parse(expiration_cfg, CfgMgr::instance().getStagingCfg()->getCfgExpiration());
         }
 
         // The hooks-libraries configuration must be parsed after parsing
@@ -523,7 +522,7 @@ processDhcp4Config(isc::data::ConstElementPtr config_set) {
         if (hosts_databases) {
             parameter_name = "hosts-databases";
             CfgDbAccessPtr cfg_db_access = srv_config->getCfgDbAccess();
-            for (auto it : hosts_databases->listValue()) {
+            for (auto const& it : hosts_databases->listValue()) {
                 db::DbAccessParser parser;
                 std::string access_string;
                 parser.parse(access_string, it);
@@ -563,8 +562,8 @@ processDhcp4Config(isc::data::ConstElementPtr config_set) {
             HostCollection hosts;
             HostReservationsListParser<HostReservationParser4> parser;
             parser.parse(SUBNET_ID_GLOBAL, reservations, hosts);
-            for (auto h = hosts.begin(); h != hosts.end(); ++h) {
-                srv_config->getCfgHosts()->add(*h);
+            for (auto const& h : hosts) {
+                srv_config->getCfgHosts()->add(h);
             }
         }
 
@@ -578,41 +577,15 @@ processDhcp4Config(isc::data::ConstElementPtr config_set) {
 
         ConstElementPtr compatibility = mutable_cfg->get("compatibility");
         if (compatibility) {
-            for (auto kv : compatibility->mapValue()) {
-                if (!kv.second || (kv.second->getType() != Element::boolean)) {
-                    isc_throw(DhcpConfigError,
-                              "compatibility parameter values must be "
-                              << "boolean (" << kv.first << " at "
-                              << kv.second->getPosition() << ")");
-                }
-                if (kv.first == "lenient-option-parsing") {
-                    CfgMgr::instance().getStagingCfg()->setLenientOptionParsing(
-                        kv.second->boolValue());
-                } else if (kv.first == "ignore-dhcp-server-identifier") {
-                    CfgMgr::instance().getStagingCfg()->setIgnoreServerIdentifier(
-                        kv.second->boolValue());
-                } else if (kv.first == "ignore-rai-link-selection") {
-                    CfgMgr::instance().getStagingCfg()->setIgnoreRAILinkSelection(
-                        kv.second->boolValue());
-                } else if (kv.first == "exclude-first-last-24") {
-                    CfgMgr::instance().getStagingCfg()->setExcludeFirstLast24(
-                        kv.second->boolValue());
-                } else {
-                    isc_throw(DhcpConfigError,
-                              "unsupported compatibility parameter: "
-                              << kv.first << " (" << kv.second->getPosition()
-                              << ")");
-                }
-            }
+            CompatibilityParser parser;
+            parser.parse(compatibility, *CfgMgr::instance().getStagingCfg());
         }
 
         // Make parsers grouping.
-        ConfigPair config_pair;
         const std::map<std::string, ConstElementPtr>& values_map =
             mutable_cfg->mapValue();
 
-        BOOST_FOREACH(config_pair, values_map) {
-
+        for (auto const& config_pair : values_map) {
             parameter_name = config_pair.first;
 
             // These are converted to SimpleParser and are handled already above.

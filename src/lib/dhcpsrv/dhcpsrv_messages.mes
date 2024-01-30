@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2023 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -121,19 +121,19 @@ The administrator should either stop using the backend that does not support
 this setting or set the value of the ip-reservations-unique to true to resolve
 the configuration issue.
 
-% DHCPSRV_CFGMGR_IP_RESERVATIONS_UNIQUE_DUPLICATES_POSSIBLE setting "ip-reservations-unique" from false to true poses a risk that some host backends may still contain multiple reservations for the same IP address
-This warning message is issued when the DHCP server is configured to not allow
-multiple reservations for the same IP address. However, the host database
-backends may still contain multiple reservations for the same IP addresses
-causing problems with lease allocation for certain addresses. Please ensure
-that all such duplicates are removed.
-
 % DHCPSRV_CFGMGR_IP_RESERVATIONS_UNIQUE_DUPLICATES_DETECTED the "ip-reservations-unique" flag is set to true and multiple reservations for the IP address %1 in subnet %2 are not allowed causing error: %3
 This warning message is issued when the DHCP server is configured to not allow
 multiple reservations for the same IP address. However, the host database
 backend contains multiple reservations for the IP address logged as the first
 argument, in the subnet logged as second argument, causing problems with lease
 allocation logged as third argument.
+
+% DHCPSRV_CFGMGR_IP_RESERVATIONS_UNIQUE_DUPLICATES_POSSIBLE setting "ip-reservations-unique" from false to true poses a risk that some host backends may still contain multiple reservations for the same IP address
+This warning message is issued when the DHCP server is configured to not allow
+multiple reservations for the same IP address. However, the host database
+backends may still contain multiple reservations for the same IP addresses
+causing problems with lease allocation for certain addresses. Please ensure
+that all such duplicates are removed.
 
 % DHCPSRV_CFGMGR_NEW_SUBNET4 a new subnet has been added to configuration: %1
 This is an informational message reporting that the configuration has
@@ -348,12 +348,6 @@ have been experienced. Any such errors should have preceding entries in the
 log with details. No further attempts to communicate with kea-dhcp-ddns will
 be made without intervention.
 
-% DHCPSRV_HOST_MGR_DB_OPEN_CONNECTION_WITH_RETRY_FAILED Failed to connect to database: %1 with error: %2
-This is an informational message issued when the the server failed to connect to
-the host database. The operation started a retry to connect procedure.
-The database access string with password redacted is logged, along with the
-error and details for the reconnect procedure.
-
 % DHCPSRV_HOOK_LEASE4_RECOVER_SKIP DHCPv4 lease %1 was not recovered from the declined state because a callout set the skip status.
 This debug message is printed when a callout installed on lease4_recover
 hook point set the next step status to SKIP. For this particular hook point, this
@@ -395,6 +389,12 @@ This debug message is printed when a callout installed on lease6_select
 hook point sets the skip flag. It means that the server was told that
 no lease6 should be assigned. The server will not put that lease in its
 database and the client will get a NoAddrsAvail for that IA_NA option.
+
+% DHCPSRV_HOST_MGR_DB_OPEN_CONNECTION_WITH_RETRY_FAILED Failed to connect to database: %1 with error: %2
+This is an informational message issued when the the server failed to connect to
+the host database. The operation started a retry to connect procedure.
+The database access string with password redacted is logged, along with the
+error and details for the reconnect procedure.
 
 % DHCPSRV_INVALID_ACCESS invalid database access string: %1
 This is logged when an attempt has been made to parse a database access string

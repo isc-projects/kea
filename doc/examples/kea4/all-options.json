@@ -689,7 +689,7 @@
       // Type: string
       {
         "code": 56,
-        "data": "Error: here's a DHCPNAK!",
+        "data": "Error: here is a DHCPNAK!",
         "name": "dhcp-message"
       },
 

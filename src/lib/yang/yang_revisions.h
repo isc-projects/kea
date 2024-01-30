@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -23,8 +23,8 @@ static const std::unordered_map<std::string, std::string> YANG_REVISIONS = {
     { "ietf-dhcpv6-server", "2018-09-04" },
     { "kea-types", "2019-08-12" },
     { "kea-dhcp-types", "2023-06-28" },
-    { "kea-dhcp4-server", "2023-06-28" },
-    { "kea-dhcp6-server", "2023-06-28" },
+    { "kea-dhcp4-server", "2024-01-31" },
+    { "kea-dhcp6-server", "2024-01-31" },
     { "kea-ctrl-agent", "2019-08-12" },
     { "kea-dhcp-ddns", "2022-07-27" }
 };  // YANG_REVISIONS

@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -3844,7 +3844,7 @@ TEST_F(AllocEngine4Test, updateExtendedInfo4) {
     // Iterate over the test scenarios.
     ElementPtr orig_context;
     ElementPtr exp_context;
-    for (auto scenario : scenarios) {
+    for (auto const& scenario : scenarios) {
         SCOPED_TRACE(scenario.description_);
 
         // Create the original user context from JSON.
@@ -3976,7 +3976,7 @@ TEST_F(AllocEngine4Test, storeExtendedInfoEnabled4) {
 
     // Iterate over the test scenarios.
     Lease4Ptr lease;
-    for (auto scenario : scenarios) {
+    for (auto const& scenario : scenarios) {
         SCOPED_TRACE(scenario.description_);
 
         ElementPtr exp_context;
@@ -4082,7 +4082,7 @@ TEST_F(AllocEngine4Test, storeExtendedInfoDisabled4) {
     Lease4Ptr lease;
 
     // Iterate over the test scenarios.
-    for (auto scenario : scenarios) {
+    for (auto const& scenario : scenarios) {
         SCOPED_TRACE(scenario.description_);
 
         // If we have a MAC address this scenario is for a new client.
@@ -4657,7 +4657,7 @@ TEST_F(AllocEngine4Test, getValidLft4) {
     };
 
     // Iterate over the scenarios and verify the correct outcome.
-    for (auto scenario : scenarios) {
+    for (auto const& scenario : scenarios) {
         SCOPED_TRACE(scenario.desc_); {
             // Create a context;
             AllocEngine::ClientContext4 ctx(subnet_, ClientIdPtr(), hwaddr_,
@@ -4666,7 +4666,7 @@ TEST_F(AllocEngine4Test, getValidLft4) {
             ctx.query_.reset(new Pkt4(DHCPDISCOVER, 1234));
 
             // Add client classes (if any)
-            for (auto class_name : scenario.classes_) {
+            for (auto const& class_name : scenario.classes_) {
                 ctx.query_->addClass(class_name);
             }
 
@@ -4802,7 +4802,7 @@ TEST_F(AllocEngine4Test, getTemplateClassValidLft4) {
     };
 
     // Iterate over the scenarios and verify the correct outcome.
-    for (auto scenario : scenarios) {
+    for (auto const& scenario : scenarios) {
         SCOPED_TRACE(scenario.desc_); {
             // Create a context;
             AllocEngine::ClientContext4 ctx(subnet_, ClientIdPtr(), hwaddr_,
@@ -4811,7 +4811,7 @@ TEST_F(AllocEngine4Test, getTemplateClassValidLft4) {
             ctx.query_.reset(new Pkt4(DHCPDISCOVER, 1234));
 
             // Add client classes (if any)
-            for (auto class_name : scenario.classes_) {
+            for (auto const& class_name : scenario.classes_) {
                 if (class_name == "BOOTP") {
                     ctx.query_->addClass(class_name);
                 } else {
@@ -5954,7 +5954,7 @@ TEST_F(AllocEngine4Test, getOfferLft4) {
     };
 
     // Iterate over the scenarios and verify the correct outcome.
-    for (auto scenario : scenarios) {
+    for (auto const& scenario : scenarios) {
         SCOPED_TRACE(scenario.desc_); {
             // Create a context;
             AllocEngine::ClientContext4 ctx(subnet_, ClientIdPtr(), hwaddr_,
@@ -5963,7 +5963,7 @@ TEST_F(AllocEngine4Test, getOfferLft4) {
             ctx.query_.reset(new Pkt4(DHCPDISCOVER, 1234));
 
             // Add client classes (if any)
-            for (auto class_name : scenario.classes_) {
+            for (auto const& class_name : scenario.classes_) {
                 ctx.query_->addClass(class_name);
             }
 

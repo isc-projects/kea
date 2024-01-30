@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -267,7 +267,7 @@ Dhcpv6SrvTest::loadConfigFile(const string& path) {
     removeTlsParameters(hosts);
     hosts = dhcp6->get("hosts-databases");
     if (hosts) {
-        for (auto& host : hosts->listValue()) {
+        for (auto const& host : hosts->listValue()) {
             removeTlsParameters(host);
         }
     }
@@ -362,11 +362,11 @@ Dhcpv6SrvTest::checkConfigFiles() {
         "with-ddns.json",
     };
     vector<string> files;
-    for (string example : examples) {
+    for (auto const& example : examples) {
         string file = path + "/" + example;
         files.push_back(file);
     }
-    for (const auto& file: files) {
+    for (auto const& file : files) {
         string label("Checking configuration from file: ");
         label += file;
         SCOPED_TRACE(label);
@@ -3365,15 +3365,14 @@ TEST_F(Dhcpv6SrvTest, rsoo2relays) {
     int count120 = 0; // Let's count how many times option 120 was echoed back
     int count130 = 0; // Let's count how many times option 130 was echoed back
     OptionPtr opt120;
-    for (OptionCollection::const_iterator it = client.config_.options_.begin();
-         it != client.config_.options_.end(); ++it) {
-        switch (it->second->getType()) {
+    for (auto const& it : client.config_.options_) {
+        switch (it.second->getType()) {
         case 110:
             count110++;
             break;
         case 120:
             count120++;
-            opt120 = it->second;
+            opt120 = it.second;
             break;
         case 130:
             count130++;
@@ -3859,15 +3858,15 @@ TEST_F(Dhcpv6SrvTest, calculateTeeTimers) {
     sol->setIndex(ETH0_INDEX);
 
     // Iterate over the test scenarios.
-    for (auto test = tests.begin(); test != tests.end(); ++test) {
+    for (auto const& test : tests) {
         {
-            SCOPED_TRACE((*test).description_);
+            SCOPED_TRACE(test.description_);
             // Configure subnet for the scenario
-            subnet_->setT1((*test).cfg_t1_);
-            subnet_->setT2((*test).cfg_t2_);
-            subnet_->setCalculateTeeTimes((*test).calculate_tee_times);
-            subnet_->setT1Percent((*test).t1_percent_);
-            subnet_->setT2Percent((*test).t2_percent_);
+            subnet_->setT1(test.cfg_t1_);
+            subnet_->setT2(test.cfg_t2_);
+            subnet_->setCalculateTeeTimes(test.calculate_tee_times);
+            subnet_->setT1Percent(test.t1_percent_);
+            subnet_->setT2Percent(test.t2_percent_);
             AllocEngine::ClientContext6 ctx;
             bool drop = !srv.earlyGHRLookup(sol, ctx);
             ASSERT_FALSE(drop);
@@ -3879,7 +3878,7 @@ TEST_F(Dhcpv6SrvTest, calculateTeeTimers) {
             checkResponse(reply, DHCPV6_ADVERTISE, 1234);
 
             // check that IA_NA was returned and T1 and T2 are correct.
-            checkIA_NA(reply, 234, (*test).t1_exp_value_, (*test).t2_exp_value_);
+            checkIA_NA(reply, 234, test.t1_exp_value_, test.t2_exp_value_);
         }
     }
 }

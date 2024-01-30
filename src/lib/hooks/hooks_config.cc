@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -76,22 +76,20 @@ HooksConfig::equal(const HooksConfig& other) const {
     /// We don't have any libraries that are interacting (or would change their behavior
     /// depending on the order in which their callouts are executed), so the code is
     /// ok for now.
-    for (isc::hooks::HookLibsCollection::const_iterator this_it = libraries_.begin();
-         this_it != libraries_.end(); ++this_it) {
+    for (auto const& this_it : libraries_) {
         bool match = false;
-        for (isc::hooks::HookLibsCollection::const_iterator other_it =
-                 other.libraries_.begin(); other_it != other.libraries_.end(); ++other_it) {
-            if (this_it->first != other_it->first) {
+        for (auto const& other_it : other.libraries_) {
+            if (this_it.first != other_it.first) {
                 continue;
             }
-            if (isNull(this_it->second) && isNull(other_it->second)) {
+            if (isNull(this_it.second) && isNull(other_it.second)) {
                 match = true;
                 break;
             }
-            if (isNull(this_it->second) || isNull(other_it->second)) {
+            if (isNull(this_it.second) || isNull(other_it.second)) {
                 continue;
             }
-            if (this_it->second->equals(*other_it->second)) {
+            if (this_it.second->equals(*other_it.second)) {
                 match = true;
                 break;
             }
@@ -109,15 +107,14 @@ HooksConfig::toElement() const {
     // hooks-libraries is a list of maps
     ElementPtr result = Element::createList();
     // Iterate through libraries
-    for (HookLibsCollection::const_iterator hl = libraries_.begin();
-         hl != libraries_.end(); ++hl) {
+    for (auto const& hl : libraries_) {
         // Entries are maps
         ElementPtr map = Element::createMap();
         // Set the library name
-        map->set("library", Element::create(hl->first));
+        map->set("library", Element::create(hl.first));
         // Set parameters (not set vs set empty map)
-        if (!isNull(hl->second)) {
-            map->set("parameters", hl->second);
+        if (!isNull(hl.second)) {
+            map->set("parameters", hl.second);
         }
         // Push to the list
         result->add(map);
@@ -125,5 +122,5 @@ HooksConfig::toElement() const {
     return (result);
 }
 
-};
-};
+}
+}

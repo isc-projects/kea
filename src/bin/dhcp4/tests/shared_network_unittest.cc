@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -1165,10 +1165,9 @@ public:
     Subnet4Ptr getConfiguredSubnet(const IOAddress& address) {
         CfgSubnets4Ptr cfg = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4();
         const Subnet4Collection* subnets = cfg->getAll();
-        for (auto subnet_it = subnets->cbegin(); subnet_it != subnets->cend();
-             ++subnet_it) {
-            if ((*subnet_it)->inRange(address)) {
-                return (*subnet_it);
+        for (auto const& subnet_it : *subnets) {
+            if (subnet_it->inRange(address)) {
+                return (subnet_it);
             }
         }
         return (Subnet4Ptr());
@@ -2975,7 +2974,7 @@ TEST_F(Dhcpv4SharedNetworkTest, authoritative) {
 
     // Let's test them one by one
     int cnt = 0;
-    for ( auto s : scenarios) {
+    for (auto const& s : scenarios) {
         cnt++;
 
         string cfg = generateAuthConfig(s.global, s.subnet1, s.subnet2);

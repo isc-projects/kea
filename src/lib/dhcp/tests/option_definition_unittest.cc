@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -551,9 +551,8 @@ TEST_F(OptionDefinitionTest, ipv6AddressArrayTokenized) {
 
     // Create a vector of strings representing addresses given above.
     std::vector<std::string> addrs_str;
-    for (std::vector<asiolink::IOAddress>::const_iterator it = addrs.begin();
-         it != addrs.end(); ++it) {
-        addrs_str.push_back(it->toText());
+    for (auto const& it : addrs) {
+        addrs_str.push_back(it.toText());
     }
 
     // Create DHCPv6 option using the list of IPv6 addresses given in the
@@ -650,9 +649,8 @@ TEST_F(OptionDefinitionTest, ipv4AddressArrayTokenized) {
 
     // Create a vector of strings representing addresses given above.
     std::vector<std::string> addrs_str;
-    for (std::vector<asiolink::IOAddress>::const_iterator it = addrs.begin();
-         it != addrs.end(); ++it) {
-        addrs_str.push_back(it->toText());
+    for (auto const& it : addrs) {
+        addrs_str.push_back(it.toText());
     }
 
     // Create DHCPv4 option using the list of IPv4 addresses given in the

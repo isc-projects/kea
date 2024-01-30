@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -280,7 +280,7 @@ void sanityCheckConfig(const string& model, const YRTree& tree) {
 // This is test environment sanity check. It verifies that all configuration
 // defined in yang_configs.h are sane.
 TEST(YangReprTest, verifyConfigs) {
-    for (auto x : TEST_CONFIGS) {
+    for (auto const& x : TEST_CONFIGS) {
         sanityCheckConfig(x.first, x.second);
     }
 }

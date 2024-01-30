@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -161,11 +161,82 @@ TEST(StampedValueTest, convertStringToDouble) {
     EXPECT_THROW(StampedValue::create("bar", "hoho", Element::real), BadValue);
 }
 
+// Tests that stamped value from map can be created, but only with at most one element.
+TEST(StampedValueTest, createFromMap) {
+    StampedValuePtr value;
+    ElementPtr map = Element::createMap();
+    ASSERT_NO_THROW(value = StampedValue::create("bar", map));
+    EXPECT_FALSE(value->amNull());
+    EXPECT_EQ(Element::map, value->getType());
+    EXPECT_EQ("bar", value->getName());
+    ASSERT_THROW(value->getValue(), TypeError);
+    EXPECT_EQ(value->getElementValue()->getType(), Element::map);
+    ASSERT_EQ(value->getElementValue()->mapValue().size(), 0);
+
+    EXPECT_THROW(value->getIntegerValue(), TypeError);
+    EXPECT_THROW(value->getBoolValue(), TypeError);
+    EXPECT_THROW(value->getDoubleValue(), TypeError);
+
+    map->set("foo", Element::create("0"));
+    ASSERT_NO_THROW(value = StampedValue::create("bar", map));
+    EXPECT_FALSE(value->amNull());
+    EXPECT_EQ(Element::map, value->getType());
+    EXPECT_EQ("bar", value->getName());
+    ASSERT_THROW(value->getValue(), TypeError);
+    EXPECT_EQ(value->getElementValue()->getType(), Element::map);
+    ASSERT_EQ(value->getElementValue()->mapValue().size(), 1);
+    EXPECT_EQ(value->getElementValue()->mapValue().begin()->first, "foo");
+    EXPECT_EQ(value->getElementValue()->mapValue().begin()->second->getType(), Element::string);
+    EXPECT_EQ(value->getElementValue()->mapValue().begin()->second->stringValue(), "0");
+
+    map->set("foo", Element::create(true));
+    ASSERT_NO_THROW(value = StampedValue::create("bar", map));
+    EXPECT_FALSE(value->amNull());
+    EXPECT_EQ(Element::map, value->getType());
+    EXPECT_EQ("bar", value->getName());
+    ASSERT_THROW(value->getValue(), TypeError);
+    EXPECT_EQ(value->getElementValue()->getType(), Element::map);
+    ASSERT_EQ(value->getElementValue()->mapValue().size(), 1);
+    EXPECT_EQ(value->getElementValue()->mapValue().begin()->first, "foo");
+    EXPECT_EQ(value->getElementValue()->mapValue().begin()->second->getType(), Element::boolean);
+    EXPECT_EQ(value->getElementValue()->mapValue().begin()->second->boolValue(), true);
+
+    map->set("foo", Element::create(0));
+    ASSERT_NO_THROW(value = StampedValue::create("bar", map));
+    EXPECT_FALSE(value->amNull());
+    EXPECT_EQ(Element::map, value->getType());
+    EXPECT_EQ("bar", value->getName());
+    ASSERT_THROW(value->getValue(), TypeError);
+    EXPECT_EQ(value->getElementValue()->getType(), Element::map);
+    ASSERT_EQ(value->getElementValue()->mapValue().size(), 1);
+    EXPECT_EQ(value->getElementValue()->mapValue().begin()->first, "foo");
+    EXPECT_EQ(value->getElementValue()->mapValue().begin()->second->getType(), Element::integer);
+    EXPECT_EQ(value->getElementValue()->mapValue().begin()->second->intValue(), 0);
+
+    map->set("foo", Element::create(0.0));
+    ASSERT_NO_THROW(value = StampedValue::create("bar", map));
+    EXPECT_FALSE(value->amNull());
+    EXPECT_EQ(Element::map, value->getType());
+    EXPECT_EQ("bar", value->getName());
+    ASSERT_THROW(value->getValue(), TypeError);
+    EXPECT_EQ(value->getElementValue()->getType(), Element::map);
+    ASSERT_EQ(value->getElementValue()->mapValue().size(), 1);
+    EXPECT_EQ(value->getElementValue()->mapValue().begin()->first, "foo");
+    EXPECT_EQ(value->getElementValue()->mapValue().begin()->second->getType(), Element::real);
+    EXPECT_EQ(value->getElementValue()->mapValue().begin()->second->doubleValue(), 0.0);
+}
+
 // Tests that the value must have an allowed type.
 TEST(StampedValueTest, createFailures) {
     EXPECT_THROW(StampedValue::create("bar", ElementPtr()), BadValue);
-    EXPECT_THROW(StampedValue::create("bar", Element::createMap()), TypeError);
     EXPECT_THROW(StampedValue::create("bar", Element::createList()), TypeError);
+    ElementPtr map = Element::createMap();
+    map->set("foo", Element::create("0"));
+    map->set("test", Element::create("true"));
+    EXPECT_THROW(StampedValue::create("bar", map), BadValue);
+    map = Element::createMap();
+    map->set("foo", Element::createMap());
+    EXPECT_THROW(StampedValue::create("bar", map), BadValue);
 
     EXPECT_THROW(StampedValue::create("bar", "1", Element::map), TypeError);
     EXPECT_THROW(StampedValue::create("bar", "1", Element::list), TypeError);

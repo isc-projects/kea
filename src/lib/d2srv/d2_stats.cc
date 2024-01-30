@@ -1,4 +1,4 @@
-// Copyright (C) 2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2021-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -46,10 +46,10 @@ void
 D2Stats::init() {
     StatsMgr& stats_mgr = isc::stats::StatsMgr::instance();
     stats_mgr.setMaxSampleCountDefault(0);
-    for (const auto& name : D2Stats::ncr) {
+    for (auto const& name : D2Stats::ncr) {
         stats_mgr.setValue(name, static_cast<int64_t>(0));
     }
-    for (const auto& name : D2Stats::update) {
+    for (auto const& name : D2Stats::update) {
         stats_mgr.setValue(name, static_cast<int64_t>(0));
     }
 };

@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -406,7 +406,7 @@ LeaseStatCmdsImpl::makeResultSet4(const ElementPtr& result_wrapper,
         CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
 
     // Set the bounds on the selected subnet range
-    const auto& idx = subnets->get<SubnetSubnetIdIndexTag>();
+    auto const& idx = subnets->get<SubnetSubnetIdIndexTag>();
 
     // Init to ALL so we can use auto
     auto lower = idx.begin();
@@ -537,7 +537,7 @@ LeaseStatCmdsImpl::makeResultSet6(const ElementPtr& result_wrapper,
         CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getAll();
 
     // Set the bounds on the selected subnet range
-    const auto& idx = subnets->get<SubnetSubnetIdIndexTag>();
+    auto const& idx = subnets->get<SubnetSubnetIdIndexTag>();
 
     // Init to ALL so we can use auto
     auto lower = idx.begin();
@@ -676,8 +676,8 @@ LeaseStatCmdsImpl::createResultSet(const ElementPtr &result_wrapper,
 
     // Create the list of column names and add it to the result set.
     ElementPtr columns = Element::createList();
-    for (auto label = column_labels.begin(); label != column_labels.end(); ++label) {
-        columns->add(Element::create(*label));
+    for (auto const& label : column_labels) {
+        columns->add(Element::create(label));
     }
     result_set->set("columns", columns);
 

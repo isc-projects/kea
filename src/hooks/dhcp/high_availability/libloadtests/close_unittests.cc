@@ -1,4 +1,4 @@
-// Copyright (C) 2020-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2020-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -243,7 +243,7 @@ CloseHATest::runPartners(bool const backup /* = true */) {
             if (accept_partner2 > nfd) {
                 nfd = accept_partner2;
             }
-            for (auto reader : readers) {
+            for (auto const& reader : readers) {
                 if (!reader.second) {
                     continue;
                 }
@@ -285,7 +285,7 @@ CloseHATest::runPartners(bool const backup /* = true */) {
                     readers[fd] = true;
                 }
             }
-            for (auto reader : readers) {
+            for (auto const& reader : readers) {
                 if (!reader.second) {
                     continue;
                 }
@@ -314,7 +314,7 @@ CloseHATest::runPartners(bool const backup /* = true */) {
     if (accept_partner2 >= 0) {
         close(accept_partner2);
     }
-    for (auto reader : readers) {
+    for (auto const& reader : readers) {
         if (!reader.second) {
             continue;
         }

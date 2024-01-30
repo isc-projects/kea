@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -520,7 +520,7 @@ MySqlConfigBackendImpl::createUpdateOptionDef(const db::ServerSelector& server_s
     auto tag = getServerTag(server_selector, "creating or updating option definition");
 
     ElementPtr record_types = Element::createList();
-    for (auto field : option_def->getRecordFields()) {
+    for (auto const& field : option_def->getRecordFields()) {
         record_types->add(Element::create(static_cast<int>(field)));
     }
     MySqlBindingPtr record_types_binding = record_types->empty() ?
@@ -974,9 +974,9 @@ MySqlConfigBackendImpl::attachElementToServers(const int index,
 MySqlBindingPtr
 MySqlConfigBackendImpl::createInputRelayBinding(const NetworkPtr& network) {
     ElementPtr relay_element = Element::createList();
-    const auto& addresses = network->getRelayAddresses();
+    auto const& addresses = network->getRelayAddresses();
     if (!addresses.empty()) {
-        for (const auto& address : addresses) {
+        for (auto const& address : addresses) {
             relay_element->add(Element::create(address.toText()));
         }
     }

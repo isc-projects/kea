@@ -1,4 +1,4 @@
-// Copyright (C) 2019-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2019-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -12,6 +12,7 @@
 #include <dhcpsrv/parsers/simple_parser6.h>
 #include <hooks/callout_handle.h>
 #include <hooks/hooks_manager.h>
+#include <boost/foreach.hpp>
 
 using namespace isc::db;
 using namespace isc::data;
@@ -64,7 +65,7 @@ CBControlDHCPv6::databaseConfigApply(const db::BackendSelector& backend_selector
         auto external_cfg = CfgMgr::instance().createExternalCfg();
 
         // Get audit entries for deleted global parameters.
-        const auto& index = audit_entries.get<AuditEntryObjectTypeTag>();
+        auto const& index = audit_entries.get<AuditEntryObjectTypeTag>();
         auto range = index.equal_range(boost::make_tuple("dhcp6_global_parameter",
                                                          AuditEntry::ModificationType::DELETE));
         if (range.first != range.second) {
@@ -76,7 +77,7 @@ CBControlDHCPv6::databaseConfigApply(const db::BackendSelector& backend_selector
             // database query and the number of global parameters is small.
             data::StampedValueCollection globals;
             globals = getMgr().getPool()->getAllGlobalParameters6(backend_selector, server_selector);
-            addGlobalsToConfig(external_cfg, globals);
+            translateAndAddGlobalsToConfig(external_cfg, globals);
 
             // Add defaults.
             external_cfg->applyDefaultsConfiguredGlobals(SimpleParser6::GLOBAL6_DEFAULTS);
@@ -98,37 +99,37 @@ CBControlDHCPv6::databaseConfigApply(const db::BackendSelector& backend_selector
             // audit entry is found.
             range = index.equal_range(boost::make_tuple("dhcp6_option_def",
                                                         AuditEntry::ModificationType::DELETE));
-            for (auto entry = range.first; entry != range.second; ++entry) {
-                current_cfg->getCfgOptionDef()->del((*entry)->getObjectId());
+            BOOST_FOREACH(auto const& entry, range) {
+                current_cfg->getCfgOptionDef()->del(entry->getObjectId());
             }
 
             // Repeat the same for other configuration elements.
 
             range = index.equal_range(boost::make_tuple("dhcp6_options",
                                                         AuditEntry::ModificationType::DELETE));
-            for (auto entry = range.first; entry != range.second; ++entry) {
-                current_cfg->getCfgOption()->del((*entry)->getObjectId());
+            BOOST_FOREACH(auto const& entry, range) {
+                current_cfg->getCfgOption()->del(entry->getObjectId());
             }
 
             range = index.equal_range(boost::make_tuple("dhcp6_client_class",
                                                         AuditEntry::ModificationType::DELETE));
-            for (auto entry = range.first; entry != range.second; ++entry) {
-                current_cfg->getClientClassDictionary()->removeClass((*entry)->getObjectId());
+            BOOST_FOREACH(auto const& entry, range) {
+                current_cfg->getClientClassDictionary()->removeClass(entry->getObjectId());
             }
 
             range = index.equal_range(boost::make_tuple("dhcp6_shared_network",
                                                         AuditEntry::ModificationType::DELETE));
-            for (auto entry = range.first; entry != range.second; ++entry) {
-                current_cfg->getCfgSharedNetworks6()->del((*entry)->getObjectId());
+            BOOST_FOREACH(auto const& entry, range) {
+                current_cfg->getCfgSharedNetworks6()->del(entry->getObjectId());
             }
 
             range = index.equal_range(boost::make_tuple("dhcp6_subnet",
                                                         AuditEntry::ModificationType::DELETE));
-            for (auto entry = range.first; entry != range.second; ++entry) {
+            BOOST_FOREACH(auto const& entry, range) {
                 // If the deleted subnet belongs to a shared network and the
                 // shared network is not being removed, we need to detach the
                 // subnet from the shared network.
-                auto subnet = current_cfg->getCfgSubnets6()->getBySubnetId((*entry)->getObjectId());
+                auto subnet = current_cfg->getCfgSubnets6()->getBySubnetId(entry->getObjectId());
                 if (subnet) {
                     // Check if the subnet belongs to a shared network.
                     SharedNetwork6Ptr network;
@@ -138,7 +139,7 @@ CBControlDHCPv6::databaseConfigApply(const db::BackendSelector& backend_selector
                         network->del(subnet->getID());
                     }
                     // Actually delete the subnet from the configuration.
-                    current_cfg->getCfgSubnets6()->del((*entry)->getObjectId());
+                    current_cfg->getCfgSubnets6()->del(entry->getObjectId());
                 }
             }
 
@@ -163,7 +164,7 @@ CBControlDHCPv6::databaseConfigApply(const db::BackendSelector& backend_selector
             data::StampedValueCollection globals;
             globals = getMgr().getPool()->getModifiedGlobalParameters6(backend_selector, server_selector,
                                                                        lb_modification_time);
-            addGlobalsToConfig(external_cfg, globals);
+            translateAndAddGlobalsToConfig(external_cfg, globals);
             globals_fetched = true;
         }
     }
@@ -176,11 +177,11 @@ CBControlDHCPv6::databaseConfigApply(const db::BackendSelector& backend_selector
         OptionDefContainer option_defs =
             getMgr().getPool()->getModifiedOptionDefs6(backend_selector, server_selector,
                                                        lb_modification_time);
-        for (auto option_def = option_defs.begin(); option_def != option_defs.end(); ++option_def) {
-            if (!audit_entries.empty() && !hasObjectId(updated_entries, (*option_def)->getId())) {
+        for (auto const& option_def : option_defs) {
+            if (!audit_entries.empty() && !hasObjectId(updated_entries, option_def->getId())) {
                 continue;
             }
-            external_cfg->getCfgOptionDef()->add(*option_def);
+            external_cfg->getCfgOptionDef()->add(option_def);
         }
     }
 
@@ -192,11 +193,11 @@ CBControlDHCPv6::databaseConfigApply(const db::BackendSelector& backend_selector
         OptionContainer options = getMgr().getPool()->getModifiedOptions6(backend_selector,
                                                                           server_selector,
                                                                           lb_modification_time);
-        for (auto option = options.begin(); option != options.end(); ++option) {
-            if (!audit_entries.empty() && !hasObjectId(updated_entries, (*option).getId())) {
+        for (auto const& option : options) {
+            if (!audit_entries.empty() && !hasObjectId(updated_entries, option.getId())) {
                 continue;
             }
-            external_cfg->getCfgOption()->add((*option), (*option).space_name_);
+            external_cfg->getCfgOption()->add(option, option.space_name_);
         }
     }
 
@@ -268,19 +269,19 @@ CBControlDHCPv6::databaseConfigApply(const db::BackendSelector& backend_selector
         networks = getMgr().getPool()->getModifiedSharedNetworks6(backend_selector, server_selector,
                                                                   lb_modification_time);
     }
-    for (auto network = networks.begin(); network != networks.end(); ++network) {
-        if (!allocator_changed && cb_update && !hasObjectId(updated_entries, (*network)->getId())) {
+    for (auto const& network : networks) {
+        if (!allocator_changed && cb_update && !hasObjectId(updated_entries, network->getId())) {
             continue;
         }
         // In order to take advantage of the dynamic inheritance of global
         // parameters to a shared network we need to set a callback function
         // for each network to allow for fetching global parameters.
-        (*network)->setFetchGlobalsFn([] () -> ConstCfgGlobalsPtr {
+        network->setFetchGlobalsFn([] () -> ConstCfgGlobalsPtr {
             return (CfgMgr::instance().getCurrentCfg()->getConfiguredGlobals());
         });
-        (*network)->setDefaultAllocatorType(global_allocator);
-        (*network)->setDefaultPdAllocatorType(global_pd_allocator);
-        external_cfg->getCfgSharedNetworks6()->add((*network));
+        network->setDefaultAllocatorType(global_allocator);
+        network->setDefaultPdAllocatorType(global_pd_allocator);
+        external_cfg->getCfgSharedNetworks6()->add(network);
     }
 
     // Next we fetch subnets.
@@ -301,19 +302,19 @@ CBControlDHCPv6::databaseConfigApply(const db::BackendSelector& backend_selector
                                                           lb_modification_time);
     }
     // Iterate over all subnets that may require reconfiguration.
-    for (auto subnet = subnets.begin(); subnet != subnets.end(); ++subnet) {
-        if (!audit_entries.empty() && !hasObjectId(updated_entries, (*subnet)->getID())) {
+    for (auto const& subnet : subnets) {
+        if (!audit_entries.empty() && !hasObjectId(updated_entries, subnet->getID())) {
             continue;
         }
         // In order to take advantage of the dynamic inheritance of global
         // parameters to a subnet we need to set a callback function for each
         // subnet to allow for fetching global parameters.
-        (*subnet)->setFetchGlobalsFn([] () -> ConstCfgGlobalsPtr {
+        subnet->setFetchGlobalsFn([] () -> ConstCfgGlobalsPtr {
             return (CfgMgr::instance().getCurrentCfg()->getConfiguredGlobals());
         });
-        (*subnet)->setDefaultAllocatorType(global_allocator);
-        (*subnet)->setDefaultPdAllocatorType(global_pd_allocator);
-        external_cfg->getCfgSubnets6()->add((*subnet));
+        subnet->setDefaultAllocatorType(global_allocator);
+        subnet->setDefaultPdAllocatorType(global_pd_allocator);
+        external_cfg->getCfgSubnets6()->add(subnet);
     }
 
     if (reconfig) {

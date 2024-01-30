@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -306,7 +306,7 @@ void
 NetconfAgent::checkModules(CfgServersMapPtr const& servers /* = {} */) const {
     bool faulty_model(false);
     if (servers) {
-        for (auto pair : *servers) {
+        for (auto const& pair : *servers) {
             if (!checkModule(pair.second->getModel())) {
                 faulty_model = true;
             }
@@ -318,7 +318,7 @@ NetconfAgent::checkModules(CfgServersMapPtr const& servers /* = {} */) const {
                               "supported. Check logs for details.");
     }
 
-    for (auto modrev : YANG_REVISIONS) {
+    for (auto const& modrev : YANG_REVISIONS) {
         auto module = modules_.find(modrev.first);
         if (module == modules_.end()) {
             LOG_WARN(netconf_logger, NETCONF_MODULE_MISSING_WARN)

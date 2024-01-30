@@ -1,4 +1,4 @@
-// Copyright (C) 2021-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2021-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -600,11 +600,9 @@ public:
     void addRequiredClassesBinding(db::PsqlBindArray& bindings, const T& object) {
         // Create JSON list of required classes.
         data::ElementPtr required_classes_element = data::Element::createList();
-        const auto& required_classes = object->getRequiredClasses();
-        for (auto required_class = required_classes.cbegin();
-             required_class != required_classes.cend();
-             ++required_class) {
-            required_classes_element->add(data::Element::create(*required_class));
+        auto const& required_classes = object->getRequiredClasses();
+        for (auto const& required_class : required_classes) {
+            required_classes_element->add(data::Element::create(required_class));
         }
 
         bindings.add(required_classes_element);
@@ -694,7 +692,7 @@ public:
     void multipleUpdateDeleteQueries(T first_index, R... other_indexes) {
         std::vector<T> indexes({ first_index, other_indexes... });
         db::PsqlBindArray in_bindings;
-        for (auto index : indexes) {
+        for (auto const& index : indexes) {
             updateDeleteQuery(index, in_bindings);
         }
     }

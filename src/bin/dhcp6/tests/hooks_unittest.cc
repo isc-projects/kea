@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -5589,7 +5589,7 @@ TEST_F(LoadUnloadDhcpv6SrvTest, failLoadIncompatibleLibraries) {
 // Checks if callouts installed on the dhcp6_srv_configured ared indeed called
 // and all the necessary parameters are passed.
 TEST_F(LoadUnloadDhcpv6SrvTest, Dhcpv6SrvConfigured) {
-    for (string parameters : {
+    for (auto const& parameters : vector<string>{
         "",
         R"(, "parameters": { "mode": "fail-without-error" } )",
         R"(, "parameters": { "mode": "fail-with-error" } )"}) {
@@ -5705,7 +5705,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6ParkedPacketLimit) {
     ASSERT_NO_THROW(configure(config, *srv_));
 
     // Verify we have no packets parked.
-    const auto& parking_lot = ServerHooks::getServerHooks()
+    auto const& parking_lot = ServerHooks::getServerHooks()
                               .getParkingLotPtr("leases6_committed");
     ASSERT_TRUE(parking_lot);
     ASSERT_EQ(0, parking_lot->size());

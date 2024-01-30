@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,6 +11,7 @@
 #include <testutils/gtest_utils.h>
 #include <util/encode/hex.h>
 #include <util/range_utilities.h>
+#include <boost/foreach.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
 #include <cstdlib>
@@ -167,9 +168,8 @@ public:
     /// @return true if reservation exists, false otherwise.
     bool
     reservationExists(const IPv6Resrv& resrv, const IPv6ResrvRange& range) {
-        for (IPv6ResrvIterator it = range.first; it != range.second;
-             ++it) {
-            if (resrv == it->second) {
+        BOOST_FOREACH(auto const& it, range) {
+            if (resrv == it.second) {
                 return (true);
             }
         }
@@ -925,10 +925,9 @@ TEST_F(HostTest, addOptions4) {
 
     // Validate codes of options added to dhcp4 option space.
     uint16_t expected_code = 100;
-    for (OptionContainer::const_iterator option_desc = options->begin();
-         option_desc != options->end(); ++option_desc) {
-        ASSERT_TRUE(option_desc->option_);
-        EXPECT_EQ(expected_code, option_desc->option_->getType());
+    for (auto const& option_desc : *options) {
+        ASSERT_TRUE(option_desc.option_);
+        EXPECT_EQ(expected_code, option_desc.option_->getType());
         ++expected_code;
     }
 
@@ -938,10 +937,9 @@ TEST_F(HostTest, addOptions4) {
 
     // Validate codes of options added to isc option space.
     expected_code = 105;
-    for (OptionContainer::const_iterator option_desc = options->begin();
-         option_desc != options->end(); ++option_desc) {
-        ASSERT_TRUE(option_desc->option_);
-        EXPECT_EQ(expected_code, option_desc->option_->getType());
+    for (auto const& option_desc : *options) {
+        ASSERT_TRUE(option_desc.option_);
+        EXPECT_EQ(expected_code, option_desc.option_->getType());
         ++expected_code;
     }
 
@@ -1013,10 +1011,9 @@ TEST_F(HostTest, addOptions6) {
 
     // Validate codes of options added to dhcp6 option space.
     uint16_t expected_code = 100;
-    for (OptionContainer::const_iterator option_desc = options->begin();
-         option_desc != options->end(); ++option_desc) {
-        ASSERT_TRUE(option_desc->option_);
-        EXPECT_EQ(expected_code, option_desc->option_->getType());
+    for (auto const& option_desc : *options) {
+        ASSERT_TRUE(option_desc.option_);
+        EXPECT_EQ(expected_code, option_desc.option_->getType());
         ++expected_code;
     }
 
@@ -1026,10 +1023,9 @@ TEST_F(HostTest, addOptions6) {
 
     // Validate codes of options added to isc option space.
     expected_code = 105;
-    for (OptionContainer::const_iterator option_desc = options->begin();
-         option_desc != options->end(); ++option_desc) {
-        ASSERT_TRUE(option_desc->option_);
-        EXPECT_EQ(expected_code, option_desc->option_->getType());
+    for (auto const& option_desc : *options) {
+        ASSERT_TRUE(option_desc.option_);
+        EXPECT_EQ(expected_code, option_desc.option_->getType());
         ++expected_code;
     }
 

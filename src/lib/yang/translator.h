@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,6 +11,7 @@
 #include <yang/netconf_error.h>
 
 #include <sysrepo-cpp/Connection.hpp>
+#include <sysrepo-cpp/Enum.hpp>
 #include <sysrepo-cpp/Session.hpp>
 
 #include <unordered_map>
@@ -335,8 +336,8 @@ public:
     /// @param elem The JSON element.
     /// @param type The sysrepo type.
     void setItem(const std::string& xpath,
-                 isc::data::ConstElementPtr elem,
-                 libyang::LeafBaseType type);
+                 isc::data::ConstElementPtr const elem,
+                 libyang::LeafBaseType const type);
 
     /// @brief Get an element from given ElementPtr node and set it in sysrepo
     /// at given xpath.

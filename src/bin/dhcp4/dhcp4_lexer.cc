@@ -1,6 +1,6 @@
-#line 2 "dhcp4_lexer.cc"
+#line 1 "dhcp4_lexer.cc"
 
-#line 4 "dhcp4_lexer.cc"
+#line 3 "dhcp4_lexer.cc"
 
 #define  YY_INT_ALIGNED short int
 
@@ -2222,7 +2222,7 @@ static const flex_int16_t yy_rule_linenum[234] =
 #define YY_RESTORE_YY_MORE_OFFSET
 char *yytext;
 #line 1 "dhcp4_lexer.ll"
-/* Copyright (C) 2016-2023 Internet Systems Consortium, Inc. ("ISC")
+/* Copyright (C) 2016-2024 Internet Systems Consortium, Inc. ("ISC")
 
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -2265,7 +2265,7 @@ using namespace isc::dhcp;
 
 /* To avoid the call to exit... oops! */
 #define YY_FATAL_ERROR(msg) isc::dhcp::Parser4Context::fatal(msg)
-#line 2269 "dhcp4_lexer.cc"
+#line 2268 "dhcp4_lexer.cc"
 /* noyywrap disables automatic rewinding for the next file to parse. Since we
    always parse only a single string, there's no need to do any wraps. And
    using yywrap requires linking with -lfl, which provides the default yywrap
@@ -2291,8 +2291,8 @@ using namespace isc::dhcp;
    by moving it ahead by yyleng bytes. yyleng specifies the length of the
    currently matched token. */
 #define YY_USER_ACTION  driver.loc_.columns(yyleng);
+#line 2294 "dhcp4_lexer.cc"
 #line 2295 "dhcp4_lexer.cc"
-#line 2296 "dhcp4_lexer.cc"
 
 #define INITIAL 0
 #define COMMENT 1
@@ -2620,7 +2620,7 @@ YY_DECL
     }
 
 
-#line 2624 "dhcp4_lexer.cc"
+#line 2623 "dhcp4_lexer.cc"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -5744,7 +5744,7 @@ YY_RULE_SETUP
 #line 2474 "dhcp4_lexer.ll"
 ECHO;
 	YY_BREAK
-#line 5748 "dhcp4_lexer.cc"
+#line 5747 "dhcp4_lexer.cc"
 
 	case YY_END_OF_BUFFER:
 		{

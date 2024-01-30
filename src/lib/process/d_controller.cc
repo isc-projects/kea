@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -250,9 +250,14 @@ DControllerBase::parseArgs(int argc, char* argv[]) {
     // ("c" or "d") handle it here.  If its a valid custom option, then
     // invoke customOption.
     int ch;
+    optarg = 0;
     opterr = 0;
     optind = 1;
     std::string opts("dvVWc:t:" + getCustomOpts());
+
+    // Defer exhausting of arguments to the end.
+    ExhaustOptions e(argc, argv, opts);
+
     while ((ch = getopt(argc, argv, opts.c_str())) != -1) {
         switch (ch) {
         case 'd':
@@ -293,10 +298,12 @@ DControllerBase::parseArgs(int argc, char* argv[]) {
             break;
 
         case '?': {
+            char const saved_optopt(optopt);
+            std::string const saved_optarg(optarg ? optarg : std::string());
+
             // We hit an invalid option.
-            isc_throw(InvalidUsage, "unsupported option: ["
-                      << static_cast<char>(optopt) << "] "
-                      << (!optarg ? "" : optarg));
+            isc_throw(InvalidUsage, "unsupported option: -" << saved_optopt <<
+                      (saved_optarg.empty() ? std::string() : " " + saved_optarg));
 
             break;
             }
@@ -304,10 +311,12 @@ DControllerBase::parseArgs(int argc, char* argv[]) {
         default:
             // We hit a valid custom option
             if (!customOption(ch, optarg)) {
-                // This would be a programmatic error.
-                isc_throw(InvalidUsage, " Option listed but implemented?: ["
-                          << static_cast<char>(ch) << "] "
-                          << (!optarg ? "" : optarg));
+                char const saved_optopt(optopt);
+                std::string const saved_optarg(optarg ? optarg : std::string());
+
+                // We hit an invalid option.
+                isc_throw(InvalidUsage, "unsupported option: -" << saved_optopt <<
+                        (saved_optarg.empty() ? std::string() : " " + saved_optarg));
             }
             break;
         }
@@ -530,7 +539,7 @@ DControllerBase::handleOtherObjects(ConstElementPtr args) {
     // Check obsolete or unknown (aka unsupported) objects.
     const std::string& app_name = getAppName();
     std::string errmsg;
-    for (auto obj : args->mapValue()) {
+    for (auto const& obj : args->mapValue()) {
         const std::string& obj_name = obj.first;
         if (obj_name == app_name) {
             continue;

@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -183,9 +183,8 @@ BaseCommandMgr::listCommandsHandler(const std::string& /* name */,
                                     const isc::data::ConstElementPtr& ) {
     using namespace isc::data;
     ElementPtr commands = Element::createList();
-    for (HandlerContainer::const_iterator it = handlers_.begin();
-         it != handlers_.end(); ++it) {
-        commands->add(Element::create(it->first));
+    for (auto const& it : handlers_) {
+        commands->add(Element::create(it.first));
     }
     return (createAnswer(CONTROL_RESULT_SUCCESS, commands));
 }

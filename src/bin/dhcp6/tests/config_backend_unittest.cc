@@ -1,4 +1,4 @@
-// Copyright (C) 2019-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2019-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -25,7 +25,6 @@
 #include <dhcp6/tests/dhcp6_test_utils.h>
 #include <dhcp6/tests/get_config_unittest.h>
 
-#include <boost/foreach.hpp>
 #include <boost/scoped_ptr.hpp>
 
 #include <iostream>
@@ -193,12 +192,16 @@ TEST_F(Dhcp6CBTest, mergeGlobals) {
     StampedValuePtr server_tag(new StampedValue("server-tag", "second-server"));
     StampedValuePtr decline_period(new StampedValue("decline-probation-period", Element::create(86400)));
     StampedValuePtr renew_timer(new StampedValue("renew-timer", Element::create(500)));
+    StampedValuePtr mt_enabled(new StampedValue("multi-threading.enable-multi-threading", Element::create(true)));
+    StampedValuePtr mt_pool_size(new StampedValue("multi-threading.thread-pool-size", Element::create(256)));
 
     // Let's add all of the globals to the second backend.  This will verify
     // we find them there.
     db2_->createUpdateGlobalParameter6(ServerSelector::ALL(), server_tag);
     db2_->createUpdateGlobalParameter6(ServerSelector::ALL(), decline_period);
     db2_->createUpdateGlobalParameter6(ServerSelector::ALL(), renew_timer);
+    db2_->createUpdateGlobalParameter6(ServerSelector::ALL(), mt_enabled);
+    db2_->createUpdateGlobalParameter6(ServerSelector::ALL(), mt_pool_size);
 
     // Should parse and merge without error.
     ASSERT_NO_FATAL_FAILURE(configure(base_config, CONTROL_RESULT_SUCCESS, ""));
@@ -220,6 +223,8 @@ TEST_F(Dhcp6CBTest, mergeGlobals) {
     // Verify that the implicit globals from the backend are there.
     ASSERT_NO_FATAL_FAILURE(checkConfiguredGlobal(staging_cfg, server_tag));
     ASSERT_NO_FATAL_FAILURE(checkConfiguredGlobal(staging_cfg, renew_timer));
+    ASSERT_NO_FATAL_FAILURE(checkConfiguredGlobal(staging_cfg, mt_enabled));
+    ASSERT_NO_FATAL_FAILURE(checkConfiguredGlobal(staging_cfg, mt_pool_size));
 }
 
 // This test verifies that externally configured option definitions
@@ -319,7 +324,6 @@ TEST_F(Dhcp6CBTest, mergeOptions) {
         "       ] \n"
         "   } \n"
         "} \n";
-
 
     OptionDescriptorPtr opt;
     // Add solmax-rt to the first backend.

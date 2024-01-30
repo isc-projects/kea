@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -244,7 +244,7 @@ void
 DUIDFactory::createLinkLayerId(std::vector<uint8_t>& identifier,
                                uint16_t& htype) const {
     // Let's find suitable interface.
-    for (IfacePtr iface : IfaceMgr::instance().getIfaces()) {
+    for (auto const& iface : IfaceMgr::instance().getIfaces()) {
         // All the following checks could be merged into one multi-condition
         // statement, but let's keep them separated as perhaps one day
         // we will grow knobs to selectively turn them on or off. Also,

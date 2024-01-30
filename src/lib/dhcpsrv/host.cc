@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -16,6 +16,7 @@
 #include <util/encode/hex.h>
 #include <util/strutil.h>
 
+#include <boost/foreach.hpp>
 #include <sstream>
 
 using namespace isc::data;
@@ -448,9 +449,8 @@ bool
 Host::hasReservation(const IPv6Resrv& reservation) const {
     IPv6ResrvRange reservations = getIPv6Reservations(reservation.getType());
     if (std::distance(reservations.first, reservations.second) > 0) {
-        for (IPv6ResrvIterator it = reservations.first;
-             it != reservations.second; ++it) {
-            if (it->second == reservation) {
+        BOOST_FOREACH(auto const& it, reservations) {
+            if (it.second == reservation) {
                 return (true);
             }
         }
@@ -561,9 +561,8 @@ Host::toElement4() const {
     // Set client-classes
     const ClientClasses& cclasses = getClientClasses4();
     ElementPtr classes = Element::createList();
-    for (ClientClasses::const_iterator cclass = cclasses.cbegin();
-         cclass != cclasses.cend(); ++cclass) {
-        classes->add(Element::create(*cclass));
+    for (auto const& cclass : cclasses) {
+        classes->add(Element::create(cclass));
     }
     map->set("client-classes", classes);
     // Set option-data
@@ -599,19 +598,17 @@ Host::toElement6() const {
         isc_throw(ToElementError, "invalid DUID type: " << id_type);
     }
     // Set reservations (ip-addresses)
-    IPv6ResrvRange na_resv = getIPv6Reservations(IPv6Resrv::TYPE_NA);
+    const IPv6ResrvRange& na_resv = getIPv6Reservations(IPv6Resrv::TYPE_NA);
     ElementPtr resvs = Element::createList();
-    for (IPv6ResrvIterator resv = na_resv.first;
-         resv != na_resv.second; ++resv) {
-        resvs->add(Element::create(resv->second.toText()));
+    BOOST_FOREACH(auto const& resv, na_resv) {
+        resvs->add(Element::create(resv.second.toText()));
     }
     map->set("ip-addresses", resvs);
     // Set reservations (prefixes)
-    IPv6ResrvRange pd_resv = getIPv6Reservations(IPv6Resrv::TYPE_PD);
+    const IPv6ResrvRange& pd_resv = getIPv6Reservations(IPv6Resrv::TYPE_PD);
     resvs = Element::createList();
-    for (IPv6ResrvIterator resv = pd_resv.first;
-         resv != pd_resv.second; ++resv) {
-        resvs->add(Element::create(resv->second.toText()));
+    BOOST_FOREACH(auto const& resv, pd_resv) {
+        resvs->add(Element::create(resv.second.toText()));
     }
     map->set("prefixes", resvs);
     // Set the hostname
@@ -620,9 +617,8 @@ Host::toElement6() const {
     // Set client-classes
     const ClientClasses& cclasses = getClientClasses6();
     ElementPtr classes = Element::createList();
-    for (ClientClasses::const_iterator cclass = cclasses.cbegin();
-         cclass != cclasses.cend(); ++cclass) {
-        classes->add(Element::create(*cclass));
+    for (auto const& cclass : cclasses) {
+        classes->add(Element::create(cclass));
     }
     map->set("client-classes", classes);
 
@@ -683,33 +679,35 @@ Host::toText() const {
 
     s << " key=" << (key_.toText().empty() ? "(empty)" : key_.toText());
 
+    size_t count = 0;
+
     if (ipv6_reservations_.empty()) {
         s << " ipv6_reservations=(none)";
 
     } else {
         // Add all IPv6 reservations.
-        for (IPv6ResrvIterator resrv = ipv6_reservations_.begin();
-             resrv != ipv6_reservations_.end(); ++resrv) {
+        count = 0;
+        for (auto const& resrv : ipv6_reservations_) {
             s << " ipv6_reservation"
-              << std::distance(ipv6_reservations_.begin(), resrv)
-              << "=" << resrv->second.toText();
+              << count++
+              << "=" << resrv.second.toText();
         }
     }
 
     // Add DHCPv4 client classes.
-    for (ClientClasses::const_iterator cclass = dhcp4_client_classes_.cbegin();
-         cclass != dhcp4_client_classes_.cend(); ++cclass) {
+    count = 0;
+    for (auto const& cclass : dhcp4_client_classes_) {
         s << " dhcp4_class"
-          << std::distance(dhcp4_client_classes_.cbegin(), cclass)
-          << "=" << *cclass;
+          << count++
+          << "=" << cclass;
     }
 
     // Add DHCPv6 client classes.
-    for (ClientClasses::const_iterator cclass = dhcp6_client_classes_.cbegin();
-         cclass != dhcp6_client_classes_.cend(); ++cclass) {
+    count = 0;
+    for (auto const& cclass : dhcp6_client_classes_) {
         s << " dhcp6_class"
-          << std::distance(dhcp6_client_classes_.cbegin(), cclass)
-          << "=" << *cclass;
+          << count++
+          << "=" << cclass;
     }
 
     // Add negative cached.

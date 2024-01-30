@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -62,11 +62,10 @@ void CfgHostsList::internalize(ConstElementPtr list) {
 
 ElementPtr CfgHostsList::externalize() const {
     ElementPtr result = Element::createList();
-    for (CfgHostsMap::const_iterator item = map_.begin();
-         item != map_.end(); ++item) {
+    for (auto const& item : map_) {
         ElementPtr pair = Element::createMap();
-        pair->set("id", Element::create(static_cast<int64_t>(item->first)));
-        pair->set("reservations", item->second);
+        pair->set("id", Element::create(static_cast<int64_t>(item.first)));
+        pair->set("reservations", item.second);
         result->add(pair);
     }
     return (result);

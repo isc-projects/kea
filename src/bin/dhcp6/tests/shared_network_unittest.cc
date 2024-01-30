@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -1279,9 +1279,9 @@ public:
     Subnet6Ptr getConfiguredSubnet(const Lease::Type& type, const IOAddress& resource) const {
         CfgSubnets6Ptr cfg = CfgMgr::instance().getCurrentCfg()->getCfgSubnets6();
         const Subnet6Collection* subnets = cfg->getAll();
-        for (auto subnet_it = subnets->cbegin(); subnet_it != subnets->cend(); ++subnet_it) {
-            if ((*subnet_it)->inPool(type, resource)) {
-                return (*subnet_it);
+        for (auto const& subnet_it : *subnets) {
+            if (subnet_it->inPool(type, resource)) {
+                return (subnet_it);
             }
         }
 
@@ -1380,13 +1380,13 @@ public:
     bool hasLeaseForAddressRange(Dhcp6Client& client, const IOAddress& first, const IOAddress& last,
                                  const LeaseOnServer& lease_on_server = LeaseOnServer::MUST_EXIST) {
         std::vector<Lease6> leases = client.getLeasesByAddressRange(first, last);
-        for (auto lease_it = leases.cbegin(); lease_it != leases.cend(); ++lease_it) {
+        for (auto const& lease_it : leases) {
             // Take into account only valid leases.
-            if (lease_it->valid_lft_ == 0) {
+            if (lease_it.valid_lft_ == 0) {
                 continue;
             }
 
-            Lease6Ptr lease = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA, lease_it->addr_);
+            Lease6Ptr lease = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA, lease_it.addr_);
             if ((lease && (lease_on_server == LeaseOnServer::MUST_NOT_EXIST)) ||
                 (!lease && (lease_on_server == LeaseOnServer::MUST_EXIST))) {
                 return (false);
@@ -1415,13 +1415,13 @@ public:
                                const LeaseOnServer& lease_on_server = LeaseOnServer::MUST_EXIST) {
         std::vector<Lease6> leases = client.getLeasesByPrefixPool(prefix, prefix_len, delegated_len);
 
-        for (auto lease_it = leases.cbegin(); lease_it != leases.cend(); ++lease_it) {
+        for (auto const& lease_it : leases) {
             // Take into account only valid leases.
-            if (lease_it->valid_lft_ == 0) {
+            if (lease_it.valid_lft_ == 0) {
                 continue;
             }
 
-            Lease6Ptr lease = LeaseMgrFactory::instance().getLease6(Lease::TYPE_PD, lease_it->addr_);
+            Lease6Ptr lease = LeaseMgrFactory::instance().getLease6(Lease::TYPE_PD, lease_it.addr_);
             if ((lease && (lease->prefixlen_ == lease->prefixlen_) &&
                  (lease_on_server == LeaseOnServer::MUST_NOT_EXIST)) ||
                 (!lease && (lease_on_server == LeaseOnServer::MUST_EXIST))) {

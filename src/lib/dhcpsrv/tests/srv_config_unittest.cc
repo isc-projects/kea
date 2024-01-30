@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -551,21 +551,21 @@ TEST_F(SrvConfigTest, configuredGlobals) {
 
     // Maps and lists should be excluded.
     auto globals = srv_globals->valuesMap();
-    for (auto global = globals.begin(); global != globals.end(); ++global) {
-        if (global->first == "comment") {
-            ASSERT_EQ(Element::string, global->second->getType());
-            EXPECT_EQ("okay", global->second->stringValue());
-        } else if (global->first == "valid-lifetime") {
-            ASSERT_EQ(Element::integer, global->second->getType());
-            EXPECT_EQ(444, global->second->intValue());
-        } else if (global->first == "store-extended-info") {
-            ASSERT_EQ(Element::boolean, global->second->getType());
-            EXPECT_TRUE(global->second->boolValue());
-        } else if (global->first == "t1-percent") {
-            ASSERT_EQ(Element::real, global->second->getType());
-            EXPECT_EQ(1.234, global->second->doubleValue());
+    for (auto const& global : globals) {
+        if (global.first == "comment") {
+            ASSERT_EQ(Element::string, global.second->getType());
+            EXPECT_EQ("okay", global.second->stringValue());
+        } else if (global.first == "valid-lifetime") {
+            ASSERT_EQ(Element::integer, global.second->getType());
+            EXPECT_EQ(444, global.second->intValue());
+        } else if (global.first == "store-extended-info") {
+            ASSERT_EQ(Element::boolean, global.second->getType());
+            EXPECT_TRUE(global.second->boolValue());
+        } else if (global.first == "t1-percent") {
+            ASSERT_EQ(Element::real, global.second->getType());
+            EXPECT_EQ(1.234, global.second->doubleValue());
         } else {
-            ADD_FAILURE() << "unexpected element found:" << global->first;
+            ADD_FAILURE() << "unexpected element found:" << global.first;
         }
     }
 
@@ -1113,9 +1113,13 @@ TEST_F(SrvConfigTest, mergeGlobals4) {
     cfg_from.addConfiguredGlobal("ip-reservations-unique", Element::create(false));
 
     // Add some configured globals:
-    cfg_to.addConfiguredGlobal("dhcp4o6-port", Element::create(999));
-    cfg_to.addConfiguredGlobal("server-tag", Element::create("use_this_server"));
-    cfg_to.addConfiguredGlobal("reservations-lookup-first", Element::create(true));
+    cfg_from.addConfiguredGlobal("dhcp4o6-port", Element::create(999));
+    cfg_from.addConfiguredGlobal("server-tag", Element::create("use_this_server"));
+    cfg_from.addConfiguredGlobal("reservations-lookup-first", Element::create(true));
+    ElementPtr mt = Element::createMap();
+    cfg_from.addConfiguredGlobal("multi-threading", mt);
+    mt->set("enable-multi-threading", Element::create(false));
+    mt->set("thread-pool-size", Element::create(256));
 
     // Now let's merge.
     ASSERT_NO_THROW(cfg_to.merge(cfg_from));
@@ -1140,16 +1144,23 @@ TEST_F(SrvConfigTest, mergeGlobals4) {
     // ip-reservations-unique
     EXPECT_FALSE(cfg_to.getCfgDbAccess()->getIPReservationsUnique());
 
+    // multi-threading
+    EXPECT_TRUE(cfg_to.getDHCPMultiThreading());
+
     // Next we check the explicitly "configured" globals.
     // The list should be all of the "to" + "from", with the
     // latter overwriting the former.
     std::string exp_globals =
         "{ \n"
-        "   \"decline-probation-period\": 300,  \n"
-        "   \"dhcp4o6-port\": 999,  \n"
-        "   \"ip-reservations-unique\": false,  \n"
-        "   \"server-tag\": \"use_this_server\",  \n"
-        "   \"reservations-lookup-first\": true"
+        "   \"decline-probation-period\": 300, \n"
+        "   \"dhcp4o6-port\": 999, \n"
+        "   \"ip-reservations-unique\": false, \n"
+        "   \"server-tag\": \"use_this_server\", \n"
+        "   \"reservations-lookup-first\": true,"
+        "   \"multi-threading\": { \"enable-multi-threading\": false, \n"
+        "                          \"packet-queue-size\": 64, \n"
+        "                          \"thread-pool-size\": 256 \n"
+        "    } \n"
         "} \n";
 
     ConstElementPtr expected_globals;
@@ -1195,9 +1206,13 @@ TEST_F(SrvConfigTest, mergeGlobals6) {
     cfg_from.addConfiguredGlobal("ip-reservations-unique", Element::create(false));
 
     // Add some configured globals:
-    cfg_to.addConfiguredGlobal("dhcp4o6-port", Element::create(999));
-    cfg_to.addConfiguredGlobal("server-tag", Element::create("use_this_server"));
-    cfg_to.addConfiguredGlobal("reservations-lookup-first", Element::create(true));
+    cfg_from.addConfiguredGlobal("dhcp4o6-port", Element::create(999));
+    cfg_from.addConfiguredGlobal("server-tag", Element::create("use_this_server"));
+    cfg_from.addConfiguredGlobal("reservations-lookup-first", Element::create(true));
+    ElementPtr mt = Element::createMap();
+    cfg_from.addConfiguredGlobal("multi-threading", mt);
+    mt->set("enable-multi-threading", Element::create(false));
+    mt->set("thread-pool-size", Element::create(256));
 
     // Now let's merge.
     ASSERT_NO_THROW(cfg_to.merge(cfg_from));
@@ -1219,16 +1234,23 @@ TEST_F(SrvConfigTest, mergeGlobals6) {
     // ip-reservations-unique
     EXPECT_FALSE(cfg_to.getCfgDbAccess()->getIPReservationsUnique());
 
+    // multi-threading
+    EXPECT_TRUE(cfg_to.getDHCPMultiThreading());
+
     // Next we check the explicitly "configured" globals.
     // The list should be all of the "to" + "from", with the
     // latter overwriting the former.
     std::string exp_globals =
         "{ \n"
-        "   \"decline-probation-period\": 300,  \n"
-        "   \"dhcp4o6-port\": 999,  \n"
-        "   \"ip-reservations-unique\": false,  \n"
-        "   \"server-tag\": \"use_this_server\",  \n"
-        "   \"reservations-lookup-first\": true"
+        "   \"decline-probation-period\": 300, \n"
+        "   \"dhcp4o6-port\": 999, \n"
+        "   \"ip-reservations-unique\": false, \n"
+        "   \"server-tag\": \"use_this_server\", \n"
+        "   \"reservations-lookup-first\": true, \n"
+        "   \"multi-threading\": { \"enable-multi-threading\": false, \n"
+        "                          \"packet-queue-size\": 64, \n"
+        "                          \"thread-pool-size\": 256 \n"
+        "    } \n"
         "} \n";
 
     ConstElementPtr expected_globals;
@@ -1412,7 +1434,7 @@ TEST_F(SrvConfigTest, moveDdnsParamsTest) {
         }
     };
 
-    for (auto scenario : scenarios) {
+    for (auto const& scenario : scenarios) {
         SrvConfig conf(32);
         ElementPtr input_cfg;
         ConstElementPtr exp_cfg;

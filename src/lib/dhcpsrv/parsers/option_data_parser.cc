@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -17,7 +17,6 @@
 #include <dhcpsrv/parsers/simple_parser6.h>
 #include <util/encode/hex.h>
 #include <util/strutil.h>
-#include <boost/foreach.hpp>
 #include <boost/make_shared.hpp>
 #include <limits>
 #include <vector>
@@ -458,7 +457,7 @@ void OptionDataListParser::parse(const CfgOptionPtr& cfg,
                                  isc::data::ConstElementPtr option_data_list,
                                  bool encapsulate) {
     auto option_parser = createOptionDataParser();
-    BOOST_FOREACH(ConstElementPtr data, option_data_list->listValue()) {
+    for (auto const& data : option_data_list->listValue()) {
         std::pair<OptionDescriptor, std::string> option =
             option_parser->parse(data);
         // Use the option description to keep the formatted value

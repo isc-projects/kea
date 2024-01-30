@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -132,8 +132,8 @@ QueryFilter::QueryFilter(const HAConfigPtr& config)
 
     // The returned configurations are not ordered. Let's iterate over them
     // and put them in the desired order.
-    for (auto peer_pair = peers_map.begin(); peer_pair != peers_map.end(); ++peer_pair) {
-        auto peer = peer_pair->second;
+    for (auto const& peer_pair : peers_map) {
+        auto peer = peer_pair.second;
         // The primary server is always first on the list.
         if (peer->getRole() == HAConfig::PeerConfig::PRIMARY) {
             peers_.insert(peers_.begin(), peer);
@@ -275,16 +275,16 @@ QueryFilter::serveFailoverScopesInternal() {
 
     // Iterate over the roles of all servers to see which scope should
     // be enabled.
-    for (auto peer = peers_.begin(); peer != peers_.end(); ++peer) {
+    for (auto const& peer : peers_) {
         // The scope of the primary server must always be served. If we're
         // doing load balancing, the scope of the secondary server also
         // has to be served. Regardless if I am primary or secondary,
         // I will start serving queries from both scopes. If I am a
         // standby server, I will start serving the scope of the primary
         // server.
-        if (((*peer)->getRole() == HAConfig::PeerConfig::PRIMARY) ||
-            ((*peer)->getRole() == HAConfig::PeerConfig::SECONDARY)) {
-            serveScopeInternal((*peer)->getName());
+        if ((peer->getRole() == HAConfig::PeerConfig::PRIMARY) ||
+            (peer->getRole() == HAConfig::PeerConfig::SECONDARY)) {
+            serveScopeInternal(peer->getName());
         }
     }
 }
@@ -304,8 +304,8 @@ QueryFilter::serveNoScopesInternal() {
     scopes_.clear();
 
     // Disable scope for each peer in the configuration.
-    for (auto peer = peers_.begin(); peer != peers_.end(); ++peer) {
-        scopes_[(*peer)->getName()] = false;
+    for (auto const& peer : peers_) {
+        scopes_[peer->getName()] = false;
     }
 }
 
@@ -338,7 +338,7 @@ QueryFilter::getServedScopes() const {
 std::set<std::string>
 QueryFilter::getServedScopesInternal() const {
     std::set<std::string> scope_set;
-    for (auto scope : scopes_) {
+    for (auto const& scope : scopes_) {
         if (scope.second) {
             scope_set.insert(scope.first);
         }
@@ -420,7 +420,7 @@ QueryFilter::loadBalance(const dhcp::Pkt4Ptr& query4) const {
     // identifier has been specified.
     OptionPtr opt_client_id = query4->getOption(DHO_DHCP_CLIENT_IDENTIFIER);
     if (opt_client_id && !opt_client_id->getData().empty()) {
-        const auto& client_id_key = opt_client_id->getData();
+        auto const& client_id_key = opt_client_id->getData();
         lb_hash = loadBalanceHash(&client_id_key[0], client_id_key.size());
 
     } else {
@@ -452,7 +452,7 @@ QueryFilter::loadBalance(const dhcp::Pkt6Ptr& query6) const {
     // Compute the hash by DUID if the DUID.
     OptionPtr opt_duid = query6->getOption(D6O_CLIENTID);
     if (opt_duid && !opt_duid->getData().empty()) {
-        const auto& duid_key = opt_duid->getData();
+        auto const& duid_key = opt_duid->getData();
         lb_hash = loadBalanceHash(&duid_key[0], duid_key.size());
 
     } else {
@@ -474,7 +474,7 @@ uint8_t
 QueryFilter::loadBalanceHash(const uint8_t* key, const size_t key_len) const {
     uint8_t hash  = static_cast<uint8_t>(key_len);
 
-    for (auto i = key_len; i > 0;) {
+    for (size_t i = key_len; i > 0;) {
         hash = loadb_mx_tbl[hash ^ key[--i]];
     }
 

@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -25,6 +25,7 @@
 #include <testutils/gtest_utils.h>
 #include <util/range_utilities.h>
 #include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/range/adaptor/reversed.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <boost/pointer_cast.hpp>
 #include <util/encode/hex.h>
@@ -452,9 +453,8 @@ TEST_F(Pkt6Test, addGetDelOptions) {
 
     // Both options must be of type 2 and there must not be
     // any other type returned
-    for (OptionCollection::const_iterator x= options.begin();
-         x != options.end(); ++x) {
-        EXPECT_EQ(2, x->second->getType());
+    for (auto const& x : options) {
+        EXPECT_EQ(2, x.second->getType());
     }
 
     // Try to get a single option. Normally for singular options
@@ -552,9 +552,8 @@ TEST_F(Pkt6Test, getOptions) {
     // that copies of the options were used to replace original options
     // in the packet.
     OptionCollection options_modified = pkt.getNonCopiedOptions(1);
-    for (OptionCollection::const_iterator opt_it_modified = options_modified.begin();
-         opt_it_modified != options_modified.end(); ++opt_it_modified) {
-        opt_it = std::find(options.begin(), options.end(), *opt_it_modified);
+    for (auto const& opt_it_modified : options_modified) {
+        opt_it = std::find(options.begin(), options.end(), opt_it_modified);
         ASSERT_TRUE(opt_it != options.end());
     }
 
@@ -1029,7 +1028,7 @@ TEST_F(Pkt6Test, getAnyRelayOption) {
         msg->getNonCopiedAllRelayOptions(200, Pkt6::RELAY_SEARCH_FROM_CLIENT);
     EXPECT_EQ(3, opts0.size());
     vector<OptionPtr> lopts0;
-    for (auto it : opts0) {
+    for (auto const& it : opts0) {
         lopts0.push_back(it.second);
     }
     ASSERT_EQ(3, lopts0.size());
@@ -1052,7 +1051,7 @@ TEST_F(Pkt6Test, getAnyRelayOption) {
     opts = msg->getNonCopiedAllRelayOptions(200, Pkt6::RELAY_SEARCH_FROM_SERVER);
     EXPECT_EQ(3, opts.size());
     vector<OptionPtr> lopts;
-    for (auto it : opts) {
+    for (auto const& it : opts) {
         lopts.push_back(it.second);
     }
     ASSERT_EQ(3, lopts.size());
@@ -1064,9 +1063,10 @@ TEST_F(Pkt6Test, getAnyRelayOption) {
 
     // Check reverse order.
     vector<OptionPtr> ropts;
-    for (auto it = opts.rbegin(); it != opts.rend(); ++it) {
-        ropts.push_back(it->second);
+    for (auto const& it : boost::adaptors::reverse(opts)) {
+         ropts.push_back(it.second);
     }
+
     EXPECT_TRUE(lopts0 == ropts);
 
     // We just want option from the first relay (closest to the client)
@@ -1113,7 +1113,7 @@ TEST_F(Pkt6Test, getAnyRelayOption) {
     // Check collections.
     opts = msg->getNonCopiedAllRelayOptions(200, Pkt6::RELAY_SEARCH_FROM_CLIENT);
     lopts0.clear();
-    for (auto it : opts) {
+    for (auto const& it : opts) {
         lopts0.push_back(it.second);
     }
     ASSERT_EQ(3, lopts0.size());
@@ -1123,7 +1123,7 @@ TEST_F(Pkt6Test, getAnyRelayOption) {
     EXPECT_TRUE(lopts0[2] == relay1_opt1);
     opts = msg->getAllRelayOptions(200, Pkt6::RELAY_SEARCH_FROM_CLIENT);
     lopts.clear();
-    for (auto it : opts) {
+    for (auto const& it : opts) {
         lopts.push_back(it.second);
     }
     ASSERT_EQ(3, lopts.size());
@@ -1150,7 +1150,7 @@ TEST_F(Pkt6Test, getAnyRelayOption) {
     // Check collections.
     opts = msg->getNonCopiedAllRelayOptions(200, Pkt6::RELAY_SEARCH_FROM_SERVER);
     lopts0.clear();
-    for (auto it : opts) {
+    for (auto const& it : opts) {
         lopts0.push_back(it.second);
     }
     ASSERT_EQ(3, lopts0.size());
@@ -1160,7 +1160,7 @@ TEST_F(Pkt6Test, getAnyRelayOption) {
     EXPECT_TRUE(lopts0[2] == relay3_opt1);
     opts = msg->getAllRelayOptions(200, Pkt6::RELAY_SEARCH_FROM_SERVER);
     lopts.clear();
-    for (auto it : opts) {
+    for (auto const& it : opts) {
         lopts.push_back(it.second);
     }
     ASSERT_EQ(3, lopts.size());

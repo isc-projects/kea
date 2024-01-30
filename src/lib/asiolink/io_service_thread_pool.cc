@@ -1,4 +1,4 @@
-// Copyright (C) 2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2022-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -114,7 +114,7 @@ IoServiceThreadPool::checkPermissions(State state) {
 
 bool
 IoServiceThreadPool::checkThreadId(std::thread::id id) {
-    for (auto thread : threads_) {
+    for (auto const& thread : threads_) {
         if (id == thread->get_id()) {
             return (true);
         }

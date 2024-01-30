@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -162,7 +162,7 @@ CfgOption::createOptions(CfgOptionDefPtr cfg_def) {
     // Iterate over all the option descriptors in
     // all the spaces and instantiate the options
     // based on the given definitions.
-    for (auto space : getOptionSpaceNames()) {
+    for (auto const& space : getOptionSpaceNames()) {
         for (auto opt_desc : *(getAll(space))) {
             if (createDescriptorOption(cfg_def, space, opt_desc)) {
                 // Option was recreated, let's replace the descriptor.
@@ -372,18 +372,16 @@ CfgOption::del(const std::string& option_space, const uint16_t option_code) {
         (option_space != DHCP6_OPTION_SPACE)) {
         // For each option space name iterate over the existing options.
         auto option_space_names = getOptionSpaceNames();
-        for (auto option_space_from_list : option_space_names) {
+        for (auto const& option_space_from_list : option_space_names) {
             // Get all options within the particular option space.
-            auto options_in_space = getAll(option_space_from_list);
-            for (auto option_it = options_in_space->begin();
-                 option_it != options_in_space->end();
-                 ++option_it) {
+            auto const& options_in_space = getAll(option_space_from_list);
+            for (auto const& option_it : *options_in_space) {
 
                 // Check if the option encapsulates our option space and
                 // it does, try to delete our option.
-                if (option_it->option_ &&
-                    (option_it->option_->getEncapsulatedSpace() == option_space)) {
-                    option_it->option_->delOption(option_code);
+                if (option_it.option_ &&
+                    (option_it.option_->getEncapsulatedSpace() == option_space)) {
+                    option_it.option_->delOption(option_code);
                 }
             }
         }
@@ -411,22 +409,20 @@ CfgOption::del(const uint64_t id) {
     // Hierarchical nature of the options configuration requires that
     // we go over all options and decapsulate them before removing
     // any of them. Let's walk over the existing option spaces.
-    for (auto space_name : getOptionSpaceNames()) {
+    for (auto const& space_name : getOptionSpaceNames()) {
         // Get all options for the option space.
-        auto options = getAll(space_name);
-        for (auto option_it = options->begin(); option_it != options->end();
-             ++option_it) {
-            if (!option_it->option_) {
+        auto const& options = getAll(space_name);
+        for (auto const& option_it : *options) {
+            if (!option_it.option_) {
                 continue;
             }
 
             // For each option within the option space we need to dereference
             // any existing sub options.
-            auto sub_options = option_it->option_->getOptions();
-            for (auto sub = sub_options.begin(); sub != sub_options.end();
-                 ++sub) {
+            auto sub_options = option_it.option_->getOptions();
+            for (auto const& sub : sub_options) {
                 // Dereference sub option.
-                option_it->option_->delOption(sub->second->getType());
+                option_it.option_->delOption(sub.second->getType());
             }
         }
     }

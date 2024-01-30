@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -60,7 +60,7 @@ StatContext::clear() {
 void
 StatContext::resetAll() {
     // Let's iterate over all stored statistics...
-    for (auto s : stats_) {
+    for (auto const& s : stats_) {
         // ... and reset each statistic.
         s.second->reset();
     }
@@ -70,7 +70,7 @@ ConstElementPtr
 StatContext::getAll() const {
     ElementPtr map = Element::createMap(); // a map
     // Let's iterate over all stored statistics...
-    for (auto s : stats_) {
+    for (auto const& s : stats_) {
         // ... and add each of them to the map.
         map->set(s.first, s.second->getJSON());
     }
@@ -80,7 +80,7 @@ StatContext::getAll() const {
 void
 StatContext::setMaxSampleCountAll(uint32_t max_samples) {
     // Let's iterate over all stored statistics...
-    for (auto s : stats_) {
+    for (auto const& s : stats_) {
         // ... and set count limit for each statistic.
         s.second->setMaxSampleCount(max_samples);
     }
@@ -89,7 +89,7 @@ StatContext::setMaxSampleCountAll(uint32_t max_samples) {
 void
 StatContext::setMaxSampleAgeAll(const StatsDuration& duration) {
     // Let's iterate over all stored statistics...
-    for (auto s : stats_) {
+    for (auto const& s : stats_) {
         // ... and set duration limit for each statistic.
         s.second->setMaxSampleAge(duration);
     }
