@@ -121,11 +121,15 @@ public:
 class StreamService {
 public:
     /// @brief Constructor.
-    StreamService(const IOServicePtr& io_service) : io_service_(io_service) {
+    StreamService(const IOServicePtr& io_service, TlsContextPtr& tls_context) :
+        io_service_(io_service), tls_context_(tls_context) {
     }
 private:
     /// @brief The IO service used to handle events.
     IOServicePtr io_service_;
+
+    /// @brief OpenSSL TLS context.
+    TlsContextPtr tls_context_;
 };
 
 /// @brief TLS stream base class.

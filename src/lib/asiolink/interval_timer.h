@@ -111,7 +111,7 @@ public:
     /// \throw isc::BadValue interval is less than or equal to 0
     /// \throw isc::Unexpected internal runtime error
     void setup(const Callback& cbfunc, const long interval,
-                    const Mode& mode = REPEATING);
+               const Mode& mode = REPEATING);
 
     /// Cancel the timer.
     ///

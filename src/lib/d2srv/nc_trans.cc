@@ -71,11 +71,11 @@ NameChangeTransaction(asiolink::IOServicePtr& io_service,
                       DdnsDomainPtr& reverse_domain,
                       D2CfgMgrPtr& cfg_mgr)
     : io_service_(io_service), ncr_(ncr), forward_domain_(forward_domain),
-     reverse_domain_(reverse_domain), dns_client_(), dns_update_request_(),
-     dns_update_status_(DNSClient::OTHER), dns_update_response_(),
-     forward_change_completed_(false), reverse_change_completed_(false),
-     current_server_list_(), current_server_(), next_server_pos_(0),
-     update_attempts_(0), cfg_mgr_(cfg_mgr), tsig_key_() {
+      reverse_domain_(reverse_domain), dns_client_(), dns_update_request_(),
+      dns_update_status_(DNSClient::OTHER), dns_update_response_(),
+      forward_change_completed_(false), reverse_change_completed_(false),
+      current_server_list_(), current_server_(), next_server_pos_(0),
+      update_attempts_(0), cfg_mgr_(cfg_mgr), tsig_key_() {
     /// @todo if io_service is NULL we are multi-threading and should
     /// instantiate our own
     if (!io_service_) {

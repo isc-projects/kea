@@ -38,7 +38,8 @@ public:
     }
 
     /// @brief Destructor.
-    virtual ~TLSAcceptor() { }
+    virtual ~TLSAcceptor() {
+    }
 
     /// @brief Asynchronously accept new connection.
     ///

@@ -217,6 +217,13 @@ public:
             listener->stop();
         }
 
+        test_timer_.cancel();
+        io_service_->restart();
+        try {
+            io_service_->poll();
+        } catch (...) {
+        }
+
         MultiThreadingMgr::instance().setMode(false);
     }
 

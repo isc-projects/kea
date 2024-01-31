@@ -85,6 +85,9 @@ public:
 
     bool            tcp_short_send_;        ///< If set to true, we do not send
                                             ///  all data in the tcp response
+    boost::shared_ptr<udp::socket> udp_socket_;
+    boost::shared_ptr<tcp::socket> tcp_socket_;
+    boost::shared_ptr<tcp::acceptor> tcp_acceptor_;
 
     /// \brief Constructor
     IOFetchTest() :
@@ -139,13 +142,21 @@ public:
         // the class.)
         //
         // We could initialize the data with a single character, but as an added
-        // check we'll make ssre that it has some structure.
+        // check we'll make sure that it has some structure.
 
         test_data_.clear();
         test_data_.reserve(MAX_SIZE);
         while (test_data_.size() < MAX_SIZE) {
             test_data_ += "A message to be returned to the client that has "
                           "some sort of structure.";
+        }
+    }
+
+    virtual ~IOFetchTest() {
+        service_->restart();
+        try {
+            service_->poll();
+        } catch (...) {
         }
     }
 
@@ -343,7 +354,7 @@ public:
 
         } else {
 
-            // For all subsequent times, send the remainder, maximised to
+            // For all subsequent times, send the remainder, maximized to
             // whatever we have chosen for the maximum send size.
             amount = min(tcp_send_size_,
                         (send_buffer_.size() - send_cumulative_));
@@ -542,14 +553,15 @@ public:
         }
 
         // Socket into which the connection will be accepted.
-        tcp::socket socket(service_->getInternalIOService());
+        tcp_socket_.reset(new tcp::socket(service_->getInternalIOService()));
 
         // Acceptor object - called when the connection is made, the handler
         // will initiate a read on the socket.
-        tcp::acceptor acceptor(service_->getInternalIOService(),
-                               tcp::endpoint(tcp::v4(), TEST_PORT));
-        acceptor.async_accept(socket,
-            std::bind(&IOFetchTest::tcpAcceptHandler, this, &socket, ph::_1));
+        tcp_acceptor_.reset(new tcp::acceptor(service_->getInternalIOService(),
+                                              tcp::endpoint(tcp::v4(), TEST_PORT)));
+        tcp_acceptor_->async_accept(*tcp_socket_,
+                                    std::bind(&IOFetchTest::tcpAcceptHandler,
+                                              this, tcp_socket_.get(), ph::_1));
 
         // Post the TCP fetch object to send the query and receive the response.
         service_->post(tcp_fetch_);
@@ -557,10 +569,11 @@ public:
         // ... and execute all the callbacks.  This exits when the fetch
         // completes.
         service_->run();
-        EXPECT_TRUE(run_);  // Make sure the callback did execute
 
         // Tidy up
-        socket.close();
+        tcp_socket_->close();
+
+        EXPECT_TRUE(run_);  // Make sure the callback did execute
     }
 
     /// Perform a send/receive test over UDP
@@ -574,18 +587,18 @@ public:
         protocol_ = IOFetch::UDP;
 
         // Set up the server.
-        udp::socket socket(service_->getInternalIOService(), udp::v4());
-        socket.set_option(socket_base::reuse_address(true));
-        socket.bind(udp::endpoint(TEST_HOST, TEST_PORT));
+        udp_socket_.reset(new udp::socket(service_->getInternalIOService(), udp::v4()));
+        udp_socket_->set_option(socket_base::reuse_address(true));
+        udp_socket_->bind(udp::endpoint(TEST_HOST, TEST_PORT));
         return_data_ = "Message returned to the client";
 
         udp::endpoint remote;
-        socket.async_receive_from(boost::asio::buffer(receive_buffer_,
-                                               sizeof(receive_buffer_)),
-                                  remote,
-                                  std::bind(&IOFetchTest::udpReceiveHandler,
-                                            this, &remote, &socket,
-                                            ph::_1, ph::_2, bad_qid, second_send));
+        udp_socket_->async_receive_from(boost::asio::buffer(receive_buffer_,
+                                                            sizeof(receive_buffer_)),
+                                        remote,
+                                        std::bind(&IOFetchTest::udpReceiveHandler,
+                                                  this, &remote, udp_socket_.get(),
+                                                  ph::_1, ph::_2, bad_qid, second_send));
         service_->post(udp_fetch_);
         if (debug_) {
             cout << "udpSendReceive: async_receive_from posted,"
@@ -593,9 +606,10 @@ public:
         }
         service_->run();
 
-        socket.close();
+        // Tidy up
+        udp_socket_->close();
 
-        EXPECT_TRUE(run_);
+        EXPECT_TRUE(run_);  // Make sure the callback did execute
     }
 };
 

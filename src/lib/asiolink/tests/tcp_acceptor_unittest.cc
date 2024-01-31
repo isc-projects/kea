@@ -64,8 +64,9 @@ public:
     /// connect() to connect to the server.
     ///
     /// @param io_service IO service to be stopped on error.
-    explicit TCPClient(const IOServicePtr& io_service)
-        : io_service_(io_service), socket_(io_service_->getInternalIOService()) {
+    explicit TCPClient(const IOServicePtr& io_service, bool& running)
+        : io_service_(io_service), socket_(io_service_->getInternalIOService()),
+          running_(running) {
     }
 
     /// @brief Destructor.
@@ -94,6 +95,9 @@ public:
     ///
     /// @param ec Error code.
     void connectHandler(const boost::system::error_code& ec) {
+        if (!running_) {
+            return;
+        }
         if (ec) {
             // One would expect that async_connect wouldn't return EINPROGRESS
             // error code, but simply wait for the connection to get
@@ -123,6 +127,8 @@ private:
     /// @brief A socket used for the connection.
     boost::asio::ip::tcp::socket socket_;
 
+    /// @brief Flag which indicates if the test is still running.
+    bool& running_;
 };
 
 /// @brief Pointer to the TCPClient.
@@ -206,13 +212,20 @@ public:
                          SERVER_PORT),
           endpoint_(asio_endpoint_), test_timer_(io_service_), connections_(),
           clients_(), connections_num_(0), aborted_connections_num_(0),
-          max_connections_(1) {
+          max_connections_(1), running_(true) {
         test_timer_.setup(std::bind(&TCPAcceptorTest::timeoutHandler, this),
                                     TEST_TIMEOUT, IntervalTimer::ONE_SHOT);
     }
 
     /// @brief Destructor.
     virtual ~TCPAcceptorTest() {
+        running_ = false;
+        test_timer_.cancel();
+        io_service_->restart();
+        try {
+            io_service_->poll();
+        } catch (...) {
+        }
     }
 
     /// @brief Specifies how many new connections are expected before the IO
@@ -264,7 +277,7 @@ public:
     /// This method creates TCPClient instance and retains it in the clients_
     /// list.
     void connect() {
-        TCPClientPtr client(new TCPClient(io_service_));
+        TCPClientPtr client(new TCPClient(io_service_, running_));
         clients_.push_back(client);
         clients_.back()->connect();
     }
@@ -333,6 +346,9 @@ public:
 
     /// @brief Connections limit.
     unsigned int max_connections_;
+
+    /// @brief Flag which indicates if the test is still running.
+    bool running_;
 };
 
 // Test TCPAcceptor::asyncAccept.

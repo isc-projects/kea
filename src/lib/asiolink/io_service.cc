@@ -29,7 +29,8 @@ public:
     };
 
     /// \brief The destructor.
-    ~IOServiceImpl() {};
+    ~IOServiceImpl() {
+    };
     //@}
 
     /// \brief Start the underlying event loop.

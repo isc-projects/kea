@@ -118,7 +118,8 @@ typedef boost::asio::ssl::stream<boost::asio::ip::tcp::socket> TlsStreamImpl;
 template <typename Callback, typename TlsStreamImpl>
 TlsStreamBase<Callback, TlsStreamImpl>::
 TlsStreamBase(const IOServicePtr& io_service, TlsContextPtr context)
-    : StreamService(io_service), TlsStreamImpl(io_service->getInternalIOService(),
+    : StreamService(io_service, context),
+      TlsStreamImpl(io_service->getInternalIOService(),
       context->getContext()), role_(context->getRole()) {
 }
 
@@ -142,7 +143,8 @@ public:
     }
 
     /// @brief Destructor.
-    virtual ~TlsStream() { }
+    virtual ~TlsStream() {
+    }
 
     /// @brief TLS Handshake.
     ///

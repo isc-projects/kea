@@ -47,6 +47,12 @@ public:
     /// Removes unix socket descriptor after the test.
     virtual ~UnixDomainSocketTest() {
         removeUnixSocketFile();
+        test_socket_.reset();
+        io_service_->restart();
+        try {
+            io_service_->poll();
+        } catch (...) {
+        }
     }
 
     /// @brief Returns socket file path.

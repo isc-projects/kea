@@ -147,6 +147,11 @@ void
 TimerMgrTest::TearDown() {
     // Remove all timers.
     timer_mgr_->unregisterTimers();
+    io_service_->restart();
+    try {
+        io_service_->poll();
+    } catch (...) {
+    }
 }
 
 void

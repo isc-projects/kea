@@ -211,11 +211,18 @@ FauxServer::requestHandler(const boost::system::error_code& error,
 //********************** TimedIO class ***********************
 
 TimedIO::TimedIO()
-    : io_service_(new isc::asiolink::IOService()), timer_(io_service_),
+    : io_service_(new isc::asiolink::IOService()),
+      timer_(new asiolink::IntervalTimer(io_service_)),
       run_time_(0) {
 }
 
 TimedIO::~TimedIO() {
+    timer_->cancel();
+    io_service_->restart();
+    try {
+        io_service_->poll();
+    } catch (...) {
+    }
 }
 
 int
@@ -223,9 +230,9 @@ TimedIO::runTimedIO(int run_time) {
     run_time_ = run_time;
     int cnt = io_service_->poll();
     if (cnt == 0) {
-        timer_.setup(std::bind(&TimedIO::timesUp, this), run_time_);
+        timer_->setup(std::bind(&TimedIO::timesUp, this), run_time_);
         cnt = io_service_->runOne();
-        timer_.cancel();
+        timer_->cancel();
     }
 
     return (cnt);

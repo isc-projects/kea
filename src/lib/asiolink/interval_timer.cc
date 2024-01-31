@@ -51,8 +51,7 @@ public:
     /// @param interval The interval used to start the timer.
     /// @param interval_mode The interval mode used by the timer.
     void setup(const IntervalTimer::Callback& cbfunc, const long interval,
-               const IntervalTimer::Mode& interval_mode
-               = IntervalTimer::REPEATING);
+               const IntervalTimer::Mode& interval_mode = IntervalTimer::REPEATING);
 
     /// @brief Callback function which calls the registerd callback.
     ///

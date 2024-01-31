@@ -114,6 +114,11 @@ public:
 
     /// @brief Destructor.
     ~HttpConnectionPoolTest() {
+        io_service_->restart();
+        try {
+            io_service_->poll();
+        } catch (...) {
+        }
         MultiThreadingMgr::instance().setMode(false);
     }
 

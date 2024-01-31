@@ -50,8 +50,7 @@ DControllerBase::setController(const DControllerBasePtr& controller) {
     if (controller_) {
         // This shouldn't happen, but let's make sure it can't be done.
         // It represents a programmatic error.
-        isc_throw (DControllerBaseError,
-                "Multiple controller instances attempted.");
+        isc_throw (DControllerBaseError, "Multiple controller instances attempted.");
     }
 
     controller_ = controller;

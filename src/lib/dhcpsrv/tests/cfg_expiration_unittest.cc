@@ -310,6 +310,11 @@ public:
     /// timers.
     virtual ~CfgExpirationTimersTest() {
         cleanupTimerMgr();
+        io_service_->restart();
+        try {
+            io_service_->poll();
+        } catch (...) {
+        }
     }
 
     /// @brief Stop @c TimerMgr worker thread and remove the timers.

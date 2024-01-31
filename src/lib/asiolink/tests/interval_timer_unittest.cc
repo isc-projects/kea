@@ -25,16 +25,22 @@ using namespace isc::asiolink;
 class IntervalTimerTest : public ::testing::Test {
 protected:
     IntervalTimerTest() :
-        io_service_(new IOService()), timer_called_(false), timer_cancel_success_(false)
-    {}
-    ~IntervalTimerTest() {}
+        io_service_(new IOService()), timer_called_(false),
+        timer_cancel_success_(false) {
+    }
+    ~IntervalTimerTest() {
+        io_service_->restart();
+        try {
+            io_service_->poll();
+        } catch (...) {
+        }
+    }
     class TimerCallBack {
     public:
         TimerCallBack(IntervalTimerTest* test_obj) : test_obj_(test_obj) {}
         void operator()() const {
             test_obj_->timer_called_ = true;
             test_obj_->io_service_->stop();
-            return;
         }
     private:
         IntervalTimerTest* test_obj_;
@@ -42,13 +48,11 @@ protected:
     class TimerCallBackCounter {
     public:
         TimerCallBackCounter(IntervalTimerTest* test_obj) :
-            test_obj_(test_obj)
-        {
+            test_obj_(test_obj) {
             counter_ = 0;
         }
         void operator()() {
             ++counter_;
-            return;
         }
         int counter_;
     private:
@@ -60,8 +64,8 @@ protected:
                                    IntervalTimer* timer,
                                    TimerCallBackCounter& counter)
             : test_obj_(test_obj), timer_(timer), counter_(counter), count_(0),
-              prev_counter_(-1)
-        {}
+              prev_counter_(-1) {
+        }
         void operator()() {
             ++count_;
             if (count_ == 1) {
@@ -80,7 +84,6 @@ protected:
                     test_obj_->timer_cancel_success_ = true;
                 }
             }
-            return;
         }
     private:
         IntervalTimerTest* test_obj_;
@@ -92,8 +95,8 @@ protected:
     class TimerCallBackCanceller {
     public:
         TimerCallBackCanceller(unsigned int& counter, IntervalTimer& itimer) :
-            counter_(counter), itimer_(itimer)
-        {}
+            counter_(counter), itimer_(itimer) {
+        }
         void operator()() {
             ++counter_;
             itimer_.cancel();
@@ -106,8 +109,8 @@ protected:
     public:
         TimerCallBackOverwriter(IntervalTimerTest* test_obj,
                                 IntervalTimer& timer)
-            : test_obj_(test_obj), timer_(timer), count_(0)
-        {}
+            : test_obj_(test_obj), timer_(timer), count_(0) {
+        }
         void operator()() {
             ++count_;
             if (count_ == 1) {
@@ -121,7 +124,6 @@ protected:
                 // We should stop here.
                 test_obj_->io_service_->stop();
             }
-            return;
         }
     private:
         IntervalTimerTest* test_obj_;
@@ -135,7 +137,6 @@ protected:
         }
         void operator()() {
             ++counter_;
-            return;
         }
     private:
         IntervalTimerTest* test_obj_;

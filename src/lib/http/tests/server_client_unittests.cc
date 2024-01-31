@@ -412,6 +412,12 @@ public:
         for (auto const& client : clients_) {
             client->close();
         }
+        test_timer_.cancel();
+        io_service_->restart();
+        try {
+            io_service_->poll();
+        } catch (...) {
+        }
     }
 
     /// @brief Connect to the endpoint.

@@ -179,7 +179,13 @@ public:
                           TEST_TIMEOUT);
     }
 
-    virtual ~NameChangeUDPListenerTest(){
+    virtual ~NameChangeUDPListenerTest() {
+        test_timer_.cancel();
+        io_service_->restart();
+        try {
+            io_service_->poll();
+        } catch (...) {
+        }
     }
 
 
@@ -987,6 +993,12 @@ public:
     }
 
     ~NameChangeUDPTest() {
+        test_timer_.cancel();
+        io_service_->restart();
+        try {
+            io_service_->poll();
+        } catch (...) {
+        }
         // Disable multi-threading
         MultiThreadingMgr::instance().setMode(false);
     }

@@ -233,6 +233,16 @@ public:
                           TEST_TIMEOUT, IntervalTimer::ONE_SHOT);
     }
 
+    /// @brief Destructor.
+    virtual ~HttpListenerTest() {
+        test_timer_.cancel();
+        io_service_->restart();
+        try {
+            io_service_->poll();
+        } catch (...) {
+        }
+    }
+
     /// @brief Callback function invoke upon test timeout.
     ///
     /// It stops the IO service and reports test timeout.

@@ -79,7 +79,7 @@ public:
     ///
     /// Indicates that the opening of a UDP socket is synchronous.
     virtual bool isOpenSynchronous() const {
-        return true;
+        return (true);
     }
 
     /// \brief Open Socket

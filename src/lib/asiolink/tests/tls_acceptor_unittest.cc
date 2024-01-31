@@ -65,8 +65,9 @@ public:
     /// connect() to connect to the server.
     ///
     /// @param io_service IO service to be stopped on error.
-    explicit TLSClient(const IOServicePtr& io_service)
-        : io_service_(io_service), socket_(io_service_->getInternalIOService()) {
+    explicit TLSClient(const IOServicePtr& io_service, bool& running)
+        : io_service_(io_service), socket_(io_service_->getInternalIOService()),
+          running_(running) {
     }
 
     /// @brief Destructor.
@@ -95,6 +96,9 @@ public:
     ///
     /// @param ec Error code.
     void connectHandler(const boost::system::error_code& ec) {
+        if (!running_) {
+            return;
+        }
         if (ec) {
             // One would expect that async_connect wouldn't return EINPROGRESS
             // error code, but simply wait for the connection to get
@@ -124,6 +128,8 @@ private:
     /// @brief A socket used for the connection.
     ip::tcp::socket socket_;
 
+    /// @brief Flag which indicates if the test is still running.
+    bool& running_;
 };
 
 /// @brief Pointer to the TLSClient.
@@ -154,8 +160,8 @@ public:
                       TlsContextPtr context,
                       TestTLSAcceptor& acceptor,
                       const TLSAcceptorCallback& callback)
-        : io_service_(io_service), socket_(io_service_, context), acceptor_(acceptor),
-          callback_(callback) {
+        : io_service_(io_service), socket_(io_service_, context),
+          acceptor_(acceptor), callback_(callback) {
     }
 
     /// @brief Destructor.
@@ -188,7 +194,6 @@ private:
 
     /// @brief Instance of the callback used for asyncAccept.
     TLSAcceptorCallback callback_;
-
 };
 
 /// @brief Pointer to the Acceptor object.
@@ -214,13 +219,20 @@ public:
                          SERVER_PORT),
           endpoint_(asio_endpoint_), test_timer_(io_service_), connections_(),
           clients_(), connections_num_(0), aborted_connections_num_(0),
-          max_connections_(1) {
+          max_connections_(1), running_(true) {
         test_timer_.setup(std::bind(&TLSAcceptorTest::timeoutHandler, this),
                                     TEST_TIMEOUT, IntervalTimer::ONE_SHOT);
     }
 
     /// @brief Destructor.
     virtual ~TLSAcceptorTest() {
+        running_ = false;
+        test_timer_.cancel();
+        io_service_->restart();
+        try {
+            io_service_->poll();
+        } catch (...) {
+        }
     }
 
     /// @brief Specifies how many new connections are expected before the IO
@@ -273,7 +285,7 @@ public:
     /// This method creates TLSClient instance and retains it in the clients_
     /// list.
     void connect() {
-        TLSClientPtr client(new TLSClient(io_service_));
+        TLSClientPtr client(new TLSClient(io_service_, running_));
         clients_.push_back(client);
         clients_.back()->connect();
     }
@@ -342,6 +354,9 @@ public:
 
     /// @brief Connections limit.
     unsigned int max_connections_;
+
+    /// @brief Flag which indicates if the test is still running.
+    bool running_;
 };
 
 // Test TLSAcceptor::asyncAccept.

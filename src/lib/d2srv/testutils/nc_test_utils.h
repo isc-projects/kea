@@ -98,8 +98,8 @@ public:
     /// @param response_mode Selects how the server responds to a request
     /// @param response_rcode The Rcode value set in the response. Not used
     /// for all modes.
-    void receive (const ResponseMode& response_mode,
-                  const dns::Rcode& response_rcode=dns::Rcode::NOERROR());
+    void receive(const ResponseMode& response_mode,
+                 const dns::Rcode& response_rcode=dns::Rcode::NOERROR());
 
     /// @brief Socket IO Completion callback
     ///
@@ -143,7 +143,7 @@ public:
 class TimedIO  {
 public:
     asiolink::IOServicePtr io_service_;
-    asiolink::IntervalTimer timer_;
+    asiolink::IntervalTimerPtr timer_;
     int run_time_;
 
     /// @brief Constructor

@@ -236,6 +236,7 @@ TestServerUnixSocket::TestServerUnixSocket(const IOServicePtr& io_service,
 }
 
 TestServerUnixSocket::~TestServerUnixSocket() {
+    test_timer_.cancel();
     server_acceptor_.close();
 }
 

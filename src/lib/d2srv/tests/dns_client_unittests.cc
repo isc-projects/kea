@@ -11,6 +11,7 @@
 #include <asiodns/io_fetch.h>
 #include <asiodns/logger.h>
 #include <asiolink/interval_timer.h>
+#include <d2srv/d2_update_message.h>
 #include <d2srv/testutils/nc_test_utils.h>
 #include <d2srv/testutils/stats_test_utils.h>
 #include <dns/messagerenderer.h>
@@ -124,6 +125,12 @@ public:
     ///
     /// Sets the asiodns logging level back to DEBUG.
     virtual ~DNSClientTest() {
+        test_timer_.cancel();
+        service_->restart();
+        try {
+            service_->poll();
+        } catch (...) {
+        }
         asiodns::logger.setSeverity(isc::log::DEBUG);
     };
 
@@ -311,21 +318,19 @@ public:
     /// @brief This test verifies that it accepted timeout values belong to the
     /// range of <0, DNSClient::getMaxTimeout()>.
     void runInvalidTimeoutTest() {
-
         expect_response_ = false;
 
-        // Create outgoing message. Simply set the required message fields:
+        // Create inbound message. Simply set the required message fields:
         // error code and Zone section. This is enough to create on-wire format
         // of this message and send it.
-        D2UpdateMessage message(D2UpdateMessage::OUTBOUND);
-        ASSERT_NO_THROW(message.setRcode(Rcode(Rcode::NOERROR_CODE)));
-        ASSERT_NO_THROW(message.setZone(Name("example.com"), RRClass::IN()));
+        D2UpdateMessage message(D2UpdateMessage::INBOUND);
 
         // Start with a valid timeout equal to maximal allowed. This way we will
         // ensure that doUpdate doesn't throw an exception for valid timeouts.
         unsigned int timeout = DNSClient::getMaxTimeout();
-        EXPECT_NO_THROW(dns_client_->doUpdate(service_, IOAddress(TEST_ADDRESS),
-                                              TEST_PORT, message, timeout));
+        EXPECT_THROW(dns_client_->doUpdate(service_, IOAddress(TEST_ADDRESS),
+                                           TEST_PORT, message, timeout),
+                     isc::d2::InvalidZoneSection);
 
         // Cross the limit and expect that exception is thrown this time.
         timeout = DNSClient::getMaxTimeout() + 1;
@@ -368,7 +373,6 @@ public:
         // This starts the execution of tasks posted to IOService. run() blocks
         // until stop() is called in the completion callback function.
         service_->run();
-
     }
 
     /// @brief This test verifies that DNSClient can send DNS Update and receive
@@ -435,7 +439,7 @@ public:
 
         }
 
-        // Kick of the message exchange by actually running the scheduled
+        // Kick off the message exchange by actually running the scheduled
         // "send" and "receive" operations.
         service_->run();
 
@@ -445,6 +449,10 @@ public:
         // we must reset it in order for subsequent calls to run() or
         // runOne() to work.
         service_->restart();
+        try {
+            service_->poll();
+        } catch (...) {
+        }
     }
 
     /// @brief Performs a single request-response exchange with or without TSIG.
@@ -497,6 +505,10 @@ public:
         // we must reset it in order for subsequent calls to run() or
         // runOne() to work.
         service_->restart();
+        try {
+            service_->poll();
+        } catch (...) {
+        }
     }
 };
 
