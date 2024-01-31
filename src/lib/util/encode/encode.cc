@@ -70,38 +70,37 @@ BaseNEncoder::encode(const std::vector<uint8_t>& input) {
         return(encoded_output);
     }
 
-    // Turn the input data into a "bit stream"
-    /// @todo Can we devise a bit-stream class that can iterate over the input
-    /// without copying it?  The weakness here is inbits could be rather large
-    /// for long strings since it input size * 8 bytes.
-    bool inbits[input.size() * 8];
-    bool* inbit = &inbits[0];
-    for (auto b : input) {
-        for (auto i = 0; i < 8; i++) {
-            bool val = b & 0x80;
-            *inbit++ = val;
-            b <<= 1;
-        }
-    }
-
-    // Now encode the bit stream.
+    uint8_t cur_bit = 0x0;
     int cnt = 0;
     int digit_idx = 0;
-    auto inbit_end = inbit;
-    inbit = &inbits[0];
-    for (inbit = &inbits[0]; inbit != inbit_end; ++inbit) {
+    int cur_byte = 0;
+    auto bytes = input.begin();
+    while (1) {
+        if (!cur_bit) {
+            if (bytes == input.end()) {
+                break;
+            }
+
+            cur_byte = *bytes;
+            cur_bit = 0x80;
+            ++bytes;
+        }
+
         if (cnt < bits_per_digit_) {
-            // Shift the index one to accommodate next bit.
             digit_idx <<= 1;
         } else {
-            // Have a complete digit index, look it the digit and add it.
+            // Have a complete digit index, look up digit and add it.
             encoded_output.push_back(bitsToDigit(digit_idx));
             digit_idx = 0;
             cnt = 0;
         }
 
         // Add the current bit to the digit index.
-        digit_idx |= *inbit;
+        if (cur_byte & cur_bit) {
+            digit_idx |= 1;
+        }
+
+        cur_bit >>= 1;
         ++cnt;
     }
 
@@ -128,52 +127,84 @@ BaseNEncoder::encode(const std::vector<uint8_t>& input) {
 void
 BaseNEncoder::decode(const std::string& encoded_str, std::vector<uint8_t>& output) {
     output.clear();
-    bool inbits[encoded_str.size() * bits_per_digit_];
-    bool* inbit = &inbits[0];
     size_t dig_cnt = 0;
     size_t pad_cnt = 0;
     size_t shift_bits = 8 - bits_per_digit_;
+    uint8_t cur_byte = 0;
+    size_t cur_bit_cnt = 0;
     for (const auto enc_digit : encoded_str) {
         if (pad_char_ && enc_digit == pad_char_) {
            pad_cnt++;
            continue;
         }
 
-        // translate the b64 digit to bits.
+        // Translate the b64 digit to bits.
         uint8_t dig_bits = digitToBits(enc_digit);
 
+        // Skip whitespace.
         if (dig_bits == 0xee) {
-            // skip whitespace
             continue;
         }
 
+        // Error on invalid characters.
         if (dig_bits == 0xff) {
             isc_throw(isc::BadValue, "attempt to decode a value not in "
                       << algorithm_ << " char set" << ": " << encoded_str);
         }
 
+        // Error if pads are in the middle.
         if (pad_cnt) {
             isc_throw(isc::BadValue, "pad mixed with digits in "
                       << algorithm_ << ": " << encoded_str);
         }
 
+        // Bump the valid character count.
         dig_cnt++;
+
+        // Shift off what we don't need.
         dig_bits <<= shift_bits;
+
+        // Add digit's decoded bits to current byte.
         for (auto i = 0; i < bits_per_digit_; ++i) {
-            *inbit++ = ((dig_bits & 0x80) == 0x80);
+            if (cur_bit_cnt < 8) {
+                // Shift contents to make room for next gbit.
+                cur_byte <<= 1;
+            } else {
+                // Add the completed byte to the output.
+                output.push_back(cur_byte);
+                cur_byte = 0;
+                cur_bit_cnt = 0;
+            }
+
+            // Add the next bit if its set.
+            if (dig_bits & 0x80) {
+                cur_byte |= 1;
+            }
+
+            // Shift the decoded bits over.
             dig_bits <<= 1;
+
+            // Update the current byte bit count.
+            ++cur_bit_cnt;
         }
     }
 
+    if (cur_bit_cnt == 8) {
+        // Whole one left to add.
+        output.push_back(cur_byte);
+    } else if (cur_bit_cnt && cur_byte) {
+        // Left over bits that are not zero.
+        isc_throw(BadValue, "non-zero bits left over " << encoded_str);
+    }
+
     if (pad_char_) {
-        // Check for invalid number of pad characters.
+        // Check for too many pad characters.
         if (pad_cnt > max_pad_) {
             isc_throw(isc::BadValue, "too many pad characters for "
                       << algorithm_ << ": " << encoded_str);
         }
 
         // Check for invalid number of pad characters.
-        /// @todo is this valid
         const size_t padbits = ((pad_cnt * bits_per_digit_) + 7) & ~7;
         if (padbits > bits_per_digit_ * (pad_cnt + 1)) {
             isc_throw(isc::BadValue, "Invalid padding for "
@@ -185,32 +216,6 @@ BaseNEncoder::decode(const std::string& encoded_str, std::vector<uint8_t>& outpu
     if ((pad_cnt + dig_cnt) % digits_per_group_) {
         isc_throw (isc::BadValue, "Incomplete input for "
                    << algorithm_ << ": " << encoded_str);
-    }
-
-    int cnt = 0;
-    int digit_idx = 0;
-
-    auto inbit_end = inbit;
-    inbit = &inbits[0];
-    for (inbit = &inbits[0]; inbit != inbit_end; ++inbit) {
-        if (cnt < 8) {
-            digit_idx <<= 1;
-        } else {
-            output.push_back(digit_idx);
-            digit_idx = 0;
-            cnt = 0;
-        }
-
-        digit_idx |= *inbit;
-        ++cnt;
-    }
-
-    if (cnt == 8) {
-        // Whole one left to add.
-        output.push_back(digit_idx);
-    } else if (cnt && digit_idx) {
-        // Left over bits that are not zero.
-        isc_throw(BadValue, "non-zero bits left over " << encoded_str);
     }
 }
 
@@ -282,39 +287,40 @@ const std::vector<uint8_t> Base16Encoder::BITS_TABLE = {
 
 string
 encodeBase64(const vector<uint8_t>& binary) {
-    Base64Encoder encoder;
+    static Base64Encoder encoder;
     return(encoder.encode(binary));
 }
 
 void
 decodeBase64 (const std::string& encoded_str, std::vector<uint8_t>& output) {
-    Base64Encoder encoder;
+    static Base64Encoder encoder;
     encoder.decode(encoded_str, output);
 }
 
 string
 encodeBase32Hex(const vector<uint8_t>& binary) {
-    Base32HexEncoder encoder;
+    static Base32HexEncoder encoder;
     return(encoder.encode(binary));
 }
 
 void
 decodeBase32Hex(const std::string& encoded_str, std::vector<uint8_t>& output) {
-    Base32HexEncoder encoder;
+    static Base32HexEncoder encoder;
     encoder.decode(encoded_str, output);
 }
 
 string
 encodeHex(const vector<uint8_t>& binary) {
-    Base16Encoder encoder;
+    static Base16Encoder encoder;
     return(encoder.encode(binary));
 }
 
 void
 decodeHex(const string& encoded_str, vector<uint8_t>& output) {
-    Base16Encoder encoder;
+    static Base16Encoder encoder;
     encoder.decode(encoded_str, output);
 }
+
 
 } // namespace encode
 } // namespace util
