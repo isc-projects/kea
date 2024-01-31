@@ -89,8 +89,13 @@ BaseNEncoder::encode(const std::vector<uint8_t>& input) {
         if (cnt < bits_per_digit_) {
             digit_idx <<= 1;
         } else {
+#if 0
             // Have a complete digit index, look up digit and add it.
             encoded_output.push_back(bitsToDigit(digit_idx));
+#else
+            encoded_output.push_back(digit_set_[digit_idx]);
+#endif
+
             digit_idx = 0;
             cnt = 0;
         }
@@ -107,7 +112,11 @@ BaseNEncoder::encode(const std::vector<uint8_t>& input) {
     // We've exhausted bits, but have left over
     if (cnt) {
         digit_idx <<= (bits_per_digit_ - cnt);
+#if 0
         encoded_output.push_back(bitsToDigit(digit_idx));
+#else
+        encoded_output.push_back(digit_set_[digit_idx]);
+#endif
     }
 
     // Add padding as needed.
@@ -139,7 +148,11 @@ BaseNEncoder::decode(const std::string& encoded_str, std::vector<uint8_t>& outpu
         }
 
         // Translate the b64 digit to bits.
+#if 0
         uint8_t dig_bits = digitToBits(enc_digit);
+#else
+        uint8_t dig_bits = bits_table_[enc_digit];
+#endif
 
         // Skip whitespace.
         if (dig_bits == 0xee) {

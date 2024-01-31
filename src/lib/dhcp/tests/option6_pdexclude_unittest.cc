@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // Author: Andrei Pavel <andrei.pavel@qualitance.com>
 //
