@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -84,6 +84,9 @@ TEST_F(PktFilterInetTest, send) {
     ASSERT_NO_THROW(result = pkt_filter.send(iface, sock_info_.sockfd_, test_message_));
     ASSERT_EQ(0, result);
 
+    // Verify that we have only the RESPONSE_SENT event with a good timestamp.
+    testPktEvents(test_message_, start_time_, std::list<std::string>{PktEvent::RESPONSE_SENT});
+
     // Read the data from socket.
     fd_set readfds;
     FD_ZERO(&readfds);
@@ -143,6 +146,11 @@ TEST_F(PktFilterInetTest, receive) {
     // Check if the received message is correct.
     testRcvdMessage(rcvd_pkt);
     testRcvdMessageAddressPort(rcvd_pkt);
+
+    // Verify that the packet event stack has SOCKET_RECEIVED and BUFFER_READ events.
+    testPktEvents(rcvd_pkt, start_time_,
+                  std::list<std::string>{PktEvent::SOCKET_RECEIVED,
+                                         PktEvent::BUFFER_READ});
 }
 
 } // anonymous namespace

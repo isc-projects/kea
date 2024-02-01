@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -226,7 +226,6 @@ PktFilterBPF::openSocket(Iface& iface,
                          const isc::asiolink::IOAddress& addr,
                          const uint16_t port, const bool,
                          const bool) {
-
     // Open fallback socket first. If it fails, it will give us an indication
     // that there is another service (perhaps DHCP server) running.
     // The function will throw an exception and effectively cease opening
@@ -376,6 +375,7 @@ PktFilterBPF::openSocket(Iface& iface,
         close(sock);
         throw;
     }
+
     return (SocketInfo(addr, port, sock, fallback));
 }
 
@@ -537,6 +537,12 @@ PktFilterBPF::receive(Iface& iface, const SocketInfo& socket_info) {
     pkt->setLocalHWAddr(dummy_pkt->getLocalHWAddr());
     pkt->setRemoteHWAddr(dummy_pkt->getRemoteHWAddr());
 
+    // Set time the packet was stored in the buffer.
+    pkt->addPktEvent(PktEvent::SOCKET_RECEIVED, bpfh.bh_tstamp);
+
+    // Set time packet was read from the buffer.
+    pkt->addPktEvent(PktEvent::BUFFER_READ);
+
     return (pkt);
 }
 
@@ -586,6 +592,7 @@ PktFilterBPF::send(const Iface& iface, uint16_t sockfd, const Pkt4Ptr& pkt) {
                   << strerror(errno));
     }
 
+    pkt->addPktEvent(PktEvent::RESPONSE_SENT);
     return (0);
 }
 

@@ -12,8 +12,14 @@
 #include <boost/foreach.hpp>
 #include <vector>
 
+using namespace boost::posix_time;
+
 namespace isc {
 namespace dhcp {
+
+const std::string PktEvent::SOCKET_RECEIVED("socket_received");
+const std::string PktEvent::BUFFER_READ("buffer_read");
+const std::string PktEvent::RESPONSE_SENT("response_sent");
 
 Pkt::Pkt(uint32_t transid, const isc::asiolink::IOAddress& local_addr,
          const isc::asiolink::IOAddress& remote_addr, uint16_t local_port,
@@ -308,6 +314,84 @@ Pkt::getMACFromIPv6(const isc::asiolink::IOAddress& addr) {
     }
 
     return (mac);
+}
+
+
+void
+Pkt::addPktEvent(const std::string& label, const ptime& timestamp) {
+    events_.push_back(PktEvent(label, timestamp));
+}
+
+void
+Pkt::setPktEvent(const std::string& label, const ptime& timestamp) {
+    for (auto& event : events_) {
+        if (event.label_ == label) {
+            event.timestamp_ = timestamp;
+            return;
+        }
+    }
+
+    events_.push_back(PktEvent(label, timestamp));
+}
+
+void
+Pkt::addPktEvent(const std::string& label, const struct timeval& tv) {
+    time_t time_t_secs = tv.tv_sec;
+    ptime timestamp = from_time_t(time_t_secs);
+    time_duration usecs(0, 0, 0, tv.tv_usec);
+    timestamp += usecs;
+    addPktEvent(label, timestamp);
+}
+
+ptime
+Pkt::getPktEventTime(const std::string& label) const {
+    for (const auto& event : events_) {
+        if (event.label_ == label) {
+            return(event.timestamp_);
+        }
+    }
+
+    return (PktEvent::EMPTY_TIME());
+}
+
+void
+Pkt::clearPktEvents() {
+    events_.clear();
+}
+
+std::string
+Pkt::dumpPktEvents(bool verbose /* = false */) const {
+    std::stringstream oss;
+    if (verbose) {
+        oss << "Event log: " << std::endl;
+    }
+
+    bool first_pass = true;
+    boost::posix_time::ptime beg_time;
+    boost::posix_time::ptime prev_time;
+    for (const auto& event : events_) {
+        if (!verbose) {
+            oss << (first_pass ? "" : ", ") <<  event.timestamp_ << " : " << event.label_;
+        } else {
+            oss << event.timestamp_ << " : " << event.label_;
+            if (first_pass) {
+                oss << std::endl;
+                beg_time = event.timestamp_;
+            } else {
+                oss << " elapsed: " << event.timestamp_ - prev_time << std::endl;
+            }
+
+            prev_time = event.timestamp_;
+        }
+
+        first_pass = false;
+    }
+
+    if (verbose) {
+        oss << "total elapsed: " << prev_time - beg_time;
+    }
+
+    return (oss.str());
 }
 
 } // end of namespace isc::dhcp

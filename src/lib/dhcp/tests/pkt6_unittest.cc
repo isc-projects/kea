@@ -2371,4 +2371,70 @@ TEST_F(Pkt6Test, relayDataOption) {
     EXPECT_EQ(orig_data, clone_data);
 }
 
+// Exercises packet event stack and helper functions.
+TEST_F(Pkt6Test, PktEvents) {
+    // Get current time.
+    auto start_time = PktEvent::now();
+
+    // Verify that a set time is not equal to an EMPTY_TIME.
+    ASSERT_NE(start_time, PktEvent::EMPTY_TIME());
+
+    // Create a test packet.
+    scoped_ptr<Pkt6> pkt(new Pkt6(DHCPV6_SOLICIT, 0x020304));
+
+    // Upon creation, the events table should be empty.
+    ASSERT_TRUE(pkt->getPktEvents().empty());
+
+    // An non-existant event should return an empty time.
+    auto event_time = pkt->getPktEventTime(PktEvent::BUFFER_READ);
+    ASSERT_EQ(event_time, PktEvent::EMPTY_TIME());
+
+    // Sleep for 200 microseconds to put some distance between now and start_time.
+    usleep(200);
+
+    // Should be able to add an event, defaulting the event time to current time.
+    pkt->addPktEvent(PktEvent::BUFFER_READ);
+    event_time = pkt->getPktEventTime(PktEvent::BUFFER_READ);
+    ASSERT_GT(event_time, start_time);
+
+    // Should be able to overwrite an existing event's time.
+    pkt->setPktEvent(PktEvent::BUFFER_READ, start_time);
+    event_time = pkt->getPktEventTime(PktEvent::BUFFER_READ);
+    ASSERT_EQ(event_time, start_time);
+
+    // Should be able to add an event with an explicit time.
+    pkt->addPktEvent(PktEvent::RESPONSE_SENT, start_time);
+    event_time = pkt->getPktEventTime(PktEvent::RESPONSE_SENT);
+    ASSERT_EQ(event_time, start_time);
+
+    // Should be able to fetch the list of events.
+    const auto& events = pkt->getPktEvents();
+    ASSERT_FALSE(events.empty());
+    auto event = events.begin();
+    ASSERT_EQ((*event).label_, PktEvent::BUFFER_READ);
+    ++event;
+    ASSERT_EQ((*event).label_, PktEvent::RESPONSE_SENT);
+
+    // Discard the event stack contents.
+    pkt->clearPktEvents();
+    ASSERT_TRUE(pkt->getPktEvents().empty());
+
+    // Verify dumpPktEvent terse output. Also serves to
+    // verify adding events using struct timeval.
+    struct timeval log_time = {1706802676, 100};
+    struct timeval log_time_plus = {1706802676, 250};
+    pkt->addPktEvent("first-event", log_time);
+    pkt->addPktEvent("second-event", log_time_plus);
+    std::string log = pkt->dumpPktEvents();
+    EXPECT_EQ(log, "2024-Feb-01 15:51:16.000100 : first-event, 2024-Feb-01 15:51:16.000250 : second-event");
+
+    // Verify dumpPktEvent verbose output.
+    log = pkt->dumpPktEvents(true);
+    EXPECT_EQ(log,
+              "Event log: \n"
+              "2024-Feb-01 15:51:16.000100 : first-event\n"
+              "2024-Feb-01 15:51:16.000250 : second-event elapsed: 00:00:00.000150\n"
+              "total elapsed: 00:00:00.000150");
+}
+
 }  // namespace

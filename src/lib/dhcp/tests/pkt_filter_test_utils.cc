@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,6 +10,7 @@
 #include <dhcp/tests/pkt_filter_test_utils.h>
 
 using namespace isc::asiolink;
+using namespace boost::posix_time;
 
 namespace isc {
 namespace dhcp {
@@ -18,7 +19,8 @@ namespace test {
 PktFilterTest::PktFilterTest(const uint16_t port)
     : port_(port),
       sock_info_(isc::asiolink::IOAddress("127.0.0.1"), port, -1, -1),
-      send_msg_sock_(-1) {
+      send_msg_sock_(-1),
+      start_time_(PktEvent::now()) {
     // Initialize ifname_ and ifindex_.
     loInit();
     // Initialize test_message_.
@@ -166,6 +168,21 @@ PktFilterTest::testRcvdMessageAddressPort(const Pkt4Ptr& rcvd_msg) const {
     EXPECT_EQ(test_message_->getLocalAddr(), rcvd_msg->getRemoteAddr());
     EXPECT_EQ(test_message_->getRemotePort(), rcvd_msg->getLocalPort());
     EXPECT_EQ(test_message_->getLocalPort(), rcvd_msg->getRemotePort());
+}
+
+void
+PktFilterTest::testPktEvents(const PktPtr& msg, ptime start_time,
+                             std::list<std::string> expected_events) const {
+    ASSERT_NE(start_time, PktEvent::EMPTY_TIME());
+    auto events = msg->getPktEvents();
+    ASSERT_EQ(events.size(), expected_events.size());
+    ptime prev_time = start_time;
+    auto expected_event = expected_events.begin();
+    for (const auto& event : events) {
+        ASSERT_EQ(event.label_, *expected_event);
+        EXPECT_GE(event.timestamp_, prev_time);
+        ++expected_event;
+    }
 }
 
 bool

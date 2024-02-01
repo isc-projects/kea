@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -82,12 +82,32 @@ public:
     /// @param rcvd_msg An instance of the message to be tested.
     void testRcvdMessageAddressPort(const Pkt4Ptr& rcvd_msg) const;
 
+    /// @brief Checks the contents of a packet's event stack agains a list
+    /// of expected events.
+    ///
+    /// @param msg pointer to the packet under test.
+    /// @param start_time system time prior to or equal to the timestamp
+    /// of the stack's first event (i.e. before packet was sent or received)
+    /// @param expected_events a list of the event labels in the order they
+    /// are expected to occur in the stack.
+    void testPktEvents(const PktPtr& msg, boost::posix_time::ptime start_time,
+                       std::list<std::string> expected_events) const;
+
+    /// @brief Indicates if current user is not root
+    ///
+    /// @return True if neither the uid or the effective
+    /// uid is root.
+    static bool notRoot() {
+        return (getuid() != 0 && geteuid() != 0);
+    }
+
     std::string ifname_;   ///< Loopback interface name
     unsigned int ifindex_; ///< Loopback interface index.
     uint16_t port_;        ///< A port number used for the test.
     isc::dhcp::SocketInfo sock_info_; ///< A structure holding socket info.
     int send_msg_sock_;    ///< Holds a descriptor of the socket used by
                            ///< sendMessage function.
+    boost::posix_time::ptime start_time_; ///< Test start time.
     Pkt4Ptr test_message_; ///< A DHCPv4 message used by tests.
 
 };
@@ -159,7 +179,6 @@ public:
 
     // Change the scope of the protected function so as they can be unit tested.
     using PktFilter::openFallbackSocket;
-
 };
 
 

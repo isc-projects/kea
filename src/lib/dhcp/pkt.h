@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -82,6 +82,55 @@ private:
 
     /// @brief Holds a pair of pointers of the packets.
     std::pair<PktTypePtr, PktTypePtr> pkts_;
+};
+
+
+/// @brief Describes an event during the life cycle of a packet.
+class PktEvent {
+public:
+    /// @brief Event that marks when a packet is placed in the socket buffer
+    /// by the kernel.
+    static const std::string SOCKET_RECEIVED;
+
+    /// @brief Event that marks when a packet is read from the socket buffer
+    /// by application.
+    static const std::string BUFFER_READ;
+
+    /// @brief Event that marks when a packet is been written to the socket
+    /// by application.
+    static const std::string RESPONSE_SENT;
+
+    /// @brief Constructor
+    ///
+    /// @param label string identifying the event.
+    /// @param timestamp time at which the event occurred.
+    PktEvent(const std::string& label, boost::posix_time::ptime timestamp)
+        : label_(label), timestamp_(timestamp) {
+    }
+
+    /// @brief Destructor
+    ~PktEvent() = default;
+
+    /// @brief Fetch the current UTC system time, microsecond precision.
+    ///
+    /// @return ptime containing the microsecond system time.
+    static boost::posix_time::ptime now() {
+        return(boost::posix_time::microsec_clock::universal_time());
+    }
+
+    /// @brief Fetch an empty timestamp, used for logic comparisons
+    ///
+    /// @return an unset ptime.
+    static boost::posix_time::ptime EMPTY_TIME() {
+        static boost::posix_time::ptime empty_time;
+        return (empty_time);
+    }
+
+    /// @brief Label identifying this event.
+    std::string label_;
+
+    /// @brief Timestamp at which the event occurred.
+    boost::posix_time::ptime timestamp_;
 };
 
 /// @brief Base class for classes representing DHCP messages.
@@ -451,13 +500,64 @@ public:
         return timestamp_;
     }
 
-    /// @brief Set packet timestamp.
+    /// @brief Set socket receive timestamp.
     ///
-    /// Sets packet timestamp to arbitrary value.
-    /// It is used by perfdhcp tool and should not be used elsewhere.
+    /// Sets the socket receive timestamp to an arbitrary value.
     void setTimestamp(boost::posix_time::ptime& timestamp) {
         timestamp_ = timestamp;
     }
+
+    /// @brief Adds an event to the end of the event stack.
+    ///
+    /// @param label string identifying the event
+    /// @param timestamp time at which the event occurred. It is expected
+    /// to be in UTC/microseconds.  Defaults to the current time.
+    void addPktEvent(const std::string& label,
+                     const boost::posix_time::ptime& timestamp = PktEvent::now());
+
+    /// @brief Adds an event to the end of the event stack with the timestamp
+    /// specified as a struct timeval.
+    ///
+    /// @param label string identifying the event
+    /// @param timestamp time at which the event occurred. It is expected
+    /// to be in UTC/microseconds.
+    void addPktEvent(const std::string& label, const struct timeval& timestamp);
+
+    /// @brief Updates (or adds) an event in the event stack.
+    ///
+    /// Updates the timestamp of the event described by label if it exists in
+    /// the stack, otherwise it adds the event to the end of the stack.  This
+    /// is intended to be used for testing.
+    ///
+    /// @param label string identifying the event
+    /// @param timestamp time at which the event occurred. It is expected
+    /// to be in UTC/microseconds.
+    void setPktEvent(const std::string& label,
+                     const boost::posix_time::ptime& timestamp = PktEvent::now());
+
+    /// @brief Discards contents of the packet event stack.
+    ///
+    /// This is provided primarily for test purposes.
+    void clearPktEvents();
+
+    /// @brief Fetches the timestamp for a given event in the stack.
+    ///
+    /// @param label string identifying the event
+    /// @return timestamp of the event (UTC/microseconds)
+    boost::posix_time::ptime getPktEventTime(const std::string& label) const;
+
+    /// @brief Fetches the current event stack contents.
+    ///
+    /// @return reference to the list of events.
+    const std::list<PktEvent>& getPktEvents() {
+        return (events_);
+    }
+
+    /// @brief Creates a dump of the stack contents to a string for logging.
+    ///
+    /// @param verbose when true the dump is more verbose, includes durations
+    /// between events and spans multiple lines.  Defaults to false.
+    std::string dumpPktEvents(bool verbose = false) const;
 
     /// @brief Copies content of input buffer to output buffer.
     ///
@@ -858,6 +958,9 @@ private:
     virtual void setHWAddrMember(const uint8_t htype, const uint8_t hlen,
                                  const std::vector<uint8_t>& hw_addr,
                                  HWAddrPtr& storage);
+
+    /// @brief List of timestamped packet events.
+    std::list<PktEvent> events_;
 };
 
 /// @brief A pointer to either Pkt4 or Pkt6 packet

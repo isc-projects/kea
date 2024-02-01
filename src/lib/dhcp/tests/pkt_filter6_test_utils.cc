@@ -15,6 +15,7 @@
 #include <sys/socket.h>
 
 using namespace isc::asiolink;
+using namespace boost::posix_time;
 
 namespace isc {
 namespace dhcp {
@@ -23,7 +24,8 @@ namespace test {
 PktFilter6Test::PktFilter6Test(const uint16_t port)
     : port_(port),
       sock_info_(isc::asiolink::IOAddress("::1"), port, -1, -1),
-      send_msg_sock_(-1) {
+      send_msg_sock_(-1),
+      start_time_(PktEvent::now()) {
     // Initialize ifname_ and ifindex_.
     loInit();
     // Initialize test_message_.
@@ -170,6 +172,21 @@ PktFilter6Test::testRcvdMessage(const Pkt6Ptr& rcvd_msg) const {
     EXPECT_EQ(test_message_->getTransid(), rcvd_msg->getTransid());
 }
 
+void
+PktFilter6Test::testPktEvents(const PktPtr& msg, ptime start_time,
+                             std::list<std::string> expected_events) const {
+    ASSERT_NE(start_time, PktEvent::EMPTY_TIME());
+    auto events = msg->getPktEvents();
+    ASSERT_EQ(events.size(), expected_events.size());
+    ptime prev_time = start_time;
+    auto expected_event = expected_events.begin();
+    for (const auto& event : events) {
+        ASSERT_EQ(event.label_, *expected_event);
+        EXPECT_GE(event.timestamp_, prev_time);
+        ++expected_event;
+    }
+}
+
 PktFilter6Stub::PktFilter6Stub()
     : open_socket_count_ (0) {
 }
@@ -197,7 +214,6 @@ int
 PktFilter6Stub::send(const Iface&, uint16_t, const Pkt6Ptr&) {
     return (0);
 }
-
 
 } // end of isc::dhcp::test namespace
 } // end of isc::dhcp namespace

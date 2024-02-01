@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -16,6 +16,8 @@
 #include <linux/filter.h>
 #include <linux/if_ether.h>
 #include <linux/if_packet.h>
+
+#define WITH_CMSG
 
 namespace {
 
@@ -133,7 +135,6 @@ PktFilterLPF::openSocket(Iface& iface,
                          const isc::asiolink::IOAddress& addr,
                          const uint16_t port, const bool,
                          const bool) {
-
     // Open fallback socket first. If it fails, it will give us an indication
     // that there is another service (perhaps DHCP server) running.
     // The function will throw an exception and effectively cease opening
@@ -180,6 +181,15 @@ PktFilterLPF::openSocket(Iface& iface,
                   << " on the socket " << sock);
     }
 
+#ifdef SO_TIMESTAMP
+    int enable = 1;
+    if (setsockopt(sock, SOL_SOCKET, SO_TIMESTAMP, &enable, sizeof(enable))) {
+        const char* errmsg = strerror(errno);
+        isc_throw(SocketConfigError, "Can't enable SO_TIMESTAMP for " << addr.toText()
+                  << ", error: " << errmsg);
+    }
+#endif
+
     struct sockaddr_ll sa;
     memset(&sa, 0, sizeof(sockaddr_ll));
     sa.sll_family = AF_PACKET;
@@ -213,6 +223,7 @@ PktFilterLPF::openSocket(Iface& iface,
 
 }
 
+#ifndef WITH_CMSG
 Pkt4Ptr
 PktFilterLPF::receive(Iface& iface, const SocketInfo& socket_info) {
     uint8_t raw_buf[IfaceMgr::RCVBUFSIZE];
@@ -285,8 +296,123 @@ PktFilterLPF::receive(Iface& iface, const SocketInfo& socket_info) {
     pkt->setLocalHWAddr(dummy_pkt->getLocalHWAddr());
     pkt->setRemoteHWAddr(dummy_pkt->getRemoteHWAddr());
 
+    // Set time packet was read from the buffer.
+    pkt->addPktEvent(PktEvent::BUFFER_READ);
+
     return (pkt);
 }
+#else
+Pkt4Ptr
+PktFilterLPF::receive(Iface& iface, const SocketInfo& socket_info) {
+    uint8_t raw_buf[IfaceMgr::RCVBUFSIZE];
+    // First let's get some data from the fallback socket. The data will be
+    // discarded but we don't want the socket buffer to bloat. We get the
+    // packets from the socket in loop but most of the time the loop will
+    // end after receiving one packet. The call to recv returns immediately
+    // when there is no data left on the socket because the socket is
+    // non-blocking.
+    // @todo In the normal conditions, both the primary socket and the fallback
+    // socket are in sync as they are set to receive packets on the same
+    // address and port. The reception of packets on the fallback socket
+    // shouldn't cause significant lags in packet reception. If we find in the
+    // future that it does, the sort of threshold could be set for the maximum
+    // bytes received on the fallback socket in a single round. Further
+    // optimizations would include an asynchronous read from the fallback socket
+    // when the DHCP server is idle.
+    int datalen;
+    do {
+        datalen = recv(socket_info.fallbackfd_, raw_buf, sizeof(raw_buf), 0);
+    } while (datalen > 0);
+
+    const size_t CONTROL_BUF_LEN = 512;
+
+    uint8_t msg_buf[IfaceMgr::RCVBUFSIZE];
+    uint8_t control_buf[CONTROL_BUF_LEN];
+
+    memset(&control_buf[0], 0, CONTROL_BUF_LEN);
+
+    // Initialize our message header structure.
+    struct msghdr m;
+    memset(&m, 0, sizeof(m));
+
+    struct iovec v;
+    v.iov_base = static_cast<void*>(msg_buf);
+    v.iov_len = IfaceMgr::RCVBUFSIZE;
+    m.msg_iov = &v;
+    m.msg_iovlen = 1;
+
+    // Getting the interface is a bit more involved.
+    //
+    // We set up some space for a "control message". We have
+    // previously asked the kernel to give us packet
+    // information (when we initialized the interface), so we
+    // should get the destination address from that.
+    m.msg_control = &control_buf[0];
+    m.msg_controllen = CONTROL_BUF_LEN;
+
+    int result = recvmsg(socket_info.sockfd_, &m, 0);
+    if (result < 0) {
+        isc_throw(SocketReadError, "Pkt4FilterLpf to receive UDP4 data");
+    }
+
+    InputBuffer buf(msg_buf, result);
+
+    // @todo: This is awkward way to solve the chicken and egg problem
+    // whereby we don't know the offset where DHCP data start in the
+    // received buffer when we create the packet object. In general case,
+    // the IP header has variable length. The information about its length
+    // is stored in one of its fields. Therefore, we have to decode the
+    // packet to get the offset of the DHCP data. The dummy object is
+    // created so as we can pass it to the functions which decode IP stack
+    // and find actual offset of the DHCP data.
+    // Once we find the offset we can create another Pkt4 object from
+    // the reminder of the input buffer and set the IP addresses and
+    // ports from the dummy packet. We should consider doing it
+    // in some more elegant way.
+    Pkt4Ptr dummy_pkt = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 0));
+
+    // Decode ethernet, ip and udp headers.
+    decodeEthernetHeader(buf, dummy_pkt);
+    decodeIpUdpHeader(buf, dummy_pkt);
+
+    // Read the DHCP data.
+    std::vector<uint8_t> dhcp_buf;
+    buf.readVector(dhcp_buf, buf.getLength() - buf.getPosition());
+
+    // Decode DHCP data into the Pkt4 object.
+    Pkt4Ptr pkt = Pkt4Ptr(new Pkt4(&dhcp_buf[0], dhcp_buf.size()));
+
+    // Set the appropriate packet members using data collected from
+    // the decoded headers.
+    pkt->setIndex(iface.getIndex());
+    pkt->setIface(iface.getName());
+    pkt->setLocalAddr(dummy_pkt->getLocalAddr());
+    pkt->setRemoteAddr(dummy_pkt->getRemoteAddr());
+    pkt->setLocalPort(dummy_pkt->getLocalPort());
+    pkt->setRemotePort(dummy_pkt->getRemotePort());
+    pkt->setLocalHWAddr(dummy_pkt->getLocalHWAddr());
+    pkt->setRemoteHWAddr(dummy_pkt->getRemoteHWAddr());
+
+    struct cmsghdr* cmsg = CMSG_FIRSTHDR(&m);
+    while (cmsg != NULL) {
+        if ((cmsg->cmsg_level == SOL_SOCKET) &&
+                   (cmsg->cmsg_type  == SCM_TIMESTAMP)) {
+
+            struct timeval cmsg_time;
+            memcpy(&cmsg_time, CMSG_DATA(cmsg), sizeof(cmsg_time));
+            pkt->addPktEvent(PktEvent::SOCKET_RECEIVED, cmsg_time);
+            break;
+        }
+
+        cmsg = CMSG_NXTHDR(&m, cmsg);
+    }
+
+    // Set time packet was read from the buffer.
+    pkt->addPktEvent(PktEvent::BUFFER_READ);
+
+    return (pkt);
+}
+#endif
 
 int
 PktFilterLPF::send(const Iface& iface, uint16_t sockfd, const Pkt4Ptr& pkt) {
@@ -323,6 +449,7 @@ PktFilterLPF::send(const Iface& iface, uint16_t sockfd, const Pkt4Ptr& pkt) {
     sa.sll_protocol = htons(ETH_P_IP);
     sa.sll_halen = 6;
 
+    pkt->addPktEvent(PktEvent::RESPONSE_SENT);
     int result = sendto(sockfd, buf.getData(), buf.getLength(), 0,
                         reinterpret_cast<const struct sockaddr*>(&sa),
                         sizeof(sockaddr_ll));
