@@ -23,6 +23,9 @@ public:
     /// @brief Size of an ethernet hardware address.
     static const size_t ETHERNET_HWADDR_LEN = 6;
 
+    /// @brief Size of an infiniband hardware address.
+    static const size_t INFINIBAND_HWADDR_LEN = 20;
+
     /// @brief Maximum size of a hardware address.
     static const size_t MAX_HWADDR_LEN = 20;
 
