@@ -59,6 +59,39 @@ decodeEthernetHeader(InputBuffer& buf, Pkt4Ptr& pkt) {
 }
 
 void
+decodeIPoIBHeader(InputBuffer& buf, Pkt4Ptr& pkt) {
+    // The size of the buffer to be parsed must not be lower
+    // then the size of the IPoIB frame header.
+    if (buf.getLength() - buf.getPosition() < IPOIB_HEADER_LEN) {
+        isc_throw(InvalidPacketHeader, "size of ethernet header in received "
+                  << "packet is invalid, expected at least "
+                  << IPOIB_HEADER_LEN << " bytes, received "
+                  << buf.getLength() - buf.getPosition() << " bytes");
+    }
+    // Packet object must not be NULL. We want to output some values
+    // to this object.
+    if (!pkt) {
+        isc_throw(BadValue, "NULL packet object provided when parsing ethernet"
+                  " frame header");
+    }
+
+    // The size of the single address is always lower then the size of
+    // the header that holds this address. Otherwise, it is a programming
+    // error that we want to detect in the compilation time.
+    BOOST_STATIC_ASSERT(IPOIB_HEADER_LEN > HWAddr::INFINIBAND_HWADDR_LEN);
+
+    // Remember initial position.
+    size_t start_pos = buf.getPosition();
+
+    // Read the source HW address.
+    std::vector<uint8_t> src_addr;
+    buf.readVector(src_addr, HWAddr::INFINIBAND_HWADDR_LEN);
+    pkt->setRemoteHWAddr(HWTYPE_INFINIBAND, HWAddr::INFINIBAND_HWADDR_LEN, src_addr);
+    // Move the buffer read pointer to the end of the Ethernet frame header.
+    buf.setPosition(start_pos + IPOIB_HEADER_LEN);
+}
+
+void
 decodeIpUdpHeader(InputBuffer& buf, Pkt4Ptr& pkt) {
     // The size of the buffer must be at least equal to the minimal size of
     // the IPv4 packet header plus UDP header length.
@@ -159,6 +192,45 @@ writeEthernetHeader(const Pkt4Ptr& pkt, OutputBuffer& out_buf) {
 
     // Type IP.
     out_buf.writeUint16(ETHERNET_TYPE_IP);
+}
+
+void
+writeIPoIBHeader(const Iface& iface, const Pkt4Ptr& pkt, OutputBuffer& out_buf) {
+    // Set destination HW address.
+    HWAddrPtr remote_addr = pkt->getRemoteHWAddr();
+    if (remote_addr) {
+        if (remote_addr->hwaddr_.size() != HWAddr::INFINIBAND_HWADDR_LEN) {
+            isc_throw(BadValue, "invalid size of the remote HW address "
+                      << remote_addr->hwaddr_.size() << " when constructing"
+                      << " an ethernet frame header; expected size is"
+                      << " " << HWAddr::INFINIBAND_HWADDR_LEN);
+        } else if (!pkt->isRelayed() &&
+                   (pkt->getFlags() & Pkt4::FLAG_BROADCAST_MASK)) {
+            if (iface.getBcastMacLen() != HWAddr::INFINIBAND_HWADDR_LEN) {
+                isc_throw(BadValue, "invalid size of the bcast HW address "
+                          << iface.getBcastMacLen() << " when constructing"
+                          << " an ethernet frame header; expected size is"
+                          << " " << HWAddr::INFINIBAND_HWADDR_LEN);
+            }
+            out_buf.writeData(iface.getBcastMac(),
+                              HWAddr::INFINIBAND_HWADDR_LEN);
+        } else {
+            out_buf.writeData(&remote_addr->hwaddr_[0],
+                              HWAddr::INFINIBAND_HWADDR_LEN);
+        }
+    } else {
+        // HW address has not been specified. This is possible when receiving
+        // packet through a logical interface (e.g. lo). In such cases, we
+        // don't want to fail but rather provide a default HW address, which
+        // consists of zeros.
+        out_buf.writeData(&std::vector<uint8_t>(HWAddr::INFINIBAND_HWADDR_LEN)[0],
+                          HWAddr::INFINIBAND_HWADDR_LEN);
+    }
+
+    // Type IP.
+    out_buf.writeUint16(ETHERNET_TYPE_IP);
+    // Reserved
+    out_buf.writeUint16(0);
 }
 
 void
