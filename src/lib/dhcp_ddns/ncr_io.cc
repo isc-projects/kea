@@ -51,8 +51,7 @@ std::string ncrProtocolToString(NameChangeProtocol protocol) {
 
 //************************** NameChangeListener ***************************
 
-NameChangeListener::NameChangeListener(RequestReceiveHandler&
-                                       recv_handler)
+NameChangeListener::NameChangeListener(RequestReceiveHandler& recv_handler)
     : listening_(false), io_pending_(false), recv_handler_(recv_handler) {
 };
 

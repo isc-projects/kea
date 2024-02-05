@@ -54,27 +54,26 @@ const int DBG_ALL = DBGLVL_TRACE_DETAIL + 20;
 /// as a coroutine and passed as callback to many async_*() functions) and we
 /// want keep the same data).  Organising the data in this way keeps copying to
 /// a minimum.
-struct IOFetchData {
-    IOServicePtr io_service_;                ///< The IO service
+struct IOFetchData : boost::noncopyable {
+    IOServicePtr                  io_service_;       ///< The IO service
     // The first two members are shared pointers to a base class because what is
     // actually instantiated depends on whether the fetch is over UDP or TCP,
     // which is not known until construction of the IOFetch.  Use of a shared
     // pointer here is merely to ensure deletion when the data object is deleted.
-    boost::scoped_ptr<IOAsioSocket<IOFetch>> socket;
-                                             ///< Socket to use for I/O
-    boost::scoped_ptr<IOEndpoint> remote_snd;///< Where the fetch is sent
-    boost::scoped_ptr<IOEndpoint> remote_rcv;///< Where the response came from
-    OutputBufferPtr   msgbuf;                ///< Wire buffer for question
-    OutputBufferPtr   received;              ///< Received data put here
-    IOFetch::Callback*          callback;    ///< Called on I/O Completion
-    boost::asio::deadline_timer timer;       ///< Timer to measure timeouts
-    IOFetch::Protocol           protocol;    ///< Protocol being used
-    size_t                      cumulative;  ///< Cumulative received amount
-    size_t                      expected;    ///< Expected amount of data
-    size_t                      offset;      ///< Offset to receive data
-    bool                        stopped;     ///< Have we stopped running?
-    int                         timeout;     ///< Timeout in ms
-    bool                        packet;      ///< true if packet was supplied
+    boost::scoped_ptr<IOAsioSocket<IOFetch>> socket; ///< Socket to use for I/O
+    boost::scoped_ptr<IOEndpoint> remote_snd;        ///< Where the fetch is sent
+    boost::scoped_ptr<IOEndpoint> remote_rcv;        ///< Where the response came from
+    OutputBufferPtr               msgbuf;            ///< Wire buffer for question
+    OutputBufferPtr               received;          ///< Received data put here
+    IOFetch::Callback*            callback;          ///< Called on I/O Completion
+    boost::asio::deadline_timer   timer;             ///< Timer to measure timeouts
+    IOFetch::Protocol             protocol;          ///< Protocol being used
+    size_t                        cumulative;        ///< Cumulative received amount
+    size_t                        expected;          ///< Expected amount of data
+    size_t                        offset;            ///< Offset to receive data
+    bool                          stopped;           ///< Have we stopped running?
+    int                           timeout;           ///< Timeout in ms
+    bool                          packet;            ///< true if packet was supplied
 
     // In case we need to log an error, the origin of the last asynchronous
     // I/O is recorded.  To save time and simplify the code, this is recorded
@@ -133,8 +132,13 @@ struct IOFetchData {
         packet(false),
         origin(ASIODNS_UNKNOWN_ORIGIN),
         staging(),
-        qid(QidGenerator::getInstance().generateQid())
-    {}
+        qid(QidGenerator::getInstance().generateQid()) {
+    }
+
+    /// \brief Destructor
+    ~IOFetchData() {
+        timer.cancel();
+    }
 
     // Checks if the response we received was ok;
     // - data contains the buffer we read, as well as the address

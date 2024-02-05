@@ -521,7 +521,6 @@ public:
     IfaceMgrTestConfig iface_mgr_test_config_;
 };
 
-
 // This test checks that an incoming DISCOVER that does not match any classes
 // will get the fixed fields empty.
 TEST_F(ClassifyTest, fixedFieldsDiscoverNoClasses) {
@@ -537,7 +536,6 @@ TEST_F(ClassifyTest, fixedFieldsRequestNoClasses) {
 TEST_F(ClassifyTest, fixedFieldsInformNoClasses) {
     testFixedFields(CONFIGS[0], DHCPINFORM, OptionPtr(), "0.0.0.0", "", "");
 }
-
 
 // This test checks that an incoming DISCOVER that does match a class that has
 // next-server specified will result in a response that has the next-server set.
@@ -561,7 +559,6 @@ TEST_F(ClassifyTest, fixedFieldsInformNextServer) {
     testFixedFields(CONFIGS[0], DHCPINFORM, pxe, "1.2.3.4", "", "");
 }
 
-
 // This test checks that an incoming DISCOVER that does match a class that has
 // server-hostname specified will result in a response that has the sname field set.
 TEST_F(ClassifyTest, fixedFieldsDiscoverHostname) {
@@ -584,7 +581,6 @@ TEST_F(ClassifyTest, fixedFieldsInformHostname) {
     testFixedFields(CONFIGS[0], DHCPINFORM, pxe, "0.0.0.0", "deneb", "");
 }
 
-
 // This test checks that an incoming DISCOVER that does match a class that has
 // boot-file-name specified will result in a response that has the filename field set.
 TEST_F(ClassifyTest, fixedFieldsDiscoverFile1) {
@@ -606,7 +602,6 @@ TEST_F(ClassifyTest, fixedFieldsInformFile1) {
 
     testFixedFields(CONFIGS[0], DHCPDISCOVER, pxe, "0.0.0.0", "", "pxelinux.0");
 }
-
 
 // This test checks that an incoming DISCOVER that does match a different class that has
 // boot-file-name specified will result in a response that has the filename field set.
@@ -703,7 +698,6 @@ TEST_F(ClassifyTest, fixedFieldsInformNoClasses2) {
     testFixedFields(CONFIGS[2], DHCPINFORM, OptionPtr(), "0.0.0.0", "", "");
 }
 
-
 // This test checks that an incoming DISCOVER that does match a class that has
 // next-server specified will result in a response that has the next-server set.
 TEST_F(ClassifyTest, fixedFieldsDiscoverNextServer2) {
@@ -726,7 +720,6 @@ TEST_F(ClassifyTest, fixedFieldsInformNextServer2) {
     testFixedFields(CONFIGS[2], DHCPINFORM, pxe, "1.2.3.4", "", "");
 }
 
-
 // This test checks that an incoming DISCOVER that does match a class that has
 // boot-file-name specified will result in a response that has the filename field set.
 TEST_F(ClassifyTest, fixedFieldsDiscoverFile21) {
@@ -748,7 +741,6 @@ TEST_F(ClassifyTest, fixedFieldsInformFile21) {
 
     testFixedFields(CONFIGS[2], DHCPDISCOVER, pxe, "0.0.0.0", "", "pxelinux.0");
 }
-
 
 // This test checks that an incoming DISCOVER that does match a different class that has
 // boot-file-name specified will result in a response that has the filename field set.
@@ -799,7 +791,6 @@ TEST_F(ClassifyTest, fixedFieldsInformNextServer3) {
 
     testFixedFields(CONFIGS[3], DHCPINFORM, pxe, "0.0.0.0", "", "");
 }
-
 
 // Class pxe2 is only-if-required but the subnet requires its evaluation
 TEST_F(ClassifyTest, fixedFieldsDiscoverHostname3) {

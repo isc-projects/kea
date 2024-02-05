@@ -28,10 +28,9 @@ MtTcpListenerMgr::MtTcpListenerMgr(TcpListenerFactory listener_factory,
                                    const uint16_t thread_pool_size /* = 1 */,
                                    TlsContextPtr context /* = () */,
                                    TcpConnectionFilterCallback connection_filter /* = 0 */)
-    : listener_factory_(listener_factory),
-      address_(address), port_(port), thread_io_service_(), tcp_listener_(),
-      thread_pool_size_(thread_pool_size), thread_pool_(),
-      tls_context_(context), connection_filter_(connection_filter),
+    : listener_factory_(listener_factory), address_(address), port_(port),
+      thread_io_service_(), tcp_listener_(), thread_pool_size_(thread_pool_size),
+      thread_pool_(), tls_context_(context), connection_filter_(connection_filter),
       idle_timeout_(TCP_IDLE_CONNECTION_TIMEOUT) {
 }
 
@@ -78,14 +77,33 @@ MtTcpListenerMgr::start() {
             .arg(port_)
             .arg(tls_context_ ? "true" : "false");
     } catch (const std::exception& ex) {
-        tcp_listener_.reset();
-        thread_pool_.reset();
-        thread_io_service_->restart();
-        try {
-            thread_io_service_->poll();
-        } catch (...) {
+        if (thread_pool_) {
+            // Stop the thread pool.
+            thread_pool_->stop();
         }
+
+        if (tcp_listener_) {
+            // Stop the listener.
+            tcp_listener_->stop();
+        }
+
+        if (thread_io_service_) {
+            thread_io_service_->restart();
+            try {
+                thread_io_service_->poll();
+            } catch (...) {
+            }
+        }
+
+        // Get rid of the thread pool.
+        thread_pool_.reset();
+
+        // Get rid of the listener.
+        tcp_listener_.reset();
+
+        // Ditch the IOService.
         thread_io_service_.reset();
+
         isc_throw(Unexpected, "MtTcpListenerMgr::start failed:" << ex.what());
     }
 }
@@ -125,14 +143,20 @@ MtTcpListenerMgr::stop() {
     // Stop the thread pool.
     thread_pool_->stop();
 
-    // Get rid of the listener.
-    tcp_listener_.reset();
+    // Stop the listener.
+    tcp_listener_->stop();
 
     thread_io_service_->restart();
     try {
         thread_io_service_->poll();
     } catch (...) {
     }
+
+    // Get rid of the thread pool.
+    thread_pool_.reset();
+
+    // Get rid of the listener.
+    tcp_listener_.reset();
 
     // Ditch the IOService.
     thread_io_service_.reset();

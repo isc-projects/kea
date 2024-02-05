@@ -229,6 +229,8 @@ void
 CommunicationState::stopHeartbeatInternal() {
     if (timer_) {
         timer_->cancel();
+        auto f = [](IntervalTimerPtr) {};
+        io_service_->post(std::bind(f, timer_));
         timer_.reset();
         interval_ = 0;
         heartbeat_impl_ = 0;

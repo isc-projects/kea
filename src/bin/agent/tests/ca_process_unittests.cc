@@ -84,7 +84,13 @@ TEST_F(CtrlAgentProcessTest, shutdown) {
     time_duration elapsed = stop - start;
     EXPECT_TRUE(elapsed.total_milliseconds() >= 100 &&
                 elapsed.total_milliseconds() <= 400);
-}
 
+    timer.cancel();
+    getIOService()->restart();
+    try {
+        getIOService()->poll();
+    } catch (...) {
+    }
+}
 
 }

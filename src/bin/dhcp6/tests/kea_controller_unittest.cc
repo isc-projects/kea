@@ -188,8 +188,7 @@ public:
 
 class JSONFileBackendTest : public dhcp::test::BaseServerTest {
 public:
-    JSONFileBackendTest()
-        : BaseServerTest() {
+    JSONFileBackendTest() {
     }
 
     ~JSONFileBackendTest() {

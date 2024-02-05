@@ -188,7 +188,6 @@ TEST_F(CtrlAgentControllerTest, basicInstanceTesting) {
     EXPECT_FALSE(checkProcess());
 }
 
-
 // Tests basic command line processing.
 // Verifies that:
 // 1. Standard command line options are supported.
@@ -680,7 +679,6 @@ TEST_F(CtrlAgentControllerTest, configReloadFileValid) {
     answer = CtrlAgentCommandMgr::instance().handleCommand("config-reload",
                                                            params, cmd);
 
-
     // Verify the reload was successful.
     string expected = "{ \"result\": 0, \"text\": "
         "\"Configuration applied successfully.\" }";
@@ -784,7 +782,6 @@ TEST_F(CtrlAgentControllerTest, shutdown) {
     // Now clean up after ourselves.
     ctrl->deregisterCommands();
 }
-
 
 TEST_F(CtrlAgentControllerTest, shutdownExitValue) {
     ASSERT_NO_THROW(initProcess());

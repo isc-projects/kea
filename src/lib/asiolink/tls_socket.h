@@ -45,7 +45,7 @@ public:
     TLSSocket(const IOServicePtr& service, TlsContextPtr context);
 
     /// @brief Destructor.
-    virtual ~TLSSocket() { }
+    virtual ~TLSSocket();
 
     /// @brief Return file descriptor of underlying socket.
     virtual int getNative() const {
@@ -275,6 +275,13 @@ TLSSocket<C>::TLSSocket(const IOServicePtr& io_service, TlsContextPtr context)
       stream_(*stream_ptr_), socket_(stream_.lowest_layer()), send_buffer_() {
 }
 
+// Destructor.
+
+template <typename C>
+TLSSocket<C>::~TLSSocket() {
+    close();
+}
+
 // Open the socket.
 
 template <typename C> void
@@ -325,8 +332,7 @@ TLSSocket<C>::handshake(C& callback) {
 // an exception if this is the case.
 
 template <typename C> void
-TLSSocket<C>::asyncSend(const void* data, size_t length, C& callback)
-{
+TLSSocket<C>::asyncSend(const void* data, size_t length, C& callback) {
     if (!socket_.is_open()) {
         isc_throw(SocketNotOpen,
                   "attempt to send on a TLS socket that is not open");
@@ -349,8 +355,7 @@ TLSSocket<C>::asyncSend(const void* data, size_t length, C& callback)
 
 template <typename C> void
 TLSSocket<C>::asyncSend(const void* data, size_t length,
-                        const IOEndpoint*, C& callback)
-{
+                        const IOEndpoint*, C& callback) {
     if (!socket_.is_open()) {
         isc_throw(SocketNotOpen,
                   "attempt to send on a TLS socket that is not open");
@@ -384,8 +389,7 @@ TLSSocket<C>::asyncSend(const void* data, size_t length,
 // caller to initialize the data to zero
 template <typename C> void
 TLSSocket<C>::asyncReceive(void* data, size_t length, size_t offset,
-                           IOEndpoint* endpoint, C& callback)
-{
+                           IOEndpoint* endpoint, C& callback) {
     if (!socket_.is_open()) {
         isc_throw(SocketNotOpen,
                   "attempt to receive from a TLS socket that is not open");
@@ -427,8 +431,7 @@ template <typename C> bool
 TLSSocket<C>::processReceivedData(const void* staging, size_t length,
                                   size_t& cumulative, size_t& offset,
                                   size_t& expected,
-                                  isc::util::OutputBufferPtr& outbuff)
-{
+                                  isc::util::OutputBufferPtr& outbuff) {
     // Point to the data in the staging buffer and note how much there is.
     const uint8_t* data = static_cast<const uint8_t*>(staging);
     size_t data_length = length;

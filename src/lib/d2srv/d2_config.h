@@ -156,10 +156,10 @@ public:
     /// -# ncr_protocol is invalid, currently only NCR_UDP is supported
     /// -# ncr_format is invalid, currently only FMT_JSON is supported
     D2Params(const isc::asiolink::IOAddress& ip_address,
-                   const size_t port,
-                   const size_t dns_server_timeout,
-                   const dhcp_ddns::NameChangeProtocol& ncr_protocol,
-                   const dhcp_ddns::NameChangeFormat& ncr_format);
+             const size_t port,
+             const size_t dns_server_timeout,
+             const dhcp_ddns::NameChangeProtocol& ncr_protocol,
+             const dhcp_ddns::NameChangeFormat& ncr_format);
 
     /// @brief Default constructor
     /// The default constructor creates an instance that has updates disabled.
@@ -170,27 +170,27 @@ public:
 
     /// @brief Return the IP address D2 listens on.
     const isc::asiolink::IOAddress& getIpAddress() const {
-        return(ip_address_);
+        return (ip_address_);
     }
 
     /// @brief Return the TCP/UPD port D2 listens on.
     size_t getPort() const {
-        return(port_);
+        return (port_);
     }
 
     /// @brief Return the DNS server timeout value.
     size_t getDnsServerTimeout() const {
-        return(dns_server_timeout_);
+        return (dns_server_timeout_);
     }
 
     /// @brief Return the socket protocol in use.
     const dhcp_ddns::NameChangeProtocol& getNcrProtocol() const {
-         return(ncr_protocol_);
+         return (ncr_protocol_);
     }
 
     /// @brief Return the expected format of inbound requests (NCRs).
     const dhcp_ddns::NameChangeFormat& getNcrFormat() const {
-        return(ncr_format_);
+        return (ncr_format_);
     }
 
     /// @brief Return summary of the configuration used by D2.

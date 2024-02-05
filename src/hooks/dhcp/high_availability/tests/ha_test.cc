@@ -56,6 +56,14 @@ HATest::HATest()
 }
 
 HATest::~HATest() {
+    if (timer_) {
+        timer_->cancel();
+    }
+    io_service_->restart();
+    try {
+        io_service_->poll();
+    } catch (...) {
+    }
 }
 
 void
@@ -72,26 +80,32 @@ HATest::startHAService() {
 void
 HATest::runIOService(long ms) {
     io_service_->restart();
-    IntervalTimer timer(io_service_);
-    timer.setup(std::bind(&IOService::stop, io_service_), ms,
-                IntervalTimer::ONE_SHOT);
+    timer_.reset(new IntervalTimer(io_service_));
+    timer_->setup(std::bind(&IOService::stop, io_service_), ms,
+                 IntervalTimer::ONE_SHOT);
+
     io_service_->run();
-    timer.cancel();
+
+    timer_->cancel();
+    auto f = [](IntervalTimerPtr) {};
+    io_service_->post(std::bind(f, timer_));
 }
 
 void
 HATest::runIOService(long ms, std::function<bool()> stop_condition) {
     io_service_->restart();
-    IntervalTimer timer(io_service_);
+    timer_.reset(new IntervalTimer(io_service_));
     bool timeout = false;
-    timer.setup(std::bind(&HATest::stopIOServiceHandler, this, std::ref(timeout)),
-                ms, IntervalTimer::ONE_SHOT);
+    timer_->setup(std::bind(&HATest::stopIOServiceHandler, this, std::ref(timeout)),
+                  ms, IntervalTimer::ONE_SHOT);
 
     while (!stop_condition() && !timeout) {
         io_service_->runOne();
     }
 
-    timer.cancel();
+    timer_->cancel();
+    auto f = [](IntervalTimerPtr) {};
+    io_service_->post(std::bind(f, timer_));
 }
 
 boost::shared_ptr<std::thread>

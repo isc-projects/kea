@@ -402,6 +402,9 @@ private:
     /// after invocation. Defaults to false.
     void closeCallback(const bool clear = false);
 
+    /// @brief A reference to the IOService that drives socket IO.
+    IOServicePtr io_service_;
+
     /// @brief Pointer to the connection pool owning this connection.
     ///
     /// This is a weak pointer to avoid circular dependency between the
@@ -415,13 +418,13 @@ private:
     TlsContextPtr tls_context_;
 
     /// @brief TCP socket to be used for this connection.
-    std::unique_ptr<TCPSocket<SocketCallback> > tcp_socket_;
+    std::shared_ptr<TCPSocket<SocketCallback>> tcp_socket_;
 
     /// @brief TLS socket to be used for this connection.
-    std::unique_ptr<TLSSocket<SocketCallback> > tls_socket_;
+    std::shared_ptr<TLSSocket<SocketCallback>> tls_socket_;
 
     /// @brief Interval timer used for detecting request timeouts.
-    IntervalTimer timer_;
+    IntervalTimerPtr timer_;
 
     /// @brief Holds currently sent request.
     HttpRequestPtr current_request_;
@@ -1105,7 +1108,7 @@ private:
         }
     }
 
-    /// @brief A reference to the IOService that drives socket IO.
+    /// @brief A pointer to the IOService that drives socket IO.
     IOServicePtr io_service_;
 
     /// @brief Map of Destinations by URL and TLS context.
@@ -1122,12 +1125,12 @@ Connection::Connection(const IOServicePtr& io_service,
                        const TlsContextPtr& tls_context,
                        const ConnectionPoolPtr& conn_pool,
                        const Url& url)
-    : conn_pool_(conn_pool), url_(url), tls_context_(tls_context),
-      tcp_socket_(), tls_socket_(), timer_(io_service),
-      current_request_(), current_response_(), parser_(),
-      current_callback_(), buf_(), input_buf_(), current_transid_(0),
-      close_callback_(), started_(false), need_handshake_(false),
-      closed_(false) {
+    : io_service_(io_service), conn_pool_(conn_pool), url_(url),
+      tls_context_(tls_context), tcp_socket_(), tls_socket_(),
+      timer_(new IntervalTimer(io_service)), current_request_(),
+      current_response_(), parser_(), current_callback_(), buf_(), input_buf_(),
+      current_transid_(0), close_callback_(), started_(false),
+      need_handshake_(false), closed_(false) {
     if (!tls_context) {
         tcp_socket_.reset(new asiolink::TCPSocket<SocketCallback>(io_service));
     } else {
@@ -1316,13 +1319,17 @@ Connection::closeInternal() {
     closeCallback(true);
 
     closed_ = true;
-    timer_.cancel();
+    timer_->cancel();
     if (tcp_socket_) {
         tcp_socket_->close();
     }
     if (tls_socket_) {
         tls_socket_->close();
     }
+
+    auto f = [](IntervalTimerPtr, std::shared_ptr<TCPSocket<SocketCallback>>,
+                std::shared_ptr<TLSSocket<SocketCallback>>) {};
+    io_service_->post(std::bind(f, timer_, tcp_socket_, tls_socket_));
 
     resetState();
 }
@@ -1384,7 +1391,7 @@ Connection::terminateInternal(const boost::system::error_code& ec,
     HttpResponsePtr response;
     if (isTransactionOngoing()) {
 
-        timer_.cancel();
+        timer_->cancel();
         if (tcp_socket_) {
             tcp_socket_->cancel();
         }
@@ -1461,8 +1468,8 @@ Connection::terminateInternal(const boost::system::error_code& ec,
 void
 Connection::scheduleTimer(const long request_timeout) {
     if (request_timeout > 0) {
-        timer_.setup(std::bind(&Connection::timerCallback, this), request_timeout,
-                     IntervalTimer::ONE_SHOT);
+        timer_->setup(std::bind(&Connection::timerCallback, this), request_timeout,
+                      IntervalTimer::ONE_SHOT);
     }
 }
 
@@ -1649,7 +1656,7 @@ Connection::sendCallback(const uint64_t transid,
     }
 
     // Sending is in progress, so push back the timeout.
-    scheduleTimer(timer_.getInterval());
+    scheduleTimer(timer_->getInterval());
 
     // If any data have been sent, remove it from the buffer and only leave the
     // portion that still has to be sent.
@@ -1695,7 +1702,7 @@ Connection::receiveCallback(const uint64_t transid,
     }
 
     // Receiving is in progress, so push back the timeout.
-    scheduleTimer(timer_.getInterval());
+    scheduleTimer(timer_->getInterval());
 
     if (runParser(ec, length)) {
         doReceive(transid);

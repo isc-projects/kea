@@ -243,15 +243,6 @@ Dhcpv6SrvTest::loadConfigFile(const string& path) {
                 return (ConfigBackendDHCPv6Ptr());
             });
 
-    // TimerMgr uses IO service to run asynchronous timers.
-    TimerMgr::instance()->setIOService(srv.getIOService());
-
-    // CommandMgr uses IO service to run asynchronous socket operations.
-    CommandMgr::instance().setIOService(srv.getIOService());
-
-    // DatabaseConnection uses IO service to run asynchronous timers.
-    DatabaseConnection::setIOService(srv.getIOService());
-
     Parser6Context parser;
     ConstElementPtr json;
     ASSERT_NO_THROW(json = parser.parseFile(path, Parser6Context::PARSER_DHCP6));

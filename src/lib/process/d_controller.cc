@@ -50,7 +50,7 @@ DControllerBase::setController(const DControllerBasePtr& controller) {
     if (controller_) {
         // This shouldn't happen, but let's make sure it can't be done.
         // It represents a programmatic error.
-        isc_throw (DControllerBaseError, "Multiple controller instances attempted.");
+        isc_throw(DControllerBaseError, "Multiple controller instances attempted.");
     }
 
     controller_ = controller;
@@ -103,7 +103,7 @@ DControllerBase::launch(int argc, char* argv[], const bool test_mode) {
     } catch (const std::exception& ex) {
         LOG_FATAL(dctl_logger, DCTL_CONFIG_FILE_LOAD_FAIL)
             .arg(app_name_).arg(ex.what());
-        isc_throw (LaunchError, "Launch Failed: " << ex.what());
+        isc_throw(LaunchError, "Launch Failed: " << ex.what());
     }
 
     try {
@@ -111,11 +111,11 @@ DControllerBase::launch(int argc, char* argv[], const bool test_mode) {
     } catch (const DaemonPIDExists& ex) {
         LOG_FATAL(dctl_logger, DCTL_ALREADY_RUNNING)
                   .arg(bin_name_).arg(ex.what());
-        isc_throw (LaunchError, "Launch Failed: " << ex.what());
+        isc_throw(LaunchError, "Launch Failed: " << ex.what());
     } catch (const std::exception& ex) {
         LOG_FATAL(dctl_logger, DCTL_PID_FILE_ERROR)
                   .arg(app_name_).arg(ex.what());
-        isc_throw (LaunchError, "Launch failed: " << ex.what());
+        isc_throw(LaunchError, "Launch failed: " << ex.what());
     }
 
     // Log the starting of the service.
@@ -134,8 +134,8 @@ DControllerBase::launch(int argc, char* argv[], const bool test_mode) {
     } catch (const std::exception& ex) {
         LOG_FATAL(dctl_logger, DCTL_INIT_PROCESS_FAIL)
                   .arg(app_name_).arg(ex.what());
-        isc_throw (ProcessInitError,
-                   "Application Process initialization failed: " << ex.what());
+        isc_throw(ProcessInitError,
+                  "Application Process initialization failed: " << ex.what());
     }
 
     LOG_DEBUG(dctl_logger, isc::log::DBGLVL_START_SHUT, DCTL_STANDALONE)
@@ -147,8 +147,8 @@ DControllerBase::launch(int argc, char* argv[], const bool test_mode) {
     if (rcode != 0) {
         LOG_FATAL(dctl_logger, DCTL_CONFIG_FILE_LOAD_FAIL)
                   .arg(app_name_).arg(comment->stringValue());
-        isc_throw (ProcessInitError, "Could Not load configuration file: "
-                   << comment->stringValue());
+        isc_throw(ProcessInitError, "Could Not load configuration file: "
+                  << comment->stringValue());
     }
 
     // Note that the controller was started.
@@ -163,8 +163,8 @@ DControllerBase::launch(int argc, char* argv[], const bool test_mode) {
     } catch (const std::exception& ex) {
         LOG_FATAL(dctl_logger, DCTL_PROCESS_FAILED)
                   .arg(app_name_).arg(ex.what());
-        isc_throw (ProcessRunError,
-                   "Application process event loop failed: " << ex.what());
+        isc_throw(ProcessRunError,
+                  "Application process event loop failed: " << ex.what());
     }
 
     // All done, so bail out.
@@ -315,7 +315,7 @@ DControllerBase::parseArgs(int argc, char* argv[]) {
 
                 // We hit an invalid option.
                 isc_throw(InvalidUsage, "unsupported option: -" << saved_optopt <<
-                        (saved_optarg.empty() ? std::string() : " " + saved_optarg));
+                          (saved_optarg.empty() ? std::string() : " " + saved_optarg));
             }
             break;
         }
@@ -342,8 +342,8 @@ DControllerBase::initProcess() {
     try {
         process_.reset(createProcess());
     } catch (const std::exception& ex) {
-        isc_throw(DControllerBaseError, std::string("createProcess failed: ")
-                  + ex.what());
+        isc_throw(DControllerBaseError, std::string("createProcess failed: ") +
+                  ex.what());
     }
 
     // This is pretty unlikely, but will test for it just to be safe..
@@ -733,7 +733,7 @@ DControllerBase::shutdownHandler(const std::string&, ConstElementPtr args) {
         }
 
         ConstElementPtr param = args->get("exit-value");
-        if (param)  {
+        if (param) {
             if (param->getType() != Element::integer) {
                 return (createAnswer(CONTROL_RESULT_ERROR,
                                      "parameter 'exit-value' is not an integer"));
@@ -813,7 +813,7 @@ DControllerBase::usage(const std::string & text) {
         std::cerr << "Usage error: " << text << std::endl;
     }
 
-    std::cerr << "Usage: " << bin_name_ <<  std::endl
+    std::cerr << "Usage: " << bin_name_ << std::endl
               << "  -v: print version number and exit" << std::endl
               << "  -V: print extended version information and exit"
               << std::endl

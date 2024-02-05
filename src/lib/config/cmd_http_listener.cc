@@ -81,14 +81,33 @@ CmdHttpListener::start() {
             .arg(port_)
             .arg(tls_context_ ? "true" : "false");
     } catch (const std::exception& ex) {
-        thread_pool_.reset();
-        http_listener_.reset();
-        thread_io_service_->restart();
-        try {
-            thread_io_service_->poll();
-        } catch(...) {
+        if (thread_pool_) {
+            // Stop the thread pool.
+            thread_pool_->stop();
         }
+
+        if (http_listener_) {
+            // Stop the listener.
+            http_listener_->stop();
+        }
+
+        if (thread_io_service_) {
+            thread_io_service_->restart();
+            try {
+                thread_io_service_->poll();
+            } catch (...) {
+            }
+        }
+
+        // Get rid of the thread pool.
+        thread_pool_.reset();
+
+        // Get rid of the listener.
+        http_listener_.reset();
+
+        // Ditch the IOService.
         thread_io_service_.reset();
+
         isc_throw(Unexpected, "CmdHttpListener::run failed: " << ex.what());
     }
 }
@@ -128,14 +147,20 @@ CmdHttpListener::stop() {
     // Stop the thread pool.
     thread_pool_->stop();
 
-    // Get rid of the listener.
-    http_listener_.reset();
+    // Stop the listener.
+    http_listener_->stop();
 
     thread_io_service_->restart();
     try {
         thread_io_service_->poll();
-    } catch(...) {
+    } catch (...) {
     }
+
+    // Get rid of the thread pool.
+    thread_pool_.reset();
+
+    // Get rid of the listener.
+    http_listener_.reset();
 
     // Ditch the IOService.
     thread_io_service_.reset();

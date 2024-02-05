@@ -258,8 +258,7 @@ private:
 
 template <typename C>
 TCPSocket<C>::TCPSocket(boost::asio::ip::tcp::socket& socket) :
-    socket_ptr_(), socket_(socket), send_buffer_()
-{
+    socket_ptr_(), socket_(socket), send_buffer_() {
 }
 
 // Constructor - create socket on the fly
@@ -267,15 +266,14 @@ TCPSocket<C>::TCPSocket(boost::asio::ip::tcp::socket& socket) :
 template <typename C>
 TCPSocket<C>::TCPSocket(const IOServicePtr& io_service) : io_service_(io_service),
     socket_ptr_(new boost::asio::ip::tcp::socket(io_service_->getInternalIOService())),
-    socket_(*socket_ptr_)
-{
+    socket_(*socket_ptr_) {
 }
 
 // Destructor.
 
 template <typename C>
-TCPSocket<C>::~TCPSocket()
-{
+TCPSocket<C>::~TCPSocket() {
+    close();
 }
 
 // Open the socket.
@@ -322,8 +320,7 @@ TCPSocket<C>::open(const IOEndpoint* endpoint, C& callback) {
 // an exception if this is the case.
 
 template <typename C> void
-TCPSocket<C>::asyncSend(const void* data, size_t length, C& callback)
-{
+TCPSocket<C>::asyncSend(const void* data, size_t length, C& callback) {
     if (socket_.is_open()) {
 
         try {
@@ -347,8 +344,7 @@ TCPSocket<C>::asyncSend(const void* data, size_t length, C& callback)
 
 template <typename C> void
 TCPSocket<C>::asyncSend(const void* data, size_t length,
-    const IOEndpoint*, C& callback)
-{
+    const IOEndpoint*, C& callback) {
     if (socket_.is_open()) {
 
         /// Need to copy the data into a temporary buffer and precede it with
@@ -382,8 +378,7 @@ TCPSocket<C>::asyncSend(const void* data, size_t length,
 // caller to initialize the data to zero
 template <typename C> void
 TCPSocket<C>::asyncReceive(void* data, size_t length, size_t offset,
-    IOEndpoint* endpoint, C& callback)
-{
+    IOEndpoint* endpoint, C& callback) {
     if (socket_.is_open()) {
         // Upconvert to a TCPEndpoint.  We need to do this because although
         // IOEndpoint is the base class of UDPEndpoint and TCPEndpoint, it
@@ -424,8 +419,7 @@ template <typename C> bool
 TCPSocket<C>::processReceivedData(const void* staging, size_t length,
                                   size_t& cumulative, size_t& offset,
                                   size_t& expected,
-                                  isc::util::OutputBufferPtr& outbuff)
-{
+                                  isc::util::OutputBufferPtr& outbuff) {
     // Point to the data in the staging buffer and note how much there is.
     const uint8_t* data = static_cast<const uint8_t*>(staging);
     size_t data_length = length;

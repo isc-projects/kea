@@ -113,9 +113,9 @@ public:
         const D2QueueMgrPtr& queue_mgr = getD2QueueMgr();
 
         // If queue manager isn't in the RUNNING state, return failure.
-        if (D2QueueMgr::RUNNING !=  queue_mgr->getMgrState()) {
+        if (D2QueueMgr::RUNNING != queue_mgr->getMgrState()) {
             return (::testing::AssertionFailure(::testing::Message() <<
-                                               "queue manager did not start"));
+                                                "queue manager did not start"));
         }
 
         //  Good to go.
@@ -578,6 +578,13 @@ TEST_F(D2ProcessTest, normalShutdown) {
     time_duration elapsed = stop - start;
     EXPECT_TRUE(elapsed.total_milliseconds() >= 1900 &&
                 elapsed.total_milliseconds() <= 2200);
+
+    timer.cancel();
+    getIOService()->restart();
+    try {
+        getIOService()->poll();
+    } catch (...) {
+    }
 }
 
 /// @brief Verifies that an "uncaught" exception thrown during event loop
@@ -602,6 +609,13 @@ TEST_F(D2ProcessTest, fatalErrorShutdown) {
     time_duration elapsed = stop - start;
     EXPECT_TRUE(elapsed.total_milliseconds() >= 1900 &&
                 elapsed.total_milliseconds() <= 2200);
+
+    timer.cancel();
+    getIOService()->restart();
+    try {
+        getIOService()->poll();
+    } catch (...) {
+    }
 }
 
 /// @brief Used to permit visual inspection of logs to ensure

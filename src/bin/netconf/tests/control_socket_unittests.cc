@@ -157,11 +157,12 @@ public:
             thread_->join();
             thread_.reset();
         }
-        // io_service must be stopped after the thread returns,
-        // otherwise the thread may never return if it is
-        // waiting for the completion of some asynchronous tasks.
-        io_service_->stop();
         removeUnixSocketFile();
+        io_service_->restart();
+        try {
+            io_service_->poll();
+        } catch (...) {
+        }
     }
 
     /// @brief Returns socket file path.
@@ -525,10 +526,15 @@ public:
             thread_->join();
             thread_.reset();
         }
-        // io_service must be stopped after the thread returns,
-        // otherwise the thread may never return if it is
-        // waiting for the completion of some asynchronous tasks.
-        io_service_->stop();
+        if (listener_) {
+            listener_->stop();
+        }
+        io_service_->restart();
+        try {
+            io_service_->poll();
+        } catch (...) {
+        }
+        listener_.reset();
     }
 
     /// @brief Returns socket URL.
@@ -568,7 +574,7 @@ public:
             while (!isStopping()) {
                 io_service_->runOne();
             }
-            // Main thread signalled that the thread should
+            // Main thread signaled that the thread should
             // terminate. Launch any outstanding IO service
             // handlers.
             io_service_->poll();

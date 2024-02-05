@@ -213,8 +213,7 @@ public:
         // Note this uses a synchronous send so it ships immediately.
         // If listener isn't in listening mode, it will get missed.
         udp_socket.send_to(boost::asio::buffer(ncr_buffer.getData(),
-                                     ncr_buffer.getLength()),
-                            listener_endpoint);
+                           ncr_buffer.getLength()), listener_endpoint);
     }
 
     /// @brief RequestReceiveHandler operator implementation for receiving NCRs.

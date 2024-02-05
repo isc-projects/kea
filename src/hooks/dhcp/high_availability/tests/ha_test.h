@@ -309,6 +309,9 @@ public:
 
     /// @brief Object holding a state of the DHCP service.
     dhcp::NetworkStatePtr network_state_;
+
+    /// @brief Test timer.
+    isc::asiolink::IntervalTimerPtr timer_;
 };
 
 } // end of namespace isc::ha::test

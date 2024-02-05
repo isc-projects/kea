@@ -145,7 +145,13 @@ public:
               bool check_only = false) = 0;
 
     /// @brief Destructor
-    virtual ~DProcessBase(){};
+    virtual ~DProcessBase() {
+        io_service_->restart();
+        try {
+            io_service_->poll();
+        } catch (...) {
+        }
+    }
 
     /// @brief Checks if the process has been instructed to shut down.
     ///

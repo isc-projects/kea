@@ -194,8 +194,8 @@ public:
         /// wise.
         ///
         /// @throw This method MUST NOT throw.
-        virtual void operator ()(const Result result,
-                                 NameChangeRequestPtr& ncr) = 0;
+        virtual void operator()(const Result result,
+                                NameChangeRequestPtr& ncr) = 0;
 
         virtual ~RequestReceiveHandler() {
         }

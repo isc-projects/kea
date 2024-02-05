@@ -178,7 +178,6 @@ D2QueueMgr::updateStopState() {
               DHCP_DDNS_QUEUE_MGR_STOPPED);
 }
 
-
 void
 D2QueueMgr::removeListener() {
     // Force our managing layer(s) to stop us properly first.
@@ -223,7 +222,6 @@ D2QueueMgr::dequeueAt(const size_t index) {
     RequestQueue::iterator pos = ncr_queue_.begin() + index;
     ncr_queue_.erase(pos);
 }
-
 
 void
 D2QueueMgr::dequeue() {

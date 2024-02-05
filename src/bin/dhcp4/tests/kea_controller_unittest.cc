@@ -201,6 +201,7 @@ public:
 
     ~JSONFileBackendTest() {
         LeaseMgrFactory::destroy();
+        isc::log::setDefaultLoggingOutput();
         static_cast<void>(remove(TEST_FILE));
         static_cast<void>(remove(TEST_INCLUDE));
     };

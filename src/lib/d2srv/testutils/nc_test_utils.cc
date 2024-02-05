@@ -59,7 +59,7 @@ FauxServer::FauxServer(asiolink::IOServicePtr& io_service,
                        asiolink::IOAddress& address, size_t port)
     : io_service_(io_service), address_(address), port_(port),
       server_socket_(), receive_pending_(false), perpetual_receive_(true),
-      tsig_key_() {
+      tsig_key_(), stopped_(false) {
 
     server_socket_.reset(new boost::asio::ip::udp::socket(io_service_->getInternalIOService(),
                                                           boost::asio::ip::udp::v4()));
@@ -73,7 +73,7 @@ FauxServer::FauxServer(asiolink::IOServicePtr& io_service,
                        DnsServerInfo& server)
     : io_service_(io_service), address_(server.getIpAddress()),
       port_(server.getPort()), server_socket_(), receive_pending_(false),
-      perpetual_receive_(true), tsig_key_() {
+      perpetual_receive_(true), tsig_key_(), stopped_(false) {
     server_socket_.reset(new boost::asio::ip::udp::socket(io_service_->getInternalIOService(),
                                                           boost::asio::ip::udp::v4()));
     server_socket_->set_option(boost::asio::socket_base::reuse_address(true));
@@ -82,11 +82,17 @@ FauxServer::FauxServer(asiolink::IOServicePtr& io_service,
 }
 
 FauxServer::~FauxServer() {
+    stop();
+}
+
+void FauxServer::stop() {
+    stopped_ = true;
+    server_socket_->close();
 }
 
 void
-FauxServer::receive (const ResponseMode& response_mode,
-                     const dns::Rcode& response_rcode) {
+FauxServer::receive(const ResponseMode& response_mode,
+                    const dns::Rcode& response_rcode) {
     if (receive_pending_) {
         return;
     }
@@ -106,6 +112,9 @@ FauxServer::requestHandler(const boost::system::error_code& error,
                            std::size_t bytes_recvd,
                            const ResponseMode& response_mode,
                            const dns::Rcode& response_rcode) {
+    if (stopped_) {
+        return;
+    }
     receive_pending_ = false;
     // If we encountered an error or received no data then fail.
     // We expect the client to send good requests.

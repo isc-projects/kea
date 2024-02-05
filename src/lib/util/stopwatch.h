@@ -118,7 +118,7 @@ public:
 private:
 
     /// @brief Pointer to the @c StopwatchImpl.
-    StopwatchImpl* impl_;
+    boost::shared_ptr<StopwatchImpl> impl_;
 
 };
 

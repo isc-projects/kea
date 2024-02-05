@@ -2874,15 +2874,6 @@ Dhcpv4SrvTest::loadConfigFile(const string& path) {
                 return (ConfigBackendDHCPv4Ptr());
             });
 
-    // TimerMgr uses IO service to run asynchronous timers.
-    TimerMgr::instance()->setIOService(srv.getIOService());
-
-    // CommandMgr uses IO service to run asynchronous socket operations.
-    CommandMgr::instance().setIOService(srv.getIOService());
-
-    // DatabaseConnection uses IO service to run asynchronous timers.
-    DatabaseConnection::setIOService(srv.getIOService());
-
     Parser4Context parser;
     ConstElementPtr json;
     ASSERT_NO_THROW(json = parser.parseFile(path, Parser4Context::PARSER_DHCP4));

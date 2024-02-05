@@ -25,6 +25,7 @@
 #include <dhcp4/parser_context.h>
 #include <asiolink/io_address.h>
 #include <cc/command_interpreter.h>
+#include <config/command_mgr.h>
 #include <util/multi_threading_mgr.h>
 #include <list>
 
@@ -126,6 +127,10 @@ public:
         server_id_.reset(new Option4AddrLst(DHO_DHCP_SERVER_IDENTIFIER,
                                             asiolink::IOAddress("192.0.3.1")));
         db::DatabaseConnection::setIOService(getIOService());
+
+        dhcp::TimerMgr::instance()->setIOService(getIOService());
+
+        config::CommandMgr::instance().setIOService(getIOService());
     }
 
     /// @brief Returns fixed server identifier assigned to the naked server
@@ -199,6 +204,14 @@ public:
     }
 
     virtual ~NakedDhcpv4Srv() {
+        // Close the lease database
+        isc::dhcp::LeaseMgrFactory::destroy();
+
+        getIOService()->restart();
+        try {
+            getIOService()->poll();
+        } catch (...) {
+        }
     }
 
     /// @brief Runs processing DHCPDISCOVER.

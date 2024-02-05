@@ -626,7 +626,10 @@ public:
         listener2_->stop();
         listener3_->stop();
         io_service_->restart();
-        io_service_->poll();
+        try {
+            io_service_->poll();
+        } catch (...) {
+        }
         MultiThreadingMgr::instance().setMode(false);
         CfgMgr::instance().clear();
     }
@@ -1509,6 +1512,12 @@ public:
         // Change the partner's response to success.
         factory2_->getResponseCreator()->setControlResult(CONTROL_RESULT_SUCCESS);
 
+        io_service_->restart();
+        try {
+            io_service_->poll();
+        } catch (...) {
+        }
+
         // Try sending the lease updates again. The previously rejected lease should
         // now be accepted and the counter should be 0.
         bool unpark_called = false;
@@ -2083,7 +2092,10 @@ public:
         io_service_->stop();
         thread->join();
         io_service_->restart();
-        io_service_->poll();
+        try {
+            io_service_->poll();
+        } catch (...) {
+        }
     }
 
     /// @brief Runs HAService::processSynchronize for the DHCPv6 server
@@ -2133,7 +2145,10 @@ public:
         io_service_->stop();
         thread->join();
         io_service_->restart();
-        io_service_->poll();
+        try {
+            io_service_->poll();
+        } catch (...) {
+        }
     }
 
     /// @brief Tests scenarios when a single lease update is sent to a partner while
@@ -4871,7 +4886,10 @@ TEST_F(HAServiceTest, processMaintenanceStartSuccess) {
     io_service_->stop();
     thread->join();
     io_service_->restart();
-    io_service_->poll();
+    try {
+        io_service_->poll();
+    } catch (...) {
+    }
 
     // The partner of our server is online and should have responded with
     // the success status. Therefore, this server should have transitioned
@@ -4923,7 +4941,10 @@ TEST_F(HAServiceTest, processMaintenanceStartSuccessAuthorized) {
     io_service_->stop();
     thread->join();
     io_service_->restart();
-    io_service_->poll();
+    try {
+        io_service_->poll();
+    } catch (...) {
+    }
 
     // The partner of our server is online and should have responded with
     // the success status. Therefore, this server should have transitioned
@@ -4966,7 +4987,10 @@ TEST_F(HAServiceTest, processMaintenanceStartPartnerDown) {
     io_service_->stop();
     thread->join();
     io_service_->restart();
-    io_service_->poll();
+    try {
+        io_service_->poll();
+    } catch (...) {
+    }
 
     // The partner of our server is online and should have responded with
     // the success status. Therefore, this server should have transitioned
@@ -5010,7 +5034,10 @@ TEST_F(HAServiceTest, processMaintenanceStartPartnerError) {
     io_service_->stop();
     thread->join();
     io_service_->restart();
-    io_service_->poll();
+    try {
+        io_service_->poll();
+    } catch (...) {
+    }
 
     ASSERT_TRUE(rsp);
     checkAnswer(rsp, CONTROL_RESULT_SUCCESS,
@@ -5052,7 +5079,10 @@ TEST_F(HAServiceTest, processMaintenanceStartPartnerUnauthorized) {
     io_service_->stop();
     thread->join();
     io_service_->restart();
-    io_service_->poll();
+    try {
+        io_service_->poll();
+    } catch (...) {
+    }
 
     ASSERT_TRUE(rsp);
     checkAnswer(rsp, CONTROL_RESULT_SUCCESS,
@@ -5095,7 +5125,10 @@ TEST_F(HAServiceTest, processMaintenanceStartNotAllowed) {
     io_service_->stop();
     thread->join();
     io_service_->restart();
-    io_service_->poll();
+    try {
+        io_service_->poll();
+    } catch (...) {
+    }
 
     ASSERT_TRUE(rsp);
     checkAnswer(rsp, CONTROL_RESULT_ERROR,
@@ -5139,7 +5172,10 @@ TEST_F(HAServiceTest, processMaintenanceCancelSuccess) {
     io_service_->stop();
     thread->join();
     io_service_->restart();
-    io_service_->poll();
+    try {
+        io_service_->poll();
+    } catch (...) {
+    }
 
     // The partner of our server is online and should have responded with
     // the success status. Therefore, this server should have transitioned
@@ -5190,7 +5226,10 @@ TEST_F(HAServiceTest, processMaintenanceCancelSuccessAuthorized) {
     io_service_->stop();
     thread->join();
     io_service_->restart();
-    io_service_->poll();
+    try {
+        io_service_->poll();
+    } catch (...) {
+    }
 
     // The partner of our server is online and should have responded with
     // the success status. Therefore, this server should have transitioned
@@ -5233,7 +5272,10 @@ TEST_F(HAServiceTest, processMaintenanceCancelPartnerError) {
     io_service_->stop();
     thread->join();
     io_service_->restart();
-    io_service_->poll();
+    try {
+        io_service_->poll();
+    } catch (...) {
+    }
 
     // The partner should have responded with an error.
     ASSERT_TRUE(rsp);
@@ -5279,7 +5321,10 @@ TEST_F(HAServiceTest, processMaintenanceCancelPartnerUnauthorized) {
     io_service_->stop();
     thread->join();
     io_service_->restart();
-    io_service_->poll();
+    try {
+        io_service_->poll();
+    } catch (...) {
+    }
 
     // The partner should have responded with an error.
     ASSERT_TRUE(rsp);
@@ -5560,6 +5605,14 @@ public:
     HAServiceStateMachineTest()
         : HAServiceTest(), state_(),
           partner_(new HAPartner(listener2_, factory2_)) {
+    }
+
+    ~HAServiceStateMachineTest() {
+        io_service_->restart();
+        try {
+            io_service_->poll();
+        } catch (...) {
+        }
     }
 
     /// @brief Creates common HA service instance from the provided configuration.

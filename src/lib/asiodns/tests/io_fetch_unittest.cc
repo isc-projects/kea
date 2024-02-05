@@ -52,42 +52,42 @@ const size_t MAX_SIZE = 64 * 1024;  // Should be able to take 64kB
 const bool DEBUG = false;
 
 /// \brief Test fixture for the asiolink::IOFetch.
-class IOFetchTest : public virtual ::testing::Test, public virtual IOFetch::Callback
-{
+class IOFetchTest : public virtual ::testing::Test, public virtual IOFetch::Callback {
 public:
-    IOServicePtr    service_;       ///< Service to run the query
-    IOFetch::Result expected_;      ///< Expected result of the callback
-    bool            run_;           ///< Did the callback run already?
-    Question        question_;      ///< What to ask
-    OutputBufferPtr result_buff_;   ///< Buffer to hold result of fetch
-    OutputBufferPtr msgbuf_;        ///< Buffer corresponding to known question
-    IOFetch         udp_fetch_;     ///< For UDP query test
-    IOFetch         tcp_fetch_;     ///< For TCP query test
-    IOFetch::Protocol protocol_;    ///< Protocol being tested
-    size_t          cumulative_;    ///< Cumulative data received by "server".
-    deadline_timer  timer_;         ///< Timer to measure timeouts
+    IOServicePtr                     service_;                  ///< Service to run the query
+    IOFetch::Result                  expected_;                 ///< Expected result of the callback
+    bool                             run_;                      ///< Did the callback run already?
+    Question                         question_;                 ///< What to ask
+    OutputBufferPtr                  result_buff_;              ///< Buffer to hold result of fetch
+    OutputBufferPtr                  msgbuf_;                   ///< Buffer corresponding to known question
+    IOFetch                          udp_fetch_;                ///< For UDP query test
+    IOFetch                          tcp_fetch_;                ///< For TCP query test
+    IOFetch::Protocol                protocol_;                 ///< Protocol being tested
+    size_t                           cumulative_;               ///< Cumulative data received by "server".
+    deadline_timer                   timer_;                    ///< Timer to measure timeouts
 
     // The next member is the buffer in which the "server" (implemented by the
     // response handler methods in this class) receives the question sent by the
     // fetch object.
-    uint8_t         receive_buffer_[MAX_SIZE]; ///< Server receive buffer
-    OutputBufferPtr expected_buffer_;          ///< Data we expect to receive
-    vector<uint8_t> send_buffer_;           ///< Server send buffer
-    uint16_t        send_cumulative_;       ///< Data sent so far
+    uint8_t                          receive_buffer_[MAX_SIZE]; ///< Server receive buffer
+    OutputBufferPtr                  expected_buffer_;          ///< Data we expect to receive
+    vector<uint8_t>                  send_buffer_;              ///< Server send buffer
+    uint16_t                         send_cumulative_;          ///< Data sent so far
 
     // Other data.
-    string          return_data_;           ///< Data returned by server
-    string          test_data_;             ///< Large string - here for convenience
-    bool            debug_;                 ///< true to enable debug output
-    size_t          tcp_send_size_;         ///< Max size of TCP send
-    uint8_t         qid_0;                  ///< First octet of qid
-    uint8_t         qid_1;                  ///< Second octet of qid
+    string                           return_data_;              ///< Data returned by server
+    string                           test_data_;                ///< Large string - here for convenience
+    bool                             debug_;                    ///< true to enable debug output
+    size_t                           tcp_send_size_;            ///< Max size of TCP send
+    uint8_t                          qid_0;                     ///< First octet of qid
+    uint8_t                          qid_1;                     ///< Second octet of qid
 
-    bool            tcp_short_send_;        ///< If set to true, we do not send
-                                            ///  all data in the tcp response
-    boost::shared_ptr<udp::socket> udp_socket_;
-    boost::shared_ptr<tcp::socket> tcp_socket_;
+    bool                             tcp_short_send_;           ///< If set to true, we do not send
+                                                                ///  all data in the tcp response
+    boost::shared_ptr<udp::socket>   udp_socket_;
+    boost::shared_ptr<tcp::socket>   tcp_socket_;
     boost::shared_ptr<tcp::acceptor> tcp_acceptor_;
+    bool                             shutdown_;
 
     /// \brief Constructor
     IOFetchTest() :
@@ -115,8 +115,8 @@ public:
         tcp_send_size_(0),
         qid_0(0),
         qid_1(0),
-        tcp_short_send_(false)
-    {
+        tcp_short_send_(false),
+        shutdown_(false) {
         // Construct the data buffer for question we expect to receive.
         Message msg(Message::RENDER);
         msg.setQid(0);
@@ -153,6 +153,8 @@ public:
     }
 
     virtual ~IOFetchTest() {
+        shutdown_ = true;
+        timer_.cancel();
         service_->restart();
         try {
             service_->poll();
@@ -178,8 +180,10 @@ public:
     void udpReceiveHandler(udp::endpoint* remote, udp::socket* socket,
                            boost::system::error_code ec = boost::system::error_code(),
                            size_t length = 0, bool bad_qid = false,
-                           bool second_send = false)
-    {
+                           bool second_send = false) {
+        if (shutdown_) {
+            return;
+        }
         if (debug_) {
             cout << "udpReceiveHandler(): error = " << ec.value() <<
                     ", length = " << length << endl;
@@ -228,8 +232,10 @@ public:
     /// \param socket Socket on which data will be received
     /// \param ec Boost error code, value should be zero.
     void tcpAcceptHandler(tcp::socket* socket,
-                          boost::system::error_code ec = boost::system::error_code())
-    {
+                          boost::system::error_code ec = boost::system::error_code()) {
+        if (shutdown_) {
+            return;
+        }
         if (debug_) {
             cout << "tcpAcceptHandler(): error = " << ec.value() << endl;
         }
@@ -269,8 +275,10 @@ public:
     /// \param length Amount of data received.
     void tcpReceiveHandler(tcp::socket* socket,
                            boost::system::error_code ec = boost::system::error_code(),
-                           size_t length = 0)
-    {
+                           size_t length = 0) {
+        if (shutdown_) {
+            return;
+        }
         if (debug_) {
             cout << "tcpReceiveHandler(): error = " << ec.value() <<
                     ", length = " << length << endl;
@@ -337,6 +345,9 @@ public:
     ///
     /// \param socket Socket over which send should take place
     void tcpSendData(tcp::socket* socket) {
+        if (shutdown_) {
+            return;
+        }
         if (debug_) {
             cout << "tcpSendData()" << endl;
         }
@@ -402,8 +413,10 @@ public:
     /// \param length Number of bytes sent.
     void tcpSendHandler(size_t expected, tcp::socket* socket,
                         boost::system::error_code ec = boost::system::error_code(),
-                        size_t length = 0)
-    {
+                        size_t length = 0) {
+        if (shutdown_) {
+            return;
+        }
         if (debug_) {
             cout << "tcpSendHandler(): error = " << ec.value() <<
                     ", length = " << length << endl;
@@ -511,8 +524,8 @@ public:
 
         // Stop before it is started
         fetch.stop();
-        service_->post(fetch);
 
+        service_->post(fetch);
         service_->run();
         EXPECT_TRUE(run_);
     }

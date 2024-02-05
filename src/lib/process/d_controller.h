@@ -135,8 +135,8 @@ public:
     /// in their main function. Such a logger uses environmental variables to
     /// control severity, verbosity etc.
     ///
-    /// @param argc  is the number of command line arguments supplied
-    /// @param argv  is the array of string (char *) command line arguments
+    /// @param argc is the number of command line arguments supplied
+    /// @param argv is the array of string (char *) command line arguments
     /// @param test_mode is a bool value which indicates if
     /// @c DControllerBase::launch should be run in the test mode (if true).
     /// This parameter doesn't have default value to force test implementers to
@@ -144,7 +144,7 @@ public:
     ///
     /// @throw throws one of the following exceptions:
     /// InvalidUsage - Indicates invalid command line.
-    /// ProcessInitError  - Failed to create and initialize application
+    /// ProcessInitError - Failed to create and initialize application
     /// process object.
     /// ProcessRunError - A fatal error occurred while in the application
     /// process event loop.
@@ -157,7 +157,7 @@ public:
     /// implementation will merge the configuration update into the existing
     /// configuration and then invoke the application process' configure method.
     ///
-    /// @param  new_config is the new configuration
+    /// @param new_config is the new configuration
     ///
     /// @return returns an Element that contains the results of configuration
     /// update composed of an integer status value (0 means successful,
@@ -172,7 +172,7 @@ public:
     /// configuration and then invoke the application process' configure method
     /// with a final rollback.
     ///
-    /// @param  new_config is the new configuration
+    /// @param new_config is the new configuration
     ///
     /// @return returns an Element that contains the results of configuration
     /// update composed of an integer status value (0 means successful,
@@ -495,8 +495,8 @@ protected:
     /// -c/t for specifying the configuration file, -d for verbose logging,
     /// and -v/V/W for version reports.
     ///
-    /// @param argc  is the number of command line arguments supplied
-    /// @param argv  is the array of string (char *) command line arguments
+    /// @param argc is the number of command line arguments supplied
+    /// @param argv is the array of string (char *) command line arguments
     ///
     /// @throw InvalidUsage when there are usage errors.
     /// @throw VersionMessage if the -v, -V or -W arguments is given.

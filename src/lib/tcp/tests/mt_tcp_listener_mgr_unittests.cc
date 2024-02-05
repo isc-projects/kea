@@ -811,8 +811,6 @@ TEST_F(MtTcpListenerMgrTest, basics) {
     ASSERT_THROW_MSG(mt_listener_mgr_->start(), InvalidOperation,
                      "MtTcpListenerMgr already started!");
 
-    return;
-
     // Stop it and verify we're no longer listening.
     ASSERT_NO_THROW_LOG(mt_listener_mgr_->stop());
     ASSERT_TRUE(mt_listener_mgr_->isStopped());

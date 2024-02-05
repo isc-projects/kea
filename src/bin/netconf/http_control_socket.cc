@@ -101,6 +101,13 @@ HttpControlSocket::sendCommand(ConstElementPtr command) {
     // Perform this synchronously.
     io_service->run();
 
+    client.stop();
+    io_service->restart();
+    try {
+        io_service->poll();
+    } catch (...) {
+    }
+
     if (received_ec) {
         // Got an error code.
         isc_throw(ControlSocketError, "communication error (code): "

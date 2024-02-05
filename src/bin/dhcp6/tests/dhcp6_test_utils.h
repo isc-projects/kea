@@ -29,6 +29,7 @@
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <hooks/hooks_manager.h>
+#include <config/command_mgr.h>
 #include <util/multi_threading_mgr.h>
 
 #include <list>
@@ -136,6 +137,10 @@ public:
         std::string memfile = "type=memfile universe=6 persist=false";
         isc::dhcp::LeaseMgrFactory::create(memfile);
         db::DatabaseConnection::setIOService(getIOService());
+
+        dhcp::TimerMgr::instance()->setIOService(getIOService());
+
+        config::CommandMgr::instance().setIOService(getIOService());
     }
 
     /// @brief fakes packet reception
@@ -209,6 +214,12 @@ public:
     virtual ~NakedDhcpv6Srv() {
         // Close the lease database
         isc::dhcp::LeaseMgrFactory::destroy();
+
+        getIOService()->restart();
+        try {
+            getIOService()->poll();
+        } catch (...) {
+        }
     }
 
     /// @brief Processes incoming Solicit message.

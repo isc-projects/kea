@@ -2448,6 +2448,14 @@ HAService::synchronize(std::string& status_message, const std::string& server_na
     // End measuring duration.
     stopwatch.stop();
 
+    client.stop();
+
+    io_service->restart();
+    try {
+        io_service->poll();
+    } catch (...) {
+    }
+
     // If an error message has been recorded, return an error to the controlling
     // client.
     if (!status_message.empty()) {
@@ -2586,6 +2594,14 @@ HAService::sendLeaseUpdatesFromBacklog() {
     // End measuring duration.
     stopwatch.stop();
 
+    client.stop();
+
+    io_service->restart();
+    try {
+        io_service->poll();
+    } catch (...) {
+    }
+
     if (updates_successful) {
         LOG_INFO(ha_logger, HA_LEASES_BACKLOG_SUCCESS)
             .arg(config_->getThisServerName())
@@ -2664,6 +2680,14 @@ HAService::sendHAReset() {
 
     // Run the IO service until it is stopped by the callback. This makes it synchronous.
     io_service->run();
+
+    client.stop();
+
+    io_service->restart();
+    try {
+        io_service->poll();
+    } catch (...) {
+    }
 
     return (reset_successful);
 }
@@ -2824,6 +2848,14 @@ HAService::processMaintenanceStart() {
     // makes it synchronous.
     io_service->run();
 
+    client.stop();
+
+    io_service->restart();
+    try {
+        io_service->poll();
+    } catch (...) {
+    }
+
     // If there was a communication problem with the partner we assume that
     // the partner is already down while we receive this command.
     if (captured_ec || (captured_rcode == CONTROL_RESULT_ERROR)) {
@@ -2937,6 +2969,14 @@ HAService::processMaintenanceCancel() {
     // Run the IO service until it is stopped by any of the callbacks. This
     // makes it synchronous.
     io_service->run();
+
+    client.stop();
+
+    io_service->restart();
+    try {
+        io_service->poll();
+    } catch (...) {
+    }
 
     // There was an error in communication with the partner or the
     // partner was unable to revert its state.

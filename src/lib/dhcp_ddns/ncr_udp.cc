@@ -61,7 +61,6 @@ UDPCallback::putData(const uint8_t* src, size_t len) {
     data_->put_len_ = len;
 }
 
-
 //*************************** NameChangeUDPListener ***********************
 NameChangeUDPListener::
 NameChangeUDPListener(const isc::asiolink::IOAddress& ip_address,
@@ -116,7 +115,6 @@ NameChangeUDPListener::open(const isc::asiolink::IOServicePtr& io_service) {
     socket_.reset(new NameChangeUDPSocket(*asio_socket_));
 }
 
-
 void
 NameChangeUDPListener::doReceive() {
     // Call the socket's asynchronous receiving, passing ourself in as callback.
@@ -149,6 +147,9 @@ NameChangeUDPListener::close() {
         asio_socket_.reset();
     }
 
+    if (socket_) {
+        socket_->close();
+    }
     socket_.reset();
     io_service_.reset();
 }
@@ -199,7 +200,6 @@ NameChangeUDPListener::receiveCompletionHandler(const bool successful,
     // Call the application's registered request receive handler.
     invokeRecvHandler(result, ncr);
 }
-
 
 //*************************** NameChangeUDPSender ***********************
 
@@ -292,6 +292,9 @@ NameChangeUDPSender::close() {
         asio_socket_.reset();
     }
 
+    if (socket_) {
+        socket_->close();
+    }
     socket_.reset();
 
     closeWatchSocket();

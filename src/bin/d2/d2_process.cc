@@ -439,6 +439,9 @@ D2Process::reconfigureQueueMgr() {
 }
 
 D2Process::~D2Process() {
+    queue_mgr_->stopListening();
+    auto f = [](D2QueueMgrPtr) {};
+    getIOService()->post(std::bind(f, queue_mgr_));
 }
 
 D2CfgMgrPtr

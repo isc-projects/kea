@@ -168,8 +168,7 @@ private:
 
 template <typename C>
 UDPSocket<C>::UDPSocket(boost::asio::ip::udp::socket& socket) :
-    socket_ptr_(), socket_(socket), isopen_(true)
-{
+    socket_ptr_(), socket_(socket), isopen_(true) {
 }
 
 // Constructor - create socket on the fly
@@ -177,15 +176,14 @@ UDPSocket<C>::UDPSocket(boost::asio::ip::udp::socket& socket) :
 template <typename C>
 UDPSocket<C>::UDPSocket(const IOServicePtr& io_service) : io_service_(io_service),
     socket_ptr_(new boost::asio::ip::udp::socket(io_service_->getInternalIOService())),
-    socket_(*socket_ptr_), isopen_(false)
-{
+    socket_(*socket_ptr_), isopen_(false) {
 }
 
 // Destructor.
 
 template <typename C>
-UDPSocket<C>::~UDPSocket()
-{
+UDPSocket<C>::~UDPSocket() {
+    close();
 }
 
 // Open the socket.
@@ -228,8 +226,7 @@ UDPSocket<C>::open(const IOEndpoint* endpoint, C&) {
 
 template <typename C> void
 UDPSocket<C>::asyncSend(const void* data, size_t length,
-                        const IOEndpoint* endpoint, C& callback)
-{
+                        const IOEndpoint* endpoint, C& callback) {
     if (isopen_) {
 
         // Upconvert to a UDPEndpoint.  We need to do this because although
@@ -255,8 +252,7 @@ UDPSocket<C>::asyncSend(const void* data, size_t length,
 
 template <typename C> void
 UDPSocket<C>::asyncReceive(void* data, size_t length, size_t offset,
-                           IOEndpoint* endpoint, C& callback)
-{
+                           IOEndpoint* endpoint, C& callback) {
     if (isopen_) {
 
         // Upconvert the endpoint again.
@@ -286,8 +282,7 @@ template <typename C> bool
 UDPSocket<C>::processReceivedData(const void* staging, size_t length,
                                   size_t& cumulative, size_t& offset,
                                   size_t& expected,
-                                  isc::util::OutputBufferPtr& outbuff)
-{
+                                  isc::util::OutputBufferPtr& outbuff) {
     // Set return values to what we should expect.
     cumulative = length;
     expected = length;

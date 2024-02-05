@@ -126,6 +126,7 @@ public:
     /// Sets the asiodns logging level back to DEBUG.
     virtual ~DNSClientTest() {
         test_timer_.cancel();
+        dns_client_->stop();
         service_->restart();
         try {
             service_->poll();
@@ -320,17 +321,18 @@ public:
     void runInvalidTimeoutTest() {
         expect_response_ = false;
 
-        // Create inbound message. Simply set the required message fields:
+        // Create outbound message. Simply set the required message fields:
         // error code and Zone section. This is enough to create on-wire format
         // of this message and send it.
-        D2UpdateMessage message(D2UpdateMessage::INBOUND);
+        D2UpdateMessage message(D2UpdateMessage::OUTBOUND);
+        ASSERT_NO_THROW(message.setRcode(Rcode(Rcode::NOERROR_CODE)));
+        ASSERT_NO_THROW(message.setZone(Name("example.com"), RRClass::IN()));
 
         // Start with a valid timeout equal to maximal allowed. This way we will
         // ensure that doUpdate doesn't throw an exception for valid timeouts.
         unsigned int timeout = DNSClient::getMaxTimeout();
-        EXPECT_THROW(dns_client_->doUpdate(service_, IOAddress(TEST_ADDRESS),
-                                           TEST_PORT, message, timeout),
-                     isc::d2::InvalidZoneSection);
+        EXPECT_NO_THROW(dns_client_->doUpdate(service_, IOAddress(TEST_ADDRESS),
+                                              TEST_PORT, message, timeout));
 
         // Cross the limit and expect that exception is thrown this time.
         timeout = DNSClient::getMaxTimeout() + 1;

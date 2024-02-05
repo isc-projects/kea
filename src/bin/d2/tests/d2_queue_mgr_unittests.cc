@@ -232,6 +232,15 @@ public:
                           TEST_TIMEOUT);
     }
 
+    virtual ~QueueMgrUDPTest() {
+        test_timer_.cancel();
+        io_service_->restart();
+        try {
+            io_service_->poll();
+        } catch (...) {
+        }
+    }
+
     void reset_results() {
         sent_ncrs_.clear();
         received_ncrs_.clear();

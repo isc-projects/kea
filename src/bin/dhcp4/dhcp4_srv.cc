@@ -705,6 +705,11 @@ Dhcpv4Srv::~Dhcpv4Srv() {
         }
         LOG_ERROR(dhcp4_logger, DHCP4_SRV_UNLOAD_LIBRARIES_ERROR).arg(msg);
     }
+    io_service_->restart();
+    try {
+        io_service_->poll();
+    } catch (...) {
+    }
 }
 
 void

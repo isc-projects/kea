@@ -41,7 +41,7 @@ public:
     /// state post construction is STOPPED.  If false, the constructor will
     /// invoke run() to transition the pool into the RUNNING state.
     IoServiceThreadPool(asiolink::IOServicePtr io_service, size_t pool_size,
-                   bool defer_start = false);
+                        bool defer_start = false);
 
     /// @brief Destructor
     ///

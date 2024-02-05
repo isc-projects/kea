@@ -9,6 +9,7 @@
 #include <asiolink/io_address.h>
 #include <cc/command_interpreter.h>
 #include <config/command_mgr.h>
+#include <config/timeouts.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/testutils/iface_mgr_test_config.h>
 #include <dhcpsrv/cfgmgr.h>
@@ -162,6 +163,13 @@ public:
 
     /// @brief Destructor
     ~CtrlChannelDhcpv6SrvTest() {
+        LeaseMgrFactory::destroy();
+        StatsMgr::instance().removeAll();
+
+        CommandMgr::instance().closeCommandSocket();
+        CommandMgr::instance().deregisterAll();
+        CommandMgr::instance().setConnectionTimeout(TIMEOUT_DHCP_SERVER_RECEIVE_COMMAND);
+
         server_.reset();
         reset();
         IfaceMgr::instance().setTestMode(false);
@@ -716,7 +724,8 @@ TEST_F(CtrlChannelDhcpv6SrvTest, configSet) {
         "            \"name\": \"kea\", \n"
         "            \"severity\": \"FATAL\", \n"
         "            \"output-options\": [{ \n"
-        "                \"output\": \"/dev/null\" \n"
+        "                \"output\": \"/dev/null\", \n"
+        "                \"maxsize\": 0"
         "            }] \n"
         "        }] \n";
 
@@ -932,7 +941,8 @@ TEST_F(CtrlChannelDhcpv6SrvTest, configTest) {
         "            \"name\": \"kea\", \n"
         "            \"severity\": \"FATAL\", \n"
         "            \"output-options\": [{ \n"
-        "                \"output\": \"/dev/null\" \n"
+        "                \"output\": \"/dev/null\", \n"
+        "                \"maxsize\": 0"
         "            }] \n"
         "        }] \n";
 

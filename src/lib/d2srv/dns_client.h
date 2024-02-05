@@ -96,6 +96,9 @@ public:
     /// @brief Virtual destructor, does nothing.
     ~DNSClient();
 
+    /// @brief Stop the client.
+    void stop();
+
     ///
     /// @name Copy constructor and assignment operator
     ///

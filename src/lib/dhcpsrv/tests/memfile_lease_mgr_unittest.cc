@@ -164,6 +164,12 @@ public:
             setExtendedInfoSanityCheck(CfgConsistency::EXTENDED_INFO_CHECK_FIX);
         // Disable multi-threading.
         MultiThreadingMgr::instance().setMode(false);
+
+        getIOService()->restart();
+        try {
+            getIOService()->poll();
+        } catch(...) {
+        }
     }
 
     /// @brief Remove files being products of Lease File Cleanup.

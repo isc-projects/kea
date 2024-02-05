@@ -71,6 +71,7 @@ public:
     D2UpdateMgrWrapperPtr update_mgr_;
     std::vector<NameChangeRequestPtr> canned_ncrs_;
     size_t canned_count_;
+    boost::shared_ptr<FauxServer> server_;
 
     D2UpdateMgrTest() {
         queue_mgr_.reset(new D2QueueMgr(io_service_));
@@ -82,6 +83,14 @@ public:
     }
 
     ~D2UpdateMgrTest() {
+        if (server_) {
+            server_->stop();
+        }
+        io_service_->restart();
+        try {
+            io_service_->poll();
+        } catch (...) {
+        }
     }
 
     /// @brief Creates a list of valid NameChangeRequest.
@@ -184,11 +193,11 @@ public:
         TransactionList::iterator it = update_mgr_->transactionListBegin();
         while (it != update_mgr_->transactionListEnd()) {
             if (((*it).second)->isModelWaiting()) {
-                return true;
+                return (true);
             }
         }
 
-        return false;
+        return (false);
     }
 
     /// @brief Process events until all requests have been completed.
@@ -692,8 +701,8 @@ TEST_F(D2UpdateMgrTest, addTransaction) {
 
     // Create a server based on the transaction's current server, and
     // start it listening.
-    FauxServer server(io_service_, *(trans->getCurrentServer()));
-    server.receive(FauxServer::USE_RCODE, dns::Rcode::NOERROR());
+    server_.reset(new FauxServer(io_service_, *(trans->getCurrentServer())));
+    server_->receive(FauxServer::USE_RCODE, dns::Rcode::NOERROR());
 
     // Run sweep and IO until everything is done.
     processAll();
@@ -749,8 +758,8 @@ TEST_F(D2UpdateMgrTest, removeTransaction) {
 
     // Create a server based on the transaction's current server, and
     // start it listening.
-    FauxServer server(io_service_, *(trans->getCurrentServer()));
-    server.receive(FauxServer::USE_RCODE, dns::Rcode::NOERROR());
+    server_.reset(new FauxServer(io_service_, *(trans->getCurrentServer())));
+    server_->receive(FauxServer::USE_RCODE, dns::Rcode::NOERROR());
 
     // Run sweep and IO until everything is done.
     processAll();
@@ -797,8 +806,8 @@ TEST_F(D2UpdateMgrTest, errorTransaction) {
     ASSERT_TRUE(trans->getCurrentServer());
 
     // Create a server and start it listening.
-    FauxServer server(io_service_, *(trans->getCurrentServer()));
-    server.receive(FauxServer::CORRUPT_RESP);
+    server_.reset(new FauxServer(io_service_, *(trans->getCurrentServer())));
+    server_->receive(FauxServer::CORRUPT_RESP);
 
     // Run sweep and IO until everything is done.
     processAll();
@@ -836,8 +845,8 @@ TEST_F(D2UpdateMgrTest, multiTransaction) {
     // that all of configured servers have the same address.
     // and start it listening.
     asiolink::IOAddress server_ip("127.0.0.1");
-    FauxServer server(io_service_, server_ip, 5301);
-    server.receive(FauxServer::USE_RCODE, dns::Rcode::NOERROR());
+    server_.reset(new FauxServer(io_service_, server_ip, 5301));
+    server_->receive(FauxServer::USE_RCODE, dns::Rcode::NOERROR());
 
     // Run sweep and IO until everything is done.
     processAll();
@@ -908,8 +917,8 @@ TEST_F(D2UpdateMgrTest, simpleAddTransaction) {
 
     // Create a server based on the transaction's current server, and
     // start it listening.
-    FauxServer server(io_service_, *(trans->getCurrentServer()));
-    server.receive(FauxServer::USE_RCODE, dns::Rcode::NOERROR());
+    server_.reset(new FauxServer(io_service_, *(trans->getCurrentServer())));
+    server_->receive(FauxServer::USE_RCODE, dns::Rcode::NOERROR());
 
     // Run sweep and IO until everything is done.
     processAll();
@@ -966,8 +975,8 @@ TEST_F(D2UpdateMgrTest, simpleRemoveTransaction) {
 
     // Create a server based on the transaction's current server, and
     // start it listening.
-    FauxServer server(io_service_, *(trans->getCurrentServer()));
-    server.receive(FauxServer::USE_RCODE, dns::Rcode::NOERROR());
+    server_.reset(new FauxServer(io_service_, *(trans->getCurrentServer())));
+    server_->receive(FauxServer::USE_RCODE, dns::Rcode::NOERROR());
 
     // Run sweep and IO until everything is done.
     processAll();

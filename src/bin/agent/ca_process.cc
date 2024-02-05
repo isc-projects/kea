@@ -33,6 +33,7 @@ CtrlAgentProcess::CtrlAgentProcess(const char* name,
 }
 
 CtrlAgentProcess::~CtrlAgentProcess() {
+    garbageCollectListeners(0);
 }
 
 void
@@ -206,7 +207,10 @@ CtrlAgentProcess::garbageCollectListeners(size_t leaving) {
         }
         // We have stopped listeners but there may be some pending handlers
         // related to these listeners. Need to invoke these handlers.
-        getIOService()->poll();
+        try {
+            getIOService()->poll();
+        } catch (...) {
+        }
         // Finally, we're ready to remove no longer used listeners.
         http_listeners_.erase(http_listeners_.begin(),
                               http_listeners_.end() - leaving);

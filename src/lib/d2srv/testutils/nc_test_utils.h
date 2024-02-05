@@ -72,6 +72,9 @@ public:
     /// NULL TSIG is not used.
     D2TsigKeyPtr tsig_key_;
 
+    /// @brief Flag which indicated that the server has been stopped.
+    bool stopped_;
+
     /// @brief Constructor
     ///
     /// @param io_service IOService to be used for socket IO.
@@ -89,6 +92,9 @@ public:
 
     /// @brief Destructor
     virtual ~FauxServer();
+
+    /// @brief Stop the server
+    void stop();
 
     /// @brief Initiates an asynchronous receive
     ///

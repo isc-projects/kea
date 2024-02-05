@@ -103,7 +103,7 @@ NameChangeTransaction(asiolink::IOServicePtr& io_service,
     }
 }
 
-NameChangeTransaction::~NameChangeTransaction(){
+NameChangeTransaction::~NameChangeTransaction() {
 }
 
 void

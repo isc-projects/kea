@@ -135,6 +135,7 @@ public:
         CommandMgr::instance().setConnectionTimeout(TIMEOUT_DHCP_SERVER_RECEIVE_COMMAND);
 
         server_.reset();
+        reset();
         IfaceMgr::instance().setTestMode(false);
         IfaceMgr::instance().setDetectCallback(std::bind(&IfaceMgr::checkDetectIfaces,
                                                IfaceMgr::instancePtr().get(), ph::_1));
@@ -806,7 +807,8 @@ TEST_F(CtrlChannelDhcpv4SrvTest, configSet) {
         "            \"name\": \"kea\", \n"
         "            \"severity\": \"FATAL\", \n"
         "            \"output-options\": [{ \n"
-        "                \"output\": \"/dev/null\" \n"
+        "                \"output\": \"/dev/null\", \n"
+        "                \"maxsize\": 0"
         "            }] \n"
         "        }] \n";
 
@@ -1021,7 +1023,8 @@ TEST_F(CtrlChannelDhcpv4SrvTest, configTest) {
         "            \"name\": \"kea\", \n"
         "            \"severity\": \"FATAL\", \n"
         "            \"output-options\": [{ \n"
-        "                \"output\": \"/dev/null\" \n"
+        "                \"output\": \"/dev/null\", \n"
+        "                \"maxsize\": 0"
         "            }] \n"
         "        }] \n";
 

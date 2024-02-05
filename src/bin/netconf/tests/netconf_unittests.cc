@@ -121,11 +121,6 @@ public:
             thread_->join();
             thread_.reset();
         }
-        // io_service must be stopped after the thread returns,
-        // otherwise the thread may never return if it is
-        // waiting for the completion of some asynchronous tasks.
-        io_service_->stop();
-        io_service_.reset();
         if (agent_) {
             clearYang(agent_);
             agent_->clear();
@@ -135,6 +130,11 @@ public:
         responses_.clear();
         removeUnixSocketFile();
         SysrepoSetup::cleanSharedMemory();
+        io_service_->restart();
+        try {
+            io_service_->poll();
+        } catch (...) {
+        }
     }
 
     /// @brief Returns socket file path.
