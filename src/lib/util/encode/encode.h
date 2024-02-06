@@ -29,9 +29,9 @@ public:
     /// @param digits_per_group number of digits contained in a group
     /// @param pad_char character used for padding out to group size (0 means no
     /// padding)
-    /// @param max_pad maximum  number of pad characters in a group
+    /// @param max_pad maximum number of pad characters in a group
     /// @param case_sensitive indicates if the algorithm's digit set is
-    /// case sensitive.
+    /// case sensitive
     BaseNEncoder(const std::string& algorithm,
                  const char* digit_set,
                  const std::vector<uint8_t>& bits_table,
@@ -79,71 +79,71 @@ public:
     ///
     /// @return string containing the algorithm name
     std::string getAlgorithm() const {
-        return(algorithm_);
+        return (algorithm_);
     }
 
     /// @brief Get the digit set
     ///
     /// @return string containing the set of digits
     const char* getDigitSet() const {
-        return(digit_set_);
+        return (digit_set_);
     }
 
     /// @brief Get the digit lookup table
     ///
     /// @return vector containing the lookup table
     const std::vector<uint8_t>& getBitsTable() const {
-        return(bits_table_);
+        return (bits_table_);
     }
 
     /// @brief Get the number of data bits represented by a digit
     ///
     /// @return number of data bits per digit
     size_t getBitsPerDigit() {
-        return(bits_per_digit_);
+        return (bits_per_digit_);
     }
 
     /// @brief Get the number of digits contained in a group
     ///
     /// @return number of digits per group
     size_t getDigitsPerGroup() const {
-        return(digits_per_group_);
+        return (digits_per_group_);
     }
 
     /// @brief Get the character used for padding out to group size (0 means no padding)
     ///
     /// @return Character used as a pad byte
     uint8_t getPadChar() const {
-        return(pad_char_);
+        return (pad_char_);
     }
 
     /// @brief Get the maximum number of pad characters in a group
     ///
     /// @return Maximum number of pad characters
     size_t getMaxPad() {
-        return(max_pad_);
+        return (max_pad_);
     }
 
     /// @brief Get the maxium index value of the digit set
     ///
     /// @return Maxium index value of the digit set
     size_t getMaxBitsToDigit() {
-        return(max_bits_to_digit_);
+        return (max_bits_to_digit_);
     }
 
     /// @brief Get the maxium index value of the algorithm bit table
     ///
     /// @return Maxium index value of the algorithm bit table
     size_t getMaxDigitToBits() {
-        return(max_digit_to_bits_);
+        return (max_digit_to_bits_);
     }
 
     /// @brief Indicates whether or not the algorithm's digit set
     /// is case-sensitive.
     ///
-    /// @return true if the digit set is case-sensitive.
+    /// @return true if the digit set is case-sensitive, false otherwise
     bool isCaseSensitive() {
-        return(case_sensitive_);
+        return (case_sensitive_);
     }
 
 protected:
@@ -157,7 +157,7 @@ protected:
     ///
     /// The table must map all 256 ASCII chars to their corresponding
     /// algorithm-specific data value.  A data value of 0xee marks
-    /// a char as whitespace, 0xff marks a char is invalid.
+    /// a char as whitespace, 0xff marks a char is invalid
     std::vector<uint8_t>bits_table_;
 
     /// @brief Number of data bits represented by a digit
@@ -172,7 +172,7 @@ protected:
     /// @brief Maximum number of pad characters in a group
     size_t max_pad_;
 
-    /// @brief Indicates whether or not the algorithm's digit set is case-sensitive.
+    /// @brief Indicates whether or not the algorithm's digit set is case-sensitive
     bool case_sensitive_;
 
     /// @brief Maxium index value of the digit set
@@ -278,10 +278,10 @@ std::string encodeHex(const std::vector<uint8_t>& binary);
 /// @throw BadValue if the input string is invalid.
 void decodeHex(const std::string& encoded_str, std::vector<uint8_t>& output);
 
-/// @brief Encode in hexadecimal inline
+/// @brief Encode in hexadecimal inline.
 ///
-/// @param value the value to encode
-/// @return 0x followed by the value encoded in hex
+/// @param value the value to encode.
+/// @return 0x followed by the value encoded in hex.
 inline std::string toHex(std::string value) {
     std::vector<uint8_t> bin(value.begin(), value.end());
     return ("0x" + encodeHex(bin));

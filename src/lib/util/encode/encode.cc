@@ -50,7 +50,7 @@ BaseNEncoder::bitsToDigit(uint8_t bits) {
                   << static_cast<uint16_t>(bits) << " invalid for " << algorithm_);
     }
 
-    return(digit_set_[bits]);
+    return (digit_set_[bits]);
 }
 
 uint8_t
@@ -60,14 +60,14 @@ BaseNEncoder::digitToBits(uint8_t digit) {
                   << static_cast<uint16_t>(digit) << " for " << algorithm_);
     }
 
-    return(bits_table_[digit]);
+    return (bits_table_[digit]);
 }
 
 std::string
 BaseNEncoder::encode(const std::vector<uint8_t>& input) {
     std::string encoded_output;
     if (input.empty()) {
-        return(encoded_output);
+        return (encoded_output);
     }
 
     uint8_t cur_bit = 0x0;
@@ -130,7 +130,7 @@ BaseNEncoder::encode(const std::vector<uint8_t>& input) {
         }
     }
 
-    return(encoded_output);
+    return (encoded_output);
 }
 
 void
@@ -301,7 +301,7 @@ const std::vector<uint8_t> Base16Encoder::BITS_TABLE = {
 string
 encodeBase64(const vector<uint8_t>& binary) {
     static Base64Encoder encoder;
-    return(encoder.encode(binary));
+    return (encoder.encode(binary));
 }
 
 void
@@ -313,7 +313,7 @@ decodeBase64 (const std::string& encoded_str, std::vector<uint8_t>& output) {
 string
 encodeBase32Hex(const vector<uint8_t>& binary) {
     static Base32HexEncoder encoder;
-    return(encoder.encode(binary));
+    return (encoder.encode(binary));
 }
 
 void
@@ -325,7 +325,7 @@ decodeBase32Hex(const std::string& encoded_str, std::vector<uint8_t>& output) {
 string
 encodeHex(const vector<uint8_t>& binary) {
     static Base16Encoder encoder;
-    return(encoder.encode(binary));
+    return (encoder.encode(binary));
 }
 
 void

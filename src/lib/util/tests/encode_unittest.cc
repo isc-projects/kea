@@ -23,17 +23,17 @@ using namespace isc::util::encode;
 
 namespace {
 
-/// @brief Defines a pointer to BaseNEncoder instances
+/// @brief Defines a pointer to BaseNEncoder instances.
 typedef boost::shared_ptr<BaseNEncoder> BaseNEncoderPtr;
 
-/// @brief Defines a encoding function.
+/// @brief Defines an encoding function.
 typedef std::function<std::string (const std::vector<uint8_t>&)> EncodeFunc;
 
 /// @brief Defines a decoding function.
 typedef std::function<void (const std::string&, std::vector<uint8_t>&)> DecodeFunc;
 
-/// @brief Test fixture fro exercising BaseNEncoder derivatives.
-class EncodeDecodeTest : public :: testing::Test {
+/// @brief Test fixture for exercising BaseNEncoder derivatives.
+class EncodeDecodeTest : public ::testing::Test {
 public:
 
     /// @brief Constructor
@@ -75,7 +75,7 @@ public:
         // -# convert the encoded result to lower case and verify decoding
         // yields correct result.
         auto expected_output_str = expected_encoded_strings_.begin();
-        for ( const auto& input : valid_input_strings_ ) {
+        for (auto const& input : valid_input_strings_) {
             std::vector<uint8_t>input_data(input.begin(), input.end());
             std::string output_str;
             ASSERT_NO_THROW_LOG(output_str = (encode_func_)(input_data));
@@ -105,7 +105,7 @@ public:
 
         ASSERT_EQ(encoded_strings.size(), expected_strings.size());
         auto expected_str = expected_strings.begin();
-        for ( const auto& encoded_str : encoded_strings ) {
+        for (auto const& encoded_str : encoded_strings) {
             std::vector<uint8_t> decoded_output;
             ASSERT_NO_THROW_LOG((decode_func_)(encoded_str, decoded_output));
             std::string tmp(decoded_output.begin(), decoded_output.end());
@@ -119,7 +119,7 @@ public:
     ///
     /// @param encoded_strings list of invalid encoded strings
     void decodeInvalid(std::vector<std::string>& encoded_strings) {
-        for ( const auto& encoded_str : encoded_strings ) {
+        for (auto const& encoded_str : encoded_strings) {
             std::vector<uint8_t> decoded_output;
             EXPECT_THROW((decode_func_)(encoded_str, decoded_output), BadValue);
         }
@@ -284,12 +284,12 @@ TEST_F(Base64Test, whiteSpace) {
 // Verify invalid encodings are handled properly in Base64
 TEST_F(Base64Test, decodeInvalid) {
     std::vector<std::string> encoded_strings = {
-        // incomplete input
+        // Incomplete input.
         "Zm9vYmF",
-        // only up to 2 padding characters are allowed
+        // Only up to 2 padding characters are allowed.
         "A===",
         "A= ==",
-        // intermediate padding isn't allowed
+        // Intermediate padding isn't allowed.
         "YmE=YmE=",
         // Non canonical form isn't allowed.
         "Zm9=",
@@ -301,11 +301,6 @@ TEST_F(Base64Test, decodeInvalid) {
 
 // Verify mappings for Base64
 TEST_F(Base64Test, mappingCheck) {
-    mapTest();
-}
-
-// Verify mappings for Base32Hex
-TEST_F(Base32HexTest, mappingCheck) {
     mapTest();
 }
 
@@ -336,19 +331,24 @@ TEST_F(Base32HexTest, whiteSpace) {
 // Verify invalid encodings are handled properly in Base32Hex
 TEST_F(Base32HexTest, decodeInvalid) {
     std::vector<std::string> encoded_strings = {
-        // Incomplete input
+        // Incomplete input.
         "CPNMUOJ",
-        // invalid number of padding characters
+        // Invalid number of padding characters.
         "CPNMU0==",
         "CO0=====",
         "CO=======",
-        // intermediate padding isn't allowed
+        // Intermediate padding isn't allowed.
         "CPNMUOG=CPNMUOG=",
         // Non canonical form isn't allowed.
         "0P======"
     };
 
     decodeInvalid(encoded_strings);
+}
+
+// Verify mappings for Base32Hex
+TEST_F(Base32HexTest, mappingCheck) {
+    mapTest();
 }
 
 // Verify RFC test vectors for Base16
@@ -378,7 +378,7 @@ TEST_F(Base16Test, whiteSpace) {
 // Verify invalid encodings are handled properly in Base16
 TEST_F(Base16Test, decodeInvalid) {
     std::vector<std::string> encoded_strings = {
-        // Non hex digits should fail
+        // Non hex digits should fail.
         "lx",
         // Encoded string must have an even number of characters.
         "dea"
