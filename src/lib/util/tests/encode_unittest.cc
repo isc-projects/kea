@@ -392,16 +392,4 @@ TEST_F(Base16Test, mappingCheck) {
     mapTest();
 }
 
-TEST(toms,theirs64) {
-    std::vector<uint8_t>input{ 'f', 'o', 'o', 'b', 'a', 'r' };
-
-    int limit = 1000000;
-    for (int i = 0; i < limit; ++i) {
-        std::string encoded = encodeBase64(input);
-        std::vector<uint8_t>decoded;
-        decodeBase64(encoded, decoded);
-        EXPECT_EQ(decoded,input);
-    }
-}
-
 }

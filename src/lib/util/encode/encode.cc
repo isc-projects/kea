@@ -70,61 +70,74 @@ BaseNEncoder::encode(const std::vector<uint8_t>& input) {
         return (encoded_output);
     }
 
-    uint8_t cur_bit = 0x0;
-    int cnt = 0;
-    int digit_idx = 0;
-    int cur_byte = 0;
-    auto bytes = input.begin();
+    // Iterate over the input bytes as a bit stream.  We add input bits
+    // to a digit set index value until we have enough (bits_per_digit).  We
+    // look up a digit in the digit set add it to the encoded output and start over
+    // on the next index value.  When we have exhausted the bits in the current
+    // byte, get the next byte from input and continue.  In other words, we pull bits
+    // from the left side of the input bit stream and push them into the right side of
+    // the index value.  Each time we have done bits_per_digit bits we look up
+    // the digit and start the index value over.
+
+    int digit_idx = 0;          // Digit index we are currently constructing.
+    int cnt = 0;                // How many bits we have in the current digit idx
+    int cur_byte = 0;           // Current input byte.
+    uint8_t cur_bit_mask = 0x0; // Bitmask of the current bit in the current byte.
+    auto bytes = input.begin(); // Start with the first byte.
     while (1) {
-        if (!cur_bit) {
+        // If the current bitmask is zero, it's time for the next input byte.
+        if (!cur_bit_mask) {
             if (bytes == input.end()) {
                 break;
             }
 
+            // Grab the next byte.
             cur_byte = *bytes;
-            cur_bit = 0x80;
+            // Start at the bitmask at the left-most bit.
+            cur_bit_mask = 0x80;
+            // Bump the iterator.
             ++bytes;
         }
 
+        // Do we need more bits in this digit index?
         if (cnt < bits_per_digit_) {
+            // Yes, so shift the index over to make room for the next bit.
             digit_idx <<= 1;
         } else {
-#if 0
-            // Have a complete digit index, look up digit and add it.
-            encoded_output.push_back(bitsToDigit(digit_idx));
-#else
+            // No, the index is complete, lookup its digit and add it to the
+            // output. Start over for the next index.
             encoded_output.push_back(digit_set_[digit_idx]);
-#endif
-
             digit_idx = 0;
             cnt = 0;
         }
 
-        // Add the current bit to the digit index.
-        if (cur_byte & cur_bit) {
+        // If the current bit in the current byte is set,
+        // set the right-most digit index bit to 1 (otherwise
+        // its left as zero).
+        if (cur_byte & cur_bit_mask) {
             digit_idx |= 1;
         }
 
-        cur_bit >>= 1;
+        // Shift the cur_bit mask to select the next input bit and
+        // bump the number of bits in the current index.
+        cur_bit_mask >>= 1;
         ++cnt;
     }
 
-    // We've exhausted bits, but have left over
-    if (cnt) {
-        digit_idx <<= (bits_per_digit_ - cnt);
-#if 0
-        encoded_output.push_back(bitsToDigit(digit_idx));
-#else
-        encoded_output.push_back(digit_set_[digit_idx]);
-#endif
-    }
+    // We've exhausted the input bits but have bits in the
+    // digit index.  This means the remaining bits in our
+    // last index are zeros (pad bits).  Shift "in" the
+    // required number of bits and add the corresponding
+    // digit.
+    digit_idx <<= (bits_per_digit_ - cnt);
+    encoded_output.push_back(bitsToDigit(digit_idx));
 
     // Add padding as needed.
     if (digits_per_group_) {
         auto rem = encoded_output.size() % digits_per_group_;
         if (rem) {
-            auto need = digits_per_group_ - rem + 1;
-            while (--need) {
+            auto need = digits_per_group_ - rem;
+            while (need--) {
                 encoded_output.push_back(pad_char_);
             }
         }
@@ -135,26 +148,34 @@ BaseNEncoder::encode(const std::vector<uint8_t>& input) {
 
 void
 BaseNEncoder::decode(const std::string& encoded_str, std::vector<uint8_t>& output) {
+
+    // Mechanics are the essentially the same as encode(). We iterate over the encoded
+    // string's digits, discarding whitespaces. We lookup the digit's binary value
+    // in the lookup table, keeping only binary value's right-most, bits_per_digit bits.
+    // The remaining bits are then shifted out from the left of binary value into the
+    // right of the currently accumulating output byte until the byte is complete
+    // (8 bits) or the value's bits are exhausted.  Completed bytes are added to the
+    // output buffer.  We continue building bytes until we've exhausted the encoded
+    // string.
+
     output.clear();
-    size_t dig_cnt = 0;
-    size_t pad_cnt = 0;
-    size_t shift_bits = 8 - bits_per_digit_;
-    uint8_t cur_byte = 0;
-    size_t cur_bit_cnt = 0;
+    size_t dig_cnt = 0;                       // Tracks how many encoded digits we see.
+    size_t pad_cnt = 0;                       // Tracks how many pad characters we see.
+    size_t shift_bits = 8 - bits_per_digit_;  // Number of unused bits in digit data values.
+    uint8_t cur_byte = 0;                     // Current output byte.
+    size_t cur_bit_cnt = 0;                   // How man bits we have added to the current byte.
+
     for (const auto enc_digit : encoded_str) {
+        // If it's a pad char, count it and go on.
         if (pad_char_ && enc_digit == pad_char_) {
            pad_cnt++;
            continue;
         }
 
-        // Translate the b64 digit to bits.
-#if 0
+        // Translate the encoded digit to its binary bits.
         uint8_t dig_bits = digitToBits(enc_digit);
-#else
-        uint8_t dig_bits = bits_table_[enc_digit];
-#endif
 
-        // Skip whitespace.
+        // Skip whitespace. The choice of 0xee to signify white-space was arbitrary.
         if (dig_bits == 0xee) {
             continue;
         }
@@ -165,7 +186,7 @@ BaseNEncoder::decode(const std::string& encoded_str, std::vector<uint8_t>& outpu
                       << algorithm_ << " char set" << ": " << encoded_str);
         }
 
-        // Error if pads are in the middle.
+        // Error if pad characters occur in the middle.
         if (pad_cnt) {
             isc_throw(isc::BadValue, "pad mixed with digits in "
                       << algorithm_ << ": " << encoded_str);
@@ -174,13 +195,13 @@ BaseNEncoder::decode(const std::string& encoded_str, std::vector<uint8_t>& outpu
         // Bump the valid character count.
         dig_cnt++;
 
-        // Shift off what we don't need.
+        // Shift off the unused bits.
         dig_bits <<= shift_bits;
 
         // Add digit's decoded bits to current byte.
         for (auto i = 0; i < bits_per_digit_; ++i) {
             if (cur_bit_cnt < 8) {
-                // Shift contents to make room for next gbit.
+                // Shift contents over one to make room for next bit.
                 cur_byte <<= 1;
             } else {
                 // Add the completed byte to the output.
@@ -217,8 +238,22 @@ BaseNEncoder::decode(const std::string& encoded_str, std::vector<uint8_t>& outpu
                       << algorithm_ << ": " << encoded_str);
         }
 
-        // Check for invalid number of pad characters.
-        const size_t padbits = ((pad_cnt * bits_per_digit_) + 7) & ~7;
+        // Check for an invalid number of pad bits.
+        // Calculate the number of pad bits corresponding to the pad
+        // characters.  In general, the pad bits consist of all-zero
+        // trailing bits of the last encoded character plus the zero bits
+        // represented by each pad character.
+        // 1st pad  2nd pad  3rd pad...
+        // +++===== =======  ===...    (+: from encoded chars, =: from pad chars)
+        // 0000...0 0......0 000...
+        // 0      7 8     15 16.... (bits)
+        // The number of bits for the '==...' part is padchars * BitsPerChunk.
+        // So the total number of pad bits is the smallest multiple of 8
+        // that is >= padchars * BitsPerChunk.
+        // (Below, note the common idiom of the bitwise AND with ~7.  It clears the
+        // lowest three bits, so has the effect of rounding the result down to the
+        // nearest multiple of 8)
+        const size_t padbits = ((pad_cnt * bits_per_digit_) + 0x07) & ~0x07;
         if (padbits > bits_per_digit_ * (pad_cnt + 1)) {
             isc_throw(isc::BadValue, "Invalid padding for "
                       << algorithm_ << ": " << encoded_str);
@@ -333,7 +368,6 @@ decodeHex(const string& encoded_str, vector<uint8_t>& output) {
     static Base16Encoder encoder;
     encoder.decode(encoded_str, output);
 }
-
 
 } // namespace encode
 } // namespace util
