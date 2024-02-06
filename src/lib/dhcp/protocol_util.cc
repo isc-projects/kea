@@ -17,6 +17,14 @@
 
 using namespace isc::asiolink;
 using namespace isc::util;
+using namespace isc::dhcp;
+
+namespace {
+
+static HWAddr zero_ib_hwaddr(&std::vector<uint8_t>(HWAddr::INFINIBAND_HWADDR_LEN)[0],
+                             HWAddr::INFINIBAND_HWADDR_LEN, HTYPE_INFINIBAND);
+
+}
 
 namespace isc {
 namespace dhcp {
@@ -204,8 +212,15 @@ writeIPoIBHeader(const Iface& iface, const Pkt4Ptr& pkt, OutputBuffer& out_buf) 
                       << remote_addr->hwaddr_.size() << " when constructing"
                       << " an ethernet frame header; expected size is"
                       << " " << HWAddr::INFINIBAND_HWADDR_LEN);
-        } else if (!pkt->isRelayed() &&
-                   (pkt->getFlags() & Pkt4::FLAG_BROADCAST_MASK)) {
+        } else if ((!pkt->isRelayed() &&
+                    (pkt->getFlags() & Pkt4::FLAG_BROADCAST_MASK)) ||
+                   *remote_addr == zero_ib_hwaddr) {
+            // We also broadcast if the received hwaddr is full zero.
+            // This happens on some IB drivers which don't provide the remote
+            // hwaddr to userspace.
+            // Generally, according to the RFC, all IPoIB clients MUST request
+            // broadcast anyway, but better to be safe and handle non-compliant
+            // clients.
             if (iface.getBcastMacLen() != HWAddr::INFINIBAND_HWADDR_LEN) {
                 isc_throw(BadValue, "invalid size of the bcast HW address "
                           << iface.getBcastMacLen() << " when constructing"
@@ -223,8 +238,7 @@ writeIPoIBHeader(const Iface& iface, const Pkt4Ptr& pkt, OutputBuffer& out_buf) 
         // packet through a logical interface (e.g. lo). In such cases, we
         // don't want to fail but rather provide a default HW address, which
         // consists of zeros.
-        out_buf.writeData(&std::vector<uint8_t>(HWAddr::INFINIBAND_HWADDR_LEN)[0],
-                          HWAddr::INFINIBAND_HWADDR_LEN);
+        out_buf.writeData(&zero_ib_hwaddr.hwaddr_[0], HWAddr::INFINIBAND_HWADDR_LEN);
     }
 
     // Type IP.
