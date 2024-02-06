@@ -25,6 +25,22 @@ using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::dhcp;
 
+namespace {
+
+static const uint8_t default_ib_bcast_addr[20] = {
+       0x00, 0xff, 0xff, 0xff,
+       0xff, 0x12, 0x40, 0x1b,
+       0x00, 0x00, 0x00, 0x00,
+       0x00, 0x00, 0x00, 0x00,
+       0xff, 0xff, 0xff, 0xff
+};
+
+static const uint8_t default_ether_bcast_addr[6] = {
+       0xff, 0xff, 0xff, 0xff, 0xff, 0xff
+};
+
+}
+
 namespace isc {
 namespace dhcp {
 
@@ -92,6 +108,18 @@ IfaceMgr::detectIfaces(bool update_only) {
 
             iface_iter->second->setHWType(ldata->sdl_type);
             iface_iter->second->setMac(ptr, ldata->sdl_alen);
+
+            //TODO: I don't have BSD, this needs tested
+            if (ifptr->ifa_flags & IFF_BROADCAST) {
+                ldata = reinterpret_cast<struct sockaddr_dl *>(ifptr->ifa_broadaddr);
+                ptr = reinterpret_cast<uint8_t *>(LLADDR(ldata));
+
+                iface_iter->second->setBcastMac(ptr, ldata->sdl_alen);
+            } else if (interface_info->ifi_type == HTYPE_INFINIBAND) {
+                iface_iter->second->setBcastMac(default_ib_bcast_addr, sizeof(default_ib_bcast_addr));
+            } else if (interface_info->ifi_type == HTYPE_ETHER) {
+                iface_iter->second->setBcastMac(default_ether_bcast_addr, sizeof(default_ether_bcast_addr));
+            }
         } else if (ifptr->ifa_addr->sa_family == AF_INET6) {
             // IPv6 Addr
             struct sockaddr_in6 * adata =
