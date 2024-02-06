@@ -106,7 +106,7 @@ BaseNEncoder::encode(const std::vector<uint8_t>& input) {
         } else {
             // No, the index is complete, lookup its digit and add it to the
             // output. Start over for the next index.
-            encoded_output.push_back(digit_set_[digit_idx]);
+            encoded_output.push_back(bitsToDigit(digit_idx));
             digit_idx = 0;
             cnt = 0;
         }
@@ -149,7 +149,7 @@ BaseNEncoder::encode(const std::vector<uint8_t>& input) {
 void
 BaseNEncoder::decode(const std::string& encoded_str, std::vector<uint8_t>& output) {
 
-    // Mechanics are the essentially the same as encode(). We iterate over the encoded
+    // Mechanics are essentially the same as encode(). We iterate over the encoded
     // string's digits, discarding whitespaces. We lookup the digit's binary value
     // in the lookup table, keeping only binary value's right-most, bits_per_digit bits.
     // The remaining bits are then shifted out from the left of binary value into the
@@ -250,10 +250,10 @@ BaseNEncoder::decode(const std::string& encoded_str, std::vector<uint8_t>& outpu
         // The number of bits for the '==...' part is padchars * BitsPerChunk.
         // So the total number of pad bits is the smallest multiple of 8
         // that is >= padchars * BitsPerChunk.
-        // (Below, note the common idiom of the bitwise AND with ~7.  It clears the
+        // (Below, note the common idiom of the bitwise AND with ~0x7.  It clears the
         // lowest three bits, so has the effect of rounding the result down to the
         // nearest multiple of 8)
-        const size_t padbits = ((pad_cnt * bits_per_digit_) + 0x07) & ~0x07;
+        const size_t padbits = ((pad_cnt * bits_per_digit_) + 7) & ~0x7;
         if (padbits > bits_per_digit_ * (pad_cnt + 1)) {
             isc_throw(isc::BadValue, "Invalid padding for "
                       << algorithm_ << ": " << encoded_str);
