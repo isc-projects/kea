@@ -31,6 +31,7 @@ rst_arm_sources += arm/hooks-limits.rst
 rst_arm_sources += arm/hooks-cb-mysql.rst
 rst_arm_sources += arm/hooks-cb-pgsql.rst
 rst_arm_sources += arm/hooks-legal-log.rst
+rst_arm_sources += arm/hooks-perfmon.rst
 rst_arm_sources += arm/hooks-ping-check.rst
 rst_arm_sources += arm/hooks-radius.rst
 rst_arm_sources += arm/hooks-rbac.rst

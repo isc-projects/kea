@@ -527,6 +527,10 @@ loaded by the correct process per the table below.
    |                                                           |              | a repository for the Kea configuration information. Kea      |
    |                                                           |              | servers use this library to fetch their configurations.      |
    +-----------------------------------------------------------+--------------+--------------------------------------------------------------+
+   | :ref:`PerfMon <hooks-perfmon>`                            | Kea open     | With this hook library, :iscman:`kea-dhcp4` server and       |
+   |                                                           | source       | :iscman:`kea-dhcp6` servers can track and report performance |
+   |                                                           |              | data. CURRENTLY UNDER DEVELOPMENT                            |
+   +-----------------------------------------------------------+--------------+--------------------------------------------------------------+
    | :ref:`Ping Check <hooks-ping-check>`                      | ISC support  | With this hook library, :iscman:`kea-dhcp4` server can       |
    |                                                           | customers    | perform ping checks of candidate lease addresses before      |
    |                                                           |              | offering them to clients.                                    |
@@ -611,6 +615,7 @@ sections.
 .. include:: hooks-legal-log.rst
 .. include:: hooks-limits.rst
 .. include:: hooks-cb-mysql.rst
+.. include:: hooks-perfmon.rst
 .. include:: hooks-ping-check.rst
 .. include:: hooks-cb-pgsql.rst
 .. include:: hooks-radius.rst

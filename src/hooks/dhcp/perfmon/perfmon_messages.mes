@@ -1,0 +1,19 @@
+# Copyright (C) 2024 Internet Systems Consortium, Inc. ("ISC")
+
+% PERFMON_DEINIT_FAILED unloading PerfMon hooks library failed: %1
+This error message indicates an error unloading the PerfMon hooks
+library. The details of the error are provided as argument of
+the log message.
+
+% PERFMON_DEINIT_OK unloading PerfMon hooks library successful
+This info message indicates that the PerfMon hooks library has been
+removed successfully.
+
+% PERFMON_INIT_FAILED loading PerfMon hooks library failed: %1
+This error message indicates an error during loading the PerfMon
+hooks library. The details of the error are provided as argument of
+the log message.
+
+% PERFMON_INIT_OK loading PerfMon hooks library successful
+This info message indicates that the PerfMon hooks library has been
+loaded successfully. Enjoy!
