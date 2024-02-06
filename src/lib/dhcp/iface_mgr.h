@@ -204,6 +204,28 @@ public:
     /// that returned it.
     const uint8_t* getMac() const { return mac_; }
 
+    /// @brief Returns link-layer address a plain text.
+    ///
+    /// @return MAC address as a plain text (string)
+    std::string getPlainBcastMac() const;
+
+    /// @brief Sets MAC address of the interface.
+    ///
+    /// @param mac pointer to MAC address buffer
+    /// @param macLen length of mac address
+    void setBcastMac(const uint8_t* bcastMac, size_t bcastMacLen);
+
+    /// @brief Returns MAC length.
+    ///
+    /// @return length of MAC address
+    size_t getBcastMacLen() const { return bcast_mac_len_; }
+
+    /// @brief Returns pointer to MAC address.
+    ///
+    /// Note: Returned pointer is only valid as long as the interface object
+    /// that returned it.
+    const uint8_t* getBcastMac() const { return bcast_mac_; }
+
     /// @brief Sets flag_*_ fields based on bitmask value returned by OS
     ///
     /// @note Implementation of this method is OS-dependent as bits have
@@ -429,6 +451,12 @@ protected:
 
     /// Length of link-layer address (usually 6).
     size_t mac_len_;
+
+    /// Link-layer address.
+    uint8_t bcast_mac_[MAX_MAC_LEN];
+
+    /// Length of link-layer address (usually 6).
+    size_t bcast_mac_len_;
 
     /// Hardware type.
     uint16_t hardware_type_;
