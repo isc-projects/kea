@@ -217,6 +217,14 @@ public:
     void processLocalizedQuery6AndSendResponse(Pkt6Ptr query,
                                                AllocEngine::ClientContext6& ctx);
 
+    /// @brief Process a localized incoming DHCPv6 query.
+    ///
+    /// A variant of the precedent method used to resume processing
+    /// for packets parked in the subnet6_select callout.
+    ///
+    /// @param query A pointer to the unparked packet.
+    void processLocalizedQuery6AndSendResponse(Pkt6Ptr query);
+
     /// @brief Instructs the server to shut down.
     void shutdown() override;
 

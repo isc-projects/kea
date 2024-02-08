@@ -1004,6 +1004,23 @@ Dhcpv6Srv::processLocalizedQuery6AndSendResponse(Pkt6Ptr query,
     }
 }
 
+void
+Dhcpv6Srv::processLocalizedQuery6AndSendResponse(Pkt6Ptr query) {
+    // Initialize context.
+    AllocEngine::ClientContext6 ctx;
+    initContext0(query, ctx);
+
+    // Subnet is cached in the callout context associated to the query.
+    try {
+        CalloutHandlePtr callout_handle = getCalloutHandle(query);
+        callout_handle->getContext("subnet6", ctx.subnet_);
+    } catch (const Exception&) {
+        // No subnet, leave it to null...
+    }
+
+    processLocalizedQuery6AndSendResponse(query, ctx);
+}
+
 Pkt6Ptr
 Dhcpv6Srv::processLocalizedQuery6(AllocEngine::ClientContext6& ctx) {
     Pkt6Ptr query = ctx.query_;
@@ -1991,8 +2008,32 @@ Dhcpv6Srv::selectSubnet(const Pkt6Ptr& question, bool& drop) {
                                     CfgMgr::instance().getCurrentCfg()->
                                     getCfgSubnets6()->getAll());
 
+        // We proactively park the packet.
+        HooksManager::park("subnet6_select", question,
+                           [this, question] () {
+                               processLocalizedQuery6AndSendResponse(question);
+                           });
+
         // Call user (and server-side) callouts
-        HooksManager::callCallouts(Hooks.hook_index_subnet6_select_, *callout_handle);
+        try {
+            HooksManager::callCallouts(Hooks.hook_index_subnet6_select_,
+                                       *callout_handle);
+        } catch (...) {
+            // Make sure we don't orphan a parked packet.
+            HooksManager::drop("subnet6_select", question);
+            throw;
+        }
+
+        // Callouts parked the packet. Same as drop but callouts will resume
+        // processing or drop the packet later.
+        if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_PARK) {
+            LOG_DEBUG(hooks_logger, DBG_DHCP6_HOOKS, DHCP6_HOOK_SUBNET6_SELECT_PARK)
+                .arg(question->getLabel());
+            drop = true;
+            return (Subnet6Ptr());
+        } else {
+            HooksManager::drop("subnet6_select", question);
+        }
 
         // Callouts decided to skip this step. This means that no
         // subnet will be selected. Packet processing will continue,
@@ -2008,15 +2049,6 @@ Dhcpv6Srv::selectSubnet(const Pkt6Ptr& question, bool& drop) {
         // skip case so no subnet will be selected.
         if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_DROP) {
             LOG_DEBUG(hooks_logger, DBG_DHCP6_HOOKS, DHCP6_HOOK_SUBNET6_SELECT_DROP)
-                .arg(question->getLabel());
-            drop = true;
-            return (Subnet6Ptr());
-        }
-
-        // Callouts parked the packet. Same as drop but callouts will resume
-        // processing or drop the packet later.
-        if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_PARK) {
-            LOG_DEBUG(hooks_logger, DBG_DHCP6_HOOKS, DHCP6_HOOK_SUBNET6_SELECT_PARK)
                 .arg(question->getLabel());
             drop = true;
             return (Subnet6Ptr());
