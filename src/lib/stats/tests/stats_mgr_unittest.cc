@@ -76,6 +76,7 @@ TEST_F(StatsMgrTest, integerStat) {
         isc::util::clockToText(alpha->getInteger().second) + "\" ] ] }";
 
     EXPECT_EQ(exp, StatsMgr::instance().get("alpha")->str());
+    EXPECT_EQ(alpha->getInteger().first, StatsMgr::instance().getInteger("alpha"));
 }
 
 // Test checks whether it's possible to record and later report

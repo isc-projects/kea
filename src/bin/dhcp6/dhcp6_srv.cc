@@ -178,6 +178,8 @@ createStatusCode(const Pkt6& pkt, const Option6IA& ia, const uint16_t status_cod
 /// List of statistics which is initialized to 0 during the DHCPv6
 /// server startup.
 std::set<std::string> dhcp6_statistics = {
+    "pkt6-dhcp-disabled",
+    "pkt6-raw-received",
     "pkt6-received",
     "pkt6-solicit-received",
     "pkt6-advertise-received",
@@ -686,10 +688,24 @@ Dhcpv6Srv::runOne() {
         return;
     }
 
+    isc::stats::StatsMgr& stats_mgr = isc::stats::StatsMgr::instance();
+
+    // Count raw packets received as soon as we know a packet has been read.
+    stats_mgr.addValue("pkt6-raw-received", static_cast<int64_t>(1));
+
     // If the DHCP service has been globally disabled, drop the packet.
     if (!network_state_->isServiceEnabled()) {
         LOG_DEBUG(bad_packet6_logger, DBGLVL_PKT_HANDLING, DHCP6_PACKET_DROP_DHCP_DISABLED)
             .arg(query->getLabel());
+
+        // Log a warning every DISABLE_WARN_PACKET6.
+        if (stats_mgr.getInteger("pkt6-dhcp-disabled") % DISABLE_WARN_PACKET6 == 0) {
+            LOG_WARN(dhcp6_logger, DHCP6_PACKET_DROP_DHCP_DISABLED)
+                .arg(query->getLabel());
+        }
+
+        // Count packets dropped due to (hopefully temporary) service disabled.
+        stats_mgr.addValue("pkt6-dhcp-disabled", static_cast<int64_t>(1));
         return;
     } else {
         if (MultiThreadingMgr::instance().getMode()) {

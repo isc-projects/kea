@@ -13,6 +13,7 @@
 #include <boost/enable_shared_from_this.hpp>
 #include <functional>
 #include <sstream>
+#include <stats/stats_mgr.h>
 #include <string>
 #include <unordered_set>
 
@@ -31,6 +32,7 @@ public:
           disabled_subnets_(), disabled_networks_(),
           timer_mgr_(TimerMgr::instance()), disabled_by_origin_(),
           disabled_by_db_connection_(0) {
+        updateStats();
     }
 
     /// @brief Destructor.
@@ -76,6 +78,7 @@ public:
                 globally_disabled_ = false;
             }
         }
+        updateStats();
     }
 
     /// @brief Reset internal counters for a database connection origin.
@@ -86,6 +89,7 @@ public:
         if (disabled_by_origin_.empty()) {
             globally_disabled_ = false;
         }
+        updateStats();
     }
 
     /// @brief Enables DHCP service for an origin.
@@ -168,6 +172,46 @@ public:
     /// @brief Flag which indicates the state has been disabled by a DB
     /// connection loss.
     uint32_t disabled_by_db_connection_;
+
+private:
+    /// @private
+
+    /// @brief Update monitoring metrics to expose disable states.
+    ///
+    /// A 0 value is used for false, 1 for true.
+    void updateStats() {
+        isc::stats::StatsMgr& stats_mgr = isc::stats::StatsMgr::instance();
+
+        stats_mgr.setValue("disabled-globally",
+                static_cast<int64_t>(globally_disabled_));
+
+        bool user = false, ha_local = false, ha_remote = false;
+        for (auto origin : disabled_by_origin_) {
+            switch (origin) {
+                case NetworkState::USER_COMMAND:
+                    user = true;
+                    break;
+                default:
+                    if ((NetworkState::HA_LOCAL_COMMAND <= origin) &&
+                        (origin < NetworkState::HA_REMOTE_COMMAND)) {
+                        ha_local = true;
+                    } else if ((NetworkState::HA_LOCAL_COMMAND <= origin) &&
+                        (origin < NetworkState::DB_CONNECTION)) {
+                        ha_remote = true;
+                    }
+                    break;
+            }
+        }
+        stats_mgr.setValue("disabled-by-user", static_cast<int64_t>(user));
+        stats_mgr.setValue("disabled-by-ha-local",
+                static_cast<int64_t>(ha_local));
+        stats_mgr.setValue("disabled-by-ha-remote",
+                static_cast<int64_t>(ha_remote));
+
+        // Expose the disabled-by-db-connection counter by direct value.
+        stats_mgr.setValue("disabled-by-db",
+                static_cast<int64_t>(disabled_by_db_connection_));
+    }
 };
 
 NetworkState::NetworkState(const NetworkState::ServerType& server_type)

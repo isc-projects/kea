@@ -123,6 +123,8 @@ struct Dhcp4Hooks {
 /// List of statistics which is initialized to 0 during the DHCPv4
 /// server startup.
 std::set<std::string> dhcp4_statistics = {
+    "pkt4-dhcp-disabled",
+    "pkt4-raw-received",
     "pkt4-received",
     "pkt4-discover-received",
     "pkt4-offer-received",
@@ -1093,10 +1095,24 @@ Dhcpv4Srv::runOne() {
         return;
     }
 
+    isc::stats::StatsMgr& stats_mgr = isc::stats::StatsMgr::instance();
+
+    // Count raw packets received as soon as we know a packet has been read.
+    stats_mgr.addValue("pkt4-raw-received", static_cast<int64_t>(1));
+
     // If the DHCP service has been globally disabled, drop the packet.
     if (!network_state_->isServiceEnabled()) {
         LOG_DEBUG(bad_packet4_logger, DBGLVL_PKT_HANDLING, DHCP4_PACKET_DROP_0008)
             .arg(query->getLabel());
+
+        // Log a warning every DISABLE_WARN_PACKET4.
+        if (stats_mgr.getInteger("pkt4-dhcp-disabled") % DISABLE_WARN_PACKET4 == 0) {
+            LOG_WARN(dhcp4_logger, DHCP4_PACKET_DROP_0008)
+                .arg(query->getLabel());
+        }
+
+        // Count packets dropped due to (hopefully temporary) service disabled.
+        stats_mgr.addValue("pkt4-dhcp-disabled", static_cast<int64_t>(1));
         return;
     } else {
         if (MultiThreadingMgr::instance().getMode()) {

@@ -273,6 +273,25 @@ StatsMgr::removeAllInternal() {
     global_->clear();
 }
 
+int64_t
+StatsMgr::getInteger(const std::string& name) const {
+    if (MultiThreadingMgr::instance().getMode()) {
+        lock_guard<mutex> lock(*mutex_);
+        return (getIntegerInternal(name));
+    } else {
+        return (getIntegerInternal(name));
+    }
+}
+
+int64_t
+StatsMgr::getIntegerInternal(const std::string& name) const {
+    ObservationPtr existing = getObservationInternal(name);
+    if (existing) {
+        return existing->getInteger().first;
+    }
+    return static_cast<int64_t>(0);
+}
+
 ConstElementPtr
 StatsMgr::get(const string& name) const {
     MultiThreadingLock lock(*mutex_);
