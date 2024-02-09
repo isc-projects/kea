@@ -23,9 +23,8 @@
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
-#include <boost/random/mersenne_twister.hpp>
-#include <boost/random/uniform_int_distribution.hpp>
 
+#include <random>
 #include <string>
 #include <vector>
 #include <unordered_map>
@@ -207,8 +206,8 @@ public:
         }
 
     private:                  
-        boost::random::uniform_int_distribution<> distribution;         
-        boost::random::mt19937 randomnessGenerator;         
+        std::uniform_int_distribution<> distribution;         
+        std::mt19937 randomnessGenerator;         
     };
 
     /// \brief Length of the Ethernet HW address (MAC) in bytes.
