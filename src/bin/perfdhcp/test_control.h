@@ -196,7 +196,7 @@ public:
             NumberGenerator(),
             distribution(min, max) {
             // Initialize the randomness source with the current time.
-            randomnessGenerator.seed(time(NULL));
+            randomnessGenerator.seed(time(0));
         }
 
         /// \brief Generate number in range of [min, max].
