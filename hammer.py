@@ -2762,19 +2762,18 @@ def parse_args():
 
 def list_supported_systems():
     """List systems hammer can support (with supported providers)."""
-    for system, revisions_and_supported in SYSTEMS.items():
+    for system in SYSTEMS:
         print('%s:' % system)
-        for r, supported in revisions_and_supported:
+        for release,supported in SYSTEMS[system].items():
             if not supported:
                 continue
             providers = []
             for p in ['lxc', 'virtualbox']:
-                k = '%s-%s-%s' % (system, r, p)
+                k = '%s-%s-%s' % (system, release, p)
                 if k in IMAGE_TEMPLATES:
                     providers.append(p)
             providers = ', '.join(providers)
-            print('  - %s: %s' % (r, providers))
-
+            print('  - %s: %s' % (release, providers))
 
 def list_created_systems():
     """List VMs that are created on this host by Hammer."""
