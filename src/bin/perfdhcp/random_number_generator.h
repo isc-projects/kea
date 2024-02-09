@@ -31,20 +31,6 @@ public:
         isc::BadValue(file, line, what) {}
 };
 
-class SumNotOne : public isc::BadValue {
-public:
-    SumNotOne(const char* file, size_t line, const char* what) :
-        isc::BadValue(file, line, what) {}
-};
-
-class InvalidProbValue : public isc::BadValue {
-public:
-    InvalidProbValue(const char* file, size_t line, const char* what) :
-        isc::BadValue(file, line, what) {}
-};
-
-
-
 /// \brief Uniform random integer generator
 ///
 /// Generate uniformly distributed integers in range of [min, max]
