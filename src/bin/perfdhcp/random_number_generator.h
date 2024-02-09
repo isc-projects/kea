@@ -25,12 +25,6 @@
 namespace isc {
 namespace perfdhcp {
 
-class InvalidLimits : public isc::BadValue {
-public:
-    InvalidLimits(const char* file, size_t line, const char* what) :
-        isc::BadValue(file, line, what) {}
-};
-
 /// \brief Uniform random integer generator
 ///
 /// Generate uniformly distributed integers in range of [min, max]
@@ -44,14 +38,6 @@ public:
         min_(std::min(min, max)), max_(std::max(min, max)),
         dist_(min_, max_), generator_(rng_, dist_)
     {
-        // To preserve the restriction of the underlying uniform_int class (and
-        // to retain compatibility with earlier versions of the class), we will
-        // abort if the minimum and maximum given are the wrong way round.
-        if (min > max) {
-            isc_throw(InvalidLimits, "minimum limit is greater than maximum "
-                      "when initializing UniformRandomIntegerGenerator");
-        }
-
         // Init with the current time
         rng_.seed(time(0));
     }

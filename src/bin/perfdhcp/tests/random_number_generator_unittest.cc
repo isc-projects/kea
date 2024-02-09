@@ -41,21 +41,6 @@ private:
     const static int max_ = 10;
 };
 
-// Some validation tests will incur performance penalty, so the tests are
-// made only in "debug" version with assert(). But if NDEBUG is defined
-// the tests will be failed since assert() is non-op in non-debug version.
-// The "#ifndef NDEBUG" is added to make the tests be performed only in
-// non-debug environment.
-// Note: the death test is not supported by all platforms.  We need to
-// compile tests using it selectively.
-#if !defined(NDEBUG)
-// Test of the constructor
-TEST_F(UniformRandomIntegerGeneratorTest, Constructor) {
-    // The range must be min<=max
-    ASSERT_THROW(UniformRandomIntegerGenerator(3, 2), InvalidLimits);
-}
-#endif
-
 // Test of the generated integers are in the range [min, max]
 TEST_F(UniformRandomIntegerGeneratorTest, IntegerRange) {
     vector<int> numbers;
