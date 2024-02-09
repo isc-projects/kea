@@ -1,3 +1,8 @@
+2205.	[func]		slawek
+
+	Refactored the random generator used in perfdhcp tests.
+	(Gitlab #3207)
+
 2204.	[func]		tmark
 	The skeleton of a new open source hook library,
 	libdhcp_perfmon.so, has been added.  The library is
