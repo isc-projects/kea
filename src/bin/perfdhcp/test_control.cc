@@ -361,7 +361,7 @@ TestControl::generateMacAddress(uint8_t& randomized) {
     const CommandOptions::MacAddrsVector& macs = options_.getMacsFromFile();
     // if we are using the -M option return a random one from the list...
     if (macs.size() > 0) {
-      uint16_t r = number_generator_();
+      uint16_t r = random_generator_->generate();
       if (r >= macs.size()) {
         r = 0;
       }
@@ -417,7 +417,7 @@ TestControl::generateDuid(uint8_t& randomized) {
     const CommandOptions::MacAddrsVector& macs = options_.getMacsFromFile();
     // pick a random mac address if we are using option -M..
     if (macs.size() > 0) {
-      uint16_t r = number_generator_();
+      uint16_t r = random_generator_->generate();
       if (r >= macs.size()) {
         r = 0;
       }
@@ -1106,10 +1106,12 @@ TestControl::reset() {
 
 TestControl::TestControl(CommandOptions& options, BasePerfSocket &socket) :
     exit_time_(not_a_date_time),
-    number_generator_(0, options.getMacsFromFile().size()),
     socket_(socket),
     receiver_(socket, options.isSingleThreaded(), options.getIpVersion()),
     stats_mgr_(options),
+    random_generator_(NumberGeneratorPtr(
+        new RandomGenerator(0, options.getMacsFromFile().size())
+    )),
     options_(options)
 {
     // Reset singleton state before test starts.

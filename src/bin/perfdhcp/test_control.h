@@ -13,7 +13,6 @@
 #include <perfdhcp/receiver.h>
 #include <perfdhcp/command_options.h>
 #include <perfdhcp/perf_socket.h>
-#include <perfdhcp/random_number_generator.h>
 
 #include <dhcp/iface_mgr.h>
 #include <dhcp/dhcp4.h>
@@ -24,6 +23,8 @@
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/random/mersenne_twister.hpp>
+#include <boost/random/uniform_int_distribution.hpp>
 
 #include <string>
 #include <vector>
@@ -181,6 +182,33 @@ public:
     private:
         uint32_t num_;   ///< Current number.
         uint32_t range_; ///< Number of unique numbers generated.
+    };
+
+    /// \brief Random numbers generator class. The generated numbers
+    /// are uniformly distributed in the range of [min, max].
+    class RandomGenerator : public NumberGenerator {
+    public:
+        /// \brief Constructor.
+        ///
+        /// \param min minimum number generated.
+        /// \param max maximum number generated.
+        RandomGenerator(uint32_t min, uint32_t max) :
+            NumberGenerator(),
+            distribution(min, max) {
+            // Initialize the randomness source with the current time.
+            randomnessGenerator.seed(time(NULL));
+        }
+
+        /// \brief Generate number in range of [min, max].
+        ///
+        /// \return generated number.
+        virtual uint32_t generate() {
+            return distribution(randomnessGenerator);
+        }
+
+    private:                  
+        boost::random::uniform_int_distribution<> distribution;         
+        boost::random::mt19937 randomnessGenerator;         
     };
 
     /// \brief Length of the Ethernet HW address (MAC) in bytes.
@@ -347,9 +375,6 @@ public:
     // solution is to make this class friend of test class but this is not
     // what's followed in other classes.
 protected:
-    /// Generate uniformly distributed integers in range of [min, max]
-    UniformRandomIntegerGenerator number_generator_;
-
     /// \brief Creates DHCPREQUEST from a DHCPACK message.
     ///
     /// @param msg_type the message type to be created (DHCPREQUEST or DHCPRELEASE)
@@ -1077,6 +1102,10 @@ protected:
 
     /// \brief Storage for reply messages.
     PacketStorage<dhcp::Pkt6> reply_storage_;
+
+    /// \brief Generate uniformly distributed integers in range of
+    /// [min, max].
+    NumberGeneratorPtr random_generator_;
 
     /// \brief Transaction id generator.
     NumberGeneratorPtr transid_gen_;
