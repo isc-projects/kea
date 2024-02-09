@@ -205,9 +205,9 @@ public:
             return distribution(randomnessGenerator);
         }
 
-    private:                  
-        std::uniform_int_distribution<> distribution;         
-        std::mt19937 randomnessGenerator;         
+    private:
+        std::uniform_int_distribution<> distribution;
+        std::mt19937 randomnessGenerator;
     };
 
     /// \brief Length of the Ethernet HW address (MAC) in bytes.
