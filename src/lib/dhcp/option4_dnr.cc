@@ -48,42 +48,48 @@ Option4Dnr::pack(OutputBuffer& buf, bool check) const {
 
 void
 Option4Dnr::unpack(OptionBufferConstIter begin, OptionBufferConstIter end) {
-    setData(begin, end);
-    while (begin != end) {
-        DnrInstance dnr_instance(V4);
-        if (std::distance(begin, end) < dnr_instance.getMinimalLength()) {
-            isc_throw(OutOfRange, dnr_instance.getLogPrefix()
-                                      << "DNR instance data truncated to size "
-                                      << std::distance(begin, end));
-        }
+    if (convenient_notation_) {
+        // parse convenient notation
+        std::string config_txt = std::string(begin, end);
+        parseConfigData(config_txt);
+    } else {
+        setData(begin, end);
+        while (begin != end) {
+            DnrInstance dnr_instance(V4);
+            if (std::distance(begin, end) < dnr_instance.getMinimalLength()) {
+                isc_throw(OutOfRange, dnr_instance.getLogPrefix()
+                                          << "DNR instance data truncated to size "
+                                          << std::distance(begin, end));
+            }
 
-        // Unpack DnrInstanceDataLength.
-        dnr_instance.unpackDnrInstanceDataLength(begin, end);
+            // Unpack DnrInstanceDataLength.
+            dnr_instance.unpackDnrInstanceDataLength(begin, end);
 
-        const OptionBufferConstIter dnr_instance_end = begin +
-                                                       dnr_instance.getDnrInstanceDataLength();
+            const OptionBufferConstIter dnr_instance_end = begin +
+                                                           dnr_instance.getDnrInstanceDataLength();
 
-        // Unpack Service priority.
-        dnr_instance.unpackServicePriority(begin);
+            // Unpack Service priority.
+            dnr_instance.unpackServicePriority(begin);
 
-        // Unpack ADN len + ADN.
-        dnr_instance.unpackAdn(begin, dnr_instance_end);
+            // Unpack ADN len + ADN.
+            dnr_instance.unpackAdn(begin, dnr_instance_end);
 
-        if (begin == dnr_instance_end) {
-            // ADN only mode, other fields are not included.
+            if (begin == dnr_instance_end) {
+                // ADN only mode, other fields are not included.
+                addDnrInstance(dnr_instance);
+                continue;
+            }
+
+            dnr_instance.setAdnOnlyMode(false);
+
+            // Unpack Addr Len + IPv4 Address(es).
+            dnr_instance.unpackAddresses(begin, dnr_instance_end);
+
+            // SvcParams (variable length) field is last.
+            dnr_instance.unpackSvcParams(begin, dnr_instance_end);
+
             addDnrInstance(dnr_instance);
-            continue;
         }
-
-        dnr_instance.setAdnOnlyMode(false);
-
-        // Unpack Addr Len + IPv4 Address(es).
-        dnr_instance.unpackAddresses(begin, dnr_instance_end);
-
-        // SvcParams (variable length) field is last.
-        dnr_instance.unpackSvcParams(begin, dnr_instance_end);
-
-        addDnrInstance(dnr_instance);
     }
 }
 
@@ -117,6 +123,11 @@ Option4Dnr::len() const {
 void
 Option4Dnr::addDnrInstance(DnrInstance& dnr_instance) {
     dnr_instances_.push_back(dnr_instance);
+}
+
+void
+Option4Dnr::parseConfigData(const std::string& config_txt) {
+    // TBD
 }
 
 const std::unordered_set<std::string> DnrInstance::FORBIDDEN_SVC_PARAMS = {"ipv4hint", "ipv6hint"};

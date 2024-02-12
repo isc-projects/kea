@@ -55,31 +55,37 @@ Option6Dnr::packAddresses(util::OutputBuffer& buf) const {
 
 void
 Option6Dnr::unpack(OptionBufferConstIter begin, OptionBufferConstIter end) {
-    if (std::distance(begin, end) < getMinimalLength()) {
-        isc_throw(OutOfRange, getLogPrefix()
-                                  << "data truncated to size " << std::distance(begin, end));
+    if (convenient_notation_) {
+        // parse convenient notation
+        std::string config_txt = std::string(begin, end);
+        parseConfigData(config_txt);
+    } else {
+        if (std::distance(begin, end) < getMinimalLength()) {
+            isc_throw(OutOfRange, getLogPrefix()
+                                      << "data truncated to size " << std::distance(begin, end));
+        }
+
+        setData(begin, end);
+
+        // First two octets of Option data is Service Priority - this is mandatory field.
+        unpackServicePriority(begin);
+
+        // Next come two octets of ADN Length plus the ADN data itself (variable length).
+        // This is Opaque Data Tuple so let's use this class to retrieve the ADN data.
+        unpackAdn(begin, end);
+
+        if (begin == end) {
+            // ADN only mode, other fields are not included.
+            return;
+        }
+
+        adn_only_mode_ = false;
+
+        unpackAddresses(begin, end);
+
+        // SvcParams (variable length) field is last.
+        unpackSvcParams(begin, end);
     }
-
-    setData(begin, end);
-
-    // First two octets of Option data is Service Priority - this is mandatory field.
-    unpackServicePriority(begin);
-
-    // Next come two octets of ADN Length plus the ADN data itself (variable length).
-    // This is Opaque Data Tuple so let's use this class to retrieve the ADN data.
-    unpackAdn(begin, end);
-
-    if (begin == end) {
-        // ADN only mode, other fields are not included.
-        return;
-    }
-
-    adn_only_mode_ = false;
-
-    unpackAddresses(begin, end);
-
-    // SvcParams (variable length) field is last.
-    unpackSvcParams(begin, end);
 }
 
 std::string
@@ -141,6 +147,11 @@ Option6Dnr::unpackAddresses(OptionBufferConstIter& begin, OptionBufferConstIter 
 
         begin += V6ADDRESS_LEN;
     }
+}
+
+void
+Option6Dnr::parseConfigData(const std::string& config_txt){
+    // TBD
 }
 
 }  // namespace dhcp
