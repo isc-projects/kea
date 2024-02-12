@@ -39,6 +39,45 @@ const std::map<std::string, uint16_t> SVC_PARAMS =
                              // not used in DNR
 };
 
+/// @brief Possible ALPN protocol IDs.
+///
+/// The IANA registry is maintained at
+/// https://www.iana.org/assignments/tls-extensiontype-values/tls-extensiontype-values.xhtml#alpn-protocol-ids
+static const std::unordered_set<std::string> ALPN_IDS = {
+    "http/0.9",            // HTTP/0.9
+    "http/1.0",            // HTTP/1.0
+    "http/1.1",            // HTTP/1.1
+    "spdy/1",              // SPDY/1
+    "spdy/2",              // SPDY/2
+    "spdy/3",              // SPDY/3
+    "stun.turn",           // Traversal Using Relays around NAT (TURN)
+    "stun.nat-discovery",  // NAT discovery using Session Traversal Utilities for NAT (STUN)
+    "h2",                  // HTTP/2 over TLS
+    "h2c",                 // HTTP/2 over TCP
+    "webrtc",              // WebRTC Media and Data
+    "c-webrtc",            // Confidential WebRTC Media and Data
+    "ftp",                 // FTP
+    "imap",                // IMAP
+    "pop3",                // POP3
+    "managesieve",         // ManageSieve
+    "coap",                // CoAP
+    "xmpp-client",         // XMPP jabber:client namespace
+    "xmpp-server",         // XMPP jabber:server namespace
+    "acme-tls/1",          // acme-tls/1
+    "mqtt",                // OASIS Message Queuing Telemetry Transport (MQTT)
+    "dot",                 // DNS-over-TLS
+    "ntske/1",             // Network Time Security Key Establishment, version 1
+    "sunrpc",              // SunRPC
+    "h3",                  // HTTP/3
+    "smb",                 // SMB2
+    "irc",                 // IRC
+    "nntp",                // NNTP (reading)
+    "nnsp",                // NNTP (transit)
+    "doq",                 // DoQ
+    "sip/2",               // SIP
+    "tds/8.0",             // TDS/8.0
+    "dicom"                // DICOM
+};
 
 /// @brief Exception thrown when invalid domain name is specified.
 class InvalidOptionDnrDomainName : public Exception {
