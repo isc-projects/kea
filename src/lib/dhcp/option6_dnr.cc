@@ -13,8 +13,10 @@ using namespace isc::asiolink;
 namespace isc {
 namespace dhcp {
 
-Option6Dnr::Option6Dnr(OptionBufferConstIter begin, OptionBufferConstIter end)
-    : Option(V6, D6O_V6_DNR), DnrInstance(V6) {
+Option6Dnr::Option6Dnr(OptionBufferConstIter begin,
+                       OptionBufferConstIter end,
+                       bool convenient_notation)
+    : Option(V6, D6O_V6_DNR), DnrInstance(V6), convenient_notation_(convenient_notation) {
     unpack(begin, end);
 }
 

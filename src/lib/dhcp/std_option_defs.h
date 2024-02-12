@@ -107,16 +107,6 @@ RECORD_DECL(V4_PORTPARAMS_RECORDS, OPT_UINT8_TYPE, OPT_PSID_TYPE);
 RECORD_DECL(OPT_6RD_RECORDS, OPT_UINT8_TYPE, OPT_UINT8_TYPE,
             OPT_IPV6_ADDRESS_TYPE, OPT_IPV4_ADDRESS_TYPE);
 
-// RFC-draft-ietf-add-dnr DHCPv4 DNR option.
-//
-// DNR Instance Data Length (2 octets), Service Priority (2 octets),
-// ADN Length (1 octet), ADN FQDN.
-// Opaque data is represented here by the binary data field.
-// It may contain Addr Length (1 octet), IPv4 address(es), SvcParams,
-// and next DNR instances as binary data.
-RECORD_DECL(V4_DNR_RECORDS, OPT_UINT16_TYPE, OPT_UINT16_TYPE, OPT_UINT8_TYPE,
-            OPT_FQDN_TYPE, OPT_BINARY_TYPE);
-
 /// @brief Definitions of standard DHCPv4 options.
 const OptionDefParams STANDARD_V4_OPTION_DEFINITIONS[] = {
     { "subnet-mask", DHO_SUBNET_MASK, DHCP4_OPTION_SPACE,
@@ -378,8 +368,8 @@ const OptionDefParams STANDARD_V4_OPTION_DEFINITIONS[] = {
       OPT_UINT8_TYPE, false, NO_RECORD_DEF, "" },
     { "v4-portparams", DHO_V4_PORTPARAMS, DHCP4_OPTION_SPACE, OPT_RECORD_TYPE,
       false, RECORD_DEF(V4_PORTPARAMS_RECORDS), "" },
-    { "v4-dnr", DHO_V4_DNR, DHCP4_OPTION_SPACE, OPT_RECORD_TYPE,
-     false, RECORD_DEF(V4_DNR_RECORDS), "" },
+    { "v4-dnr", DHO_V4_DNR, DHCP4_OPTION_SPACE, OPT_INTERNAL_TYPE,
+     false, NO_RECORD_DEF, "" },
     { "option-6rd", DHO_6RD, DHCP4_OPTION_SPACE, OPT_RECORD_TYPE, true,
       RECORD_DEF(OPT_6RD_RECORDS), "" },
     { "v4-access-domain", DHO_V4_ACCESS_DOMAIN, DHCP4_OPTION_SPACE,
@@ -500,13 +490,6 @@ RECORD_DECL(SIGNATURE_RECORDS, OPT_UINT8_TYPE, OPT_UINT8_TYPE,
 //
 // Three 1 byte fileds to describe a network interface: type, major and minor
 RECORD_DECL(CLIENT_NII_RECORDS, OPT_UINT8_TYPE, OPT_UINT8_TYPE, OPT_UINT8_TYPE);
-
-// RFC-draft-ietf-add-dnr DHCPv6 DNR option.
-//
-// Service Priority (2 octets), ADN Length (2 octets), ADN FQDN.
-// Opaque data is represented here by the binary data field.
-// It may contain Addr Length (2 octets), IPv6 address(es), SvcParams.
-RECORD_DECL(V6_DNR_RECORDS, OPT_UINT16_TYPE, OPT_UINT16_TYPE, OPT_FQDN_TYPE, OPT_BINARY_TYPE);
 
 /// Standard DHCPv6 option definitions.
 ///
@@ -671,8 +654,8 @@ const OptionDefParams STANDARD_V6_OPTION_DEFINITIONS[] = {
       false, NO_RECORD_DEF, MAPT_V6_OPTION_SPACE },
     { "s46-cont-lw", D6O_S46_CONT_LW, DHCP6_OPTION_SPACE, OPT_EMPTY_TYPE,
       false, NO_RECORD_DEF, LW_V6_OPTION_SPACE },
-    { "v6-dnr", D6O_V6_DNR, DHCP6_OPTION_SPACE, OPT_RECORD_TYPE,
-     false, RECORD_DEF(V6_DNR_RECORDS), "" }
+    { "v6-dnr", D6O_V6_DNR, DHCP6_OPTION_SPACE, OPT_INTERNAL_TYPE,
+     false, NO_RECORD_DEF, "" }
 
     // @todo There is still a bunch of options for which we have to provide
     // definitions but we don't do it because they are not really

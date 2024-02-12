@@ -893,7 +893,7 @@ OptionDefinition::factorySpecialFormatOption(Option::Universe u,
             return (OptionPtr(new Option6PDExclude(begin, end)));
 
         case D6O_V6_DNR:
-            return (OptionPtr(new Option6Dnr(begin, end)));
+            return (OptionPtr(new Option6Dnr(begin, end, convenient_notation)));
 
         default:
             break;
@@ -927,7 +927,7 @@ OptionDefinition::factorySpecialFormatOption(Option::Universe u,
             return (factoryOpaqueDataTuples(Option::V4, getCode(), begin, end, OpaqueDataTuple::LENGTH_2_BYTES));
 
         case DHO_V4_DNR:
-            return (OptionPtr(new Option4Dnr(begin, end)));
+            return (OptionPtr(new Option4Dnr(begin, end, convenient_notation)));
 
         default:
             break;

@@ -34,11 +34,16 @@ public:
     /// @param begin Iterator pointing to the beginning of the buffer holding an
     /// option.
     /// @param end Iterator pointing to the end of the buffer holding an option.
+    /// @param convenient_notation Flag stating whether data in buffer is a convenient
+    ///                            notation string that needs custom parsing or binary
+    ///                            data. Defaults to @c false.
     ///
     /// @throw OutOfRange Thrown in case of truncated data.
     /// @throw BadValue Thrown when @c DnrInstance::unpackAdn(begin,end) throws.
     /// @throw InvalidOptionDnrDomainName Thrown when @c DnrInstance::unpackAdn(begin,end) throws.
-    Option6Dnr(OptionBufferConstIter begin, OptionBufferConstIter end);
+    Option6Dnr(OptionBufferConstIter begin,
+               OptionBufferConstIter end,
+               bool convenient_notation = false);
 
     /// @brief Constructor of the %Option with all fields from params.
     ///
@@ -136,6 +141,11 @@ public:
     /// @throw OutOfRange Thrown in case of malformed data detected during parsing e.g.
     /// Addr Len not divisible by 16, Addr Len is 0, addresses data truncated etc.
     void unpackAddresses(OptionBufferConstIter& begin, OptionBufferConstIter end) override;
+
+private:
+    /// @brief Flag stating whether the %Option was constructed with a convenient notation string,
+    /// that needs custom parsing, or binary data.
+    bool convenient_notation_;
 };
 
 /// A pointer to the @c Option6Dnr object.

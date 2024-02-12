@@ -16,8 +16,10 @@ using namespace isc::util;
 namespace isc {
 namespace dhcp {
 
-Option4Dnr::Option4Dnr(OptionBufferConstIter begin, OptionBufferConstIter end)
-    : Option(V4, DHO_V4_DNR) {
+Option4Dnr::Option4Dnr(OptionBufferConstIter begin,
+                       OptionBufferConstIter end,
+                       bool convenient_notation)
+    : Option(V4, DHO_V4_DNR), convenient_notation_(convenient_notation) {
     unpack(begin, end);
 }
 
