@@ -17,16 +17,16 @@ The code has issued a commit call.  All outstanding transactions will be
 committed to the database.  Note that depending on the MySQL settings,
 the committal may not include a write to disk.
 
-% DATABASE_MYSQL_INITIALIZE_SCHEMA Initializing the MySQL schema with command: kea-admin %1.
-This is logged before running the kea-admin command to automatically initialize the schema from Kea
-after getting the schema version initially failed. The full kea-admin command is shown.
-
 % DATABASE_MYSQL_FATAL_ERROR Unrecoverable MySQL error occurred: %1 for <%2>, reason: %3 (error code: %4).
 An error message indicating that communication with the MySQL database server
 has been lost.  If automatic recovery has been enabled,  then the server will
 attempt to recover connectivity.  If not, then the server will exit with a
 non-zero exit code.  The cause of such an error is most likely a network issue
 or the MySQL server has gone down.
+
+% DATABASE_MYSQL_INITIALIZE_SCHEMA Initializing the MySQL schema with command: %1.
+This is logged before running the kea-admin command to automatically initialize the schema from Kea
+after getting the schema version initially failed. The full kea-admin command is shown.
 
 % DATABASE_MYSQL_ROLLBACK rolling back MySQL database
 The code has issued a rollback call.  All outstanding transaction will
@@ -65,6 +65,10 @@ has been lost.  If automatic recovery has been enabled,  then the server will
 attempt to recover the connectivity.  If not, then the server will exit with a
 non-zero exit code.  The cause of such an error is most likely a network issue
 or the PostgreSQL server has gone down.
+
+% DATABASE_PGSQL_INITIALIZE_SCHEMA Initializing the PostgreSQL schema with command: %1.
+This is logged before running the kea-admin command to automatically initialize the schema from Kea
+after getting the schema version initially failed. The full kea-admin command is shown.
 
 % DATABASE_PGSQL_ROLLBACK rolling back PostgreSQL database
 The code has issued a rollback call.  All outstanding transaction will

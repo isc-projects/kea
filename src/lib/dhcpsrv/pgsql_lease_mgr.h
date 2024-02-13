@@ -676,6 +676,8 @@ public:
     /// @return Description of the backend.
     virtual std::string getDescription() const override;
 
+    void ensureSchemaVersion() const;
+
     /// @brief Returns backend version.
     ///
     /// @param timer_name The DB reconnect timer name.

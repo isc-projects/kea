@@ -1612,10 +1612,19 @@ PgSqlLeaseMgr::PgSqlLeaseTrackingContextAlloc::~PgSqlLeaseTrackingContextAlloc()
 // PgSqlLeaseMgr Constructor and Destructor
 
 PgSqlLeaseMgr::PgSqlLeaseMgr(const DatabaseConnection::ParameterMap& parameters)
-    : TrackingLeaseMgr(), parameters_(parameters), timer_name_("") {
+    : TrackingLeaseMgr(), parameters_(parameters) {
 
     // Check if the extended info tables are enabled.
     setExtendedInfoTablesEnabled(parameters);
+
+    // retry-on-startup?
+    bool const retry(parameters.count("retry-on-startup") &&
+                     parameters.at("retry-on-startup") == "true");
+
+    // retry-on-startup disabled. Ensure schema version with empty timer name / no retry.
+    if (!retry) {
+        ensureSchemaVersion();
+    }
 
     // Create unique timer name per instance.
     timer_name_ = "PgSqlLeaseMgr[";
@@ -1644,28 +1653,9 @@ PgSqlLeaseMgr::PgSqlLeaseMgr(const DatabaseConnection::ParameterMap& parameters)
     }
 #endif
 
-    // Validate schema version first.
-    std::pair<uint32_t, uint32_t> code_version(PGSQL_SCHEMA_VERSION_MAJOR,
-                                               PGSQL_SCHEMA_VERSION_MINOR);
-
-    std::string timer_name;
-    bool retry = false;
-    if (parameters.count("retry-on-startup")) {
-        if (parameters.at("retry-on-startup") == "true") {
-            retry = true;
-        }
-    }
+    // retry-on-startup enabled. Ensure schema version with timer name set / retries.
     if (retry) {
-        timer_name = timer_name_;
-    }
-
-    std::pair<uint32_t, uint32_t> db_version = getVersion(timer_name);
-    if (code_version != db_version) {
-        isc_throw(DbOpenError,
-                  "PostgreSQL schema version mismatch: need version: "
-                      << code_version.first << "." << code_version.second
-                      << " found version: " << db_version.first << "."
-                      << db_version.second);
+        ensureSchemaVersion();
     }
 
     // Create an initial context.
@@ -3042,6 +3032,16 @@ PgSqlLeaseMgr::getName() const {
 std::string
 PgSqlLeaseMgr::getDescription() const {
     return (std::string("PostgreSQL Database"));
+}
+
+void
+PgSqlLeaseMgr::ensureSchemaVersion() const {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_PGSQL_GET_VERSION);
+
+    IOServiceAccessorPtr ac(new IOServiceAccessor(&DatabaseConnection::getIOService));
+    DbCallback cb(&PgSqlLeaseMgr::dbReconnect);
+
+    return (PgSqlConnection::ensureSchemaVersion(parameters_, ac, cb, timer_name_));
 }
 
 std::pair<uint32_t, uint32_t>

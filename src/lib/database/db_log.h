@@ -51,6 +51,7 @@ extern isc::log::Logger database_logger;
 enum DbMessageID {
     DB_INVALID_ACCESS,
 
+    PGSQL_INITIALIZE_SCHEMA,
     PGSQL_DEALLOC_ERROR,
     PGSQL_FATAL_ERROR,
     PGSQL_START_TRANSACTION,

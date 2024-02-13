@@ -6,6 +6,8 @@
 
 #include <config.h>
 
+#include <asiolink/io_service.h>
+#include <asiolink/process_spawn.h>
 #include <database/database_connection.h>
 #include <database/db_exceptions.h>
 #include <database/db_log.h>
@@ -29,6 +31,7 @@
 
 #include <sstream>
 
+using namespace isc::asiolink;
 using namespace std;
 
 namespace isc {
@@ -149,7 +152,7 @@ PgSqlConnection::getVersion(const ParameterMap& parameters,
     // Open the database.
     conn.openDatabaseInternal(false);
 
-    const char* version_sql =  "SELECT version, minor FROM schema_version;";
+    const char* version_sql = "SELECT version, minor FROM schema_version;";
     PgSqlResult r(PQexec(conn.conn_, version_sql));
     if (PQresultStatus(r) != PGRES_TUPLES_OK) {
         isc_throw(DbOperationError, "unable to execute PostgreSQL statement <"
@@ -163,6 +166,107 @@ PgSqlConnection::getVersion(const ParameterMap& parameters,
     PgSqlExchange::getColumnValue(r, 0, 1, minor);
 
     return (make_pair(version, minor));
+}
+
+void
+PgSqlConnection::ensureSchemaVersion(const ParameterMap& parameters,
+                                     const IOServiceAccessorPtr& ac,
+                                     const DbCallback& cb,
+                                     const string& timer_name) {
+    pair<uint32_t, uint32_t> schema_version;
+    try {
+        schema_version = getVersion(parameters, ac, cb, timer_name);
+    } catch (DbOpenError const& exception) {
+        // Do nothing for open errors. We first need to establish a connection,
+        // and only afterwards can we initialize the schema if it still fails.
+        // Let it fail, or retry if retry is configured.
+    } catch (exception const& exception) {
+        // This may fail for a variety of reasons. We don't have to necessarily
+        // check for the error that is most common in situations where the
+        // database is not initialized which would sound something like
+        // "table schema_version does not exist". If the error had another
+        // cause, it will fail again during initialization or during the
+        // subsequent version retrieval and that is fine.
+        initializeSchema(parameters);
+
+        // Retrieve again because the initial retrieval failed.
+        schema_version = getVersion(parameters, ac, cb, timer_name);
+    }
+
+    // Check that the versions match.
+    pair<uint32_t, uint32_t> const expected_version(PGSQL_SCHEMA_VERSION_MAJOR,
+                                                    PGSQL_SCHEMA_VERSION_MINOR);
+    if (schema_version != expected_version) {
+        isc_throw(DbOpenError, "PostgreSQL schema version mismatch: expected version: "
+                                   << expected_version.first << "." << expected_version.second
+                                   << ", found version: " << schema_version.first << "."
+                                   << schema_version.second);
+    }
+}
+
+void
+PgSqlConnection::initializeSchema(const ParameterMap& parameters) {
+    if (parameters.count("readonly") && parameters.at("readonly") == "true") {
+        // The readonly flag is historically used for host backends. Still, if
+        // enabled, it is a strong indication that we should not meDDLe with it.
+        return;
+    }
+
+    // Convert parameters.
+    auto const tupl(toKeaAdminParameters(parameters));
+    vector<string> kea_admin_parameters(get<0>(tupl));
+    ProcessEnvVars const vars(get<1>(tupl));
+    kea_admin_parameters.insert(kea_admin_parameters.begin(), "db-init");
+
+    // Run.
+    IOServicePtr io_service(new IOService());
+    ProcessSpawn kea_admin(io_service, KEA_ADMIN, kea_admin_parameters, vars);
+    DB_LOG_INFO(PGSQL_INITIALIZE_SCHEMA).arg(kea_admin.getCommandLine());
+    pid_t const pid(kea_admin.spawn());
+    io_service->runOne();
+    if (kea_admin.isRunning(pid)) {
+        // TODO: implement synchronous process spawning. Otherwise kea-admin is not waited by the
+        // parent process, and it becomes a zombie, even though its work is finished. Uncomment the
+        // following throw when that is done.
+        // isc_throw(SchemaInitializationFailed, "kea-admin still running");
+    }
+    int const exit_code(kea_admin.getExitStatus(pid));
+    if (exit_code != 0) {
+        isc_throw(SchemaInitializationFailed, "Expected exit code 0. Got " << exit_code);
+    }
+}
+
+tuple<vector<string>, vector<string>>
+PgSqlConnection::toKeaAdminParameters(ParameterMap const& params) {
+    vector<string> result{"pgsql"};
+    ProcessEnvVars vars;
+    for (auto const& p : params) {
+        string const& keyword(p.first);
+        string const& value(p.second);
+
+        // These Kea parameters are the same as the kea-admin parameters.
+        if (keyword == "user" ||
+            keyword == "password" ||
+            keyword == "host" ||
+            keyword == "port" ||
+            keyword == "name") {
+            result.push_back("--" + keyword);
+            result.push_back(value);
+            continue;
+        }
+
+        // These Kea parameters do not have a direct kea-admin equivalent.
+        // But they do have a psql client environment variable equivalent.
+        // We pass them to kea-admin.
+        static unordered_map<string, string> conversions{
+            {"connect-timeout", "PGCONNECT_TIMEOUT"},
+            // {"tcp-user-timeout", "N/A"},
+        };
+        if (conversions.count(keyword)) {
+            vars.push_back(conversions.at(keyword) + "=" + value);
+        }
+    }
+    return make_tuple(result, vars);
 }
 
 void
