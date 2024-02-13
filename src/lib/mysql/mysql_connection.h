@@ -282,15 +282,16 @@ public:
     ///     version, and attempt to initialize the schema if there is an
     ///     error during retrieval.
     ///
+    /// Properly handles retrying of the database connection.
+    ///
     /// @param parameters A data structure relating keywords and values
     ///     concerned with the database.
     ///
     /// @throw isc::db::ScehamInitializationFailed if the initialization fails
     static void
     ensureSchemaVersion(const ParameterMap& parameters,
-                        const IOServiceAccessorPtr& ac = IOServiceAccessorPtr(),
                         const DbCallback& cb = DbCallback(),
-                        const std::string& timer_name = std::string());
+                        std::string timer_name = std::string());
 
     /// @brief Initialize schema.
     ///

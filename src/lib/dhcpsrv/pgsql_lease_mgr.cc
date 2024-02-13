@@ -1617,20 +1617,6 @@ PgSqlLeaseMgr::PgSqlLeaseMgr(const DatabaseConnection::ParameterMap& parameters)
     // Check if the extended info tables are enabled.
     setExtendedInfoTablesEnabled(parameters);
 
-    // retry-on-startup?
-    bool const retry(parameters.count("retry-on-startup") &&
-                     parameters.at("retry-on-startup") == "true");
-
-    // retry-on-startup disabled. Ensure schema version with empty timer name / no retry.
-    if (!retry) {
-        ensureSchemaVersion();
-    }
-
-    // Create unique timer name per instance.
-    timer_name_ = "PgSqlLeaseMgr[";
-    timer_name_ += boost::lexical_cast<std::string>(reinterpret_cast<uint64_t>(this));
-    timer_name_ += "]DbReconnectTimer";
-
     // Check TLS support.
     size_t tls(0);
     tls += parameters.count("trust-anchor");
@@ -1653,10 +1639,13 @@ PgSqlLeaseMgr::PgSqlLeaseMgr(const DatabaseConnection::ParameterMap& parameters)
     }
 #endif
 
-    // retry-on-startup enabled. Ensure schema version with timer name set / retries.
-    if (retry) {
-        ensureSchemaVersion();
-    }
+    // Create unique timer name per instance.
+    timer_name_ = "PgSqlLeaseMgr[";
+    timer_name_ += boost::lexical_cast<std::string>(reinterpret_cast<uint64_t>(this));
+    timer_name_ += "]DbReconnectTimer";
+
+    PgSqlConnection::ensureSchemaVersion(parameters_, DbCallback(&PgSqlLeaseMgr::dbReconnect),
+                                         timer_name_);
 
     // Create an initial context.
     pool_.reset(new PgSqlLeaseContextPool());
@@ -3032,16 +3021,6 @@ PgSqlLeaseMgr::getName() const {
 std::string
 PgSqlLeaseMgr::getDescription() const {
     return (std::string("PostgreSQL Database"));
-}
-
-void
-PgSqlLeaseMgr::ensureSchemaVersion() const {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_PGSQL_GET_VERSION);
-
-    IOServiceAccessorPtr ac(new IOServiceAccessor(&DatabaseConnection::getIOService));
-    DbCallback cb(&PgSqlLeaseMgr::dbReconnect);
-
-    return (PgSqlConnection::ensureSchemaVersion(parameters_, ac, cb, timer_name_));
 }
 
 std::pair<uint32_t, uint32_t>

@@ -77,19 +77,9 @@ PgSqlConfigBackendImpl::PgSqlConfigBackendImpl(const std::string& space,
                                                size_t last_insert_id_index)
     : conn_(parameters,
             IOServiceAccessorPtr(new IOServiceAccessor(&PgSqlConfigBackendImpl::getIOService)),
-            db_reconnect_callback), timer_name_(""),
-            audit_revision_ref_count_(0), parameters_(parameters),
-            last_insert_id_index_(last_insert_id_index) {
-
-    // Create unique timer name per instance.
-    timer_name_ = "PgSqlConfigBackend";
-    timer_name_ += space;
-    timer_name_ += "[";
-    timer_name_ += boost::lexical_cast<std::string>(reinterpret_cast<uint64_t>(this));
-    timer_name_ += "]DbReconnectTimer";
-
-    // Create ReconnectCtl for this connection.
-    conn_.makeReconnectCtl(timer_name_);
+            db_reconnect_callback),
+      audit_revision_ref_count_(0), parameters_(parameters),
+      last_insert_id_index_(last_insert_id_index) {
 
     // Check TLS support.
     size_t tls(0);
@@ -113,31 +103,17 @@ PgSqlConfigBackendImpl::PgSqlConfigBackendImpl(const std::string& space,
     }
 #endif
 
-    // Test schema version first.
-    std::pair<uint32_t, uint32_t> code_version(PGSQL_SCHEMA_VERSION_MAJOR,
-                                               PGSQL_SCHEMA_VERSION_MINOR);
+    // Create unique timer name per instance.
+    timer_name_ = "PgSqlConfigBackend";
+    timer_name_ += space;
+    timer_name_ += "[";
+    timer_name_ += boost::lexical_cast<std::string>(reinterpret_cast<uint64_t>(this));
+    timer_name_ += "]DbReconnectTimer";
 
-    std::string timer_name;
-    bool retry = false;
-    if (parameters.count("retry-on-startup")) {
-        if (parameters.at("retry-on-startup") == "true") {
-            retry = true;
-        }
-    }
-    if (retry) {
-        timer_name = timer_name_;
-    }
+    PgSqlConnection::ensureSchemaVersion(parameters, db_reconnect_callback, timer_name_);
 
-    IOServiceAccessorPtr ac(new IOServiceAccessor(&DatabaseConnection::getIOService));
-
-    std::pair<uint32_t, uint32_t> db_version =
-        PgSqlConnection::getVersion(parameters, ac, db_reconnect_callback, timer_name);
-    if (code_version != db_version) {
-        isc_throw(DbOpenError, "PostgreSQL schema version mismatch: need version: "
-                  << code_version.first << "." << code_version.second
-                  << " found version: " << db_version.first << "."
-                  << db_version.second);
-    }
+    // Create ReconnectCtl for this connection.
+    conn_.makeReconnectCtl(timer_name_);
 
     // Open the database.
     conn_.openDatabase();

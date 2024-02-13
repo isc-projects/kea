@@ -1142,7 +1142,7 @@ public:
 private:
 
     // Note: All array lengths are equal to the corresponding variable in the
-    //       schema.
+    // schema.
     // Note: Arrays are declared fixed length for speed of creation
     uint32_t             addr4_;                                         ///< IPv4 address
     MYSQL_BIND           bind_[LEASE_COLUMNS];                           ///< Bind array
@@ -2190,24 +2190,13 @@ MySqlLeaseMgr::MySqlLeaseMgr(const DatabaseConnection::ParameterMap& parameters)
     // Check if the extended info tables are enabled.
     setExtendedInfoTablesEnabled(parameters);
 
-    // retry-on-startup?
-    bool const retry(parameters.count("retry-on-startup") &&
-                     parameters.at("retry-on-startup") == "true");
-
-    // retry-on-startup disabled. Ensure schema version with empty timer name / no retry.
-    if (!retry) {
-        ensureSchemaVersion();
-    }
-
     // Create unique timer name per instance.
     timer_name_ = "MySqlLeaseMgr[";
     timer_name_ += boost::lexical_cast<std::string>(reinterpret_cast<uint64_t>(this));
     timer_name_ += "]DbReconnectTimer";
 
-    // retry-on-startup enabled. Ensure schema version with timer name set / retries.
-    if (retry) {
-        ensureSchemaVersion();
-    }
+    MySqlConnection::ensureSchemaVersion(parameters, DbCallback(&MySqlLeaseMgr::dbReconnect),
+                                         timer_name_);
 
     // Create an initial context.
     pool_.reset(new MySqlLeaseContextPool());
@@ -3877,16 +3866,6 @@ MySqlLeaseMgr::getName() const {
 std::string
 MySqlLeaseMgr::getDescription() const {
     return (std::string("MySQL Database"));
-}
-
-void
-MySqlLeaseMgr::ensureSchemaVersion() const {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MYSQL_GET_VERSION);
-
-    IOServiceAccessorPtr ac(new IOServiceAccessor(&DatabaseConnection::getIOService));
-    DbCallback cb(&MySqlLeaseMgr::dbReconnect);
-
-    return (MySqlConnection::ensureSchemaVersion(parameters_, ac, cb, timer_name_));
 }
 
 std::pair<uint32_t, uint32_t>

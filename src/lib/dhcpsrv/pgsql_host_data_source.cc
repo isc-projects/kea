@@ -2268,13 +2268,7 @@ PgSqlHostDataSource::PgSqlHostContextAlloc::~PgSqlHostContextAlloc() {
 }
 
 PgSqlHostDataSourceImpl::PgSqlHostDataSourceImpl(const DatabaseConnection::ParameterMap& parameters)
-    : parameters_(parameters), ip_reservations_unique_(true), unusable_(false),
-      timer_name_("") {
-
-    // Create unique timer name per instance.
-    timer_name_ = "PgSqlHostMgr[";
-    timer_name_ += boost::lexical_cast<std::string>(reinterpret_cast<uint64_t>(this));
-    timer_name_ += "]DbReconnectTimer";
+    : parameters_(parameters), ip_reservations_unique_(true), unusable_(false) {
 
     // Check TLS support.
     size_t tls(0);
@@ -2298,29 +2292,14 @@ PgSqlHostDataSourceImpl::PgSqlHostDataSourceImpl(const DatabaseConnection::Param
     }
 #endif
 
-    // Validate the schema version first.
-    std::pair<uint32_t, uint32_t> code_version(PGSQL_SCHEMA_VERSION_MAJOR,
-                                               PGSQL_SCHEMA_VERSION_MINOR);
+    // Create unique timer name per instance.
+    timer_name_ = "PgSqlHostMgr[";
+    timer_name_ += boost::lexical_cast<std::string>(reinterpret_cast<uint64_t>(this));
+    timer_name_ += "]DbReconnectTimer";
 
-    std::string timer_name;
-    bool retry = false;
-    if (parameters.count("retry-on-startup")) {
-        if (parameters.at("retry-on-startup") == "true") {
-            retry = true;
-        }
-    }
-    if (retry) {
-        timer_name = timer_name_;
-    }
-
-    std::pair<uint32_t, uint32_t> db_version = getVersion(timer_name);
-    if (code_version != db_version) {
-        isc_throw(DbOpenError,
-                  "PostgreSQL schema version mismatch: need version: "
-                      << code_version.first << "." << code_version.second
-                      << " found version: " << db_version.first << "."
-                      << db_version.second);
-    }
+    PgSqlConnection::ensureSchemaVersion(parameters_,
+                                         DbCallback(&PgSqlHostDataSourceImpl::dbReconnect),
+                                         timer_name_);
 
     // Create an initial context.
     pool_.reset(new PgSqlHostContextPool());
@@ -2631,8 +2610,7 @@ PgSqlHostDataSourceImpl::getHost(PgSqlHostContextPtr& ctx,
 
 std::pair<uint32_t, uint32_t>
 PgSqlHostDataSourceImpl::getVersion(const std::string& timer_name) const {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_PGSQL_HOST_DB_GET_VERSION);
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_PGSQL_HOST_DB_GET_VERSION);
 
     IOServiceAccessorPtr ac(new IOServiceAccessor(&DatabaseConnection::getIOService));
     DbCallback cb(&PgSqlHostDataSourceImpl::dbReconnect);

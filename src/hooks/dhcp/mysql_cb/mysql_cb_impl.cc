@@ -55,7 +55,7 @@ MySqlConfigBackendImpl(const std::string& space,
                        const DbCallback db_reconnect_callback)
     : conn_(parameters,
             IOServiceAccessorPtr(new IOServiceAccessor(&MySqlConfigBackendImpl::getIOService)),
-            db_reconnect_callback), timer_name_(""),
+            db_reconnect_callback),
       audit_revision_ref_count_(0), parameters_(parameters) {
 
     // Create unique timer name per instance.
@@ -65,34 +65,10 @@ MySqlConfigBackendImpl(const std::string& space,
     timer_name_ += boost::lexical_cast<std::string>(reinterpret_cast<uint64_t>(this));
     timer_name_ += "]DbReconnectTimer";
 
+    MySqlConnection::ensureSchemaVersion(parameters, db_reconnect_callback, timer_name_);
+
     // Create ReconnectCtl for this connection.
     conn_.makeReconnectCtl(timer_name_);
-
-    // Test schema version first.
-    std::pair<uint32_t, uint32_t> code_version(MYSQL_SCHEMA_VERSION_MAJOR,
-                                               MYSQL_SCHEMA_VERSION_MINOR);
-
-    std::string timer_name;
-    bool retry = false;
-    if (parameters.count("retry-on-startup")) {
-        if (parameters.at("retry-on-startup") == "true") {
-            retry = true;
-        }
-    }
-    if (retry) {
-        timer_name = timer_name_;
-    }
-
-    IOServiceAccessorPtr ac(new IOServiceAccessor(&DatabaseConnection::getIOService));
-
-    std::pair<uint32_t, uint32_t> db_version =
-        MySqlConnection::getVersion(parameters, ac, db_reconnect_callback, timer_name);
-    if (code_version != db_version) {
-        isc_throw(DbOpenError, "MySQL schema version mismatch: need version: "
-                  << code_version.first << "." << code_version.second
-                  << " found version: " << db_version.first << "."
-                  << db_version.second);
-    }
 
     // Open the database.
     conn_.openDatabase();

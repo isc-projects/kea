@@ -371,9 +371,19 @@ MySqlConnection::getVersion(const ParameterMap& parameters,
 
 void
 MySqlConnection::ensureSchemaVersion(const ParameterMap& parameters,
-                                     const IOServiceAccessorPtr& ac,
                                      const DbCallback& cb,
-                                     const string& timer_name) {
+                                     string timer_name) {
+    // retry-on-startup?
+    bool const retry(parameters.count("retry-on-startup") &&
+                     parameters.at("retry-on-startup") == "true");
+    if (!retry) {
+        // If not, then we need timer_name to be empty to signal that retrying
+        // is not desired.
+        timer_name = string();
+    }
+
+    IOServiceAccessorPtr ac(new IOServiceAccessor(&DatabaseConnection::getIOService));
+
     pair<uint32_t, uint32_t> schema_version;
     try {
         schema_version = getVersion(parameters, ac, cb, timer_name);
