@@ -228,6 +228,10 @@ At the service level, three sections can be configured:
   synchronization process at the startup of an HA node does not trigger a RADIUS
   accounting request, regardless of the value of this flag.
 
+- The ``max-pending-requests'' positive integer value limits the number
+of pending RADIUS requests, the value 0 means no limit. It is supported only
+by the access service, its default is 0 (can change to e.g. 64?).
+
 For example, to specify a single access server available on localhost
 that uses ``"xyz123"`` as a secret, and tell Kea to send three additional
 attributes (``User-Password``, ``Connect-Info``, and ``Configuration-Token``),
