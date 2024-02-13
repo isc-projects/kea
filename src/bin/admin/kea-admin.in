@@ -275,9 +275,8 @@ mysql_init() {
     printf "mysql returned status code %s\n" "${EXIT_CODE}"
 
     if [ "${EXIT_CODE}" -eq 0 ]; then
-        printf "Database version reported after initialization: "
-        checked_mysql_version
-        printf '\n'
+        version=$(checked_mysql_version)
+        printf 'Schema version reported after initialization: %s\n' "${version}"
     fi
 
     exit "${EXIT_CODE}"
@@ -314,8 +313,7 @@ pgsql_init() {
     fi
 
     version=$(checked_pgsql_version)
-    printf "Database version reported after initialization: %s\n" "$version"
-    exit 0
+    printf 'Schema version reported after initialization: %s\n' "${version}"
 }
 
 ### Functions that implement database version checking commands
@@ -339,10 +337,8 @@ memfile_upgrade() {
 #
 # This function prints version before and after upgrade.
 mysql_upgrade() {
-
-    printf "Database version reported before upgrade: "
-    checked_mysql_version
-    printf '\n'
+    version=$(checked_mysql_version)
+    printf 'Schema version reported before upgrade: %s\n' "${version}"
 
     upgrade_scripts_dir=${scripts_dir}/mysql
 
@@ -385,14 +381,13 @@ mysql_upgrade() {
         --password="${db_password}" "${db_name}" ${extra_arguments}
     done
 
-    printf "Database version reported after upgrade: "
-    checked_mysql_version
-    printf '\n'
+    version=$(checked_mysql_version)
+    printf 'Schema version reported after upgrade: %s\n' "${version}"
 }
 
 pgsql_upgrade() {
     version=$(checked_pgsql_version)
-    printf "Database version reported before upgrade: %s\n" "$version"
+    printf 'Schema version reported before upgrade: %s\n' "${version}"
 
     upgrade_scripts_dir=${scripts_dir}/pgsql
 
@@ -434,8 +429,7 @@ pgsql_upgrade() {
     done
 
     version=$(checked_pgsql_version)
-    printf "Database version reported after upgrade: %s\n" "$version"
-    exit 0
+    printf 'Schema version reported after upgrade: %s\n' "${version}"
 }
 
 # Remove a file if it exists
@@ -567,7 +561,6 @@ mysql_dump() {
     log_info "Removed temporary file ${tmp_file}."
 
     log_info "Successfully dumped lease${dhcp_version} to ${dump_file}."
-    exit 0
 }
 
 ### Functions used for dump
@@ -609,7 +602,6 @@ pgsql_dump() {
     fi
 
     echo lease${dhcp_version} successfully dumped to "${dump_file}"
-    exit 0
 }
 
 ######################## functions used in lease-upload ########################
@@ -1086,5 +1078,3 @@ case ${command} in
             esac
         ;;
 esac
-
-exit 0
