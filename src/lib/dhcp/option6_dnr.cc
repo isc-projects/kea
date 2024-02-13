@@ -9,6 +9,7 @@
 #include <dhcp/option6_dnr.h>
 
 using namespace isc::asiolink;
+using namespace isc::util;
 
 namespace isc {
 namespace dhcp {
@@ -151,7 +152,179 @@ Option6Dnr::unpackAddresses(OptionBufferConstIter& begin, OptionBufferConstIter 
 
 void
 Option6Dnr::parseConfigData(const std::string& config_txt){
-    // TBD
+    // This parses convenient option config notation.
+    // The config to be parsed may contain escaped characters like "\\," or "\\|".
+    // Example configs are below (first contains recommended resolvers' IP addresses, and SvcParams;
+    // second is an example of ADN-only mode):
+    //
+    // "name": "v6-dnr",
+    // "data": "100, dot1.example.org., 2001:db8::1 2001:db8::2, alpn=dot\\,doq\\,h2\\,h3 port=8530 dohpath=/q{?dns}"
+    //
+    // "name": "v6-dnr",
+    // "data": "200, resolver.example."
+
+    // get tokens using comma separator with double backslash escaping enabled
+    std::vector<std::string> tokens = str::tokens(config_txt, std::string(","), true);
+
+    if (tokens.size() < 2) {
+        isc_throw(BadValue, getLogPrefix() << "Option config requires at least comma separated "
+                                           << "Service Priority and ADN");
+    }
+
+    if (tokens.size() > 4) {
+        isc_throw(BadValue, getLogPrefix() << "Option config supports maximum 4 comma separated "
+                                           << "fields: Service Priority, ADN, resolver IP "
+                                           << "address/es and SvcParams");
+    }
+
+    // parse Service Priority
+    std::string txt_svc_priority = str::trim(tokens[0]);
+    try {
+        service_priority_ = boost::lexical_cast<uint16_t>(txt_svc_priority);
+    } catch (const std::exception& e) {
+        isc_throw(BadValue, getLogPrefix() << "Given service priority " + txt_svc_priority
+                                           << " cannot be parsed into uint_16 integer. "
+                                           << "Error: " << e.what());
+    }
+
+    // parse ADN
+    std::string txt_adn = str::trim(tokens[1]);
+    try {
+        adn_.reset(new isc::dns::Name(txt_adn, true));
+    } catch (const std::exception& e) {
+        isc_throw(InvalidOptionDnrDomainName, getLogPrefix()
+                                                  << "Given ADN " + txt_adn
+                                                  << " cannot be parsed into fully qualified "
+                                                  << "domain-name. "
+                                                  << "Error: " << e.what());
+    }
+
+    adn_length_ = adn_->getLength();
+    if (adn_length_ == 0) {
+        isc_throw(InvalidOptionDnrDomainName, getLogPrefix()
+                                                  << "Mandatory Authentication Domain Name fully "
+                                                     "qualified domain-name is missing");
+    }
+
+    if (tokens.size() > 2) {
+        setAdnOnlyMode(false);
+
+        // parse resolver IP address/es
+        std::string txt_addresses = str::trim(tokens[2]);
+
+        // IP addresses are separated with space
+        std::vector<std::string> addresses = str::tokens(txt_addresses, std::string(" "));
+        for (auto const& txt_addr : addresses) {
+            try {
+                ip_addresses_.push_back(IOAddress(str::trim(txt_addr)));
+            } catch (const Exception& e) {
+                isc_throw(BadValue, getLogPrefix() << "Given string " + txt_addr
+                                                   << " cannot be parsed into IPv6 address. "
+                                                   << "Error: " << e.what());
+            }
+        }
+
+        // As per RFC9463 section 3.1.8:
+        // (If ADN-only mode is not used)
+        // The option includes at least one valid IP address.
+        if (ip_addresses_.empty()) {
+            isc_throw(BadValue, getLogPrefix() << "Option config requires at least one valid IP "
+                                               << "address.");
+        }
+
+        addr_length_ = ip_addresses_.size() * V6ADDRESS_LEN;
+    }
+
+    if (tokens.size() == 4) {
+        // parse Service Parameters
+        std::string txt_svc_params = str::trim(tokens[3]);
+
+        // SvcParamKey=SvcParamValue pairs are separated with space
+        std::vector<std::string> svc_params = str::tokens(txt_svc_params, std::string(" "));
+        std::vector<std::string> alpn_ids;
+        std::vector<OpaqueDataTuple> alpn_ids_container;
+        for (auto const& txt_svc_param : svc_params) {
+            std::vector<std::string> key_val = str::tokens(str::trim(txt_svc_param), "=");
+            if (key_val.size() != 2) {
+                isc_throw(InvalidOptionDnrSvcParams,
+                          getLogPrefix() << "Wrong Svc Params syntax - SvcParamKey=SvcParamValue "
+                                         << "pair syntax must be used");
+            }
+
+            // SvcParam Key related checks come below.
+            std::string key = str::trim(key_val[0]);
+
+            if (FORBIDDEN_SVC_PARAMS.find(key) != FORBIDDEN_SVC_PARAMS.end()) {
+                isc_throw(InvalidOptionDnrSvcParams, getLogPrefix() << "Wrong Svc Params syntax - key "
+                                                                    << key << " must not be used");
+            }
+
+            auto svc_params_iterator = SVC_PARAMS.find(key);
+            if (svc_params_iterator == SVC_PARAMS.end()) {
+                isc_throw(InvalidOptionDnrSvcParams,
+                          getLogPrefix() << "Wrong Svc Params syntax - key "
+                                         << key
+                                         << " not found in SvcParamKeys registry");
+            }
+
+            uint8_t num_svc_param_key = svc_params_iterator->second;
+            if (SUPPORTED_SVC_PARAMS.find(num_svc_param_key) == SUPPORTED_SVC_PARAMS.end()) {
+                isc_throw(InvalidOptionDnrSvcParams,
+                          getLogPrefix() << "Wrong Svc Params syntax - key "
+                                         << key
+                                         << " not supported in DNR option SvcParams");
+            }
+
+            // SvcParam Val check.
+            std::string val = str::trim(key_val[1]);
+            if (val.empty()) {
+                isc_throw(InvalidOptionDnrSvcParams,
+                          getLogPrefix() << "Wrong Svc Params syntax - empty SvcParamValue for key "
+                                         << key);
+            }
+
+
+
+            switch (num_svc_param_key) {
+            case 1:
+                // alpn
+                // The wire-format value for "alpn" consists of at least one alpn-id prefixed by its
+                // length as a single octet, and these length-value pairs are concatenated to form
+                // the SvcParamValue.
+
+                alpn_ids = str::tokens(val, std::string(","));
+                for (auto const& alpn_id : alpn_ids) {
+                    if (ALPN_IDS.find(alpn_id) == ALPN_IDS.end()) {
+                        isc_throw(InvalidOptionDnrSvcParams,
+                                  getLogPrefix() << "Wrong Svc Params syntax - alpn-id "
+                                                 << alpn_id
+                                  << " not found in ALPN-IDs registry");
+                    }
+
+                    OpaqueDataTuple alpn_id_tuple(OpaqueDataTuple::LENGTH_1_BYTE);
+                    alpn_id_tuple.append(alpn_id);
+                    alpn_ids_container.push_back(alpn_id_tuple);
+                }
+
+                break;
+            case 3:
+                // port
+                break;
+            case 7:
+                // dohpath
+                break;
+            }
+        }
+
+        std::ostringstream stream;
+        for (auto const& t : alpn_ids_container) {
+            stream << t.getLength() << "-" << t.getText() << " ";
+        }
+        isc_throw(BadValue, getLogPrefix() << "SvcParams: " + txt_svc_params + ", parsed "
+                                                                               "alpn-ids "
+                  + stream.str());
+    }
+
 }
 
 }  // namespace dhcp

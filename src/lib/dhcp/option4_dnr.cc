@@ -132,6 +132,8 @@ Option4Dnr::parseConfigData(const std::string& config_txt) {
 
 const std::unordered_set<std::string> DnrInstance::FORBIDDEN_SVC_PARAMS = {"ipv4hint", "ipv6hint"};
 
+const std::unordered_set<uint8_t> DnrInstance::SUPPORTED_SVC_PARAMS = {1, 3, 7};
+
 DnrInstance::DnrInstance(Option::Universe universe)
     : universe_(universe), dnr_instance_data_length_(0), service_priority_(0),
       adn_length_(0), addr_length_(0), svc_params_length_(0),

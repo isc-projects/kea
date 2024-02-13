@@ -13,6 +13,7 @@
 #include <dhcp/option.h>
 #include <dhcp/option_data_types.h>
 #include <dns/name.h>
+#include <util/strutil.h>
 
 #include <unordered_set>
 #include <string>
@@ -34,7 +35,7 @@ const std::map<std::string, uint16_t> SVC_PARAMS =
     { "ipv4hint", 4},        // RFC 9460, Section 14.3.2, forbidden in DNR
     { "ech", 5},             // RFC 9460, Section 14.3.2, not used in DNR
     { "ipv6hint", 6},        // RFC 9460, Section 14.3.2, forbidden in DNR
-    { "dotpath", 7},         // RFC 9461, optional in DNR
+    { "dohpath", 7},         // RFC 9461, optional in DNR
     { "ohttp", 8}            // https://datatracker.ietf.org/doc/draft-ietf-ohai-svcb-config,
                              // not used in DNR
 };
@@ -121,6 +122,8 @@ public:
     /// "ipv4hint" or "ipv6hint" SvcParams as they are superseded by the
     /// included IP addresses.
     static const std::unordered_set<std::string> FORBIDDEN_SVC_PARAMS;
+
+    static const std::unordered_set<uint8_t> SUPPORTED_SVC_PARAMS;
 
     /// @brief Constructor of the empty DNR Instance.
     ///
