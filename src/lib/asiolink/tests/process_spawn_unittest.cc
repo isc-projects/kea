@@ -128,6 +128,7 @@ TEST_F(ProcessSpawnTest, spawnWithArgs) {
     ASSERT_EQ(1, processed_signals_.size());
     ASSERT_EQ(SIGCHLD, processed_signals_[0]);
 
+    // Exit code 64 as requested.
     EXPECT_EQ(64, process.getExitStatus(pid));
 }
 
@@ -161,7 +162,8 @@ TEST_F(ProcessSpawnTest, spawnWithArgsAndEnvVars) {
     ASSERT_EQ(1, processed_signals_.size());
     ASSERT_EQ(SIGCHLD, processed_signals_[0]);
 
-    EXPECT_EQ(32, process.getExitStatus(pid));
+    // 56 means successful comparison of env vars.
+    EXPECT_EQ(56, process.getExitStatus(pid));
 }
 
 // This test verifies that the single ProcessSpawn object can be used
@@ -245,6 +247,7 @@ TEST_F(ProcessSpawnTest, spawnNoArgs) {
     ASSERT_EQ(1, processed_signals_.size());
     ASSERT_EQ(SIGCHLD, processed_signals_[0]);
 
+    // 32 means no args.
     EXPECT_EQ(32, process.getExitStatus(pid));
 
     ASSERT_NO_THROW(pid = process.spawn(true));
@@ -345,6 +348,73 @@ TEST_F(ProcessSpawnTest, isRunning) {
 
     ASSERT_EQ(1, processed_signals_.size());
     ASSERT_EQ(SIGCHLD, processed_signals_[0]);
+}
+
+// This test verifies inheritance of environment.
+TEST_F(ProcessSpawnTest, inheritEnv) {
+    // Run the process which sleeps for 10 seconds, so as we have
+    // enough time to check if it is running.
+    vector<string> args{"-v", "VAR", "value"};
+
+    ProcessEnvVars vars{"VAR=value"};
+
+    ProcessSpawn process(io_service_, TEST_SCRIPT_SH, args, vars,
+                         /* inherit_env = */ true);
+    pid_t pid = 0;
+    ASSERT_NO_THROW(pid = process.spawn());
+
+    // Set test fail safe.
+    setTestTime(1000);
+
+    // The next handler executed is IOSignal's handler.
+    io_service_->runOne();
+
+    // The first handler executed is the IOSignal's internal timer expire
+    // callback.
+    io_service_->runOne();
+
+    // Polling once to be sure.
+    io_service_->poll();
+
+    ASSERT_EQ(1, processed_signals_.size());
+    ASSERT_EQ(SIGCHLD, processed_signals_[0]);
+
+    // 56 means successful comparison of env vars.
+    EXPECT_EQ(56, process.getExitStatus(pid));
+}
+
+// This test verifies inheritance of environment when a variable is inherited
+// from parent. It assumes PATH is set.
+TEST_F(ProcessSpawnTest, inheritEnvWithParentVar) {
+    // Run the process which sleeps for 10 seconds, so as we have
+    // enough time to check if it is running.
+    vector<string> args{"-v", "PATH", "value"};
+
+    ProcessEnvVars vars{"VAR=value"};
+
+    ProcessSpawn process(io_service_, TEST_SCRIPT_SH, args, vars,
+                         /* inherit_env = */ true);
+    pid_t pid = 0;
+    ASSERT_NO_THROW(pid = process.spawn());
+
+    // Set test fail safe.
+    setTestTime(1000);
+
+    // The next handler executed is IOSignal's handler.
+    io_service_->runOne();
+
+    // The first handler executed is the IOSignal's internal timer expire
+    // callback.
+    io_service_->runOne();
+
+    // Polling once to be sure.
+    io_service_->poll();
+
+    ASSERT_EQ(1, processed_signals_.size());
+    ASSERT_EQ(SIGCHLD, processed_signals_[0]);
+
+    // 34 means failed comparison of env vars.
+    EXPECT_EQ(34, process.getExitStatus(pid));
 }
 
 } // end of anonymous namespace

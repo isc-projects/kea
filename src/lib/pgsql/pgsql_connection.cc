@@ -220,7 +220,8 @@ PgSqlConnection::initializeSchema(const ParameterMap& parameters) {
 
     // Run.
     IOServicePtr io_service(new IOService());
-    ProcessSpawn kea_admin(io_service, KEA_ADMIN, kea_admin_parameters, vars);
+    ProcessSpawn kea_admin(io_service, KEA_ADMIN, kea_admin_parameters, vars,
+                           /* inherit_env = */ true);
     DB_LOG_INFO(PGSQL_INITIALIZE_SCHEMA).arg(kea_admin.getCommandLine());
     pid_t const pid(kea_admin.spawn());
     io_service->runOne();

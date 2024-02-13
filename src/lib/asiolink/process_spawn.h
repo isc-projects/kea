@@ -67,10 +67,13 @@ public:
     /// @param executable A full path to the program to be executed.
     /// @param args Arguments for the program to be executed.
     /// @param vars Environment variables for the program to be executed.
+    /// @param inherit_env whether the spawned process will inherit the
+    ///        environment before adding 'vars' on top.
     ProcessSpawn(isc::asiolink::IOServicePtr io_service,
                  const std::string& executable,
                  const ProcessArgs& args = ProcessArgs(),
-                 const ProcessEnvVars& vars = ProcessEnvVars());
+                 const ProcessEnvVars& vars = ProcessEnvVars(),
+                 const bool inherit_env = false);
 
     /// @brief Destructor.
     ~ProcessSpawn() = default;

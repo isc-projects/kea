@@ -415,11 +415,13 @@ MySqlConnection::initializeSchema(const ParameterMap& parameters) {
 
     // Convert parameters.
     vector<string> kea_admin_parameters(toKeaAdminParameters(parameters));
+    ProcessEnvVars const vars;
     kea_admin_parameters.insert(kea_admin_parameters.begin(), "db-init");
 
     // Run.
     IOServicePtr io_service(new IOService());
-    ProcessSpawn kea_admin(io_service, KEA_ADMIN, kea_admin_parameters);
+    ProcessSpawn kea_admin(io_service, KEA_ADMIN, kea_admin_parameters, vars,
+                           /* inherit_env = */ true);
     DB_LOG_INFO(MYSQL_INITIALIZE_SCHEMA).arg(kea_admin.getCommandLine());
     pid_t const pid(kea_admin.spawn());
     io_service->runOne();

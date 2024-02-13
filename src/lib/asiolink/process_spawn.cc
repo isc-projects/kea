@@ -9,10 +9,12 @@
 #include <asiolink/io_service_signal.h>
 #include <asiolink/process_spawn.h>
 #include <exceptions/exceptions.h>
-#include <cstring>
+
 #include <functional>
 #include <map>
 #include <mutex>
+
+#include <cstring>
 #include <signal.h>
 #include <stdlib.h>
 #include <errno.h>
@@ -24,6 +26,8 @@
 
 using namespace std;
 namespace ph = std::placeholders;
+
+extern char **environ;
 
 namespace isc {
 namespace asiolink {
@@ -77,10 +81,13 @@ public:
     /// @param executable A full path to the program to be executed.
     /// @param args Arguments for the program to be executed.
     /// @param vars Environment variables for the program to be executed.
+    /// @param inherit_env whether the spawned process will inherit the
+    ///        environment before adding 'vars' on top.
     ProcessSpawnImpl(IOServicePtr io_service,
                      const std::string& executable,
                      const ProcessArgs& args,
-                     const ProcessEnvVars& vars);
+                     const ProcessEnvVars& vars,
+                     const bool inherit_env);
 
     /// @brief Destructor.
     ~ProcessSpawnImpl();
@@ -238,9 +245,24 @@ void ProcessSpawnImpl::IOSignalSetInitializer::initIOSignalSet(IOServicePtr io_s
 ProcessSpawnImpl::ProcessSpawnImpl(IOServicePtr io_service,
                                    const std::string& executable,
                                    const ProcessArgs& args,
-                                   const ProcessEnvVars& vars)
+                                   const ProcessEnvVars& vars,
+                                   const bool inherit_env)
     : executable_(executable), args_(new char*[args.size() + 2]),
-      vars_(new char*[vars.size() + 1]), store_(false), io_service_(io_service) {
+      store_(false), io_service_(io_service) {
+
+    // Size of vars except the trailing null
+    size_t vars_size;
+    if (inherit_env) {
+        size_t i(0);
+        while (environ[i]) {
+            ++i;
+        }
+        vars_size = i + vars.size();
+    } else {
+        vars_size = vars.size();
+    }
+
+    vars_ = boost::shared_ptr<char*[]>(new char*[vars_size + 1]);
 
     struct stat st;
 
@@ -256,16 +278,23 @@ ProcessSpawnImpl::ProcessSpawnImpl(IOServicePtr io_service,
     // all pointers within an array to NULL to indicate that they haven't
     // been allocated yet.
     memset(args_.get(), 0, (args.size() + 2) * sizeof(char*));
-    memset(vars_.get(), 0, (vars.size() + 1) * sizeof(char*));
+    memset(vars_.get(), 0, (vars_size + 1) * sizeof(char*));
     // By convention, the first argument points to an executable name.
     args_[0] = allocateInternal(executable_);
     // Copy arguments to the array.
-    for (int i = 1; i <= args.size(); ++i) {
+    for (size_t i = 1; i <= args.size(); ++i) {
         args_[i] = allocateInternal(args[i - 1]);
     }
     // Copy environment variables to the array.
-    for (int i = 0; i < vars.size(); ++i) {
-        vars_[i] = allocateInternal(vars[i]);
+    size_t i(0);
+    if (inherit_env) {
+        while (environ[i]) {
+            vars_[i] = allocateInternal(environ[i]);
+            ++i;
+        }
+    }
+    for (size_t j = 0; j < vars.size(); ++j) {
+        vars_[i + j] = allocateInternal(vars[j]);
     }
 }
 
@@ -410,8 +439,9 @@ ProcessSpawnImpl::clearState(const pid_t pid) {
 ProcessSpawn::ProcessSpawn(IOServicePtr io_service,
                            const std::string& executable,
                            const ProcessArgs& args,
-                           const ProcessEnvVars& vars)
-    : impl_(new ProcessSpawnImpl(io_service, executable, args, vars)) {
+                           const ProcessEnvVars& vars,
+                           const bool inherit_env /* = false */)
+    : impl_(new ProcessSpawnImpl(io_service, executable, args, vars, inherit_env)) {
 }
 
 std::string
