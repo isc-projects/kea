@@ -240,50 +240,67 @@ Option6Dnr::parseConfigData(const std::string& config_txt){
         std::string txt_svc_params = str::trim(tokens[3]);
 
         // SvcParamKey=SvcParamValue pairs are separated with space
-        std::vector<std::string> svc_params = str::tokens(txt_svc_params, std::string(" "));
-        std::vector<std::string> alpn_ids;
-        std::vector<OpaqueDataTuple> alpn_ids_container;
-        for (auto const& txt_svc_param : svc_params) {
-            std::vector<std::string> key_val = str::tokens(str::trim(txt_svc_param), "=");
-            if (key_val.size() != 2) {
+        std::vector<std::string> svc_params_pairs = str::tokens(txt_svc_params, std::string(" "));
+        std::vector<std::string> alpn_ids_tokens;
+        OpaqueDataTuple alpn_svc_param_val(OpaqueDataTuple::LENGTH_2_BYTES);
+        OutputBuffer out_buf(2);
+        for (auto const& svc_param_pair : svc_params_pairs) {
+            std::vector<std::string> key_val_tokens = str::tokens(str::trim(svc_param_pair), "=");
+            if (key_val_tokens.size() != 2) {
                 isc_throw(InvalidOptionDnrSvcParams,
                           getLogPrefix() << "Wrong Svc Params syntax - SvcParamKey=SvcParamValue "
                                          << "pair syntax must be used");
             }
 
             // SvcParam Key related checks come below.
-            std::string key = str::trim(key_val[0]);
+            std::string svc_param_key = str::trim(key_val_tokens[0]);
 
-            if (FORBIDDEN_SVC_PARAMS.find(key) != FORBIDDEN_SVC_PARAMS.end()) {
-                isc_throw(InvalidOptionDnrSvcParams, getLogPrefix() << "Wrong Svc Params syntax - key "
-                                                                    << key << " must not be used");
+            // As per RFC9463 Section 3.1.8:
+            // The service parameters do not include "ipv4hint" or "ipv6hint" parameters.
+            if (FORBIDDEN_SVC_PARAMS.find(svc_param_key) != FORBIDDEN_SVC_PARAMS.end()) {
+                isc_throw(InvalidOptionDnrSvcParams,
+                          getLogPrefix() << "Wrong Svc Params syntax - key "
+                                         << svc_param_key << " must not be used");
             }
 
-            auto svc_params_iterator = SVC_PARAMS.find(key);
+            // Check if SvcParamKey is known in https://www.iana.org/assignments/dns-svcb/dns-svcb.xhtml
+            auto svc_params_iterator = SVC_PARAMS.find(svc_param_key);
             if (svc_params_iterator == SVC_PARAMS.end()) {
                 isc_throw(InvalidOptionDnrSvcParams,
                           getLogPrefix() << "Wrong Svc Params syntax - key "
-                                         << key
+                                         << svc_param_key
                                          << " not found in SvcParamKeys registry");
             }
 
-            uint8_t num_svc_param_key = svc_params_iterator->second;
+            // Check if SvcParamKey usage is supported by DNR DHCP option.
+            // Note that SUPPORTED_SVC_PARAMS set may expand in future.
+            uint16_t num_svc_param_key = svc_params_iterator->second;
             if (SUPPORTED_SVC_PARAMS.find(num_svc_param_key) == SUPPORTED_SVC_PARAMS.end()) {
                 isc_throw(InvalidOptionDnrSvcParams,
                           getLogPrefix() << "Wrong Svc Params syntax - key "
-                                         << key
+                                         << svc_param_key
                                          << " not supported in DNR option SvcParams");
             }
 
-            // SvcParam Val check.
-            std::string val = str::trim(key_val[1]);
-            if (val.empty()) {
+            // As per RFC9460 Section 2.2:
+            // SvcParamKeys SHALL appear in increasing numeric order. (...)
+            // There are no duplicate SvcParamKeys.
+            //
+            // We check for duplicates here. Correct ordering is done when option gets packed.
+            if (svc_params_map_.find(num_svc_param_key) != svc_params_map_.end()) {
                 isc_throw(InvalidOptionDnrSvcParams,
-                          getLogPrefix() << "Wrong Svc Params syntax - empty SvcParamValue for key "
-                                         << key);
+                          getLogPrefix() << "Wrong Svc Params syntax - key "
+                                         << svc_param_key
+                                         << " is duplicated.");
             }
 
-
+            // SvcParam Val check.
+            std::string svc_param_val = str::trim(key_val_tokens[1]);
+            if (svc_param_val.empty()) {
+                isc_throw(InvalidOptionDnrSvcParams,
+                          getLogPrefix() << "Wrong Svc Params syntax - empty SvcParamValue for key "
+                                         << svc_param_key);
+            }
 
             switch (num_svc_param_key) {
             case 1:
@@ -291,9 +308,10 @@ Option6Dnr::parseConfigData(const std::string& config_txt){
                 // The wire-format value for "alpn" consists of at least one alpn-id prefixed by its
                 // length as a single octet, and these length-value pairs are concatenated to form
                 // the SvcParamValue.
-
-                alpn_ids = str::tokens(val, std::string(","));
-                for (auto const& alpn_id : alpn_ids) {
+                alpn_ids_tokens = str::tokens(svc_param_val, std::string(","));
+                for (auto const& alpn_id : alpn_ids_tokens) {
+                    // Check if alpn-id is known in
+                    // https://www.iana.org/assignments/tls-extensiontype-values/tls-extensiontype-values.xhtml#alpn-protocol-ids
                     if (ALPN_IDS.find(alpn_id) == ALPN_IDS.end()) {
                         isc_throw(InvalidOptionDnrSvcParams,
                                   getLogPrefix() << "Wrong Svc Params syntax - alpn-id "
@@ -303,8 +321,12 @@ Option6Dnr::parseConfigData(const std::string& config_txt){
 
                     OpaqueDataTuple alpn_id_tuple(OpaqueDataTuple::LENGTH_1_BYTE);
                     alpn_id_tuple.append(alpn_id);
-                    alpn_ids_container.push_back(alpn_id_tuple);
+                    alpn_id_tuple.pack(out_buf);
+                    alpn_svc_param_val.append(static_cast<const char*>(out_buf.getData()), out_buf.getLength());
+                    out_buf.clear();
                 }
+
+                svc_params_map_.insert(std::make_pair(num_svc_param_key, alpn_svc_param_val));
 
                 break;
             case 3:
@@ -316,13 +338,13 @@ Option6Dnr::parseConfigData(const std::string& config_txt){
             }
         }
 
-        std::ostringstream stream;
-        for (auto const& t : alpn_ids_container) {
-            stream << t.getLength() << "-" << t.getText() << " ";
-        }
-        isc_throw(BadValue, getLogPrefix() << "SvcParams: " + txt_svc_params + ", parsed "
-                                                                               "alpn-ids "
-                  + stream.str());
+        isc_throw(BadValue,
+                  getLogPrefix() << "SvcParams: " + txt_svc_params
+                                 << ", parsed alpn SvcParamVal len-data_to_text "
+                  << alpn_svc_param_val.getLength()
+                  << "-"
+                  << str::dumpAsHex(alpn_svc_param_val.getData().data(), alpn_svc_param_val.getLength())
+                  );
     }
 
 }

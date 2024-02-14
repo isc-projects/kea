@@ -443,6 +443,17 @@ protected:
     /// following the rules in Section 2.1 of [I-D.ietf-dnsop-svcb-https].
     std::string svc_params_;
 
+    /// @brief Service Parameters stored in a map.
+    ///
+    /// A set of service parameters that are encoded following the same rules
+    /// for encoding SvcParams using the wire format specified in Section 2.2 of RFC9460.
+    /// SvcParams are stored here in a map where the key is the SvcParamKey as an uint_16.
+    /// (Defined values are in Section 14.3.2 of RFC9460 - listed in @c SVC_PARAMS).
+    /// The value is an OpaqueDataTuple containing:
+    /// - the length of the SvcParamValue as an uint_16 integer in network byte order
+    /// - data buffer the SvcParamValue in a format determined by the SvcParamKey.
+    std::map<uint16_t, OpaqueDataTuple> svc_params_map_;
+
     /// @brief Calculates and returns length of DNR Instance data in octets.
     /// @return length of DNR Instance data in octets.
     uint16_t dnrInstanceLen() const;
