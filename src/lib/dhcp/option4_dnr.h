@@ -15,9 +15,10 @@
 #include <dns/name.h>
 #include <util/strutil.h>
 
-#include <unordered_set>
-#include <string>
 #include <map>
+#include <set>
+#include <string>
+#include <unordered_set>
 
 namespace isc {
 namespace dhcp {
@@ -123,7 +124,7 @@ public:
     /// included IP addresses.
     static const std::unordered_set<std::string> FORBIDDEN_SVC_PARAMS;
 
-    static const std::unordered_set<uint8_t> SUPPORTED_SVC_PARAMS;
+    static const std::set<uint8_t> SUPPORTED_SVC_PARAMS;
 
     /// @brief Constructor of the empty DNR Instance.
     ///

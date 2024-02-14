@@ -242,7 +242,7 @@ Option6Dnr::parseConfigData(const std::string& config_txt){
         // SvcParamKey=SvcParamValue pairs are separated with space
         std::vector<std::string> svc_params_pairs = str::tokens(txt_svc_params, std::string(" "));
         std::vector<std::string> alpn_ids_tokens;
-        OpaqueDataTuple alpn_svc_param_val(OpaqueDataTuple::LENGTH_2_BYTES);
+        OpaqueDataTuple svc_param_val_tuple(OpaqueDataTuple::LENGTH_2_BYTES);
         OutputBuffer out_buf(2);
         for (auto const& svc_param_pair : svc_params_pairs) {
             std::vector<std::string> key_val_tokens = str::tokens(str::trim(svc_param_pair), "=");
@@ -302,6 +302,7 @@ Option6Dnr::parseConfigData(const std::string& config_txt){
                                          << svc_param_key);
             }
 
+            svc_param_val_tuple.clear();
             switch (num_svc_param_key) {
             case 1:
                 // alpn
@@ -322,15 +323,31 @@ Option6Dnr::parseConfigData(const std::string& config_txt){
                     OpaqueDataTuple alpn_id_tuple(OpaqueDataTuple::LENGTH_1_BYTE);
                     alpn_id_tuple.append(alpn_id);
                     alpn_id_tuple.pack(out_buf);
-                    alpn_svc_param_val.append(static_cast<const char*>(out_buf.getData()), out_buf.getLength());
+                    svc_param_val_tuple.append(static_cast<const char*>(out_buf.getData()), out_buf.getLength());
                     out_buf.clear();
                 }
 
-                svc_params_map_.insert(std::make_pair(num_svc_param_key, alpn_svc_param_val));
-
+                svc_params_map_.insert(std::make_pair(num_svc_param_key, svc_param_val_tuple));
                 break;
             case 3:
                 // port
+                // The wire format of the SvcParamValue is the corresponding 2-octet numeric value
+                // in network byte order.
+                uint16_t port;
+                try {
+                    port = boost::lexical_cast<uint16_t>(svc_param_val);
+                } catch (const std::exception& e) {
+                    isc_throw(InvalidOptionDnrSvcParams,
+                              getLogPrefix() << "Wrong Svc Params syntax - given port nr "
+                                             << svc_param_val
+                                             << " cannot be parsed into uint_16 integer. "
+                                             << "Error: " << e.what());
+                }
+
+                out_buf.writeUint16(port);
+                svc_param_val_tuple.append(static_cast<const char*>(out_buf.getData()), out_buf.getLength());
+                out_buf.clear();
+                svc_params_map_.insert(std::make_pair(num_svc_param_key, svc_param_val_tuple));
                 break;
             case 7:
                 // dohpath
@@ -338,15 +355,24 @@ Option6Dnr::parseConfigData(const std::string& config_txt){
             }
         }
 
+        std::ostringstream stream;
+        for (auto const& p : SUPPORTED_SVC_PARAMS) {
+            auto it = svc_params_map_.find(p);
+            if (it != svc_params_map_.end()) {
+                out_buf.writeUint16(it->first);
+                (it->second).pack(out_buf);
+                stream << str::dumpAsHex(static_cast<const uint8_t*>(out_buf.getData()), out_buf.getLength());
+                stream << " ";
+                out_buf.clear();
+            }
+        }
+
         isc_throw(BadValue,
                   getLogPrefix() << "SvcParams: " + txt_svc_params
-                                 << ", parsed alpn SvcParamVal len-data_to_text "
-                  << alpn_svc_param_val.getLength()
-                  << "-"
-                  << str::dumpAsHex(alpn_svc_param_val.getData().data(), alpn_svc_param_val.getLength())
+                                 << ", packed hex: "
+                                 << stream.str()
                   );
     }
-
 }
 
 }  // namespace dhcp
