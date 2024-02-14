@@ -13,6 +13,7 @@
 #include <dhcp/option.h>
 #include <dhcp/option_data_types.h>
 #include <dns/name.h>
+#include <util/encode/utf8.h>
 #include <util/strutil.h>
 
 #include <map>
@@ -458,6 +459,10 @@ protected:
     /// @brief Calculates and returns length of DNR Instance data in octets.
     /// @return length of DNR Instance data in octets.
     uint16_t dnrInstanceLen() const;
+
+    /// @brief Indicates whether the "alpn" SvcParam contains support for HTTP.
+    /// Defaults to false.
+    bool alpn_http_;
 
 private:
     /// @brief Size in octets of DNR Instance Data Length field.

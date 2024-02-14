@@ -317,7 +317,12 @@ Option6Dnr::parseConfigData(const std::string& config_txt){
                         isc_throw(InvalidOptionDnrSvcParams,
                                   getLogPrefix() << "Wrong Svc Params syntax - alpn-id "
                                                  << alpn_id
-                                  << " not found in ALPN-IDs registry");
+                                                 << " not found in ALPN-IDs registry");
+                    }
+
+                    // Make notice if this is any of http alpn-ids.
+                    if (alpn_id.starts_with('h')) {
+                        alpn_http_ = true;
                     }
 
                     OpaqueDataTuple alpn_id_tuple(OpaqueDataTuple::LENGTH_1_BYTE);
@@ -350,9 +355,37 @@ Option6Dnr::parseConfigData(const std::string& config_txt){
                 svc_params_map_.insert(std::make_pair(num_svc_param_key, svc_param_val_tuple));
                 break;
             case 7:
-                // dohpath
+                // dohpath - RFC9461 Section 5
+                // single-valued SvcParamKey whose value (in both presentation format and wire
+                // format) MUST be a URI Template in relative form ([RFC6570], Section 1.1) encoded
+                // in UTF-8 [RFC3629]. If the "alpn" SvcParam indicates support for HTTP,
+                // "dohpath" MUST be present. The URI Template MUST contain a "dns" variable,
+                // and MUST be chosen such that the result after DoH URI Template expansion
+                // (Section 6 of [RFC8484]) is always a valid and functional ":path" value
+                // ([RFC9113], Section 8.3.1).
+
+                // Check that "dns" variable is there
+                if (svc_param_val.find("{?dns}") == std::string::npos) {
+                    isc_throw(InvalidOptionDnrSvcParams,
+                              getLogPrefix() << "Wrong Svc Params syntax - dohpath SvcParamValue URI"
+                                             << " Template MUST contain a 'dns' variable.");
+                }
+
+                // We hope to have URI containing < 0x80 ASCII chars, however to be sure
+                // and to be inline with RFC9461 Section 5, let's encode the dohpath with utf8.
+                auto const utf8_encoded = encode::encodeUtf8(svc_param_val);
+                svc_param_val_tuple.append(utf8_encoded.begin(), utf8_encoded.size());
+                svc_params_map_.insert(std::make_pair(num_svc_param_key, svc_param_val_tuple));
                 break;
             }
+        }
+
+        // If the "alpn" SvcParam indicates support for HTTP, "dohpath" MUST be present.
+        if (alpn_http_ && svc_params_map_.find(7) == svc_params_map_.end()) {
+            isc_throw(InvalidOptionDnrSvcParams,
+                      getLogPrefix() << "Wrong Svc Params syntax - dohpath SvcParam missing. "
+                                     << "When alpn SvcParam indicates "
+                                     << "support for HTTP, dohpath must be present.");
         }
 
         std::ostringstream stream;
