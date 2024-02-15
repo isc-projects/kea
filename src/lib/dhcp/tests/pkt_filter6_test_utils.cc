@@ -174,13 +174,13 @@ PktFilter6Test::testRcvdMessage(const Pkt6Ptr& rcvd_msg) const {
 
 void
 PktFilter6Test::testPktEvents(const PktPtr& msg, ptime start_time,
-                             std::list<std::string> expected_events) const {
+                              std::list<std::string> expected_events) const {
     ASSERT_NE(start_time, PktEvent::EMPTY_TIME());
     auto events = msg->getPktEvents();
     ASSERT_EQ(events.size(), expected_events.size());
     ptime prev_time = start_time;
     auto expected_event = expected_events.begin();
-    for (const auto& event : events) {
+    for (auto const& event : events) {
         ASSERT_EQ(event.label_, *expected_event);
         EXPECT_GE(event.timestamp_, prev_time);
         ++expected_event;

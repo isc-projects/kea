@@ -345,9 +345,9 @@ Pkt::addPktEvent(const std::string& label, const struct timeval& tv) {
 
 ptime
 Pkt::getPktEventTime(const std::string& label) const {
-    for (const auto& event : events_) {
+    for (auto const& event : events_) {
         if (event.label_ == label) {
-            return(event.timestamp_);
+            return (event.timestamp_);
         }
     }
 
@@ -369,7 +369,7 @@ Pkt::dumpPktEvents(bool verbose /* = false */) const {
     bool first_pass = true;
     boost::posix_time::ptime beg_time;
     boost::posix_time::ptime prev_time;
-    for (const auto& event : events_) {
+    for (auto const& event : events_) {
         if (!verbose) {
             oss << (first_pass ? "" : ", ") <<  event.timestamp_ << " : " << event.label_;
         } else {

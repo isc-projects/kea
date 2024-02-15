@@ -178,7 +178,7 @@ PktFilterTest::testPktEvents(const PktPtr& msg, ptime start_time,
     ASSERT_EQ(events.size(), expected_events.size());
     ptime prev_time = start_time;
     auto expected_event = expected_events.begin();
-    for (const auto& event : events) {
+    for (auto const& event : events) {
         ASSERT_EQ(event.label_, *expected_event);
         EXPECT_GE(event.timestamp_, prev_time);
         ++expected_event;

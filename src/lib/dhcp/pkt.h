@@ -100,7 +100,7 @@ public:
     /// by application.
     static const std::string RESPONSE_SENT;
 
-    /// @brief Constructor
+    /// @brief Constructor.
     ///
     /// @param label string identifying the event.
     /// @param timestamp time at which the event occurred.
@@ -108,14 +108,14 @@ public:
         : label_(label), timestamp_(timestamp) {
     }
 
-    /// @brief Destructor
+    /// @brief Destructor.
     ~PktEvent() = default;
 
     /// @brief Fetch the current UTC system time, microsecond precision.
     ///
     /// @return ptime containing the microsecond system time.
     static boost::posix_time::ptime now() {
-        return(boost::posix_time::microsec_clock::universal_time());
+        return (boost::posix_time::microsec_clock::universal_time());
     }
 
     /// @brief Fetch an empty timestamp, used for logic comparisons

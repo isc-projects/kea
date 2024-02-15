@@ -1539,7 +1539,7 @@ TEST_F(Pkt4Test, PktEvents) {
     // Upon creation, the events table should be empty.
     ASSERT_TRUE(pkt->getPktEvents().empty());
 
-    // An non-existant event should return an empty time.
+    // An non-existent event should return an empty time.
     auto event_time = pkt->getPktEventTime(PktEvent::BUFFER_READ);
     ASSERT_EQ(event_time, PktEvent::EMPTY_TIME());
 
@@ -1562,7 +1562,7 @@ TEST_F(Pkt4Test, PktEvents) {
     ASSERT_EQ(event_time, start_time);
 
     // Should be able to fetch the list of events.
-    const auto& events = pkt->getPktEvents();
+    auto const& events = pkt->getPktEvents();
     ASSERT_FALSE(events.empty());
     auto event = events.begin();
     ASSERT_EQ((*event).label_, PktEvent::BUFFER_READ);
@@ -1590,6 +1590,5 @@ TEST_F(Pkt4Test, PktEvents) {
               "2024-Feb-01 15:51:16.000250 : second-event elapsed: 00:00:00.000150\n"
               "total elapsed: 00:00:00.000150");
 }
-
 
 } // end of anonymous namespace

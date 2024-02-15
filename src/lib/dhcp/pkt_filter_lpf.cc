@@ -396,7 +396,7 @@ PktFilterLPF::receive(Iface& iface, const SocketInfo& socket_info) {
     struct cmsghdr* cmsg = CMSG_FIRSTHDR(&m);
     while (cmsg != NULL) {
         if ((cmsg->cmsg_level == SOL_SOCKET) &&
-                   (cmsg->cmsg_type  == SCM_TIMESTAMP)) {
+            (cmsg->cmsg_type  == SCM_TIMESTAMP)) {
 
             struct timeval cmsg_time;
             memcpy(&cmsg_time, CMSG_DATA(cmsg), sizeof(cmsg_time));
