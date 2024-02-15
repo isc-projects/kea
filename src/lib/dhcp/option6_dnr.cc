@@ -151,7 +151,7 @@ Option6Dnr::unpackAddresses(OptionBufferConstIter& begin, OptionBufferConstIter 
 }
 
 void
-Option6Dnr::parseConfigData(const std::string& config_txt){
+Option6Dnr::parseConfigData(const std::string& config_txt) {
     // This parses convenient option config notation.
     // The config to be parsed may contain escaped characters like "\\," or "\\|".
     // Example configs are below (first contains recommended resolvers' IP addresses, and SvcParams;
@@ -182,9 +182,9 @@ Option6Dnr::parseConfigData(const std::string& config_txt){
     try {
         service_priority_ = boost::lexical_cast<uint16_t>(txt_svc_priority);
     } catch (const std::exception& e) {
-        isc_throw(BadValue, getLogPrefix() << "Given service priority " + txt_svc_priority
-                                           << " cannot be parsed into uint_16 integer. "
-                                           << "Error: " << e.what());
+        isc_throw(BadValue, getLogPrefix() << "Cannot parse uint_16 integer Service priority "
+                                           << "from given value: " << txt_svc_priority
+                                           << ". Error: " << e.what());
     }
 
     // parse ADN
@@ -192,18 +192,16 @@ Option6Dnr::parseConfigData(const std::string& config_txt){
     try {
         adn_.reset(new isc::dns::Name(txt_adn, true));
     } catch (const std::exception& e) {
-        isc_throw(InvalidOptionDnrDomainName, getLogPrefix()
-                                                  << "Given ADN " + txt_adn
-                                                  << " cannot be parsed into fully qualified "
-                                                  << "domain-name. "
-                                                  << "Error: " << e.what());
+        isc_throw(InvalidOptionDnrDomainName, getLogPrefix() << "Cannot parse ADN FQDN "
+                                                             << "from given value: " << txt_adn
+                                                             << ". Error: " << e.what());
     }
 
     adn_length_ = adn_->getLength();
     if (adn_length_ == 0) {
         isc_throw(InvalidOptionDnrDomainName, getLogPrefix()
                                                   << "Mandatory Authentication Domain Name fully "
-                                                     "qualified domain-name is missing");
+                                                  << "qualified domain-name is missing");
     }
 
     if (tokens.size() > 2) {
@@ -218,9 +216,9 @@ Option6Dnr::parseConfigData(const std::string& config_txt){
             try {
                 ip_addresses_.push_back(IOAddress(str::trim(txt_addr)));
             } catch (const Exception& e) {
-                isc_throw(BadValue, getLogPrefix() << "Given string " + txt_addr
-                                                   << " cannot be parsed into IPv6 address. "
-                                                   << "Error: " << e.what());
+                isc_throw(BadValue, getLogPrefix() << "Cannot parse IPv6 address "
+                                                   << "from given value: " << txt_addr
+                                                   << ". Error: " << e.what());
             }
         }
 
@@ -258,17 +256,17 @@ Option6Dnr::parseConfigData(const std::string& config_txt){
             // As per RFC9463 Section 3.1.8:
             // The service parameters do not include "ipv4hint" or "ipv6hint" parameters.
             if (FORBIDDEN_SVC_PARAMS.find(svc_param_key) != FORBIDDEN_SVC_PARAMS.end()) {
-                isc_throw(InvalidOptionDnrSvcParams,
-                          getLogPrefix() << "Wrong Svc Params syntax - key "
-                                         << svc_param_key << " must not be used");
+                isc_throw(InvalidOptionDnrSvcParams, getLogPrefix()
+                                                         << "Wrong Svc Params syntax - key "
+                                                         << svc_param_key << " must not be used");
             }
 
-            // Check if SvcParamKey is known in https://www.iana.org/assignments/dns-svcb/dns-svcb.xhtml
+            // Check if SvcParamKey is known in
+            // https://www.iana.org/assignments/dns-svcb/dns-svcb.xhtml
             auto svc_params_iterator = SVC_PARAMS.find(svc_param_key);
             if (svc_params_iterator == SVC_PARAMS.end()) {
                 isc_throw(InvalidOptionDnrSvcParams,
-                          getLogPrefix() << "Wrong Svc Params syntax - key "
-                                         << svc_param_key
+                          getLogPrefix() << "Wrong Svc Params syntax - key " << svc_param_key
                                          << " not found in SvcParamKeys registry");
             }
 
@@ -277,8 +275,7 @@ Option6Dnr::parseConfigData(const std::string& config_txt){
             uint16_t num_svc_param_key = svc_params_iterator->second;
             if (SUPPORTED_SVC_PARAMS.find(num_svc_param_key) == SUPPORTED_SVC_PARAMS.end()) {
                 isc_throw(InvalidOptionDnrSvcParams,
-                          getLogPrefix() << "Wrong Svc Params syntax - key "
-                                         << svc_param_key
+                          getLogPrefix() << "Wrong Svc Params syntax - key " << svc_param_key
                                          << " not supported in DNR option SvcParams");
             }
 
@@ -288,10 +285,9 @@ Option6Dnr::parseConfigData(const std::string& config_txt){
             //
             // We check for duplicates here. Correct ordering is done when option gets packed.
             if (svc_params_map_.find(num_svc_param_key) != svc_params_map_.end()) {
-                isc_throw(InvalidOptionDnrSvcParams,
-                          getLogPrefix() << "Wrong Svc Params syntax - key "
-                                         << svc_param_key
-                                         << " is duplicated.");
+                isc_throw(InvalidOptionDnrSvcParams, getLogPrefix()
+                                                         << "Wrong Svc Params syntax - key "
+                                                         << svc_param_key << " is duplicated.");
             }
 
             // SvcParam Val check.
@@ -315,8 +311,7 @@ Option6Dnr::parseConfigData(const std::string& config_txt){
                     // https://www.iana.org/assignments/tls-extensiontype-values/tls-extensiontype-values.xhtml#alpn-protocol-ids
                     if (ALPN_IDS.find(alpn_id) == ALPN_IDS.end()) {
                         isc_throw(InvalidOptionDnrSvcParams,
-                                  getLogPrefix() << "Wrong Svc Params syntax - alpn-id "
-                                                 << alpn_id
+                                  getLogPrefix() << "Wrong Svc Params syntax - alpn-id " << alpn_id
                                                  << " not found in ALPN-IDs registry");
                     }
 
@@ -328,7 +323,8 @@ Option6Dnr::parseConfigData(const std::string& config_txt){
                     OpaqueDataTuple alpn_id_tuple(OpaqueDataTuple::LENGTH_1_BYTE);
                     alpn_id_tuple.append(alpn_id);
                     alpn_id_tuple.pack(out_buf);
-                    svc_param_val_tuple.append(static_cast<const char*>(out_buf.getData()), out_buf.getLength());
+                    svc_param_val_tuple.append(static_cast<const char*>(out_buf.getData()),
+                                               out_buf.getLength());
                     out_buf.clear();
                 }
 
@@ -343,14 +339,14 @@ Option6Dnr::parseConfigData(const std::string& config_txt){
                     port = boost::lexical_cast<uint16_t>(svc_param_val);
                 } catch (const std::exception& e) {
                     isc_throw(InvalidOptionDnrSvcParams,
-                              getLogPrefix() << "Wrong Svc Params syntax - given port nr "
-                                             << svc_param_val
-                                             << " cannot be parsed into uint_16 integer. "
-                                             << "Error: " << e.what());
+                              getLogPrefix() << "Cannot parse uint_16 integer port nr "
+                                             << "from given value: " << svc_param_val
+                                             << ". Error: " << e.what());
                 }
 
                 out_buf.writeUint16(port);
-                svc_param_val_tuple.append(static_cast<const char*>(out_buf.getData()), out_buf.getLength());
+                svc_param_val_tuple.append(static_cast<const char*>(out_buf.getData()),
+                                           out_buf.getLength());
                 out_buf.clear();
                 svc_params_map_.insert(std::make_pair(num_svc_param_key, svc_param_val_tuple));
                 break;
@@ -367,8 +363,9 @@ Option6Dnr::parseConfigData(const std::string& config_txt){
                 // Check that "dns" variable is there
                 if (svc_param_val.find("{?dns}") == std::string::npos) {
                     isc_throw(InvalidOptionDnrSvcParams,
-                              getLogPrefix() << "Wrong Svc Params syntax - dohpath SvcParamValue URI"
-                                             << " Template MUST contain a 'dns' variable.");
+                              getLogPrefix()
+                                  << "Wrong Svc Params syntax - dohpath SvcParamValue URI"
+                                  << " Template MUST contain a 'dns' variable.");
                 }
 
                 // We hope to have URI containing < 0x80 ASCII chars, however to be sure
@@ -388,23 +385,45 @@ Option6Dnr::parseConfigData(const std::string& config_txt){
                                      << "support for HTTP, dohpath must be present.");
         }
 
+        // At this step all given SvcParams should be fine. We can pack everything to data
+        // buffer according to RFC9460 Section 2.2.
+        //
+        // When the list of SvcParams is non-empty, it contains a series of
+        // SvcParamKey=SvcParamValue pairs, represented as:
+        // - a 2-octet field containing the SvcParamKey as an integer in network byte order.
+        // - a 2-octet field containing the length of the SvcParamValue as an integer
+        //   between 0 and 65535 in network byte order. (uint16)
+        // - an octet string of this length whose contents are the SvcParamValue in a format
+        //   determined by the SvcParamKey.
+        // (...)
+        // SvcParamKeys SHALL appear in increasing numeric order.
+        // Note that (...) there are no duplicate SvcParamKeys.
+
         std::ostringstream stream;
-        for (auto const& p : SUPPORTED_SVC_PARAMS) {
-            auto it = svc_params_map_.find(p);
+        for (auto const& svc_param_key : SUPPORTED_SVC_PARAMS) {
+            auto it = svc_params_map_.find(svc_param_key);
             if (it != svc_params_map_.end()) {
+                // Write 2-octet field containing the SvcParamKey as an integer
+                // in network byte order.
                 out_buf.writeUint16(it->first);
+                // Write 2-octet field containing the length of the SvcParamValue
+                // and an octet string of this length whose contents are the SvcParamValue.
+                // We use OpaqueDataTuple#pack(&buf) here that will write correct len-data
+                // tuple to the buffer.
                 (it->second).pack(out_buf);
-                stream << str::dumpAsHex(static_cast<const uint8_t*>(out_buf.getData()), out_buf.getLength());
-                stream << " ";
-                out_buf.clear();
             }
         }
 
-        isc_throw(BadValue,
-                  getLogPrefix() << "SvcParams: " + txt_svc_params
-                                 << ", packed hex: "
-                                 << stream.str()
-                  );
+        // Copy SvcParams buffer from OutputBuffer to OptionBuffer.
+        const uint8_t* ptr = static_cast<const uint8_t*>(out_buf.getData());
+        OptionBuffer temp_buf(ptr, ptr + out_buf.getLength());
+        svc_params_buf_ = temp_buf;
+        svc_params_length_ = out_buf.getLength();
+        out_buf.clear();
+
+        isc_throw(BadValue, getLogPrefix()
+                                << "SvcParams: " + txt_svc_params << ", packed hex: "
+                                << str::dumpAsHex(svc_params_buf_.data(), svc_params_length_));
     }
 }
 

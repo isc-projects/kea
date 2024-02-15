@@ -439,11 +439,17 @@ protected:
     /// fields are not present if the ADN-only mode is used.
     bool adn_only_mode_;
 
-    /// @brief Service Parameters (SvcParams) (variable length).
+    /// @brief Service Parameters (SvcParams) (variable length) as string.
     ///
     /// Specifies a set of service parameters that are encoded
     /// following the rules in Section 2.1 of [I-D.ietf-dnsop-svcb-https].
     std::string svc_params_;
+
+    /// @brief Service Parameters (SvcParams) (variable length) as on-wire data buffer.
+    ///
+    /// Specifies a set of service parameters that are encoded
+    /// following the rules in Section 2.2 of RFC9460.
+    OptionBuffer svc_params_buf_;
 
     /// @brief Service Parameters stored in a map.
     ///
