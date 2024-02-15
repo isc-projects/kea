@@ -24,64 +24,6 @@
 namespace isc {
 namespace dhcp {
 
-
-/// @brief Service parameters, used in DNR options in DHCPv4 and DHCPv6, but also in RA and DNS
-///
-/// The IANA registry is maintained at https://www.iana.org/assignments/dns-svcb/dns-svcb.xhtml
-const std::map<std::string, uint16_t> SVC_PARAMS =
-{
-    { "mandatory", 0},       // RFC 9460, Section 14.3.2, not used in DNR
-    { "alpn", 1 },           // RFC 9460, Section 14.3.2, mandatory in DNR
-    { "no-default-alpn", 2}, // RFC 9460, Section 14.3.2, not used in DNR
-    { "port", 3},            // RFC 9460, Section 14.3.2, optional in DNR
-    { "ipv4hint", 4},        // RFC 9460, Section 14.3.2, forbidden in DNR
-    { "ech", 5},             // RFC 9460, Section 14.3.2, not used in DNR
-    { "ipv6hint", 6},        // RFC 9460, Section 14.3.2, forbidden in DNR
-    { "dohpath", 7},         // RFC 9461, optional in DNR
-    { "ohttp", 8}            // https://datatracker.ietf.org/doc/draft-ietf-ohai-svcb-config,
-                             // not used in DNR
-};
-
-/// @brief Possible ALPN protocol IDs.
-///
-/// The IANA registry is maintained at
-/// https://www.iana.org/assignments/tls-extensiontype-values/tls-extensiontype-values.xhtml#alpn-protocol-ids
-static const std::unordered_set<std::string> ALPN_IDS = {
-    "http/0.9",            // HTTP/0.9
-    "http/1.0",            // HTTP/1.0
-    "http/1.1",            // HTTP/1.1
-    "spdy/1",              // SPDY/1
-    "spdy/2",              // SPDY/2
-    "spdy/3",              // SPDY/3
-    "stun.turn",           // Traversal Using Relays around NAT (TURN)
-    "stun.nat-discovery",  // NAT discovery using Session Traversal Utilities for NAT (STUN)
-    "h2",                  // HTTP/2 over TLS
-    "h2c",                 // HTTP/2 over TCP
-    "webrtc",              // WebRTC Media and Data
-    "c-webrtc",            // Confidential WebRTC Media and Data
-    "ftp",                 // FTP
-    "imap",                // IMAP
-    "pop3",                // POP3
-    "managesieve",         // ManageSieve
-    "coap",                // CoAP
-    "xmpp-client",         // XMPP jabber:client namespace
-    "xmpp-server",         // XMPP jabber:server namespace
-    "acme-tls/1",          // acme-tls/1
-    "mqtt",                // OASIS Message Queuing Telemetry Transport (MQTT)
-    "dot",                 // DNS-over-TLS
-    "ntske/1",             // Network Time Security Key Establishment, version 1
-    "sunrpc",              // SunRPC
-    "h3",                  // HTTP/3
-    "smb",                 // SMB2
-    "irc",                 // IRC
-    "nntp",                // NNTP (reading)
-    "nnsp",                // NNTP (transit)
-    "doq",                 // DoQ
-    "sip/2",               // SIP
-    "tds/8.0",             // TDS/8.0
-    "dicom"                // DICOM
-};
-
 /// @brief Exception thrown when invalid domain name is specified.
 class InvalidOptionDnrDomainName : public Exception {
 public:
@@ -125,7 +67,31 @@ public:
     /// included IP addresses.
     static const std::unordered_set<std::string> FORBIDDEN_SVC_PARAMS;
 
+    /// @brief Service parameters, used in DNR options in DHCPv4 and DHCPv6, but also in RA and DNS
+    ///
+    /// The IANA registry is maintained at https://www.iana.org/assignments/dns-svcb/dns-svcb.xhtml
+    static const std::map<std::string, uint16_t> SVC_PARAMS;
+
+    /// @brief Ordered set of supported SvcParamKeys.
+    ///
+    /// As per RFC9463 Section 3.1.5:
+    /// The following service parameters MUST be supported by a DNR implementation:
+    /// SvcParamKey=1 alpn: Used to indicate the set of supported protocols (Section 7.1 of
+    /// [RFC9460]).
+    /// SvcParamKey=3 port: Used to indicate the target port number for the encrypted DNS connection
+    /// (Section 7.2 of [RFC9460]).
+    ///
+    /// In addition, the following service parameter is RECOMMENDED to be supported by a DNR
+    /// implementation:
+    /// SvcParamKey=7 dohpath: Used to supply a relative DoH URI Template
+    /// (Section 5.1 of [RFC9461]).
     static const std::set<uint8_t> SUPPORTED_SVC_PARAMS;
+
+    /// @brief Possible ALPN protocol IDs.
+    ///
+    /// The IANA registry is maintained at
+    /// https://www.iana.org/assignments/tls-extensiontype-values/tls-extensiontype-values.xhtml#alpn-protocol-ids
+    static const std::unordered_set<std::string> ALPN_IDS;
 
     /// @brief Constructor of the empty DNR Instance.
     ///
@@ -290,6 +256,15 @@ public:
         adn_only_mode_ = adn_only_mode;
     }
 
+    /// @brief Setter of the @c dnr_instance_data_length_ field.
+    ///
+    /// Size is calculated basing on set Service Priority, ADN, IP address/es and SvcParams.
+    /// This should be called after all fields are set.
+    /// This is only used for DHCPv4 Encrypted DNS %Option.
+    void setDnrInstanceDataLength() {
+        dnr_instance_data_length_ = dnrInstanceLen();
+    }
+
     /// @brief Writes the ADN FQDN in the wire format into a buffer.
     ///
     /// The Authentication Domain Name - fully qualified domain name of the encrypted
@@ -356,9 +331,7 @@ public:
     /// Addr Len not divisible by 4, Addr Len is 0.
     virtual void unpackAddresses(OptionBufferConstIter& begin, OptionBufferConstIter end);
 
-    /// @brief Unpacks Service Parameters from wire data buffer and stores it in @c svc_params_.
-    ///
-    /// It may throw in case of malformed data detected during parsing.
+    /// @brief Unpacks Service Parameters from wire data buffer and stores it in @c svc_params_buf_.
     ///
     /// @param begin beginning of the buffer from which the field will be read
     /// @param end end of the buffer from which the field will be read
@@ -396,6 +369,34 @@ public:
     ///
     /// @param ip_address IP address to be added
     void addIpAddress(const asiolink::IOAddress& ip_address);
+
+    /// @brief Parses a convenient notation of the option data, which may be used in config.
+    ///
+    /// As an alternative to the binary format,
+    /// we provide convenience option definition as a string in format:
+    /// (for DNRv6)
+    /// "100, dot1.example.org., 2001:db8::1 2001:db8::2, alpn=dot\\,doq\\,h2\\,h3 port=8530 dohpath=/q{?dns}"
+    /// "200, resolver.example." - ADN only mode
+    /// (for DNRv4)
+    /// "100, dot1.example.org., 10.0.3.4 10.1.5.6, alpn=dot\\,doq\\,h2\\,h3 port=8530 dohpath=/q{?dns}"
+    /// "200, resolver.example." - ADN only mode
+    ///
+    /// Note that comma and pipe chars ("," 0x2C and "|" 0x7C) are used as separators in this
+    /// syntax. That's why whenever they are used in config in fields' values, they must be escaped
+    /// with double backslash as in example.
+    ///
+    /// Note that this function parses single DnrInstance. For DNRv4 it is possible to have more
+    /// than one DnrInstance per one Option. In that case this function must be called for each
+    /// DnrInstance.
+    ///
+    /// @param config_txt convenient notation of the option data received as string
+    ///
+    /// @throw BadValue Thrown in case parser found wrong format of received string.
+    /// @throw InvalidOptionDnrDomainName Thrown in case parser had problems with extracting ADN
+    /// FQDN.
+    /// @throw InvalidOptionDnrSvcParams Thrown in case parser had problems with extracting
+    /// SvcParams.
+    void parseDnrInstanceConfigData(const std::string& config_txt);
 
 protected:
     /// @brief Either V4 or V6 Option universe.
@@ -616,11 +617,13 @@ private:
     ///
     /// As an alternative to the binary format,
     /// we provide convenience option definition as a string in format:
-    /// TBD
+    /// "name": "v4-dnr",
+    /// "data": "10, dot1.example.org., 10.0.2.3 10.3.4.5, alpn=dot\\,doq | 20, dot2.example.org., 10.0.2.3 10.3.4.5, alpn=dot"
     ///
-    /// @param config_txt convenient notation of the option data received as string
+    /// It may throw BadValue, InvalidOptionDnrDomainName or InvalidOptionDnrSvcParams,
+    /// if DnrInstance#parseDnrInstanceConfigData() throws.
     ///
-    /// @throw BadValue Thrown in case parser found wrong format of received string.
+    /// @param config_txt convenient notation of the option data received as string.
     void parseConfigData(const std::string& config_txt);
 };
 

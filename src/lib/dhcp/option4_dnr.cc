@@ -127,18 +127,91 @@ Option4Dnr::addDnrInstance(DnrInstance& dnr_instance) {
 
 void
 Option4Dnr::parseConfigData(const std::string& config_txt) {
-    // TBD
+    // This parses convenient option config notation.
+    // The config to be parsed may contain escaped characters like "\\," or "\\|".
+    // Example configs are below (first contains two DNR instances in one option with recommended
+    // resolvers' IP addresses, and SvcParams - DNR instances are separated with pipe "|" char;
+    // second is an example of ADN-only mode;
+    // third is like the first example, but for single DNR instance):
+    //
+    // "name": "v4-dnr",
+    // "data": "10, dot1.example.org., 10.0.2.3 10.3.4.5, alpn=dot\\,doq | 20, dot2.example.org., 10.0.2.3 10.3.4.5, alpn=dot"
+    //
+    // "name": "v4-dnr",
+    // "data": "200, resolver.example."
+    //
+    // "name": "v4-dnr",
+    // "data": "100, dot1.example.org., 10.0.3.4 10.1.5.6, alpn=dot\\,doq\\,h2\\,h3 port=8530 dohpath=/q{?dns}"
+
+    // Get Dnr Instance tokens using pipe separator with double backslash escaping enabled.
+    std::vector<std::string> tokens = str::tokens(config_txt, std::string("|"), true);
+
+    for (auto const& txt_dnr_instance : tokens) {
+        DnrInstance dnr_instance(V4);
+        dnr_instance.parseDnrInstanceConfigData(txt_dnr_instance);
+        dnr_instance.setDnrInstanceDataLength();
+        addDnrInstance(dnr_instance);
+    }
 }
 
 const std::unordered_set<std::string> DnrInstance::FORBIDDEN_SVC_PARAMS = {"ipv4hint", "ipv6hint"};
 
+const std::map<std::string, uint16_t> DnrInstance::SVC_PARAMS = {
+    {"mandatory", 0},        // RFC 9460, Section 14.3.2, not used in DNR
+    {"alpn", 1},             // RFC 9460, Section 14.3.2, mandatory in DNR
+    {"no-default-alpn", 2},  // RFC 9460, Section 14.3.2, not used in DNR
+    {"port", 3},             // RFC 9460, Section 14.3.2, optional in DNR
+    {"ipv4hint", 4},         // RFC 9460, Section 14.3.2, forbidden in DNR
+    {"ech", 5},              // RFC 9460, Section 14.3.2, not used in DNR
+    {"ipv6hint", 6},         // RFC 9460, Section 14.3.2, forbidden in DNR
+    {"dohpath", 7},          // RFC 9461, optional in DNR
+    {"ohttp", 8}             // https://datatracker.ietf.org/doc/draft-ietf-ohai-svcb-config,
+                             // not used in DNR
+};
+
 const std::set<uint8_t> DnrInstance::SUPPORTED_SVC_PARAMS = {1, 3, 7};
 
+const std::unordered_set<std::string> DnrInstance::ALPN_IDS = {
+    "http/0.9",            // HTTP/0.9
+    "http/1.0",            // HTTP/1.0
+    "http/1.1",            // HTTP/1.1
+    "spdy/1",              // SPDY/1
+    "spdy/2",              // SPDY/2
+    "spdy/3",              // SPDY/3
+    "stun.turn",           // Traversal Using Relays around NAT (TURN)
+    "stun.nat-discovery",  // NAT discovery using Session Traversal Utilities for NAT (STUN)
+    "h2",                  // HTTP/2 over TLS
+    "h2c",                 // HTTP/2 over TCP
+    "webrtc",              // WebRTC Media and Data
+    "c-webrtc",            // Confidential WebRTC Media and Data
+    "ftp",                 // FTP
+    "imap",                // IMAP
+    "pop3",                // POP3
+    "managesieve",         // ManageSieve
+    "coap",                // CoAP
+    "xmpp-client",         // XMPP jabber:client namespace
+    "xmpp-server",         // XMPP jabber:server namespace
+    "acme-tls/1",          // acme-tls/1
+    "mqtt",                // OASIS Message Queuing Telemetry Transport (MQTT)
+    "dot",                 // DNS-over-TLS
+    "ntske/1",             // Network Time Security Key Establishment, version 1
+    "sunrpc",              // SunRPC
+    "h3",                  // HTTP/3
+    "smb",                 // SMB2
+    "irc",                 // IRC
+    "nntp",                // NNTP (reading)
+    "nnsp",                // NNTP (transit)
+    "doq",                 // DoQ
+    "sip/2",               // SIP
+    "tds/8.0",             // TDS/8.0
+    "dicom"                // DICOM
+};
+
 DnrInstance::DnrInstance(Option::Universe universe)
-    : universe_(universe), dnr_instance_data_length_(0), service_priority_(0),
-      adn_length_(0), addr_length_(0), svc_params_length_(0),
-      adn_only_mode_(true), dnr_instance_data_length_size_(0),
-      adn_length_size_(0), addr_length_size_(0), minimal_length_(0) {
+    : universe_(universe), dnr_instance_data_length_(0), service_priority_(0), adn_length_(0),
+      addr_length_(0), svc_params_length_(0), adn_only_mode_(true), alpn_http_(false),
+      dnr_instance_data_length_size_(0), adn_length_size_(0), addr_length_size_(0),
+      minimal_length_(0) {
     initMembers();
 }
 
@@ -147,12 +220,11 @@ DnrInstance::DnrInstance(Option::Universe universe,
                          const std::string& adn,
                          const DnrInstance::AddressContainer& ip_addresses,
                          const std::string& svc_params)
-    : universe_(universe), dnr_instance_data_length_(0),
-      service_priority_(service_priority), adn_length_(0),
-      addr_length_(0), ip_addresses_(ip_addresses), svc_params_length_(0),
-      adn_only_mode_(true), svc_params_(svc_params),
-      dnr_instance_data_length_size_(0), adn_length_size_(0),
-      addr_length_size_(0), minimal_length_(0) {
+    : universe_(universe), dnr_instance_data_length_(0), service_priority_(service_priority),
+      adn_length_(0), addr_length_(0), ip_addresses_(ip_addresses), svc_params_length_(0),
+      adn_only_mode_(true), svc_params_(svc_params), alpn_http_(false),
+      dnr_instance_data_length_size_(0), adn_length_size_(0), addr_length_size_(0),
+      minimal_length_(0) {
     initMembers();
     setAdn(adn);
     checkFields();
@@ -161,10 +233,9 @@ DnrInstance::DnrInstance(Option::Universe universe,
 DnrInstance::DnrInstance(Option::Universe universe,
                          const uint16_t service_priority,
                          const std::string& adn)
-    : universe_(universe), dnr_instance_data_length_(0),
-      service_priority_(service_priority), adn_length_(0),
-      addr_length_(0), svc_params_length_(0), adn_only_mode_(true),
-      dnr_instance_data_length_size_(0), adn_length_size_(0),
+    : universe_(universe), dnr_instance_data_length_(0), service_priority_(service_priority),
+      adn_length_(0), addr_length_(0), svc_params_length_(0), adn_only_mode_(true),
+      alpn_http_(false), dnr_instance_data_length_size_(0), adn_length_size_(0),
       addr_length_size_(0), minimal_length_(0) {
     initMembers();
     setAdn(adn);
@@ -199,8 +270,8 @@ DnrInstance::packAddresses(OutputBuffer& buf) const {
 
 void
 DnrInstance::packSvcParams(OutputBuffer& buf) const {
-    if (svc_params_length_ > 0) {
-        buf.writeData(&(*svc_params_.begin()), svc_params_length_);
+    if (svc_params_length_ > 0 && !svc_params_buf_.empty()) {
+        buf.writeData(svc_params_buf_.data(), svc_params_length_);
     }
 }
 
@@ -237,7 +308,7 @@ DnrInstance::setAdn(const std::string& adn) {
 
     adn_length_ = adn_len;
     if (universe_ == Option::V4) {
-        dnr_instance_data_length_ = dnrInstanceLen();
+        setDnrInstanceDataLength();
     }
 }
 
@@ -267,9 +338,8 @@ DnrInstance::unpackAdn(OptionBufferConstIter& begin, OptionBufferConstIter end) 
         adn_.reset(new isc::dns::Name(name_buf, true));
     } catch (const Exception& ex) {
         isc_throw(InvalidOptionDnrDomainName, getLogPrefix()
-                                                  << "Failed to parse "
-                                                     "fully qualified domain-name from wire format "
-                                                     "- " << ex.what());
+                                                  << "Failed to parse fully qualified domain-name "
+                                                  << "from wire format - " << ex.what());
     }
 
     begin += adn_length_ + getAdnLengthSize();
@@ -328,8 +398,8 @@ DnrInstance::checkSvcParams(bool from_wire_data) {
         std::string key = key_val[0];
         if (key.length() > 63) {
             isc_throw(InvalidOptionDnrSvcParams,
-                      getLogPrefix() << "Wrong Svc Params syntax - key had more than 63 "
-                                        "characters - " << key);
+                      getLogPrefix() << "Wrong Svc Params syntax - key had more "
+                                     << "than 63 characters - " << key);
         }
 
         if (FORBIDDEN_SVC_PARAMS.find(key) != FORBIDDEN_SVC_PARAMS.end()) {
@@ -384,7 +454,7 @@ DnrInstance::checkFields() {
 
     addr_length_ = addr_len;
     if (universe_ == Option::V4) {
-        dnr_instance_data_length_ = dnrInstanceLen();
+        setDnrInstanceDataLength();
     }
 }
 
@@ -482,8 +552,11 @@ void
 DnrInstance::unpackSvcParams(OptionBufferConstIter& begin, OptionBufferConstIter end) {
     svc_params_length_ = std::distance(begin, end);
     if (svc_params_length_ > 0) {
-        svc_params_.assign(begin, end);
-        checkSvcParams();
+        // This is used only when upacking hex bin option data.
+        // We only assign the data to svc_params_buf_ buffer.
+        // We do exact SvcParam syntax check when unpacking convenient option config notation
+        // in parseDnrInstanceConfigData().
+        svc_params_buf_.assign(begin, end);
         begin += svc_params_length_;
     }
 }
@@ -498,6 +571,286 @@ DnrInstance::initMembers() {
         (universe_ == Option::V4) ?
             ("DHCPv4 Encrypted DNS Option (" + std::to_string(DHO_V4_DNR) + ") malformed: ") :
             ("DHCPv6 Encrypted DNS Option (" + std::to_string(D6O_V6_DNR) + ") malformed: ");
+}
+
+void
+DnrInstance::parseDnrInstanceConfigData(const std::string& config_txt) {
+    // This parses convenient option config notation.
+    // The config to be parsed may contain escaped characters like "\\," or "\\|".
+    // Example configs are below (first contains recommended resolvers' IP addresses, and SvcParams;
+    // second is an example of ADN-only mode;
+    // third is like the first example, but for DNRv4 - single DNR instance):
+    //
+    // "name": "v6-dnr",
+    // "data": "100, dot1.example.org., 2001:db8::1 2001:db8::2, alpn=dot\\,doq\\,h2\\,h3 port=8530 dohpath=/q{?dns}"
+    //
+    // "name": "v6-dnr",
+    // "data": "200, resolver.example."
+    //
+    // "name": "v4-dnr",
+    // "data": "100, dot1.example.org., 10.0.3.4 10.1.5.6, alpn=dot\\,doq\\,h2\\,h3 port=8530 dohpath=/q{?dns}"
+
+    // get tokens using comma separator with double backslash escaping enabled
+    std::vector<std::string> tokens = str::tokens(config_txt, std::string(","), true);
+
+    if (tokens.size() < 2) {
+        isc_throw(BadValue, getLogPrefix() << "Option config requires at least comma separated "
+                                           << "Service Priority and ADN");
+    }
+
+    if (tokens.size() > 4) {
+        isc_throw(BadValue, getLogPrefix() << "Option config supports maximum 4 comma separated "
+                                           << "fields: Service Priority, ADN, resolver IP "
+                                           << "address/es and SvcParams");
+    }
+
+    // parse Service Priority
+    std::string txt_svc_priority = str::trim(tokens[0]);
+    try {
+        service_priority_ = boost::lexical_cast<uint16_t>(txt_svc_priority);
+    } catch (const std::exception& e) {
+        isc_throw(BadValue, getLogPrefix() << "Cannot parse uint_16 integer Service priority "
+                                           << "from given value: " << txt_svc_priority
+                                           << ". Error: " << e.what());
+    }
+
+    // parse ADN
+    std::string txt_adn = str::trim(tokens[1]);
+    try {
+        adn_.reset(new isc::dns::Name(txt_adn, true));
+    } catch (const std::exception& e) {
+        isc_throw(InvalidOptionDnrDomainName, getLogPrefix() << "Cannot parse ADN FQDN "
+                                                             << "from given value: " << txt_adn
+                                                             << ". Error: " << e.what());
+    }
+
+    adn_length_ = adn_->getLength();
+    if (adn_length_ == 0) {
+        isc_throw(InvalidOptionDnrDomainName, getLogPrefix()
+                                                  << "Mandatory Authentication Domain Name fully "
+                                                  << "qualified domain-name is missing");
+    }
+
+    if (tokens.size() > 2) {
+        setAdnOnlyMode(false);
+
+        // parse resolver IP address/es
+        std::string txt_addresses = str::trim(tokens[2]);
+
+        // determine v4/v6 universe
+        std::string ip_version = (universe_ == Option::V6) ? "IPv6" : "IPv4";
+        const size_t addr_len = (universe_ == Option::V6) ? V6ADDRESS_LEN : V4ADDRESS_LEN;
+
+        // IP addresses are separated with space
+        std::vector<std::string> addresses = str::tokens(txt_addresses, std::string(" "));
+        for (auto const& txt_addr : addresses) {
+            try {
+                addIpAddress(IOAddress(str::trim(txt_addr)));
+            } catch (const Exception& e) {
+                isc_throw(BadValue, getLogPrefix() << "Cannot parse " << ip_version << " address "
+                                                   << "from given value: " << txt_addr
+                                                   << ". Error: " << e.what());
+            }
+        }
+
+        // As per RFC9463 section 3.1.8:
+        // (If ADN-only mode is not used)
+        // The option includes at least one valid IP address.
+        if (ip_addresses_.empty()) {
+            isc_throw(BadValue, getLogPrefix() << "Option config requires at least one valid IP "
+                                               << "address.");
+        }
+
+        addr_length_ = ip_addresses_.size() * addr_len;
+    }
+
+    if (tokens.size() == 4) {
+        // parse Service Parameters
+        std::string txt_svc_params = str::trim(tokens[3]);
+
+        // SvcParamKey=SvcParamValue pairs are separated with space
+        std::vector<std::string> svc_params_pairs = str::tokens(txt_svc_params, std::string(" "));
+        std::vector<std::string> alpn_ids_tokens;
+        OpaqueDataTuple svc_param_val_tuple(OpaqueDataTuple::LENGTH_2_BYTES);
+        OutputBuffer out_buf(2);
+        for (auto const& svc_param_pair : svc_params_pairs) {
+            std::vector<std::string> key_val_tokens = str::tokens(str::trim(svc_param_pair), "=");
+            if (key_val_tokens.size() != 2) {
+                isc_throw(InvalidOptionDnrSvcParams,
+                          getLogPrefix() << "Wrong Svc Params syntax - SvcParamKey=SvcParamValue "
+                                         << "pair syntax must be used");
+            }
+
+            // SvcParam Key related checks come below.
+            std::string svc_param_key = str::trim(key_val_tokens[0]);
+
+            // As per RFC9463 Section 3.1.8:
+            // The service parameters do not include "ipv4hint" or "ipv6hint" parameters.
+            if (FORBIDDEN_SVC_PARAMS.find(svc_param_key) != FORBIDDEN_SVC_PARAMS.end()) {
+                isc_throw(InvalidOptionDnrSvcParams, getLogPrefix()
+                                                         << "Wrong Svc Params syntax - key "
+                                                         << svc_param_key << " must not be used");
+            }
+
+            // Check if SvcParamKey is known in
+            // https://www.iana.org/assignments/dns-svcb/dns-svcb.xhtml
+            auto svc_params_iterator = SVC_PARAMS.find(svc_param_key);
+            if (svc_params_iterator == SVC_PARAMS.end()) {
+                isc_throw(InvalidOptionDnrSvcParams,
+                          getLogPrefix() << "Wrong Svc Params syntax - key " << svc_param_key
+                                         << " not found in SvcParamKeys registry");
+            }
+
+            // Check if SvcParamKey usage is supported by DNR DHCP option.
+            // Note that SUPPORTED_SVC_PARAMS set may expand in future.
+            uint16_t num_svc_param_key = svc_params_iterator->second;
+            if (SUPPORTED_SVC_PARAMS.find(num_svc_param_key) == SUPPORTED_SVC_PARAMS.end()) {
+                isc_throw(InvalidOptionDnrSvcParams,
+                          getLogPrefix() << "Wrong Svc Params syntax - key " << svc_param_key
+                                         << " not supported in DNR option SvcParams");
+            }
+
+            // As per RFC9460 Section 2.2:
+            // SvcParamKeys SHALL appear in increasing numeric order. (...)
+            // There are no duplicate SvcParamKeys.
+            //
+            // We check for duplicates here. Correct ordering is done when option gets packed.
+            if (svc_params_map_.find(num_svc_param_key) != svc_params_map_.end()) {
+                isc_throw(InvalidOptionDnrSvcParams, getLogPrefix()
+                                                         << "Wrong Svc Params syntax - key "
+                                                         << svc_param_key << " is duplicated.");
+            }
+
+            // SvcParam Val check.
+            std::string svc_param_val = str::trim(key_val_tokens[1]);
+            if (svc_param_val.empty()) {
+                isc_throw(InvalidOptionDnrSvcParams,
+                          getLogPrefix() << "Wrong Svc Params syntax - empty SvcParamValue for key "
+                                         << svc_param_key);
+            }
+
+            svc_param_val_tuple.clear();
+            switch (num_svc_param_key) {
+            case 1:
+                // alpn
+                // The wire-format value for "alpn" consists of at least one alpn-id prefixed by its
+                // length as a single octet, and these length-value pairs are concatenated to form
+                // the SvcParamValue.
+                alpn_ids_tokens = str::tokens(svc_param_val, std::string(","));
+                for (auto const& alpn_id : alpn_ids_tokens) {
+                    // Check if alpn-id is known in
+                    // https://www.iana.org/assignments/tls-extensiontype-values/tls-extensiontype-values.xhtml#alpn-protocol-ids
+                    if (ALPN_IDS.find(alpn_id) == ALPN_IDS.end()) {
+                        isc_throw(InvalidOptionDnrSvcParams,
+                                  getLogPrefix() << "Wrong Svc Params syntax - alpn-id " << alpn_id
+                                                 << " not found in ALPN-IDs registry");
+                    }
+
+                    // Make notice if this is any of http alpn-ids.
+                    if (alpn_id.starts_with('h')) {
+                        alpn_http_ = true;
+                    }
+
+                    OpaqueDataTuple alpn_id_tuple(OpaqueDataTuple::LENGTH_1_BYTE);
+                    alpn_id_tuple.append(alpn_id);
+                    alpn_id_tuple.pack(out_buf);
+                    svc_param_val_tuple.append(static_cast<const char*>(out_buf.getData()),
+                                               out_buf.getLength());
+                    out_buf.clear();
+                }
+
+                svc_params_map_.insert(std::make_pair(num_svc_param_key, svc_param_val_tuple));
+                break;
+            case 3:
+                // port
+                // The wire format of the SvcParamValue is the corresponding 2-octet numeric value
+                // in network byte order.
+                uint16_t port;
+                try {
+                    port = boost::lexical_cast<uint16_t>(svc_param_val);
+                } catch (const std::exception& e) {
+                    isc_throw(InvalidOptionDnrSvcParams,
+                              getLogPrefix() << "Cannot parse uint_16 integer port nr "
+                                             << "from given value: " << svc_param_val
+                                             << ". Error: " << e.what());
+                }
+
+                out_buf.writeUint16(port);
+                svc_param_val_tuple.append(static_cast<const char*>(out_buf.getData()),
+                                           out_buf.getLength());
+                out_buf.clear();
+                svc_params_map_.insert(std::make_pair(num_svc_param_key, svc_param_val_tuple));
+                break;
+            case 7:
+                // dohpath - RFC9461 Section 5
+                // single-valued SvcParamKey whose value (in both presentation format and wire
+                // format) MUST be a URI Template in relative form ([RFC6570], Section 1.1) encoded
+                // in UTF-8 [RFC3629]. If the "alpn" SvcParam indicates support for HTTP,
+                // "dohpath" MUST be present. The URI Template MUST contain a "dns" variable,
+                // and MUST be chosen such that the result after DoH URI Template expansion
+                // (Section 6 of [RFC8484]) is always a valid and functional ":path" value
+                // ([RFC9113], Section 8.3.1).
+
+                // Check that "dns" variable is there
+                if (svc_param_val.find("{?dns}") == std::string::npos) {
+                    isc_throw(InvalidOptionDnrSvcParams,
+                              getLogPrefix()
+                                  << "Wrong Svc Params syntax - dohpath SvcParamValue URI"
+                                  << " Template MUST contain a 'dns' variable.");
+                }
+
+                // We hope to have URI containing < 0x80 ASCII chars, however to be sure
+                // and to be inline with RFC9461 Section 5, let's encode the dohpath with utf8.
+                auto const utf8_encoded = encode::encodeUtf8(svc_param_val);
+                svc_param_val_tuple.append(utf8_encoded.begin(), utf8_encoded.size());
+                svc_params_map_.insert(std::make_pair(num_svc_param_key, svc_param_val_tuple));
+                break;
+            }
+        }
+
+        // If the "alpn" SvcParam indicates support for HTTP, "dohpath" MUST be present.
+        if (alpn_http_ && svc_params_map_.find(7) == svc_params_map_.end()) {
+            isc_throw(InvalidOptionDnrSvcParams,
+                      getLogPrefix() << "Wrong Svc Params syntax - dohpath SvcParam missing. "
+                                     << "When alpn SvcParam indicates "
+                                     << "support for HTTP, dohpath must be present.");
+        }
+
+        // At this step all given SvcParams should be fine. We can pack everything to data
+        // buffer according to RFC9460 Section 2.2.
+        //
+        // When the list of SvcParams is non-empty, it contains a series of
+        // SvcParamKey=SvcParamValue pairs, represented as:
+        // - a 2-octet field containing the SvcParamKey as an integer in network byte order.
+        // - a 2-octet field containing the length of the SvcParamValue as an integer
+        //   between 0 and 65535 in network byte order. (uint16)
+        // - an octet string of this length whose contents are the SvcParamValue in a format
+        //   determined by the SvcParamKey.
+        // (...)
+        // SvcParamKeys SHALL appear in increasing numeric order.
+        // Note that (...) there are no duplicate SvcParamKeys.
+
+        for (auto const& svc_param_key : SUPPORTED_SVC_PARAMS) {
+            auto it = svc_params_map_.find(svc_param_key);
+            if (it != svc_params_map_.end()) {
+                // Write 2-octet field containing the SvcParamKey as an integer
+                // in network byte order.
+                out_buf.writeUint16(it->first);
+                // Write 2-octet field containing the length of the SvcParamValue
+                // and an octet string of this length whose contents are the SvcParamValue.
+                // We use OpaqueDataTuple#pack(&buf) here that will write correct len-data
+                // tuple to the buffer.
+                (it->second).pack(out_buf);
+            }
+        }
+
+        // Copy SvcParams buffer from OutputBuffer to OptionBuffer.
+        const uint8_t* ptr = static_cast<const uint8_t*>(out_buf.getData());
+        OptionBuffer temp_buf(ptr, ptr + out_buf.getLength());
+        svc_params_buf_ = temp_buf;
+        svc_params_length_ = out_buf.getLength();
+        out_buf.clear();
+    }
 }
 
 }  // namespace dhcp

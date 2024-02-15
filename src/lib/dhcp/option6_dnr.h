@@ -146,17 +146,6 @@ private:
     /// @brief Flag stating whether the %Option was constructed with a convenient notation string,
     /// that needs custom parsing, or binary data.
     bool convenient_notation_;
-
-    /// @brief Parses a convenient notation of the option data, which may be used in config.
-    ///
-    /// As an alternative to the binary format,
-    /// we provide convenience option definition as a string in format:
-    /// TBD
-    ///
-    /// @param config_txt convenient notation of the option data received as string
-    ///
-    /// @throw BadValue Thrown in case parser found wrong format of received string.
-    void parseConfigData(const std::string& config_txt);
 };
 
 /// A pointer to the @c Option6Dnr object.
