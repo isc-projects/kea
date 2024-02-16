@@ -44,6 +44,18 @@ TEST_F(PktFilterInetTest, isDirectResponseSupported) {
     EXPECT_FALSE(pkt_filter.isDirectResponseSupported());
 }
 
+// This test verifies that the PktFilterInet class reports its capability
+// to create SOCKET_RECEIVED events.
+TEST_F(PktFilterInetTest, isSocketReceivedTimeSupported) {
+    // Create object under test.
+    PktFilterInet pkt_filter;
+#ifdef SO_TIMESTAMP
+    EXPECT_TRUE(pkt_filter.isSocketReceivedTimeSupported());
+#else
+    EXPECT_FALSE(pkt_filter.isSocketReceivedTimeSupported());
+#endif
+}
+
 // This test verifies that the INET datagram socket is correctly opened and
 // bound to the appropriate address and port.
 TEST_F(PktFilterInetTest, openSocket) {

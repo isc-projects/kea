@@ -31,6 +31,18 @@ public:
     }
 };
 
+// This test verifies that the PktFilterInet6 class reports its capability
+// to create SOCKET_RECEIVED events.
+TEST_F(PktFilterInet6Test, isSocketReceivedTimeSupported) {
+    // Create object under test.
+    PktFilterInet6 pkt_filter;
+#ifdef SO_TIMESTAMP
+    EXPECT_TRUE(pkt_filter.isSocketReceivedTimeSupported());
+#else
+    EXPECT_FALSE(pkt_filter.isSocketReceivedTimeSupported());
+#endif
+}
+
 // This test verifies that the INET6 datagram socket is correctly opened and
 // bound to the appropriate address and port.
 TEST_F(PktFilterInet6Test, openSocket) {
