@@ -17,8 +17,6 @@
 #include <linux/if_ether.h>
 #include <linux/if_packet.h>
 
-#define WITH_CMSG
-
 namespace {
 
 using namespace isc::dhcp;
@@ -223,7 +221,6 @@ PktFilterLPF::openSocket(Iface& iface,
 
 }
 
-#ifndef WITH_CMSG
 Pkt4Ptr
 PktFilterLPF::receive(Iface& iface, const SocketInfo& socket_info) {
     uint8_t raw_buf[IfaceMgr::RCVBUFSIZE];
@@ -246,6 +243,7 @@ PktFilterLPF::receive(Iface& iface, const SocketInfo& socket_info) {
         datalen = recv(socket_info.fallbackfd_, raw_buf, sizeof(raw_buf), 0);
     } while (datalen > 0);
 
+#ifndef SO_TIMESTAMP
     // Now that we finished getting data from the fallback socket, we
     // have to get the data from the raw socket too.
     int data_len = read(socket_info.sockfd_, raw_buf, sizeof(raw_buf));
@@ -259,73 +257,8 @@ PktFilterLPF::receive(Iface& iface, const SocketInfo& socket_info) {
     }
 
     InputBuffer buf(raw_buf, data_len);
-
-    // @todo: This is awkward way to solve the chicken and egg problem
-    // whereby we don't know the offset where DHCP data start in the
-    // received buffer when we create the packet object. In general case,
-    // the IP header has variable length. The information about its length
-    // is stored in one of its fields. Therefore, we have to decode the
-    // packet to get the offset of the DHCP data. The dummy object is
-    // created so as we can pass it to the functions which decode IP stack
-    // and find actual offset of the DHCP data.
-    // Once we find the offset we can create another Pkt4 object from
-    // the reminder of the input buffer and set the IP addresses and
-    // ports from the dummy packet. We should consider doing it
-    // in some more elegant way.
-    Pkt4Ptr dummy_pkt = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 0));
-
-    // Decode ethernet, ip and udp headers.
-    decodeEthernetHeader(buf, dummy_pkt);
-    decodeIpUdpHeader(buf, dummy_pkt);
-
-    // Read the DHCP data.
-    std::vector<uint8_t> dhcp_buf;
-    buf.readVector(dhcp_buf, buf.getLength() - buf.getPosition());
-
-    // Decode DHCP data into the Pkt4 object.
-    Pkt4Ptr pkt = Pkt4Ptr(new Pkt4(&dhcp_buf[0], dhcp_buf.size()));
-
-    // Set the appropriate packet members using data collected from
-    // the decoded headers.
-    pkt->setIndex(iface.getIndex());
-    pkt->setIface(iface.getName());
-    pkt->setLocalAddr(dummy_pkt->getLocalAddr());
-    pkt->setRemoteAddr(dummy_pkt->getRemoteAddr());
-    pkt->setLocalPort(dummy_pkt->getLocalPort());
-    pkt->setRemotePort(dummy_pkt->getRemotePort());
-    pkt->setLocalHWAddr(dummy_pkt->getLocalHWAddr());
-    pkt->setRemoteHWAddr(dummy_pkt->getRemoteHWAddr());
-
-    // Set time packet was read from the buffer.
-    pkt->addPktEvent(PktEvent::BUFFER_READ);
-
-    return (pkt);
-}
 #else
-Pkt4Ptr
-PktFilterLPF::receive(Iface& iface, const SocketInfo& socket_info) {
-    uint8_t raw_buf[IfaceMgr::RCVBUFSIZE];
-    // First let's get some data from the fallback socket. The data will be
-    // discarded but we don't want the socket buffer to bloat. We get the
-    // packets from the socket in loop but most of the time the loop will
-    // end after receiving one packet. The call to recv returns immediately
-    // when there is no data left on the socket because the socket is
-    // non-blocking.
-    // @todo In the normal conditions, both the primary socket and the fallback
-    // socket are in sync as they are set to receive packets on the same
-    // address and port. The reception of packets on the fallback socket
-    // shouldn't cause significant lags in packet reception. If we find in the
-    // future that it does, the sort of threshold could be set for the maximum
-    // bytes received on the fallback socket in a single round. Further
-    // optimizations would include an asynchronous read from the fallback socket
-    // when the DHCP server is idle.
-    int datalen;
-    do {
-        datalen = recv(socket_info.fallbackfd_, raw_buf, sizeof(raw_buf), 0);
-    } while (datalen > 0);
-
     const size_t CONTROL_BUF_LEN = 512;
-
     uint8_t msg_buf[IfaceMgr::RCVBUFSIZE];
     uint8_t control_buf[CONTROL_BUF_LEN];
 
@@ -356,6 +289,7 @@ PktFilterLPF::receive(Iface& iface, const SocketInfo& socket_info) {
     }
 
     InputBuffer buf(msg_buf, result);
+#endif
 
     // @todo: This is awkward way to solve the chicken and egg problem
     // whereby we don't know the offset where DHCP data start in the
@@ -393,6 +327,7 @@ PktFilterLPF::receive(Iface& iface, const SocketInfo& socket_info) {
     pkt->setLocalHWAddr(dummy_pkt->getLocalHWAddr());
     pkt->setRemoteHWAddr(dummy_pkt->getRemoteHWAddr());
 
+#ifdef SO_TIMESTAMP
     struct cmsghdr* cmsg = CMSG_FIRSTHDR(&m);
     while (cmsg != NULL) {
         if ((cmsg->cmsg_level == SOL_SOCKET) &&
@@ -406,13 +341,13 @@ PktFilterLPF::receive(Iface& iface, const SocketInfo& socket_info) {
 
         cmsg = CMSG_NXTHDR(&m, cmsg);
     }
+#endif
 
     // Set time packet was read from the buffer.
     pkt->addPktEvent(PktEvent::BUFFER_READ);
 
     return (pkt);
 }
-#endif
 
 int
 PktFilterLPF::send(const Iface& iface, uint16_t sockfd, const Pkt4Ptr& pkt) {
@@ -461,7 +396,6 @@ PktFilterLPF::send(const Iface& iface, uint16_t sockfd, const Pkt4Ptr& pkt) {
     return (0);
 
 }
-
 
 } // end of isc::dhcp namespace
 } // end of isc namespace

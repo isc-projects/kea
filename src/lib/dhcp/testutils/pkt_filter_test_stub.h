@@ -42,6 +42,16 @@ public:
     /// @return always true.
     virtual bool isDirectResponseSupported() const;
 
+    /// @brief Check if the socket received time is supported.
+    ///
+    /// If true, then packets received through this filter will include
+    /// a SOCKET_RECEIVED event in its event stack.  Other than direct
+    /// clients using BPF for which this is always true, this function
+    /// is true provided SO_TIMESTAMP is defined.
+    ///
+    /// @return True if it is supported.
+    virtual bool isSocketReceivedTimeSupported() const;
+
     /// @brief Simulate opening of the socket.
     ///
     /// This function simulates opening a primary socket. Rather than open

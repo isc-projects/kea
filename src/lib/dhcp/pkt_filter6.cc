@@ -33,6 +33,5 @@ PktFilter6::joinMulticast(int sock, const std::string& ifname,
     return (true);
 }
 
-
 } // end of isc::dhcp namespace
 } // end of isc namespace

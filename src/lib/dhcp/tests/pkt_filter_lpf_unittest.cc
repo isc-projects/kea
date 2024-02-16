@@ -183,10 +183,8 @@ TEST_F(PktFilterLPFTest, receive) {
     testRcvdMessage(rcvd_pkt);
     testRcvdMessageAddressPort(rcvd_pkt);
 
-    // Verify that the packet event stack has SOCKET_RECEIVED and BUFFER_READ events.
-    testPktEvents(rcvd_pkt, start_time_,
-                  std::list<std::string>{PktEvent::SOCKET_RECEIVED,
-                                         PktEvent::BUFFER_READ});
+    // Verify that the packet event stack is as expected.
+    testReceivedPktEvents (rcvd_pkt, pkt_filter.isSocketReceivedTimeSupported());
 }
 
 // This test verifies that if the packet is received over the raw

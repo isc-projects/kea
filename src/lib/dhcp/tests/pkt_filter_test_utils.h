@@ -82,6 +82,15 @@ public:
     /// @param rcvd_msg An instance of the message to be tested.
     void testRcvdMessageAddressPort(const Pkt4Ptr& rcvd_msg) const;
 
+    /// @brief Checks that a received message has the appropriate events
+    /// in it's event stack.
+    ///
+    /// @param rcvd_msg An instance of the message to be tested.
+    /// @param so_time_supported If true the event stack should have with
+    /// a SOCKET_RECEIVED event followed by a BUFFER_READ event, if false
+    /// it should have only the latter.
+    void testReceivedPktEvents(const PktPtr& msg, bool so_time_supported) const;
+
     /// @brief Checks the contents of a packet's event stack agains a list
     /// of expected events.
     ///
@@ -129,6 +138,14 @@ public:
     ///
     /// @return always true.
     virtual bool isDirectResponseSupported() const;
+
+    /// @brief Check if the socket received time is supported.
+    ///
+    /// If true, then packets received through this filter will include
+    /// a SOCKET_RECEIVED event in its event stack.
+    ///
+    /// @return always true.
+    virtual bool isSocketReceivedTimeSupported() const;
 
     /// @brief Simulate opening of the socket.
     ///

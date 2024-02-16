@@ -59,6 +59,16 @@ public:
     /// @return true of the direct response is supported.
     virtual bool isDirectResponseSupported() const = 0;
 
+    /// @brief Check if the socket received time is supported.
+    ///
+    /// If true, then packets received through this filter will include
+    /// a SOCKET_RECEIVED event in its event stack.  Other than direct
+    /// clients using BPF for which this is always true, this function
+    /// is true provided SO_TIMESTAMP is defined.
+    ///
+    /// @return True if it is supported.
+    virtual bool isSocketReceivedTimeSupported() const = 0;
+
     /// @brief Open primary and fallback socket.
     ///
     /// A method implementation in the derived class may open one or two

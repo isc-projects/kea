@@ -132,10 +132,8 @@ TEST_F(PktFilterInet6Test, receive) {
     // Check if the received message is correct.
     testRcvdMessage(rcvd_pkt);
 
-    // Verify that the packet event stack has SOCKET_RECEIVED and BUFFER_READ events.
-    testPktEvents(rcvd_pkt, start_time_,
-                  std::list<std::string>{PktEvent::SOCKET_RECEIVED,
-                                         PktEvent::BUFFER_READ});
+    // Verify that the packet event stack is as expected.
+    testReceivedPktEvents (rcvd_pkt, pkt_filter.isSocketReceivedTimeSupported());
 }
 
 } // anonymous namespace

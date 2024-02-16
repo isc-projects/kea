@@ -67,6 +67,5 @@ PktFilter::openFallbackSocket(const isc::asiolink::IOAddress& addr,
     return (sock);
 }
 
-
 } // end of isc::dhcp namespace
 } // end of isc namespace

@@ -752,6 +752,14 @@ public:
     /// @return true if direct response is supported.
     bool isDirectResponseSupported() const;
 
+    /// @brief Check if the socket received time is supported.
+    ///
+    /// If true, then received packets will include a SOCKET_RECEIVED
+    /// event in their event stack.
+    ///
+    /// @return True if it is supported.
+    virtual bool isSocketReceivedTimeSupported() const;
+
     /// @brief Returns interface specified interface index
     ///
     /// @param ifindex index of searched interface

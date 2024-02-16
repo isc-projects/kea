@@ -24,6 +24,15 @@ PktFilterTestStub::isDirectResponseSupported() const {
     return (direct_response_supported_);
 }
 
+bool
+PktFilterTestStub::isSocketReceivedTimeSupported() const {
+#ifdef SO_TIMESTAMP
+    return(true);
+#else
+    return(false);
+#endif
+}
+
 SocketInfo
 PktFilterTestStub::openSocket(Iface&,
            const isc::asiolink::IOAddress& addr,

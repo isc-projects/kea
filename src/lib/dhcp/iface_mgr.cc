@@ -320,6 +320,11 @@ IfaceMgr::isDirectResponseSupported() const {
     return (packet_filter_->isDirectResponseSupported());
 }
 
+bool
+IfaceMgr::isSocketReceivedTimeSupported() const {
+    return (packet_filter_->isSocketReceivedTimeSupported());
+}
+
 void
 IfaceMgr::addExternalSocket(int socketfd, SocketCallback callback) {
     if (socketfd < 0) {

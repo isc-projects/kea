@@ -144,6 +144,10 @@ public:
         return (false);
     }
 
+    virtual bool isSocketReceivedTimeSupported() const {
+        return (false);
+    }
+
     /// @brief Pretend to open a socket.
     ///
     /// This function doesn't open a real socket. It always returns the

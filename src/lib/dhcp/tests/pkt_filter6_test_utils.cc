@@ -173,6 +173,18 @@ PktFilter6Test::testRcvdMessage(const Pkt6Ptr& rcvd_msg) const {
 }
 
 void
+PktFilter6Test::testReceivedPktEvents(const PktPtr& msg,
+                                      bool so_time_supported) const {
+    std::list<std::string> expected_events;
+    if (so_time_supported) {
+        expected_events.push_back(PktEvent::SOCKET_RECEIVED);
+    }
+
+    expected_events.push_back(PktEvent::BUFFER_READ);
+    testPktEvents(msg, start_time_, expected_events);
+}
+
+void
 PktFilter6Test::testPktEvents(const PktPtr& msg, ptime start_time,
                               std::list<std::string> expected_events) const {
     ASSERT_NE(start_time, PktEvent::EMPTY_TIME());
@@ -183,6 +195,7 @@ PktFilter6Test::testPktEvents(const PktPtr& msg, ptime start_time,
     for (auto const& event : events) {
         ASSERT_EQ(event.label_, *expected_event);
         EXPECT_GE(event.timestamp_, prev_time);
+        prev_time = event.timestamp_;
         ++expected_event;
     }
 }

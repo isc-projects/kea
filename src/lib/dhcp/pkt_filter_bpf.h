@@ -65,6 +65,13 @@ public:
         return (true);
     }
 
+    /// @brief Check if the socket received time is supported.
+    ///
+    /// @return true always.
+    virtual bool isSocketReceivedTimeSupported() const {
+        return (true);
+    }
+
     /// @brief Open primary and fallback socket.
     ///
     /// This method opens the BPF device and applies the following

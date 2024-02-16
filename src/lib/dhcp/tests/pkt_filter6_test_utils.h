@@ -73,6 +73,15 @@ public:
     /// @param rcvd_msg An instance of the message to be tested.
     void testRcvdMessage(const Pkt6Ptr& rcvd_msg) const;
 
+    /// @brief Checks that a received message has the appropriate events
+    /// in it's event stack.
+    ///
+    /// @param rcvd_msg An instance of the message to be tested.
+    /// @param so_time_supported If true the event stack should have with
+    /// a SOCKET_RECEIVED event followed by a BUFFER_READ event, if false
+    /// it should have only the latter.
+    void testReceivedPktEvents(const PktPtr& msg, bool so_time_supported) const;
+
     /// @brief Checks the contents of a packet's event stack agains a list
     /// of expected events.
     ///

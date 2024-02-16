@@ -31,6 +31,20 @@ public:
         return (false);
     }
 
+    /// @brief Check if the socket received time is supported.
+    ///
+    /// If true, then packets received through this filter will include
+    /// a SOCKET_RECEIVED event in its event stack.
+    ///
+    /// @return True if SO_TIMESTAMP is defined.
+    virtual bool isSocketReceivedTimeSupported() const {
+#ifdef SO_TIMESTAMP
+        return (true);
+#else
+        return (false);
+#endif
+    }
+
     /// @brief Open primary and fallback socket.
     ///
     /// @param iface Interface descriptor.
