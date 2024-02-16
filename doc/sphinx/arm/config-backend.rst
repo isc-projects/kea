@@ -99,11 +99,13 @@ Appendix A of this manual for a complete list.
    a paid support contract. For more information on subscription options, please
    complete the form at https://www.isc.org/contact.
 
-The schema creation scripts can be found at `dhcpdb_create.mysql <https://gitlab.isc.org/isc-projects/kea/blob/master/src/share/database/scripts/mysql/dhcpdb_create.mysql>`__ and
-;
-`dhcpdb_create.pgsql <https://gitlab.isc.org/isc-projects/kea/blob/master/src/share/database/scripts/pgsql/dhcpdb_create.pgsql>`__ and
-;
-other related design documents are stored in our GitLab: `CB Design <https://gitlab.isc.org/isc-projects/kea/wikis/designs/configuration-in-db-design>`__ and
+The schema creation scripts can be found at
+`dhcpdb_create.mysql <https://gitlab.isc.org/isc-projects/kea/blob/master/src/share/database/scripts/mysql/dhcpdb_create.mysql>`__
+and
+`dhcpdb_create.pgsql <https://gitlab.isc.org/isc-projects/kea/blob/master/src/share/database/scripts/pgsql/dhcpdb_create.pgsql>`__.
+Other related design documents are stored in our GitLab:
+`CB Design <https://gitlab.isc.org/isc-projects/kea/wikis/designs/configuration-in-db-design>`__
+and
 `Client Classes in CB Design <https://gitlab.isc.org/isc-projects/kea/wikis/designs/client-classes-in-cb>`__.
 
 We strongly recommend against duplication of configuration information

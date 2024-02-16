@@ -50,8 +50,9 @@ currently supported commands are:
 
 -  ``db-init`` — initializes a new database schema. This is useful
    during a new Kea installation. The database is initialized to the
-   latest version supported by the version of the software being
-   installed.
+   latest version supported by the version of the software being installed.
+   Called automatically on startup or reconfiguration of Kea DHCP servers if
+   required.
 
 -  ``db-version`` — reports the database backend version number. This
    is not necessarily equal to the Kea version number, as each backend

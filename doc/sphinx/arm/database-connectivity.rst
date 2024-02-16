@@ -3,6 +3,7 @@
 *********************
 Database Connectivity
 *********************
+
 The Kea servers (:iscman:`kea-dhcp4` and :iscman:`kea-dhcp6`) can be configured to use a variety of
 database backends for leases, hosts, and configuration. They can be
 configured to support automatic recovery when connectivity is lost, via
@@ -59,6 +60,18 @@ connection is lost. It can have one of the following values:
 If connectivity to all backends is restored, the server returns to normal
 operations. If the connection cannot be restored and the server is configured
 to exit, it issues a fatal error before shutdown.
+
+For Kea DHCP servers to work with database backends, the schema has to be
+created and has to have the version specific to the version of the running Kea
+server. If the version check fails on a database backend that is not configured
+as readonly, Kea attempts to initialize the schema.
+
+.. note::
+
+    Schema upgrades are not attempted to not accidentally remove the
+    opportunity for prior administrative actions that users may be interested in,
+    like, for example, backing up the database or temporarily shutting off running
+    Kea servers that are currently operating on the database.
 
 The connection to the database server can optionally be protected by TLS.
 Corresponding database configuration parameters for Kea servers are:
