@@ -18,6 +18,7 @@
 
 using namespace isc::dhcp;
 using namespace isc::hooks;
+using namespace isc::log;
 using namespace isc::process;
 using namespace isc::perfmon;
 
@@ -35,6 +36,12 @@ int pkt4_send(CalloutHandle& handle) {
         return (0);
     }
 
+    Pkt4Ptr query;
+    handle.getArgument("query4", query);
+    LOG_DEBUG(perfmon_logger, DBGLVL_TRACE_DETAIL, PERFMON_DHCP4_PKT_EVENTS)
+              .arg(query->getLabel())
+              .arg(query->dumpPktEvents());
+
     return (0);
 }
 
@@ -49,6 +56,12 @@ int pkt6_send(CalloutHandle& handle) {
         status == CalloutHandle::NEXT_STEP_SKIP) {
         return (0);
     }
+
+    Pkt6Ptr query;
+    handle.getArgument("query6", query);
+    LOG_DEBUG(perfmon_logger, DBGLVL_TRACE_DETAIL, PERFMON_DHCP6_PKT_EVENTS)
+              .arg(query->getLabel())
+              .arg(query->dumpPktEvents());
 
     return (0);
 }

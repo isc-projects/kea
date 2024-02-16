@@ -17,3 +17,13 @@ the log message.
 % PERFMON_INIT_OK loading PerfMon hooks library successful
 This info message indicates that the PerfMon hooks library has been
 loaded successfully. Enjoy!
+
+% PERFMON_DHCP4_PKT_EVENTS query: %1 events=[%2]
+The debug message is emitted after an inbound DHCPv4 query has been
+processed, the arguments are the query label and the dump of the
+query's packet event stack.
+
+% PERFMON_DHCP6_PKT_EVENTS query: %1 events=[%2]
+The debug message is emitted after an inbound DHCPv6 query has been
+processed, the arguments are the query label and the dump of the
+query's packet event stack.
