@@ -49,7 +49,7 @@ TEST_F(BootpLibLoadTest, validLoad4) {
     validDaemonTest("kea-dhcp4");
 }
 
-// Simple V6 test that checks the library cannot by loaded by invalid daemons.
+// Simple test that checks the library cannot by loaded by invalid daemons.
 TEST_F(BootpLibLoadTest, invalidDaemonLoad) {
     invalidDaemonTest("kea-dhcp6", AF_INET6);
     invalidDaemonTest("kea-ctrl-agent");

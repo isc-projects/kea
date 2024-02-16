@@ -16,7 +16,7 @@ namespace perfmon {
 
 extern isc::log::Logger perfmon_logger;
 
-} // end of isc::perfmon
+} // end of isc::perfmon namespace
 } // end of isc namespace
 
 

@@ -54,7 +54,7 @@ TEST_F(LeaseCmdsCbLibLoadTest, validLoad6) {
     validDaemonTest("kea-dhcp6", AF_INET6);
 }
 
-// Simple V6 test that checks the library cannot by loaded by invalid daemons.
+// Simple test that checks the library cannot by loaded by invalid daemons.
 TEST_F(LeaseCmdsCbLibLoadTest, invalidDaemonLoad) {
     invalidDaemonTest("kea-ctrl-agent");
     invalidDaemonTest("kea-dhcp-ddns");

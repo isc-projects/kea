@@ -31,7 +31,7 @@ using namespace isc::process;
 
 namespace {
 
-/// @brief Test fixture for testing loading and unloading the stat cmds library
+/// @brief Test fixture for testing loading and unloading the perfmon library
 class PerfMonLibLoadTest : public isc::test::LibLoadTest {
 public:
     /// @brief Constructor
@@ -54,7 +54,7 @@ TEST_F(PerfMonLibLoadTest, validLoad6) {
     validDaemonTest("kea-dhcp6", AF_INET6);
 }
 
-// Simple V6 test that checks the library cannot by loaded by invalid daemons.
+// Simple test that checks the library cannot by loaded by invalid daemons.
 TEST_F(PerfMonLibLoadTest, invalidDaemonLoad) {
     invalidDaemonTest("kea-ctrl-agent");
     invalidDaemonTest("kea-dhcp-ddns");

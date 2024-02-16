@@ -25,7 +25,7 @@ PerfMon (or perfmon) is a Hook library that can be loaded by
 either kea-dhcp4 and kea-dhcp6 servers to extend them with the
 ability to track and report performance related data.
 
-The initial purpose of this library is provide supplemental data and
+The initial purpose of this library is to provide supplemental data and
 commands for monitoring the performance of kea-dhcp4 and kea-dhcp6
 servers in real time.
 

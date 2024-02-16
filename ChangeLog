@@ -1,3 +1,9 @@
+2204.	[func]		tmark
+	The skeleton of a new open source hook library,
+	libdhcp_perfmon.so, has been added.  The library is
+	still in development and does yet provide any functionality.
+	(Gitlab #3242)
+
 Kea 2.5.5 (development) released on January 31, 2024
 
 2203.	[build]		razvan
