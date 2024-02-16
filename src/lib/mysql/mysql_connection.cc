@@ -477,14 +477,9 @@ MySqlConnection::toKeaAdminParameters(ParameterMap const& params) {
             // {"read-timeout", "--net-read-timeout"},  // available in docs, but client says unknown variable?
             // {"write-timeout", "--net-write-timeout"},  // available in docs, but client says unknown variable?
         };
-        bool extra_flag_added(false);
         if (conversions.count(keyword)) {
-            if (!extra_flag_added) {
-                result.push_back("--extra");
-                extra_flag_added = true;
-            }
-            result.push_back("--" + conversions.at(keyword));
-            result.push_back(value);
+            result.push_back("--extra");
+            result.push_back("--" + conversions.at(keyword) + " " + value);
         }
     }
     return result;

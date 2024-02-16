@@ -226,6 +226,12 @@ public:
     /// @brief Destructor
     virtual ~PgSqlConnection();
 
+    /// @brief Convert MySQL library parameters to kea-admin parameters.
+    ///
+    /// @param params input MySQL parameters
+    ///
+    /// @return tuple of (vector of kea-admin parameters, vector of PostgreSQL
+    /// environment variables)
     static std::tuple<std::vector<std::string>, std::vector<std::string>>
     toKeaAdminParameters(ParameterMap const& params);
 

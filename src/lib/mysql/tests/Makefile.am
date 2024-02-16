@@ -1,6 +1,8 @@
 SUBDIRS = .
 
-AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
+AM_CPPFLAGS  =
+AM_CPPFLAGS += -DABS_TOP_BUILDDIR="\"$(abs_top_builddir)\""
+AM_CPPFLAGS += -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES) $(MYSQL_CPPFLAGS)
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)

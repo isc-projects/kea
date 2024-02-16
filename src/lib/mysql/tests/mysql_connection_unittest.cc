@@ -21,6 +21,8 @@
 using namespace isc::db;
 using namespace isc::db::test;
 
+using namespace std;
+
 namespace {
 
 /// @brief RAII wrapper over MYSQL_RES obtained from MySQL library functions like
@@ -248,7 +250,7 @@ public:
         // Make sure that null values were returned for columns for which null
         // was set.
         ASSERT_EQ(in_bindings.size(), out_bindings.size());
-        for (auto i = 0; i < in_bindings.size(); ++i) {
+        for (size_t i = 0; i < in_bindings.size(); ++i) {
             EXPECT_EQ(in_bindings[i]->amNull(), out_bindings[i]->amNull())
                 << "null value test failed for binding #" << i;
         }
@@ -906,6 +908,108 @@ TEST_F(MySqlSecureConnectionTest, TlsNoKey) {
                                             VALID_CIPHER);
     MySqlConnection conn(DatabaseConnection::parse(conn_str));
     EXPECT_THROW(conn.openDatabase(), DbOpenError);
+}
+
+/// @brief Check ensureSchemaVersion when schema is not created.
+TEST_F(MySqlConnectionTest, ensureSchemaVersionNoSchema) {
+    std::pair<uint32_t, uint32_t> version;
+    auto const parameters(DatabaseConnection::parse(validMySQLConnectionString()));
+
+    // Make sure schema is not created.
+    destroyMySQLSchema(/* show_err = */ false, /* force = */ true);
+    dropTestTable();
+    EXPECT_THROW_MSG(version = MySqlConnection::getVersion(parameters), DbOperationError,
+                     "unable to prepare MySQL statement <SELECT version, minor FROM "
+                     "schema_version>, reason: Table 'keatest.schema_version' doesn't exist");
+
+    EXPECT_NO_THROW_LOG(MySqlConnection::ensureSchemaVersion(parameters));
+
+    EXPECT_NO_THROW_LOG(version = MySqlConnection::getVersion(parameters));
+    EXPECT_EQ(MYSQL_SCHEMA_VERSION_MAJOR, version.first);
+    EXPECT_EQ(MYSQL_SCHEMA_VERSION_MINOR, version.second);
+}
+
+/// @brief Check ensureSchemaVersion when schema is created.
+TEST_F(MySqlConnectionTest, ensureSchemaVersion) {
+    std::pair<uint32_t, uint32_t> version;
+    auto const parameters(DatabaseConnection::parse(validMySQLConnectionString()));
+
+    // Make sure schema is created.
+    EXPECT_NO_THROW_LOG(version = MySqlConnection::getVersion(parameters));
+    EXPECT_EQ(MYSQL_SCHEMA_VERSION_MAJOR, version.first);
+    EXPECT_EQ(MYSQL_SCHEMA_VERSION_MINOR, version.second);
+
+    EXPECT_NO_THROW_LOG(MySqlConnection::ensureSchemaVersion(parameters));
+
+    EXPECT_NO_THROW_LOG(version = MySqlConnection::getVersion(parameters));
+    EXPECT_EQ(MYSQL_SCHEMA_VERSION_MAJOR, version.first);
+    EXPECT_EQ(MYSQL_SCHEMA_VERSION_MINOR, version.second);
+}
+
+/// @brief Check ensureSchemaVersion when schema is not created.
+TEST_F(MySqlConnectionTest, initializeSchemaNoSchema) {
+    pair<uint32_t, uint32_t> version;
+    auto const parameters(DatabaseConnection::parse(validMySQLConnectionString()));
+
+    // Make sure schema is not created.
+    destroyMySQLSchema(/* show_err = */ false, /* force = */ true);
+    dropTestTable();
+    EXPECT_THROW_MSG(version = MySqlConnection::getVersion(parameters), DbOperationError,
+                     "unable to prepare MySQL statement <SELECT version, minor FROM "
+                     "schema_version>, reason: Table 'keatest.schema_version' doesn't exist");
+
+    EXPECT_NO_THROW_LOG(MySqlConnection::initializeSchema(parameters));
+
+    EXPECT_NO_THROW_LOG(version = MySqlConnection::getVersion(parameters));
+    EXPECT_EQ(MYSQL_SCHEMA_VERSION_MAJOR, version.first);
+    EXPECT_EQ(MYSQL_SCHEMA_VERSION_MINOR, version.second);
+}
+
+/// @brief Check ensureSchemaVersion when schema is created.
+TEST_F(MySqlConnectionTest, initializeSchema) {
+    pair<uint32_t, uint32_t> version;
+    auto const parameters(DatabaseConnection::parse(validMySQLConnectionString()));
+
+    // Make sure schema is created.
+    EXPECT_NO_THROW_LOG(version = MySqlConnection::getVersion(parameters));
+    EXPECT_EQ(MYSQL_SCHEMA_VERSION_MAJOR, version.first);
+    EXPECT_EQ(MYSQL_SCHEMA_VERSION_MINOR, version.second);
+
+    EXPECT_THROW_MSG(MySqlConnection::initializeSchema(parameters), SchemaInitializationFailed,
+                     "Expected exit code 0 for kea-admin. Got 1");
+
+    EXPECT_NO_THROW_LOG(version = MySqlConnection::getVersion(parameters));
+    EXPECT_EQ(MYSQL_SCHEMA_VERSION_MAJOR, version.first);
+    EXPECT_EQ(MYSQL_SCHEMA_VERSION_MINOR, version.second);
+}
+
+/// @brief Check ensureSchemaVersion when schema is created.
+TEST_F(MySqlConnectionTest, toKeaAdminParameters) {
+    auto parameters(DatabaseConnection::parse(validMySQLConnectionString()));
+    vector<string> kea_admin_parameters(MySqlConnection::toKeaAdminParameters(parameters));
+    EXPECT_EQ(kea_admin_parameters,
+              vector<string>({"mysql", "--host", "localhost", "--name", "keatest", "--password",
+                              "keatest", "--user", "keatest"}));
+
+    string const full_mysql_connection_string(
+        connectionString(MYSQL_VALID_TYPE, VALID_NAME, VALID_HOST_TCP, VALID_SECURE_USER,
+                         VALID_PASSWORD, VALID_TIMEOUT, VALID_READONLY_DB, VALID_CERT, VALID_KEY,
+                         VALID_CA, VALID_CIPHER));
+    parameters = DatabaseConnection::parse(full_mysql_connection_string);
+    kea_admin_parameters = MySqlConnection::toKeaAdminParameters(parameters);
+    EXPECT_EQ(kea_admin_parameters,
+              vector<string>(
+                  {"mysql", "--extra",
+                   "--ssl-cert " ABS_TOP_BUILDDIR "/src/lib/database/testutils/../../asiolink/"
+                   "testutils/ca/kea-client.crt",
+                   "--extra", "--ssl-cipher AES", "--extra", "--connect_timeout 10", "--host",
+                   "127.0.0.1", "--extra",
+                   "--ssl-key " ABS_TOP_BUILDDIR "/src/lib/database/testutils/../../asiolink/"
+                   "testutils/ca/kea-client.key",
+                   "--name", "keatest", "--password", "keatest", "--extra",
+                   "--ssl-ca " ABS_TOP_BUILDDIR "/src/lib/database/testutils/../../asiolink/"
+                   "testutils/ca/kea-ca.crt",
+                   "--user", "keatest_secure"}));
 }
 
 }  // namespace

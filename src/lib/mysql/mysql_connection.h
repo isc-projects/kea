@@ -256,6 +256,11 @@ public:
     /// @brief Destructor
     virtual ~MySqlConnection();
 
+    /// @brief Convert MySQL library parameters to kea-admin parameters.
+    ///
+    /// @param params input MySQL parameters
+    ///
+    /// @return vector of kea-admin parameters
     static std::vector<std::string>
     toKeaAdminParameters(ParameterMap const& params);
 

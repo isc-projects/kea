@@ -25,6 +25,8 @@ using namespace isc::db;
 using namespace isc::db::test;
 using namespace isc::util;
 
+using namespace std;
+
 namespace {
 
 // A small extension of PgSqlBasicsTest that instantiates the actual Kea schema.
@@ -195,7 +197,7 @@ public:
         // Run the select.  The row consumption lambda should populate
         // fetched_rows based on the the result set returned by the select.
         conn_->selectQuery(tagged_statements[GET_BY_INT_RANGE], in_bindings,
-                           [&](PgSqlResult& r, int row) {
+                           [&](PgSqlResult& r, size_t row) {
             TestRow fetched_row;
             if (row >= expected_rows.size()) {
                 // We have too many rows.
@@ -647,5 +649,106 @@ TEST_F(PgSqlConnectionTest, tcpUserTimeoutInvalid) {
     EXPECT_THROW(conn.getConnParameters(), DbInvalidTimeout);
 }
 
+/// @brief Check ensureSchemaVersion when schema is not created.
+TEST_F(PgSqlConnectionTest, ensureSchemaVersionNoSchema) {
+    std::pair<uint32_t, uint32_t> version;
+    auto const parameters(DatabaseConnection::parse(validPgSQLConnectionString()));
 
-}; // namespace
+    // Make sure schema is not created.
+    destroyPgSQLSchema(/* show_err = */ false, /* force = */ true);
+    destroySchema();
+    EXPECT_THROW_MSG(version = PgSqlConnection::getVersion(parameters), DbOperationError,
+                     "unable to execute PostgreSQL statement <SELECT version, minor FROM "
+                     "schema_version;, reason: ERROR:  relation \"schema_version\" does not "
+                     "exist\nLINE 1: SELECT version, minor FROM schema_version;\n                  "
+                     "                 ^\n");
+
+    EXPECT_NO_THROW_LOG(PgSqlConnection::ensureSchemaVersion(parameters));
+
+    EXPECT_NO_THROW_LOG(version = PgSqlConnection::getVersion(parameters));
+    EXPECT_EQ(PGSQL_SCHEMA_VERSION_MAJOR, version.first);
+    EXPECT_EQ(PGSQL_SCHEMA_VERSION_MINOR, version.second);
+}
+
+/// @brief Check ensureSchemaVersion when schema is created.
+TEST_F(PgSqlConnectionTest, ensureSchemaVersion) {
+    std::pair<uint32_t, uint32_t> version;
+    auto const parameters(DatabaseConnection::parse(validPgSQLConnectionString()));
+
+    // Make sure schema is created.
+    EXPECT_NO_THROW_LOG(version = PgSqlConnection::getVersion(parameters));
+    EXPECT_EQ(PGSQL_SCHEMA_VERSION_MAJOR, version.first);
+    EXPECT_EQ(PGSQL_SCHEMA_VERSION_MINOR, version.second);
+
+    EXPECT_NO_THROW_LOG(PgSqlConnection::ensureSchemaVersion(parameters));
+
+    EXPECT_NO_THROW_LOG(version = PgSqlConnection::getVersion(parameters));
+    EXPECT_EQ(PGSQL_SCHEMA_VERSION_MAJOR, version.first);
+    EXPECT_EQ(PGSQL_SCHEMA_VERSION_MINOR, version.second);
+}
+
+/// @brief Check ensureSchemaVersion when schema is not created.
+TEST_F(PgSqlConnectionTest, initializeSchemaNoSchema) {
+    pair<uint32_t, uint32_t> version;
+    auto const parameters(DatabaseConnection::parse(validPgSQLConnectionString()));
+
+    // Make sure schema is not created.
+    destroyPgSQLSchema(/* show_err = */ false, /* force = */ true);
+    destroySchema();
+    EXPECT_THROW_MSG(version = PgSqlConnection::getVersion(parameters), DbOperationError,
+                     "unable to execute PostgreSQL statement <SELECT version, minor FROM "
+                     "schema_version;, reason: ERROR:  relation \"schema_version\" does not "
+                     "exist\nLINE 1: SELECT version, minor FROM schema_version;\n                  "
+                     "                 ^\n");
+
+    EXPECT_NO_THROW_LOG(PgSqlConnection::initializeSchema(parameters));
+
+    EXPECT_NO_THROW_LOG(version = PgSqlConnection::getVersion(parameters));
+    EXPECT_EQ(PGSQL_SCHEMA_VERSION_MAJOR, version.first);
+    EXPECT_EQ(PGSQL_SCHEMA_VERSION_MINOR, version.second);
+}
+
+/// @brief Check ensureSchemaVersion when schema is created.
+TEST_F(PgSqlConnectionTest, initializeSchema) {
+    pair<uint32_t, uint32_t> version;
+    auto const parameters(DatabaseConnection::parse(validPgSQLConnectionString()));
+
+    // Make sure schema is created.
+    EXPECT_NO_THROW_LOG(version = PgSqlConnection::getVersion(parameters));
+    EXPECT_EQ(PGSQL_SCHEMA_VERSION_MAJOR, version.first);
+    EXPECT_EQ(PGSQL_SCHEMA_VERSION_MINOR, version.second);
+
+    EXPECT_THROW_MSG(PgSqlConnection::initializeSchema(parameters), SchemaInitializationFailed,
+                     "Expected exit code 0 for kea-admin. Got 2");
+
+    EXPECT_NO_THROW_LOG(version = PgSqlConnection::getVersion(parameters));
+    EXPECT_EQ(PGSQL_SCHEMA_VERSION_MAJOR, version.first);
+    EXPECT_EQ(PGSQL_SCHEMA_VERSION_MINOR, version.second);
+}
+
+/// @brief Check ensureSchemaVersion when schema is created.
+TEST_F(PgSqlConnectionTest, toKeaAdminParameters) {
+    auto parameters(DatabaseConnection::parse(validPgSQLConnectionString()));
+    auto tupl(PgSqlConnection::toKeaAdminParameters(parameters));
+    vector<string> kea_admin_parameters(get<0>(tupl));
+    vector<string> kea_admin_env_vars(get<1>(tupl));
+    EXPECT_EQ(kea_admin_parameters,
+              vector<string>({"pgsql", "--host", "localhost", "--name", "keatest", "--password",
+                              "keatest", "--user", "keatest"}));
+    EXPECT_EQ(kea_admin_env_vars, vector<string>({}));
+
+    string const full_pgsql_connection_string(
+        connectionString(PGSQL_VALID_TYPE, VALID_NAME, VALID_HOST_TCP, VALID_SECURE_USER,
+                         VALID_PASSWORD, VALID_TIMEOUT, VALID_READONLY_DB, VALID_CERT, VALID_KEY,
+                         VALID_CA, VALID_CIPHER));
+    parameters = DatabaseConnection::parse(full_pgsql_connection_string);
+    tupl = PgSqlConnection::toKeaAdminParameters(parameters);
+    kea_admin_parameters = get<0>(tupl);
+    kea_admin_env_vars = get<1>(tupl);
+    EXPECT_EQ(kea_admin_parameters,
+              vector<string>({"pgsql", "--host", "127.0.0.1", "--name", "keatest", "--password",
+                              "keatest", "--user", "keatest_secure"}));
+    EXPECT_EQ(kea_admin_env_vars, vector<string>({ "PGCONNECT_TIMEOUT=10" }));
+}
+
+}  // namespace
