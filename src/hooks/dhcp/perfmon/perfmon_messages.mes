@@ -19,7 +19,24 @@ This info message indicates that the PerfMon hooks library has been
 loaded successfully. Enjoy!
 
 % PERFMON_DHCP4_PKT_EVENTS query: %1 events=[%2]
-The debug message is emitted after an inbound DHCPv4 query has been
+This debug message is emitted after an inbound DHCPv4 query has been
+processed, the arguments are the query label and the dump of the
+query's packet event stack.
+
+% PERFMON_DHCP4_SOCKET_RECEIVED_TIME_SUPPORT Kernel supports socket received time? %1
+This debug message is emitted after a (re)configuration and indicates
+whether or not the packet filter being used by kea-dhcp4 can supply
+the timestamp a packet was received by the kernel for recording
+SOCKET_RECEIVED events. If it does not, perfmon will still function but
+will not have data available to determine kernel buffer wait times.
+
+% PERFMON_DHCP6_SOCKET_RECEIVED_TIME_SUPPORT Kernel supports socket received time? %1
+This debug message is emitted after a (re)configuration and indicates
+whether or not the packet filter being used by kea-dhcp6 can supply
+the timestamp a packet was received by the kernel for recording
+SOCKET_RECEIVED events. If it does not, perfmon will still function but
+will not have data available to determine kernel buffer wait times.
+
 processed, the arguments are the query label and the dump of the
 query's packet event stack.
 

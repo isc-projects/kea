@@ -24,6 +24,24 @@ using namespace isc::perfmon;
 
 extern "C" {
 
+int dhcp4_srv_configured(CalloutHandle& /* handle */) {
+    // We do this here rather than in load() to ensure we check after the
+    // filter has been determined.
+    LOG_DEBUG(perfmon_logger, DBGLVL_TRACE_BASIC,
+              PERFMON_DHCP4_SOCKET_RECEIVED_TIME_SUPPORT)
+              .arg(IfaceMgr::instance().isSocketReceivedTimeSupported() ? "Yes" : "No");
+    return (0);
+}
+
+int dhcp6_srv_configured(CalloutHandle& /* handle */) {
+    // We do this here rather than in load() to ensure we check after the
+    // filter has been determined.
+    LOG_DEBUG(perfmon_logger, DBGLVL_TRACE_BASIC,
+              PERFMON_DHCP6_SOCKET_RECEIVED_TIME_SUPPORT)
+              .arg(IfaceMgr::instance().isSocketReceivedTimeSupported() ? "Yes" : "No");
+    return (0);
+}
+
 /// @brief This callout is called at the "pkt4_send" hook.
 ///
 /// @param handle CalloutHandle which provides access to context.
