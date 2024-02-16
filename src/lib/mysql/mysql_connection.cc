@@ -16,8 +16,8 @@
 
 #include <boost/lexical_cast.hpp>
 
-#include <algorithm>
 #include <cstdint>
+#include <exception>
 #include <limits>
 #include <string>
 
@@ -376,32 +376,37 @@ MySqlConnection::ensureSchemaVersion(const ParameterMap& parameters,
     // retry-on-startup?
     bool const retry(parameters.count("retry-on-startup") &&
                      parameters.at("retry-on-startup") == "true");
-    if (!retry) {
-        // If not, then we need timer_name to be empty to signal that retrying
-        // is not desired.
-        timer_name = string();
-    }
 
     IOServiceAccessorPtr ac(new IOServiceAccessor(&DatabaseConnection::getIOService));
-
     pair<uint32_t, uint32_t> schema_version;
     try {
-        schema_version = getVersion(parameters, ac, cb, timer_name);
+        // Attempt to get version without retrying or other sophistries. This
+        // provides the most accurate view of the status of the database and the
+        // most flexibility to reacting to errors.
+        schema_version = getVersion(parameters);
     } catch (DbOpenError const& exception) {
-        // Do nothing for open errors. We first need to establish a connection,
-        // and only afterwards can we initialize the schema if it still fails.
-        // Let it fail, or retry if retry is configured.
+        // Could not establish a connection. Best thing is to wait for the
+        // database server to come up. Establish he mechanism of retrying.
+        if (retry && !timer_name.empty()) {
+            MySqlConnection conn(parameters, ac, cb);
+            conn.makeReconnectCtl(timer_name);
+            conn.openDatabase();
+        } else {
+            rethrow_exception(current_exception());
+        }
     } catch (exception const& exception) {
-        // This may fail for a variety of reasons. We don't have to necessarily
-        // check for the error that is most common in situations where the
-        // database is not initialized which would sound something like
-        // "table schema_version does not exist". If the error had another
-        // cause, it will fail again during initialization or during the
-        // subsequent version retrieval and that is fine.
+        // This failure may occur for a variety of reasons. We are looking at
+        // initializing schema as the only potential mitigation. We could narrow
+        // down on the error that would suggest an uninitialized schema
+        // which would sound something along the lines of
+        // "table schema_version does not exist", but we do not necessarily have
+        // to. If the error had another cause, it will fail again during
+        // initialization or during the subsequent version retrieval and that is
+        // fine, and the error should still be relevant.
         initializeSchema(parameters);
 
         // Retrieve again because the initial retrieval failed.
-        schema_version = getVersion(parameters, ac, cb, timer_name);
+        schema_version = getVersion(parameters, ac, cb, retry ? timer_name : string());
     }
 
     // Check that the versions match.
@@ -429,21 +434,16 @@ MySqlConnection::initializeSchema(const ParameterMap& parameters) {
     kea_admin_parameters.insert(kea_admin_parameters.begin(), "db-init");
 
     // Run.
-    IOServicePtr io_service(DatabaseConnection::getIOService());
-    ProcessSpawn kea_admin(io_service, KEA_ADMIN, kea_admin_parameters, vars,
+    ProcessSpawn kea_admin(KEA_ADMIN, kea_admin_parameters, vars,
                            /* inherit_env = */ true);
     DB_LOG_INFO(MYSQL_INITIALIZE_SCHEMA).arg(kea_admin.getCommandLine());
     pid_t const pid(kea_admin.spawn());
-    io_service->runOne();
     if (kea_admin.isRunning(pid)) {
-        // TODO: implement synchronous process spawning. Otherwise kea-admin is not waited by the
-        // parent process, and it becomes a zombie, even though its work is finished. Uncomment the
-        // following throw when that is done.
-        // isc_throw(SchemaInitializationFailed, "kea-admin still running");
+        isc_throw(SchemaInitializationFailed, "kea-admin still running");
     }
     int const exit_code(kea_admin.getExitStatus(pid));
     if (exit_code != 0) {
-        isc_throw(SchemaInitializationFailed, "Expected exit code 0. Got " << exit_code);
+        isc_throw(SchemaInitializationFailed, "Expected exit code 0 for kea-admin. Got " << exit_code);
     }
 }
 
