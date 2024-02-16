@@ -200,6 +200,9 @@ public:
     ///
     /// See fake_received_ field for description
     void fakeReceive(const isc::dhcp::Pkt6Ptr& pkt) {
+        // Add packet events normally set by PktFilter.
+        pkt->addPktEvent(PktEvent::SOCKET_RECEIVED);
+        pkt->addPktEvent(PktEvent::BUFFER_READ);
         fake_received_.push_back(pkt);
     }
 
@@ -549,6 +552,16 @@ public:
         EXPECT_EQ(expected_transid, rsp->getTransid());
     }
 
+    /// @brief Checks the contents of a packet's event stack agains a list
+    /// of expected events.
+    ///
+    /// @param msg pointer to the packet under test.
+    /// @param start_time system time prior to or equal to the timestamp
+    /// of the stack's first event (i.e. before packet was sent or received)
+    /// @param expected_events a list of the event labels in the order they
+    /// are expected to occur in the stack.
+    void checkPktEvents(const PktPtr& msg, std::list<std::string> expected_events);
+
     virtual ~NakedDhcpv6SrvTest();
 
     // A DUID used in most tests (typically as client-id)
@@ -562,6 +575,9 @@ public:
 
     // Index of a valid network interface
     unsigned int valid_ifindex_;
+
+    /// @brief Time the test started (UTC/microseconds)
+    boost::posix_time::ptime start_time_;
 };
 
 // We need to pass one reference to the Dhcp6Client, which is defined in

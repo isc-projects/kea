@@ -693,6 +693,7 @@ Dhcpv6Srv::runOne() {
         return;
     } else {
         if (MultiThreadingMgr::instance().getMode()) {
+            query->addPktEvent("mt_queued");
             typedef function<void()> CallBack;
             boost::shared_ptr<CallBack> call_back =
                 boost::make_shared<CallBack>(std::bind(&Dhcpv6Srv::processPacketAndSendResponseNoThrow,
@@ -731,6 +732,8 @@ Dhcpv6Srv::processPacketAndSendResponse(Pkt6Ptr query) {
 
 Pkt6Ptr
 Dhcpv6Srv::processPacket(Pkt6Ptr query) {
+    query->addPktEvent("process_started");
+
     // All packets belong to ALL.
     query->addClass("ALL");
 
@@ -1228,18 +1231,19 @@ Dhcpv6Srv::processLocalizedQuery6(AllocEngine::ClientContext6& ctx) {
         // the callback (i.e. drop) unless the callout status is set to
         // NEXT_STEP_PARK.  Otherwise the callback we bind here will be
         // executed when the hook library unparks the packet.
+        Subnet6Ptr subnet = ctx.subnet_;
         HooksManager::park("leases6_committed", query,
-        [this, callout_handle, query, rsp, callout_handle_state]() mutable {
+        [this, callout_handle, query, rsp, callout_handle_state, subnet]() mutable {
             if (MultiThreadingMgr::instance().getMode()) {
                 typedef function<void()> CallBack;
                 boost::shared_ptr<CallBack> call_back =
                     boost::make_shared<CallBack>(std::bind(&Dhcpv6Srv::sendResponseNoThrow,
-                                                           this, callout_handle, query, rsp));
+                                                           this, callout_handle, query, rsp, subnet));
                 callout_handle_state->on_completion_ = [call_back]() {
                     MultiThreadingMgr::instance().getThreadPool().add(call_back);
                 };
             } else {
-                processPacketPktSend(callout_handle, query, rsp);
+                processPacketPktSend(callout_handle, query, rsp, subnet);
                 processPacketBufferSend(callout_handle, rsp);
             }
         });
@@ -1275,7 +1279,7 @@ Dhcpv6Srv::processLocalizedQuery6(AllocEngine::ClientContext6& ctx) {
 
     // If we have a response prep it for shipment.
     if (rsp) {
-        processPacketPktSend(callout_handle, query, rsp);
+        processPacketPktSend(callout_handle, query, rsp, ctx.subnet_);
     }
 
     return (rsp);
@@ -1283,9 +1287,9 @@ Dhcpv6Srv::processLocalizedQuery6(AllocEngine::ClientContext6& ctx) {
 
 void
 Dhcpv6Srv::sendResponseNoThrow(hooks::CalloutHandlePtr& callout_handle,
-                               Pkt6Ptr query, Pkt6Ptr& rsp) {
+                               Pkt6Ptr query, Pkt6Ptr& rsp, Subnet6Ptr& subnet) {
     try {
-            processPacketPktSend(callout_handle, query, rsp);
+            processPacketPktSend(callout_handle, query, rsp, subnet);
             processPacketBufferSend(callout_handle, rsp);
         } catch (const std::exception& e) {
             LOG_ERROR(packet6_logger, DHCP6_PACKET_PROCESS_STD_EXCEPTION)
@@ -1297,7 +1301,8 @@ Dhcpv6Srv::sendResponseNoThrow(hooks::CalloutHandlePtr& callout_handle,
 
 void
 Dhcpv6Srv::processPacketPktSend(hooks::CalloutHandlePtr& callout_handle,
-                                Pkt6Ptr& query, Pkt6Ptr& rsp) {
+                                Pkt6Ptr& query, Pkt6Ptr& rsp, Subnet6Ptr& subnet) {
+    query->addPktEvent("process_completed");
     if (!rsp) {
         return;
     }
@@ -1325,6 +1330,9 @@ Dhcpv6Srv::processPacketPktSend(hooks::CalloutHandlePtr& callout_handle,
 
         // Set our response
         callout_handle->setArgument("response6", rsp);
+
+        // Pass the selected subnet as an argument.
+        callout_handle->setArgument("subnet6", subnet);
 
         // Call all installed callouts
         HooksManager::callCallouts(Hooks.hook_index_pkt6_send_, *callout_handle);

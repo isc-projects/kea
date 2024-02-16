@@ -170,8 +170,9 @@ public:
     /// @param callout_handle pointer to the callout handle.
     /// @param query A pointer to the packet to be processed.
     /// @param rsp A pointer to the response.
+    /// @param subnet A pointer to the selected subnet.
     void sendResponseNoThrow(hooks::CalloutHandlePtr& callout_handle,
-                             Pkt6Ptr query, Pkt6Ptr& rsp);
+                             Pkt6Ptr query, Pkt6Ptr& rsp, Subnet6Ptr& subnet);
 
     /// @brief Process a single incoming DHCPv6 packet.
     ///
@@ -1201,8 +1202,9 @@ protected:
     /// @param callout_handle pointer to the callout handle.
     /// @param query Pointer to a query.
     /// @param rsp Pointer to a response.
+    /// @param subnet A pointer to the selected subnet.
     void processPacketPktSend(hooks::CalloutHandlePtr& callout_handle,
-                              Pkt6Ptr& query, Pkt6Ptr& rsp);
+                              Pkt6Ptr& query, Pkt6Ptr& rsp, Subnet6Ptr& subnet);
 
     /// @brief Allocation Engine.
     /// Pointer to the allocation engine that we are currently using

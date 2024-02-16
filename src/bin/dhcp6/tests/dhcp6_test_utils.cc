@@ -24,6 +24,7 @@ using namespace isc::dhcp;
 using namespace isc::asiolink;
 using namespace isc::stats;
 using namespace isc::util;
+using namespace boost::posix_time;
 
 namespace isc {
 namespace dhcp {
@@ -1054,7 +1055,7 @@ Dhcpv6SrvTest::configure(const std::string& config,
 }
 
 NakedDhcpv6SrvTest::NakedDhcpv6SrvTest()
-    : rcode_(-1) {
+    : rcode_(-1), start_time_(PktEvent::now()) {
     // it's ok if that fails. There should not be such a file anyway
     static_cast<void>(remove(DUID_FILE));
 
@@ -1104,6 +1105,21 @@ NakedDhcpv6SrvTest::generateIA(uint16_t type, uint32_t iaid, uint32_t t1,
     ia->setT1(t1);
     ia->setT2(t2);
     return (ia);
+}
+
+void
+NakedDhcpv6SrvTest::checkPktEvents(const PktPtr& msg,
+                             std::list<std::string> expected_events) {
+    ASSERT_NE(start_time_, PktEvent::EMPTY_TIME());
+    auto events = msg->getPktEvents();
+    ASSERT_EQ(events.size(), expected_events.size());
+    ptime prev_time = start_time_;
+    auto expected_event = expected_events.begin();
+    for (const auto& event : events) {
+        ASSERT_EQ(event.label_, *expected_event);
+        EXPECT_GE(event.timestamp_, prev_time);
+        ++expected_event;
+    }
 }
 
 bool

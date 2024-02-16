@@ -378,9 +378,10 @@ called before "subnet6_select".
  - @b Arguments:
    - name: @b query6, type: isc::dhcp::Pkt6Ptr, direction: <b>in</b>
    - name: @b response6, type: isc::dhcp::Pkt6Ptr, direction: <b>in/out</b>
+   - name: @b subnet6, type: isc::dhcp::Subnet6Ptr, direction: <b>in/out</b>
 
  - @b Description: This callout is executed when server's response
-   is about to be send back to the client. The sole argument "response6"
+   is about to be send back to the client. The argument "response6"
    contains a pointer to an @c isc::dhcp::Pkt6 object that contains the
    packet, with set source and destination addresses, interface over which
    it will be send, list of all options and relay information.  All fields
@@ -388,6 +389,12 @@ called before "subnet6_select".
    noted that unless the callout sets the skip flag (see below), anything
    placed in the @c buffer_out_ field will be overwritten when the callout
    returns. (buffer_out_ is scratch space used for constructing the packet.)
+   The argument query6 contains a pointer to the corresponding query packet
+   (allowing to perform correlation between response and query). This object
+   cannot be modified.
+   The argument subnet6 contains a pointer to the selected subnet (if one).
+   This object cannot be modified.
+
 
  - <b>Next step status</b>: If any callout sets the status to SKIP, the server
    will assume that the callout did pack the "transaction-id", "message type"

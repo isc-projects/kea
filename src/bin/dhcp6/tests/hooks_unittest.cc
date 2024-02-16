@@ -402,6 +402,8 @@ public:
 
         callout_handle.getArgument("query6", callback_qry_pkt6_);
 
+        callout_handle.getArgument("subnet6", callback_subnet6_);
+
         callback_argument_names_ = callout_handle.getArgumentNames();
 
         if (callback_qry_pkt6_) {
@@ -1444,11 +1446,20 @@ TEST_F(HooksDhcpv6SrvTest, pkt6SendSimple) {
     vector<string> expected_argument_names;
     expected_argument_names.push_back(string("query6"));
     expected_argument_names.push_back(string("response6"));
+    expected_argument_names.push_back(string("subnet6"));
     EXPECT_TRUE(expected_argument_names == callback_argument_names_);
 
     // Pkt passed to a callout must be configured to copy retrieved options.
     EXPECT_TRUE(callback_qry_options_copy_);
     EXPECT_TRUE(callback_resp_options_copy_);
+
+    // Verify that packet sent to callout has the expected packet events.
+    std::list<std::string> expected_events;
+    expected_events.push_back(PktEvent::SOCKET_RECEIVED);
+    expected_events.push_back(PktEvent::BUFFER_READ);
+    expected_events.push_back("process_started");
+    expected_events.push_back("process_completed");
+    checkPktEvents(callback_qry_pkt6_, expected_events);
 
     // Check if the callout handle state was reset after the callout.
     checkCalloutHandleReset(sol);

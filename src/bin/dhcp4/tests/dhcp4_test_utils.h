@@ -192,6 +192,8 @@ public:
     ///
     /// See fake_received_ field for description
     void fakeReceive(const Pkt4Ptr& pkt) {
+        pkt->addPktEvent(PktEvent::SOCKET_RECEIVED);
+        pkt->addPktEvent(PktEvent::BUFFER_READ);
         fake_received_.push_back(pkt);
     }
 
@@ -679,6 +681,16 @@ public:
         multi_threading_ = enabled;
     }
 
+    /// @brief Checks the contents of a packet's event stack agains a list
+    /// of expected events.
+    ///
+    /// @param msg pointer to the packet under test.
+    /// @param start_time system time prior to or equal to the timestamp
+    /// of the stack's first event (i.e. before packet was sent or received)
+    /// @param expected_events a list of the event labels in the order they
+    /// are expected to occur in the stack.
+    void checkPktEvents(const PktPtr& msg, std::list<std::string> expected_events);
+
     /// @brief A subnet used in most tests.
     Subnet4Ptr subnet_;
 
@@ -699,6 +711,9 @@ public:
 
     /// @brief The multi-threading flag.
     bool multi_threading_;
+
+    /// @brief Time the test started (UTC/microseconds)
+    boost::posix_time::ptime start_time_;
 };
 
 /// @brief Patch the server config to add interface-config/re-detect=false

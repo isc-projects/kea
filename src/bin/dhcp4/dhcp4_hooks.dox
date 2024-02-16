@@ -370,11 +370,12 @@ called before "subnet4_select".
 @subsection dhcpv4HooksPkt4Send pkt4_send
 
  - @b Arguments:
-   - name: @b response4, type: isc::dhcp::Pkt4Ptr, direction: <b>in/out</b>
    - name: @b query4, type: isc::dhcp::Pkt4Ptr, direction: <b>in</b>
+   - name: @b response4, type: isc::dhcp::Pkt4Ptr, direction: <b>in/out</b>
+   - name: @b subnet4, type: isc::dhcp::Subnet4Ptr, direction: <b>in</b>
 
  - @b Description: this callout is executed when server's response
-   is about to be sent back to the client. The sole argument "response4"
+   is about to be sent back to the client. The argument "response4"
    contains a pointer to an isc::dhcp::Pkt4 object carrying the
    packet, with source and destination addresses set, interface over which
    it will be sent, and a list of all options and relay information.  All fields
@@ -385,6 +386,8 @@ called before "subnet4_select".
    The argument query4 contains a pointer to the corresponding query packet
    (allowing to perform correlation between response and query). This object
    cannot be modified.
+   The argument subnet4 contains a pointer to the selected subnet (if one).
+   This object cannot be modified.
 
  - <b>Next step action</b>: if any callout installed on the "pkt4_send" hook
    sets the next step action to SKIP, the server will not construct the raw

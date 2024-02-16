@@ -33,6 +33,7 @@ using namespace std;
 using namespace isc::asiolink;
 using namespace isc::data;
 using namespace isc::util;
+using namespace boost::posix_time;
 
 namespace isc {
 namespace dhcp {
@@ -57,7 +58,7 @@ BaseServerTest::~BaseServerTest() {
 }
 
 Dhcpv4SrvTest::Dhcpv4SrvTest()
-    : rcode_(-1), srv_(0), multi_threading_(false) {
+    : rcode_(-1), srv_(0), multi_threading_(false), start_time_(PktEvent::now()) {
 
     // Wipe any existing statistics
     isc::stats::StatsMgr::instance().removeAll();
@@ -1004,6 +1005,21 @@ Dhcpv4SrvTest::pretendReceivingPkt(NakedDhcpv4Srv& srv, const std::string& confi
     // They also must have expected values.
     EXPECT_EQ(1, pkt4_rcvd->getInteger().first);
     EXPECT_EQ(1, tested_stat->getInteger().first);
+}
+
+void
+Dhcpv4SrvTest::checkPktEvents(const PktPtr& msg,
+                             std::list<std::string> expected_events) {
+    ASSERT_NE(start_time_, PktEvent::EMPTY_TIME());
+    auto events = msg->getPktEvents();
+    ASSERT_EQ(events.size(), expected_events.size());
+    ptime prev_time = start_time_;
+    auto expected_event = expected_events.begin();
+    for (const auto& event : events) {
+        ASSERT_EQ(event.label_, *expected_event);
+        EXPECT_GE(event.timestamp_, prev_time);
+        ++expected_event;
+    }
 }
 
 } // end of isc::dhcp::test namespace

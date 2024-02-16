@@ -359,8 +359,9 @@ public:
     /// @param callout_handle pointer to the callout handle.
     /// @param query A pointer to the packet to be processed.
     /// @param rsp A pointer to the response.
+    /// @param subnet A pointer to selected subnet.
     void sendResponseNoThrow(hooks::CalloutHandlePtr& callout_handle,
-                             Pkt4Ptr& query, Pkt4Ptr& rsp);
+                             Pkt4Ptr& query, Pkt4Ptr& rsp, Subnet4Ptr& subnet);
 
     /// @brief Process a single incoming DHCPv4 packet.
     ///
@@ -1115,8 +1116,9 @@ protected:
     /// @param callout_handle pointer to the callout handle.
     /// @param query Pointer to a query.
     /// @param rsp Pointer to a response.
+    /// @param subnet A pointer to selected subnet.
     void processPacketPktSend(hooks::CalloutHandlePtr& callout_handle,
-                              Pkt4Ptr& query, Pkt4Ptr& rsp);
+                              Pkt4Ptr& query, Pkt4Ptr& rsp, Subnet4Ptr& subnet);
 
     /// @brief Executes buffer4_send callout and sends the response.
     ///

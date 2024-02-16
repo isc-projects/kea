@@ -1100,6 +1100,7 @@ Dhcpv4Srv::runOne() {
         return;
     } else {
         if (MultiThreadingMgr::instance().getMode()) {
+            query->addPktEvent("mt_queued");
             typedef function<void()> CallBack;
             boost::shared_ptr<CallBack> call_back =
                 boost::make_shared<CallBack>(std::bind(&Dhcpv4Srv::processPacketAndSendResponseNoThrow,
@@ -1134,11 +1135,14 @@ Dhcpv4Srv::processPacketAndSendResponse(Pkt4Ptr& query) {
     }
 
     CalloutHandlePtr callout_handle = getCalloutHandle(query);
+
     processPacketBufferSend(callout_handle, rsp);
 }
 
 void
 Dhcpv4Srv::processPacket(Pkt4Ptr& query, Pkt4Ptr& rsp, bool allow_packet_park) {
+    query->addPktEvent("process_started");
+
     // All packets belong to ALL.
     query->addClass("ALL");
 
@@ -1550,12 +1554,12 @@ Dhcpv4Srv::processDhcp4Query(Pkt4Ptr& query, Pkt4Ptr& rsp,
                             typedef function<void()> CallBack;
                             boost::shared_ptr<CallBack> call_back = boost::make_shared<CallBack>(
                                 std::bind(&Dhcpv4Srv::sendResponseNoThrow, this, callout_handle,
-                                          query, rsp));
+                                          query, rsp, ctx->subnet_));
                             callout_handle_state->on_completion_ = [call_back]() {
                                 MultiThreadingMgr::instance().getThreadPool().add(call_back);
                             };
                         } else {
-                            processPacketPktSend(callout_handle, query, rsp);
+                            processPacketPktSend(callout_handle, query, rsp, ctx->subnet_);
                             processPacketBufferSend(callout_handle, rsp);
                         }
                     });
@@ -1596,15 +1600,16 @@ Dhcpv4Srv::processDhcp4Query(Pkt4Ptr& query, Pkt4Ptr& rsp,
 
     // If we have a response prep it for shipment.
     if (rsp) {
-        processPacketPktSend(callout_handle, query, rsp);
+        Subnet4Ptr subnet = (ctx ? ctx->subnet_ : Subnet4Ptr());
+        processPacketPktSend(callout_handle, query, rsp, subnet);
     }
 }
 
 void
 Dhcpv4Srv::sendResponseNoThrow(hooks::CalloutHandlePtr& callout_handle,
-                               Pkt4Ptr& query, Pkt4Ptr& rsp) {
+                               Pkt4Ptr& query, Pkt4Ptr& rsp, Subnet4Ptr& subnet) {
     try {
-            processPacketPktSend(callout_handle, query, rsp);
+            processPacketPktSend(callout_handle, query, rsp, subnet);
             processPacketBufferSend(callout_handle, rsp);
         } catch (const std::exception& e) {
             LOG_ERROR(packet4_logger, DHCP4_PACKET_PROCESS_STD_EXCEPTION)
@@ -1616,7 +1621,8 @@ Dhcpv4Srv::sendResponseNoThrow(hooks::CalloutHandlePtr& callout_handle,
 
 void
 Dhcpv4Srv::processPacketPktSend(hooks::CalloutHandlePtr& callout_handle,
-                                Pkt4Ptr& query, Pkt4Ptr& rsp) {
+                                Pkt4Ptr& query, Pkt4Ptr& rsp, Subnet4Ptr& subnet) {
+    query->addPktEvent("process_completed");
     if (!rsp) {
         return;
     }
@@ -1642,6 +1648,9 @@ Dhcpv4Srv::processPacketPktSend(hooks::CalloutHandlePtr& callout_handle,
 
         // Set our response
         callout_handle->setArgument("response4", rsp);
+
+        // Pass in the selected subnet.
+        callout_handle->setArgument("subnet4", subnet);
 
         // Call all installed callouts
         HooksManager::callCallouts(Hooks.hook_index_pkt4_send_,

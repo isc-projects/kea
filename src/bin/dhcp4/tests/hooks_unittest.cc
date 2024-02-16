@@ -1536,6 +1536,7 @@ TEST_F(HooksDhcpv4SrvTest, pkt4SendSimple) {
     vector<string> expected_argument_names;
     expected_argument_names.push_back(string("query4"));
     expected_argument_names.push_back(string("response4"));
+    expected_argument_names.push_back(string("subnet4"));
     sort(callback_argument_names_.begin(), callback_argument_names_.end());
     sort(expected_argument_names.begin(), expected_argument_names.end());
     EXPECT_TRUE(expected_argument_names == callback_argument_names_);
@@ -1543,6 +1544,14 @@ TEST_F(HooksDhcpv4SrvTest, pkt4SendSimple) {
     // Pkt passed to a callout must be configured to copy retrieved options.
     EXPECT_TRUE(callback_qry_options_copy_);
     EXPECT_TRUE(callback_resp_options_copy_);
+
+    // Verify that packet sent to callout had the expected packet events.
+    std::list<std::string> expected_events;
+    expected_events.push_back(PktEvent::SOCKET_RECEIVED);
+    expected_events.push_back(PktEvent::BUFFER_READ);
+    expected_events.push_back("process_started");
+    expected_events.push_back("process_completed");
+    checkPktEvents(callback_qry_pkt4_, expected_events);
 
     // Check if the callout handle state was reset after the callout.
     checkCalloutHandleReset(discover);
