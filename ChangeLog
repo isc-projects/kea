@@ -1,3 +1,9 @@
+2207.	[func]		andrei
+	DHCP servers now initialize the database schema automatically on
+	startup or on reconfiguration if there is at least one database
+	backend configured and if the configured database is empty.
+	(Gitlab #3025)
+
 2206.   [func]      tmark
 	Perfmon hook library now dumps the packet event stack
 	of query packets to debug logging after they have been
