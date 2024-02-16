@@ -53,7 +53,7 @@ typedef boost::shared_ptr<ProcessState> ProcessStatePtr;
 /// identified by PID.
 typedef std::map<pid_t, ProcessStatePtr> ProcessStates;
 
-class ProcessSpawnImpl;
+class processSpawnImpl;
 
 /// @brief ProcessCollection container which stores all ProcessStates for each
 /// instance of @ref ProcessSpawnImpl.
@@ -87,7 +87,8 @@ public:
                      const std::string& executable,
                      const ProcessArgs& args,
                      const ProcessEnvVars& vars,
-                     const bool inherit_env);
+                     const bool inherit_env,
+                     const bool sync);
 
     /// @brief Destructor.
     ~ProcessSpawnImpl();
@@ -158,8 +159,10 @@ private:
             if (!io_service) {
                 isc_throw(ProcessSpawnError, "NULL IOService instance");
             }
-            io_signal_set_ = boost::make_shared<IOSignalSet>(io_service,
-                    std::bind(&ProcessSpawnImpl::waitForProcess, ph::_1));
+            io_signal_set_ =
+                boost::make_shared<IOSignalSet>(io_service,
+                                                std::bind(&ProcessSpawnImpl::waitForProcess, ph::_1,
+                                                          /* pid = */ -1, /* sync = */ false));
             io_signal_set_->add(SIGCHLD);
         }
 
@@ -200,12 +203,13 @@ private:
 
     /// @brief Signal handler for SIGCHLD.
     ///
-    /// This handler waits for the child process to finish and retrieves
-    /// its exit code into the @c status_ member.
-    ///
-    /// @return true if the processed signal was SIGCHLD or false if it
-    /// was a different signal.
-    static bool waitForProcess(int signum);
+    /// @param signum the signal number received,
+    /// populated by the signal set in async mode
+    /// @param pid the pid to wait for, -1 by default meaning wait
+    /// for any child process
+    /// @param sync whether this function is called immediately after spawning
+    /// (synchronous) or not (asynchronous, default).:w
+    static void waitForProcess(int signum, pid_t const pid = -1, bool const sync = false);
 
     /// @brief A map holding the status codes of executed processes.
     static ProcessCollection process_collection_;
@@ -233,6 +237,10 @@ private:
 
     /// @brief The IOService which handles IO operations.
     IOServicePtr io_service_;
+
+    /// @brief Whether the process is waited immediately after spawning
+    /// (synchronous) or not (asynchronous, default).
+    bool sync_;
 };
 
 ProcessCollection ProcessSpawnImpl::process_collection_;
@@ -246,9 +254,10 @@ ProcessSpawnImpl::ProcessSpawnImpl(IOServicePtr io_service,
                                    const std::string& executable,
                                    const ProcessArgs& args,
                                    const ProcessEnvVars& vars,
-                                   const bool inherit_env)
+                                   const bool inherit_env,
+                                   const bool sync)
     : executable_(executable), args_(new char*[args.size() + 2]),
-      store_(false), io_service_(io_service) {
+      store_(false), io_service_(io_service), sync_(sync) {
 
     // Size of vars except the trailing null
     size_t vars_size;
@@ -346,6 +355,11 @@ ProcessSpawnImpl::spawn(bool dismiss) {
         store_ = true;
         process_collection_[this].insert(std::pair<pid_t, ProcessStatePtr>(pid, ProcessStatePtr(new ProcessState())));
     }
+
+    if (sync_) {
+        waitForProcess(SIGCHLD, pid, /* sync = */ true);
+    }
+
     return (pid);
 }
 
@@ -355,9 +369,7 @@ ProcessSpawnImpl::isRunning(const pid_t pid) const {
     ProcessStates::const_iterator proc;
     if (process_collection_.find(this) == process_collection_.end() ||
         (proc = process_collection_[this].find(pid)) == process_collection_[this].end()) {
-        isc_throw(BadValue, "the process with the pid '" << pid
-                  << "' hasn't been spawned and it status cannot be"
-                  " returned");
+        isc_throw(InvalidOperation, "the status of process with pid '" << pid << "' cannot be returned");
     }
     return (proc->second->running_);
 }
@@ -381,9 +393,7 @@ ProcessSpawnImpl::getExitStatus(const pid_t pid) const {
     ProcessStates::const_iterator proc;
     if (process_collection_.find(this) == process_collection_.end() ||
         (proc = process_collection_[this].find(pid)) == process_collection_[this].end()) {
-        isc_throw(InvalidOperation, "the process with the pid '" << pid
-                  << "' hasn't been spawned and it status cannot be"
-                  " returned");
+        isc_throw(InvalidOperation, "the status of process with pid '" << pid << "' cannot be returned");
     }
     return (WEXITSTATUS(proc->second->status_));
 }
@@ -401,17 +411,26 @@ ProcessSpawnImpl::allocateInternal(const std::string& src) {
     return (dest);
 }
 
-bool
-ProcessSpawnImpl::waitForProcess(int) {
-    lock_guard<std::mutex> lk(mutex_);
+void
+ProcessSpawnImpl::waitForProcess(int /* signum */,
+                                 pid_t const pid /* = -1 */,
+                                 bool sync /* = false */) {
+    unique_lock<std::mutex> lk{mutex_, std::defer_lock};
+    if (!sync) {
+        lk.lock();
+    }
     for (;;) {
         int status = 0;
-        pid_t pid = waitpid(-1, &status, WNOHANG);
-        if (pid <= 0) {
+        // When called synchronously, this function needs to be blocking.
+        // When called asynchronously, the first IO context event is for
+        // receiving the SIGCHLD signal which itself is blocking,
+        // hence no need to block here too.
+        pid_t wpid = waitpid(pid, &status, sync ? 0 : WNOHANG);
+        if (wpid <= 0) {
             break;
         }
         for (auto const& instance : process_collection_) {
-            auto const& proc = instance.second.find(pid);
+            auto const& proc = instance.second.find(wpid);
             /// Check that the terminating process was started
             /// by our instance of ProcessSpawn
             if (proc != instance.second.end()) {
@@ -421,7 +440,6 @@ ProcessSpawnImpl::waitForProcess(int) {
             }
         }
     }
-    return (true);
 }
 
 void
@@ -441,7 +459,20 @@ ProcessSpawn::ProcessSpawn(IOServicePtr io_service,
                            const ProcessArgs& args,
                            const ProcessEnvVars& vars,
                            const bool inherit_env /* = false */)
-    : impl_(new ProcessSpawnImpl(io_service, executable, args, vars, inherit_env)) {
+    : impl_(new ProcessSpawnImpl(
+          io_service, executable, args, vars, inherit_env, /* sync = */ false)) {
+}
+
+ProcessSpawn::ProcessSpawn(const std::string& executable,
+                           const ProcessArgs& args,
+                           const ProcessEnvVars& vars,
+                           const bool inherit_env /* = false */)
+    : impl_(new ProcessSpawnImpl(IOServicePtr(new IOService()),
+                                 executable,
+                                 args,
+                                 vars,
+                                 inherit_env,
+                                 /* sync = */ true)) {
 }
 
 std::string

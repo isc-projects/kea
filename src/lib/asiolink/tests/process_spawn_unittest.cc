@@ -115,14 +115,16 @@ TEST_F(ProcessSpawnTest, spawnWithArgs) {
     // Set test fail safe.
     setTestTime(1000);
 
-    // The next handler executed is IOSignal's handler.
+    // SIGCHLD signal.
     io_service_->runOne();
 
-    // The first handler executed is the IOSignal's internal timer expire
-    // callback.
+    // waitForProcess handler.
     io_service_->runOne();
 
-    // Polling once to be sure.
+    // ProcessSpawnTest::processSignal handler.
+    io_service_->runOne();
+
+    // Poll to be sure.
     io_service_->poll();
 
     ASSERT_EQ(1, processed_signals_.size());
@@ -149,14 +151,16 @@ TEST_F(ProcessSpawnTest, spawnWithArgsAndEnvVars) {
     // Set test fail safe.
     setTestTime(1000);
 
-    // The next handler executed is IOSignal's handler.
+    // SIGCHLD signal.
     io_service_->runOne();
 
-    // The first handler executed is the IOSignal's internal timer expire
-    // callback.
+    // waitForProcess handler.
     io_service_->runOne();
 
-    // Polling once to be sure.
+    // ProcessSpawnTest::processSignal handler.
+    io_service_->runOne();
+
+    // Poll to be sure.
     io_service_->poll();
 
     ASSERT_EQ(1, processed_signals_.size());
@@ -181,14 +185,16 @@ TEST_F(ProcessSpawnTest, spawnTwoProcesses) {
     // Set test fail safe.
     setTestTime(1000);
 
-    // The next handler executed is IOSignal's handler.
+    // SIGCHLD signal.
     io_service_->runOne();
 
-    // The first handler executed is the IOSignal's internal timer expire
-    // callback.
+    // waitForProcess handler.
     io_service_->runOne();
 
-    // Polling once to be sure.
+    // ProcessSpawnTest::processSignal handler.
+    io_service_->runOne();
+
+    // Poll to be sure.
     io_service_->poll();
 
     pid_t pid2 = 0;
@@ -197,14 +203,16 @@ TEST_F(ProcessSpawnTest, spawnTwoProcesses) {
     // Set test fail safe.
     setTestTime(1000);
 
-    // The next handler executed is IOSignal's handler.
+    // SIGCHLD signal.
     io_service_->runOne();
 
-    // The first handler executed is the IOSignal's internal timer expire
-    // callback.
+    // waitForProcess handler.
     io_service_->runOne();
 
-    // Polling once to be sure.
+    // ProcessSpawnTest::processSignal handler.
+    io_service_->runOne();
+
+    // Poll to be sure.
     io_service_->poll();
 
     ASSERT_EQ(2, processed_signals_.size());
@@ -234,14 +242,16 @@ TEST_F(ProcessSpawnTest, spawnNoArgs) {
     // Set test fail safe.
     setTestTime(1000);
 
-    // The next handler executed is IOSignal's handler.
+    // SIGCHLD signal.
     io_service_->runOne();
 
-    // The first handler executed is the IOSignal's internal timer expire
-    // callback.
+    // waitForProcess handler.
     io_service_->runOne();
 
-    // Polling once to be sure.
+    // ProcessSpawnTest::processSignal handler.
+    io_service_->runOne();
+
+    // Poll to be sure.
     io_service_->poll();
 
     ASSERT_EQ(1, processed_signals_.size());
@@ -255,14 +265,16 @@ TEST_F(ProcessSpawnTest, spawnNoArgs) {
     // Set test fail safe.
     setTestTime(1000);
 
-    // The next handler executed is IOSignal's handler.
+    // SIGCHLD signal.
     io_service_->runOne();
 
-    // The first handler executed is the IOSignal's internal timer expire
-    // callback.
+    // waitForProcess handler.
     io_service_->runOne();
 
-    // Polling once to be sure.
+    // ProcessSpawnTest::processSignal handler.
+    io_service_->runOne();
+
+    // Poll to be sure.
     io_service_->poll();
 
     ASSERT_EQ(2, processed_signals_.size());
@@ -336,14 +348,16 @@ TEST_F(ProcessSpawnTest, isRunning) {
     // Set test fail safe.
     setTestTime(1000);
 
-    // The next handler executed is IOSignal's handler.
+    // SIGCHLD signal.
     io_service_->runOne();
 
-    // The first handler executed is the IOSignal's internal timer expire
-    // callback.
+    // waitForProcess handler.
     io_service_->runOne();
 
-    // Polling once to be sure.
+    // ProcessSpawnTest::processSignal handler.
+    io_service_->runOne();
+
+    // Poll to be sure.
     io_service_->poll();
 
     ASSERT_EQ(1, processed_signals_.size());
@@ -366,14 +380,16 @@ TEST_F(ProcessSpawnTest, inheritEnv) {
     // Set test fail safe.
     setTestTime(1000);
 
-    // The next handler executed is IOSignal's handler.
+    // SIGCHLD signal.
     io_service_->runOne();
 
-    // The first handler executed is the IOSignal's internal timer expire
-    // callback.
+    // waitForProcess handler.
     io_service_->runOne();
 
-    // Polling once to be sure.
+    // ProcessSpawnTest::processSignal handler.
+    io_service_->runOne();
+
+    // Poll to be sure.
     io_service_->poll();
 
     ASSERT_EQ(1, processed_signals_.size());
@@ -400,18 +416,193 @@ TEST_F(ProcessSpawnTest, inheritEnvWithParentVar) {
     // Set test fail safe.
     setTestTime(1000);
 
-    // The next handler executed is IOSignal's handler.
+    // SIGCHLD signal.
     io_service_->runOne();
 
-    // The first handler executed is the IOSignal's internal timer expire
-    // callback.
+    // waitForProcess handler.
     io_service_->runOne();
 
-    // Polling once to be sure.
+    // ProcessSpawnTest::processSignal handler.
+    io_service_->runOne();
+
+    // Poll to be sure.
     io_service_->poll();
 
     ASSERT_EQ(1, processed_signals_.size());
     ASSERT_EQ(SIGCHLD, processed_signals_[0]);
+
+    // 34 means failed comparison of env vars.
+    EXPECT_EQ(34, process.getExitStatus(pid));
+}
+
+// This test verifies that the external application can be ran synchronously
+// with arguments and that the exit code is gathered.
+TEST_F(ProcessSpawnTest, spawnWithArgsSync) {
+    vector<string> args;
+    args.push_back("-e");
+    args.push_back("64");
+
+    ProcessSpawn process(TEST_SCRIPT_SH, args);
+    pid_t pid = 0;
+    ASSERT_NO_THROW(pid = process.spawn());
+
+    // Exit code 64 as requested.
+    EXPECT_EQ(64, process.getExitStatus(pid));
+}
+
+// This test verifies that the external application can be ran synchronously
+// with arguments and environment variables that the exit code is gathered.
+TEST_F(ProcessSpawnTest, spawnWithArgsAndEnvVarsSync) {
+    vector<string> args;
+    vector<string> vars;
+    args.push_back("-v");
+    args.push_back("TEST_VARIABLE_NAME");
+    args.push_back("TEST_VARIABLE_VALUE");
+    vars.push_back("TEST_VARIABLE_NAME=TEST_VARIABLE_VALUE");
+
+    ProcessSpawn process(TEST_SCRIPT_SH, args, vars);
+    pid_t pid = 0;
+    ASSERT_NO_THROW(pid = process.spawn());
+
+    // 56 means successful comparison of env vars.
+    EXPECT_EQ(56, process.getExitStatus(pid));
+}
+
+// This test verifies that the single ProcessSpawn object can be used
+// to start two processes synchronously and that their status codes can be
+// gathered. It also checks that it is possible to clear the status of the
+// process.
+TEST_F(ProcessSpawnTest, spawnTwoProcessesSync) {
+    vector<string> args;
+    args.push_back("-p");
+
+    ProcessSpawn process(TEST_SCRIPT_SH, args);
+    pid_t pid1 = 0;
+    ASSERT_NO_THROW(pid1 = process.spawn());
+
+    pid_t pid2 = 0;
+    ASSERT_NO_THROW(pid2 = process.spawn());
+
+    EXPECT_NE(process.getExitStatus(pid1), process.getExitStatus(pid2));
+
+    // Clear the status of the first process. An attempt to get the status
+    // for the cleared process should result in exception. But, there should
+    // be no exception for the second process.
+    process.clearState(pid1);
+    EXPECT_THROW(process.getExitStatus(pid1), InvalidOperation);
+    EXPECT_NO_THROW(process.getExitStatus(pid2));
+
+    process.clearState(pid2);
+    EXPECT_THROW(process.getExitStatus(pid2), InvalidOperation);
+}
+
+// This test verifies that the external application can be ran synchronously
+// without arguments and that the exit code is gathered.
+TEST_F(ProcessSpawnTest, spawnNoArgsSync) {
+    ProcessSpawn process(TEST_SCRIPT_SH);
+    pid_t pid = 0;
+    ASSERT_NO_THROW(pid = process.spawn());
+
+    // 32 means no args.
+    EXPECT_EQ(32, process.getExitStatus(pid));
+
+    ASSERT_NO_THROW(pid = process.spawn(true));
+
+    EXPECT_THROW(process.getExitStatus(pid), InvalidOperation);
+}
+
+// This test verifies that the EXIT_FAILURE code is returned when
+// application can't be executed synchronously.
+TEST_F(ProcessSpawnTest, invalidExecutableSync) {
+    std::string expected = "File not found: foo";
+    ASSERT_THROW_MSG(ProcessSpawn process("foo"),
+                     ProcessSpawnError, expected);
+
+    std::string name = INVALID_TEST_SCRIPT_SH;
+
+    expected = "File not executable: ";
+    expected += name;
+    ASSERT_THROW_MSG(ProcessSpawn process(name),
+                     ProcessSpawnError, expected);
+}
+
+// This test verifies that the full command line for the synchronous process is
+// returned.
+TEST_F(ProcessSpawnTest, getCommandLineSync) {
+    // Note that cases below are enclosed in separate scopes to make
+    // sure that the ProcessSpawn object is destroyed before a new
+    // object is created. Current implementation doesn't allow for
+    // having two ProcessSpawn objects simultaneously as they will
+    // both try to allocate a signal handler for SIGCHLD.
+    {
+        // Case 1: arguments present.
+        ProcessArgs args;
+        args.push_back("-x");
+        args.push_back("-y");
+        args.push_back("foo");
+        args.push_back("bar");
+        ProcessSpawn process(TEST_SCRIPT_SH, args);
+        std::string expected = TEST_SCRIPT_SH;
+        expected += " -x -y foo bar";
+        EXPECT_EQ(expected, process.getCommandLine());
+    }
+
+    {
+        // Case 2: no arguments.
+        ProcessSpawn process(TEST_SCRIPT_SH);
+        EXPECT_EQ(TEST_SCRIPT_SH, process.getCommandLine());
+    }
+}
+
+// This test verifies that it is possible to check if the synchronous process is
+// running.
+TEST_F(ProcessSpawnTest, DISABLED_isRunningSync) {
+    // Run the process which sleeps for 10 seconds, so as we have
+    // enough time to check if it is running.
+    vector<string> args;
+    args.push_back("-s");
+    args.push_back("10");
+
+    ProcessSpawn process(TEST_SCRIPT_SH, args);
+    pid_t pid = 0;
+    ASSERT_NO_THROW(pid = process.spawn());
+
+    EXPECT_TRUE(process.isRunning(pid));
+
+    // Kill the process.
+    ASSERT_EQ(0, kill(pid, SIGKILL));
+}
+
+// This test verifies inheritance of environment in a synchronous context.
+TEST_F(ProcessSpawnTest, inheritEnvSync) {
+    // Run the process which sleeps for 10 seconds, so as we have
+    // enough time to check if it is running.
+    vector<string> args{"-v", "VAR", "value"};
+
+    ProcessEnvVars vars{"VAR=value"};
+
+    ProcessSpawn process(TEST_SCRIPT_SH, args, vars,
+                         /* inherit_env = */ true);
+    pid_t pid = 0;
+    ASSERT_NO_THROW(pid = process.spawn());
+
+    // 56 means successful comparison of env vars.
+    EXPECT_EQ(56, process.getExitStatus(pid));
+}
+
+// This test verifies inheritance of environment when a variable is inherited
+// from parent in a synchronous context. It assumes PATH is set.
+TEST_F(ProcessSpawnTest, inheritEnvWithParentVarSync) {
+    // Run the process which sleeps for 10 seconds, so as we have
+    // enough time to check if it is running.
+    vector<string> args{"-v", "PATH", "value"};
+
+    ProcessEnvVars vars{"VAR=value"};
+
+    ProcessSpawn process(TEST_SCRIPT_SH, args, vars,
+                         /* inherit_env = */ true);
+    pid_t pid = 0;
+    ASSERT_NO_THROW(pid = process.spawn());
 
     // 34 means failed comparison of env vars.
     EXPECT_EQ(34, process.getExitStatus(pid));
