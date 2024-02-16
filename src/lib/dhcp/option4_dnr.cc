@@ -156,18 +156,19 @@ Option4Dnr::parseConfigData(const std::string& config_txt) {
 
 const std::unordered_set<std::string> DnrInstance::FORBIDDEN_SVC_PARAMS = {"ipv4hint", "ipv6hint"};
 
-const std::map<std::string, uint16_t> DnrInstance::SVC_PARAMS = {
-    {"mandatory", 0},        // RFC 9460, Section 14.3.2, not used in DNR
-    {"alpn", 1},             // RFC 9460, Section 14.3.2, mandatory in DNR
-    {"no-default-alpn", 2},  // RFC 9460, Section 14.3.2, not used in DNR
-    {"port", 3},             // RFC 9460, Section 14.3.2, optional in DNR
-    {"ipv4hint", 4},         // RFC 9460, Section 14.3.2, forbidden in DNR
-    {"ech", 5},              // RFC 9460, Section 14.3.2, not used in DNR
-    {"ipv6hint", 6},         // RFC 9460, Section 14.3.2, forbidden in DNR
-    {"dohpath", 7},          // RFC 9461, optional in DNR
-    {"ohttp", 8}             // https://datatracker.ietf.org/doc/draft-ietf-ohai-svcb-config,
-                             // not used in DNR
-};
+const DnrInstance::SvcParamsMap DnrInstance::SVC_PARAMS =
+    boost::assign::list_of<DnrInstance::SvcParamsMap::relation>
+    ("mandatory", 0)        // RFC 9460, Section 14.3.2, not used in DNR
+    ("alpn", 1)             // RFC 9460, Section 14.3.2, mandatory in DNR
+    ("no-default-alpn", 2)  // RFC 9460, Section 14.3.2, not used in DNR
+    ("port", 3)             // RFC 9460, Section 14.3.2, optional in DNR
+    ("ipv4hint", 4)         // RFC 9460, Section 14.3.2, forbidden in DNR
+    ("ech", 5)              // RFC 9460, Section 14.3.2, not used in DNR
+    ("ipv6hint", 6)         // RFC 9460, Section 14.3.2, forbidden in DNR
+    ("dohpath", 7)          // RFC 9461, optional in DNR
+    ("ohttp", 8)            // https://datatracker.ietf.org/doc/draft-ietf-ohai-svcb-config,
+                            // not used in DNR
+    ;
 
 const std::set<uint8_t> DnrInstance::SUPPORTED_SVC_PARAMS = {1, 3, 7};
 
@@ -459,6 +460,58 @@ DnrInstance::checkFields() {
 }
 
 std::string
+DnrInstance::svcParamValAsText(const std::pair<uint16_t, OpaqueDataTuple>& svc_param) const {
+    OptionBufferConstIter alpn_begin;
+    OptionBufferConstIter alpn_end;
+    std::ostringstream stream;
+    OpaqueDataTuple alpn_id_tuple(OpaqueDataTuple::LENGTH_1_BYTE);
+    bool first = true;
+    std::string ret;
+
+    switch (svc_param.first) {
+    case 1:
+        // alpn
+        // read all protocols and concatenate them with comma
+        alpn_begin = svc_param.second.getData().begin();
+        alpn_end = svc_param.second.getData().end();
+        while (alpn_begin != alpn_end) {
+            try {
+                alpn_id_tuple.unpack(alpn_begin, alpn_end);
+            } catch (const Exception& e) {
+                isc_throw(BadValue, getLogPrefix()
+                                        << "Exception happened when tried to parse ALPN IDs"
+                                        << ". Error: " << e.what());
+            }
+
+            if (first) {
+                first = false;
+            } else {
+                stream << ",";
+            }
+
+            stream << alpn_id_tuple.getText();
+            alpn_begin += alpn_id_tuple.getTotalLength();
+        }
+
+        ret = stream.str();
+        break;
+    case 3:
+        // port
+        // read uint16 from data buffer and return as string
+        ret = std::to_string(
+            readUint16(svc_param.second.getData().data(), svc_param.second.getLength()));
+        break;
+    case 7:
+        // dohpath
+        // convertion not needed, let's return data as string
+        ret = svc_param.second.getText();
+        break;
+    }
+
+    return (ret);
+}
+
+std::string
 DnrInstance::getDnrInstanceAsText() const {
     std::ostringstream stream;
     stream << "service_priority=" << service_priority_ << ", adn_length=" << adn_length_ << ", "
@@ -470,7 +523,20 @@ DnrInstance::getDnrInstanceAsText() const {
         }
 
         if (svc_params_length_ > 0) {
-            stream << ", svc_params='" + svc_params_ + "'";
+            stream << ", svc_params='";
+            bool first = true;
+            for (auto const& it : svc_params_map_) {
+                auto const& k = SVC_PARAMS.right.at(it.first);
+                if (first) {
+                    first = false;
+                } else {
+                    stream << " ";
+                }
+
+                stream << k << "=" << svcParamValAsText(it);
+            }
+
+            stream << "'";
         }
     }
 
@@ -552,11 +618,91 @@ void
 DnrInstance::unpackSvcParams(OptionBufferConstIter& begin, OptionBufferConstIter end) {
     svc_params_length_ = std::distance(begin, end);
     if (svc_params_length_ > 0) {
-        // This is used only when upacking hex bin option data.
-        // We only assign the data to svc_params_buf_ buffer.
-        // We do exact SvcParam syntax check when unpacking convenient option config notation
-        // in parseDnrInstanceConfigData().
         svc_params_buf_.assign(begin, end);
+
+        // used to check correct order of SvcParams
+        int prev_svc_param_key = -1;
+
+        // When the list of SvcParams is non-empty, it contains a series of
+        // SvcParamKey=SvcParamValue pairs, represented as:
+        // - a 2-octet field containing the SvcParamKey as an integer in network byte order.
+        // - a 2-octet field containing the length of the SvcParamValue as an integer
+        //   between 0 and 65535 in network byte order. (uint16)
+        // - an octet string of this length whose contents are the SvcParamValue in a format
+        //   determined by the SvcParamKey.
+        while (begin != end) {
+            // Minimum SvcParams len shall be 4:
+            // 2 octets SvcParamKey + 2 octets SvcParamValue Len
+            if (std::distance(begin, end) < 4) {
+                isc_throw(OutOfRange, getLogPrefix() << "DNR SvcParams data truncated to size "
+                                                     << std::distance(begin, end));
+            }
+
+            uint16_t num_svc_param_key = readUint16(&*begin, 2);
+            begin += 2;
+
+            // Check if SvcParamKey is known in
+            // https://www.iana.org/assignments/dns-svcb/dns-svcb.xhtml
+            auto it = SVC_PARAMS.right.find(num_svc_param_key);
+            if (it == SVC_PARAMS.right.end()) {
+                isc_throw(InvalidOptionDnrSvcParams,
+                          getLogPrefix() << "Wrong Svc Params syntax - key " << num_svc_param_key
+                                         << " not found in SvcParamKeys registry");
+            }
+
+            std::string svc_param_key = it->second;
+
+            // As per RFC9463 Section 3.1.8:
+            // The service parameters do not include "ipv4hint" or "ipv6hint" parameters.
+            if (FORBIDDEN_SVC_PARAMS.find(svc_param_key) != FORBIDDEN_SVC_PARAMS.end()) {
+                isc_throw(InvalidOptionDnrSvcParams, getLogPrefix()
+                                                         << "Wrong Svc Params syntax - key "
+                                                         << svc_param_key << " must not be used");
+            }
+
+            // Check if SvcParamKey usage is supported by DNR DHCP option.
+            // Note that SUPPORTED_SVC_PARAMS set may expand in future.
+            if (SUPPORTED_SVC_PARAMS.find(num_svc_param_key) == SUPPORTED_SVC_PARAMS.end()) {
+                isc_throw(InvalidOptionDnrSvcParams,
+                          getLogPrefix() << "Wrong Svc Params syntax - key " << svc_param_key
+                                         << " not supported in DNR option SvcParams");
+            }
+
+            // As per RFC9460 Section 2.2:
+            // SvcParamKeys SHALL appear in increasing numeric order. (...)
+            // There are no duplicate SvcParamKeys.
+            //
+            // We check for duplicates here.
+            if (svc_params_map_.find(num_svc_param_key) != svc_params_map_.end()) {
+                isc_throw(InvalidOptionDnrSvcParams, getLogPrefix()
+                                                         << "Wrong Svc Params syntax - key "
+                                                         << svc_param_key << " is duplicated.");
+            }
+
+            // And we check correct order here.
+            if (num_svc_param_key <= prev_svc_param_key) {
+                isc_throw(InvalidOptionDnrSvcParams,
+                          getLogPrefix() << "Wrong Svc Params syntax - SvcParamKeys"
+                                         << " SHALL appear in increasing numeric order.");
+            }
+
+            prev_svc_param_key = num_svc_param_key;
+
+            // Let's try to unpack SvcParamVal into a tuple.
+            OpaqueDataTuple svc_param_tuple(OpaqueDataTuple::LENGTH_2_BYTES);
+            try {
+                svc_param_tuple.unpack(begin, end);
+            } catch (const Exception& e) {
+                isc_throw(InvalidOptionDnrSvcParams,
+                          getLogPrefix()
+                              << "Wrong Svc Params syntax - failed to unpack SvcParamVal for "
+                              << "SvcParamKey " << svc_param_key << ". Error: " << e.what());
+            }
+
+            svc_params_map_.insert(std::make_pair(num_svc_param_key, svc_param_tuple));
+            begin += svc_param_tuple.getTotalLength();
+        }
+
         begin += svc_params_length_;
     }
 }
@@ -694,8 +840,8 @@ DnrInstance::parseDnrInstanceConfigData(const std::string& config_txt) {
 
             // Check if SvcParamKey is known in
             // https://www.iana.org/assignments/dns-svcb/dns-svcb.xhtml
-            auto svc_params_iterator = SVC_PARAMS.find(svc_param_key);
-            if (svc_params_iterator == SVC_PARAMS.end()) {
+            auto svc_params_iterator = SVC_PARAMS.left.find(svc_param_key);
+            if (svc_params_iterator == SVC_PARAMS.left.end()) {
                 isc_throw(InvalidOptionDnrSvcParams,
                           getLogPrefix() << "Wrong Svc Params syntax - key " << svc_param_key
                                          << " not found in SvcParamKeys registry");

@@ -8,6 +8,8 @@
 #define OPTION4_DNR_H
 
 #include <asiolink/io_address.h>
+#include <boost/assign.hpp>
+#include <boost/bimap.hpp>
 #include <dhcp/dhcp4.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/option.h>
@@ -57,6 +59,9 @@ public:
     /// @brief A Type defined for container holding IP addresses.
     typedef std::vector<isc::asiolink::IOAddress> AddressContainer;
 
+    /// @brief A Type defined for boost Bimap holding SvcParamKeys.
+    typedef boost::bimap<std::string, uint16_t> SvcParamsMap;
+
     /// @brief Size in octets of Service Priority field.
     static const uint8_t SERVICE_PRIORITY_SIZE = 2;
 
@@ -70,7 +75,7 @@ public:
     /// @brief Service parameters, used in DNR options in DHCPv4 and DHCPv6, but also in RA and DNS
     ///
     /// The IANA registry is maintained at https://www.iana.org/assignments/dns-svcb/dns-svcb.xhtml
-    static const std::map<std::string, uint16_t> SVC_PARAMS;
+    static const SvcParamsMap SVC_PARAMS;
 
     /// @brief Ordered set of supported SvcParamKeys.
     ///
@@ -195,11 +200,11 @@ public:
         return (ip_addresses_);
     }
 
-    /// @brief Getter of the @c svc_params_ field.
+    /// @brief Returns a reference to the buffer holding SvcParam data.
     ///
-    /// @return Returns Service Parameters as a string.
-    const std::string& getSvcParams() const {
-        return (svc_params_);
+    /// @return a reference to the Service Parameters buffer
+    const OptionBuffer& getSvcParams() const {
+        return (svc_params_buf_);
     }
 
     /// @brief Returns minimal length of the DNR instance data (without headers) in octets.
@@ -499,6 +504,16 @@ private:
     ///
     /// @note It must be called in all types of constructors of class @c DnrInstance .
     void initMembers();
+
+    /// @brief Returns string representation of SvcParamVal.
+    ///
+    /// @param svc_param a key-val pair from the @c svc_params_map_ map
+    ///
+    /// @return string representation of the SvcParamVal
+    ///
+    /// @throw BadValue thrown when there is a problem with reading alpn SvcParamVal from
+    ///                 @c svc_params_map_
+    std::string svcParamValAsText(const std::pair<uint16_t, OpaqueDataTuple>& svc_param) const;
 };
 
 /// @brief Represents DHCPv4 Encrypted DNS %Option (code 162).
