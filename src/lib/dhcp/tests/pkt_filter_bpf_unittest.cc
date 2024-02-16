@@ -47,6 +47,14 @@ TEST_F(PktFilterBPFTest, isDirectResponseSupported) {
     EXPECT_TRUE(pkt_filter.isDirectResponseSupported());
 }
 
+// This test verifies that the PktFilterBPF class reports its capability
+// to create SOCKET_RECEIVED events.
+TEST_F(PktFilterBPFTest, isSocketReceivedTimeSupported) {
+    // Create object under test.
+    PktFilterBPF pkt_filter;
+    EXPECT_TRUE(pkt_filter.isSocketReceivedTimeSupported());
+}
+
 // All tests below require root privileges to execute successfully. If they
 // are run as non-root they will be skipped via SKIP_IF(notRoot()).
 
