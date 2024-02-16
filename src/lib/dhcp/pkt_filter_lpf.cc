@@ -128,6 +128,15 @@ using namespace isc::util;
 namespace isc {
 namespace dhcp {
 
+bool
+PktFilterLPF::isSocketReceivedTimeSupported() const {
+#ifdef SO_TIMESTAMP
+        return (true);
+#else
+        return (false);
+#endif
+}
+
 SocketInfo
 PktFilterLPF::openSocket(Iface& iface,
                          const isc::asiolink::IOAddress& addr,

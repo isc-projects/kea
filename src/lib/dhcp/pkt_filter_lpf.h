@@ -38,13 +38,7 @@ public:
     /// a SOCKET_RECEIVED event in its event stack.
     ///
     /// @return True if SO_TIMESTAMP is defined.
-    virtual bool isSocketReceivedTimeSupported() const {
-#ifdef SO_TIMESTAMP
-        return (true);
-#else
-        return (false);
-#endif
-    }
+    virtual bool isSocketReceivedTimeSupported() const;
 
     /// @brief Open primary and fallback socket.
     ///

@@ -19,6 +19,15 @@ namespace dhcp {
 
 const size_t PktFilterInet::CONTROL_BUF_LEN = 512;
 
+bool
+PktFilterInet::isSocketReceivedTimeSupported() const {
+#ifdef SO_TIMESTAMP
+        return (true);
+#else
+        return (false);
+#endif
+} 
+
 SocketInfo
 PktFilterInet::openSocket(Iface& iface,
                           const isc::asiolink::IOAddress& addr,
