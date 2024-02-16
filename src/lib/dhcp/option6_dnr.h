@@ -45,41 +45,6 @@ public:
                OptionBufferConstIter end,
                bool convenient_notation = false);
 
-    /// @brief Constructor of the %Option with all fields from params.
-    ///
-    /// Constructor of the %Option where all fields
-    /// i.e. Service priority, ADN, IP address(es) and Service params
-    /// are provided as ctor parameters.
-    ///
-    /// @param service_priority Service priority
-    /// @param adn ADN FQDN
-    /// @param ip_addresses Container of IP addresses
-    /// @param svc_params Service Parameters
-    ///
-    /// @throw InvalidOptionDnrDomainName Thrown in case of any issue with parsing ADN
-    /// @throw InvalidOptionDnrSvcParams Thrown when @c checkSvcParams(from_wire_data) throws
-    /// @throw OutOfRange Thrown in case of no IP addresses found or when IP addresses length
-    /// is too big
-    Option6Dnr(const uint16_t service_priority,
-               const std::string& adn,
-               const Option6Dnr::AddressContainer& ip_addresses,
-               const std::string& svc_params)
-        : Option(V6, D6O_V6_DNR), DnrInstance(V6, service_priority, adn, ip_addresses, svc_params) {
-    }
-
-    /// @brief Constructor of the %Option in ADN only mode.
-    ///
-    /// Constructor of the %Option in ADN only mode
-    /// i.e. only Service priority and ADN FQDN
-    /// are provided as ctor parameters.
-    ///
-    /// @param service_priority Service priority
-    /// @param adn ADN FQDN
-    ///
-    /// @throw InvalidOptionDnrDomainName Thrown in case of any issue with parsing ADN
-    Option6Dnr(const uint16_t service_priority, const std::string& adn)
-        : Option(V6, D6O_V6_DNR), DnrInstance(V6, service_priority, adn) {}
-
     /// @brief Copies this option and returns a pointer to the copy.
     ///
     /// @return Pointer to the copy of the option.
