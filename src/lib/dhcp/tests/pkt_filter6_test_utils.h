@@ -76,8 +76,8 @@ public:
     /// @brief Checks that a received message has the appropriate events
     /// in it's event stack.
     ///
-    /// @param rcvd_msg An instance of the message to be tested.
-    /// @param so_time_supported If true the event stack should have with
+    /// @param msg An instance of the message to be tested.
+    /// @param so_time_supported If true the event stack should have
     /// a SOCKET_RECEIVED event followed by a BUFFER_READ event, if false
     /// it should have only the latter.
     void testReceivedPktEvents(const PktPtr& msg, bool so_time_supported) const;

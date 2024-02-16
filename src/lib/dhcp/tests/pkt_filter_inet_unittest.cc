@@ -160,7 +160,7 @@ TEST_F(PktFilterInetTest, receive) {
     testRcvdMessageAddressPort(rcvd_pkt);
 
     // Verify that the packet event stack is as expected.
-    testReceivedPktEvents (rcvd_pkt, pkt_filter.isSocketReceivedTimeSupported());
+    testReceivedPktEvents(rcvd_pkt, pkt_filter.isSocketReceivedTimeSupported());
 }
 
 } // anonymous namespace

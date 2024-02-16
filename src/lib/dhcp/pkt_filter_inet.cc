@@ -22,11 +22,11 @@ const size_t PktFilterInet::CONTROL_BUF_LEN = 512;
 bool
 PktFilterInet::isSocketReceivedTimeSupported() const {
 #ifdef SO_TIMESTAMP
-        return (true);
+    return (true);
 #else
-        return (false);
+    return (false);
 #endif
-} 
+}
 
 SocketInfo
 PktFilterInet::openSocket(Iface& iface,

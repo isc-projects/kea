@@ -27,9 +27,9 @@ PktFilterTestStub::isDirectResponseSupported() const {
 bool
 PktFilterTestStub::isSocketReceivedTimeSupported() const {
 #ifdef SO_TIMESTAMP
-    return(true);
+    return (true);
 #else
-    return(false);
+    return (false);
 #endif
 }
 

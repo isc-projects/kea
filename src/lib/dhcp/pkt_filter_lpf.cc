@@ -131,9 +131,9 @@ namespace dhcp {
 bool
 PktFilterLPF::isSocketReceivedTimeSupported() const {
 #ifdef SO_TIMESTAMP
-        return (true);
+    return (true);
 #else
-        return (false);
+    return (false);
 #endif
 }
 

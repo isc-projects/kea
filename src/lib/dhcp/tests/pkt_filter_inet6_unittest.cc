@@ -145,7 +145,7 @@ TEST_F(PktFilterInet6Test, receive) {
     testRcvdMessage(rcvd_pkt);
 
     // Verify that the packet event stack is as expected.
-    testReceivedPktEvents (rcvd_pkt, pkt_filter.isSocketReceivedTimeSupported());
+    testReceivedPktEvents(rcvd_pkt, pkt_filter.isSocketReceivedTimeSupported());
 }
 
 } // anonymous namespace
