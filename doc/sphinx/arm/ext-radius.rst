@@ -334,7 +334,7 @@ And here's how to specify period-separated hexadecimal notation (``dead.beef.caf
             "attributes": [
                {
                   "name": "User-Password",
-                  "expr": "concat(concat(concat(substring(hexstring(pkt4.mac, ''), 0, 4), '.'), concat(substring(hexstring(pkt4.mac, ''), 4, 4), '.'), concat(substring(hexstring(pkt4.mac, ''), 8, 4), '.'))"
+                  "expr": "substring(hexstring(pkt4.mac, ''), 0, 4) + '.' + substring(hexstring(pkt4.mac, ''), 4, 4) + '.' + substring(hexstring(pkt4.mac, ''), 8, 4)"
                }
             ]
          }
