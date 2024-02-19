@@ -103,41 +103,6 @@ public:
     /// @param universe either V4 or V6 Option universe
     explicit DnrInstance(Option::Universe universe);
 
-    /// @brief Constructor of the DNR Instance with all fields from params.
-    ///
-    /// Constructor of the DNR Instance where all fields
-    /// i.e. Service priority, ADN, IP address(es) and Service params
-    /// are provided as ctor parameters.
-    ///
-    /// @param universe either V4 or V6 Option universe
-    /// @param service_priority Service priority
-    /// @param adn ADN FQDN
-    /// @param ip_addresses Container of IP addresses
-    /// @param svc_params Service Parameters
-    ///
-    /// @throw InvalidOptionDnrDomainName Thrown in case of any issue with parsing ADN
-    /// @throw InvalidOptionDnrSvcParams Thrown when @c checkSvcParams(from_wire_data) throws
-    /// @throw OutOfRange Thrown in case of no IP addresses found or when IP addresses length
-    /// is too big
-    DnrInstance(Option::Universe universe,
-                uint16_t service_priority,
-                const std::string& adn,
-                const AddressContainer& ip_addresses,
-                const std::string& svc_params);
-
-    /// @brief Constructor of the DNR Instance in ADN only mode.
-    ///
-    /// Constructor of the DNR Instance in ADN only mode
-    /// i.e. only Service priority and ADN FQDN
-    /// are provided as ctor parameters.
-    ///
-    /// @param universe either V4 or V6 Option universe
-    /// @param service_priority Service priority
-    /// @param adn ADN FQDN
-    ///
-    /// @throw InvalidOptionDnrDomainName Thrown in case of any issue with parsing ADN
-    DnrInstance(Option::Universe universe, uint16_t service_priority, const std::string& adn);
-
     /// @brief Default destructor.
     virtual ~DnrInstance() = default;
 
@@ -241,19 +206,6 @@ public:
         return (adn_only_mode_);
     }
 
-    /// @brief Sets Authentication domain name from given string.
-    ///
-    /// Sets FQDN of the encrypted DNS resolver from given string.
-    /// It may throw an exception if parsing of the FQDN fails or if
-    /// provided FQDN length is bigger than uint16_t Max.
-    /// It also calculates and sets value of Addr length field.
-    ///
-    /// @param adn string representation of ADN FQDN
-    ///
-    /// @throw InvalidOptionDnrDomainName Thrown in case of any issue with parsing ADN
-    /// from given string.
-    void setAdn(const std::string& adn);
-
     /// @brief Setter of the @c adn_only_mode_ field.
     ///
     /// @param adn_only_mode enabled/disabled setting
@@ -342,34 +294,6 @@ public:
     /// @param end end of the buffer from which the field will be read
     void unpackSvcParams(OptionBufferConstIter& begin, OptionBufferConstIter end);
 
-    /// @brief Checks SvcParams field if encoded correctly and throws in case of issue found.
-    ///
-    /// The field should be encoded following the rules in
-    /// Section 2.1 of [I-D.ietf-dnsop-svcb-https]. SvcParams are
-    /// a whitespace-separated list, with each SvcParam consisting of
-    /// a SvcParamKey=SvcParamValue pair or a standalone SvcParamKey.
-    ///
-    /// @note It is user's responsibility to provide correct configuration
-    /// of @c SvcParams as described in Section 2.1 of [I-D.ietf-dnsop-svcb-https].
-    /// Currently, SvcParamValue is not verified. Proper syntax of SvcParamValue
-    /// is described in Appendix A of [I-D.ietf-dnsop-svcb-https].
-    ///
-    /// @param from_wire_data used to determine whether SvcParams data comes
-    /// from unpacked wire data or from ctor param
-    ///
-    /// @throw InvalidOptionDnrSvcParams Thrown in case of any issue found when checking
-    /// @c ServiceParams field syntax
-    void checkSvcParams(bool from_wire_data = true);
-
-    /// @brief Checks IP address(es) field if data is correct and throws in case of issue found.
-    ///
-    /// Fields lengths are also calculated and saved to member variables.
-    ///
-    /// @throw OutOfRange Thrown in case of no IP addresses found or when IP addresses length
-    /// is too big
-    /// @throw InvalidOptionDnrSvcParams Thrown when @c checkSvcParams(from_wire_data) throws
-    void checkFields();
-
     /// @brief Adds IP address to @c ip_addresses_ container.
     ///
     /// @param ip_address IP address to be added
@@ -392,7 +316,7 @@ public:
     ///
     /// Note that this function parses single DnrInstance. For DNRv4 it is possible to have more
     /// than one DnrInstance per one Option. In that case this function must be called for each
-    /// DnrInstance.
+    /// DnrInstance config.
     ///
     /// @param config_txt convenient notation of the option data received as string
     ///
@@ -445,12 +369,6 @@ protected:
     /// fields are not present if the ADN-only mode is used.
     bool adn_only_mode_;
 
-    /// @brief Service Parameters (SvcParams) (variable length) as string.
-    ///
-    /// Specifies a set of service parameters that are encoded
-    /// following the rules in Section 2.1 of [I-D.ietf-dnsop-svcb-https].
-    std::string svc_params_;
-
     /// @brief Service Parameters (SvcParams) (variable length) as on-wire data buffer.
     ///
     /// Specifies a set of service parameters that are encoded
@@ -465,7 +383,7 @@ protected:
     /// (Defined values are in Section 14.3.2 of RFC9460 - listed in @c SVC_PARAMS).
     /// The value is an OpaqueDataTuple containing:
     /// - the length of the SvcParamValue as an uint_16 integer in network byte order
-    /// - data buffer the SvcParamValue in a format determined by the SvcParamKey.
+    /// - data buffer with the SvcParamValue in a format determined by the SvcParamKey.
     std::map<uint16_t, OpaqueDataTuple> svc_params_map_;
 
     /// @brief Calculates and returns length of DNR Instance data in octets.
@@ -556,14 +474,6 @@ public:
     Option4Dnr(OptionBufferConstIter begin,
                OptionBufferConstIter end,
                bool convenient_notation = false);
-
-    /// @brief Constructor of the empty %Option.
-    ///
-    /// No DNR instances are included in the %Option when using this ctor.
-    /// They must be added afterwards.
-    /// No fields data included in the %Option when using this ctor.
-    /// They must be added afterwards.
-    Option4Dnr() : Option(V4, DHO_V4_DNR) {}
 
     /// @brief Adds given DNR instance to Option's DNR Instance container.
     /// @param dnr_instance DNR instance to be added

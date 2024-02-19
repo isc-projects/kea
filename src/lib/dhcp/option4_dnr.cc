@@ -8,7 +8,6 @@
 
 #include <dhcp/option4_dnr.h>
 #include <dns/labelsequence.h>
-#include <util/strutil.h>
 
 using namespace isc::asiolink;
 using namespace isc::util;
@@ -216,32 +215,6 @@ DnrInstance::DnrInstance(Option::Universe universe)
     initMembers();
 }
 
-DnrInstance::DnrInstance(Option::Universe universe,
-                         const uint16_t service_priority,
-                         const std::string& adn,
-                         const DnrInstance::AddressContainer& ip_addresses,
-                         const std::string& svc_params)
-    : universe_(universe), dnr_instance_data_length_(0), service_priority_(service_priority),
-      adn_length_(0), addr_length_(0), ip_addresses_(ip_addresses), svc_params_length_(0),
-      adn_only_mode_(true), svc_params_(svc_params), alpn_http_(false),
-      dnr_instance_data_length_size_(0), adn_length_size_(0), addr_length_size_(0),
-      minimal_length_(0) {
-    initMembers();
-    setAdn(adn);
-    checkFields();
-}
-
-DnrInstance::DnrInstance(Option::Universe universe,
-                         const uint16_t service_priority,
-                         const std::string& adn)
-    : universe_(universe), dnr_instance_data_length_(0), service_priority_(service_priority),
-      adn_length_(0), addr_length_(0), svc_params_length_(0), adn_only_mode_(true),
-      alpn_http_(false), dnr_instance_data_length_size_(0), adn_length_size_(0),
-      addr_length_size_(0), minimal_length_(0) {
-    initMembers();
-    setAdn(adn);
-}
-
 void
 DnrInstance::packAdn(OutputBuffer& buf) const {
     if (!adn_) {
@@ -282,38 +255,6 @@ DnrInstance::getAdnAsText() const {
 }
 
 void
-DnrInstance::setAdn(const std::string& adn) {
-    std::string trimmed_adn = str::trim(adn);
-    if (trimmed_adn.empty()) {
-        isc_throw(InvalidOptionDnrDomainName, getLogPrefix()
-                                                  << "Mandatory Authentication Domain Name fully "
-                                                     "qualified domain-name must not be empty");
-    }
-
-    try {
-        adn_.reset(new isc::dns::Name(trimmed_adn, true));
-    } catch (const Exception& ex) {
-        isc_throw(InvalidOptionDnrDomainName, getLogPrefix()
-                                                  << "Failed to parse "
-                                                     "fully qualified domain-name from string - "
-                                                  << ex.what());
-    }
-
-    size_t adn_len = 0;
-    isc::dns::LabelSequence label_sequence(*adn_);
-    label_sequence.getData(&adn_len);
-    if (adn_len > std::numeric_limits<uint16_t>::max()) {
-        isc_throw(InvalidOptionDnrDomainName, getLogPrefix() << "Given ADN FQDN length " << adn_len
-                                                             << " is bigger than uint_16 MAX");
-    }
-
-    adn_length_ = adn_len;
-    if (universe_ == Option::V4) {
-        setDnrInstanceDataLength();
-    }
-}
-
-void
 DnrInstance::unpackAdn(OptionBufferConstIter& begin, OptionBufferConstIter end) {
     OpaqueDataTuple::LengthFieldType lft = OptionDataTypeUtil::getTupleLenFieldType(universe_);
     OpaqueDataTuple adn_tuple(lft);
@@ -344,119 +285,6 @@ DnrInstance::unpackAdn(OptionBufferConstIter& begin, OptionBufferConstIter end) 
     }
 
     begin += adn_length_ + getAdnLengthSize();
-}
-
-void
-DnrInstance::checkSvcParams(bool from_wire_data) {
-    std::string svc_params = str::trim(svc_params_);
-    if (svc_params.empty()) {
-        isc_throw(InvalidOptionDnrSvcParams, getLogPrefix()
-                                                 << "Provided Svc Params field is empty");
-    }
-
-    if (!from_wire_data) {
-        // If Service Params field was not parsed from on-wire data,
-        // but actually was provided with ctor, let's calculate svc_params_length_.
-        auto svc_params_len = svc_params.length();
-        if (svc_params_len > std::numeric_limits<uint16_t>::max()) {
-            isc_throw(InvalidOptionDnrSvcParams, getLogPrefix()
-                                                     << "Given Svc Params length " << svc_params_len
-                                                     << " is bigger than uint_16 MAX");
-        }
-
-        svc_params_length_ = svc_params_len;
-        // If Service Params field was not parsed from on-wire data,
-        // but actually was provided with ctor, let's replace it with trimmed value.
-        svc_params_ = svc_params;
-    }
-
-    // SvcParams are a whitespace-separated list, with each SvcParam
-    // consisting of a SvcParamKey=SvcParamValue pair or a standalone SvcParamKey.
-    // SvcParams in presentation format MAY appear in any order, but keys MUST NOT be repeated.
-
-    // Let's put all elements of a whitespace-separated list into a vector.
-    std::vector<std::string> tokens = str::tokens(svc_params, " ");
-
-    // Set of keys used to check if a key is not repeated.
-    std::unordered_set<std::string> keys;
-    // String sanitizer is used to check keys syntax.
-    str::StringSanitizerPtr sanitizer;
-    // SvcParamKeys are lower-case alphanumeric strings. Key names
-    // contain 1-63 characters from the ranges "a"-"z", "0"-"9", and "-".
-    std::string regex = "[^a-z0-9-]";
-    sanitizer.reset(new str::StringSanitizer(regex, ""));
-
-    // Now let's check each SvcParamKey=SvcParamValue pair.
-    for (const std::string& token : tokens) {
-        std::vector<std::string> key_val = str::tokens(token, "=");
-        if (key_val.size() > 2) {
-            isc_throw(InvalidOptionDnrSvcParams,
-                      getLogPrefix() << "Wrong Svc Params syntax - more than one "
-                                        "equals sign found in SvcParamKey=SvcParamValue pair");
-        }
-
-        // SvcParam Key related checks come below.
-        std::string key = key_val[0];
-        if (key.length() > 63) {
-            isc_throw(InvalidOptionDnrSvcParams,
-                      getLogPrefix() << "Wrong Svc Params syntax - key had more "
-                                     << "than 63 characters - " << key);
-        }
-
-        if (FORBIDDEN_SVC_PARAMS.find(key) != FORBIDDEN_SVC_PARAMS.end()) {
-            isc_throw(InvalidOptionDnrSvcParams, getLogPrefix() << "Wrong Svc Params syntax - key "
-                                                                << key << " must not be used");
-        }
-
-        auto insert_res = keys.insert(key);
-        if (!insert_res.second) {
-            isc_throw(InvalidOptionDnrSvcParams, getLogPrefix() << "Wrong Svc Params syntax - key "
-                                                                << key << " was duplicated");
-        }
-
-        std::string sanitized_key = sanitizer->scrub(key);
-        if (sanitized_key.size() < key.size()) {
-            isc_throw(InvalidOptionDnrSvcParams,
-                      getLogPrefix()
-                          << "Wrong Svc Params syntax - invalid character used in key - " << key);
-        }
-    }
-}
-
-void
-DnrInstance::checkFields() {
-    if (svc_params_.empty() && ip_addresses_.empty()) {
-        // ADN only mode, nothing more to do.
-        return;
-    }
-
-    if (!svc_params_.empty() && ip_addresses_.empty()) {
-        // As per draft-ietf-add-dnr 3.1.8:
-        // If additional data is supplied (i.e. not ADN only mode),
-        // the option includes at least one valid IP address.
-        isc_throw(OutOfRange, getLogPrefix() << "No IP address given. Since this is not ADN only "
-                                                "mode, at least one valid IP address must "
-                                                "be included");
-    }
-
-    if (!svc_params_.empty()) {
-        checkSvcParams(false);
-    }
-
-    adn_only_mode_ = false;
-    const uint8_t addr_field_len = (universe_ == Option::V4) ? V4ADDRESS_LEN : V6ADDRESS_LEN;
-    const uint16_t max_addr_len = (universe_ == Option::V4) ? std::numeric_limits<uint8_t>::max() :
-                                                              std::numeric_limits<uint16_t>::max();
-    auto addr_len = ip_addresses_.size() * addr_field_len;
-    if (addr_len > max_addr_len) {
-        isc_throw(OutOfRange, getLogPrefix() << "Given IP addresses length " << addr_len
-                                             << " is bigger than MAX " << max_addr_len);
-    }
-
-    addr_length_ = addr_len;
-    if (universe_ == Option::V4) {
-        setDnrInstanceDataLength();
-    }
 }
 
 std::string
@@ -503,7 +331,7 @@ DnrInstance::svcParamValAsText(const std::pair<uint16_t, OpaqueDataTuple>& svc_p
         break;
     case 7:
         // dohpath
-        // convertion not needed, let's return data as string
+        // conversion not needed, let's return data as string
         ret = svc_param.second.getText();
         break;
     }
@@ -661,7 +489,7 @@ DnrInstance::unpackSvcParams(OptionBufferConstIter& begin, OptionBufferConstIter
             }
 
             // Check if SvcParamKey usage is supported by DNR DHCP option.
-            // Note that SUPPORTED_SVC_PARAMS set may expand in future.
+            // Note that SUPPORTED_SVC_PARAMS set may expand in the future.
             if (SUPPORTED_SVC_PARAMS.find(num_svc_param_key) == SUPPORTED_SVC_PARAMS.end()) {
                 isc_throw(InvalidOptionDnrSvcParams,
                           getLogPrefix() << "Wrong Svc Params syntax - key " << svc_param_key
@@ -702,8 +530,6 @@ DnrInstance::unpackSvcParams(OptionBufferConstIter& begin, OptionBufferConstIter
             svc_params_map_.insert(std::make_pair(num_svc_param_key, svc_param_tuple));
             begin += svc_param_tuple.getTotalLength();
         }
-
-        begin += svc_params_length_;
     }
 }
 
@@ -819,6 +645,7 @@ DnrInstance::parseDnrInstanceConfigData(const std::string& config_txt) {
         std::vector<std::string> alpn_ids_tokens;
         OpaqueDataTuple svc_param_val_tuple(OpaqueDataTuple::LENGTH_2_BYTES);
         OutputBuffer out_buf(2);
+        std::vector<uint8_t> utf8_encoded;
         for (auto const& svc_param_pair : svc_params_pairs) {
             std::vector<std::string> key_val_tokens = str::tokens(str::trim(svc_param_pair), "=");
             if (key_val_tokens.size() != 2) {
@@ -848,7 +675,7 @@ DnrInstance::parseDnrInstanceConfigData(const std::string& config_txt) {
             }
 
             // Check if SvcParamKey usage is supported by DNR DHCP option.
-            // Note that SUPPORTED_SVC_PARAMS set may expand in future.
+            // Note that SUPPORTED_SVC_PARAMS set may expand in the future.
             uint16_t num_svc_param_key = svc_params_iterator->second;
             if (SUPPORTED_SVC_PARAMS.find(num_svc_param_key) == SUPPORTED_SVC_PARAMS.end()) {
                 isc_throw(InvalidOptionDnrSvcParams,
@@ -947,10 +774,17 @@ DnrInstance::parseDnrInstanceConfigData(const std::string& config_txt) {
 
                 // We hope to have URI containing < 0x80 ASCII chars, however to be sure
                 // and to be inline with RFC9461 Section 5, let's encode the dohpath with utf8.
-                auto const utf8_encoded = encode::encodeUtf8(svc_param_val);
+                utf8_encoded = encode::encodeUtf8(svc_param_val);
                 svc_param_val_tuple.append(utf8_encoded.begin(), utf8_encoded.size());
                 svc_params_map_.insert(std::make_pair(num_svc_param_key, svc_param_val_tuple));
                 break;
+            default:
+                // This should not happen because we check if num_svc_param_key is
+                // in SUPPORTED_SVC_PARAMS before. But in case new SvcParam appears in Supported,
+                // and is not handled here...
+                isc_throw(InvalidOptionDnrSvcParams,
+                          getLogPrefix() << "Wrong Svc Params syntax - key " << num_svc_param_key
+                                         << " not supported yet.");
             }
         }
 

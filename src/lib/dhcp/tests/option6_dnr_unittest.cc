@@ -77,7 +77,7 @@ TEST(Option6DnrTest, onWireCtorDataTruncated) {
 }
 
 // Test checks that exception is thrown when trying to unpack malformed wire data
-// - ADN FQDN contains only whitespace - non valid FQDN.
+// - ADN FQDN contains only whitespace - non-valid FQDN.
 TEST(Option6DnrTest, onWireCtorOnlyWhitespaceFqdn) {
     // Prepare data to decode - ADN only mode.
     const uint8_t buf_data[] = {
@@ -308,7 +308,8 @@ TEST(Option6DnrTest, onWireCtorSvcParamsIncluded) {
     const Option6Dnr::AddressContainer& addresses = option->getAddresses();
     EXPECT_EQ(1, addresses.size());
     EXPECT_EQ("2001:db8:1::dead:beef", addresses[0].toText());
-    EXPECT_EQ(12, option->getSvcParamsLength());
+
+    // Reference SvcParams on-wire data buffer.
     const OptionBuffer svc_params = {
         0, 1,              // SvcParamKey alpn
         0, 8,              // SvcParamVal Len
@@ -316,6 +317,7 @@ TEST(Option6DnrTest, onWireCtorSvcParamsIncluded) {
         3, 'd', 'o', 'q'   // 3 octets long alpn-id doq
     };
     EXPECT_EQ(svc_params, option->getSvcParams());
+    EXPECT_EQ(svc_params.size(), option->getSvcParamsLength());
 
     // BTW let's check if len() works ok.
     // expected len: 20 (FQDN) + 2 (ADN Len) + 2 (Service priority) + 4 (headers) = 28
@@ -612,7 +614,8 @@ TEST(Option6DnrTest, toText) {
     EXPECT_EQ(expected, option->toText(indent));
 }
 
-// This test verifies on-wire format of the option is correctly created in ADN only mode.
+// This test verifies that the option is correctly created in ADN only mode,
+// when constructor from convenient string notation is used.
 TEST(Option6DnrTest, fromConfigCtorPackAdnOnlyMode) {
     // Prepare example config.
     const std::string config = "9, myhost.example.com.";
@@ -648,8 +651,8 @@ TEST(Option6DnrTest, fromConfigCtorPackAdnOnlyMode) {
     EXPECT_EQ(0, memcmp(ref_data, buf.getData(), buf.getLength()));
 }
 
-// This test verifies on-wire format of the option is correctly created when
-// IP addresses and Svc Params are also included.
+// This test verifies on-wire format of the option is correctly created with pack
+// method when IP addresses and Svc Params are also included.
 TEST(Option6DnrTest, pack) {
     // Prepare example config.
     const std::string config = "9, myhost.example.com., 2001:db8:1::dead:beef ff02::face:b00c,"
