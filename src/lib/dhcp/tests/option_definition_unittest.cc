@@ -1842,26 +1842,18 @@ TEST_F(OptionDefinitionTest, tuple4ArrayOption143) {
 }
 
 // The purpose of this test is to verify that definition can be created
-// for option that comprises record of data. In this particular test
+// for option of internal type with convenient config notation. In this particular test
 // the V4-DNR option is used (code 162) in ADN only mode, only one DNR instance.
 // Option's fields are specified as a vector of strings.
-TEST_F(OptionDefinitionTest, recordOption4DnrAdnOnly) {
-    OptionDefinition opt_def("option-dnr", DHO_V4_DNR, DHCP4_OPTION_SPACE, "record", false);
-    opt_def.addRecordField(OPT_UINT16_TYPE);
-    opt_def.addRecordField(OPT_UINT16_TYPE);
-    opt_def.addRecordField(OPT_UINT8_TYPE);
-    opt_def.addRecordField(OPT_FQDN_TYPE);
-    opt_def.addRecordField(OPT_BINARY_TYPE);
+TEST_F(OptionDefinitionTest, internalOption4DnrAdnOnly) {
+    OptionDefinition opt_def("option-dnr", DHO_V4_DNR, DHCP4_OPTION_SPACE, "internal", false);
 
     OptionPtr option;
 
     // Specify option's fields for ADN only mode.
     std::vector<std::string> values;
-    values.push_back("26");                      // DNR instance data Len
     values.push_back("1234");                    // service priority
-    values.push_back("23");                      // ADN Len
     values.push_back("Example.Some.Host.Org.");  // ADN FQDN
-    values.push_back("");                        // leave empty Binary type
 
     // Create an instance of this option using the definition.
     ASSERT_NO_THROW(option = opt_def.optionFactory(Option::V4, DHO_V4_DNR, values););
@@ -1890,43 +1882,25 @@ TEST_F(OptionDefinitionTest, recordOption4DnrAdnOnly) {
 }
 
 // The purpose of this test is to verify that definition can be created
-// for option that comprises record of data. In this particular test
+// for option of internal type with convenient config notation. In this particular test
 // the V4-DNR option is used (code 162) with ADN, IP addresses and Service
 // Parameters included. Option's fields are specified as a vector of strings.
 // Multiple DNR instances are configured in this test.
-TEST_F(OptionDefinitionTest, recordOption4Dnr) {
-    OptionDefinition opt_def("option-dnr", DHO_V4_DNR, DHCP4_OPTION_SPACE, "record", false);
-    opt_def.addRecordField(OPT_UINT16_TYPE);
-    opt_def.addRecordField(OPT_UINT16_TYPE);
-    opt_def.addRecordField(OPT_UINT8_TYPE);
-    opt_def.addRecordField(OPT_FQDN_TYPE);
-    opt_def.addRecordField(OPT_BINARY_TYPE);
+TEST_F(OptionDefinitionTest, internalOption4Dnr) {
+    OptionDefinition opt_def("option-dnr", DHO_V4_DNR, DHCP4_OPTION_SPACE, "internal", false);
 
     OptionPtr option;
 
     // Specify option's fields - multiple DNR instances.
     std::vector<std::string> values;
-    values.push_back("54");                            // DNR instance #1 data Len
-    values.push_back("1234");                          // service priority
-    values.push_back("23");                            // ADN Len
-    values.push_back("Example.Some.Host.Org.");        // ADN FQDN
-    values.push_back("08 "                             // Addr Len
-                     "c0 a8 00 01"                     // IP 192.168.0.1
-                     "c0 a8 00 02"                     // IP 192.168.0.2
-                     "6b 65 79 31 3d 76 61 6c 31 20 "  // SvcParams "key1=val1 "
-                     "6b 65 79 32 3d 76 61 6c 32 "     // SvcParams "key2=val2"
-                     "00 34 "                          // DNR instance #2 data Len 52
-                     "10 e1 "                          // service priority 4321
-                     "15 "                             // ADN Len 21
-                     "07 6D 79 68 6F 73 74 31 "        // ADN FQDN myhost1.
-                     "07 65 78 61 6D 70 6C 65 "        // example.
-                     "03 63 6F 6D 00 "                 // com.
-                     "08 "                             // Addr Len 8
-                     "c0 a9 00 01"                     // IP 192.169.0.1
-                     "c0 a9 00 02"                     // IP 192.169.0.2
-                     "6b 65 79 33 3d 76 61 6c 33 20 "  // SvcParams "key3=val3 "
-                     "6b 65 79 34 3d 76 61 6c 34 "     // SvcParams "key4=val4"
-    );
+    values.push_back("1234");                              // service priority
+    values.push_back("Example.Some.Host.Org.");            // ADN FQDN
+    values.push_back("192.168.0.1 192.168.0.2");           // Addresses
+    values.push_back("alpn=dot\\,doq port=2345 | 4321");   // SvcParams, DnrInstance separator
+                                                           // and DnrInstance#2 Service Priority
+    values.push_back("myhost1.example.com.");              // ADN FQDN
+    values.push_back("192.169.0.1 192.169.0.2");           // Addresses
+    values.push_back("alpn=h3 dohpath=/dns-query{?dns}");  // SvcParams
 
     // Create an instance of this option using the definition.
     ASSERT_NO_THROW(option = opt_def.optionFactory(Option::V4, DHO_V4_DNR, values););
@@ -1946,54 +1920,46 @@ TEST_F(OptionDefinitionTest, recordOption4Dnr) {
 
     // Let's check 1st DNR instance.
     DnrInstance& dnr_1 = dnr_instances[0];
-    ASSERT_EQ(54, dnr_1.getDnrInstanceDataLength());
+    ASSERT_EQ(53, dnr_1.getDnrInstanceDataLength());
     ASSERT_EQ(1234, dnr_1.getServicePriority());
     ASSERT_EQ(false, dnr_1.isAdnOnlyMode());
     ASSERT_EQ(23, dnr_1.getAdnLength());
     ASSERT_EQ("example.some.host.org.", dnr_1.getAdnAsText());
     ASSERT_EQ(8, dnr_1.getAddrLength());
-    ASSERT_EQ(19, dnr_1.getSvcParamsLength());
+    ASSERT_EQ(18, dnr_1.getSvcParamsLength());
     auto addresses_1 = dnr_1.getAddresses();
     ASSERT_EQ(2, addresses_1.size());
     ASSERT_EQ("192.168.0.1", addresses_1[0].toText());
     ASSERT_EQ("192.168.0.2", addresses_1[1].toText());
-    ASSERT_EQ("key1=val1 key2=val2", dnr_1.getSvcParams());
 
     // Let's check 2nd DNR instance.
     DnrInstance& dnr_2 = dnr_instances[1];
-    ASSERT_EQ(52, dnr_2.getDnrInstanceDataLength());
+    ASSERT_EQ(60, dnr_2.getDnrInstanceDataLength());
     ASSERT_EQ(4321, dnr_2.getServicePriority());
     ASSERT_EQ(false, dnr_2.isAdnOnlyMode());
     ASSERT_EQ(21, dnr_2.getAdnLength());
     ASSERT_EQ("myhost1.example.com.", dnr_2.getAdnAsText());
     ASSERT_EQ(8, dnr_2.getAddrLength());
-    ASSERT_EQ(19, dnr_2.getSvcParamsLength());
+    ASSERT_EQ(27, dnr_2.getSvcParamsLength());
     auto addresses_2 = dnr_2.getAddresses();
     ASSERT_EQ(2, addresses_2.size());
     ASSERT_EQ("192.169.0.1", addresses_2[0].toText());
     ASSERT_EQ("192.169.0.2", addresses_2[1].toText());
-    ASSERT_EQ("key3=val3 key4=val4", dnr_2.getSvcParams());
 }
 
 // The purpose of this test is to verify that definition can be created
-// for option that comprises record of data. In this particular test
+// for option of internal type with convenient config notation. In this particular test
 // the V6-DNR option is used (code 144) in ADN only mode.
 // Option's fields are specified as a vector of strings.
-TEST_F(OptionDefinitionTest, recordOption6DnrAdnOnly) {
-    OptionDefinition opt_def("option-dnr", D6O_V6_DNR, DHCP6_OPTION_SPACE, "record", false);
-    opt_def.addRecordField(OPT_UINT16_TYPE);
-    opt_def.addRecordField(OPT_UINT16_TYPE);
-    opt_def.addRecordField(OPT_FQDN_TYPE);
-    opt_def.addRecordField(OPT_BINARY_TYPE);
+TEST_F(OptionDefinitionTest, internalOption6DnrAdnOnly) {
+    OptionDefinition opt_def("option-dnr", D6O_V6_DNR, DHCP6_OPTION_SPACE, "internal", false);
 
     OptionPtr option;
 
     // Specify option's fields for ADN only mode.
     std::vector<std::string> values;
     values.push_back("1234");                    // service priority
-    values.push_back("23");                      // ADN Len
     values.push_back("Example.Some.Host.Org.");  // ADN FQDN
-    values.push_back("");                        // leave empty Binary type
 
     // Create an instance of this option using the definition.
     ASSERT_NO_THROW(option = opt_def.optionFactory(Option::V6, D6O_V6_DNR, values););
@@ -2015,29 +1981,20 @@ TEST_F(OptionDefinitionTest, recordOption6DnrAdnOnly) {
 }
 
 // The purpose of this test is to verify that definition can be created
-// for option that comprises record of data. In this particular test
+// for option of internal type with convenient config notation. In this particular test
 // the V6-DNR option is used (code 144) with ADN, IP addresses and Service
 // Parameters included. Option's fields are specified as a vector of strings.
-TEST_F(OptionDefinitionTest, recordOption6Dnr) {
-    OptionDefinition opt_def("option-dnr", D6O_V6_DNR, DHCP6_OPTION_SPACE, "record", false);
-    opt_def.addRecordField(OPT_UINT16_TYPE);
-    opt_def.addRecordField(OPT_UINT16_TYPE);
-    opt_def.addRecordField(OPT_FQDN_TYPE);
-    opt_def.addRecordField(OPT_BINARY_TYPE);
+TEST_F(OptionDefinitionTest, internalOption6Dnr) {
+    OptionDefinition opt_def("option-dnr", D6O_V6_DNR, DHCP6_OPTION_SPACE, "internal", false);
 
     OptionPtr option;
 
     // Specify option's fields: service priority, ADN, IP addresses and SvcParams.
     std::vector<std::string> values;
-    values.push_back("1234");                                            // service priority
-    values.push_back("23");                                              // ADN Len
-    values.push_back("Example.Some.Host.Org.");                          // ADN FQDN
-    values.push_back("00 20 "                                            // Addr Len
-                     "20 01 0d b8 00 01 00 00 00 00 00 00 de ad be ef "  // IP 2001:db8:1::dead:beef
-                     "ff 02 00 00 00 00 00 00 00 00 00 00 fa ce b0 0c "  // IP ff02::face:b00c
-                     "6b 65 79 31 3d 76 61 6c 31 20 "                    // SvcParams "key1=val1 "
-                     "6b 65 79 32 3d 76 61 6c 32"                        // SvcParams "key2=val2"
-    );
+    values.push_back("1234");                                   // service priority
+    values.push_back("Example.Some.Host.Org.");                 // ADN FQDN
+    values.push_back("2001:db8:1::dead:beef ff02::face:b00c");  // Addresses
+    values.push_back("alpn=h3 dohpath=/dns-query{?dns}");       // SvcParams
 
     // Create an instance of this option using the definition.
     ASSERT_NO_THROW(option = opt_def.optionFactory(Option::V6, D6O_V6_DNR, values););
@@ -2055,11 +2012,11 @@ TEST_F(OptionDefinitionTest, recordOption6Dnr) {
     ASSERT_EQ("example.some.host.org.", option_cast->getAdnAsText());
     ASSERT_EQ(23, option_cast->getAdnLength());
     ASSERT_EQ(32, option_cast->getAddrLength());
+    ASSERT_EQ(27, option_cast->getSvcParamsLength());
     auto addresses = option_cast->getAddresses();
     ASSERT_EQ(2, addresses.size());
     ASSERT_EQ("2001:db8:1::dead:beef", addresses[0].toText());
     ASSERT_EQ("ff02::face:b00c", addresses[1].toText());
-    ASSERT_EQ("key1=val1 key2=val2", option_cast->getSvcParams());
 }
 
 // This test verifies that a definition of an option with an array
