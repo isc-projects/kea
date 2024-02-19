@@ -156,7 +156,7 @@ enum DHCPv6OptionType {
    D60_V6_SZTP_REDIRECT                   = 136, /* RFC8572 */
    // Option codes 137-142 are unassigned.
    D6O_IPV6_ADDRESS_ANDSF                 = 143, /* RFC6153 */
-   D6O_V6_DNR                             = 144 /* RFC-ietf-add-dnr */
+   D6O_V6_DNR                             = 144 /* RFC9463 */
 };
 
 /*

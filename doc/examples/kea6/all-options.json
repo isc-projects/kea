@@ -1795,7 +1795,7 @@
       Service Priority:  The priority of this OPTION_V6_DNR instance
          compared to other instances.  This 16-bit unsigned integer is
          interpreted following the rules specified in Section 2.4.1 of
-         [I-D.ietf-dnsop-svcb-https].
+         [RFC9460].
 
       ADN Length:  Length of the authentication-domain-name field in
          octets.
@@ -1813,7 +1813,7 @@
 
       Service Parameters (SvcParams) (variable length):  Specifies a set of
          service parameters that are encoded following the rules in
-         Section 2.1 of [I-D.ietf-dnsop-svcb-https].
+         Section 2.2 of [RFC9460].
       */
       // Type: uint16, uint16, FQDN, binary
       {

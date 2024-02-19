@@ -52,8 +52,7 @@ public:
 /// @c Option6Dnr class can derive from this @c DnrInstance class, whereas @c Option4Dnr class
 /// should have a container of @c DnrInstance's.
 ///
-/// DNR Instance Data Format has been defined in the @c draft-ietf-add-dnr (to be replaced
-/// with published RFC).
+/// DNR Instance Data Format has been defined in the @c RFC9463.
 class DnrInstance {
 public:
     /// @brief A Type defined for container holding IP addresses.
@@ -436,8 +435,7 @@ private:
 
 /// @brief Represents DHCPv4 Encrypted DNS %Option (code 162).
 ///
-/// This option has been defined in the @c draft-ietf-add-dnr (to be replaced
-/// with published RFC) and it has a following structure:
+/// This option has been defined in the @c RFC9463 and it has a following structure:
 /// - option-code = 162 (1 octet)
 /// - option-len (1 octet)
 /// - multiple (one or more) DNR Instance Data

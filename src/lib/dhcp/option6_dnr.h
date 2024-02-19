@@ -14,8 +14,7 @@ namespace dhcp {
 
 /// @brief Represents DHCPv6 Encrypted DNS %Option (code 144).
 ///
-/// This option has been defined in the @c draft-ietf-add-dnr (to be replaced
-/// with published RFC) and it has a following structure:
+/// This option has been defined in the @c RFC9463 and it has a following structure:
 /// - option-code = 144 (2 octets)
 /// - option-len (2 octets)
 /// - Service Priority (2 octets)

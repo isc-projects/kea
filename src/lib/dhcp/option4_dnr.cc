@@ -421,7 +421,7 @@ DnrInstance::unpackAddresses(OptionBufferConstIter& begin, const OptionBufferCon
                                   << "Addr Len=" << addr_length_ << " is not divisible by 4");
     }
 
-    // As per draft-ietf-add-dnr 3.1.8:
+    // As per RFC9463 Section 3.1.8:
     // If additional data is supplied (i.e. not ADN only mode),
     // the option includes at least one valid IP address.
     if (addr_length_ == 0) {

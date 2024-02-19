@@ -1,7 +1,7 @@
 // This is an example configuration file for the DHCPv6 server in Kea.
 // The purpose of this example is to showcase how to configure
 // DHCP option for the Discovery of Network-designated Resolvers (DNR)
-// (code 144) draft-ietf-add-dnr.
+// (code 144) RFC9463.
 {
   "Dhcp6": {
     // Option data defined globally
