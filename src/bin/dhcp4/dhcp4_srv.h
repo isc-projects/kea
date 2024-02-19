@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -344,7 +344,7 @@ public:
     /// methods, generates appropriate answer, sends the answer to the client.
     ///
     /// @param query A pointer to the packet to be processed.
-    void processPacketAndSendResponse(Pkt4Ptr& query);
+    void processPacketAndSendResponse(Pkt4Ptr query);
 
     /// @brief Process a single incoming DHCPv4 packet and sends the response.
     ///
@@ -352,7 +352,7 @@ public:
     /// methods, generates appropriate answer, sends the answer to the client.
     ///
     /// @param query A pointer to the packet to be processed.
-    void processPacketAndSendResponseNoThrow(Pkt4Ptr& query);
+    void processPacketAndSendResponseNoThrow(Pkt4Ptr query);
 
     /// @brief Process an unparked DHCPv4 packet and sends the response.
     ///
@@ -369,20 +369,18 @@ public:
     /// methods, generates appropriate answer.
     ///
     /// @param query A pointer to the packet to be processed.
-    /// @param rsp A pointer to the response.
     /// @param allow_packet_park Indicates if parking a packet is allowed.
-    void processPacket(Pkt4Ptr& query, Pkt4Ptr& rsp,
-                       bool allow_packet_park = true);
+    /// @return A pointer to the response.
+    Pkt4Ptr processPacket(Pkt4Ptr query, bool allow_packet_park = true);
 
     /// @brief Process a single incoming DHCPv4 query.
     ///
     /// It calls per-type processXXX methods, generates appropriate answer.
     ///
     /// @param query A pointer to the packet to be processed.
-    /// @param rsp A pointer to the response.
     /// @param allow_packet_park Indicates if parking a packet is allowed.
-    void processDhcp4Query(Pkt4Ptr& query, Pkt4Ptr& rsp,
-                           bool allow_packet_park);
+    /// @return A pointer to the response.
+    Pkt4Ptr processDhcp4Query(Pkt4Ptr query, bool allow_packet_park);
 
     /// @brief Process a single incoming DHCPv4 query.
     ///
@@ -390,9 +388,8 @@ public:
     /// sends the answer to the client.
     ///
     /// @param query A pointer to the packet to be processed.
-    /// @param rsp A pointer to the response.
     /// @param allow_packet_park Indicates if parking a packet is allowed.
-    void processDhcp4QueryAndSendResponse(Pkt4Ptr& query, Pkt4Ptr& rsp,
+    void processDhcp4QueryAndSendResponse(Pkt4Ptr query,
                                           bool allow_packet_park);
 
     /// @brief Instructs the server to shut down.
@@ -465,6 +462,13 @@ public:
     bool getSendResponsesToSource() const {
         return (test_send_responses_to_source_);
     }
+
+    /// @brief Initialize client context (first part).
+    ///
+    /// @param query The query message.
+    /// @param ctx Pointer to client context.
+    void initContext0(const Pkt4Ptr& query,
+                      AllocEngine::ClientContext4Ptr ctx);
 
     /// @brief Initialize client context and perform early global
     /// reservations lookup.
@@ -571,6 +575,17 @@ protected:
     /// server identifiers that the server is using; false otherwise.
     bool acceptServerId(const Pkt4Ptr& pkt) const;
     //@}
+
+    /// @brief Verifies if specified packet meets RFC requirements
+    ///
+    /// Checks if mandatory option is really there, that forbidden option
+    /// is not there, and that client-id or server-id appears only once.
+    /// Calls the second method with the requirement level from the
+    /// message type.
+    ///
+    /// @param query Pointer to the client's message.
+    /// @throw RFCViolation if any issues are detected
+    static void sanityCheck(const Pkt4Ptr& query);
 
     /// @brief Verifies if specified packet meets RFC requirements
     ///

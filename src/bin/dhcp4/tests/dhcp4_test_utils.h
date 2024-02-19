@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -208,6 +208,12 @@ public:
     Pkt4Ptr processDiscover(Pkt4Ptr& discover) {
         AllocEngine::ClientContext4Ptr context(new AllocEngine::ClientContext4());
         earlyGHRLookup(discover, context);
+        sanityCheck(discover);
+        bool drop = false;
+        context->subnet_ = selectSubnet(discover, drop);
+        if (drop) {
+            return (Pkt4Ptr ());
+        }
         return (processDiscover(discover, context));
     }
 
@@ -218,6 +224,12 @@ public:
     Pkt4Ptr processRequest(Pkt4Ptr& request) {
         AllocEngine::ClientContext4Ptr context(new AllocEngine::ClientContext4());
         earlyGHRLookup(request, context);
+        sanityCheck(request);
+        bool drop = false;
+        context->subnet_ = selectSubnet(request, drop);
+        if (drop) {
+            return (Pkt4Ptr ());
+        }
         return (processRequest(request, context));
     }
 
@@ -227,6 +239,7 @@ public:
     void processRelease(Pkt4Ptr& release) {
         AllocEngine::ClientContext4Ptr context(new AllocEngine::ClientContext4());
         earlyGHRLookup(release, context);
+        sanityCheck(release);
         processRelease(release, context);
     }
 
@@ -236,6 +249,7 @@ public:
     void processDecline(Pkt4Ptr& decline) {
         AllocEngine::ClientContext4Ptr context(new AllocEngine::ClientContext4());
         earlyGHRLookup(decline, context);
+        sanityCheck(decline);
         processDecline(decline, context);
     }
 
@@ -246,6 +260,12 @@ public:
     Pkt4Ptr processInform(Pkt4Ptr& inform) {
         AllocEngine::ClientContext4Ptr context(new AllocEngine::ClientContext4());
         earlyGHRLookup(inform, context);
+        sanityCheck(inform);
+        bool drop = false;
+        context->subnet_ = selectSubnet(inform, drop);
+        if (drop) {
+            return (Pkt4Ptr ());
+        }
         return (processInform(inform, context));
     }
 

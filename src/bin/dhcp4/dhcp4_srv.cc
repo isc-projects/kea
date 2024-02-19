@@ -928,14 +928,22 @@ Dhcpv4Srv::sendPacket(const Pkt4Ptr& packet) {
     IfaceMgr::instance().send(packet);
 }
 
-bool
-Dhcpv4Srv::earlyGHRLookup(const Pkt4Ptr& query,
-                          AllocEngine::ClientContext4Ptr ctx) {
+void
+Dhcpv4Srv::initContext0(const Pkt4Ptr& query,
+                        AllocEngine::ClientContext4Ptr ctx) {
     // Pointer to client's query.
     ctx->query_ = query;
 
     // Hardware address.
     ctx->hwaddr_ = query->getHWAddr();
+}
+
+bool
+Dhcpv4Srv::earlyGHRLookup(const Pkt4Ptr& query,
+                          AllocEngine::ClientContext4Ptr ctx) {
+
+    // First part of context initialization.
+    initContext0(query, ctx);
 
     // Get the early-global-reservations-lookup flag value.
     data::ConstElementPtr egrl = CfgMgr::instance().getCurrentCfg()->
@@ -1115,7 +1123,7 @@ Dhcpv4Srv::runOne() {
 }
 
 void
-Dhcpv4Srv::processPacketAndSendResponseNoThrow(Pkt4Ptr& query) {
+Dhcpv4Srv::processPacketAndSendResponseNoThrow(Pkt4Ptr query) {
     try {
         processPacketAndSendResponse(query);
     } catch (const std::exception& e) {
@@ -1127,9 +1135,8 @@ Dhcpv4Srv::processPacketAndSendResponseNoThrow(Pkt4Ptr& query) {
 }
 
 void
-Dhcpv4Srv::processPacketAndSendResponse(Pkt4Ptr& query) {
-    Pkt4Ptr rsp;
-    processPacket(query, rsp);
+Dhcpv4Srv::processPacketAndSendResponse(Pkt4Ptr query) {
+    Pkt4Ptr rsp = processPacket(query);
     if (!rsp) {
         return;
     }
@@ -1139,8 +1146,8 @@ Dhcpv4Srv::processPacketAndSendResponse(Pkt4Ptr& query) {
     processPacketBufferSend(callout_handle, rsp);
 }
 
-void
-Dhcpv4Srv::processPacket(Pkt4Ptr& query, Pkt4Ptr& rsp, bool allow_packet_park) {
+Pkt4Ptr
+Dhcpv4Srv::processPacket(Pkt4Ptr query, bool allow_packet_park) {
     query->addPktEvent("process_started");
 
     // All packets belong to ALL.
@@ -1185,7 +1192,7 @@ Dhcpv4Srv::processPacket(Pkt4Ptr& query, Pkt4Ptr& rsp, bool allow_packet_park) {
                 .arg(query->getRemoteAddr().toText())
                 .arg(query->getLocalAddr().toText())
                 .arg(query->getIface());
-            return;
+            return (Pkt4Ptr());;
         }
 
         // Callouts decided to skip the next processing step. The next
@@ -1233,7 +1240,7 @@ Dhcpv4Srv::processPacket(Pkt4Ptr& query, Pkt4Ptr& rsp, bool allow_packet_park) {
                                                       static_cast<int64_t>(1));
             isc::stats::StatsMgr::instance().addValue("pkt4-receive-drop",
                                                       static_cast<int64_t>(1));
-            return;
+            return (Pkt4Ptr());
         }
     }
 
@@ -1258,7 +1265,7 @@ Dhcpv4Srv::processPacket(Pkt4Ptr& query, Pkt4Ptr& rsp, bool allow_packet_park) {
         // Increase the statistic of dropped packets.
         isc::stats::StatsMgr::instance().addValue("pkt4-receive-drop",
                                                   static_cast<int64_t>(1));
-        return;
+        return (Pkt4Ptr());
     }
 
     // We have sanity checked (in accept() that the Message Type option
@@ -1303,7 +1310,7 @@ Dhcpv4Srv::processPacket(Pkt4Ptr& query, Pkt4Ptr& rsp, bool allow_packet_park) {
             LOG_DEBUG(hooks_logger, DBG_DHCP4_HOOKS,
                       DHCP4_HOOK_PACKET_RCVD_SKIP)
                 .arg(query->getLabel());
-            return;
+            return (Pkt4Ptr());
         }
 
         callout_handle->getArgument("query4", query);
@@ -1316,17 +1323,17 @@ Dhcpv4Srv::processPacket(Pkt4Ptr& query, Pkt4Ptr& rsp, bool allow_packet_park) {
             .arg(query->toText());
         isc::stats::StatsMgr::instance().addValue("pkt4-receive-drop",
                                                   static_cast<int64_t>(1));
-        return;
+        return (Pkt4Ptr());
     }
 
-    processDhcp4Query(query, rsp, allow_packet_park);
+    return (processDhcp4Query(query, allow_packet_park));
 }
 
 void
-Dhcpv4Srv::processDhcp4QueryAndSendResponse(Pkt4Ptr& query, Pkt4Ptr& rsp,
+Dhcpv4Srv::processDhcp4QueryAndSendResponse(Pkt4Ptr query,
                                             bool allow_packet_park) {
     try {
-        processDhcp4Query(query, rsp, allow_packet_park);
+        Pkt4Ptr rsp = processDhcp4Query(query, allow_packet_park);
         if (!rsp) {
             return;
         }
@@ -1341,9 +1348,8 @@ Dhcpv4Srv::processDhcp4QueryAndSendResponse(Pkt4Ptr& query, Pkt4Ptr& rsp,
     }
 }
 
-void
-Dhcpv4Srv::processDhcp4Query(Pkt4Ptr& query, Pkt4Ptr& rsp,
-                             bool allow_packet_park) {
+Pkt4Ptr
+Dhcpv4Srv::processDhcp4Query(Pkt4Ptr query, bool allow_packet_park) {
     // Create a client race avoidance RAII handler.
     ClientHandler client_handler;
 
@@ -1355,18 +1361,30 @@ Dhcpv4Srv::processDhcp4Query(Pkt4Ptr& query, Pkt4Ptr& rsp,
          (query->getType() == DHCPDECLINE))) {
         ContinuationPtr cont =
             makeContinuation(std::bind(&Dhcpv4Srv::processDhcp4QueryAndSendResponse,
-                                       this, query, rsp, allow_packet_park));
+                                       this, query, allow_packet_park));
         if (!client_handler.tryLock(query, cont)) {
-            return;
+            return (Pkt4Ptr());
         }
     }
 
     AllocEngine::ClientContext4Ptr ctx(new AllocEngine::ClientContext4());
     if (!earlyGHRLookup(query, ctx)) {
-        return;
+        return (Pkt4Ptr());
     }
 
+    Pkt4Ptr rsp;
     try {
+        sanityCheck(query);
+        if ((query->getType() == DHCPDISCOVER) ||
+            (query->getType() == DHCPREQUEST) ||
+            (query->getType() == DHCPINFORM)) {
+            bool drop = false;
+            ctx->subnet_ = selectSubnet(query, drop);
+            // Stop here if selectSubnet decided to drop the packet
+            if (drop) {
+                return (Pkt4Ptr());
+            }
+        }
         switch (query->getType()) {
         case DHCPDISCOVER:
             rsp = processDiscover(query, ctx);
@@ -1506,8 +1524,7 @@ Dhcpv4Srv::processDhcp4Query(Pkt4Ptr& query, Pkt4Ptr& rsp,
                             .arg(query->getLabel());
                         isc::stats::StatsMgr::instance().addValue("pkt4-receive-drop",
                                                                   static_cast<int64_t>(1));
-                        rsp.reset();
-                        return;
+                        return (Pkt4Ptr());
                     }
                 }
 
@@ -1603,6 +1620,7 @@ Dhcpv4Srv::processDhcp4Query(Pkt4Ptr& query, Pkt4Ptr& rsp,
         Subnet4Ptr subnet = (ctx ? ctx->subnet_ : Subnet4Ptr());
         processPacketPktSend(callout_handle, query, rsp, subnet);
     }
+    return (rsp);
 }
 
 void
@@ -3471,18 +3489,8 @@ Dhcpv4Srv::getNetmaskOption(const Subnet4Ptr& subnet) {
 
 Pkt4Ptr
 Dhcpv4Srv::processDiscover(Pkt4Ptr& discover, AllocEngine::ClientContext4Ptr& context) {
-    // server-id is forbidden.
-    sanityCheck(discover, FORBIDDEN);
-
     bool drop = false;
-    Subnet4Ptr subnet = selectSubnet(discover, drop);
-
-    // Stop here if selectSubnet decided to drop the packet
-    if (drop) {
-        return (Pkt4Ptr());
-    }
-
-    Dhcpv4Exchange ex(alloc_engine_, discover, context, subnet, drop);
+    Dhcpv4Exchange ex(alloc_engine_, discover, context, context->subnet_, drop);
 
     // Stop here if Dhcpv4Exchange constructor decided to drop the packet
     if (drop) {
@@ -3550,19 +3558,8 @@ Dhcpv4Srv::processDiscover(Pkt4Ptr& discover, AllocEngine::ClientContext4Ptr& co
 
 Pkt4Ptr
 Dhcpv4Srv::processRequest(Pkt4Ptr& request, AllocEngine::ClientContext4Ptr& context) {
-    // Since we cannot distinguish  between client states
-    // we'll make server-id is optional for REQUESTs.
-    sanityCheck(request, OPTIONAL);
-
     bool drop = false;
-    Subnet4Ptr subnet = selectSubnet(request, drop);
-
-    // Stop here if selectSubnet decided to drop the packet
-    if (drop) {
-        return (Pkt4Ptr());
-    }
-
-    Dhcpv4Exchange ex(alloc_engine_, request, context, subnet, drop);
+    Dhcpv4Exchange ex(alloc_engine_, request, context, context->subnet_, drop);
 
     // Stop here if Dhcpv4Exchange constructor decided to drop the packet
     if (drop) {
@@ -3632,10 +3629,6 @@ Dhcpv4Srv::processRequest(Pkt4Ptr& request, AllocEngine::ClientContext4Ptr& cont
 
 void
 Dhcpv4Srv::processRelease(Pkt4Ptr& release, AllocEngine::ClientContext4Ptr& context) {
-    // Server-id is mandatory in DHCPRELEASE (see table 5, RFC2131)
-    // but ISC DHCP does not enforce this, so we'll follow suit.
-    sanityCheck(release, OPTIONAL);
-
     // Try to find client-id. Note that for the DHCPRELEASE we don't check if the
     // match-client-id configuration parameter is disabled because this parameter
     // is configured for subnets and we don't select subnet for the DHCPRELEASE.
@@ -3783,10 +3776,6 @@ Dhcpv4Srv::processRelease(Pkt4Ptr& release, AllocEngine::ClientContext4Ptr& cont
 
 void
 Dhcpv4Srv::processDecline(Pkt4Ptr& decline, AllocEngine::ClientContext4Ptr& context) {
-    // Server-id is mandatory in DHCPDECLINE (see table 5, RFC2131)
-    // but ISC DHCP does not enforce this, so we'll follow suit.
-    sanityCheck(decline, OPTIONAL);
-
     // Client is supposed to specify the address being declined in
     // Requested IP address option, but must not set its ciaddr.
     // (again, see table 5 in RFC2131).
@@ -4081,19 +4070,8 @@ Dhcpv4Srv::serverDeclineNoThrow(hooks::CalloutHandlePtr& callout_handle, Pkt4Ptr
 
 Pkt4Ptr
 Dhcpv4Srv::processInform(Pkt4Ptr& inform, AllocEngine::ClientContext4Ptr& context) {
-    // server-id is supposed to be forbidden (as is requested address)
-    // but ISC DHCP does not enforce either. So neither will we.
-    sanityCheck(inform, OPTIONAL);
-
     bool drop = false;
-    Subnet4Ptr subnet = selectSubnet(inform, drop);
-
-    // Stop here if selectSubnet decided to drop the packet
-    if (drop) {
-        return (Pkt4Ptr());
-    }
-
-    Dhcpv4Exchange ex(alloc_engine_, inform, context, subnet, drop);
+    Dhcpv4Exchange ex(alloc_engine_, inform, context, context->subnet_, drop);
 
     // Stop here if Dhcpv4Exchange constructor decided to drop the packet
     if (drop) {
@@ -4396,6 +4374,36 @@ Dhcpv4Srv::acceptServerId(const Pkt4Ptr& query) const {
         (cfg_global_options->get(DHCP4_OPTION_SPACE, DHO_DHCP_SERVER_IDENTIFIER).option_);
 
     return (opt_server_id && (opt_server_id->readAddress() == server_id));
+}
+
+void
+Dhcpv4Srv::sanityCheck(const Pkt4Ptr& query) {
+    switch (query->getType()) {
+    case DHCPDISCOVER:
+        // server-id is forbidden.
+        sanityCheck(query, FORBIDDEN);
+        break;
+    case DHCPREQUEST:
+        // Since we cannot distinguish  between client states
+        // we'll make server-id is optional for REQUESTs.
+        sanityCheck(query, OPTIONAL);
+        break;
+    case DHCPRELEASE:
+        // Server-id is mandatory in DHCPRELEASE (see table 5, RFC2131)
+        // but ISC DHCP does not enforce this, so we'll follow suit.
+        sanityCheck(query, OPTIONAL);
+        break;
+    case DHCPDECLINE:
+        // Server-id is mandatory in DHCPDECLINE (see table 5, RFC2131)
+        // but ISC DHCP does not enforce this, so we'll follow suit.
+        sanityCheck(query, OPTIONAL);
+        break;
+    case DHCPINFORM:
+        // server-id is supposed to be forbidden (as is requested address)
+        // but ISC DHCP does not enforce either. So neither will we.
+        sanityCheck(query, OPTIONAL);
+        break;
+    }
 }
 
 void
