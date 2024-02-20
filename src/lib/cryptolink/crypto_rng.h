@@ -42,7 +42,7 @@ public:
     virtual std::vector<uint8_t> random(size_t len) = 0;
 
 private:
-    friend RNGPtr& CryptoLink::getRNG();
+    friend RNGPtr const& CryptoLink::getRNG() const;
 };
 
 /// \brief Generate random value. 

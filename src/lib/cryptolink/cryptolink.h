@@ -211,7 +211,7 @@ public:
     ///                           in a derived class
     /// \exception LibraryError if there was any unexpected exception
     ///                         in the underlying library
-    virtual RNGPtr& getRNG();
+    virtual RNGPtr const& getRNG() const;
 
 private:
     /// \brief Initialize the library

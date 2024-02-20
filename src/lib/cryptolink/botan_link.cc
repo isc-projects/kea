@@ -70,8 +70,6 @@ CryptoLink::initialize(CryptoLink& c) {
             isc_throw(InitializationError, "Botan error: " << ex.what());
         }
     }
-    // A not yet fixed bug makes RNG to be destroyed after memory pool...
-    atexit([]{ getCryptoLink().getRNG().reset(); });
 }
 
 std::string

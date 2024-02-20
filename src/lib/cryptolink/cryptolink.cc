@@ -30,8 +30,8 @@ CryptoLink::createHMAC(const void* secret, size_t secret_len,
     return (new HMAC(secret, secret_len, hash_algorithm));
 }
 
-RNGPtr&
-CryptoLink::getRNG() {
+RNGPtr const&
+CryptoLink::getRNG() const {
     return (rng_);
 }
 
