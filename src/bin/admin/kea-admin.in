@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright (C) 2014-2023 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -36,8 +36,8 @@ prefix="@prefix@"
 export prefix
 exec_prefix="@exec_prefix@"
 export exec_prefix
+BASENAME=$(basename ${0})
 SCRIPTS_DIR_DEFAULT="@datarootdir@/@PACKAGE@/scripts"
-scripts_dir="${SCRIPTS_DIR_DEFAULT}"
 VERSION="@PACKAGE_VERSION@"
 
 assume_yes=0
@@ -47,27 +47,28 @@ dhcp_version=0
 dump_file=""
 dump_qry=""
 
-# Include the installed admin-utils.sh if available. Fallback to sources otherwise.
-if test -f "@datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh"; then
-    . "@datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh"
+# Detect if this is installed or in sources. Check for sources first, so that
+# the the unexpected situations with weird paths fall on the default case of
+# installed.
+script_path=$(cd "$(dirname "${0}")" && pwd)
+if test "${script_path}" = "@abs_top_builddir@/src/bin/admin"; then
+    admin_utils="@abs_top_builddir@/src/bin/admin/admin-utils.sh"
+    KEA_LFC="@abs_top_builddir@/src/bin/lfc/kea-lfc"
+    SCRIPTS_DIR="@abs_top_builddir@/src/share/database/scripts"
 else
-    . "@abs_top_builddir@/src/bin/admin/admin-utils.sh"
+    admin_utils="@datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh"
+    KEA_LFC="@sbindir@/kea-lfc"
+    SCRIPTS_DIR="@datarootdir@/@PACKAGE@/scripts"
 fi
 
-# Find the installed kea-lfc if available. Fallback to sources otherwise.
-if test -x "@sbindir@/kea-lfc"; then
-    kea_lfc="@sbindir@/kea-lfc"
-else
-    kea_lfc="@abs_top_builddir@/src/bin/lfc/kea-lfc"
-fi
+. "${admin_utils}"
 
 # Prints out usage version.
 usage() {
   printf \
-'
-kea-admin %s
+'%s %s
 
-This is a kea-admin script that conducts administrative tasks on
+This is a script that conducts administrative tasks on
 the Kea installation.
 
 Usage: %s COMMAND BACKEND [parameters]
@@ -103,7 +104,7 @@ PARAMETERS: Parameters are optional in general, but may be required
      -i or --input to specify the name of file from which leases will be uploaded
      -o or --output to specify the name of file to which leases will be dumped
      -y or --yes - assume yes on overwriting temporary files
-' "${VERSION}" "${0}" "${SCRIPTS_DIR_DEFAULT}"
+' "${BASENAME}" "${VERSION}" "${BASENAME}" "${SCRIPTS_DIR_DEFAULT}"
 }
 
 ### Logging functions ###
@@ -267,10 +268,10 @@ mysql_init() {
     printf "Verifying create permissions for %s\n" "$db_user"
     mysql_can_create
 
-    printf "Initializing database using script %s\n" $scripts_dir/mysql/dhcpdb_create.mysql
+    printf "Initializing database using script %s\n" "${SCRIPTS_DIR}/mysql/dhcpdb_create.mysql"
     mysql -B --host="${db_host}" --user="${db_user}" \
     --password="${db_password}" \
-    "${db_name}" ${extra_arguments} < "${scripts_dir}/mysql/dhcpdb_create.mysql"
+    "${db_name}" ${extra_arguments} < "${SCRIPTS_DIR}/mysql/dhcpdb_create.mysql"
 
     printf "mysql returned status code %s\n" "${EXIT_CODE}"
 
@@ -303,7 +304,7 @@ pgsql_init() {
         exit 2
     fi
 
-    init_script="$scripts_dir/pgsql/dhcpdb_create.pgsql"
+    init_script="${SCRIPTS_DIR}/pgsql/dhcpdb_create.pgsql"
     printf "Initializing database using script %s\n" $init_script
     run_command \
         pgsql_execute_script $init_script
@@ -340,7 +341,7 @@ mysql_upgrade() {
     version=$(checked_mysql_version)
     printf 'Schema version reported before upgrade: %s\n' "${version}"
 
-    upgrade_scripts_dir=${scripts_dir}/mysql
+    upgrade_scripts_dir="${SCRIPTS_DIR}/mysql"
 
     # Check if the scripts directory exists at all.
     if [ ! -d ${upgrade_scripts_dir} ]; then
@@ -389,7 +390,7 @@ pgsql_upgrade() {
     version=$(checked_pgsql_version)
     printf 'Schema version reported before upgrade: %s\n' "${version}"
 
-    upgrade_scripts_dir=${scripts_dir}/pgsql
+    upgrade_scripts_dir="${SCRIPTS_DIR}/pgsql"
 
     # Check if the scripts directory exists at all.
     if [ ! -d ${upgrade_scripts_dir} ]; then
@@ -503,7 +504,6 @@ memfile_dump() {
 }
 
 mysql_dump() {
-
     # Check the lease type was given
     if [ ${dhcp_version} -eq 0 ]; then
         log_error "lease-dump: lease type ( -4 or -6 ) needs to be specified"
@@ -563,7 +563,6 @@ mysql_dump() {
     log_info "Successfully dumped lease${dhcp_version} to ${dump_file}."
 }
 
-### Functions used for dump
 pgsql_dump() {
     # Check the lease type was given
     if [ ${dhcp_version} -eq 0 ]; then
@@ -707,7 +706,7 @@ lease_upload() {
     cleaned_up_csv="/tmp/$(basename "${input_file}").tmp"
     check_file_overwrite "${cleaned_up_csv}"
     cp "${input_file}" "${cleaned_up_csv}"
-    "${kea_lfc}" "-${dhcp_version}" -x "${cleaned_up_csv}" \
+    "${KEA_LFC}" "-${dhcp_version}" -x "${cleaned_up_csv}" \
         -i "${cleaned_up_csv}.1" -o "${cleaned_up_csv}.output" \
         -f "${cleaned_up_csv}.completed" -p "${cleaned_up_csv}.pid" \
         -cignored-path
@@ -818,6 +817,12 @@ if [ -z "${command}" ]; then
     exit 1
 fi
 
+# Check if this is a simple request for usage.
+if test "${command}" = "--help" ; then
+    usage
+    exit 0
+fi
+
 # Check if this is a simple question about version.
 if test "${command}" = "-v" || test "${command}" = "--version" ; then
     echo "${VERSION}"
@@ -917,8 +922,8 @@ do
             ;;
         -d|--directory)
             shift
-            scripts_dir=${1-}
-            if [ -z "${scripts_dir}" ]; then
+            SCRIPTS_DIR=${1-}
+            if [ -z "${SCRIPTS_DIR}" ]; then
                 log_error "-d or --directory requires a parameter"
                 usage
                 exit 1
