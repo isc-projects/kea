@@ -94,7 +94,7 @@ public:
 };
 
 /// @brief Thrown when an initialization of the schema failed.
-class SchemaInitializationFailed: public Exception {
+class SchemaInitializationFailed : public Exception {
 public:
     SchemaInitializationFailed(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) {}

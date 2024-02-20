@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -12,6 +12,7 @@
 #include <database/db_exceptions.h>
 #include <database/db_log.h>
 #include <pgsql/pgsql_connection.h>
+#include <util/file_utilities.h>
 
 #include <exception>
 
@@ -38,6 +39,8 @@ using namespace std;
 
 namespace isc {
 namespace db {
+
+std::string PgSqlConnection::KEA_ADMIN_ = KEA_ADMIN;
 
 // Default connection timeout
 
@@ -173,7 +176,7 @@ PgSqlConnection::getVersion(const ParameterMap& parameters,
 void
 PgSqlConnection::ensureSchemaVersion(const ParameterMap& parameters,
                                      const DbCallback& cb,
-                                     string timer_name) {
+                                     const string& timer_name) {
     // retry-on-startup?
     bool const retry(parameters.count("retry-on-startup") &&
                      parameters.at("retry-on-startup") == "true");
@@ -184,17 +187,11 @@ PgSqlConnection::ensureSchemaVersion(const ParameterMap& parameters,
         // Attempt to get version without retrying or other sophistries. This
         // provides the most accurate view of the status of the database and the
         // most flexibility to reacting to errors.
-        schema_version = getVersion(parameters);
+        schema_version = getVersion(parameters, ac, cb, retry ? timer_name : string());
     } catch (DbOpenError const& exception) {
-        // Could not establish a connection. Best thing is to wait for the
-        // database server to come up. Establish he mechanism of retrying.
-        if (retry && !timer_name.empty()) {
-            PgSqlConnection conn(parameters, ac, cb);
-            conn.makeReconnectCtl(timer_name);
-            conn.openDatabaseInternal(false);
-        } else {
-            rethrow_exception(current_exception());
-        }
+        throw;
+    } catch (DbOpenErrorWithRetry const& exception) {
+        throw;
     } catch (exception const& exception) {
         // This failure may occur for a variety of reasons. We are looking at
         // initializing schema as the only potential mitigation. We could narrow
@@ -229,6 +226,12 @@ PgSqlConnection::initializeSchema(const ParameterMap& parameters) {
         return;
     }
 
+    if (!isc::util::file::isFile(KEA_ADMIN_)) {
+        // It can happen for kea-admin to not exist, especially with
+        // packages that install it in a separate package.
+        return;
+    }
+
     // Convert parameters.
     auto const tupl(toKeaAdminParameters(parameters));
     vector<string> kea_admin_parameters(get<0>(tupl));
@@ -236,7 +239,7 @@ PgSqlConnection::initializeSchema(const ParameterMap& parameters) {
     kea_admin_parameters.insert(kea_admin_parameters.begin(), "db-init");
 
     // Run.
-    ProcessSpawn kea_admin(KEA_ADMIN, kea_admin_parameters, vars,
+    ProcessSpawn kea_admin(KEA_ADMIN_, kea_admin_parameters, vars,
                            /* inherit_env = */ true);
     DB_LOG_INFO(PGSQL_INITIALIZE_SCHEMA).arg(kea_admin.getCommandLine());
     pid_t const pid(kea_admin.spawn());

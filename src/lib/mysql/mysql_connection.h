@@ -296,7 +296,7 @@ public:
     static void
     ensureSchemaVersion(const ParameterMap& parameters,
                         const DbCallback& cb = DbCallback(),
-                        std::string timer_name = std::string());
+                        const std::string& timer_name = std::string());
 
     /// @brief Initialize schema.
     ///
@@ -826,6 +826,8 @@ public:
 
     /// @brief TLS flag (true when TLS was required, false otherwise).
     bool tls_;
+
+    static std::string KEA_ADMIN_;
 };
 
 } // end of isc::db namespace

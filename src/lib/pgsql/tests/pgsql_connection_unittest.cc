@@ -144,7 +144,9 @@ public:
     typedef std::vector<TestRow> TestRowSet;
 
     /// @brief Constructor.
-    PgSqlConnectionTest() : PgSqlBasicsTest() {};
+    PgSqlConnectionTest() : PgSqlBasicsTest() {
+        PgSqlConnection::KEA_ADMIN_ = KEA_ADMIN;
+    };
 
     /// @brief Destructor.
     virtual ~PgSqlConnectionTest() {
@@ -687,7 +689,7 @@ TEST_F(PgSqlConnectionTest, ensureSchemaVersion) {
     EXPECT_EQ(PGSQL_SCHEMA_VERSION_MINOR, version.second);
 }
 
-/// @brief Check ensureSchemaVersion when schema is not created.
+/// @brief Check initializeSchema when schema is not created.
 TEST_F(PgSqlConnectionTest, initializeSchemaNoSchema) {
     pair<uint32_t, uint32_t> version;
     auto const parameters(DatabaseConnection::parse(validPgSQLConnectionString()));
@@ -708,7 +710,7 @@ TEST_F(PgSqlConnectionTest, initializeSchemaNoSchema) {
     EXPECT_EQ(PGSQL_SCHEMA_VERSION_MINOR, version.second);
 }
 
-/// @brief Check ensureSchemaVersion when schema is created.
+/// @brief Check initializeSchema when schema is created.
 TEST_F(PgSqlConnectionTest, initializeSchema) {
     pair<uint32_t, uint32_t> version;
     auto const parameters(DatabaseConnection::parse(validPgSQLConnectionString()));
@@ -726,7 +728,7 @@ TEST_F(PgSqlConnectionTest, initializeSchema) {
     EXPECT_EQ(PGSQL_SCHEMA_VERSION_MINOR, version.second);
 }
 
-/// @brief Check ensureSchemaVersion when schema is created.
+/// @brief Check toKeaAdminParameters.
 TEST_F(PgSqlConnectionTest, toKeaAdminParameters) {
     auto parameters(DatabaseConnection::parse(validPgSQLConnectionString()));
     auto tupl(PgSqlConnection::toKeaAdminParameters(parameters));

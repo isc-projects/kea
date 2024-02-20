@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -27,6 +27,8 @@ using namespace std;
 
 namespace isc {
 namespace db {
+
+std::string MySqlConnection::KEA_ADMIN_ = KEA_ADMIN;
 
 int MySqlHolder::atexit_ = [] {
     return atexit([] { mysql_library_end(); });
@@ -372,7 +374,7 @@ MySqlConnection::getVersion(const ParameterMap& parameters,
 void
 MySqlConnection::ensureSchemaVersion(const ParameterMap& parameters,
                                      const DbCallback& cb,
-                                     string timer_name) {
+                                     const string& timer_name) {
     // retry-on-startup?
     bool const retry(parameters.count("retry-on-startup") &&
                      parameters.at("retry-on-startup") == "true");
@@ -380,20 +382,11 @@ MySqlConnection::ensureSchemaVersion(const ParameterMap& parameters,
     IOServiceAccessorPtr ac(new IOServiceAccessor(&DatabaseConnection::getIOService));
     pair<uint32_t, uint32_t> schema_version;
     try {
-        // Attempt to get version without retrying or other sophistries. This
-        // provides the most accurate view of the status of the database and the
-        // most flexibility to reacting to errors.
-        schema_version = getVersion(parameters);
+        schema_version = getVersion(parameters, ac, cb, retry ? timer_name : string());
     } catch (DbOpenError const& exception) {
-        // Could not establish a connection. Best thing is to wait for the
-        // database server to come up. Establish he mechanism of retrying.
-        if (retry && !timer_name.empty()) {
-            MySqlConnection conn(parameters, ac, cb);
-            conn.makeReconnectCtl(timer_name);
-            conn.openDatabase();
-        } else {
-            rethrow_exception(current_exception());
-        }
+        throw;
+    } catch (DbOpenErrorWithRetry const& exception) {
+        throw;
     } catch (exception const& exception) {
         // This failure may occur for a variety of reasons. We are looking at
         // initializing schema as the only potential mitigation. We could narrow
@@ -428,13 +421,19 @@ MySqlConnection::initializeSchema(const ParameterMap& parameters) {
         return;
     }
 
+    if (!isc::util::file::isFile(KEA_ADMIN_)) {
+        // It can happen for kea-admin to not exist, especially with
+        // packages that install it in a separate package.
+        return;
+    }
+
     // Convert parameters.
     vector<string> kea_admin_parameters(toKeaAdminParameters(parameters));
     ProcessEnvVars const vars;
     kea_admin_parameters.insert(kea_admin_parameters.begin(), "db-init");
 
     // Run.
-    ProcessSpawn kea_admin(KEA_ADMIN, kea_admin_parameters, vars,
+    ProcessSpawn kea_admin(KEA_ADMIN_, kea_admin_parameters, vars,
                            /* inherit_env = */ true);
     DB_LOG_INFO(MYSQL_INITIALIZE_SCHEMA).arg(kea_admin.getCommandLine());
     pid_t const pid(kea_admin.spawn());

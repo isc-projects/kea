@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -77,6 +77,8 @@ public:
     /// types.
     MySqlConnectionTest(bool const primary_key = false)
         : conn_(DatabaseConnection::parse(validMySQLConnectionString())) {
+
+        MySqlConnection::KEA_ADMIN_ = KEA_ADMIN;
 
         try {
             // Open new connection.
@@ -946,7 +948,7 @@ TEST_F(MySqlConnectionTest, ensureSchemaVersion) {
     EXPECT_EQ(MYSQL_SCHEMA_VERSION_MINOR, version.second);
 }
 
-/// @brief Check ensureSchemaVersion when schema is not created.
+/// @brief Check initializeSchema when schema is not created.
 TEST_F(MySqlConnectionTest, initializeSchemaNoSchema) {
     pair<uint32_t, uint32_t> version;
     auto const parameters(DatabaseConnection::parse(validMySQLConnectionString()));
@@ -965,7 +967,7 @@ TEST_F(MySqlConnectionTest, initializeSchemaNoSchema) {
     EXPECT_EQ(MYSQL_SCHEMA_VERSION_MINOR, version.second);
 }
 
-/// @brief Check ensureSchemaVersion when schema is created.
+/// @brief Check initializeSchema when schema is created.
 TEST_F(MySqlConnectionTest, initializeSchema) {
     pair<uint32_t, uint32_t> version;
     auto const parameters(DatabaseConnection::parse(validMySQLConnectionString()));
@@ -983,7 +985,7 @@ TEST_F(MySqlConnectionTest, initializeSchema) {
     EXPECT_EQ(MYSQL_SCHEMA_VERSION_MINOR, version.second);
 }
 
-/// @brief Check ensureSchemaVersion when schema is created.
+/// @brief Check toKeaAdminParameters.
 TEST_F(MySqlConnectionTest, toKeaAdminParameters) {
     auto parameters(DatabaseConnection::parse(validMySQLConnectionString()));
     vector<string> kea_admin_parameters(MySqlConnection::toKeaAdminParameters(parameters));

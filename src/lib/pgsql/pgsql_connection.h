@@ -226,9 +226,9 @@ public:
     /// @brief Destructor
     virtual ~PgSqlConnection();
 
-    /// @brief Convert MySQL library parameters to kea-admin parameters.
+    /// @brief Convert PostgreSQL library parameters to kea-admin parameters.
     ///
-    /// @param params input MySQL parameters
+    /// @param params input PostgreSQL parameters
     ///
     /// @return tuple of (vector of kea-admin parameters, vector of PostgreSQL
     /// environment variables)
@@ -267,7 +267,7 @@ public:
     static void
     ensureSchemaVersion(const ParameterMap& parameters,
                         const DbCallback& cb = DbCallback(),
-                        std::string timer_name = std::string());
+                        const std::string& timer_name = std::string());
 
     /// @brief Initialize schema.
     ///
@@ -625,6 +625,8 @@ public:
     /// ongoing transaction. We do not want to start new transactions when one
     /// is already in progress.
     int transaction_ref_count_;
+
+    static std::string KEA_ADMIN_;
 };
 
 /// @brief Defines a pointer to a PgSqlConnection
