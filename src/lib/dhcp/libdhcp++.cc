@@ -1284,7 +1284,7 @@ bool
 LibDHCP::initOptionDefs() {
     for (uint32_t i = 0; OPTION_DEF_PARAMS[i].optionDefParams; ++i) {
         string space = OPTION_DEF_PARAMS[i].space;
-        option_defs_[space] = OptionDefContainerPtr(new OptionDefContainer);
+        option_defs_[space] = OptionDefContainerPtr(new OptionDefContainer());
         initOptionSpace(option_defs_[space],
                         OPTION_DEF_PARAMS[i].optionDefParams,
                         OPTION_DEF_PARAMS[i].size);

@@ -1361,7 +1361,7 @@ mergeDiffDel(ElementPtr& element, ElementPtr& other,
         }
         return;
     }
-    element = ElementPtr(new NullElement);
+    element = ElementPtr(new NullElement());
 }
 
 void

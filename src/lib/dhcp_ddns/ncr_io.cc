@@ -159,7 +159,7 @@ NameChangeListener::invokeRecvHandler(const Result result,
 NameChangeSender::NameChangeSender(RequestSendHandler& send_handler,
                                    size_t send_queue_max)
     : sending_(false), send_handler_(send_handler),
-      send_queue_max_(send_queue_max), mutex_(new mutex) {
+      send_queue_max_(send_queue_max), mutex_(new mutex()) {
 
     // Queue size must be big enough to hold at least 1 entry.
     setQueueMaxSize(send_queue_max);

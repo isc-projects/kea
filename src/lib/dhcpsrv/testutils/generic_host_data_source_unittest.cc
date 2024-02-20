@@ -2685,7 +2685,7 @@ HostMgrDbLostCallbackTest::testRetryOpenDbLostAndRecoveredCallback() {
     access += " retry-on-startup=true";
     CfgMgr::instance().getCurrentCfg()->getCfgDbAccess()->setHostDbAccessString(access);
 
-    std::shared_ptr<DbConnectionInitWithRetry> dbr(new DbConnectionInitWithRetry);
+    std::shared_ptr<DbConnectionInitWithRetry> dbr(new DbConnectionInitWithRetry());
 
     // Create the HostMgr.
     HostMgr::create();
@@ -2729,7 +2729,7 @@ HostMgrDbLostCallbackTest::testRetryOpenDbLostAndFailedCallback() {
     access += " retry-on-startup=true";
     CfgMgr::instance().getCurrentCfg()->getCfgDbAccess()->setHostDbAccessString(access);
 
-    std::shared_ptr<DbConnectionInitWithRetry> dbr(new DbConnectionInitWithRetry);
+    std::shared_ptr<DbConnectionInitWithRetry> dbr(new DbConnectionInitWithRetry());
 
     // Create the HostMgr.
     HostMgr::create();
@@ -2769,7 +2769,7 @@ HostMgrDbLostCallbackTest::testRetryOpenDbLostAndRecoveredAfterTimeoutCallback()
     access += extra;
     CfgMgr::instance().getCurrentCfg()->getCfgDbAccess()->setHostDbAccessString(access);
 
-    std::shared_ptr<DbConnectionInitWithRetry> dbr(new DbConnectionInitWithRetry);
+    std::shared_ptr<DbConnectionInitWithRetry> dbr(new DbConnectionInitWithRetry());
 
     // Create the HostMgr.
     HostMgr::create();
@@ -2834,7 +2834,7 @@ HostMgrDbLostCallbackTest::testRetryOpenDbLostAndFailedAfterTimeoutCallback() {
     access += extra;
     CfgMgr::instance().getCurrentCfg()->getCfgDbAccess()->setHostDbAccessString(access);
 
-    std::shared_ptr<DbConnectionInitWithRetry> dbr(new DbConnectionInitWithRetry);
+    std::shared_ptr<DbConnectionInitWithRetry> dbr(new DbConnectionInitWithRetry());
 
     // Create the HostMgr.
     HostMgr::create();

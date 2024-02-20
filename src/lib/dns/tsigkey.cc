@@ -311,7 +311,7 @@ struct TSIGKeyRing::TSIGKeyRingImpl {
     TSIGKeyMap keys;
 };
 
-TSIGKeyRing::TSIGKeyRing() : impl_(new TSIGKeyRingImpl) {
+TSIGKeyRing::TSIGKeyRing() : impl_(new TSIGKeyRingImpl()) {
 }
 
 TSIGKeyRing::~TSIGKeyRing() {

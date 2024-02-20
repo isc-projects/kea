@@ -220,8 +220,8 @@ struct MessageRenderer::MessageRendererImpl {
 
 MessageRenderer::MessageRenderer() :
     AbstractMessageRenderer(),
-    impl_(new MessageRendererImpl)
-{}
+    impl_(new MessageRendererImpl()) {
+}
 
 MessageRenderer::~MessageRenderer() {
     delete impl_;

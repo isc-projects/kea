@@ -103,7 +103,7 @@ public:
     /// @param expected_response expected text response.
     void testSynchronizeHandler(const std::string& ha_sync_command,
                                 const std::string& expected_response) {
-        io_service_.reset(new IOService);
+        io_service_.reset(new IOService());
         ha_impl_.reset(new HAImpl());
         ASSERT_NO_THROW(ha_impl_->configure(createValidJsonConfiguration()));
 

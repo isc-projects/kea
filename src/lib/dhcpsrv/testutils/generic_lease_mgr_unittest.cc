@@ -3427,7 +3427,7 @@ LeaseMgrDbLostCallbackTest::testRetryOpenDbLostAndRecoveredCallback() {
     access += " retry-on-startup=true";
     CfgMgr::instance().getCurrentCfg()->getCfgDbAccess()->setLeaseDbAccessString(access);
 
-    std::shared_ptr<DbConnectionInitWithRetry> dbr(new DbConnectionInitWithRetry);
+    std::shared_ptr<DbConnectionInitWithRetry> dbr(new DbConnectionInitWithRetry());
 
     // Connect to the lease backend.
     ASSERT_THROW(LeaseMgrFactory::create(access), DbOpenErrorWithRetry);
@@ -3468,7 +3468,7 @@ LeaseMgrDbLostCallbackTest::testRetryOpenDbLostAndFailedCallback() {
     access += " retry-on-startup=true";
     CfgMgr::instance().getCurrentCfg()->getCfgDbAccess()->setLeaseDbAccessString(access);
 
-    std::shared_ptr<DbConnectionInitWithRetry> dbr(new DbConnectionInitWithRetry);
+    std::shared_ptr<DbConnectionInitWithRetry> dbr(new DbConnectionInitWithRetry());
 
     // Connect to the lease backend.
     ASSERT_THROW(LeaseMgrFactory::create(access), DbOpenErrorWithRetry);
@@ -3506,7 +3506,7 @@ LeaseMgrDbLostCallbackTest::testRetryOpenDbLostAndRecoveredAfterTimeoutCallback(
     access += extra;
     CfgMgr::instance().getCurrentCfg()->getCfgDbAccess()->setLeaseDbAccessString(access);
 
-    std::shared_ptr<DbConnectionInitWithRetry> dbr(new DbConnectionInitWithRetry);
+    std::shared_ptr<DbConnectionInitWithRetry> dbr(new DbConnectionInitWithRetry());
 
     // Connect to the lease backend.
     ASSERT_THROW(LeaseMgrFactory::create(access), DbOpenErrorWithRetry);
@@ -3568,7 +3568,7 @@ LeaseMgrDbLostCallbackTest::testRetryOpenDbLostAndFailedAfterTimeoutCallback() {
     access += extra;
     CfgMgr::instance().getCurrentCfg()->getCfgDbAccess()->setLeaseDbAccessString(access);
 
-    std::shared_ptr<DbConnectionInitWithRetry> dbr(new DbConnectionInitWithRetry);
+    std::shared_ptr<DbConnectionInitWithRetry> dbr(new DbConnectionInitWithRetry());
 
     // Connect to the lease backend.
     ASSERT_THROW(LeaseMgrFactory::create(access), DbOpenErrorWithRetry);

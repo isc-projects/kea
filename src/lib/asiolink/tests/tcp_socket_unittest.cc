@@ -234,7 +234,7 @@ serverRead(tcp::socket& socket, TCPCallback& server_cb) {
 TEST(TCPSocket, processReceivedData) {
     const uint16_t PACKET_SIZE = 16382;     // Amount of "real" data in the buffer
 
-    IOServicePtr            service(new IOService);   // Used to instantiate socket
+    IOServicePtr            service(new IOService());  // Used to instantiate socket
     TCPSocket<TCPCallback>  test(service);  // Socket under test
     uint8_t                 inbuff[PACKET_SIZE + 2];   // Buffer to check
     OutputBufferPtr         outbuff(new OutputBuffer(16));

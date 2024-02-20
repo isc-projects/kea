@@ -54,7 +54,7 @@ struct OPTImpl {
 
 /// \brief Default constructor.
 OPT::OPT() :
-    impl_(new OPTImpl)
+    impl_(new OPTImpl())
 {
 }
 
@@ -84,7 +84,7 @@ OPT::OPT(MasterLexer&, const Name*,
 OPT::OPT(InputBuffer& buffer, size_t rdata_len) :
     impl_(NULL)
 {
-    std::unique_ptr<OPTImpl> impl_ptr(new OPTImpl);
+    std::unique_ptr<OPTImpl> impl_ptr(new OPTImpl());
 
     while (true) {
         if (rdata_len == 0) {

@@ -59,7 +59,7 @@ class DStubCfgMgrTest : public ConfigParseTest {
 public:
 
     /// @brief Constructor
-    DStubCfgMgrTest():cfg_mgr_(new DStubCfgMgr) {
+    DStubCfgMgrTest():cfg_mgr_(new DStubCfgMgr()) {
     }
 
     /// @brief Destructor

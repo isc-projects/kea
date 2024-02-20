@@ -33,7 +33,7 @@ StatsMgr::instance() {
 }
 
 StatsMgr::StatsMgr() :
-    global_(boost::make_shared<StatContext>()), mutex_(new mutex) {
+    global_(boost::make_shared<StatContext>()), mutex_(new mutex()) {
 }
 
 void

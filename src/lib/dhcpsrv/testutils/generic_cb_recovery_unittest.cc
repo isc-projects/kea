@@ -91,7 +91,7 @@ GenericConfigBackendDbLostCallbackTest::testRetryOpenDbLostAndRecoveredCallback(
     config_ctl_info->addConfigDatabase(access);
     CfgMgr::instance().getCurrentCfg()->setConfigControlInfo(config_ctl_info);
 
-    std::shared_ptr<DbConnectionInitWithRetry> dbr(new DbConnectionInitWithRetry);
+    std::shared_ptr<DbConnectionInitWithRetry> dbr(new DbConnectionInitWithRetry());
 
     // Connect to the CB backend.
     ASSERT_THROW(addBackend(access), DbOpenErrorWithRetry);
@@ -146,7 +146,7 @@ GenericConfigBackendDbLostCallbackTest::testRetryOpenDbLostAndFailedCallback() {
     config_ctl_info->addConfigDatabase(access);
     CfgMgr::instance().getCurrentCfg()->setConfigControlInfo(config_ctl_info);
 
-    std::shared_ptr<DbConnectionInitWithRetry> dbr(new DbConnectionInitWithRetry);
+    std::shared_ptr<DbConnectionInitWithRetry> dbr(new DbConnectionInitWithRetry());
 
     // Connect to the CB backend.
     ASSERT_THROW(addBackend(access), DbOpenErrorWithRetry);
@@ -194,7 +194,7 @@ GenericConfigBackendDbLostCallbackTest::testRetryOpenDbLostAndRecoveredAfterTime
     config_ctl_info->addConfigDatabase(access);
     CfgMgr::instance().getCurrentCfg()->setConfigControlInfo(config_ctl_info);
 
-    std::shared_ptr<DbConnectionInitWithRetry> dbr(new DbConnectionInitWithRetry);
+    std::shared_ptr<DbConnectionInitWithRetry> dbr(new DbConnectionInitWithRetry());
 
     // Connect to the CB backend.
     ASSERT_THROW(addBackend(access), DbOpenErrorWithRetry);
@@ -270,7 +270,7 @@ GenericConfigBackendDbLostCallbackTest::testRetryOpenDbLostAndFailedAfterTimeout
     config_ctl_info->addConfigDatabase(access);
     CfgMgr::instance().getCurrentCfg()->setConfigControlInfo(config_ctl_info);
 
-    std::shared_ptr<DbConnectionInitWithRetry> dbr(new DbConnectionInitWithRetry);
+    std::shared_ptr<DbConnectionInitWithRetry> dbr(new DbConnectionInitWithRetry());
 
     // Connect to the CB backend.
     ASSERT_THROW(addBackend(access), DbOpenErrorWithRetry);

@@ -193,7 +193,7 @@ public:
         : finished_(false),
           io_service_(new IOService()),
           thread_(),
-          agent_(new NakedNetconfAgent) {
+          agent_(new NakedNetconfAgent()) {
     }
 
     /// @brief Destructor.

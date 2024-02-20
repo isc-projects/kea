@@ -122,7 +122,7 @@ TEST_F(RRParamRegistryTest, addRemoveFactory) {
     // Add factories so that we can treat this pair just like in::A.
     RRParamRegistry::getRegistry().add(test_type_str, test_type_code,
                                        test_class_str, test_class_code,
-                                       RdataFactoryPtr(new TestRdataFactory));
+                                       RdataFactoryPtr(new TestRdataFactory()));
     // Now it should be accepted, and should be identical to the same data of
     // in::A.
     EXPECT_EQ(0, in::A("192.0.2.1").compare(
@@ -135,7 +135,7 @@ TEST_F(RRParamRegistryTest, addRemoveFactory) {
                  InvalidRdataText);
     // Add the factories also as a class independent RRtype
     RRParamRegistry::getRegistry().add(test_type_str, test_type_code,
-                                       RdataFactoryPtr(new TestRdataFactory));
+                                       RdataFactoryPtr(new TestRdataFactory()));
     // Now it should be okay for other classes than the test class.
     EXPECT_EQ(0, in::A("192.0.2.1").compare(
                   *createRdata(RRType(test_type_code), RRClass("IN"),
@@ -155,7 +155,7 @@ TEST_F(RRParamRegistryTest, addRemoveFactory) {
 
 RdataPtr
 createRdataHelper(const std::string& str) {
-    boost::scoped_ptr<AbstractRdataFactory> rdf(new TestRdataFactory);
+    boost::scoped_ptr<AbstractRdataFactory> rdf(new TestRdataFactory());
 
     std::stringstream ss(str);
     MasterLexer lexer;

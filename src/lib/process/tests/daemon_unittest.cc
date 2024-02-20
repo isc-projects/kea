@@ -248,7 +248,7 @@ TEST_F(DaemonTest, createPIDFileOverwrite) {
 // Verifies that Daemon destruction deletes the PID file
 TEST_F(DaemonTest, PIDFileCleanup) {
     boost::shared_ptr<DaemonImpl> instance;
-    instance.reset(new DaemonImpl);
+    instance.reset(new DaemonImpl());
 
     instance->setConfigFile("test.conf");
     instance->setProcName("daemon_test");

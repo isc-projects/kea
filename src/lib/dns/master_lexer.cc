@@ -126,7 +126,7 @@ struct MasterLexer::MasterLexerImpl {
     bool previous_was_eol_;
 };
 
-MasterLexer::MasterLexer() : impl_(new MasterLexerImpl) {
+MasterLexer::MasterLexer() : impl_(new MasterLexerImpl()) {
 }
 
 MasterLexer::~MasterLexer() {
