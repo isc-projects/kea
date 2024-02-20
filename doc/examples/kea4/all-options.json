@@ -1635,14 +1635,22 @@
       Note that "Addr Length", "IPv4 Address(es)", and "Service Parameters
       (SvcParams)" fields are not present if the ADN-only mode is used.
       */
-      // Type: uint16, uint16, uint8, FQDN, binary
+      // Type: internal
       {
-        // Only one DNR instance ADN only mode - IP address(es) and SvcParams are missing on purpose.
-        // For more detailed example with IP addresses and SvcParams included, please check dnr.json example.
+        // DNR option may be configured using convenient notation. DNR Instances must be delimited with pipe "|" char.
+        // For each DNR Instance comma delimited fields must be provided:
+        // - service priority (mandatory),
+        // - ADN (mandatory),
+        // - IP address/es (optional - if more than one - they must be space-separated)
+        // - SvcParams (optional - if more than one - they must be space-separated;
+        //   to provide more than one alpn-id separate them with double-backslash escaped comma like in the
+        //   example below).
+        // Note: whenever pipe "|" char needs to be used not as the delimiter, it must be escaped with
+        //       double backslash, like in case of escaped commas in alpn-ids list.
+        // Basing on the config, Kea will encode the option according to RFC9463.
         "code": 162,
         "name": "v4-dnr",
-        "data": "26, 1234, 23, example.some.host.org., " // please notice comma and space at the end put on purpose
-                                                         // this means empty last type of the record - binary type
+        "data": "1, resolver.example., 10.2.3.4 10.0.4.5, alpn=dot\\,doq\\,h2\\,h3 dohpath=/q{?dns} | 2, resolver.example., 10.0.5.6, alpn=dot port=8530 | 3, fooexp.resolver.example."
       },
 
       // Option codes 163-209 are unassigned.
