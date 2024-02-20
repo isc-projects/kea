@@ -18,6 +18,7 @@
 namespace {
 
 using namespace isc::dhcp;
+using namespace boost::posix_time;
 
 /// @brief Maximum number of attempts to open BPF device.
 const unsigned int MAX_BPF_OPEN_ATTEMPTS = 100;
@@ -538,7 +539,17 @@ PktFilterBPF::receive(Iface& iface, const SocketInfo& socket_info) {
     pkt->setRemoteHWAddr(dummy_pkt->getRemoteHWAddr());
 
     // Set time the packet was stored in the buffer.
+#ifdef BPF_TIMEVAL
+    // Convert to ptime directly to avoid timeval vs
+    // timeval32 definitons under MacOS.
+    time_t time_t_secs = bpfh.bh_tstamp.tv_sec;
+    ptime timestamp = from_time_t(time_t_secs);
+    time_duration usecs(0, 0, 0, bpfh.bh_tstamp.tv_usec);
+    timestamp += usecs;
+    pkt->addPktEvent(PktEvent::SOCKET_RECEIVED, timestamp);
+#else
     pkt->addPktEvent(PktEvent::SOCKET_RECEIVED, bpfh.bh_tstamp);
+#endif
 
     // Set time packet was read from the buffer.
     pkt->addPktEvent(PktEvent::BUFFER_READ);
