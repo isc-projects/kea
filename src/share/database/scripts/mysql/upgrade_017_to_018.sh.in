@@ -14,14 +14,16 @@ set -eu
 # SC2034: ... appears unused. Verify use (or export if used externally).
 prefix="@prefix@"
 
-# Include utilities. Use installed version if available and
-# use build version if it isn't.
-if test -f "@datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh"; then
-    # shellcheck source=./src/bin/admin/admin-utils.sh.in
-    . "@datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh"
-else
+# Include utilities based on location of this script. Check for sources first,
+# so that the unexpected situations with weird paths fall on the default
+# case of installed.
+script_path=$(cd "$(dirname "${0}")" && pwd)
+if test "${script_path}" = "@abs_top_builddir@/src/share/database/scripts/mysql"; then
     # shellcheck source=./src/bin/admin/admin-utils.sh.in
     . "@abs_top_builddir@/src/bin/admin/admin-utils.sh"
+else
+    # shellcheck source=./src/bin/admin/admin-utils.sh.in
+    . "@datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh"
 fi
 
 # Check version.
