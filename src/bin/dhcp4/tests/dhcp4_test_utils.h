@@ -192,7 +192,7 @@ public:
     ///
     /// See fake_received_ field for description
     void fakeReceive(const Pkt4Ptr& pkt) {
-        // Add packet events normmaly set by PktFilter.
+        // Add packet events normally set by PktFilter.
         pkt->addPktEvent(PktEvent::SOCKET_RECEIVED);
         pkt->addPktEvent(PktEvent::BUFFER_READ);
         fake_received_.push_back(pkt);
@@ -686,7 +686,6 @@ public:
     /// of expected events.
     ///
     /// @param msg pointer to the packet under test.
-    /// of the stack's first event (i.e. before packet was sent or received)
     /// @param expected_events a list of the event labels in the order they
     /// are expected to occur in the stack.
     void checkPktEvents(const PktPtr& msg, std::list<std::string> expected_events);

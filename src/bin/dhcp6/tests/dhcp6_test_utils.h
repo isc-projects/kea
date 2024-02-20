@@ -556,8 +556,6 @@ public:
     /// of expected events.
     ///
     /// @param msg pointer to the packet under test.
-    /// @param start_time system time prior to or equal to the timestamp
-    /// of the stack's first event (i.e. before packet was sent or received)
     /// @param expected_events a list of the event labels in the order they
     /// are expected to occur in the stack.
     void checkPktEvents(const PktPtr& msg, std::list<std::string> expected_events);
