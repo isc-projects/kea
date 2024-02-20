@@ -827,6 +827,8 @@ public:
     /// @brief TLS flag (true when TLS was required, false otherwise).
     bool tls_;
 
+    /// @brief Holds location to kea-admin. By default, it points to kea-admin
+    /// from installation. In tests, it points to kea-admin from sources.
     static std::string KEA_ADMIN_;
 };
 

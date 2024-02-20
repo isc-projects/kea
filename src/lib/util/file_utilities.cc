@@ -73,7 +73,6 @@ isFile(const string& name) {
     return ((stats.st_mode & S_IFMT) == S_IFREG);
 }
 
-
 } // namespace file
 } // namespace log
 } // namespace isc

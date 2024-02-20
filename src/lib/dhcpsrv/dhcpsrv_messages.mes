@@ -391,7 +391,7 @@ no lease6 should be assigned. The server will not put that lease in its
 database and the client will get a NoAddrsAvail for that IA_NA option.
 
 % DHCPSRV_HOST_MGR_DB_OPEN_CONNECTION_WITH_RETRY_FAILED Failed to connect to database: %1 with error: %2
-This is an informational message issued when the the server failed to connect to
+This is an informational message issued when the server failed to connect to
 the host database. The operation started a retry to connect procedure.
 The database access string with password redacted is logged, along with the
 error and details for the reconnect procedure.
@@ -438,7 +438,7 @@ This log message variant contains no error text because it is triggered
 by an unknown exception.
 
 % DHCPSRV_LEASE_MGR_DB_OPEN_CONNECTION_WITH_RETRY_FAILED Failed to connect to database: %1 with error: %2
-This is an informational message issued when the the server failed to connect to
+This is an informational message issued when the server failed to connect to
 the lease database. The operation started a retry to connect procedure.
 The database access string with password redacted is logged, along with the
 error and details for the reconnect procedure.

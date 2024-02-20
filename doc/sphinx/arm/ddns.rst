@@ -952,7 +952,7 @@ Currently Kea's statistics management has the following limitations:
 
 .. note::
 
-    Hook libraries, such as the the ISC subscriber-only GSS-TSIG library,
+    Hook libraries, such as the ISC subscriber-only GSS-TSIG library,
     make new statistics available in Kea.
 
 More information about Kea statistics can be found at :ref:`stats`.

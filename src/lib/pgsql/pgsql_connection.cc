@@ -184,9 +184,6 @@ PgSqlConnection::ensureSchemaVersion(const ParameterMap& parameters,
     IOServiceAccessorPtr ac(new IOServiceAccessor(&DatabaseConnection::getIOService));
     pair<uint32_t, uint32_t> schema_version;
     try {
-        // Attempt to get version without retrying or other sophistries. This
-        // provides the most accurate view of the status of the database and the
-        // most flexibility to reacting to errors.
         schema_version = getVersion(parameters, ac, cb, retry ? timer_name : string());
     } catch (DbOpenError const& exception) {
         throw;

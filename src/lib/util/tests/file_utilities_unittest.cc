@@ -28,7 +28,7 @@ public:
 };
 
 FileUtilTest::~FileUtilTest() {
-    string test_file_name = string(TEST_DATA_BUILDDIR) + "/fu.test";
+    string test_file_name(TEST_DATA_BUILDDIR "/fu.test");
     static_cast<void>(remove(test_file_name.c_str()));
 }
 
@@ -65,7 +65,7 @@ TEST_F(FileUtilTest, notRegular) {
 
 /// @brief Check getContent works.
 TEST_F(FileUtilTest, basic) {
-    string file_name = string(TEST_DATA_BUILDDIR) + "/fu.test";
+    string file_name(TEST_DATA_BUILDDIR "/fu.test");
     ofstream fs(file_name.c_str(), ofstream::out | ofstream::trunc);
     ASSERT_TRUE(fs.is_open());
     fs << "abdc";
@@ -79,13 +79,13 @@ TEST_F(FileUtilTest, basic) {
 TEST_F(FileUtilTest, isDir) {
     EXPECT_TRUE(isDir("/dev"));
     EXPECT_FALSE(isDir("/dev/null"));
-    EXPECT_FALSE(isDir("/this/does/not/exists"));
+    EXPECT_FALSE(isDir("/this/does/not/exist"));
     EXPECT_FALSE(isDir("/etc/hosts"));
 }
 
 /// @brief Check isFile.
 TEST_F(FileUtilTest, isFile) {
-    EXPECT_TRUE(isFile("file_utilities_unittest.cc"));
+    EXPECT_TRUE(isFile(ABS_SRCDIR "/file_utilities_unittest.cc"));
     EXPECT_FALSE(isFile(TEST_DATA_BUILDDIR));
 }
 

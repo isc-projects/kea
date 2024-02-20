@@ -42,13 +42,13 @@ dump_file=""
 dump_qry=""
 
 # Detect if this is installed or in sources. Check for sources first, so that
-# the the unexpected situations with weird paths fall on the default case of
+# the unexpected situations with weird paths fall on the default case of
 # installed.
 script_path=$(cd "$(dirname "${0}")" && pwd)
 if test "${script_path}" = "@abs_top_builddir@/src/bin/admin"; then
     admin_utils="@abs_top_builddir@/src/bin/admin/admin-utils.sh"
     KEA_LFC="@abs_top_builddir@/src/bin/lfc/kea-lfc"
-    SCRIPTS_DIR="@abs_top_builddir@/src/share/database/scripts"
+    SCRIPTS_DIR="@abs_top_srcdir@/src/share/database/scripts"
 else
     admin_utils="@datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh"
     KEA_LFC="@sbindir@/kea-lfc"

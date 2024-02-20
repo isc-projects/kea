@@ -302,11 +302,6 @@ TEST_F(ProcessSpawnTest, invalidExecutable) {
 // This test verifies that the full command line for the process is
 // returned.
 TEST_F(ProcessSpawnTest, getCommandLine) {
-    // Note that cases below are enclosed in separate scopes to make
-    // sure that the ProcessSpawn object is destroyed before a new
-    // object is created. Current implementation doesn't allow for
-    // having two ProcessSpawn objects simultaneously as they will
-    // both try to allocate a signal handler for SIGCHLD.
     {
         // Case 1: arguments present.
         ProcessArgs args;

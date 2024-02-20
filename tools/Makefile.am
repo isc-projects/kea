@@ -8,7 +8,3 @@ endif
 
 CLEANFILES = *.gcno *.gcda
 DISTCLEANFILES = path_replacer.sh
-
-if GENERATE_DOCS
-
-endif

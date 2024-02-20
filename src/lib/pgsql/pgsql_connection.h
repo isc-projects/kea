@@ -626,6 +626,8 @@ public:
     /// is already in progress.
     int transaction_ref_count_;
 
+    /// @brief Holds location to kea-admin. By default, it points to kea-admin
+    /// from installation. In tests, it points to kea-admin from sources.
     static std::string KEA_ADMIN_;
 };
 

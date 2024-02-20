@@ -1000,18 +1000,16 @@ TEST_F(MySqlConnectionTest, toKeaAdminParameters) {
     parameters = DatabaseConnection::parse(full_mysql_connection_string);
     kea_admin_parameters = MySqlConnection::toKeaAdminParameters(parameters);
     EXPECT_EQ(kea_admin_parameters,
-              vector<string>(
-                  {"mysql", "--extra",
-                   "--ssl-cert " ABS_TOP_BUILDDIR "/src/lib/database/testutils/../../asiolink/"
-                   "testutils/ca/kea-client.crt",
-                   "--extra", "--ssl-cipher AES", "--extra", "--connect_timeout 10", "--host",
-                   "127.0.0.1", "--extra",
-                   "--ssl-key " ABS_TOP_BUILDDIR "/src/lib/database/testutils/../../asiolink/"
-                   "testutils/ca/kea-client.key",
-                   "--name", "keatest", "--password", "keatest", "--extra",
-                   "--ssl-ca " ABS_TOP_BUILDDIR "/src/lib/database/testutils/../../asiolink/"
-                   "testutils/ca/kea-ca.crt",
-                   "--user", "keatest_secure"}));
+              vector<string>({"mysql", "--extra",
+                              "--ssl-cert " ABS_SRCDIR "/src/lib/asiolink/testutils/ca/"
+                              "kea-client.crt",
+                              "--extra", "--ssl-cipher AES", "--extra", "--connect_timeout 10",
+                              "--host", "127.0.0.1", "--extra",
+                              "--ssl-key " ABS_SRCDIR "/src/lib/asiolink/testutils/ca/"
+                                                      "kea-client.key",
+                              "--name", "keatest", "--password", "keatest", "--extra",
+                              "--ssl-ca " ABS_SRCDIR "/src/lib/asiolink/testutils/ca/kea-ca.crt",
+                              "--user", "keatest_secure"}));
 }
 
 }  // namespace

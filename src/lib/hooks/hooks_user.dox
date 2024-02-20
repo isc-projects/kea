@@ -875,7 +875,7 @@ configuration derived from the root logger.
 @subsection hooksdgBuild Building the Library
 
 Building the code requires building a sharable library.  This requires
-the the code be compiled as position-independent code (using the
+the code be compiled as position-independent code (using the
 compiler's "-fpic" switch) and linked as a shared library (with the
 linker's "-shared" switch).  The build command also needs to point to
 the Kea include directory and link in the appropriate libraries.

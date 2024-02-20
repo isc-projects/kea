@@ -2,6 +2,7 @@ SUBDIRS = .
 
 AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES)
+AM_CPPFLAGS += -DABS_SRCDIR=\"$(abs_srcdir)\"
 AM_CPPFLAGS += -DTEST_DATA_BUILDDIR=\"$(abs_builddir)\"
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 

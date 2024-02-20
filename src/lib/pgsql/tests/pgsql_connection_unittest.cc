@@ -197,7 +197,7 @@ public:
         TestRowSet fetched_rows;
 
         // Run the select.  The row consumption lambda should populate
-        // fetched_rows based on the the result set returned by the select.
+        // fetched_rows based on the result set returned by the select.
         conn_->selectQuery(tagged_statements[GET_BY_INT_RANGE], in_bindings,
                            [&](PgSqlResult& r, size_t row) {
             TestRow fetched_row;
@@ -236,7 +236,7 @@ public:
     /// In this test, the input data is a set of rows that describe
     /// which rows in the database to update and how. For each row
     /// in the set we find the record in the database with matching
-    /// int_col value and replace its text_col value with the the
+    /// int_col value and replace its text_col value with the
     /// text value from the input the row.
     ///
     /// @param update_rows Collection of rows of data to update.
