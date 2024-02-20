@@ -302,7 +302,6 @@ TEST(ParserTest, file) {
                                "comments.json",
                                "config-backend.json",
                                "dhcpv4-over-dhcpv6.json",
-                               "dnr.json",
                                "global-reservations.json",
                                "ha-load-balancing-server1-mt-with-tls.json",
                                "ha-load-balancing-server2-mt.json",

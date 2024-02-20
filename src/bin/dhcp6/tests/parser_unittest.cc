@@ -309,7 +309,6 @@ TEST(ParserTest, file) {
     configs.push_back("comments.json");
     configs.push_back("config-backend.json");
     configs.push_back("dhcpv4-over-dhcpv6.json");
-    configs.push_back("dnr.json");
     configs.push_back("duid.json");
     configs.push_back("global-reservations.json");
     configs.push_back("ha-hot-standby-server1-with-tls.json");

@@ -2146,7 +2146,7 @@ Kea currently supports the following service parameters:
 Other currently defined service parameters: mandatory (0), no-default-alpn (2), ipv4hint (4), ech (5),
 ipv6hint (6), and ohttp (8) are not usable in the DNR option.
 
-Further examples are provided in Kea sources in ``dnr.json`` and ``all-options.json`` files
+Further examples are provided in Kea sources in ``all-options.json`` file
 in the ``doc/examples/kea6`` directory. The DHCPv4 option is almost equivalent, and is described
 in :ref:`dnr4-options`.
 

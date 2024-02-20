@@ -337,7 +337,6 @@ Dhcpv6SrvTest::checkConfigFiles() {
         "config-backend.json",
 #endif
         "dhcpv4-over-dhcpv6.json",
-        "dnr.json",
         "duid.json",
         "global-reservations.json",
         "ha-hot-standby-server1-with-tls.json",

@@ -4746,7 +4746,7 @@ DHCPv6 option, except the minor difference of using IPv4 rather than IPv6 addres
 
 For detailed example how to configure DNR option, see :ref:`dnr6-options`.
 Examples for DNR DHCPv4 options are provided in the Kea sources in
-`dnr.json` and `all-options.json` in the `doc/examples/kea4` directory.
+`all-options.json` in the `doc/examples/kea4` directory.
 
 
 .. _host-reservation-v4:
