@@ -4745,6 +4745,23 @@ array that allows multiple DNS instances. Each instance is logically equal to on
 DHCPv6 option, except the minor difference of using IPv4 rather than IPv6 addresses.
 
 For detailed example how to configure DNR option, see :ref:`dnr6-options`.
+The only difference for DNR DHCPv4 options configuration is that it allows
+to configure more than one DNR instance and the DNR instances are separated
+with the "pipe" (``0x7C``) character. Example usage below:
+
+::
+
+      {
+        "name": "v4-dnr",
+        "data": "2, resolver.example., 10.0.5.6, alpn=dot port=8530 | 3, fooexp.resolver.example."
+      }
+
+
+.. note::
+
+   Note that whenever "comma" or "pipe" characters need to be used not as the delimiters, they must be escaped with
+   double backslash (``\\,`` or ``\\|``).
+
 Examples for DNR DHCPv4 options are provided in the Kea sources in
 `all-options.json` in the `doc/examples/kea4` directory.
 

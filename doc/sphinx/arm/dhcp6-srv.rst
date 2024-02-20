@@ -2071,14 +2071,14 @@ DNR (Discovery of Network-designated Resolvers) Options for DHCPv6
 ------------------------------------------------------------------
 
 One of the more recently added option is Discovery of Network-designated Resolvers or DNR,
-introduced in `RFC 9463 <https://tools.ietf.org/html/rfc9463>`__. The goal of that RFC is
+introduced in `RFC 9463 <https://www.rfc-editor.org/rfc/rfc9463>`__. The goal of that RFC is
 to provide a way to communicate location of DNS resolvers available over other means than
 the classic DNS over UDP port 53. At the time of this writing, the supported technologies
 are DoT (DNS-over-TLS), DoH (DNS-over-HTTPS), and DoQ (DNS-over-QUIC), but the option was
 designed to be extensible to also cover future extensions.
 
 Let's imagine an example that we want to convey a DoT server operating at dot1.example.org
-(which resolves to two IPv6 addresses: 2001:db8::1 2001:db8::2) on a non-standard port 8530.
+(which resolves to two IPv6 addresses: ``2001:db8::1`` and  ``2001:db8::2``) on a non-standard port 8530.
 An example option that would convey this information looks as follows:
 
 ::
@@ -2089,30 +2089,75 @@ An example option that would convey this information looks as follows:
         // The following fields should be specified:
         // - service priority (unsigned 16 bit integer)
         // - authentication-domain-name (fqdn of the encrypted resolver)
-        // - a list of zero or more IPv6 addresses
-        // - list of parameters in key=value format, space separated
+        // - a list of one or more IPv6 addresses
+        // - list of parameters in key=value format, space separated; any comma
+        //   characters in this field must be escaped with double backslash
         "data": "100, dot1.example.org., 2001:db8::1 2001:db8::2, alpn=dot port=8530"
 
         // The above option will be encoded on-wire as follows:
-        // 100 - service priority
-        // 18 - length of the Authentication Domain Name (name of the resolver)
+        // 00 64 - service priority (100 in hex as unsigned 16 bit integer)
+        // 00 12 - length of the Authentication Domain Name (name of the resolver) FQDN (18 in hex as unsigned 16 bit integer)
+        // 04 64 6f 74 31 07 65 78 61 6d 70 6c 65 03 6f 72 67 00 - 18 octets of the ADN FQDN
         // 00 20 - 32 octets is the length of the following two IPv6 addresses
-        // 20 01 0d b8 00 00 00 01 00 00 00 00 00 00 00 01 - 2001:db8:1::1
-        // 20 01 0d b8 00 00 00 01 00 00 00 00 00 00 00 02 - 2001:db8:1::2
-        // Remaining part is to be interpreted as svcParams field. In particular:
+        // 20 01 0d b8 00 00 00 00 00 00 00 00 00 00 00 01 - 2001:db8::1
+        // 20 01 0d b8 00 00 00 00 00 00 00 00 00 00 00 02 - 2001:db8::2
+        // Remaining part is to be interpreted as SvcParams field. In particular:
         // 00 01 - next record is alpn
-        // 00 03 - length of the alpn-id field (3 octets)
+        // 00 04 - length of the alpn SvcParamValue field (4 octets)
+        // 03    - length of the following alpn-id coded on one octet
         // 64 6f 74 - "dot" - value of the alpn
         // 00 03 - next record is port
-        // 00 02 - length of the record is 2 octets
+        // 00 02 - length of the SvcParamValue field is 2 octets
         // 21 52 - the actual is 0x2152 or 8530 in decimal
       }
 
-The only strictly mandatory key in the SvcParams field is the ``ALPN`` (Application-Layer Protocol Negotiation)
-parameter. It defines the protocol how the encrypted resolver could be reached. The most common values are
-``dot``, ``doq``, ``h2`` (meaning HTTP/2.0 over TLS, used in DoH). In case of DoH, the path also needs to be specified
-using the ``dotpath`` parameter. For example, when advertising DoH resolver available at
-``https://doh1.example.org/query{?dns}``, the ``dotpath`` should be set to ``query{?dns}``.
+And yet another example where we want to convey in the same time, with ``resolver.example``
+as the Authentication Domain Name:
+
+- DoT on default port 853
+- DoQ on default port 853
+- DoH at ``https://resolver.example/q{?dns}``
+
+::
+
+      {
+        "name": "v6-dnr", // name of the option
+
+        "data": "150, resolver.example., 2001:db8::1 2001:db8::2, alpn=dot\\,doq\\,h2\\,h3 dohpath=/q{?dns}" // mind double backslash escaped commas in alpn-id list
+
+        // The above option will be encoded on-wire as follows:
+        // 00 96 - service priority (150 in hex as unsigned 16 bit integer)
+        // 00 12 - length of the Authentication Domain Name (name of the resolver) FQDN (18 in hex as unsigned 16 bit integer)
+        // 08 72 65 73 6f 6c 76 65 72 07 65 78 61 6d 70 6c 65 00 - 18 octets of the ADN FQDN
+        // 00 20 - 32 octets is the length of the following two IPv6 addresses
+        // 20 01 0d b8 00 00 00 00 00 00 00 00 00 00 00 01 - 2001:db8::1
+        // 20 01 0d b8 00 00 00 00 00 00 00 00 00 00 00 02 - 2001:db8::2
+        // Remaining part is to be interpreted as SvcParams field. In particular:
+        // 00 01 - next record is alpn
+        // 00 0e - length of the alpn SvcParamValue field (14 octets)
+        // 03    - length of the following alpn-id coded on one octet
+        // 64 6f 74 - "dot" - value of the alpn
+        // 03    - length of the following alpn-id coded on one octet
+        // 64 6f 71 - "doq" - value of the alpn
+        // 02    - length of the following alpn-id coded on one octet
+        // 68 32 - "h2" - value of the alpn "HTTP/2 over TLS"
+        // 02    - length of the following alpn-id coded on one octet
+        // 68 33 - "h3" - value of the alpn "HTTP/3"
+        // 00 07 - next record is dohpath
+        // 00 08 - length of the SvcParamValue field is 8 octets
+        // 2f 71 7b 3f 64 6e 73 7d - "/q{?dns}" dohpath
+      }
+
+The `RFC 9463 <https://www.rfc-editor.org/rfc/rfc9463#name-option-format>`__ Section 4.1 is encouraging to include
+at least the ``ALPN`` (Application-Layer Protocol Negotiation) SvcParam, as it will be required in most cases.
+It defines the protocol how the encrypted resolver could be reached. The most common values are
+``dot``, ``doq``, ``h2`` (meaning HTTP/2.0 over TLS, used in DoH).
+
+As per `RFC 9461 <https://www.rfc-editor.org/rfc/rfc9461.html#name-new-svcparamkey-dohpath>`__ Section 5:
+
+If the ``alpn`` SvcParam indicates support for HTTP, ``dohpath`` MUST be present. The URI Template MUST contain
+a "dns" variable. For example, when advertising DoH resolver available at
+``https://doh1.example.org/query{?dns}``, the ``dohpath`` should be set to relative URI ``/query{?dns}``.
 
 A reader interested in configuring this option is encouraged to read the following materials:
 
@@ -2124,11 +2169,11 @@ A reader interested in configuring this option is encouraged to read the followi
 - List of currently allowed protocols in the ALPN parameter is maintained on `another IANA registry
   <https://www.iana.org/assignments/tls-extensiontype-values/tls-extensiontype-values.xhtml#alpn-protocol-ids>`__.
 
-- `RFC 9463 <https://www.rfc-editor.org/rfc/rfc9463>`__ which provide option definitions. In terms of SvcParams, it states
-  that at `alpn` and `port` must be supported, and `dotpath` (used for DoT) is recommended to be supported.
-- Section 2.2 of `RFC 9460 <https://www.rfc-editor.org/rfc/rfc9460>`__, which define the on-wire format for SvcParams.
-- Sections 7.1, 7.2 of `RFC 9460 <https://www.rfc-editor.org/rfc/rfc9460>`__, which define the on-wire format for alpn and port.
-- Section 5 of  `RFC 9460 <https://www.rfc-editor.org/rfc/rfc9461#name-new-svcparamkey-dohpath>`__, which defines
+- `RFC 9463 <https://www.rfc-editor.org/rfc/rfc9463>`__ which provides option definitions. In terms of SvcParams, it states
+  that at `alpn` and `port` must be supported, and `dohpath` (used for DoH) is recommended to be supported.
+- Section 2.2 of `RFC 9460 <https://www.rfc-editor.org/rfc/rfc9460>`__, which defines the on-wire format for SvcParams.
+- Sections 7.1, 7.2 of `RFC 9460 <https://www.rfc-editor.org/rfc/rfc9460>`__, which defines the on-wire format for alpn and port.
+- Section 5 of  `RFC 9461 <https://www.rfc-editor.org/rfc/rfc9461#name-new-svcparamkey-dohpath>`__, which defines
   on-wire format for `dohpath`.
 
 Kea currently supports the following service parameters:
@@ -2136,11 +2181,11 @@ Kea currently supports the following service parameters:
    +-----------------+------+------------------------------------------------------------------------+
    | Name            | Code | Description                                                            |
    +=================+======+========================================================================+
-   | alpn            | 1    | Specifies coma separated protocol types (DoT, DoH, etc.)               |
+   | alpn            | 1    | Specifies comma separated protocol types (DoT, DoH, etc.)              |
    +-----------------+------+------------------------------------------------------------------------+
    | port            | 3    | Unsigned 16 bit integer. Indicated non-standard TCP or UDP port.       |
    +-----------------+------+------------------------------------------------------------------------+
-   | dotpath         | 7    | Mandatory for DoT. Contains URL path for the DoT resolver.             |
+   | dohpath         | 7    | Mandatory for DoH. Contains URL path for the DoT resolver.             |
    +-----------------+------+------------------------------------------------------------------------+
 
 Other currently defined service parameters: mandatory (0), no-default-alpn (2), ipv4hint (4), ech (5),
