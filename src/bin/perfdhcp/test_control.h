@@ -193,27 +193,27 @@ public:
         /// \param max maximum number generated.
         RandomGenerator(uint32_t min, uint32_t max) :
             NumberGenerator(),
-            distribution(min, max) {
+            distribution_(min, max) {
             // Initialize the randomness source with the current time.
-            randomness_generator.seed(time(0));
+            randomness_generator_.seed(time(0));
         }
 
         /// \brief Generate number in range of [min, max].
         ///
         /// \return generated number.
         virtual uint32_t generate() {
-            return distribution(randomness_generator);
+            return distribution_(randomness_generator_);
         }
 
     private:
         /// \brief The random values will be uniformly distributed in
         /// the range provided in the constructor.
-        std::uniform_int_distribution<> distribution;
+        std::uniform_int_distribution<> distribution_;
 
         /// \brief It is a high quality general-purpose random
         /// generator. It isn't suitable for cryptographic use but is
         /// good enough for testing.
-        std::mt19937 randomness_generator;
+        std::mt19937 randomness_generator_;
     };
 
     /// \brief Length of the Ethernet HW address (MAC) in bytes.
