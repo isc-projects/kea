@@ -6,17 +6,12 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-# shellcheck disable=SC1091
-# SC1091: Not following: ... was not specified as input (see shellcheck -x).
-
-# shellcheck disable=SC2039
-# SC2039: In POSIX sh, 'local' is undefined.
-
 # Exit with error if commands exit with non-zero and if undefined variables are
 # used.
 set -eu
 
 # Include common test library.
+# shellcheck source=src/lib/testutils/dhcp_test_lib.sh.in
 . "@abs_top_builddir@/src/lib/testutils/dhcp_test_lib.sh"
 
 # Path to the temporary configuration file.
@@ -80,9 +75,6 @@ CONFIG_PWD="{
 bin="kea-ctrl-agent"
 bin_path="@abs_top_builddir@/src/bin/agent"
 
-# Import common test library.
-. "@abs_top_builddir@/src/lib/testutils/dhcp_test_lib.sh"
-
 # This test verifies that syntax checking works properly. This function
 # requires 3 parameters:
 # test_name
@@ -120,7 +112,7 @@ shutdown_test() {
     # Instruct Control Agent to log to the specific file.
     set_logger
     # Start Control Agent.
-    start_kea ${bin_path}/${bin}
+    start_kea "${bin_path}/${bin}"
     # Wait up to 20s for Control Agent to start.
     wait_for_kea 20
     if [ "${_WAIT_FOR_KEA}" -eq 0 ]; then
@@ -130,7 +122,7 @@ shutdown_test() {
 
     # Check if it is still running. It could have terminated (e.g. as a result
     # of configuration failure).
-    get_pid ${bin}
+    get_pid "${bin}"
     if [ "${_GET_PIDS_NUM}" -ne 1 ]; then
         printf "ERROR: expected one Control Agent process to be started. Found %d processes\
  started.\n" "${_GET_PIDS_NUM}"
@@ -158,7 +150,7 @@ shutdown_test() {
     fi
 
     # Make sure the server is down.
-    wait_for_server_down 5 ${bin}
+    wait_for_server_down 5 "${bin}"
     assert_eq 1 "${_WAIT_FOR_SERVER_DOWN}" \
         "Expected wait_for_server_down return %d, returned %d"
 

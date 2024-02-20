@@ -6,17 +6,12 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-# shellcheck disable=SC1091
-# SC1091: Not following: ... was not specified as input (see shellcheck -x).
-
-# shellcheck disable=SC2039
-# SC2039: In POSIX sh, 'local' is undefined.
-
 # Exit with error if commands exit with non-zero and if undefined variables are
 # used.
 set -eu
 
 # Include common test library.
+# shellcheck source=src/lib/testutils/dhcp_test_lib.sh.in
 . "@abs_top_builddir@/src/lib/testutils/dhcp_test_lib.sh"
 
 # Path to the temporary configuration file.
@@ -106,9 +101,6 @@ shell_bin="kea-shell"
 shell_bin_path="@abs_top_builddir@/src/bin/shell"
 
 tmpfile_path="@abs_top_builddir@/src/bin/agent/tests"
-
-# Import common test library.
-. "@abs_top_builddir@/src/lib/testutils/dhcp_test_lib.sh"
 
 list_commands_test() {
     local test_name="${1}"

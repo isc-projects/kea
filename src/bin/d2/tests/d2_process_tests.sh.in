@@ -6,12 +6,6 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-# shellcheck disable=SC1091
-# SC1091: Not following: ... was not specified as input (see shellcheck -x).
-
-# shellcheck disable=SC2039
-# SC2039: In POSIX sh, 'local' is undefined.
-
 # Exit with error if commands exit with non-zero and if undefined variables are
 # used.
 set -eu
@@ -140,6 +134,7 @@ bin="kea-dhcp-ddns"
 bin_path="@abs_top_builddir@/src/bin/d2"
 
 # Import common test library.
+# shellcheck source=src/lib/testutils/dhcp_test_lib.sh.in
 . "@abs_top_builddir@/src/lib/testutils/dhcp_test_lib.sh"
 
 # This test verifies that syntax checking works properly. This function
@@ -176,7 +171,7 @@ dynamic_reconfiguration_test() {
     # Instruct D2 to log to the specific file.
     set_logger
     # Start D2.
-    start_kea ${bin_path}/${bin}
+    start_kea "${bin_path}/${bin}"
     # Wait up to 20s for D2 to start.
     wait_for_kea 20
     if [ "${_WAIT_FOR_KEA}" -eq 0 ]; then
@@ -186,7 +181,7 @@ dynamic_reconfiguration_test() {
 
     # Check if it is still running. It could have terminated (e.g. as a result
     # of configuration failure).
-    get_pid ${bin}
+    get_pid "${bin}"
     if [ "${_GET_PIDS_NUM}" -ne 1 ]; then
         printf "ERROR: expected one D2 process to be started. Found %d processes\
  started.\n" "${_GET_PIDS_NUM}"
@@ -207,7 +202,7 @@ dynamic_reconfiguration_test() {
     create_config "${CONFIG_INVALID}"
 
     # Try to reconfigure by sending SIGHUP
-    send_signal 1 ${bin}
+    send_signal 1 "${bin}"
 
     # Wait up to 10s for the D2Controller to log reload signal received.
     wait_for_message 10 "DCTL_CFG_FILE_RELOAD_SIGNAL_RECVD"  1
@@ -226,7 +221,7 @@ dynamic_reconfiguration_test() {
     fi
 
     # Make sure the server is still operational.
-    get_pid ${bin}
+    get_pid "${bin}"
     if [ "${_GET_PIDS_NUM}" -ne 1 ]; then
         printf "ERROR: D2 was killed when attempting reconfiguration.\n"
         clean_exit 1
@@ -236,7 +231,7 @@ dynamic_reconfiguration_test() {
     create_config "${CONFIG}"
 
     # Reconfigure the server with SIGHUP.
-    send_signal 1 ${bin}
+    send_signal 1 "${bin}"
 
     # There should be two occurrences of the DHCP4_CONFIG_COMPLETE messages.
     # Wait for it up to 10s.
@@ -253,7 +248,7 @@ dynamic_reconfiguration_test() {
     fi
 
     # Make sure the server is still operational.
-    get_pid ${bin}
+    get_pid "${bin}"
     if [ "${_GET_PIDS_NUM}" -ne 1 ]; then
         printf "ERROR: D2 was killed when attempting reconfiguration.\n"
         clean_exit 1
@@ -275,7 +270,7 @@ shutdown_test() {
     # Instruct D2 to log to the specific file.
     set_logger
     # Start D2.
-    start_kea ${bin_path}/${bin}
+    start_kea "${bin_path}/${bin}"
     # Wait up to 20s for D2 to start.
     wait_for_kea 20
     if [ "${_WAIT_FOR_KEA}" -eq 0 ]; then
@@ -285,7 +280,7 @@ shutdown_test() {
 
     # Check if it is still running. It could have terminated (e.g. as a result
     # of configuration failure).
-    get_pid ${bin}
+    get_pid "${bin}"
     if [ "${_GET_PIDS_NUM}" -ne 1 ]; then
         printf "ERROR: expected one D2 process to be started. Found %d processes\
  started.\n" "${_GET_PIDS_NUM}"
@@ -313,7 +308,7 @@ shutdown_test() {
     fi
 
     # Make sure the server is down.
-    wait_for_server_down 5 ${bin}
+    wait_for_server_down 5 "${bin}"
     assert_eq 1 "${_WAIT_FOR_SERVER_DOWN}" \
         "Expected wait_for_server_down return %d, returned %d"
 

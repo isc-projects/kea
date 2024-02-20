@@ -6,9 +6,6 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-# shellcheck disable=SC2039
-# SC2039: In POSIX sh, 'local' is undefined.
-
 # Usage:
 #
 # check-for-duplicate-includes.sh [-d|--debug] [-h|--help]

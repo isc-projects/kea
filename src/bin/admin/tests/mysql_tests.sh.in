@@ -6,9 +6,6 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-# shellcheck disable=SC1091
-# SC1091: Not following: ... was not specified as input (see shellcheck -x).
-
 # shellcheck disable=SC2154
 # SC2154: ... is referenced but not assigned.
 # Reason: some variables are sourced.
@@ -18,9 +15,11 @@
 set -eu
 
 # Include common test library.
+# shellcheck source=src/lib/testutils/dhcp_test_lib.sh.in
 . "@abs_top_builddir@/src/lib/testutils/dhcp_test_lib.sh"
 
 # Include admin utilities
+# shellcheck source=src/bin/admin/admin-utils.sh.in
 . "@abs_top_builddir@/src/bin/admin/admin-utils.sh"
 
 # Set path to the production schema scripts

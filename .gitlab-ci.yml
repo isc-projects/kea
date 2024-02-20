@@ -6,9 +6,10 @@ variables:
 
   # Disabled shellcheck warnings:
   # SC1117: Backslash is literal in "\/". Prefer explicit escaping: "\\/".
+  # SC2119: Use "$@" if function's $1 should mean script's $1.
   # SC2039: In POSIX sh, 'local' is undefined.
   # SC3043: In POSIX sh, 'local' is undefined.
-  SHELLCHECK_OPTS: "--exclude=SC1117 --exclude=SC2039 --exclude=SC3043"
+  SHELLCHECK_OPTS: "--exclude=SC1117 --exclude=SC2119 --exclude=SC2039 --exclude=SC3043"
 
   # Setting this variable will affect all Security templates
   # (SAST, Dependency Scanning, ...)
@@ -110,7 +111,7 @@ shellcheck:
     - SCRIPTS+="tools/print-generated-files.sh "
     - SCRIPTS+="tools/shellcheck-all.sh "
     - SCRIPTS+="tools/tests_in_valgrind.sh "
-    - shellcheck ${SCRIPTS} ${SHELLCHECK_OPTS}
+    - shellcheck -x ${SCRIPTS} ${SHELLCHECK_OPTS}
 
 are-database-scripts-in-sync:
   stage: test

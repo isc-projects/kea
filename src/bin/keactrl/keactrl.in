@@ -13,9 +13,6 @@
 # shellcheck disable=SC2034
 # SC2034: ... appears unused. Verify use (or export if used externally).
 
-# shellcheck disable=SC2039
-# SC2039: In POSIX sh, 'local' is undefined.
-
 # shellcheck disable=SC2154
 # SC2154: ... is referenced but not assigned.
 # Reason: some variables are taken from keactrl.conf
@@ -414,8 +411,7 @@ if [ ! -f "${keactrl_conf}" ]; then
 fi
 
 # Include the configuration file.
-# Shellcheck complaints about not being to follow the source. Let's ingore it.
-# shellcheck disable=SC1090
+# shellcheck source=src/bin/keactrl/keactrl.conf.in
 . "${keactrl_conf}"
 
 # Get location of the DHCPv4 server binary.

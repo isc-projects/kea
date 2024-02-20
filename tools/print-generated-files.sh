@@ -16,9 +16,6 @@
 # parser files are included with the source files, the built sources are only
 # created when building or some of them included in the Kea installation.
 
-# shellcheck disable=SC2039
-# SC2039: In POSIX sh, 'local' is undefined.
-
 # shellcheck disable=SC2013
 # SC2013: To read lines rather than words, pipe/redirect to a 'while read' loop.
 # reason: `while read` reads lines, we need to read words

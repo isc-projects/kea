@@ -6,12 +6,6 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-# shellcheck disable=SC1091
-# SC1091: Not following: ... was not specified as input (see shellcheck -x).
-
-# shellcheck disable=SC2039
-# SC2039: In POSIX sh, 'local' is undefined.
-
 # Exit with error if commands exit with non-zero and if undefined variables are
 # used.
 set -eu
@@ -77,6 +71,7 @@ bin="kea-netconf"
 bin_path="@abs_top_builddir@/src/bin/netconf"
 
 # Import common test library.
+# shellcheck source=src/lib/testutils/dhcp_test_lib.sh.in
 . "@abs_top_builddir@/src/lib/testutils/dhcp_test_lib.sh"
 
 # This test verifies that help can be printed out.
@@ -158,7 +153,7 @@ shutdown_test() {
     # Instruct Netconf Agent to log to the specific file.
     set_logger
     # Start Netconf Agent.
-    start_kea ${bin_path}/${bin}
+    start_kea "${bin_path}/${bin}"
     # Wait up to 20s for Netconf Agent to start.
     wait_for_kea 20
     if [ "${_WAIT_FOR_KEA}" -eq 0 ]; then
@@ -168,7 +163,7 @@ shutdown_test() {
 
     # Check if it is still running. It could have terminated (e.g. as a result
     # of configuration failure).
-    get_pid ${bin}
+    get_pid "${bin}"
     if [ "${_GET_PIDS_NUM}" -ne 1 ]; then
         printf "ERROR: expected one Netconf Agent process to be started. Found %d processes\
  started.\n" "${_GET_PIDS_NUM}"
@@ -196,7 +191,7 @@ shutdown_test() {
     fi
 
     # Make sure the server is down.
-    wait_for_server_down 5 ${bin}
+    wait_for_server_down 5 "${bin}"
     assert_eq 1 "${_WAIT_FOR_SERVER_DOWN}" \
         "Expected wait_for_server_down return %d, returned %d"
 

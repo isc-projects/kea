@@ -6,14 +6,8 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-# shellcheck disable=SC1091
-# SC1091: Not following: ... was not specified as input (see shellcheck -x).
-
 # shellcheck disable=SC2034
 # SC2034: ... appears unused. Verify use (or export if used externally).
-
-# shellcheck disable=SC2039
-# SC2039: In POSIX sh, 'local' is undefined.
 
 # shellcheck disable=SC2153
 # SC2153: Possible misspelling: ... may not be assigned, but ... is.
@@ -21,14 +15,12 @@
 # shellcheck disable=SC2154
 # SC2154: bin_path is referenced but not assigned.
 
-# shellcheck disable=SC3043
-# SC3043: In POSIX sh, 'local' is undefined.
-
 # Exit with error if commands exit with non-zero and if undefined variables are
 # used.
 set -eu
 
 # Include XML reporting library.
+# shellcheck source=src/lib/testutils/xml_reporting_test_lib.sh.in
 . "@abs_top_builddir@/src/lib/testutils/xml_reporting_test_lib.sh"
 
 prefix="@prefix@"

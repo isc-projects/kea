@@ -12,9 +12,6 @@
 # including leases, reservations, etc... Use at your own peril.
 # Reference tables will be left in-tact.
 
-# shellcheck disable=SC1091
-# SC1091: Not following: ... was not specified as input (see shellcheck -x).
-
 # Exit with error if commands exit with non-zero and if undefined variables are
 # used.
 set -eu
@@ -26,8 +23,10 @@ prefix="@prefix@"
 # Include utilities. Use installed version if available and
 # use build version if it isn't.
 if test -f "@datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh"; then
+    # shellcheck source=./src/bin/admin/admin-utils.sh.in
     . "@datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh"
 else
+    # shellcheck source=./src/bin/admin/admin-utils.sh.in
     . "@abs_top_builddir@/src/bin/admin/admin-utils.sh"
 fi
 
