@@ -72,7 +72,7 @@ TestControl::haveAllPacketsBeenReceived() const {
     const size_t& num_request_size = num_request.size();
 
     if (num_request_size == 0) {
-        return false;
+        return (false);
     }
 
     uint32_t responses = 0;
@@ -365,7 +365,7 @@ TestControl::generateMacAddress(uint8_t& randomized) {
       if (r >= macs.size()) {
         r = 0;
       }
-      return macs[r];
+      return (macs[r]);
 
     } else {
       // ... otherwise use the standard behavior
@@ -932,9 +932,9 @@ TestControl::validateIA(const Pkt6Ptr& pkt6) {
     if ((address_and_prefix && iapref && iaaddr) ||
         (prefix_only && iapref && !address_and_prefix) ||
         (address_only && iaaddr && !address_and_prefix)) {
-        return true;
+        return (true);
     } else {
-        return false;
+        return (false);
     }
 }
 
@@ -1109,11 +1109,8 @@ TestControl::TestControl(CommandOptions& options, BasePerfSocket &socket) :
     socket_(socket),
     receiver_(socket, options.isSingleThreaded(), options.getIpVersion()),
     stats_mgr_(options),
-    random_generator_(NumberGeneratorPtr(
-        new RandomGenerator(0, options.getMacsFromFile().size())
-    )),
-    options_(options)
-{
+    random_generator_(new RandomGenerator(0, options.getMacsFromFile().size())),
+    options_(options) {
     // Reset singleton state before test starts.
     reset();
 
@@ -1892,7 +1889,7 @@ static OptionBuffer const concatenateBuffers(OptionBuffer const& a,
     OptionBuffer result;
     result.insert(result.end(), a.begin(), a.end());
     result.insert(result.end(), b.begin(), b.end());
-    return result;
+    return (result);
 }
 
 static void mergeOptionIntoPacket(Pkt4Ptr const& packet,
