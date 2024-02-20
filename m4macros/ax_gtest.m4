@@ -87,6 +87,8 @@ if test "x$enable_gtest" = "xyes" ; then
                 AC_MSG_ERROR([no gtest sources found])
             fi
         else
+            # Trim trailing slashes.
+            GTEST_SOURCE=$(echo "$GTEST_SOURCE" | ${SED} 's:/*$::')
             cmakelists="$GTEST_SOURCE/CMakeLists.txt"
             if test ! -d "$GTEST_SOURCE/src" -a -d "$GTEST_SOURCE/googletest"; then
                 GTEST_SOURCE="$GTEST_SOURCE/googletest"
