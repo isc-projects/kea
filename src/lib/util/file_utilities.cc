@@ -64,6 +64,16 @@ isDir(const string& name) {
     return ((stats.st_mode & S_IFMT) == S_IFDIR);
 }
 
+bool
+isFile(const string& name) {
+    struct stat stats;
+    if (::stat(name.c_str(), &stats) < 0) {
+        return (false);
+    }
+    return ((stats.st_mode & S_IFMT) == S_IFREG);
+}
+
+
 } // namespace file
 } // namespace log
 } // namespace isc

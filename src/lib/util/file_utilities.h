@@ -20,12 +20,19 @@ namespace file {
 /// @throw BadValue when the file can't be opened or is not a regular one.
 std::string getContent(const std::string& file_name);
 
-/// @brief Is a directory predicate.
+/// @brief Check if there is a directory at the given path.
 ///
-/// @param name The file or directory name.
+/// @param name the path being checked.
 /// @return True if the name points to a directory, false otherwise including
 /// if the pointed location does not exist.
 bool isDir(const std::string& name);
+
+/// @brief Check if there is a file at the given path.
+///
+/// @param name the path being checked.
+/// @return True if the name points to a file, false otherwise including
+/// if the pointed location does not exist.
+bool isFile(const std::string& name);
 
 } // namespace file
 } // namespace util

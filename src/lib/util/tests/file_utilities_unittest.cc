@@ -83,4 +83,10 @@ TEST_F(FileUtilTest, isDir) {
     EXPECT_FALSE(isDir("/etc/hosts"));
 }
 
+/// @brief Check isFile.
+TEST_F(FileUtilTest, isFile) {
+    EXPECT_TRUE(isFile("file_utilities_unittest.cc"));
+    EXPECT_FALSE(isFile(TEST_DATA_BUILDDIR));
 }
+
+}  // namespace
