@@ -33,8 +33,8 @@
 #include <dns/name.h>
 #include <util/strutil.h>
 #include <boost/algorithm/string/classification.hpp>
-#include <boost/algorithm/string/join.hpp>
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/algorithm/string/replace.hpp>
 #include <boost/dynamic_bitset.hpp>
 #include <boost/make_shared.hpp>
 #include <sstream>
@@ -317,7 +317,24 @@ OptionDefinition::optionFactory(Option::Universe u, uint16_t type,
             // convenient notation option config that needs special parsing. Let's treat it like
             // String type. optionFactory() will be called with convenient_notation flag set to
             // true, so that the factory will have a chance to handle it in a special way.
-            writeToBuffer(u, boost::algorithm::join(values, ","), OPT_STRING_TYPE, buf);
+
+            // At this stage any escape backslash chars were lost during last call of
+            // isc::util::str::tokens(), so we must restore them. Some INTERNAL options may use
+            // escaped delimiters, e.g. DNR options.
+            std::ostringstream stream;
+            bool first = true;
+            for (auto val : values) {
+                boost::algorithm::replace_all(val, ",", "\\,");
+                if (first) {
+                    first = false;
+                } else {
+                    stream << ",";
+                }
+
+                stream << val;
+            }
+
+            writeToBuffer(u, stream.str(), OPT_STRING_TYPE, buf);
         } else {
             writeToBuffer(u, util::str::trim(values[0]), type_, buf);
         }
