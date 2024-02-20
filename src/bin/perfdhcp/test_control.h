@@ -195,19 +195,19 @@ public:
             NumberGenerator(),
             distribution(min, max) {
             // Initialize the randomness source with the current time.
-            randomnessGenerator.seed(time(0));
+            randomness_generator.seed(time(0));
         }
 
         /// \brief Generate number in range of [min, max].
         ///
         /// \return generated number.
         virtual uint32_t generate() {
-            return distribution(randomnessGenerator);
+            return distribution(randomness_generator);
         }
 
     private:
         std::uniform_int_distribution<> distribution;
-        std::mt19937 randomnessGenerator;
+        std::mt19937 randomness_generator;
     };
 
     /// \brief Length of the Ethernet HW address (MAC) in bytes.
