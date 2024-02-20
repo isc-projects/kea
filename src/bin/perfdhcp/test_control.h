@@ -206,7 +206,13 @@ public:
         }
 
     private:
+        /// \brief The random values will be uniformly distributed in
+        /// the range provided in the constructor.
         std::uniform_int_distribution<> distribution;
+
+        /// \brief It is a high quality general-purpose random
+        /// generator. It isn't suitable for cryptographic use but is
+        /// good enough for testing.
         std::mt19937 randomness_generator;
     };
 
