@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -208,7 +208,7 @@ private:
     /// @param pid the pid to wait for, -1 by default meaning wait
     /// for any child process
     /// @param sync whether this function is called immediately after spawning
-    /// (synchronous) or not (asynchronous, default).:w
+    /// (synchronous) or not (asynchronous, default).
     static void waitForProcess(int signum, pid_t const pid = -1, bool const sync = false);
 
     /// @brief A map holding the status codes of executed processes.
@@ -415,6 +415,8 @@ void
 ProcessSpawnImpl::waitForProcess(int /* signum */,
                                  pid_t const pid /* = -1 */,
                                  bool sync /* = false */) {
+    // In synchronous mode, the lock is taken by the caller function
+    // spawn(), so do not deadlock.
     unique_lock<std::mutex> lk{mutex_, std::defer_lock};
     if (!sync) {
         lk.lock();
@@ -459,8 +461,12 @@ ProcessSpawn::ProcessSpawn(IOServicePtr io_service,
                            const ProcessArgs& args,
                            const ProcessEnvVars& vars,
                            const bool inherit_env /* = false */)
-    : impl_(new ProcessSpawnImpl(
-          io_service, executable, args, vars, inherit_env, /* sync = */ false)) {
+    : impl_(new ProcessSpawnImpl(io_service,
+                                 executable,
+                                 args,
+                                 vars,
+                                 inherit_env,
+                                 /* sync = */ false)) {
 }
 
 ProcessSpawn::ProcessSpawn(const std::string& executable,

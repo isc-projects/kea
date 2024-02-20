@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -529,11 +529,6 @@ TEST_F(ProcessSpawnTest, invalidExecutableSync) {
 // This test verifies that the full command line for the synchronous process is
 // returned.
 TEST_F(ProcessSpawnTest, getCommandLineSync) {
-    // Note that cases below are enclosed in separate scopes to make
-    // sure that the ProcessSpawn object is destroyed before a new
-    // object is created. Current implementation doesn't allow for
-    // having two ProcessSpawn objects simultaneously as they will
-    // both try to allocate a signal handler for SIGCHLD.
     {
         // Case 1: arguments present.
         ProcessArgs args;
@@ -554,23 +549,14 @@ TEST_F(ProcessSpawnTest, getCommandLineSync) {
     }
 }
 
-// This test verifies that it is possible to check if the synchronous process is
-// running.
-TEST_F(ProcessSpawnTest, DISABLED_isRunningSync) {
-    // Run the process which sleeps for 10 seconds, so as we have
-    // enough time to check if it is running.
-    vector<string> args;
-    args.push_back("-s");
-    args.push_back("10");
-
-    ProcessSpawn process(TEST_SCRIPT_SH, args);
+// This test verifies that the synchronous process reports as not running after
+// it was spawned.
+TEST_F(ProcessSpawnTest, isRunningSync) {
+    ProcessSpawn process(TEST_SCRIPT_SH);
     pid_t pid = 0;
     ASSERT_NO_THROW(pid = process.spawn());
 
-    EXPECT_TRUE(process.isRunning(pid));
-
-    // Kill the process.
-    ASSERT_EQ(0, kill(pid, SIGKILL));
+    EXPECT_FALSE(process.isRunning(pid));
 }
 
 // This test verifies inheritance of environment in a synchronous context.
