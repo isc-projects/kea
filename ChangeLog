@@ -1,3 +1,10 @@
+2208.	[func]		piotrek
+	Kea now supports DNR options as specified in RFC9463,
+	RFC9461, RFC9460. Option may be configured using
+	convenient notation, where Kea takes care of complex
+	option encoding to be inline with RFCs.
+	(Gitlab #3141)
+
 2207.	[func]		andrei
 	DHCP servers now initialize the database schema automatically on
 	startup or on reconfiguration if there is at least one database
