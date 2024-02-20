@@ -37,9 +37,6 @@ the timestamp a packet was received by the kernel for recording
 SOCKET_RECEIVED events. If it does not, perfmon will still function but
 will not have data available to determine kernel buffer wait times.
 
-processed, the arguments are the query label and the dump of the
-query's packet event stack.
-
 % PERFMON_DHCP6_PKT_EVENTS query: %1 events=[%2]
 The debug message is emitted after an inbound DHCPv6 query has been
 processed, the arguments are the query label and the dump of the

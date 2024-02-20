@@ -1118,6 +1118,7 @@ NakedDhcpv6SrvTest::checkPktEvents(const PktPtr& msg,
     for (const auto& event : events) {
         ASSERT_EQ(event.label_, *expected_event);
         EXPECT_GE(event.timestamp_, prev_time);
+        prev_time = event.timestamp_;
         ++expected_event;
     }
 }

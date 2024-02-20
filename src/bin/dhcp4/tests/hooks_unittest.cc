@@ -440,6 +440,8 @@ public:
 
         callout_handle.getArgument("query4", callback_qry_pkt4_);
 
+        callout_handle.getArgument("subnet4", callback_subnet4_);
+
         callback_argument_names_ = callout_handle.getArgumentNames();
 
         if (callback_qry_pkt4_) {

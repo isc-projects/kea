@@ -378,7 +378,7 @@ called before "subnet6_select".
  - @b Arguments:
    - name: @b query6, type: isc::dhcp::Pkt6Ptr, direction: <b>in</b>
    - name: @b response6, type: isc::dhcp::Pkt6Ptr, direction: <b>in/out</b>
-   - name: @b subnet6, type: isc::dhcp::Subnet6Ptr, direction: <b>in/out</b>
+   - name: @b subnet6, type: isc::dhcp::Subnet6Ptr, direction: <b>in</b>
 
  - @b Description: This callout is executed when server's response
    is about to be send back to the client. The argument "response6"
