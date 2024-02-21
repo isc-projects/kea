@@ -1,7 +1,9 @@
 SUBDIRS = .
 
+TEST_CA_DIR = $(realpath $(abs_srcdir)/../../asiolink/testutils/ca)
+
 AM_CPPFLAGS  =
-AM_CPPFLAGS += -DABS_SRCDIR="\"$(abs_top_builddir)\""
+AM_CPPFLAGS += -DTEST_CA_DIR=\"$(TEST_CA_DIR)\"
 AM_CPPFLAGS += -DKEA_ADMIN=\"${abs_top_builddir}/src/bin/admin/kea-admin\"
 AM_CPPFLAGS += -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES) $(MYSQL_CPPFLAGS)
