@@ -1372,7 +1372,6 @@ Dhcpv4Srv::processDhcp4Query(Pkt4Ptr query, bool allow_packet_park) {
         return (Pkt4Ptr());
     }
 
-    Pkt4Ptr rsp;
     try {
         sanityCheck(query);
         if ((query->getType() == DHCPDISCOVER) ||
@@ -1385,6 +1384,56 @@ Dhcpv4Srv::processDhcp4Query(Pkt4Ptr query, bool allow_packet_park) {
                 return (Pkt4Ptr());
             }
         }
+    } catch (const std::exception& e) {
+
+        // Catch-all exception (we used to call only isc::Exception, but
+        // std::exception could potentially be raised and if we don't catch
+        // it here, it would be caught in main() and the process would
+        // terminate).  Just log the problem and ignore the packet.
+        // (The problem is logged as a debug message because debug is
+        // disabled by default - it prevents a DDOS attack based on the
+        // sending of problem packets.)
+        LOG_DEBUG(bad_packet4_logger, DBGLVL_PKT_HANDLING, DHCP4_PACKET_DROP_0007)
+            .arg(query->getLabel())
+            .arg(e.what());
+
+        // Increase the statistic of dropped packets.
+        isc::stats::StatsMgr::instance().addValue("pkt4-receive-drop",
+                                                  static_cast<int64_t>(1));
+    }
+
+    return (processLocalizedQuery4(ctx, allow_packet_park));
+}
+
+void
+Dhcpv4Srv::processLocalizedQuery4AndSendResponse(Pkt4Ptr query,
+                                                 AllocEngine::ClientContext4Ptr& ctx) {
+    try {
+        Pkt4Ptr rsp = processLocalizedQuery4(ctx, true);
+        if (!rsp) {
+            return;
+        }
+
+        CalloutHandlePtr callout_handle = getCalloutHandle(query);
+
+        processPacketBufferSend(callout_handle, rsp);
+    } catch (const std::exception& e) {
+        LOG_ERROR(packet4_logger, DHCP4_PACKET_PROCESS_STD_EXCEPTION)
+            .arg(e.what());
+    } catch (...) {
+        LOG_ERROR(packet4_logger, DHCP4_PACKET_PROCESS_EXCEPTION);
+    }
+}
+
+Pkt4Ptr
+Dhcpv4Srv::processLocalizedQuery4(AllocEngine::ClientContext4Ptr& ctx,
+                                  bool allow_packet_park) {
+    if (!ctx) {
+        isc_throw(Unexpected, "null context");
+    }
+    Pkt4Ptr query = ctx->query_;
+    Pkt4Ptr rsp;
+    try {
         switch (query->getType()) {
         case DHCPDISCOVER:
             rsp = processDiscover(query, ctx);

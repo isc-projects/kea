@@ -375,7 +375,8 @@ public:
 
     /// @brief Process a single incoming DHCPv4 query.
     ///
-    /// It calls per-type processXXX methods, generates appropriate answer.
+    /// It localizes the query, calls per-type processXXX methods,
+    /// generates appropriate answer.
     ///
     /// @param query A pointer to the packet to be processed.
     /// @param allow_packet_park Indicates if parking a packet is allowed.
@@ -384,13 +385,34 @@ public:
 
     /// @brief Process a single incoming DHCPv4 query.
     ///
-    /// It calls per-type processXXX methods, generates appropriate answer,
-    /// sends the answer to the client.
+    /// It localizes the query, calls per-type processXXX methods,
+    /// generates appropriate answer, sends the answer to the client.
     ///
     /// @param query A pointer to the packet to be processed.
     /// @param allow_packet_park Indicates if parking a packet is allowed.
     void processDhcp4QueryAndSendResponse(Pkt4Ptr query,
                                           bool allow_packet_park);
+
+    /// @brief Process a localized incoming DHCPv4 query.
+    ///
+    /// It calls per-type processXXX methods, generates appropriate answer.
+    ///
+    /// @param ctx Pointer to The client context.
+    /// @param allow_packet_park Indicates if parking a packet is allowed.
+    /// @return A pointer to the response.
+    Pkt4Ptr processLocalizedQuery4(AllocEngine::ClientContext4Ptr& ctx,
+                                   bool allow_packet_park);
+
+    /// @brief Process a localized incoming DHCPv4 query.
+    ///
+    /// A variant of the precedent method used to resume processing
+    /// for packets parked in the subnet4_select callout.
+    ///
+    /// @param query A pointer to the unparked packet.
+    /// @param ctx Pointer to The client context.
+    /// @return A pointer to the response.
+    void processLocalizedQuery4AndSendResponse(Pkt4Ptr query,
+                                               AllocEngine::ClientContext4Ptr& ctx);
 
     /// @brief Instructs the server to shut down.
     void shutdown() override;
