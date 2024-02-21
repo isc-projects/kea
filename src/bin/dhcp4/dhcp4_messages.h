@@ -96,6 +96,7 @@ extern const isc::log::MessageID DHCP4_HOOK_PACKET_RCVD_SKIP;
 extern const isc::log::MessageID DHCP4_HOOK_PACKET_SEND_DROP;
 extern const isc::log::MessageID DHCP4_HOOK_PACKET_SEND_SKIP;
 extern const isc::log::MessageID DHCP4_HOOK_SUBNET4_SELECT_DROP;
+extern const isc::log::MessageID DHCP4_HOOK_SUBNET4_SELECT_PARK;
 extern const isc::log::MessageID DHCP4_HOOK_SUBNET4_SELECT_SKIP;
 extern const isc::log::MessageID DHCP4_INFORM_DIRECT_REPLY;
 extern const isc::log::MessageID DHCP4_INIT_FAIL;

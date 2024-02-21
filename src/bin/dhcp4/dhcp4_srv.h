@@ -369,9 +369,9 @@ public:
     /// methods, generates appropriate answer.
     ///
     /// @param query A pointer to the packet to be processed.
-    /// @param allow_packet_park Indicates if parking a packet is allowed.
+    /// @param allow_answer_park Indicates if parking a packet is allowed.
     /// @return A pointer to the response.
-    Pkt4Ptr processPacket(Pkt4Ptr query, bool allow_packet_park = true);
+    Pkt4Ptr processPacket(Pkt4Ptr query, bool allow_answer_park = true);
 
     /// @brief Process a single incoming DHCPv4 query.
     ///
@@ -379,9 +379,9 @@ public:
     /// generates appropriate answer.
     ///
     /// @param query A pointer to the packet to be processed.
-    /// @param allow_packet_park Indicates if parking a packet is allowed.
+    /// @param allow_answer_park Indicates if parking a packet is allowed.
     /// @return A pointer to the response.
-    Pkt4Ptr processDhcp4Query(Pkt4Ptr query, bool allow_packet_park);
+    Pkt4Ptr processDhcp4Query(Pkt4Ptr query, bool allow_answer_park);
 
     /// @brief Process a single incoming DHCPv4 query.
     ///
@@ -389,19 +389,32 @@ public:
     /// generates appropriate answer, sends the answer to the client.
     ///
     /// @param query A pointer to the packet to be processed.
-    /// @param allow_packet_park Indicates if parking a packet is allowed.
+    /// @param allow_answer_park Indicates if parking a packet is allowed.
     void processDhcp4QueryAndSendResponse(Pkt4Ptr query,
-                                          bool allow_packet_park);
+                                          bool allow_answer_park);
 
     /// @brief Process a localized incoming DHCPv4 query.
     ///
     /// It calls per-type processXXX methods, generates appropriate answer.
     ///
     /// @param ctx Pointer to The client context.
-    /// @param allow_packet_park Indicates if parking a packet is allowed.
+    /// @param allow_answer_park Indicates if parking a packet is allowed.
     /// @return A pointer to the response.
     Pkt4Ptr processLocalizedQuery4(AllocEngine::ClientContext4Ptr& ctx,
-                                   bool allow_packet_park);
+                                   bool allow_answer_park);
+
+    /// @brief Process a localized incoming DHCPv4 query.
+    ///
+    /// It calls per-type processXXX methods, generates appropriate answer,
+    /// sends the answer to the client.
+    ///
+    /// @param query A pointer to the unparked packet.
+    /// @param ctx Pointer to The client context.
+    /// @param allow_answer_park Indicates if parking a packet is allowed.
+    /// @return A pointer to the response.
+    void processLocalizedQuery4AndSendResponse(Pkt4Ptr query,
+                                               AllocEngine::ClientContext4Ptr& ctx,
+                                               bool allow_answer_park);
 
     /// @brief Process a localized incoming DHCPv4 query.
     ///
@@ -409,10 +422,10 @@ public:
     /// for packets parked in the subnet4_select callout.
     ///
     /// @param query A pointer to the unparked packet.
-    /// @param ctx Pointer to The client context.
+    /// @param allow_answer_park Indicates if parking a packet is allowed.
     /// @return A pointer to the response.
     void processLocalizedQuery4AndSendResponse(Pkt4Ptr query,
-                                               AllocEngine::ClientContext4Ptr& ctx);
+                                               bool allow_answer_park);
 
     /// @brief Instructs the server to shut down.
     void shutdown() override;
@@ -531,7 +544,7 @@ protected:
     ///
     /// @return true if the message should be further processed, or false if
     /// the message should be discarded.
-    bool accept(const Pkt4Ptr& query) const;
+    bool accept(const Pkt4Ptr& query);
 
     /// @brief Check if a message sent by directly connected client should be
     /// accepted or discarded.
@@ -560,7 +573,7 @@ protected:
     ///
     /// @return true if message is accepted for further processing, false
     /// otherwise.
-    bool acceptDirectRequest(const Pkt4Ptr& query) const;
+    bool acceptDirectRequest(const Pkt4Ptr& query);
 
     /// @brief Check if received message type is valid for the server to
     /// process.
@@ -1079,10 +1092,12 @@ protected:
     /// @param query client's message
     /// @param drop if it is true the packet will be dropped
     /// @param sanity_only if it is true the callout won't be called
+    /// @param allow_answer_park Indicates if parking a packet is allowed
     /// @return selected subnet (or NULL if no suitable subnet was found)
     isc::dhcp::Subnet4Ptr selectSubnet(const Pkt4Ptr& query,
                                        bool& drop,
-                                       bool sanity_only = false) const;
+                                       bool sanity_only = false,
+                                       bool allow_answer_park = true);
 
     /// @brief Selects a subnet for a given client's DHCP4o6 packet.
     ///
@@ -1094,10 +1109,12 @@ protected:
     /// @param query client's message
     /// @param drop if it is true the packet will be dropped
     /// @param sanity_only if it is true the callout won't be called
+    /// @param allow_answer_park Indicates if parking a packet is allowed
     /// @return selected subnet (or NULL if no suitable subnet was found)
     isc::dhcp::Subnet4Ptr selectSubnet4o6(const Pkt4Ptr& query,
                                           bool& drop,
-                                          bool sanity_only = false) const;
+                                          bool sanity_only = false,
+                                          bool allow_answer_park = true);
 
     /// @brief dummy wrapper around IfaceMgr::receive4
     ///

@@ -95,6 +95,7 @@ extern const isc::log::MessageID DHCP4_HOOK_PACKET_RCVD_SKIP = "DHCP4_HOOK_PACKE
 extern const isc::log::MessageID DHCP4_HOOK_PACKET_SEND_DROP = "DHCP4_HOOK_PACKET_SEND_DROP";
 extern const isc::log::MessageID DHCP4_HOOK_PACKET_SEND_SKIP = "DHCP4_HOOK_PACKET_SEND_SKIP";
 extern const isc::log::MessageID DHCP4_HOOK_SUBNET4_SELECT_DROP = "DHCP4_HOOK_SUBNET4_SELECT_DROP";
+extern const isc::log::MessageID DHCP4_HOOK_SUBNET4_SELECT_PARK = "DHCP4_HOOK_SUBNET4_SELECT_PARK";
 extern const isc::log::MessageID DHCP4_HOOK_SUBNET4_SELECT_SKIP = "DHCP4_HOOK_SUBNET4_SELECT_SKIP";
 extern const isc::log::MessageID DHCP4_INFORM_DIRECT_REPLY = "DHCP4_INFORM_DIRECT_REPLY";
 extern const isc::log::MessageID DHCP4_INIT_FAIL = "DHCP4_INIT_FAIL";
@@ -279,6 +280,7 @@ const char* values[] = {
     "DHCP4_HOOK_PACKET_SEND_DROP", "%1: prepared DHCPv4 response was not sent because a callout set the next ste to DROP",
     "DHCP4_HOOK_PACKET_SEND_SKIP", "%1: prepared response is not sent, because a callout set the next stp to SKIP",
     "DHCP4_HOOK_SUBNET4_SELECT_DROP", "%1: packet was dropped, because a callout set the next step to 'drop'",
+    "DHCP4_HOOK_SUBNET4_SELECT_PARK", "%1: packet was parked",
     "DHCP4_HOOK_SUBNET4_SELECT_SKIP", "%1: no subnet was selected, because a callout set the next skip flag",
     "DHCP4_INFORM_DIRECT_REPLY", "%1: DHCPACK in reply to the DHCPINFORM will be sent directly to %2 over %3",
     "DHCP4_INIT_FAIL", "failed to initialize Kea server: %1",

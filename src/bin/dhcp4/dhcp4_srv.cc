@@ -715,11 +715,11 @@ Dhcpv4Srv::shutdown() {
 
 isc::dhcp::Subnet4Ptr
 Dhcpv4Srv::selectSubnet(const Pkt4Ptr& query, bool& drop,
-                        bool sanity_only) const {
+                        bool sanity_only, bool allow_answer_park) {
 
     // DHCPv4-over-DHCPv6 is a special (and complex) case
     if (query->isDhcp4o6()) {
-        return (selectSubnet4o6(query, drop, sanity_only));
+        return (selectSubnet4o6(query, drop, sanity_only, allow_answer_park));
     }
 
     Subnet4Ptr subnet;
@@ -751,9 +751,34 @@ Dhcpv4Srv::selectSubnet(const Pkt4Ptr& query, bool& drop,
                                     cfgmgr.getCurrentCfg()->
                                     getCfgSubnets4()->getAll());
 
+        // We proactively park the packet.
+        HooksManager::park("subnet4_select", query,
+                           [this, query, allow_answer_park] () {
+                               processLocalizedQuery4AndSendResponse(query,
+                                                                     allow_answer_park);
+                           });
+
         // Call user (and server-side) callouts
-        HooksManager::callCallouts(Hooks.hook_index_subnet4_select_,
-                                   *callout_handle);
+        try {
+            HooksManager::callCallouts(Hooks.hook_index_subnet4_select_,
+                                       *callout_handle);
+        } catch (...) {
+            // Make sure we don't orphan a parked packet.
+            HooksManager::drop("subnet4_select", query);
+            throw;
+        }
+
+        // Callouts parked the packet. Same as drop but callouts will resume
+        // processing or drop the packet later.
+        if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_PARK) {
+            LOG_DEBUG(hooks_logger, DBG_DHCP4_HOOKS,
+                      DHCP4_HOOK_SUBNET4_SELECT_PARK)
+                .arg(query->getLabel());
+            drop = true;
+            return (Subnet4Ptr());
+        } else {
+            HooksManager::drop("subnet4_select", query);
+        }
 
         // Callouts decided to skip this step. This means that no subnet
         // will be selected. Packet processing will continue, but it will
@@ -801,7 +826,7 @@ Dhcpv4Srv::selectSubnet(const Pkt4Ptr& query, bool& drop,
 
 isc::dhcp::Subnet4Ptr
 Dhcpv4Srv::selectSubnet4o6(const Pkt4Ptr& query, bool& drop,
-                           bool sanity_only) const {
+                           bool sanity_only, bool allow_answer_park) {
     Subnet4Ptr subnet;
 
     SubnetSelector selector;
@@ -861,6 +886,9 @@ Dhcpv4Srv::selectSubnet4o6(const Pkt4Ptr& query, bool& drop,
         // handle and its arguments.
         ScopedCalloutHandleState callout_handle_state(callout_handle);
 
+        // Enable copying options from the packet within hook library.
+        ScopedEnableOptionsCopy<Pkt4> query4_options_copy(query);
+
         // Set new arguments
         callout_handle->setArgument("query4", query);
         callout_handle->setArgument("subnet4", subnet);
@@ -868,9 +896,34 @@ Dhcpv4Srv::selectSubnet4o6(const Pkt4Ptr& query, bool& drop,
                                     cfgmgr.getCurrentCfg()->
                                     getCfgSubnets4()->getAll());
 
+        // We proactively park the packet.
+        HooksManager::park("subnet4_select", query,
+                           [this, query, allow_answer_park] () {
+                               processLocalizedQuery4AndSendResponse(query,
+                                                                     allow_answer_park);
+                           });
+
         // Call user (and server-side) callouts
-        HooksManager::callCallouts(Hooks.hook_index_subnet4_select_,
-                                   *callout_handle);
+        try {
+            HooksManager::callCallouts(Hooks.hook_index_subnet4_select_,
+                                       *callout_handle);
+        } catch (...) {
+            // Make sure we don't orphan a parked packet.
+            HooksManager::drop("subnet4_select", query);
+            throw;
+        }
+
+        // Callouts parked the packet. Same as drop but callouts will resume
+        // processing or drop the packet later.
+        if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_PARK) {
+            LOG_DEBUG(hooks_logger, DBG_DHCP4_HOOKS,
+                      DHCP4_HOOK_SUBNET4_SELECT_PARK)
+                .arg(query->getLabel());
+            drop = true;
+            return (Subnet4Ptr());
+        } else {
+            HooksManager::drop("subnet4_select", query);
+        }
 
         // Callouts decided to skip this step. This means that no subnet
         // will be selected. Packet processing will continue, but it will
@@ -1147,7 +1200,7 @@ Dhcpv4Srv::processPacketAndSendResponse(Pkt4Ptr query) {
 }
 
 Pkt4Ptr
-Dhcpv4Srv::processPacket(Pkt4Ptr query, bool allow_packet_park) {
+Dhcpv4Srv::processPacket(Pkt4Ptr query, bool allow_answer_park) {
     query->addPktEvent("process_started");
 
     // All packets belong to ALL.
@@ -1326,14 +1379,14 @@ Dhcpv4Srv::processPacket(Pkt4Ptr query, bool allow_packet_park) {
         return (Pkt4Ptr());
     }
 
-    return (processDhcp4Query(query, allow_packet_park));
+    return (processDhcp4Query(query, allow_answer_park));
 }
 
 void
 Dhcpv4Srv::processDhcp4QueryAndSendResponse(Pkt4Ptr query,
-                                            bool allow_packet_park) {
+                                            bool allow_answer_park) {
     try {
-        Pkt4Ptr rsp = processDhcp4Query(query, allow_packet_park);
+        Pkt4Ptr rsp = processDhcp4Query(query, allow_answer_park);
         if (!rsp) {
             return;
         }
@@ -1349,7 +1402,7 @@ Dhcpv4Srv::processDhcp4QueryAndSendResponse(Pkt4Ptr query,
 }
 
 Pkt4Ptr
-Dhcpv4Srv::processDhcp4Query(Pkt4Ptr query, bool allow_packet_park) {
+Dhcpv4Srv::processDhcp4Query(Pkt4Ptr query, bool allow_answer_park) {
     // Create a client race avoidance RAII handler.
     ClientHandler client_handler;
 
@@ -1361,7 +1414,7 @@ Dhcpv4Srv::processDhcp4Query(Pkt4Ptr query, bool allow_packet_park) {
          (query->getType() == DHCPDECLINE))) {
         ContinuationPtr cont =
             makeContinuation(std::bind(&Dhcpv4Srv::processDhcp4QueryAndSendResponse,
-                                       this, query, allow_packet_park));
+                                       this, query, allow_answer_park));
         if (!client_handler.tryLock(query, cont)) {
             return (Pkt4Ptr());
         }
@@ -1378,7 +1431,7 @@ Dhcpv4Srv::processDhcp4Query(Pkt4Ptr query, bool allow_packet_park) {
             (query->getType() == DHCPREQUEST) ||
             (query->getType() == DHCPINFORM)) {
             bool drop = false;
-            ctx->subnet_ = selectSubnet(query, drop);
+            ctx->subnet_ = selectSubnet(query, drop, false, allow_answer_park);
             // Stop here if selectSubnet decided to drop the packet
             if (drop) {
                 return (Pkt4Ptr());
@@ -1402,14 +1455,15 @@ Dhcpv4Srv::processDhcp4Query(Pkt4Ptr query, bool allow_packet_park) {
                                                   static_cast<int64_t>(1));
     }
 
-    return (processLocalizedQuery4(ctx, allow_packet_park));
+    return (processLocalizedQuery4(ctx, allow_answer_park));
 }
 
 void
 Dhcpv4Srv::processLocalizedQuery4AndSendResponse(Pkt4Ptr query,
-                                                 AllocEngine::ClientContext4Ptr& ctx) {
+                                                 AllocEngine::ClientContext4Ptr& ctx,
+                                                 bool allow_answer_park) {
     try {
-        Pkt4Ptr rsp = processLocalizedQuery4(ctx, true);
+        Pkt4Ptr rsp = processLocalizedQuery4(ctx, allow_answer_park);
         if (!rsp) {
             return;
         }
@@ -1425,9 +1479,27 @@ Dhcpv4Srv::processLocalizedQuery4AndSendResponse(Pkt4Ptr query,
     }
 }
 
+void
+Dhcpv4Srv::processLocalizedQuery4AndSendResponse(Pkt4Ptr query,
+                                                 bool allow_answer_park) {
+    // Initialize context.
+    AllocEngine::ClientContext4Ptr ctx(new AllocEngine::ClientContext4());
+    initContext0(query, ctx);
+
+    // Subnet is cached in the callout context associated to the query.
+    try {
+        CalloutHandlePtr callout_handle = getCalloutHandle(query);
+        callout_handle->getContext("subnet4", ctx->subnet_);
+    } catch (const Exception&) {
+        // No subnet, leave it to null...
+    }
+
+    processLocalizedQuery4AndSendResponse(query, ctx, allow_answer_park);
+}
+
 Pkt4Ptr
 Dhcpv4Srv::processLocalizedQuery4(AllocEngine::ClientContext4Ptr& ctx,
-                                  bool allow_packet_park) {
+                                  bool allow_answer_park) {
     if (!ctx) {
         isc_throw(Unexpected, "null context");
     }
@@ -1553,7 +1625,7 @@ Dhcpv4Srv::processLocalizedQuery4(AllocEngine::ClientContext4Ptr& ctx,
                 callout_handle->setArgument("deleted_leases4", deleted_leases);
             }
 
-            if (allow_packet_park) {
+            if (allow_answer_park) {
                 // Get the parking limit. Parsing should ensure the value is present.
                 uint32_t parked_packet_limit = 0;
                 data::ConstElementPtr ppl = CfgMgr::instance().getCurrentCfg()->
@@ -1636,7 +1708,7 @@ Dhcpv4Srv::processLocalizedQuery4(AllocEngine::ClientContext4Ptr& ctx,
                 HooksManager::callCallouts(hook_idx, *callout_handle);
             } catch (...) {
                 // Make sure we don't orphan a parked packet.
-                if (allow_packet_park) {
+                if (allow_answer_park) {
                     HooksManager::drop(hook_label, query);
                 }
 
@@ -1644,7 +1716,7 @@ Dhcpv4Srv::processLocalizedQuery4(AllocEngine::ClientContext4Ptr& ctx,
             }
 
             if ((callout_handle->getStatus() == CalloutHandle::NEXT_STEP_PARK) &&
-                allow_packet_park) {
+                allow_answer_park) {
                 LOG_DEBUG(hooks_logger, DBG_DHCP4_HOOKS, pkt_park_msg)
                     .arg(query->getLabel());
                 // Since the hook library(ies) are going to do the unparking, then
@@ -4172,7 +4244,7 @@ Dhcpv4Srv::processInform(Pkt4Ptr& inform, AllocEngine::ClientContext4Ptr& contex
 }
 
 bool
-Dhcpv4Srv::accept(const Pkt4Ptr& query) const {
+Dhcpv4Srv::accept(const Pkt4Ptr& query) {
     // Check that the message type is accepted by the server. We rely on the
     // function called to log a message if needed.
     if (!acceptMessageType(query)) {
@@ -4200,7 +4272,7 @@ Dhcpv4Srv::accept(const Pkt4Ptr& query) const {
 }
 
 bool
-Dhcpv4Srv::acceptDirectRequest(const Pkt4Ptr& pkt) const {
+Dhcpv4Srv::acceptDirectRequest(const Pkt4Ptr& pkt) {
     // Accept all relayed messages.
     if (pkt->isRelayed()) {
         return (true);
