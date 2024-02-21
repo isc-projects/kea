@@ -43,6 +43,9 @@ while test ${#} -gt 0; do
     # [-h|--help]              print usage (this text).
     '-h'|'--help') print_usage; exit 0 ;;
 
+    # [-c|--changed]           format changed files only
+    '-c'|'--changed') changed=true ;;
+
     # Allow extra arguments, they should be directories or files to be formatted.
     *) break ;;
   esac; shift
@@ -51,8 +54,11 @@ done
 # Get script path.
 script_path=$(cd "$(dirname "${0}")" && pwd)
 
-# Use current directory when called without an argument.
-if test ${#} = 0; then
+list_of_files=
+if ${changed-false}; then
+  list_of_files=$(git diff $(git merge-base origin/master HEAD) --name-only | grep -E "${extensions_regex}")
+elif test ${#} = 0; then
+  # Use current directory when called without an argument.
   set -- .
 fi
 
@@ -61,16 +67,23 @@ filtered_out=$("${script_path}/print-generated-files.sh")
 
 # For all arguments...
 parameters=
-while test ${#} -gt 0; do
+while test ${#} -gt 0 || test -n "${list_of_files}"; do
   # Preserve parameters that begin with dash and pass them to clang-format.
-  if test "$(printf '%s' "${1}" | cut -c 1)" = '-'; then
+  if test ${#} -gt 0 && test "$(printf '%s' "${1}" | cut -c 1)" = '-'; then
     parameters="${parameters} ${1}"
     shift
     continue
   fi
 
-  # The rest of the parameters are considered files or directories.
-  file=${1}
+  if test -n "${list_of_files}"; then
+    # First exhaust list_of_files.
+    file=$(printf '%s\n' "${list_of_files}" | head -n 1)
+    list_of_files=$(printf '%s\n' "${list_of_files}" | tail -n +2)
+  else
+    # Then exhaust parameters.
+    file=${1}
+    shift
+  fi
 
   # Get absolute path.
   if test "$(printf '%s' "${file}" | grep -Eo '^.')" != '/'; then
@@ -97,8 +110,7 @@ while test ${#} -gt 0; do
 
     # Get list of files to format.
     cd "$(git rev-parse --show-toplevel)"
-    files=$(git ls-files | xargs -n1 printf "${PWD}/%s\\n" | grep -F "${file}" \
-      | grep -E "${extensions_regex}")
+    files=$(git ls-files | xargs -n1 printf "${PWD}/%s\\n" | grep -F "${file}" | grep -E "${extensions_regex}")
 
     # Filter out generated files.
     for file in ${filtered_out}; do
@@ -115,6 +127,4 @@ while test ${#} -gt 0; do
       "${0}" "${i}"
     done
   fi
-
-  shift
 done
