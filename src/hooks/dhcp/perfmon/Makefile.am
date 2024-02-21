@@ -18,6 +18,7 @@ libperfmon_la_SOURCES = perfmon_callouts.cc
 libperfmon_la_SOURCES += perfmon_log.cc perfmon_log.h
 libperfmon_la_SOURCES += perfmon_messages.cc perfmon_messages.h
 libperfmon_la_SOURCES += monitored_duration.cc monitored_duration.h
+libperfmon_la_SOURCES += alarm.cc alarm.h
 libperfmon_la_SOURCES += version.cc
 
 libperfmon_la_CXXFLAGS = $(AM_CXXFLAGS)
