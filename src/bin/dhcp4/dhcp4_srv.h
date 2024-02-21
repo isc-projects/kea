@@ -580,7 +580,7 @@ protected:
     ///
     /// Checks if mandatory option is really there, that forbidden option
     /// is not there, and that client-id or server-id appears only once.
-    /// Calls the second method with the requirement level from the
+    /// Calls the second method with the requirement level based on
     /// message type.
     ///
     /// @param query Pointer to the client's message.
