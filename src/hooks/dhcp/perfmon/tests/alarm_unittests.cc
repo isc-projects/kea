@@ -20,7 +20,7 @@ using namespace boost::posix_time;
 
 namespace {
 
-/// @brief Verifies Alarm construction.
+// Verifies Alarm construction.
 TEST(Alarm, validConstructors) {
     AlarmPtr alarm;
 
@@ -69,7 +69,7 @@ TEST(Alarm, validConstructors) {
     EXPECT_GE(alarm->getStosTime(), start_time);
 }
 
-/// @brief Verifies Alarm invalid construction.
+// Verifies Alarm invalid construction.
 TEST(Alarm, invalidConstructors) {
     AlarmPtr alarm;
 
@@ -168,40 +168,40 @@ TEST(Alarm, clearAndDisable) {
     EXPECT_EQ(alarm->getLastHighWaterReport(), PktEvent::EMPTY_TIME());
 }
 
-/// @brief Verifies the result of Alarm::checkSample() over the range of scenarios.
-/// The alarm is created in either the CLEAR or TRIGGERED state and then checkSample()
-/// is invoked.  The scenarios tested are described by the table below:
-///
-/// ```
-///                     INPUT                           |          OUTPUT
-///    Test sample relationship       Input  Report Int.|
+// Verifies the result of Alarm::checkSample() over the range of scenarios.
+// The alarm is created in either the CLEAR or TRIGGERED state and then checkSample()
+// is invoked.  The scenarios tested are described by the table below:
+//
+// ```
+//                     INPUT                           |          OUTPUT
+//    Test sample relationship       Input  Report Int.|
 //     to the thresholds              State   Elapsed   | Report  State  Stos   Last Report
-///    -------------------------------------------------|----------------------------------
-///    sample < low_water                C      false   | false     C      -       -
-///    sample < low_water                C      true    | false     C      -       -
-///    sample < low_water                T      false   | true      C    updated  reset
-///    sample < low_water                T      true    | true      C    updated  reset
-///                                                     |
-///    sample == low_water               C      false   | false     C      -       -
-///    sample == low_water               C      true    | false     C      -       -
-///    sample == low_water               T      false   | false     T      -       -
-///    sample == low_water               T      true    | true      T             updated
-///                                                     |
-///    low_water < sample < high_water   C      false   | false     C      -       -
-///    low_water < sample < high_water   C      true    | false     C      -       -
-///    low_water < sample < high_water   T      false   | false     T      -       -
-///    low_water < sample < high_water   T      true    | true      T      -      updated
-///                                                     |
-///    sample == high water              C      false   | false     C      -       -
-///    sample == high water              C      true    | false     C      -       -
-///    sample == high water              T      false   | false     T      -       -
-///    sample == high water              T      true    | true      T      -      updated
-///                                                     |
-///    sample > high water               C      false   | true      T    updated  set
-///    sample > high water               C      true    | true      T    updated  set
-///    sample > high water               T      false   | false     T      -       -
-///    sample > high water               T      true    | true      T      -      updated
-/// ```
+//    -------------------------------------------------|----------------------------------
+//    sample < low_water                C      false   | false     C      -       -
+//    sample < low_water                C      true    | false     C      -       -
+//    sample < low_water                T      false   | true      C    updated  reset
+//    sample < low_water                T      true    | true      C    updated  reset
+//                                                     |
+//    sample == low_water               C      false   | false     C      -       -
+//    sample == low_water               C      true    | false     C      -       -
+//    sample == low_water               T      false   | false     T      -       -
+//    sample == low_water               T      true    | true      T             updated
+//                                                     |
+//    low_water < sample < high_water   C      false   | false     C      -       -
+//    low_water < sample < high_water   C      true    | false     C      -       -
+//    low_water < sample < high_water   T      false   | false     T      -       -
+//    low_water < sample < high_water   T      true    | true      T      -      updated
+//                                                     |
+//    sample == high water              C      false   | false     C      -       -
+//    sample == high water              C      true    | false     C      -       -
+//    sample == high water              T      false   | false     T      -       -
+//    sample == high water              T      true    | true      T      -      updated
+//                                                     |
+//    sample > high water               C      false   | true      T    updated  set
+//    sample > high water               C      true    | true      T    updated  set
+//    sample > high water               T      false   | false     T      -       -
+//    sample > high water               T      true    | true      T      -      updated
+// ```
 TEST(Alarm, checkSample) {
     // Create mnemonic constants.
     Duration low_water(milliseconds(100));

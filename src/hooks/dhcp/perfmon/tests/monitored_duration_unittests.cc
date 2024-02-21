@@ -20,7 +20,7 @@ using namespace boost::posix_time;
 
 namespace {
 
-/// @brief Exercises the basic functions of DurationDataInterval.
+// Exercises the basic functions of DurationDataInterval.
 TEST(DurationDataInterval, basics) {
     auto start_time = PktEvent::now();
 
@@ -80,7 +80,7 @@ TEST(DurationDataInterval, basics) {
     EXPECT_EQ(interval->getAverageDuration(), Duration(microseconds(112500)));
 }
 
-/// @brief Exercises the basic functions of DurationDataInterval.
+// Exercises the basic functions of DurationDataInterval.
 TEST(DurationKey, basics) {
     DurationKeyPtr key;
 
@@ -115,7 +115,7 @@ TEST(DurationKey, basics) {
                      "Query type not supported by monitoring: ADVERTISE");
 }
 
-/// @brief Verify v4 message pair validation works.
+// Verify v4 message pair validation works.
 TEST(DurationKey, validateMessagePairs4) {
     //  Defines a test scenario.
     struct Scenario {
@@ -165,7 +165,7 @@ TEST(DurationKey, validateMessagePairs4) {
     }
 }
 
-/// @brief Verify v4 message pair validation works.
+// Verify v4 message pair validation works.
 TEST(DurationKey, validateMessagePairs6) {
     //  Defines a test scenario.
     struct Scenario {
@@ -232,7 +232,7 @@ TEST(DurationKey, validateMessagePairs6) {
     }
 }
 
-/// @brief Verifies MonitoredDuration valid construction.
+// Verifies MonitoredDuration valid construction.
 TEST(MonitoredDuration, validConstructors) {
     MonitoredDurationPtr mond;
     Duration interval_duration(seconds(60));
@@ -272,7 +272,7 @@ TEST(MonitoredDuration, validConstructors) {
     EXPECT_FALSE(mond->getPreviousInterval());
 }
 
-/// @brief Verifies MonitoredDuration invalid construction.
+// Verifies MonitoredDuration invalid construction.
 TEST(MonitoredDuration, invalidConstructors) {
     MonitoredDurationPtr mond;
 
