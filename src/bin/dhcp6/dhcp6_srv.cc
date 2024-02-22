@@ -2017,6 +2017,8 @@ Dhcpv6Srv::selectSubnet(const Pkt6Ptr& question, bool& drop) {
                                     getCfgSubnets6()->getAll());
 
         // We proactively park the packet.
+        // Not MT compatible because the unparking callback can be called
+        // before the current thread exists from this block.
         HooksManager::park("subnet6_select", question,
                            [this, question] () {
                                processLocalizedQuery6AndSendResponse(question);

@@ -752,6 +752,8 @@ Dhcpv4Srv::selectSubnet(const Pkt4Ptr& query, bool& drop,
                                     getCfgSubnets4()->getAll());
 
         // We proactively park the packet.
+        // Not MT compatible because the unparking callback can be called
+        // before the current thread exists from this block.
         HooksManager::park("subnet4_select", query,
                            [this, query, allow_answer_park] () {
                                processLocalizedQuery4AndSendResponse(query,
@@ -897,6 +899,8 @@ Dhcpv4Srv::selectSubnet4o6(const Pkt4Ptr& query, bool& drop,
                                     getCfgSubnets4()->getAll());
 
         // We proactively park the packet.
+        // Not MT compatible because the unparking callback can be called
+        // before the current thread exists from this block.
         HooksManager::park("subnet4_select", query,
                            [this, query, allow_answer_park] () {
                                processLocalizedQuery4AndSendResponse(query,
