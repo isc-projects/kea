@@ -12,6 +12,7 @@
 #include <cryptolink/crypto_hmac.h>
 #include <dns/rdataclass.h>
 #include <dns/rrclass.h>
+#include <dns/time_utils.h>
 #include <dns/tsig.h>
 #include <dns/tsigerror.h>
 #include <dns/tsigkey.h>
@@ -37,14 +38,14 @@ namespace {
 typedef boost::shared_ptr<HMAC> HMACPtr;
 
 // TSIG uses 48-bit unsigned integer to represent time signed.
-// Since gettimeWrapper() returns a 64-bit *signed* integer, we
+// Since getTimeWrapper() returns a 64-bit *signed* integer, we
 // make sure it's stored in an unsigned 64-bit integer variable and
 // represents a value in the expected range.  (In reality, however,
-// gettimeWrapper() will return a positive integer that will fit
+// getTimeWrapper() will return a positive integer that will fit
 // in 48 bits)
 uint64_t
 getTSIGTime() {
-    return (detail::gettimeWrapper() & 0x0000ffffffffffffULL);
+    return (detail::getTimeWrapper() & 0x0000ffffffffffffULL);
 }
 }
 

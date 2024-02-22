@@ -16,6 +16,7 @@
 #include <dhcp/duid.h>
 #include <dhcp/hwaddr.h>
 #include <dns/name.h>
+#include <dns/time_utils.h>
 #include <exceptions/exceptions.h>
 #include <util/buffer.h>
 

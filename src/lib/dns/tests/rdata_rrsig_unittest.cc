@@ -14,6 +14,7 @@
 #include <dns/rdataclass.h>
 #include <dns/rrclass.h>
 #include <dns/rrtype.h>
+#include <dns/time_utils.h>
 
 #include <gtest/gtest.h>
 

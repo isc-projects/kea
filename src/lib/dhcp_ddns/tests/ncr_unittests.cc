@@ -275,7 +275,7 @@ TEST(NameChangeRequestTest, constructionTests) {
     EXPECT_TRUE(ncr);
 
     // Verify that full constructor works.
-    uint64_t expiry = isc::util::detail::gettimeWrapper();
+    uint64_t expiry = isc::util::detail::getTimeWrapper();
     D2Dhcid dhcid("010203040A7F8E3D");
 
     EXPECT_NO_THROW(ncr.reset(new NameChangeRequest(

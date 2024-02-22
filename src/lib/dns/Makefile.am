@@ -38,6 +38,7 @@ libkea_dns___la_SOURCES += rrttl.h rrttl.cc
 libkea_dns___la_SOURCES += rrtype.cc
 libkea_dns___la_SOURCES += question.h question.cc
 libkea_dns___la_SOURCES += serial.h serial.cc
+libkea_dns___la_SOURCES += time_utils.h time_utils.cc
 libkea_dns___la_SOURCES += tsig.h tsig.cc
 libkea_dns___la_SOURCES += tsigerror.h tsigerror.cc
 libkea_dns___la_SOURCES += tsigkey.h tsigkey.cc
@@ -84,6 +85,7 @@ libdns___include_HEADERS = \
 	rrttl.h \
 	rrtype.h \
 	serial.h \
+	time_utils.h \
 	tsig.h \
 	tsigerror.h \
 	tsigkey.h \
