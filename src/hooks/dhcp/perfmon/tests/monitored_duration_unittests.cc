@@ -42,7 +42,7 @@ TEST(DurationDataInterval, basics) {
     // Verify that start time can be specified.
     interval.reset(new DurationDataInterval(start_time + milliseconds(5000)));
     ASSERT_TRUE(interval);
-    EXPECT_GE(interval->getStartTime() - start_time, milliseconds(5000));
+    EXPECT_EQ(interval->getStartTime() - start_time, milliseconds(5000));
 
     // Add 100ms duration and check contents.
     Duration d100(milliseconds(100));
