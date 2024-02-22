@@ -11,6 +11,7 @@
 
 #include <perfdhcp/abstract_scen.h>
 
+#include <unordered_map>
 
 namespace isc {
 namespace perfdhcp {

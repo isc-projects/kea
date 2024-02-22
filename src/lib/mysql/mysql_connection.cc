@@ -20,6 +20,7 @@
 #include <exception>
 #include <limits>
 #include <string>
+#include <unordered_map>
 
 using namespace isc;
 using namespace isc::asiolink;

@@ -15,6 +15,7 @@
 #include <util/file_utilities.h>
 
 #include <exception>
+#include <unordered_map>
 
 // PostgreSQL errors should be tested based on the SQL state code.  Each state
 // code is 5 decimal, ASCII, digits, the first two define the category of

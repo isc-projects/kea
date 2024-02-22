@@ -27,7 +27,6 @@
 #include <random>
 #include <string>
 #include <vector>
-#include <unordered_map>
 
 namespace isc {
 namespace perfdhcp {
