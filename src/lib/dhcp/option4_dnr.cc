@@ -720,7 +720,7 @@ DnrInstance::parseDnrInstanceConfigData(const std::string& config_txt) {
                     }
 
                     // Make notice if this is any of http alpn-ids.
-                    if (alpn_id.starts_with('h')) {
+                    if (alpn_id[0] == 'h') {
                         alpn_http_ = true;
                     }
 
