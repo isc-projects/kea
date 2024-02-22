@@ -14,7 +14,6 @@
 #include <d2/simple_add.h>
 #include <d2/simple_remove.h>
 #include <process/testutils/d_test_stubs.h>
-#include <util/time_utilities.h>
 
 #include <gtest/gtest.h>
 #include <algorithm>

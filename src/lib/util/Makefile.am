@@ -34,7 +34,6 @@ libkea_util_la_SOURCES += stopwatch.cc stopwatch.h
 libkea_util_la_SOURCES += stopwatch_impl.cc stopwatch_impl.h
 libkea_util_la_SOURCES += strutil.h strutil.cc
 libkea_util_la_SOURCES += thread_pool.h
-libkea_util_la_SOURCES += time_utilities.h time_utilities.cc
 libkea_util_la_SOURCES += triplet.h
 libkea_util_la_SOURCES += unlock_guard.h
 libkea_util_la_SOURCES += versioned_csv_file.h versioned_csv_file.cc
@@ -80,7 +79,6 @@ libkea_util_include_HEADERS = \
 	stopwatch_impl.h \
 	strutil.h \
 	thread_pool.h \
-	time_utilities.h \
 	triplet.h \
 	unlock_guard.h \
 	versioned_csv_file.h \

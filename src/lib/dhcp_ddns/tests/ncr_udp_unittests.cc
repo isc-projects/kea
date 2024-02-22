@@ -12,7 +12,6 @@
 #include <dhcp_ddns/ncr_io.h>
 #include <dhcp_ddns/ncr_udp.h>
 #include <util/multi_threading_mgr.h>
-#include <util/time_utilities.h>
 #include <test_utils.h>
 
 #include <boost/asio/ip/udp.hpp>

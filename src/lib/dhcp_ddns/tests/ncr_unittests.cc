@@ -9,7 +9,6 @@
 #include <dhcp_ddns/ncr_io.h>
 #include <dhcp/duid.h>
 #include <dhcp/hwaddr.h>
-#include <util/time_utilities.h>
 
 #include <testutils/gtest_utils.h>
 #include <gtest/gtest.h>

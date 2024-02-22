@@ -13,7 +13,6 @@
 #include <exceptions/exceptions.h>
 
 #include <util/buffer.h>
-#include <util/time_utilities.h>
 
 #include <util/unittests/testdata.h>
 #include <util/unittests/textdata.h>

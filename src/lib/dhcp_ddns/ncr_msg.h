@@ -18,7 +18,6 @@
 #include <dns/name.h>
 #include <exceptions/exceptions.h>
 #include <util/buffer.h>
-#include <util/time_utilities.h>
 
 #include <time.h>
 #include <string>

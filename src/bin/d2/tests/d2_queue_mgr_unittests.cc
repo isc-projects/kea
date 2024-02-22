@@ -11,7 +11,6 @@
 #include <d2/d2_queue_mgr.h>
 #include <d2srv/testutils/stats_test_utils.h>
 #include <dhcp_ddns/ncr_udp.h>
-#include <util/time_utilities.h>
 
 #include <gtest/gtest.h>
 #include <algorithm>

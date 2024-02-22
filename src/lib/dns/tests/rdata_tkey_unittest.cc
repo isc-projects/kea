@@ -11,7 +11,6 @@
 #include <exceptions/exceptions.h>
 
 #include <util/buffer.h>
-#include <util/time_utilities.h>
 #include <dns/exceptions.h>
 #include <dns/messagerenderer.h>
 #include <dns/rdata.h>
