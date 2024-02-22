@@ -30,9 +30,9 @@ TEST(Alarm, validConstructors) {
     Duration low_water(milliseconds(50));
     Duration high_water(milliseconds(250));
     ASSERT_NO_THROW_LOG(alarm.reset(new Alarm(AF_INET, DHCPDISCOVER, DHCPOFFER,
-                              "process_started", "process_completed",
-                              SUBNET_ID_GLOBAL,
-                              low_water, high_water)));
+                                              "process_started", "process_completed",
+                                              SUBNET_ID_GLOBAL,
+                                              low_water, high_water)));
     ASSERT_TRUE(alarm);
     EXPECT_EQ(alarm->getFamily(), AF_INET);
     EXPECT_EQ(alarm->getQueryType(), DHCPDISCOVER);
@@ -52,7 +52,7 @@ TEST(Alarm, validConstructors) {
     // Create valid v6 key and use that to create an alarm. Verify contents and label.
     DurationKeyPtr key;
     ASSERT_NO_THROW_LOG(key.reset(new DurationKey(AF_INET6, DHCPV6_SOLICIT, DHCPV6_ADVERTISE,
-                                  "mt_queued", "process_started", 77)));
+                                                  "mt_queued", "process_started", 77)));
 
     ASSERT_NO_THROW_LOG(alarm.reset(new Alarm(*key, low_water, high_water, false)));
     ASSERT_TRUE(alarm);
@@ -77,15 +77,15 @@ TEST(Alarm, invalidConstructors) {
     Duration low_water(milliseconds(50));
     Duration high_water(milliseconds(250));
     ASSERT_THROW_MSG(alarm.reset(new Alarm(AF_INET, DHCPDISCOVER, DHCPDISCOVER,
-                                 "process_started", "process_completed",
-                                 SUBNET_ID_GLOBAL, low_water, high_water)),
+                                           "process_started", "process_completed",
+                                           SUBNET_ID_GLOBAL, low_water, high_water)),
                       BadValue,
                       "Response type: DHCPDISCOVER not valid for query type: DHCPDISCOVER");
 
     // Low water too high, should throw.
     ASSERT_THROW_MSG(alarm.reset(new Alarm(AF_INET, DHCPDISCOVER, DHCPOFFER,
-                                "process_started", "process_completed",
-                                 SUBNET_ID_GLOBAL, high_water, low_water)),
+                                           "process_started", "process_completed",
+                                           SUBNET_ID_GLOBAL, high_water, low_water)),
                       BadValue,
                       "low water: 00:00:00.250000, must be less than high water:"
                       " 00:00:00.050000");
@@ -93,7 +93,7 @@ TEST(Alarm, invalidConstructors) {
     // Create valid v6 key.
     DurationKeyPtr key;
     ASSERT_NO_THROW_LOG(key.reset(new DurationKey(AF_INET6, DHCPV6_SOLICIT, DHCPV6_ADVERTISE,
-                                  "mt_queued", "process_started", 77)));
+                                                  "mt_queued", "process_started", 77)));
 
     // Low water too high, should throw.
     ASSERT_THROW_MSG(alarm.reset(new Alarm(*key, high_water, low_water)),
@@ -108,9 +108,9 @@ TEST(Alarm, lowWaterHighWaterSetters) {
     Duration high_water(milliseconds(250));
     AlarmPtr alarm;
     ASSERT_NO_THROW_LOG(alarm.reset(new Alarm(AF_INET, DHCPDISCOVER, DHCPOFFER,
-                              "process_started", "process_completed",
-                              SUBNET_ID_GLOBAL,
-                              low_water, high_water)));
+                                              "process_started", "process_completed",
+                                              SUBNET_ID_GLOBAL,
+                                              low_water, high_water)));
 
     // Should be able to set thresholds to new, valid values.
     low_water += milliseconds(50);
@@ -135,8 +135,8 @@ TEST(Alarm, clearAndDisable) {
     auto start_time = PktEvent::now();
     AlarmPtr alarm;
     ASSERT_NO_THROW_LOG(alarm.reset(new Alarm(AF_INET, DHCPDISCOVER, DHCPOFFER,
-                              "process_started", "process_completed",
-                              SUBNET_ID_GLOBAL, milliseconds(100), milliseconds(200))));
+                                              "process_started", "process_completed",
+                                              SUBNET_ID_GLOBAL, milliseconds(100), milliseconds(200))));
 
     // Initial state should be CLEAR, stos_time_ should be close to now, no report time.
     EXPECT_EQ(alarm->getState(), Alarm::CLEAR);
@@ -175,7 +175,7 @@ TEST(Alarm, clearAndDisable) {
 // ```
 //                     INPUT                           |          OUTPUT
 //    Test sample relationship       Input  Report Int.|
-//     to the thresholds              State   Elapsed   | Report  State  Stos   Last Report
+//    to the thresholds              State   Elapsed   | Report  State  Stos   Last Report
 //    -------------------------------------------------|----------------------------------
 //    sample < low_water                C      false   | false     C      -       -
 //    sample < low_water                C      true    | false     C      -       -

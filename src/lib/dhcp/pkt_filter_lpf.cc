@@ -192,7 +192,7 @@ PktFilterLPF::openSocket(Iface& iface,
     int enable = 1;
     if (setsockopt(sock, SOL_SOCKET, SO_TIMESTAMP, &enable, sizeof(enable))) {
         const char* errmsg = strerror(errno);
-        isc_throw(SocketConfigError, "Can't enable SO_TIMESTAMP for " << addr.toText()
+        isc_throw(SocketConfigError, "Can not enable SO_TIMESTAMP for " << addr.toText()
                   << ", error: " << errmsg);
     }
 #endif

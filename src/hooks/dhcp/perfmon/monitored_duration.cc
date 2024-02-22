@@ -21,9 +21,9 @@ namespace perfmon {
 // DurationDataInterval methods
 
 DurationDataInterval::DurationDataInterval(const Timestamp& start_time /* = PktEvent::now()*/)
- : start_time_(start_time), occurrences_(0),
-   min_duration_(pos_infin), max_duration_(neg_infin),
-   total_duration_(microseconds(0)) {
+    : start_time_(start_time), occurrences_(0),
+      min_duration_(pos_infin), max_duration_(neg_infin),
+      total_duration_(microseconds(0)) {
 }
 
 void

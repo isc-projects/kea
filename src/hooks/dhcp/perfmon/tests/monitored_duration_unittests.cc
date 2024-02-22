@@ -86,8 +86,8 @@ TEST(DurationKey, basics) {
 
     // Create valid v4 key, verify contents and label.
     ASSERT_NO_THROW_LOG(key.reset(new DurationKey(AF_INET, DHCPDISCOVER, DHCPOFFER,
-                              "process_started", "process_completed",
-                              SUBNET_ID_GLOBAL)));
+                                  "process_started", "process_completed",
+                                  SUBNET_ID_GLOBAL)));
     ASSERT_TRUE(key);
     EXPECT_EQ(key->getFamily(), AF_INET);
     EXPECT_EQ(key->getQueryType(), DHCPDISCOVER);
@@ -127,28 +127,28 @@ TEST(DurationKey, validateMessagePairs4) {
 
     // List of scenarios to test, one per v4 message type.
     std::list<Scenario> scenarios {
-        { DHCP_NOTYPE, {DHCP_NOTYPE, DHCPOFFER, DHCPACK, DHCPNAK}},
-        { DHCPDISCOVER, {DHCP_NOTYPE, DHCPOFFER, DHCPNAK}},
-        { DHCPOFFER, {}},
-        { DHCPREQUEST, {DHCP_NOTYPE, DHCPACK, DHCPNAK}},
-        { DHCPDECLINE, {}},
-        { DHCPACK, {}},
-        { DHCPNAK, {}},
-        { DHCPRELEASE, {}},
-        { DHCPINFORM, {DHCP_NOTYPE, DHCPACK}},
-//      { DHCPFORCERENEW, {}},        commented out in dhcp4.h
-        { DHCPLEASEQUERY, {}},
-        { DHCPLEASEUNASSIGNED, {}},
-        { DHCPLEASEUNKNOWN, {}},
-        { DHCPLEASEACTIVE, {}},
-        { DHCPBULKLEASEQUERY, {}},
-        { DHCPLEASEQUERYDONE, {}},
-//      {  DHCPACTIVELEASEQUERY, {}}, commented out in dhcp4.h
-        { DHCPLEASEQUERYSTATUS, {}},
-        { DHCPTLS, {}},
+        {DHCP_NOTYPE, {DHCP_NOTYPE, DHCPOFFER, DHCPACK, DHCPNAK}},
+        {DHCPDISCOVER, {DHCP_NOTYPE, DHCPOFFER, DHCPNAK}},
+        {DHCPOFFER, {}},
+        {DHCPREQUEST, {DHCP_NOTYPE, DHCPACK, DHCPNAK}},
+        {DHCPDECLINE, {}},
+        {DHCPACK, {}},
+        {DHCPNAK, {}},
+        {DHCPRELEASE, {}},
+        {DHCPINFORM, {DHCP_NOTYPE, DHCPACK}},
+//      {DHCPFORCERENEW, {}},        commented out in dhcp4.h
+        {DHCPLEASEQUERY, {}},
+        {DHCPLEASEUNASSIGNED, {}},
+        {DHCPLEASEUNKNOWN, {}},
+        {DHCPLEASEACTIVE, {}},
+        {DHCPBULKLEASEQUERY, {}},
+        {DHCPLEASEQUERYDONE, {}},
+//      {DHCPACTIVELEASEQUERY, {}}, commented out in dhcp4.h
+        {DHCPLEASEQUERYSTATUS, {}},
+        {DHCPTLS, {}},
     };
 
-    // Iterate over the scenarios.  Attempt to pair each scenario query type with every v6 message
+    // Iterate over the scenarios.  Attempt to pair each scenario query type with every v4 message
     // type as a response type.  If the response type is in the scenario's valid list, the pair
     // should validate, otherwise it should throw.
     for (auto const& scenario : scenarios) {
@@ -165,7 +165,7 @@ TEST(DurationKey, validateMessagePairs4) {
     }
 }
 
-// Verify v4 message pair validation works.
+// Verify v6 message pair validation works.
 TEST(DurationKey, validateMessagePairs6) {
     //  Defines a test scenario.
     struct Scenario {
@@ -279,24 +279,24 @@ TEST(MonitoredDuration, invalidConstructors) {
     // Make sure we catch an invalid message pairing.
     Duration interval_duration = seconds(60);
     ASSERT_THROW_MSG(mond.reset(new MonitoredDuration(AF_INET, DHCPDISCOVER, DHCPDISCOVER,
-                                "process_started", "process_completed",
-                                SUBNET_ID_GLOBAL, interval_duration)),
+                                                      "process_started", "process_completed",
+                                                      SUBNET_ID_GLOBAL, interval_duration)),
                      BadValue,
                      "Response type: DHCPDISCOVER not valid for query type: DHCPDISCOVER");
 
-    // Interval duration cannot be than zero.
+    // Interval duration cannot be zero.
     interval_duration = DurationDataInterval::ZERO_DURATION();
     ASSERT_THROW_MSG(mond.reset(new MonitoredDuration(AF_INET, DHCPDISCOVER, DHCPOFFER,
-                                "process_started", "process_completed",
-                                 SUBNET_ID_GLOBAL, interval_duration)),
+                                                      "process_started", "process_completed",
+                                                      SUBNET_ID_GLOBAL, interval_duration)),
                      BadValue,
                      "MonitoredDuration - interval_duration 00:00:00,"
                      " is invalid, it must be greater than 0");
 
     // Interval duration cannot be negative.
     ASSERT_THROW_MSG(mond.reset(new MonitoredDuration(AF_INET, DHCPDISCOVER, DHCPOFFER,
-                                "process_started", "process_completed",
-                                 SUBNET_ID_GLOBAL, seconds(-5))),
+                                                      "process_started", "process_completed",
+                                                      SUBNET_ID_GLOBAL, seconds(-5))),
                      BadValue,
                      "MonitoredDuration - interval_duration -00:00:05,"
                      " is invalid, it must be greater than 0");
@@ -304,9 +304,9 @@ TEST(MonitoredDuration, invalidConstructors) {
     // Create valid v6 key.
     DurationKeyPtr key;
     ASSERT_NO_THROW_LOG(key.reset(new DurationKey(AF_INET6, DHCPV6_SOLICIT, DHCPV6_ADVERTISE,
-                                  "mt_queued", "process_started", 77)));
+                                                  "mt_queued", "process_started", 77)));
 
-    // Interval duration cannot be than zero.
+    // Interval duration cannot be zero.
     ASSERT_THROW_MSG(mond.reset(new MonitoredDuration(*key, interval_duration)),
                      BadValue,
                      "MonitoredDuration - interval_duration 00:00:00,"
@@ -326,8 +326,8 @@ TEST(MonitoredDuration, addSampleAndClear) {
 
     // Create valid v4 duration with interval duration of 50ms.
     ASSERT_NO_THROW_LOG(mond.reset(new MonitoredDuration(AF_INET, DHCPDISCOVER, DHCPOFFER,
-                                  "process_started", "process_completed",
-                                   SUBNET_ID_GLOBAL, interval_duration)));
+                                                         "process_started", "process_completed",
+                                                         SUBNET_ID_GLOBAL, interval_duration)));
     ASSERT_TRUE(mond);
 
     // Initially there are no intervals.

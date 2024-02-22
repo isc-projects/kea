@@ -63,7 +63,7 @@ public:
     /// @brief Get the number of occurrences that have contributed to the
     /// interval.
     ///
-    /// @return uint64_t containing the number of occurrences.
+    /// @return the number of occurrences.
     uint64_t getOccurrences() const {
         return (occurrences_);
     };
@@ -119,20 +119,20 @@ typedef boost::shared_ptr<DurationDataInterval> DurationDataIntervalPtr;
 /// -# Response Packet Type
 /// -# Start Event
 /// -# End Event
-/// -# Subnet ID  can be GLOBAL_SUBNET_ID for aggregate durations
+/// -# Subnet ID can be GLOBAL_SUBNET_ID for aggregate durations
 class DurationKey {
 public:
     /// @brief Constructor
     ///
     /// @param family protocol family AF_INET or AF_INET6
     /// @param query_type message type of the query packet
-    /// @param response_type_ message type of the response packet
+    /// @param response_type message type of the response packet
     /// @param start_event_label label of the start event
     /// @param end_event_label label of the end event
-    /// @param SubnetID subnet_id id of the selected subnet
-    DurationKey(uint16_t family, uint8_t query_type_, uint8_t response_type_,
+    /// @param subnet_id id of the selected subnet
+    DurationKey(uint16_t family, uint8_t query_type, uint8_t response_type,
                 const std::string& start_event_label, const std::string& end_event_label,
-                dhcp::SubnetID subnet_id_);
+                dhcp::SubnetID subnet_id);
 
     /// @brief Destructor
     virtual ~DurationKey() = default;
@@ -141,33 +141,33 @@ public:
     ///
     /// @return uint16_t containing the family (AF_INET or AF_INET6)
     uint16_t getFamily() {
-        return(family_);
+        return (family_);
     }
 
     /// @brief Get the query packet type.
     ///
-    /// @return uint8_t containing the query packet type.
+    /// @return the query packet type.
     uint8_t getQueryType() const {
         return (query_type_);
     }
 
     /// @brief Get the response packet type.
     ///
-    /// @return uint8_t containing the response packet type.
+    /// @return the response packet type.
     uint8_t getResponseType() const {
         return (response_type_);
     };
 
     /// @brief Get the start event label.
     ///
-    /// @return String containing the start event label.
+    /// @return the start event label.
     std::string getStartEventLabel() const {
         return (start_event_label_);
     }
 
     /// @brief Get the end event label.
     ///
-    /// @return String containing the end event label.
+    /// @return the end event label.
     std::string getEndEventLabel() const {
         return (end_event_label_);
     }
@@ -197,7 +197,7 @@ public:
     ///
     /// @endcode
     ///
-    /// @return String containing the composite label.
+    /// @return the composite label.
     std::string getLabel() const;
 
     /// @brief Validates that a query and response message type pair is sane.
@@ -205,19 +205,19 @@ public:
     /// @param family Protocol family of the key (AF_INET or AF_INET6)
     /// The format of the string:
     /// @param query_type message type of the query packet
-    /// @param response_type_ message type of the response packet
+    /// @param response_type message type of the response packet
     ///
     /// @throw BadValue is the pairing does not make sense.
     static void validateMessagePair(uint16_t family, uint8_t query_type, uint8_t response_type);
 
 protected:
-    /// @brief Protocol family AF_INET or AF_INET6
+    /// @brief Protocol family AF_INET or AF_INET6.
     uint16_t family_;
 
-    /// @brief Query message type (e.g. DHCPDISCOVER, DHCP6_SOLICIT)
+    /// @brief Query message type (e.g. DHCPDISCOVER, DHCP6_SOLICIT).
     uint8_t query_type_;
 
-    /// @brief Response message type. (e.g. DHCPOFFER, DHCP6_ADVERTISE)
+    /// @brief Response message type (e.g. DHCPOFFER, DHCP6_ADVERTISE).
     uint8_t response_type_;
 
     /// @brief Label of the start event which begins the duration.
@@ -239,39 +239,39 @@ public:
     ///
     /// @param family protocol family AF_INET or AF_INET6
     /// @param query_type message type of the query packet
-    /// @param response_type_ message type of the response packet
+    /// @param response_type message type of the response packet
     /// @param start_event_label label of the start event
     /// @param end_event_label label of the end event
-    /// @param SubnetID subnet_id id of the selected subnet
-    /// @param Duration interval_duration_;
-    MonitoredDuration(uint16_t family, uint8_t query_type_, uint8_t response_type_,
+    /// @param subnet_id id of the selected subnet
+    /// @param interval_duration the interval duration
+    MonitoredDuration(uint16_t family, uint8_t query_type, uint8_t response_type,
                       const std::string& start_event_label, const std::string& end_event_label,
-                      dhcp::SubnetID subnet_id_, const Duration& interval_duration_);
+                      dhcp::SubnetID subnet_id, const Duration& interval_duration);
 
     /// @brief Constructor
     ///
-    /// param key composite key that identifies the alarm
-    /// @param Duration interval_duration_;
-    MonitoredDuration(const DurationKey& key, const Duration& interval_duration_);
+    /// @param key composite key that identifies the alarm
+    /// @param interval_duration the interval duration
+    MonitoredDuration(const DurationKey& key, const Duration& interval_duration);
 
     /// @brief Destructor
     virtual ~MonitoredDuration() = default;
 
-    /// @brief Get the interval duration
+    /// @brief Get the interval duration.
     ///
     /// @return Duration containing the interval duration.
     Duration getIntervalDuration() const {
-        return(interval_duration_);
+        return (interval_duration_);
     }
 
-    /// @brief Get the previous interval
+    /// @brief Get the previous interval.
     ///
     /// @return Pointer to the previous interval if it exists or an empty pointer.
     DurationDataIntervalPtr getPreviousInterval() const {
         return (previous_interval_);
     }
 
-    /// @brief Get the current interval
+    /// @brief Get the current interval.
     ///
     /// @return Pointer to the current interval if it exists or an empty pointer.
     DurationDataIntervalPtr getCurrentInterval() const {
