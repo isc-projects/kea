@@ -104,6 +104,7 @@ public:
     ///
     /// @throw OutOfRange Thrown in case of malformed data detected during parsing e.g.
     /// Addr Len not divisible by 16, Addr Len is 0, addresses data truncated etc.
+    /// @throw BadValue Thrown when trying to unpack address which is not an IPv6 address
     void unpackAddresses(OptionBufferConstIter& begin, OptionBufferConstIter end) override;
 
 private:

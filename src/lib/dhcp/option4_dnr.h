@@ -291,6 +291,9 @@ public:
     ///
     /// @param begin beginning of the buffer from which the field will be read
     /// @param end end of the buffer from which the field will be read
+    ///
+    /// @throw OutOfRange Thrown when truncated data is detected.
+    /// @throw InvalidOptionDnrSvcParams Thrown when invalid SvcParams syntax is detected.
     void unpackSvcParams(OptionBufferConstIter& begin, OptionBufferConstIter end);
 
     /// @brief Adds IP address to @c ip_addresses_ container.
@@ -322,8 +325,6 @@ public:
     /// @throw BadValue Thrown in case parser found wrong format of received string.
     /// @throw InvalidOptionDnrDomainName Thrown in case parser had problems with extracting ADN
     /// FQDN.
-    /// @throw InvalidOptionDnrSvcParams Thrown in case parser had problems with extracting
-    /// SvcParams.
     void parseDnrInstanceConfigData(const std::string& config_txt);
 
 protected:
@@ -431,6 +432,45 @@ private:
     /// @throw BadValue thrown when there is a problem with reading alpn SvcParamVal from
     ///                 @c svc_params_map_
     std::string svcParamValAsText(const std::pair<uint16_t, OpaqueDataTuple>& svc_param) const;
+
+    /// @brief Parses DNR resolver IP address/es from a piece of convenient notation option config.
+    ///
+    /// @param txt_addresses a piece of convenient notation option config holding IP address/es
+    ///
+    /// @throw BadValue Thrown in case parser found wrong format of received string.
+    void parseIpAddresses(const std::string& txt_addresses);
+
+    /// @brief Parses Service Parameters from a piece of convenient notation option config.
+    ///
+    /// @param txt_svc_params a piece of convenient notation option config holding SvcParams
+    ///
+    /// @throw InvalidOptionDnrSvcParams Thrown in case parser had problems with extracting
+    /// SvcParams.
+    void parseSvcParams(const std::string& txt_svc_params);
+
+    /// @brief Parses ALPN Service Parameter from a piece of convenient notation option config.
+    ///
+    /// @param svc_param_val a piece of convenient notation option config holding ALPN SvcParam
+    ///
+    /// @throw InvalidOptionDnrSvcParams Thrown in case parser had problems with extracting
+    /// SvcParams.
+    void parseAlpnSvcParam(const std::string& svc_param_val);
+
+    /// @brief Parses Port Service Parameter from a piece of convenient notation option config.
+    ///
+    /// @param svc_param_val a piece of convenient notation option config holding Port SvcParam
+    ///
+    /// @throw InvalidOptionDnrSvcParams Thrown in case parser had problems with extracting
+    /// SvcParams.
+    void parsePortSvcParam(const std::string& svc_param_val);
+
+    /// @brief Parses Dohpath Service Parameter from a piece of convenient notation option config.
+    ///
+    /// @param svc_param_val a piece of convenient notation option config holding Dohpath SvcParam
+    ///
+    /// @throw InvalidOptionDnrSvcParams Thrown in case parser had problems with extracting
+    /// SvcParams.
+    void parseDohpathSvcParam(const std::string& svc_param_val);
 };
 
 /// @brief Represents DHCPv4 Encrypted DNS %Option (code 162).

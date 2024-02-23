@@ -319,8 +319,11 @@ OptionDefinition::optionFactory(Option::Universe u, uint16_t type,
             // true, so that the factory will have a chance to handle it in a special way.
 
             // At this stage any escape backslash chars were lost during last call of
-            // isc::util::str::tokens(), so we must restore them. Some INTERNAL options may use
-            // escaped delimiters, e.g. DNR options.
+            // isc::util::str::tokens() inside of
+            // OptionDataParser::createOption(ConstElementPtr option_data), so we must
+            // restore them. Some INTERNAL options may use escaped delimiters, e.g. DNR options.
+            // Values are concatenated back to comma separated format and will be written to
+            // the OptionBuffer as one String type option.
             std::ostringstream stream;
             bool first = true;
             for (auto val : values) {

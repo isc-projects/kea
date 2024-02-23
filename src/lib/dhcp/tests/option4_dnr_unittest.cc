@@ -685,6 +685,23 @@ TEST(Option4DnrTest, fromConfigCtorWrongSvcParamsMissingVarInDohpath) {
     ASSERT_FALSE(option);
 }
 
+// This test verifies that option constructor throws
+// an exception when config provided via ctor is malformed
+// - IPv6 address given.
+TEST(Option4DnrTest, fromConfigCtorIPv6Address) {
+    // Prepare example config.
+    const std::string config = "100, dot1.example.org., 2001:db8::1";
+
+    OptionBuffer buf;
+    buf.assign(config.begin(), config.end());
+
+    // Create option instance. Check that constructor throws.
+    Option4DnrPtr option;
+    EXPECT_THROW(option.reset(new Option4Dnr(buf.begin(), buf.end(), true)),
+                 BadValue);
+    ASSERT_FALSE(option);
+}
+
 // This test verifies option packing into wire data.
 // Provided data to pack contains 2 DNR instances:
 // 1. ADN only mode

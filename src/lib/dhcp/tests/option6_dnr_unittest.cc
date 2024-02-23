@@ -590,6 +590,23 @@ TEST(Option6DnrTest, fromConfigCtorSvcParamsKeyRepeated) {
     ASSERT_FALSE(option);
 }
 
+// This test verifies that option constructor throws
+// an exception when config provided via ctor is malformed
+// - IPv4 address given.
+TEST(Option6DnrTest, fromConfigCtorIPv4Address) {
+    // Prepare example config.
+    const std::string config = "100, dot1.example.org., 10.0.2.3";
+
+    OptionBuffer buf;
+    buf.assign(config.begin(), config.end());
+
+    // Create option instance. Check that constructor throws.
+    Option6DnrPtr option;
+    EXPECT_THROW(option.reset(new Option6Dnr(buf.begin(), buf.end(), true)),
+                 BadValue);
+    ASSERT_FALSE(option);
+}
+
 // This test verifies that string representation of the option returned by
 // toText method is correctly formatted.
 TEST(Option6DnrTest, toText) {
