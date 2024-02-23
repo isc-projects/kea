@@ -573,7 +573,7 @@ DnrInstance::parseDnrInstanceConfigData(const std::string& config_txt) {
     if (tokens.size() > 4) {
         isc_throw(BadValue, getLogPrefix() << "Option config supports maximum 4 comma separated "
                                            << "fields: Service Priority, ADN, resolver IP "
-                                           << "address/es and SvcParams");
+                                           << "address(es) and SvcParams");
     }
 
     // parse Service Priority
@@ -606,7 +606,7 @@ DnrInstance::parseDnrInstanceConfigData(const std::string& config_txt) {
     if (tokens.size() > 2) {
         setAdnOnlyMode(false);
 
-        // parse resolver IP address/es
+        // parse resolver IP address(es)
         std::string txt_addresses = str::trim(tokens[2]);
 
         parseIpAddresses(txt_addresses);
@@ -659,9 +659,6 @@ void
 DnrInstance::parseSvcParams(const std::string& txt_svc_params) {
     // SvcParamKey=SvcParamValue pairs are separated with space
     std::vector<std::string> svc_params_pairs = str::tokens(txt_svc_params, std::string(" "));
-    std::vector<std::string> alpn_ids_tokens;
-
-    OutputBuffer out_buf(2);
 
     for (auto const& svc_param_pair : svc_params_pairs) {
         std::vector<std::string> key_val_tokens = str::tokens(str::trim(svc_param_pair), "=");
@@ -760,6 +757,7 @@ DnrInstance::parseSvcParams(const std::string& txt_svc_params) {
     // (...)
     // SvcParamKeys SHALL appear in increasing numeric order.
     // Note that (...) there are no duplicate SvcParamKeys.
+    OutputBuffer out_buf(2);
 
     for (auto const& svc_param_key : SUPPORTED_SVC_PARAMS) {
         auto it = svc_params_map_.find(svc_param_key);

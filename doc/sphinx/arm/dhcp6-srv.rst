@@ -2070,7 +2070,7 @@ Parameters option.
 DNR (Discovery of Network-designated Resolvers) Options for DHCPv6
 ------------------------------------------------------------------
 
-One of the more recently added option is the Discovery of
+One of the more recently added options is the Discovery of
 Network-designated Resolvers or DNR option,
 introduced in `RFC 9463 <https://www.rfc-editor.org/rfc/rfc9463>`__. The goal of that RFC is
 to provide a way to communicate location of DNS resolvers available over means other than
@@ -2078,11 +2078,11 @@ the classic DNS over UDP port 53. At the time of this writing, the supported tec
 are DoT (DNS-over-TLS), DoH (DNS-over-HTTPS), and DoQ (DNS-over-QUIC), but the option was
 designed to be extensible to accommodate other protocols in the future.
 
-DNR option may be configured using convenient notation. Comma delimited fields must be provided:
+DNR option may be configured using convenient notation. Comma delimited fields must be provided in the following order:
 
 - Service Priority (mandatory),
 - ADN FQDN (mandatory),
-- IP address/es (optional - if more than one - they must be space-separated)
+- IP address(es) (optional - if more than one - they must be space-separated)
 - SvcParams as a set of key=value pairs (optional - if more than one - they must be space-separated;
   to provide more than one alpn-id separate them with double backslash escaped comma like in the
   example below).
@@ -2109,20 +2109,19 @@ The above option will be encoded on-wire as follows:
 
 ::
 
-        // 00 64 - service priority (100 in hex as unsigned 16 bit integer)
-        // 00 12 - length of the Authentication Domain Name (name of the resolver) FQDN (18 in hex as unsigned 16 bit integer)
-        // 04 64 6f 74 31 07 65 78 61 6d 70 6c 65 03 6f 72 67 00 - 18 octets of the ADN FQDN
-        // 00 20 - 32 octets is the length of the following two IPv6 addresses
-        // 20 01 0d b8 00 00 00 00 00 00 00 00 00 00 00 01 - 2001:db8::1
-        // 20 01 0d b8 00 00 00 00 00 00 00 00 00 00 00 02 - 2001:db8::2
-        // Remaining part is to be interpreted as SvcParams field. In particular:
-        // 00 01 - next record is alpn
-        // 00 04 - length of the alpn SvcParamValue field (4 octets)
-        // 03    - length of the following alpn-id coded on one octet
-        // 64 6f 74 - "dot" - value of the alpn
-        // 00 03 - next record is port
-        // 00 02 - length of the SvcParamValue field is 2 octets
-        // 21 52 - the actual is 0x2152 or 8530 in decimal
+        00 64 - service priority (100 in hex as unsigned 16 bit integer)
+        00 12 - length of the Authentication Domain Name (name of the resolver) FQDN (18 in hex as unsigned 16 bit integer)
+        04 64 6f 74 31 07 65 78 61 6d 70 6c 65 03 6f 72 67 00 - 18 octets of the ADN FQDN
+        00 20 - 32 octets is the length of the following two IPv6 addresses
+        20 01 0d b8 00 00 00 00 00 00 00 00 00 00 00 01 - 2001:db8::1
+        20 01 0d b8 00 00 00 00 00 00 00 00 00 00 00 02 - 2001:db8::2
+        00 01 - SvsParams begin - this is alpn SvcParamKey
+        00 04 - length of the alpn SvcParamValue field (4 octets)
+        03    - length of the following alpn-id coded on one octet
+        64 6f 74 - "dot" - value of the alpn
+        00 03 - this is port SvcParamKey
+        00 02 - length of the SvcParamValue field is 2 octets
+        21 52 - the actual value is 0x2152 or 8530 in decimal
 
 The following example shows how to configure more than one ``ALPN`` protocol in Service Parameters.
 The example specifies a resolver known as ``resolver.example`` that supports:
@@ -2144,26 +2143,25 @@ The above option will be encoded on-wire as follows:
 
 ::
 
-        // 00 96 - service priority (150 in hex as unsigned 16 bit integer)
-        // 00 12 - length of the Authentication Domain Name (name of the resolver) FQDN (18 in hex as unsigned 16 bit integer)
-        // 08 72 65 73 6f 6c 76 65 72 07 65 78 61 6d 70 6c 65 00 - 18 octets of the ADN FQDN
-        // 00 20 - 32 octets is the length of the following two IPv6 addresses
-        // 20 01 0d b8 00 00 00 00 00 00 00 00 00 00 00 01 - 2001:db8::1
-        // 20 01 0d b8 00 00 00 00 00 00 00 00 00 00 00 02 - 2001:db8::2
-        // Remaining part is to be interpreted as SvcParams field. In particular:
-        // 00 01 - next record is alpn
-        // 00 0e - length of the alpn SvcParamValue field (14 octets)
-        // 03    - length of the following alpn-id coded on one octet
-        // 64 6f 74 - "dot" - value of the alpn
-        // 03    - length of the following alpn-id coded on one octet
-        // 64 6f 71 - "doq" - value of the alpn
-        // 02    - length of the following alpn-id coded on one octet
-        // 68 32 - "h2" - value of the alpn "HTTP/2 over TLS"
-        // 02    - length of the following alpn-id coded on one octet
-        // 68 33 - "h3" - value of the alpn "HTTP/3"
-        // 00 07 - next record is dohpath
-        // 00 08 - length of the SvcParamValue field is 8 octets
-        // 2f 71 7b 3f 64 6e 73 7d - "/q{?dns}" dohpath
+        00 96 - service priority (150 in hex as unsigned 16 bit integer)
+        00 12 - length of the Authentication Domain Name (name of the resolver) FQDN (18 in hex as unsigned 16 bit integer)
+        08 72 65 73 6f 6c 76 65 72 07 65 78 61 6d 70 6c 65 00 - 18 octets of the ADN FQDN
+        00 20 - 32 octets is the length of the following two IPv6 addresses
+        20 01 0d b8 00 00 00 00 00 00 00 00 00 00 00 01 - 2001:db8::1
+        20 01 0d b8 00 00 00 00 00 00 00 00 00 00 00 02 - 2001:db8::2
+        00 01 - SvsParams begin - this is alpn SvcParamKey
+        00 0e - length of the alpn SvcParamValue field (14 octets)
+        03    - length of the following alpn-id coded on one octet
+        64 6f 74 - "dot" - value of the alpn
+        03    - length of the following alpn-id coded on one octet
+        64 6f 71 - "doq" - value of the alpn
+        02    - length of the following alpn-id coded on one octet
+        68 32 - "h2" - value of the alpn "HTTP/2 over TLS"
+        02    - length of the following alpn-id coded on one octet
+        68 33 - "h3" - value of the alpn "HTTP/3"
+        00 07 - this is dohpath SvcParamKey
+        00 08 - length of the SvcParamValue field is 8 octets
+        2f 71 7b 3f 64 6e 73 7d - "/q{?dns}" dohpath
 
 
 .. note::

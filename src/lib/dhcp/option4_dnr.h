@@ -214,7 +214,7 @@ public:
 
     /// @brief Setter of the @c dnr_instance_data_length_ field.
     ///
-    /// Size is calculated basing on set Service Priority, ADN, IP address/es and SvcParams.
+    /// Size is calculated basing on set Service Priority, ADN, IP address(es) and SvcParams.
     /// This should be called after all fields are set.
     /// This is only used for DHCPv4 Encrypted DNS %Option.
     void setDnrInstanceDataLength() {
@@ -433,9 +433,9 @@ private:
     ///                 @c svc_params_map_
     std::string svcParamValAsText(const std::pair<uint16_t, OpaqueDataTuple>& svc_param) const;
 
-    /// @brief Parses DNR resolver IP address/es from a piece of convenient notation option config.
+    /// @brief Parses DNR resolver IP address(es) from a piece of convenient notation option config.
     ///
-    /// @param txt_addresses a piece of convenient notation option config holding IP address/es
+    /// @param txt_addresses a piece of convenient notation option config holding IP address(es)
     ///
     /// @throw BadValue Thrown in case parser found wrong format of received string.
     void parseIpAddresses(const std::string& txt_addresses);

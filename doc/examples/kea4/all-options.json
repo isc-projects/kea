@@ -1641,7 +1641,7 @@
         // For each DNR Instance comma delimited fields must be provided:
         // - service priority (mandatory),
         // - ADN (mandatory),
-        // - IP address/es (optional - if more than one - they must be space-separated)
+        // - IP address(es) (optional - if more than one - they must be space-separated)
         // - SvcParams (optional - if more than one - they must be space-separated;
         //   to provide more than one alpn-id separate them with double-backslash escaped comma like in the
         //   example below).

@@ -4731,7 +4731,7 @@ point.
 DNR (Discovery of Network-designated Resolvers) Options for DHCPv4
 ------------------------------------------------------------------
 
-One of the more recently added option is the Discovery of
+One of the more recently added options is the Discovery of
 Network-designated Resolvers or DNR option,
 introduced in `RFC 9463 <https://tools.ietf.org/html/rfc9463>`__. The goal of that RFC is
 to provide a way to communicate location of DNS resolvers available over means other than
@@ -4749,11 +4749,11 @@ For detailed example how to configure DNR option, see :ref:`dnr6-options`.
 The only difference for DNR DHCPv4 options configuration is that it allows
 to configure more than one DNR instance and the DNR instances are separated
 with the "pipe" (``0x7C``) character.
-For each DNR Instance comma delimited fields must be provided:
+For each DNR Instance comma delimited fields must be provided in the following order:
 
 - Service Priority (mandatory),
 - ADN FQDN (mandatory),
-- IP address/es (optional - if more than one - they must be space-separated)
+- IP address(es) (optional - if more than one - they must be space-separated)
 - SvcParams as a set of key=value pairs (optional - if more than one - they must be space-separated;
   to provide more than one alpn-id separate them with double backslash escaped comma like in the
   example below).
