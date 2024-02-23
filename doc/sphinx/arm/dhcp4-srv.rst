@@ -4731,12 +4731,13 @@ point.
 DNR (Discovery of Network-designated Resolvers) Options for DHCPv4
 ------------------------------------------------------------------
 
-One of the more recently added option is Discovery of Network-designated Resolvers or DNR,
+One of the more recently added option is the Discovery of
+Network-designated Resolvers or DNR option,
 introduced in `RFC 9463 <https://tools.ietf.org/html/rfc9463>`__. The goal of that RFC is
-to provide a way to communicate location of DNS resolvers available over other means than
+to provide a way to communicate location of DNS resolvers available over means other than
 the classic DNS over UDP over port 53. At the time of this writing, the supported technologies
 are DoT (DNS-over-TLS), DoH (DNS-over-HTTPS), and DoQ (DNS-over-QUIC), but the option was
-designed to be extensible to also cover future extensions.
+designed to be extensible to accommodate other protocols in the future.
 
 The DHCPv4 option and its corresponding DHCPv6 options are almost exactly the same,
 with the exception of cardinality. Only one DHCPv4 option is allowed, while for DHCPv6
@@ -4747,20 +4748,35 @@ DHCPv6 option, except the minor difference of using IPv4 rather than IPv6 addres
 For detailed example how to configure DNR option, see :ref:`dnr6-options`.
 The only difference for DNR DHCPv4 options configuration is that it allows
 to configure more than one DNR instance and the DNR instances are separated
-with the "pipe" (``0x7C``) character. Example usage below:
+with the "pipe" (``0x7C``) character.
+For each DNR Instance comma delimited fields must be provided:
+
+- Service Priority (mandatory),
+- ADN FQDN (mandatory),
+- IP address/es (optional - if more than one - they must be space-separated)
+- SvcParams as a set of key=value pairs (optional - if more than one - they must be space-separated;
+  to provide more than one alpn-id separate them with double backslash escaped comma like in the
+  example below).
+
+Example usage:
 
 ::
 
       {
         "name": "v4-dnr",
-        "data": "2, resolver.example., 10.0.5.6, alpn=dot port=8530 | 3, fooexp.resolver.example."
+        // 2 DNR Instances:
+        // - Service priority 2, ADN, resolver IPv4 address and Service Parameters
+        // - Service priority 3, ADN - this is ADN-only mode as per RFC9463 3.1.6
+        "data": "2, resolver.example., 10.0.5.6, alpn=dot\\,doq port=8530 | 3, fooexp.resolver.example."
       }
 
 
 .. note::
 
    Note that whenever "comma" or "pipe" characters need to be used not as the delimiters, they must be escaped with
-   double backslash (``\\,`` or ``\\|``).
+   double backslash (``\\,`` or ``\\|``). E.g. one must use escaped commas when configuring more than one ``ALPN``
+   protocol to separate them. One might want to use "pipe" (``0x7C``) character in ``dohpath`` Service Parameter,
+   as it is allowed in URI. In that case it must be escaped with double backslash.
 
 Examples for DNR DHCPv4 options are provided in the Kea sources in
 `all-options.json` in the `doc/examples/kea4` directory.

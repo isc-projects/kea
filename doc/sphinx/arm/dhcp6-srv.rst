@@ -2070,14 +2070,24 @@ Parameters option.
 DNR (Discovery of Network-designated Resolvers) Options for DHCPv6
 ------------------------------------------------------------------
 
-One of the more recently added option is Discovery of Network-designated Resolvers or DNR,
+One of the more recently added option is the Discovery of
+Network-designated Resolvers or DNR option,
 introduced in `RFC 9463 <https://www.rfc-editor.org/rfc/rfc9463>`__. The goal of that RFC is
-to provide a way to communicate location of DNS resolvers available over other means than
+to provide a way to communicate location of DNS resolvers available over means other than
 the classic DNS over UDP port 53. At the time of this writing, the supported technologies
 are DoT (DNS-over-TLS), DoH (DNS-over-HTTPS), and DoQ (DNS-over-QUIC), but the option was
-designed to be extensible to also cover future extensions.
+designed to be extensible to accommodate other protocols in the future.
 
-Let's imagine an example that we want to convey a DoT server operating at dot1.example.org
+DNR option may be configured using convenient notation. Comma delimited fields must be provided:
+
+- Service Priority (mandatory),
+- ADN FQDN (mandatory),
+- IP address/es (optional - if more than one - they must be space-separated)
+- SvcParams as a set of key=value pairs (optional - if more than one - they must be space-separated;
+  to provide more than one alpn-id separate them with double backslash escaped comma like in the
+  example below).
+
+Let's imagine an example that we want to convey a DoT server operating at ``dot1.example.org``
 (which resolves to two IPv6 addresses: ``2001:db8::1`` and  ``2001:db8::2``) on a non-standard port 8530.
 An example option that would convey this information looks as follows:
 
@@ -2093,8 +2103,12 @@ An example option that would convey this information looks as follows:
         // - list of parameters in key=value format, space separated; any comma
         //   characters in this field must be escaped with double backslash
         "data": "100, dot1.example.org., 2001:db8::1 2001:db8::2, alpn=dot port=8530"
+      }
 
-        // The above option will be encoded on-wire as follows:
+The above option will be encoded on-wire as follows:
+
+::
+
         // 00 64 - service priority (100 in hex as unsigned 16 bit integer)
         // 00 12 - length of the Authentication Domain Name (name of the resolver) FQDN (18 in hex as unsigned 16 bit integer)
         // 04 64 6f 74 31 07 65 78 61 6d 70 6c 65 03 6f 72 67 00 - 18 octets of the ADN FQDN
@@ -2109,10 +2123,9 @@ An example option that would convey this information looks as follows:
         // 00 03 - next record is port
         // 00 02 - length of the SvcParamValue field is 2 octets
         // 21 52 - the actual is 0x2152 or 8530 in decimal
-      }
 
-And yet another example where we want to convey in the same time, with ``resolver.example``
-as the Authentication Domain Name:
+The following example shows how to configure more than one ``ALPN`` protocol in Service Parameters.
+The example specifies a resolver known as ``resolver.example`` that supports:
 
 - DoT on default port 853
 - DoQ on default port 853
@@ -2123,9 +2136,14 @@ as the Authentication Domain Name:
       {
         "name": "v6-dnr", // name of the option
 
-        "data": "150, resolver.example., 2001:db8::1 2001:db8::2, alpn=dot\\,doq\\,h2\\,h3 dohpath=/q{?dns}" // mind double backslash escaped commas in alpn-id list
+        // Note the double backslash escaped commas in alpn-id list.
+        "data": "150, resolver.example., 2001:db8::1 2001:db8::2, alpn=dot\\,doq\\,h2\\,h3 dohpath=/q{?dns}"
+      }
 
-        // The above option will be encoded on-wire as follows:
+The above option will be encoded on-wire as follows:
+
+::
+
         // 00 96 - service priority (150 in hex as unsigned 16 bit integer)
         // 00 12 - length of the Authentication Domain Name (name of the resolver) FQDN (18 in hex as unsigned 16 bit integer)
         // 08 72 65 73 6f 6c 76 65 72 07 65 78 61 6d 70 6c 65 00 - 18 octets of the ADN FQDN
@@ -2146,7 +2164,13 @@ as the Authentication Domain Name:
         // 00 07 - next record is dohpath
         // 00 08 - length of the SvcParamValue field is 8 octets
         // 2f 71 7b 3f 64 6e 73 7d - "/q{?dns}" dohpath
-      }
+
+
+.. note::
+
+   Note that whenever "comma" characters need to be used not as the delimiters, they must be escaped with
+   double backslash (``\\,``). E.g. one must use escaped commas when configuring more than one ``ALPN``
+   protocol to separate them.
 
 The `RFC 9463 <https://www.rfc-editor.org/rfc/rfc9463#name-option-format>`__ Section 4.1 is encouraging to include
 at least the ``ALPN`` (Application-Layer Protocol Negotiation) SvcParam, as it will be required in most cases.
