@@ -29,6 +29,7 @@ TESTS += perfmon_unittests
 perfmon_unittests_SOURCES = run_unittests.cc
 perfmon_unittests_SOURCES += monitored_duration_unittests.cc
 perfmon_unittests_SOURCES += alarm_unittests.cc
+perfmon_unittests_SOURCES += monitored_duration_store_unittests.cc
 
 perfmon_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES) $(LOG4CPLUS_INCLUDES)
 

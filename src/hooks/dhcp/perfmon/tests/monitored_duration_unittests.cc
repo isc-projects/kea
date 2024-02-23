@@ -232,6 +232,23 @@ TEST(DurationKey, validateMessagePairs6) {
     }
 }
 
+/// @brief Verify DurationKey equality operator
+TEST(DurationKey, equalityOperators) {
+    DurationKeyPtr refkey;
+    DurationKeyPtr compkey;
+
+    ASSERT_NO_THROW_LOG(refkey.reset(new DurationKey(AF_INET6, DHCPV6_REQUEST, DHCPV6_REPLY,
+                                     "event_2", "event_3", 100)));
+
+    ASSERT_NO_THROW_LOG(compkey.reset(new DurationKey(AF_INET6, DHCPV6_REQUEST, DHCPV6_REPLY,
+                                      "event_2", "event_3", 100)));
+    EXPECT_EQ(*compkey, *refkey);
+
+    ASSERT_NO_THROW_LOG(compkey.reset(new DurationKey(AF_INET6, DHCPV6_SOLICIT, DHCPV6_REPLY,
+                                      "event_2", "event_3", 100)));
+    EXPECT_NE(*compkey, *refkey);
+}
+
 // Verifies MonitoredDuration valid construction.
 TEST(MonitoredDuration, validConstructors) {
     MonitoredDurationPtr mond;

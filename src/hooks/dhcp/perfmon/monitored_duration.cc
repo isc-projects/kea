@@ -164,6 +164,36 @@ DurationKey::getLabel() const {
     return (oss.str());
 };
 
+bool
+DurationKey::operator==(const DurationKey& other) const {
+    return (
+        (family_ == other.family_) &&
+        (query_type_ == other.query_type_) &&
+        (response_type_ == other.response_type_) &&
+        (start_event_label_ == other.start_event_label_) &&
+        (end_event_label_ == other.end_event_label_) &&
+        (subnet_id_ == other.subnet_id_)
+    );
+}
+
+bool
+DurationKey::operator!=(const DurationKey& other) const {
+    return (!(*this == other));
+}
+
+bool
+DurationKey::operator<(const DurationKey& other) const {
+    return (
+        (family_ < other.family_) ||
+        (query_type_ < other.query_type_) ||
+        (response_type_ < other.response_type_) ||
+        (start_event_label_ < other.start_event_label_) ||
+        (end_event_label_ < other.end_event_label_) ||
+        (subnet_id_ < other.subnet_id_)
+    );
+}
+
+
 // MonitoredDuration methods
 
 MonitoredDuration::MonitoredDuration(uint16_t family,

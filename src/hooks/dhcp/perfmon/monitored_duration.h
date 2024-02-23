@@ -210,6 +210,27 @@ public:
     /// @throw BadValue is the pairing does not make sense.
     static void validateMessagePair(uint16_t family, uint8_t query_type, uint8_t response_type);
 
+    /// @brief Equality operator.
+    ///
+    /// equality operator to compare two DurationKey objects.
+    /// @param other DurationKey to be compared against.
+    /// @return True the keys are equal
+    bool operator==(const DurationKey& other) const;
+
+    /// @brief Inequality operator.
+    ///
+    /// Inequality operator to compare two DurationKey objects.
+    /// @param other DurationKey to be compared against.
+    /// @return True the keys are not equal
+    bool operator!=(const DurationKey& other) const;
+
+    /// @brief Less than operator.
+    ///
+    /// less than operator to compare two DurationKey objects.
+    /// @param other DurationKey to be compared against.
+    /// @return True other is less than this key
+    bool operator<(const DurationKey& other) const;
+
 protected:
     /// @brief Protocol family AF_INET or AF_INET6.
     uint16_t family_;
