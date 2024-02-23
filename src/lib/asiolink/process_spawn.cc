@@ -209,7 +209,7 @@ private:
     /// for any child process
     /// @param sync whether this function is called immediately after spawning
     /// (synchronous) or not (asynchronous, default).
-    static void waitForProcess(int signum, pid_t const pid = -1, bool const sync = false);
+    static void waitForProcess(int signum, pid_t const wpid = -1, bool const sync = false);
 
     /// @brief A map holding the status codes of executed processes.
     static ProcessCollection process_collection_;
@@ -332,7 +332,9 @@ ProcessSpawnImpl::getCommandLine() const {
 pid_t
 ProcessSpawnImpl::spawn(bool dismiss) {
     lock_guard<std::mutex> lk(mutex_);
-    ProcessSpawnImpl::IOSignalSetInitializer::initIOSignalSet(io_service_);
+    if (!sync_) {
+        ProcessSpawnImpl::IOSignalSetInitializer::initIOSignalSet(io_service_);
+    }
     // Create the child
     pid_t pid = fork();
     if (pid < 0) {
@@ -413,7 +415,7 @@ ProcessSpawnImpl::allocateInternal(const std::string& src) {
 
 void
 ProcessSpawnImpl::waitForProcess(int /* signum */,
-                                 pid_t const pid /* = -1 */,
+                                 pid_t const wpid /* = -1 */,
                                  bool sync /* = false */) {
     // In synchronous mode, the lock is taken by the caller function
     // spawn(), so do not deadlock.
@@ -427,18 +429,37 @@ ProcessSpawnImpl::waitForProcess(int /* signum */,
         // When called asynchronously, the first IO context event is for
         // receiving the SIGCHLD signal which itself is blocking,
         // hence no need to block here too.
-        pid_t wpid = waitpid(pid, &status, sync ? 0 : WNOHANG);
-        if (wpid <= 0) {
-            break;
-        }
-        for (auto const& instance : process_collection_) {
-            auto const& proc = instance.second.find(wpid);
-            /// Check that the terminating process was started
-            /// by our instance of ProcessSpawn
-            if (proc != instance.second.end()) {
-                // In this order please
-                proc->second->status_ = status;
-                proc->second->running_ = false;
+        pid_t pid = waitpid(wpid, &status, sync ? 0 : WNOHANG);
+        if (pid < 0) {
+            if (!sync) {
+                break;
+            }
+            if (errno == EINTR) {
+                // On some systems that call sigaction wihout SA_RESTART by default, signals make
+                // waitpid exit with EINTR. In this situation, if sync mode is enabled, we're
+                // interested in another round of waitpid.
+                continue;
+            }
+            isc_throw(InvalidOperation, "process with pid " << wpid << " has returned " << pid
+                                                            << " from waitpid in sync mode, errno: "
+                                                            << strerror(errno));
+        } else if (pid == 0) {
+            if (!sync) {
+                break;
+            }
+        } else /* if (pid > 0) */ {
+            for (auto const& instance : process_collection_) {
+                auto const& proc = instance.second.find(pid);
+                /// Check that the terminating process was started
+                /// by our instance of ProcessSpawn
+                if (proc != instance.second.end()) {
+                    proc->second->status_ = status;
+                    proc->second->running_ = false;
+                }
+            }
+            if (sync) {
+                // Collected process status. Can exit loop.
+                break;
             }
         }
     }

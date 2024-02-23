@@ -68,7 +68,11 @@ public:
         io_signal_set_->remove(SIGCHLD);
         io_signal_set_.reset();
         // Make sure the cancel handler for the IOSignalSet is called.
-        io_service_->poll();
+        io_service_->restart();
+        try {
+            io_service_->poll();
+        } catch (...) {
+        }
     }
 
     /// @brief Method used as the IOSignalSet handler.
@@ -98,6 +102,7 @@ public:
     /// @brief Failsafe timer expiration handler.
     void testTimerHandler() {
         io_service_->stop();
+        FAIL() << "Test Time: " << test_time_ms_ << " expired";
     }
 };
 
@@ -119,8 +124,6 @@ TEST_F(ProcessSpawnTest, spawnWithArgs) {
     io_service_->runOne();
 
     // waitForProcess handler.
-    io_service_->runOne();
-
     // ProcessSpawnTest::processSignal handler.
     io_service_->runOne();
 
@@ -155,8 +158,6 @@ TEST_F(ProcessSpawnTest, spawnWithArgsAndEnvVars) {
     io_service_->runOne();
 
     // waitForProcess handler.
-    io_service_->runOne();
-
     // ProcessSpawnTest::processSignal handler.
     io_service_->runOne();
 
@@ -189,13 +190,14 @@ TEST_F(ProcessSpawnTest, spawnTwoProcesses) {
     io_service_->runOne();
 
     // waitForProcess handler.
-    io_service_->runOne();
-
     // ProcessSpawnTest::processSignal handler.
     io_service_->runOne();
 
     // Poll to be sure.
     io_service_->poll();
+
+    ASSERT_EQ(1, processed_signals_.size());
+    ASSERT_EQ(SIGCHLD, processed_signals_[0]);
 
     pid_t pid2 = 0;
     ASSERT_NO_THROW(pid2 = process.spawn());
@@ -207,8 +209,6 @@ TEST_F(ProcessSpawnTest, spawnTwoProcesses) {
     io_service_->runOne();
 
     // waitForProcess handler.
-    io_service_->runOne();
-
     // ProcessSpawnTest::processSignal handler.
     io_service_->runOne();
 
@@ -246,8 +246,6 @@ TEST_F(ProcessSpawnTest, spawnNoArgs) {
     io_service_->runOne();
 
     // waitForProcess handler.
-    io_service_->runOne();
-
     // ProcessSpawnTest::processSignal handler.
     io_service_->runOne();
 
@@ -269,8 +267,6 @@ TEST_F(ProcessSpawnTest, spawnNoArgs) {
     io_service_->runOne();
 
     // waitForProcess handler.
-    io_service_->runOne();
-
     // ProcessSpawnTest::processSignal handler.
     io_service_->runOne();
 
@@ -347,8 +343,6 @@ TEST_F(ProcessSpawnTest, isRunning) {
     io_service_->runOne();
 
     // waitForProcess handler.
-    io_service_->runOne();
-
     // ProcessSpawnTest::processSignal handler.
     io_service_->runOne();
 
@@ -379,8 +373,6 @@ TEST_F(ProcessSpawnTest, inheritEnv) {
     io_service_->runOne();
 
     // waitForProcess handler.
-    io_service_->runOne();
-
     // ProcessSpawnTest::processSignal handler.
     io_service_->runOne();
 
@@ -415,8 +407,6 @@ TEST_F(ProcessSpawnTest, inheritEnvWithParentVar) {
     io_service_->runOne();
 
     // waitForProcess handler.
-    io_service_->runOne();
-
     // ProcessSpawnTest::processSignal handler.
     io_service_->runOne();
 
