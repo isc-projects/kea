@@ -61,7 +61,7 @@ const uint16_t Message::DEFAULT_MAX_UDPSIZE;
 namespace isc {
 namespace util {
 namespace detail {
-extern int64_t (*gettimeFunction)();
+extern int64_t (*getTimeFunction)();
 }
 }
 }
@@ -894,7 +894,7 @@ TEST_F(MessageTest, toWireWithTSIG) {
     // TSIG are tested in the tsig tests.  We only check the message contains
     // a TSIG at the end and the ARCOUNT of the header is updated.
 
-    isc::util::detail::gettimeFunction = testGetTime<0x4da8877a>;
+    isc::util::detail::getTimeFunction = testGetTime<0x4da8877a>;
 
     message_render.setQid(0x2d65);
 
@@ -908,7 +908,7 @@ TEST_F(MessageTest, toWireWithTSIG) {
 TEST_F(MessageTest, toWireWithEDNSAndTSIG) {
     // Similar to the previous test, but with an EDNS before TSIG.
     // The wire data check will confirm the ordering.
-    isc::util::detail::gettimeFunction = testGetTime<0x4db60d1f>;
+    isc::util::detail::getTimeFunction = testGetTime<0x4db60d1f>;
 
     message_render.setQid(0x6cd);
 
@@ -951,7 +951,7 @@ const char* const long_txt4 = "0123456789abcdef0123456789abcdef0123456789abcdef0
 // QID: 0x22c2
 // Time Signed: 0x00004e179212
 TEST_F(MessageTest, toWireTSIGTruncation) {
-    isc::util::detail::gettimeFunction = testGetTime<0x4e179212>;
+    isc::util::detail::getTimeFunction = testGetTime<0x4e179212>;
 
     // Verify a validly signed query so that we can use the TSIG context
 
@@ -976,7 +976,7 @@ TEST_F(MessageTest, toWireTSIGTruncation) {
 TEST_F(MessageTest, toWireTSIGTruncation2) {
     // Similar to the previous test, but without TSIG it wouldn't cause
     // truncation.
-    isc::util::detail::gettimeFunction = testGetTime<0x4e179212>;
+    isc::util::detail::getTimeFunction = testGetTime<0x4e179212>;
     factoryFromFile(message_parse, "message_fromWire17.wire");
     EXPECT_EQ(TSIGError::NOERROR(),
               tsig_ctx.verify(message_parse.getTSIGRecord(),
@@ -1031,7 +1031,7 @@ TEST_F(MessageTest, toWireTSIGTruncation3) {
 TEST_F(MessageTest, toWireTSIGNoTruncation) {
     // A boundary case that shouldn't cause truncation: the resulting
     // response message with a TSIG will be 512 bytes long.
-    isc::util::detail::gettimeFunction = testGetTime<0x4e17b38d>;
+    isc::util::detail::getTimeFunction = testGetTime<0x4e17b38d>;
     factoryFromFile(message_parse, "message_fromWire18.wire");
     EXPECT_EQ(TSIGError::NOERROR(),
               tsig_ctx.verify(message_parse.getTSIGRecord(),
