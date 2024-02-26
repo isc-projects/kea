@@ -16,26 +16,35 @@ using namespace isc::util;
 namespace isc {
 namespace perfmon {
 
-MonitoredDurationStore::MonitoredDurationStore(uint16_t family, const Duration& interval_duration)
-    : family_(family), interval_duration_(interval_duration), durations_(), mutex_(new std::mutex) {
+MonitoredDurationStore::MonitoredDurationStore(uint16_t family,
+                                               const Duration& interval_duration)
+    : family_(family),
+      interval_duration_(interval_duration),
+      durations_(),
+      mutex_(new std::mutex) {
     if (interval_duration_ <= DurationDataInterval::ZERO_DURATION()) {
         isc_throw(BadValue, "MonitoredDurationStore - invalid interval_duration "
                             << interval_duration_ << ", must be greater than zero");
     }
 }
 
-MonitoredDurationPtr
-MonitoredDurationStore::addDuration(DurationKeyPtr key,
-                                    const Duration& sample /* = ZERO_DURATION()*/) {
+void
+MonitoredDurationStore::validateKey(const std::string& label, DurationKeyPtr key) const {
     if (!key) {
-        isc_throw(BadValue, "MonitoredDurationStore::addDuration - key is empty");
+        isc_throw(BadValue, "MonitoredDurationStore::" << label << " - key is empty");
     }
 
     if (key->getFamily() != family_) {
-        isc_throw(BadValue, "MonitoredDurationStore::addDuration - cannot add "
-                            << (family_ == AF_INET ? "v6 key to v4" : "v4 key to v6")
-                            << " store");
+        isc_throw(BadValue, "MonitoredDurationStore::" << label
+                            << " - family mismatch, key is " << (family_ == AF_INET ?
+                            "v6, store is v4" : "v4, store is v6"));
     }
+}
+
+MonitoredDurationPtr
+MonitoredDurationStore::addDuration(DurationKeyPtr key,
+                                    const Duration& sample /* = ZERO_DURATION()*/) {
+    validateKey("addDuration", key);
 
     // Create the duration instance.
     MonitoredDurationPtr mond;
@@ -66,31 +75,18 @@ MonitoredDurationStore::addDuration(DurationKeyPtr key,
 
 MonitoredDurationPtr
 MonitoredDurationStore::getDuration(DurationKeyPtr key) {
-    if (!key) {
-        isc_throw(BadValue, "MonitoredDurationStore::getDuration - key is empty");
-    }
+    validateKey("getDuration", key);
 
     MultiThreadingLock lock(*mutex_);
-#if 0
-    const auto& index = durations_.get<KeyTag>();
-    auto duration_iter = index.find(boost::make_tuple(key->getQueryType(),
-                                                      key->getResponseType(),
-                                                      key->getStartEventLabel(),
-                                                      key->getEndEventLabel(),
-                                                      key->getSubnetId()));
-#else
     const auto& index = durations_.get<DurationKeyTag>();
     auto duration_iter = index.find(*key);
-#endif
     return (duration_iter == index.end() ? MonitoredDurationPtr()
             : MonitoredDurationPtr(new MonitoredDuration(**duration_iter)));
 }
 
 void
 MonitoredDurationStore::updateDuration(MonitoredDurationPtr& duration) {
-    if (!duration) {
-        isc_throw(BadValue, "MonitoredDurationStore::updateDuration - duration is empty");
-    }
+    validateKey("updateDuration", duration);
 
     MultiThreadingLock lock(*mutex_);
     auto& index = durations_.get<DurationKeyTag>();
@@ -106,9 +102,7 @@ MonitoredDurationStore::updateDuration(MonitoredDurationPtr& duration) {
 
 void
 MonitoredDurationStore::deleteDuration(DurationKeyPtr key) {
-    if (!key) {
-        isc_throw(BadValue, "MonitoredDurationStore::deleteDuration - key is empty");
-    }
+    validateKey("deleteDuration", key);
 
     MultiThreadingLock lock(*mutex_);
     auto& index = durations_.get<DurationKeyTag>();
@@ -136,7 +130,8 @@ MonitoredDurationStore::getAll() {
 
 void
 MonitoredDurationStore::clear() {
-    isc_throw(NotImplemented, __FUNCTION__);
+    MultiThreadingLock lock(*mutex_);
+    durations_.clear();
 }
 
 } // end of namespace perfmon

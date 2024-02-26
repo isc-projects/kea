@@ -167,7 +167,6 @@ DurationKey::getLabel() const {
 bool
 DurationKey::operator==(const DurationKey& other) const {
     return (
-        (family_ == other.family_) &&
         (query_type_ == other.query_type_) &&
         (response_type_ == other.response_type_) &&
         (start_event_label_ == other.start_event_label_) &&
@@ -184,7 +183,6 @@ DurationKey::operator!=(const DurationKey& other) const {
 bool
 DurationKey::operator<(const DurationKey& other) const {
     return (
-        (family_ < other.family_) ||
         (query_type_ < other.query_type_) ||
         (response_type_ < other.response_type_) ||
         (start_event_label_ < other.start_event_label_) ||

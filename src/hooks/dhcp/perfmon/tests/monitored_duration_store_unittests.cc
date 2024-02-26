@@ -60,115 +60,125 @@ class MonitoredDurationStoreTest : public ::testing::Test {
 public:
 
     /// @brief Constructor
-    MonitoredDurationStoreTest() {
-    }
+    MonitoredDurationStoreTest() = default;
 
     /// @brief Destructor
     virtual ~MonitoredDurationStoreTest() = default;
 
+    /// @brief Creates a protocol-specific DurationKey for a given subnet
+    ///
+    /// The message-pair and socket-event pairs are fixed.
+    ///
+    /// @param family protocol family to test, AF_INET or AF_INET6
+    /// @param subnet SubnetID of the duration
+    DurationKeyPtr makeKey(uint16_t family, SubnetID subnet = 1) {
+        DurationKeyPtr key;
+        if (family == AF_INET) {
+            return (DurationKeyPtr(new DurationKey(AF_INET, DHCPDISCOVER, DHCPOFFER,
+                                                   "socket_received", "buffer_read", subnet)));
+        }
+
+        return (DurationKeyPtr(new DurationKey(AF_INET6, DHCPV6_SOLICIT, DHCPV6_REPLY,
+                                               "socket_received", "buffer_read", subnet)));
+    }
+
     /// @brief Verifies that durations be added to the store and fetched
     /// by DurationKey.
-    void addDurationTest() {
+    ///
+    /// @param family protocol family to test, AF_INET or AF_INET6
+    void addDurationTest(uint16_t family) {
         Duration interval_duration(milliseconds(10));
-        MonitoredDurationStore store(AF_INET6, interval_duration);
+        MonitoredDurationStore store(family, interval_duration);
 
-        // Create a key.
-        DurationKeyPtr key;
-        ASSERT_NO_THROW_LOG(key.reset(new DurationKey(AF_INET6, DHCPV6_SOLICIT, DHCPV6_ADVERTISE,
-                                                       "mt_queued", "process_started", 77)));
-        // Add a duration using the key.
-        MonitoredDurationPtr mond;
-        ASSERT_NO_THROW_LOG(mond = store.addDuration(key, interval_duration));
-        ASSERT_TRUE(mond);
+        std::vector<MonitoredDurationPtr> monds;
+        // Add four durations with decreaing subnet ids.
+        for (int subnet = 4; subnet > 0; --subnet) {
+            MonitoredDurationPtr mond;
+            ASSERT_NO_THROW_LOG(mond = store.addDuration(makeKey(family, subnet),
+                                                         interval_duration));
+            ASSERT_TRUE(mond);
+            monds.push_back(mond);
+        }
 
-        // Verify we can fetch duration by key.
-        MonitoredDurationPtr found;
-        ASSERT_NO_THROW_LOG(found = store.getDuration(key));
-        ASSERT_TRUE(found);
+        // Get all should retrieve all four in ascending order.
+        MonitoredDurationCollectionPtr durations = store.getAll();
+        ASSERT_EQ(durations->size(), monds.size());
 
-        // Verify we have different objects but equal keys. Ensures we retrieved
-        // a copy, not what is stored.
-        EXPECT_NE(found, mond);
-        EXPECT_EQ(*found, *mond);
+        int idx = monds.size() - 1;
+        for (auto const& d : *durations) {
+            EXPECT_EQ(*d, *monds[idx]) << "failed on pass :" << idx;
+            --idx;
+        }
 
-        // Create a second key and duration.
-        DurationKeyPtr key2;
-        ASSERT_NO_THROW_LOG(key2.reset(new DurationKey(AF_INET6, DHCPV6_SOLICIT, DHCPV6_REPLY,
-                                                       "mt_queued", "process_started", 77)));
-        MonitoredDurationPtr mond2;
-        ASSERT_NO_THROW_LOG(mond2 = store.addDuration(key2, interval_duration));
-        ASSERT_TRUE(mond2);
+        // Make sure we can fetch them all individually.
+        for (auto const& mond : monds) {
+            MonitoredDurationPtr found;
+            ASSERT_NO_THROW_LOG(found = store.getDuration(mond));
+            ASSERT_TRUE(found);
+            EXPECT_EQ(*mond, *found);
+        }
 
-        // Verify we can fetch duration by key.
-        MonitoredDurationPtr found2;
-        ASSERT_NO_THROW_LOG(found2 = store.getDuration(key2));
-        ASSERT_TRUE(found2);
-
-        // Fetch all durations, should return them both.
-        MonitoredDurationCollectionPtr durations;
-        ASSERT_NO_THROW_LOG(durations = store.getAll());
-        ASSERT_TRUE(durations);
-        ASSERT_EQ(durations->size(), 2);
-
-        // They should be in order by key.
-        EXPECT_EQ(*(*durations)[0], *mond);
-        EXPECT_EQ(*(*durations)[1], *mond2);
+        // Verify that clear() discards store contents.
+        store.clear();
+        durations = store.getAll();
+        ASSERT_TRUE(durations->empty());
     }
 
     /// @brief Verifies that duplicate durations cannot be added to the store.
-    void addDurationDuplicateTest() {
+    ///
+    /// @param family protocol family to test, AF_INET or AF_INET6
+    void addDurationDuplicateTest(uint16_t family) {
         Duration interval_duration(milliseconds(10));
-        MonitoredDurationStore store(AF_INET6, interval_duration);
+        MonitoredDurationStore store(family, interval_duration);
 
-        // Create a key.
-        DurationKeyPtr key;
-        ASSERT_NO_THROW_LOG(key.reset(new DurationKey(AF_INET6, DHCPV6_SOLICIT, DHCPV6_ADVERTISE,
-                                                       "mt_queued", "process_started", 77)));
-        // Add a duration using the key.
+        // Add a duration.
         MonitoredDurationPtr mond;
-        ASSERT_NO_THROW_LOG(mond = store.addDuration(key, interval_duration));
+        ASSERT_NO_THROW_LOG(mond = store.addDuration(makeKey(family), interval_duration));
         ASSERT_TRUE(mond);
 
         // Attempting to add it again should evoke a duplicate key exception.
-        ASSERT_THROW_MSG(store.addDuration(key, interval_duration),
-                         DuplicateDurationKey,
-                         "MonitoredDurationStore::addDuration: duration already exists for:"
-                         " SOLICIT-ADVERTISE.mt_queued-process_started.77");
+        ASSERT_THROW(store.addDuration(mond, interval_duration), DuplicateDurationKey);
     }
 
-    /// @brief Verifies that duration and store families must match on add.
+    /// @brief Verifies that duration key must be valid to add a duration to the store.
+    ///
+    /// Tests both v4 and v6.
     void addDurationInvalidTest() {
+        // Create a v4 store.
         Duration interval_duration(milliseconds(10));
         MonitoredDurationStorePtr store(new MonitoredDurationStore(AF_INET, interval_duration));
 
-        // Create a key.
-        DurationKeyPtr key;
-        ASSERT_NO_THROW_LOG(key.reset(new DurationKey(AF_INET6, DHCPV6_SOLICIT, DHCPV6_ADVERTISE,
-                                                       "mt_queued", "process_started", 77)));
-
-        // Attempting to add it the key should fail.
-        ASSERT_THROW_MSG(store->addDuration(key, interval_duration),
+        // Attempting to add with an empty key should throw.
+        ASSERT_THROW_MSG(store->addDuration(DurationKeyPtr(), interval_duration),
                          BadValue,
-                         "MonitoredDurationStore::addDuration - cannot add v6 key to v4 store");
+                         "MonitoredDurationStore::addDuration - key is empty");
 
+        // Attempting to a v6 key should fail.
+        ASSERT_THROW_MSG(store->addDuration(makeKey(AF_INET6), interval_duration),
+                         BadValue,
+                         "MonitoredDurationStore::addDuration"
+                         " - family mismatch, key is v6, store is v4");
+
+        // Create a v6 store.
         store.reset(new MonitoredDurationStore(AF_INET6, interval_duration));
-        ASSERT_NO_THROW_LOG(key.reset(new DurationKey(AF_INET, DHCPDISCOVER, DHCPOFFER,
-                                                       "mt_queued", "process_started", 77)));
-        // Attempting to add it the key should fail.
-        ASSERT_THROW_MSG(store->addDuration(key, interval_duration),
+
+        // Attempting to add a v4 key should fail.
+        ASSERT_THROW_MSG(store->addDuration(makeKey(AF_INET), interval_duration),
                          BadValue,
-                         "MonitoredDurationStore::addDuration - cannot add v4 key to v6 store");
+                         "MonitoredDurationStore::addDuration"
+                         " - family mismatch, key is v4, store is v6");
     }
 
     /// @brief Verify that durations can be deleted from the store.
-    void deleteDurationTest() {
-        MonitoredDurationStore store(AF_INET, milliseconds(5));
+    ///
+    /// @param family protocol family to test, AF_INET or AF_INET6
+    void deleteDurationTest(uint16_t family) {
+        MonitoredDurationStore store(family, milliseconds(5));
 
         std::vector<DurationKeyPtr> keys;
         for (int subnet = 0; subnet < 3; ++subnet) {
             MonitoredDurationPtr mond;
-            DurationKeyPtr key(new DurationKey(AF_INET, DHCPDISCOVER, DHCPOFFER,
-                                               "socket_received", "buffer_read", subnet));
+            DurationKeyPtr key = makeKey(family, subnet);
             ASSERT_NO_THROW_LOG(mond = store.addDuration(key));
             ASSERT_TRUE(mond);
             keys.push_back(key);
@@ -200,32 +210,51 @@ public:
         ASSERT_EQ(durations->size(), 2);
     }
 
-    /// @brief Verify that durations in the store can be updated.
-    void updateDurationTest() {
-        Duration interval_duration(seconds(60));
-        MonitoredDurationStore store(AF_INET6, interval_duration);
-        MonitoredDurationPtr mond;
+    /// @brief Verify an invalid duration key on delete is detected.
+    ///
+    /// Tests both v4 and v6.
+    void deleteDurationInvalidTest() {
+         // Create a v4 store.
+        Duration interval_duration(milliseconds(10));
+        MonitoredDurationStorePtr store(new MonitoredDurationStore(AF_INET, interval_duration));
 
-        // Passing in an empty duration should throw.
-        ASSERT_THROW_MSG(store.updateDuration(mond), BadValue,
-                         "MonitoredDurationStore::updateDuration - duration is empty");
-
-        // Create a key and then a duration.
+        // Attempting to delete an empty key should throw.
         DurationKeyPtr key;
-        ASSERT_NO_THROW_LOG(key.reset(new DurationKey(AF_INET6, DHCPV6_SOLICIT, DHCPV6_ADVERTISE,
-                                                       "mt_queued", "process_started", 77)));
-        ASSERT_NO_THROW(mond.reset(new MonitoredDuration(*key, interval_duration)));
+        ASSERT_THROW_MSG(store->deleteDuration(key),
+                         BadValue,
+                         "MonitoredDurationStore::deleteDuration - key is empty");
 
-        ASSERT_THROW_MSG(store.updateDuration(mond), InvalidOperation,
-                         "MonitoredDurationStore::updateDuration duration not found:"
-                         " SOLICIT-ADVERTISE.mt_queued-process_started.77");
+        // Attempting to delete a v6 key should fail.
+        ASSERT_THROW_MSG(store->deleteDuration(makeKey(AF_INET6)),
+                         BadValue,
+                         "MonitoredDurationStore::deleteDuration"
+                         " - family mismatch, key is v6, store is v4");
 
-        // Now add the duration to the store.
+        // Create a v6 store.
+        store.reset(new MonitoredDurationStore(AF_INET6, interval_duration));
+
+        // Attempting to delete a v4 key should fail.
+        ASSERT_THROW_MSG(store->deleteDuration(makeKey(AF_INET)),
+                         BadValue,
+                         "MonitoredDurationStore::deleteDuration"
+                         " - family mismatch, key is v4, store is v6");
+    }
+
+    /// @brief Verify that durations in the store can be updated.
+    ///
+    /// @param family protocol family to test, AF_INET or AF_INET6
+    void updateDurationTest(uint16_t family) {
+        Duration interval_duration(seconds(60));
+        MonitoredDurationStore store(family, interval_duration);
+
+        // Add the duration to the store.
+        MonitoredDurationPtr mond;
+        ASSERT_NO_THROW(mond.reset(new MonitoredDuration(*makeKey(family), interval_duration)));
         ASSERT_NO_THROW(store.addDuration(mond));
 
         // Fetch it.
         MonitoredDurationPtr found;
-        ASSERT_NO_THROW_LOG(found = store.getDuration(key));
+        ASSERT_NO_THROW_LOG(found = store.getDuration(mond));
         ASSERT_TRUE(found);
 
         // Verify the fetched object is a copy.
@@ -240,70 +269,95 @@ public:
         mond->addSample(milliseconds(75));
         ASSERT_NO_THROW(store.updateDuration(mond));
 
-        // Fetch it again and verify there is now a current interval.
-        ASSERT_NO_THROW_LOG(found = store.getDuration(key));
+        // Fetch it again.
+        ASSERT_NO_THROW_LOG(found = store.getDuration(mond));
         ASSERT_FALSE(found->getPreviousInterval());
 
+        // Verify it has the expected current interval.
         DurationDataIntervalPtr current;
         ASSERT_TRUE(current = found->getCurrentInterval());
         EXPECT_EQ(current->getOccurrences(), 1);
         EXPECT_EQ(current->getTotalDuration(), milliseconds(75));
     }
 
-YOU ARE HERE
-#if 0
-    void getAllAndClearTest() {
-        MonitoredDurationStore store;
+    /// @brief Verify an invalid duration key on update is detected.
+    ///
+    /// Tests both v4 and v6.
+    void updateDurationInvalidTest() {
+        Duration interval_duration(seconds(60));
+        MonitoredDurationPtr mond;
 
-        // Add contexts to store.
-        for (int i = 0; i < leases_.size(); ++i) {
-            MonitoredDurationPtr context;
-            ASSERT_NO_THROW_LOG(context = store.addDuration(leases_[i], queries_[i], 1, 100));
-            ASSERT_TRUE(context);
-            EXPECT_EQ(leases_[i], context->getLease());
-            EXPECT_EQ(queries_[i], context->getQuery());
-        }
+         // Create a v4 store.
+        MonitoredDurationStorePtr store(new MonitoredDurationStore(AF_INET6, interval_duration));
 
-        // Fetch them all.
-        MonitoredDurationCollectionPtr contexts;
-        ASSERT_NO_THROW_LOG(contexts = store.getAll());
-        ASSERT_EQ(leases_.size(), contexts->size());
+        // Attempting to update an empty key should throw.
+        ASSERT_THROW_MSG(store->updateDuration(mond),
+                         BadValue,
+                         "MonitoredDurationStore::deleteDuration - key is empty");
 
-        // Verify we got them all in order.
-        int i = 0;
-        for (const auto& context : *contexts) {
-            EXPECT_EQ(leases_[i], context->getLease());
-            EXPECT_EQ(queries_[i], context->getQuery());
-            ++i;
-        }
+        // Create a v6 duration.
+        ASSERT_NO_THROW_LOG(mond.reset(new MonitoredDuration(*makeKey(AF_INET6), interval_duration)));
 
-        // Now clear the store. Verify it's empty.
-        ASSERT_NO_THROW_LOG(store.clear());
-        ASSERT_NO_THROW_LOG(contexts = store.getAll());
-        ASSERT_EQ(0, contexts->size());
+        // Attempting to update v6 duration in a v4 store should fail.
+        ASSERT_THROW_MSG(store->updateDuration(mond),
+                         BadValue,
+                         "MonitoredDurationStore::updateDuration"
+                         " - family mismatch, key is v6, store is v4");
 
-        // Verify clearing an empty store does no harm.
-        ASSERT_NO_THROW_LOG(store.clear());
+        // Create a v6 store.
+        store.reset(new MonitoredDurationStore(AF_INET6, interval_duration));
+
+        // Updating a non-existent duration should fail.
+        ASSERT_THROW_MSG(store->updateDuration(mond),
+                         BadValue,
+                         "MonitoredDurationStore::updateDuration duration not found:"
+                         " SOLICIT-ADVERTISE.mt_queued-process_started.77");
+
+        // Create a v4 duration.
+        ASSERT_NO_THROW_LOG(mond.reset(new MonitoredDuration(*makeKey(AF_INET), interval_duration)));
+
+        // Attempting to update v4 duration in a v6 store fail.
+        ASSERT_THROW_MSG(store->updateDuration(mond),
+                         BadValue,
+                         "MonitoredDurationStore::updateDuration"
+                         " - family mismatch, key is v4, store is v6");
     }
-#endif
 };
 
 TEST_F(MonitoredDurationStoreTest, addDuration) {
-    addDurationTest();
+    addDurationTest(AF_INET);
 }
 
 TEST_F(MonitoredDurationStoreTest, addDurationMultiThreading) {
     MultiThreadingTest mt;
-    addDurationTest();
+    addDurationTest(AF_INET);
+}
+
+TEST_F(MonitoredDurationStoreTest, addDuration6) {
+    addDurationTest(AF_INET6);
+}
+
+TEST_F(MonitoredDurationStoreTest, addDuration6MultiThreading) {
+    MultiThreadingTest mt;
+    addDurationTest(AF_INET6);
 }
 
 TEST_F(MonitoredDurationStoreTest, addDurationDuplicate) {
-    addDurationDuplicateTest();
+    addDurationDuplicateTest(AF_INET);
 }
 
 TEST_F(MonitoredDurationStoreTest, addDurationDuplicateMultiThreading) {
     MultiThreadingTest mt;
-    addDurationDuplicateTest();
+    addDurationDuplicateTest(AF_INET);
+}
+
+TEST_F(MonitoredDurationStoreTest, addDuration6Duplicate) {
+    addDurationDuplicateTest(AF_INET6);
+}
+
+TEST_F(MonitoredDurationStoreTest, addDuration6DuplicateMultiThreading) {
+    MultiThreadingTest mt;
+    addDurationDuplicateTest(AF_INET6);
 }
 
 TEST_F(MonitoredDurationStoreTest, addDurationInvalid) {
@@ -316,32 +370,48 @@ TEST_F(MonitoredDurationStoreTest, addDurationInvalidMultiThreading) {
 }
 
 TEST_F(MonitoredDurationStoreTest, deleteDuration) {
-    deleteDurationTest();
+    deleteDurationTest(AF_INET);
 }
 
 TEST_F(MonitoredDurationStoreTest, deleteDurationMultiThreading) {
     MultiThreadingTest mt;
-    deleteDurationTest();
+    deleteDurationTest(AF_INET);
+}
+
+TEST_F(MonitoredDurationStoreTest, deleteDuration6) {
+    deleteDurationTest(AF_INET6);
+}
+
+TEST_F(MonitoredDurationStoreTest, deleteDuration6MultiThreading) {
+    MultiThreadingTest mt;
+    deleteDurationTest(AF_INET6);
+}
+
+TEST_F(MonitoredDurationStoreTest, deleteDurationInvalid) {
+    deleteDurationInvalidTest();
+}
+
+TEST_F(MonitoredDurationStoreTest, deleteDurationInvalidMultiThreading) {
+    MultiThreadingTest mt;
+    deleteDurationInvalidTest();
 }
 
 TEST_F(MonitoredDurationStoreTest, updateDuration) {
-    updateDurationTest();
+    updateDurationTest(AF_INET);
 }
 
 TEST_F(MonitoredDurationStoreTest, updateDurationMultiThreading) {
     MultiThreadingTest mt;
-    updateDurationTest();
+    updateDurationTest(AF_INET);
 }
 
-#if 0
-TEST_F(MonitoredDurationStoreTest, getAllAndClear) {
-    getAllAndClearTest();
+TEST_F(MonitoredDurationStoreTest, updateDuration6) {
+    updateDurationTest(AF_INET6);
 }
 
-TEST_F(MonitoredDurationStoreTest, getAllAndClearMultiThreading) {
+TEST_F(MonitoredDurationStoreTest, updateDuration6MultiThreading) {
     MultiThreadingTest mt;
-    getAllAndClearTest();
+    updateDurationTest(AF_INET6);
 }
-#endif
 
 } // end of anonymous namespace

@@ -151,6 +151,15 @@ public:
     /// @brief Removes all durations from the store.
     void clear();
 
+    /// @brief Convenience method to verify a key is valid for an operation.
+    ///
+    /// @param label description of where the check is being made, appears in exception text.
+    /// @param key key to validate
+    ///
+    /// @throw BadValue if the key is either empty or its family does not
+    /// match the store.
+    void validateKey(const std::string& label, DurationKeyPtr key) const;
+
     /// @brief Get protocol family
     ///
     /// @return uint16_t containing the family (AF_INET or AF_INET6)
