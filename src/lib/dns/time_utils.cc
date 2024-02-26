@@ -6,26 +6,22 @@
 
 #include <config.h>
 
-#include <stdint.h>
+#include <dns/time_utils.h>
+#include <exceptions/exceptions.h>
 
-#include <sys/time.h>
-
-#include <string>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
-
+#include <stdint.h>
 #include <stdio.h>
+#include <string>
+#include <sys/time.h>
 #include <time.h>
-
-#include <exceptions/exceptions.h>
-
-#include <dns/time_utils.h>
 
 using namespace std;
 
 namespace {
-int days[12] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
+int days[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 
 inline bool
 isLeap(const int y) {
@@ -34,14 +30,14 @@ isLeap(const int y) {
 
 unsigned int
 yearSecs(const int year) {
-    return ((isLeap(year) ? 366 : 365 ) * 86400);
+    return ((isLeap(year) ? 366 : 365) * 86400);
 }
 
 unsigned int
 monthSecs(const int month, const int year) {
-    return ((days[month] + ((month == 1 && isLeap(year)) ? 1 : 0 )) * 86400);
+    return ((days[month] + ((month == 1 && isLeap(year)) ? 1 : 0)) * 86400);
 }
-}
+}  // anonymous namespace
 
 namespace isc {
 namespace util {
@@ -58,41 +54,39 @@ timeToText64(uint64_t value) {
         value -= secs;
         ++tm.tm_year;
         if (tm.tm_year + 1900 > 9999) {
-            isc_throw(InvalidTime,
-                      "Time value out of range (year > 9999): " <<
-                      tm.tm_year + 1900);
+            isc_throw(InvalidTime, "Time value out of range (year > 9999): " << tm.tm_year + 1900);
         }
     }
+
     tm.tm_mon = 0;
     while ((secs = monthSecs(tm.tm_mon, tm.tm_year + 1900)) <= value) {
         value -= secs;
         tm.tm_mon++;
     }
+
     tm.tm_mday = 1;
     while (86400 <= value) {
         value -= 86400;
         ++tm.tm_mday;
     }
+
     tm.tm_hour = 0;
     while (3600 <= value) {
         value -= 3600;
         ++tm.tm_hour;
     }
+
     tm.tm_min = 0;
     while (60 <= value) {
         value -= 60;
         ++tm.tm_min;
     }
-    tm.tm_sec = value;    // now t < 60, so this substitution is safe.
+
+    tm.tm_sec = value;  // now t < 60, so this substitution is safe.
 
     ostringstream oss;
-    oss << setfill('0')
-        << setw(4) << tm.tm_year + 1900
-        << setw(2) << tm.tm_mon + 1
-        << setw(2) << tm.tm_mday
-        << setw(2) << tm.tm_hour
-        << setw(2) << tm.tm_min
-        << setw(2) << tm.tm_sec;
+    oss << setfill('0') << setw(4) << tm.tm_year + 1900 << setw(2) << tm.tm_mon + 1 << setw(2)
+        << tm.tm_mday << setw(2) << tm.tm_hour << setw(2) << tm.tm_min << setw(2) << tm.tm_sec;
     return (oss.str());
 }
 
@@ -116,7 +110,7 @@ getTimeWrapper() {
 
     return (static_cast<int64_t>(now.tv_sec));
 }
-}
+}  // namespace detail
 
 string
 timeToText32(const uint32_t value) {
@@ -135,20 +129,22 @@ timeToText32(const uint32_t value) {
 }
 
 namespace {
-const size_t DATE_LEN = 14;      // YYYYMMDDHHmmSS
+const size_t DATE_LEN = 14;  // YYYYMMDDHHmmSS
 
-inline uint64_t ull(const int c) { return (static_cast<uint64_t>(c)); }
+inline uint64_t
+ull(const int c) {
+    return (static_cast<uint64_t>(c));
+}
 
 inline void
-checkRange(const unsigned min, const unsigned max, const unsigned value,
-           const string& valname)
-{
+checkRange(const unsigned min, const unsigned max, const unsigned value, const string& valname) {
     if ((value >= min) && (value <= max)) {
         return;
     }
+
     isc_throw(InvalidTime, "Invalid " << valname << " value: " << value);
 }
-}
+}  // anonymous namespace
 
 uint64_t
 timeFromText64(const string& time_txt) {
@@ -156,35 +152,32 @@ timeFromText64(const string& time_txt) {
     // minor exceptions.
     for (string::size_type i = 0; i < time_txt.length(); ++i) {
         if (!isdigit(time_txt.at(i))) {
-            isc_throw(InvalidTime, "Couldn't convert non-numeric time value: "
-                      << time_txt);
+            isc_throw(InvalidTime, "Couldn't convert non-numeric time value: " << time_txt);
         }
     }
 
     unsigned year, month, day, hour, minute, second;
-    if (time_txt.length() != DATE_LEN ||
-        sscanf(time_txt.c_str(), "%4u%2u%2u%2u%2u%2u",
-               &year, &month, &day, &hour, &minute, &second) != 6)
-    {
+    if (time_txt.length() != DATE_LEN || sscanf(time_txt.c_str(), "%4u%2u%2u%2u%2u%2u", &year,
+                                                &month, &day, &hour, &minute, &second) != 6) {
         isc_throw(InvalidTime, "Couldn't convert time value: " << time_txt);
     }
 
     checkRange(1970, 9999, year, "year");
     checkRange(1, 12, month, "month");
-    checkRange(1, days[month - 1] + ((month == 2 && isLeap(year)) ? 1 : 0),
-            day, "day");
+    checkRange(1, days[month - 1] + ((month == 2 && isLeap(year)) ? 1 : 0), day, "day");
     checkRange(0, 23, hour, "hour");
     checkRange(0, 59, minute, "minute");
-    checkRange(0, 60, second, "second"); // 60 == leap second.
+    checkRange(0, 60, second, "second");  // 60 == leap second.
 
-    uint64_t timeval = second + (ull(60) * minute) + (ull(3600) * hour) +
-        ((day - 1) * ull(86400));
+    uint64_t timeval = second + (ull(60) * minute) + (ull(3600) * hour) + ((day - 1) * ull(86400));
     for (unsigned m = 0; m < (month - 1); ++m) {
-            timeval += days[m] * ull(86400);
+        timeval += days[m] * ull(86400);
     }
+
     if (isLeap(year) && month > 2) {
-            timeval += ull(86400);
+        timeval += ull(86400);
     }
+
     for (unsigned y = 1970; y < year; ++y) {
         timeval += ((isLeap(y) ? 366 : 365) * ull(86400));
     }
@@ -199,5 +192,5 @@ timeFromText32(const string& time_txt) {
     return (timeFromText64(time_txt));
 }
 
-}
-}
+}  // namespace util
+}  // namespace isc
