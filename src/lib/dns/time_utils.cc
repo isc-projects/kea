@@ -103,16 +103,16 @@ timeToText64(uint64_t value) {
 // intended for testing purposes, so, even if it's visible outside of this
 // library, it's not even declared in a header file.
 namespace detail {
-int64_t (*getTimeFunction)() = NULL;
+int64_t (*getTimeFunction)() = 0;
 
 int64_t
 getTimeWrapper() {
-    if (getTimeFunction != NULL) {
+    if (getTimeFunction != 0) {
         return (getTimeFunction());
     }
 
     struct timeval now;
-    gettimeofday(&now, NULL);
+    gettimeofday(&now, 0);
 
     return (static_cast<int64_t>(now.tv_sec));
 }
