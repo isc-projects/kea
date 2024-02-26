@@ -9,14 +9,14 @@
 #include <dns/time_utils.h>
 #include <exceptions/exceptions.h>
 
+#include <cstdint>
+#include <cstdio>
+#include <ctime>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
-#include <cstdint>
-#include <cstdio>
 #include <string>
 #include <sys/time.h>
-#include <ctime>
 
 using namespace std;
 
@@ -41,6 +41,45 @@ monthSecs(const int month, const int year) {
 
 namespace isc {
 namespace util {
+namespace {
+const size_t DATE_LEN = 14;  // YYYYMMDDHHmmSS
+
+inline uint64_t
+ull(const int c) {
+    return (static_cast<uint64_t>(c));
+}
+
+inline void
+checkRange(const unsigned min, const unsigned max, const unsigned value, const string& valname) {
+    if ((value >= min) && (value <= max)) {
+        return;
+    }
+
+    isc_throw(InvalidTime, "Invalid " << valname << " value: " << value);
+}
+}  // anonymous namespace
+
+namespace detail {
+// timeToText32() below uses the current system time.  To test it with
+// unusual current time values we introduce the following function pointer;
+// when it's non NULL, we call it to get the (normally faked) current time.
+// Otherwise we use the standard gettimeofday(2).  This hook is specifically
+// intended for testing purposes, so, even if it's visible outside of this
+// library, it's not even declared in a header file.
+int64_t (*getTimeFunction)() = 0;
+
+int64_t
+getTimeWrapper() {
+    if (getTimeFunction != 0) {
+        return (getTimeFunction());
+    }
+
+    struct timeval now;
+    gettimeofday(&now, 0);
+
+    return (static_cast<int64_t>(now.tv_sec));
+}
+}  // namespace detail
 
 string
 timeToText64(uint64_t value) {
@@ -90,28 +129,6 @@ timeToText64(uint64_t value) {
     return (oss.str());
 }
 
-// timeToText32() below uses the current system time.  To test it with
-// unusual current time values we introduce the following function pointer;
-// when it's non NULL, we call it to get the (normally faked) current time.
-// Otherwise we use the standard gettimeofday(2).  This hook is specifically
-// intended for testing purposes, so, even if it's visible outside of this
-// library, it's not even declared in a header file.
-namespace detail {
-int64_t (*getTimeFunction)() = 0;
-
-int64_t
-getTimeWrapper() {
-    if (getTimeFunction != 0) {
-        return (getTimeFunction());
-    }
-
-    struct timeval now;
-    gettimeofday(&now, 0);
-
-    return (static_cast<int64_t>(now.tv_sec));
-}
-}  // namespace detail
-
 string
 timeToText32(const uint32_t value) {
     // We first adjust the time to the closest epoch based on the current time.
@@ -127,24 +144,6 @@ timeToText32(const uint32_t value) {
     // Then convert it to text.
     return (timeToText64(t));
 }
-
-namespace {
-const size_t DATE_LEN = 14;  // YYYYMMDDHHmmSS
-
-inline uint64_t
-ull(const int c) {
-    return (static_cast<uint64_t>(c));
-}
-
-inline void
-checkRange(const unsigned min, const unsigned max, const unsigned value, const string& valname) {
-    if ((value >= min) && (value <= max)) {
-        return;
-    }
-
-    isc_throw(InvalidTime, "Invalid " << valname << " value: " << value);
-}
-}  // anonymous namespace
 
 uint64_t
 timeFromText64(const string& time_txt) {
