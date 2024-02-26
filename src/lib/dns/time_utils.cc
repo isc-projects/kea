@@ -23,7 +23,7 @@ using namespace std;
 namespace {
 int days[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 
-inline bool
+bool
 isLeap(const int y) {
     return ((((y) % 4) == 0 && ((y) % 100) != 0) || ((y) % 400) == 0);
 }
@@ -42,14 +42,14 @@ monthSecs(const int month, const int year) {
 namespace isc {
 namespace util {
 namespace {
-const size_t DATE_LEN = 14;  // YYYYMMDDHHmmSS
+constexpr size_t DATE_LEN = 14;  // YYYYMMDDHHmmSS
 
-inline uint64_t
+uint64_t
 ull(const int c) {
     return (static_cast<uint64_t>(c));
 }
 
-inline void
+void
 checkRange(const unsigned min, const unsigned max, const unsigned value, const string& valname) {
     if ((value >= min) && (value <= max)) {
         return;
@@ -74,7 +74,7 @@ getTimeWrapper() {
         return (getTimeFunction());
     }
 
-    struct timeval now;
+    struct timeval now{};
     gettimeofday(&now, 0);
 
     return (static_cast<int64_t>(now.tv_sec));
@@ -83,7 +83,7 @@ getTimeWrapper() {
 
 string
 timeToText64(uint64_t value) {
-    struct tm tm;
+    struct tm tm{};
     unsigned int secs;
 
     // We cannot rely on gmtime() because time_t may not be of 64 bit

@@ -112,7 +112,7 @@ timeFromText64(const std::string& time_txt);
 ///
 /// @param time_txt
 ///
-/// @return
+/// @return Seconds since epoch corresponding to @c time_txt as uint_32
 uint32_t
 timeFromText32(const std::string& time_txt);
 
@@ -125,6 +125,7 @@ timeFromText32(const std::string& time_txt);
 /// YYYY... form, an exception of class @c InvalidTime will be thrown.
 ///
 /// @param value Seconds since epoch to be converted.
+///
 /// @return Textual representation of @c value in the form of YYYYMMDDHHmmSS.
 ///
 /// @throw InvalidTime The given time specifies on or after year 10,000.
@@ -153,9 +154,9 @@ timeToText64(uint64_t value);
 /// 2^32-1 (the highest value in 32-bit unsigned integers) will be converted
 /// to "21060207062815", instead of "19691231235959".
 ///
-/// @param value
+/// @param value Seconds since epoch to be converted.
 ///
-/// @return
+/// @return Textual representation of @c value in the form of YYYYMMDDHHmmSS.
 std::string
 timeToText32(uint32_t value);
 ///@}
