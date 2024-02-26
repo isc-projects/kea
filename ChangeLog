@@ -1,3 +1,5 @@
+Kea 2.5.6 (development) released on February 28, 2024
+
 2209.	[build]		razvan
 	The library version numbers have been bumped up for the Kea 2.5.6
 	development release.
@@ -5,7 +7,7 @@
 
 2208.	[func]		piotrek
 	Kea now supports DNR options as specified in RFC9463,
-	RFC9461, RFC9460. Option may be configured using
+	RFC9461, RFC9460. The option may be configured using
 	convenient notation, where Kea takes care of complex
 	option encoding to be inline with RFCs.
 	(Gitlab #3141)
@@ -16,7 +18,7 @@
 	backend configured and if the configured database is empty.
 	(Gitlab #3025)
 
-2206.   [func]      tmark
+2206.	[func]		tmark
 	Perfmon hook library now dumps the packet event stack
 	of query packets to debug logging after they have been
 	processed.

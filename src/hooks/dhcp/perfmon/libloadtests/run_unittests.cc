@@ -1,4 +1,4 @@
-// Copyright (C) 2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the End User License
 // Agreement. See COPYING file in the premium/ directory.

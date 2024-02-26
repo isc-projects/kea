@@ -427,9 +427,8 @@ libraries), or hook libraries (open source or premium).
    |                                  |                                       | message carried in             |
    |                                  |                                       | the packet is parsed.          |
    +----------------------------------+---------------------------------------+--------------------------------+
-   | ``kea-dhcp4.perfmon-hooks``,     | :ischooklib:`libdhcp_perfmon.so`      | Used                           |
-   | ``kea-dhcp6.perfmon-hooks``      | open-source hook library              | to log messages related to     |
-   |                                  |                                       | performan monitoring.          |
+   | ``kea-dhcp4.perfmon-hooks``,     | :ischooklib:`libdhcp_perfmon.so`      | Used to log messages related   |
+   | ``kea-dhcp6.perfmon-hooks``      | open-source hook library              | to performance monitoring.     |
    +----------------------------------+---------------------------------------+--------------------------------+
    | ``kea-dhcp4.ping-check-hooks``   | :ischooklib:`libdhcp_ping_check.so`   | Used                           |
    |                                  | subscription hook library             | to log messages related to     |

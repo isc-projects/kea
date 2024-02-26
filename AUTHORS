@@ -16,7 +16,7 @@ Primary developers:
  - Thomas Markwalder (DDNS, user_chk, global host reservations, stat commands,
                       congestion handling, config backend, multi-threading mode
                       of high availability, forensic logging, leasequery,
-                      ddns_tuning, bulk leasequery, ping-check)
+                      ddns_tuning, bulk leasequery, ping-check, perfmon)
  - Wlodek Wencel (testing, release engineering, hammer, perfdhcp)
  - Francis Dupont (crypto, flex/bison parsers, perfdhcp, control agent,
                    radius, netconf, config backend, multi-threading,
@@ -30,7 +30,7 @@ Primary developers:
                  radius, release engineering, shell scripts, testing, limits,
                  statistics)
  - Peter Davies (documentation)
- - Slawek Figiel (documentation, host reservations)
+ - Slawek Figiel (documentation, host reservations, perfdhcp)
  - Marcin Godzina (documentation, release engineering, testing)
  - Piotrek Zadroga (documentation, options handling, perfdhcp, ping-check,
                     host_cmds)

@@ -93,7 +93,7 @@ global expression for that subnet. An example subnet expression is shown below:
 
 .. note::
 
-   The expression value above uses a slash, '\', to show line continuation. This is for
+   The expression value above uses a backslash, ``\``, to show line continuation. This is for
    clarity only and is not valid JSON supported by Kea parsing. The actual value must
    be expressed on a single line.
 
