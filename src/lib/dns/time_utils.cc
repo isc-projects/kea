@@ -12,11 +12,11 @@
 #include <iomanip>
 #include <iostream>
 #include <sstream>
-#include <stdint.h>
-#include <stdio.h>
+#include <cstdint>
+#include <cstdio>
 #include <string>
 #include <sys/time.h>
-#include <time.h>
+#include <ctime>
 
 using namespace std;
 
