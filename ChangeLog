@@ -1,32 +1,28 @@
 Kea 2.5.6 (development) released on February 28, 2024
 
-2209.	[build]		razvan
+2208.	[build]		razvan
 	The library version numbers have been bumped up for the Kea 2.5.6
 	development release.
 	(Gitlab #3261)
 
-2208.	[func]		piotrek
+2207.	[func]		piotrek
 	Kea now supports DNR options as specified in RFC9463,
 	RFC9461, RFC9460. The option may be configured using
 	convenient notation, where Kea takes care of complex
 	option encoding to be inline with RFCs.
 	(Gitlab #3141)
 
-2207.	[func]		andrei
+2206.	[func]		andrei
 	DHCP servers now initialize the database schema automatically on
 	startup or on reconfiguration if there is at least one database
 	backend configured and if the configured database is empty.
 	(Gitlab #3025)
 
-2206.	[func]		tmark
+2205.	[func]		tmark
 	Perfmon hook library now dumps the packet event stack
 	of query packets to debug logging after they have been
 	processed.
 	(Gitlab #3231)
-
-2205.	[func]		slawek
-	Refactored the random generator used in perfdhcp tests.
-	(Gitlab #3207)
 
 2204.	[func]		tmark
 	The skeleton of a new open source hook library,
