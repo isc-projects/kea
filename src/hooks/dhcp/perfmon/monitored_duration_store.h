@@ -124,6 +124,14 @@ public:
     /// @brief Removes all durations from the store.
     void clear();
 
+    /// @brief Get protocol family
+    ///
+    /// @return uint16_t containing the family (AF_INET or AF_INET6)
+    uint16_t getFamily() {
+        return (family_);
+    }
+
+private:
     /// @brief Convenience method to verify a key is valid for an operation.
     ///
     /// @param label description of where the check is being made, appears in exception text.
@@ -133,14 +141,6 @@ public:
     /// match the store.
     void validateKey(const std::string& label, DurationKeyPtr key) const;
 
-    /// @brief Get protocol family
-    ///
-    /// @return uint16_t containing the family (AF_INET or AF_INET6)
-    uint16_t getFamily() {
-        return (family_);
-    }
-
-private:
     /// @brief Protocol family AF_INET or AF_INET6.
     uint16_t family_;
 

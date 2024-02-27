@@ -112,7 +112,7 @@ MonitoredDurationStore::deleteDuration(DurationKeyPtr key) {
         return;
     }
 
-    // Remove the context from the store.
+    // Remove the duration from the store.
     durations_.erase(duration_iter);
 }
 
