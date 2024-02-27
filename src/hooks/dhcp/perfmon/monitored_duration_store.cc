@@ -22,6 +22,11 @@ MonitoredDurationStore::MonitoredDurationStore(uint16_t family,
       interval_duration_(interval_duration),
       durations_(),
       mutex_(new std::mutex) {
+    if (family != AF_INET && family_ != AF_INET6) {
+        isc_throw(BadValue, "MonitoredDurationStore - invalid family "
+                            << family_ << ", must be AF_INET or AF_INET6");
+    }
+
     if (interval_duration_ <= DurationDataInterval::ZERO_DURATION()) {
         isc_throw(BadValue, "MonitoredDurationStore - invalid interval_duration "
                             << interval_duration_ << ", must be greater than zero");
@@ -96,7 +101,7 @@ MonitoredDurationStore::updateDuration(MonitoredDurationPtr& duration) {
                   << duration->getLabel());
     }
 
-    // Use replace() to re-index durations.
+    // Use replace() which only re-indexes if keys change.
     index.replace(duration_iter, MonitoredDurationPtr(new MonitoredDuration(*duration)));
 }
 

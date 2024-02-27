@@ -4,11 +4,11 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#ifndef MONITORED_DURATION_STORE_H
-#define MONITORED_DURATION_STORE_H
+#ifndef ALARM_STORE_H
+#define ALARM_STORE_H
 
 #include <exceptions/exceptions.h>
-#include <monitored_duration.h>
+#include <alarm.h>
 
 #include <boost/multi_index/indexed_by.hpp>
 #include <boost/multi_index/member.hpp>
@@ -27,16 +27,16 @@ namespace perfmon {
 
 /// @brief Exception thrown when an attempt was made to add a duplicate key
 /// to either the duration or alarm stores.
-class DuplicateDurationKey : public Exception {
+class DuplicateAlarm : public Exception {
 public:
-    DuplicateDurationKey(const char* file, size_t line, const char* what) :
+    DuplicateAlarm(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) {}
 };
 
 /// @brief Tag for index by primary key (DurationKey).
-struct DurationKeyTag { };
+struct AlarmPrimaryKeyTag { };
 
-/// @brief A multi index container holding pointers to MonitoredDurations.
+/// @brief A multi index container holding pointers to Alarms.
 ///
 /// The durations in the container may be accessed using different indexes:
 /// - using the full key index
@@ -47,81 +47,87 @@ struct DurationKeyTag { };
 /// they do not depend on the order of indexes in the container.
 typedef boost::multi_index_container<
     // It holds pointers to Lease6 objects.
-    MonitoredDurationPtr,
+    AlarmPtr,
     boost::multi_index::indexed_by<
         // Specification of the first index starts here.
         // This index sorts using DurationKey::operators
         boost::multi_index::ordered_unique<
-            boost::multi_index::tag<DurationKeyTag>,
+            boost::multi_index::tag<AlarmPrimaryKeyTag>,
             boost::multi_index::identity<DurationKey>
         >
     >
-> MonitoredDurationContainer;
+> AlarmContainer;
 
-/// @brief Type for a collection of MonitoredDurationPtrs.
-typedef std::vector<MonitoredDurationPtr> MonitoredDurationCollection;
+/// @brief Type for a collection of AlarmPtrs.
+typedef std::vector<AlarmPtr> AlarmCollection;
 
-/// @brief Type for a pointer to a collection of MonitoredDurationPtrs.
-typedef boost::shared_ptr<MonitoredDurationCollection> MonitoredDurationCollectionPtr;
+/// @brief Type for a pointer to a collection of AlarmPtrs.
+typedef boost::shared_ptr<AlarmCollection> AlarmCollectionPtr;
 
-/// @brief Maintains an in-memory store of MonitoredDurations
+/// @brief Maintains an in-memory store of Alarms
 ///
 /// Provides essential CRUD functions for managing a collection of
-/// MonitoredDurations.  Additionally there are finders that can return
+/// Alarms.  Additionally there are finders that can return
 /// durations by DurationKey  <TBD>
 /// All finders return copies of the durations found, rather than the
 /// stored duration itself.
-class MonitoredDurationStore {
+class AlarmStore {
 public:
     /// @brief Constructor
     ///
     /// @param family protocol family AF_INET or AF_INET6
-    /// @param interval_duration the interval duration
-    explicit MonitoredDurationStore(uint16_t family, const Duration& interval_duration);
+    explicit AlarmStore(uint16_t family);
 
     /// @brief Destructor
-    ~MonitoredDurationStore() = default;
+    ~AlarmStore() = default;
 
-    /// @brief Creates a new MonitoredDuration and adds it to the store
+    /// @brief Creates a new Alarm and adds it to the store
     ///
-    /// @param key key value of the duration to create.
-    /// @param sample An initial sample to add to the duration if not zero.
+    /// @param key key value of the Alarm to create.
+    /// @param low_water threshold below which the average duration must fall to clear the alarm
+    /// @brief high_water threshold above which the average duration must rise to trigger the alarm.
+    /// @brief enabled true sets state to CLEAR, otherwise DISABLED, defaults to true.
     ///
-    /// @return pointer to the newly created duration.
-    /// @throw DuplicateDuration if a duration for the given key already exists in
+    /// @return pointer to the newly created Alarm.
+    /// @throw DuplicateAlarm if a duration for the given key already exists in
     /// the store.
-    MonitoredDurationPtr addDuration(DurationKeyPtr key, const Duration& sample
-                                                         = DurationDataInterval::ZERO_DURATION());
+    AlarmPtr addAlarm(DurationKeyPtr key, const Duration& low_water,
+                      const Duration& high_water, bool enabled = true);
+
+    /// @brief Adds an Alarm  to the store.
+    ///
+    /// @return pointer to a copy of the Alarm added.
+    AlarmPtr addAlarm(AlarmPtr alarm);
 
     /// @brief Fetches a duration from the store for a given key.
     ///
-    /// @param key key value of the duration to fetch.
+    /// @param key key value of the alarm to fetch.
     ///
-    /// @return Pointer the desired duration or an empty pointer.
-    MonitoredDurationPtr getDuration(DurationKeyPtr key);
+    /// @return Pointer the desired alarm or an empty pointer.
+    AlarmPtr getAlarm(DurationKeyPtr key);
 
-    /// @brief Updates a duration in the store.
+    /// @brief Updates an alarm in the store.
     ///
-    /// The duration is assumed to already exist in the store.
+    /// The alarm is assumed to already exist in the store.
     ///
-    /// @param duration duration to update.
+    /// @param alarm alarm to update.
     ///
-    /// @throw InvalidOperation if MonitoredDuration does not exist in the store.
-    void updateDuration(MonitoredDurationPtr& duration);
+    /// @throw InvalidOperation if the alarm does not exist in the store.
+    void updateAlarm(AlarmPtr& alarm);
 
-    /// @brief Removes the duration from the store.
+    /// @brief Removes the alarm from the store.
     ///
-    /// If the duration does not exist in the store, it simply returns.
+    /// If the alarm does not exist in the store, it simply returns.
     ///
-    /// @param key key value of the duration to delete.
-    void deleteDuration(DurationKeyPtr key);
+    /// @param key key value of the alarm to delete.
+    void deleteAlarm(DurationKeyPtr key);
 
-    /// @brief Fetches all of the durations (in order by target)
+    /// @brief Fetches all of the alarms (in order by target)
     ///
-    /// @return a collection of all durations in the store.
-    MonitoredDurationCollectionPtr getAll();
+    /// @return a collection of all alarms in the store.
+    AlarmCollectionPtr getAll();
 
-    /// @brief Removes all durations from the store.
+    /// @brief Removes all alarms from the store.
     void clear();
 
     /// @brief Get protocol family
@@ -144,18 +150,14 @@ private:
     /// @brief Protocol family AF_INET or AF_INET6.
     uint16_t family_;
 
-    /// @brief The length of time over data for a single MonitoredDuration is
-    /// accumulated before reporting.
-    Duration interval_duration_;
-
     /// @brief Container instance.
-    MonitoredDurationContainer durations_;
+    AlarmContainer alarms_;
 
     /// @brief The mutex used to protect internal state.
     const boost::scoped_ptr<std::mutex> mutex_;
 };
 
-typedef boost::shared_ptr<MonitoredDurationStore> MonitoredDurationStorePtr;
+typedef boost::shared_ptr<AlarmStore> AlarmStorePtr;
 
 } // end of namespace perfmon
 } // end of namespace isc

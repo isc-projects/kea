@@ -40,6 +40,10 @@ TEST(MonitoredDurationStore, validConstructors) {
 TEST(MonitoredDurationStore, invalidConstructors) {
     MonitoredDurationStorePtr store;
 
+    EXPECT_THROW_MSG(MonitoredDurationStore(777, seconds(60)),
+                     BadValue,
+                     "MonitoredDurationStore - invalid family 777, must be AF_INET or AF_INET6");
+
     EXPECT_THROW_MSG(MonitoredDurationStore(AF_INET, milliseconds(0)),
                      BadValue,
                      "MonitoredDurationStore - invalid interval_duration"
@@ -82,7 +86,7 @@ public:
                                                "socket_received", "buffer_read", subnet)));
     }
 
-    /// @brief Verifies that durations be added to the store and fetched
+    /// @brief Verifies that durations can be added to the store and fetched
     /// by DurationKey.
     ///
     /// @param family protocol family to test, AF_INET or AF_INET6
@@ -288,12 +292,12 @@ public:
         MonitoredDurationPtr mond;
 
          // Create a v4 store.
-        MonitoredDurationStorePtr store(new MonitoredDurationStore(AF_INET6, interval_duration));
+        MonitoredDurationStorePtr store(new MonitoredDurationStore(AF_INET, interval_duration));
 
         // Attempting to update an empty key should throw.
         ASSERT_THROW_MSG(store->updateDuration(mond),
                          BadValue,
-                         "MonitoredDurationStore::deleteDuration - key is empty");
+                         "MonitoredDurationStore::updateDuration - key is empty");
 
         // Create a v6 duration.
         ASSERT_NO_THROW_LOG(mond.reset(new MonitoredDuration(*makeKey(AF_INET6), interval_duration)));
@@ -309,9 +313,9 @@ public:
 
         // Updating a non-existent duration should fail.
         ASSERT_THROW_MSG(store->updateDuration(mond),
-                         BadValue,
+                         InvalidOperation,
                          "MonitoredDurationStore::updateDuration duration not found:"
-                         " SOLICIT-ADVERTISE.mt_queued-process_started.77");
+                         " SOLICIT-REPLY.socket_received-buffer_read.1");
 
         // Create a v4 duration.
         ASSERT_NO_THROW_LOG(mond.reset(new MonitoredDuration(*makeKey(AF_INET), interval_duration)));
@@ -412,6 +416,15 @@ TEST_F(MonitoredDurationStoreTest, updateDuration6) {
 TEST_F(MonitoredDurationStoreTest, updateDuration6MultiThreading) {
     MultiThreadingTest mt;
     updateDurationTest(AF_INET6);
+}
+
+TEST_F(MonitoredDurationStoreTest, updateDurationInvalid) {
+    updateDurationInvalidTest();
+}
+
+TEST_F(MonitoredDurationStoreTest, updateDurationInvalidMultiThreading) {
+    MultiThreadingTest mt;
+    updateDurationInvalidTest();
 }
 
 } // end of anonymous namespace
