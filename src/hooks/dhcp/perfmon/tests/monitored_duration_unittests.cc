@@ -334,54 +334,63 @@ TEST(MonitoredDuration, addSampleAndClear) {
     EXPECT_FALSE(mond->getCurrentInterval());
     EXPECT_FALSE(mond->getPreviousInterval());
 
-    // Iterate over a 60ms period, adding a 10ms sample to a duration
-    // on each pass.  Sleep for 10ms in between iterations.
-    DurationDataIntervalPtr original_interval;
-    DurationDataIntervalPtr current_interval;
+    auto two_ms = milliseconds(2);
+    bool should_report = false;
+
+    // Add a sample and verify nothing to report and that it creates a
+    // current interval.
+    ASSERT_NO_THROW(should_report = mond->addSample(two_ms));
+    EXPECT_FALSE(should_report);
+    DurationDataIntervalPtr current_interval = mond->getCurrentInterval();
+    ASSERT_TRUE(current_interval);
+
+    // First pass, we should only have a current interval,
+    // nothing to report, one occurrence and a total duration of 10ms.
+    EXPECT_FALSE(mond->getPreviousInterval());
+    EXPECT_FALSE(should_report);
+    EXPECT_EQ(current_interval->getOccurrences(), 1);
+    EXPECT_EQ(current_interval->getTotalDuration(), two_ms);
+
+    // Save a copy of the current interval pointer.
+    DurationDataIntervalPtr original_interval = current_interval;
+
+    // Add 4 two ms samples during the current interval.
     DurationDataIntervalPtr previous_interval;
-    auto ten_ms = milliseconds(10);
-    bool should_report;
-    for (int i = 0; i < 6; ++i) {
-        ASSERT_NO_THROW(should_report = mond->addSample(ten_ms));
+    for (int i = 1; i < 5; ++i) {
+        // Add a two ms sample, it should return false as its not
+        // time to report.
+        ASSERT_NO_THROW(should_report = mond->addSample(two_ms));
+        EXPECT_FALSE(should_report);
         current_interval = mond->getCurrentInterval();
         ASSERT_TRUE(current_interval);
-        switch(i) {
-        case 0:
-            // First pass, we should only have a current interval,
-            // nothing to report, one occurrence and a total duration of 10ms.
-            original_interval = current_interval;
-            EXPECT_FALSE(mond->getPreviousInterval());
-            EXPECT_FALSE(should_report);
-            EXPECT_EQ(current_interval->getOccurrences(), 1);
-            EXPECT_EQ(current_interval->getTotalDuration(), ten_ms);
-            break;
-        default:
-            // On passes that occur during the duration interval, we should
-            // still only have a current interval and nothing to report.
-            // Current interval occurrences and total duration should be increasing.
-            EXPECT_EQ(current_interval, original_interval);
-            EXPECT_FALSE(mond->getPreviousInterval());
-            EXPECT_FALSE(should_report);
-            EXPECT_EQ(current_interval->getOccurrences(), (i + 1));
-            EXPECT_EQ(current_interval->getTotalDuration(), (ten_ms * (i + 1)));
-            break;
-        case 5:
-            // On the last pass we should have crossed the interval boundary.
-            // Previous interval should be equal to the original interval and
-            // should_report should be true.  The new current interval should
-            // have 1 occurrence and a total of 10ms.
-            previous_interval = mond->getPreviousInterval();
-            EXPECT_TRUE(previous_interval);
-            EXPECT_EQ(previous_interval, original_interval);
-            EXPECT_TRUE(should_report);
-            EXPECT_EQ(current_interval->getOccurrences(), 1);
-            EXPECT_EQ(current_interval->getTotalDuration(), ten_ms);
-            break;
-        }
 
-        // Sleep for 10ms.
-        usleep(10000);
+        // Make sure the current interval hasn't been replaced and we
+        // have no previous interval.
+        EXPECT_EQ(current_interval, original_interval);
+        EXPECT_FALSE(mond->getPreviousInterval());
+        // Verify the sample was added.
+        EXPECT_EQ(current_interval->getOccurrences(), (i + 1));
+        EXPECT_EQ(current_interval->getTotalDuration(), (two_ms * (i + 1)));
     }
+
+    // Sleep til past the end of interval
+    usleep(60 * 1000);
+
+    // Add another sample.
+    ASSERT_NO_THROW(should_report = mond->addSample(two_ms));
+    current_interval = mond->getCurrentInterval();
+    ASSERT_TRUE(current_interval);
+
+    // We should have crossed the interval boundary.
+    // Previous interval should be equal to the original interval and
+    // should_report should be true.  The new current interval should
+    // have 1 occurrence and a total of 10ms.
+    previous_interval = mond->getPreviousInterval();
+    EXPECT_TRUE(previous_interval);
+    EXPECT_EQ(previous_interval, original_interval);
+    EXPECT_TRUE(should_report);
+    EXPECT_EQ(current_interval->getOccurrences(), 1);
+    EXPECT_EQ(current_interval->getTotalDuration(), two_ms);
 
     // Verify that clear wipes the intervals.
     ASSERT_NO_THROW_LOG(mond->clear());
