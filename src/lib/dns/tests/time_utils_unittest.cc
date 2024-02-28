@@ -1,12 +1,10 @@
 #include <config.h>
 
-#include <string>
-
-#include <ctime>
-
 #include <dns/time_utils.h>
 
+#include <ctime>
 #include <gtest/gtest.h>
+#include <string>
 
 using namespace std;
 using namespace isc::util;
@@ -17,8 +15,8 @@ namespace util {
 namespace detail {
 extern int64_t (*getTimeFunction)();
 }
-}
-}
+}  // namespace util
+}  // namespace isc
 
 namespace {
 
@@ -54,15 +52,15 @@ TEST_F(DNSSECTimeTest, fromText) {
     EXPECT_NO_THROW(timeFromText32("20110101120060"));
 
     // Out of range parameters
-    EXPECT_THROW(timeFromText32("19100223214617"), InvalidTime); // YY<1970
-    EXPECT_THROW(timeFromText32("20110001120000"), InvalidTime); // MM=00
-    EXPECT_THROW(timeFromText32("20111301120000"), InvalidTime); // MM=13
-    EXPECT_THROW(timeFromText32("20110100120000"), InvalidTime); // DD=00
-    EXPECT_THROW(timeFromText32("20110132120000"), InvalidTime); // DD=32
-    EXPECT_THROW(timeFromText32("20110431120000"), InvalidTime); // 'Apr31'
-    EXPECT_THROW(timeFromText32("20110101250000"), InvalidTime); // HH=25
-    EXPECT_THROW(timeFromText32("20110101126000"), InvalidTime); // mm=60
-    EXPECT_THROW(timeFromText32("20110101120061"), InvalidTime); // SS=61
+    EXPECT_THROW(timeFromText32("19100223214617"), InvalidTime);  // YY<1970
+    EXPECT_THROW(timeFromText32("20110001120000"), InvalidTime);  // MM=00
+    EXPECT_THROW(timeFromText32("20111301120000"), InvalidTime);  // MM=13
+    EXPECT_THROW(timeFromText32("20110100120000"), InvalidTime);  // DD=00
+    EXPECT_THROW(timeFromText32("20110132120000"), InvalidTime);  // DD=32
+    EXPECT_THROW(timeFromText32("20110431120000"), InvalidTime);  // 'Apr31'
+    EXPECT_THROW(timeFromText32("20110101250000"), InvalidTime);  // HH=25
+    EXPECT_THROW(timeFromText32("20110101126000"), InvalidTime);  // mm=60
+    EXPECT_THROW(timeFromText32("20110101120061"), InvalidTime);  // SS=61
 
     // Feb 7, 06:28:15 UTC 2106 is the possible maximum time that can be
     // represented as an unsigned 32bit integer without overflow.
@@ -146,4 +144,4 @@ TEST_F(DNSSECTimeTest, overflow) {
     EXPECT_THROW(timeToText32(4294197632LU), InvalidTime);
 }
 
-}
+}  // namespace
