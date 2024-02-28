@@ -392,6 +392,7 @@ public:
         EXPECT_EQ(previous_interval->getTotalDuration(), (five_ms) * 2);
     }
 
+    /// @todo TAKE THIS OUT
     /// @brief Test tool for gauging speed.
     ///
     /// This test is really just a development tool for gauging performance.
@@ -410,6 +411,15 @@ public:
         for (int s = 0; s < num_subnets; ++s) {
             keys.push_back(makeKey(family, s));
         }
+
+        auto start_time = PktEvent::now();
+
+        for (auto k : keys) {
+            store.addDuration(k);
+        }
+
+        auto add_keys_time = PktEvent::now();
+
         size_t num_passes = 100;
         size_t report_count = 0;
         Duration two_us(microseconds(2));
@@ -421,10 +431,16 @@ public:
             }
         }
 
-        std::cout << "report count: " << report_count << std::endl;
-        auto durations = store.getAll();
-        EXPECT_EQ(durations->size(), 100);
+        auto add_samples_time = PktEvent::now();
 
+        EXPECT_GT(report_count, 0);
+        auto durations = store.getAll();
+        EXPECT_EQ(durations->size(), num_subnets);
+
+        std::cout << "add keys time   : " << (add_keys_time - start_time) << std::endl
+                  << "add samples time: " << (add_samples_time - add_keys_time) << std::endl
+                  << "time per sample: "
+                  << (add_samples_time - add_keys_time) / (num_subnets * num_passes) << std::endl;
     }
 };
 
@@ -545,6 +561,7 @@ TEST_F(MonitoredDurationStoreTest, addDurationSample6MultiThreading) {
     addDurationSampleTest(AF_INET6);
 }
 
+/// @todo TAKE THESE OUT
 TEST_F(MonitoredDurationStoreTest, speedCheck) {
     speedCheckTest(AF_INET);
 }
@@ -562,6 +579,5 @@ TEST_F(MonitoredDurationStoreTest, speedCheck6MultiThreading) {
     MultiThreadingTest mt;
     speedCheckTest(AF_INET6);
 }
-
 
 } // end of anonymous namespace

@@ -81,6 +81,27 @@ public:
     /// @brief Destructor
     ~AlarmStore() = default;
 
+    /// @brief Checks a sample against an alarm.
+    ///
+    /// If the alarm exists in the store for the duration key, then Alarm::checkSample()
+    /// is invoked on the in-store alarm.  If this returns true, indicating an alarm
+    /// state change, then a copy of the in-store alarm is returned, otherwise an empty
+    /// pointer is returned.
+    ///
+    /// If no alarm exists in the store, then it simply returns an empty pointer.
+    ///
+    /// This function does not/must not modify any index keys.
+    ///
+    /// @param key key value of the alarm to check.
+    /// @param sample duration value to check.
+    /// @param report_interval amount of time that must elapse between high
+    /// water reports.
+    ///
+    /// @return A copy of the updated alarm if it should be reported, an empty
+    /// pointer otherwise.
+    AlarmPtr checkDurationSample(DurationKeyPtr key, const Duration& sample,
+                                 const Duration& report_interval);
+
     /// @brief Creates a new Alarm and adds it to the store
     ///
     /// @param key key value of the Alarm to create.

@@ -247,7 +247,6 @@ public:
                          " - family mismatch, key is v4, store is v6");
     }
 
-
     /// @brief Verify that alarms in the store can be updated.
     ///
     /// @param family protocol family to test, AF_INET or AF_INET6
@@ -256,9 +255,9 @@ public:
 
         // Add the duration to the store.
         AlarmPtr alarm;
-        ASSERT_NO_THROW(alarm.reset(new Alarm(*makeKey(family), milliseconds(10),
+        ASSERT_NO_THROW_LOG(alarm.reset(new Alarm(*makeKey(family), milliseconds(10),
                                               milliseconds(250))));
-        ASSERT_NO_THROW(store.addAlarm(alarm));
+        ASSERT_NO_THROW_LOG(store.addAlarm(alarm));
 
         // Fetch it.
         AlarmPtr found;
@@ -272,7 +271,7 @@ public:
         // Now change the thresholds and update it.
         alarm->setLowWater(milliseconds(125));
         alarm->setHighWater(milliseconds(500));
-        ASSERT_NO_THROW(store.updateAlarm(alarm));
+        ASSERT_NO_THROW_LOG(store.updateAlarm(alarm));
 
         // Fetch it again.
         ASSERT_NO_THROW_LOG(found = store.getAlarm(alarm));
@@ -324,6 +323,70 @@ public:
                          BadValue,
                          "AlarmStore::updateAlarm"
                          " - family mismatch, key is v4, store is v6");
+    }
+
+    /// @brief Verify checkDurationSample() valid behavior.
+    ///
+    /// @param family protocol family to test, AF_INET or AF_INET6
+    void checkDurationSampleTest(uint16_t family) {
+        AlarmStore store(family);
+
+        Duration under_low_water(milliseconds(50));
+        Duration low_water(milliseconds(100));
+        Duration mid_range(milliseconds(175));
+        Duration high_water(milliseconds(250));
+        Duration over_high_water(milliseconds(300));
+        Duration report_interval(milliseconds(10));
+
+        DurationKeyPtr key(makeKey(family));
+        AlarmPtr reportable;
+        ASSERT_NO_THROW_LOG(reportable = store.checkDurationSample(key, over_high_water,
+                                                                   report_interval));
+        ASSERT_FALSE(reportable);
+
+        // Add an alarm for the key to the store.
+        AlarmPtr alarm;
+        ASSERT_NO_THROW_LOG(alarm.reset(new Alarm(*key, low_water, high_water)));
+        ASSERT_NO_THROW_LOG(store.addAlarm(alarm));
+
+        // Fetch it.
+        AlarmPtr found;
+        ASSERT_NO_THROW_LOG(found = store.getAlarm(alarm));
+        ASSERT_TRUE(found);
+
+        // Check a sample at mid range. Should not return the alarm.
+        ASSERT_NO_THROW_LOG(reportable = store.checkDurationSample(key, mid_range,
+                                                                   report_interval));
+        ASSERT_FALSE(reportable);
+
+        // Check a sample over high water.  Should return the alarm.
+        ASSERT_NO_THROW_LOG(reportable = store.checkDurationSample(key, over_high_water,
+                                                                   report_interval));
+        ASSERT_TRUE(reportable);
+        EXPECT_EQ(reportable->getState(), Alarm::TRIGGERED);
+
+        // Check a sample over high water but before report interval elapses.
+        // Should not return the alarm.
+        ASSERT_NO_THROW_LOG(reportable = store.checkDurationSample(key, over_high_water,
+                                                                   report_interval));
+        ASSERT_FALSE(reportable);
+
+        // Sleep beyond the report interval.
+        usleep(15 * 1000);
+
+        // Check a sample over high water after report interval elapses.
+        // Should return the alarm.
+        ASSERT_NO_THROW_LOG(reportable = store.checkDurationSample(key, over_high_water,
+                                                                   report_interval));
+        ASSERT_TRUE(reportable);
+        EXPECT_EQ(reportable->getState(), Alarm::TRIGGERED);
+
+        // Check a sample below low water.
+        // Should return the alarm.
+        ASSERT_NO_THROW_LOG(reportable = store.checkDurationSample(key, under_low_water,
+                                                                   report_interval));
+        ASSERT_TRUE(reportable);
+        EXPECT_EQ(reportable->getState(), Alarm::CLEAR);
     }
 };
 
@@ -426,5 +489,22 @@ TEST_F(AlarmStoreTest, updateAlarmInvalidMultiThreading) {
     updateAlarmInvalidTest();
 }
 
+TEST_F(AlarmStoreTest, checkDurationSample) {
+    checkDurationSampleTest(AF_INET);
+}
+
+TEST_F(AlarmStoreTest, checkDurationSampleMultiThreading) {
+    MultiThreadingTest mt;
+    checkDurationSampleTest(AF_INET);
+}
+
+TEST_F(AlarmStoreTest, checkDurationSample6) {
+    checkDurationSampleTest(AF_INET6);
+}
+
+TEST_F(AlarmStoreTest, checkDurationSample6MultiThreading) {
+    MultiThreadingTest mt;
+    checkDurationSampleTest(AF_INET6);
+}
 
 } // end of anonymous namespace

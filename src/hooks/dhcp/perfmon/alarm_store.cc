@@ -40,6 +40,27 @@ AlarmStore::validateKey(const std::string& label, DurationKeyPtr key) const {
 }
 
 AlarmPtr
+AlarmStore::checkDurationSample(DurationKeyPtr key, const Duration& sample,
+                                const Duration& report_interval) {
+    validateKey("checkDurationSample", key);
+
+    MultiThreadingLock lock(*mutex_);
+    auto& index = alarms_.get<AlarmPrimaryKeyTag>();
+    auto alarm_iter = index.find(*key);
+
+    // If we find an alarm the check the sample.  Alarm::checkSample()
+    //does not alter the key so it can be done in-place.
+    if (alarm_iter != index.end() &&
+        (*alarm_iter)->checkSample(sample, report_interval)) {
+        // Alarm state needs to be reported, return a copy of the alarm.
+        return (AlarmPtr(new Alarm(**alarm_iter)));
+    }
+
+    // Nothing to alarm.
+    return(AlarmPtr());
+}
+
+AlarmPtr
 AlarmStore::addAlarm(AlarmPtr alarm) {
     {
         MultiThreadingLock lock(*mutex_);
