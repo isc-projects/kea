@@ -94,6 +94,15 @@ public:
     /// @return Duration containing the average.
     Duration getAverageDuration() const;
 
+    /// @brief Equality operator.
+    ///
+    /// Primarily used for testing.
+    ///
+    /// equality operator to compare two DurationDataInterval objects.
+    /// @param other DurationDataInterval to be compared against.
+    /// @return True the keys are equal
+    bool operator==(const DurationDataInterval& other) const;
+
 private:
     /// @brief Timestamp at which this interval began.
     Timestamp start_time_;
@@ -274,6 +283,11 @@ public:
     /// @param key composite key that identifies the alarm
     /// @param interval_duration the interval duration
     MonitoredDuration(const DurationKey& key, const Duration& interval_duration);
+
+    /// @brief Copy Constructor
+    ///
+    /// @param rhs duration to copy
+    MonitoredDuration(const MonitoredDuration& rhs);
 
     /// @brief Destructor
     virtual ~MonitoredDuration() = default;

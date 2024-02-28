@@ -289,6 +289,72 @@ TEST(MonitoredDuration, validConstructors) {
     EXPECT_FALSE(mond->getPreviousInterval());
 }
 
+// Verifies Copy construction.  Since current and preivous intervals are not
+// exposed, this test relies on addSample() to alter them.
+TEST(MonitoredDuration, copyConstructors) {
+    MonitoredDurationPtr mond;
+    Duration interval_duration(microseconds(10));
+
+    // Create valid v4 duration, verify contents and label.
+    ASSERT_NO_THROW_LOG(mond.reset(new MonitoredDuration(AF_INET, DHCPDISCOVER, DHCPOFFER,
+                                  "process_started", "process_completed",
+                                   SUBNET_ID_GLOBAL, interval_duration)));
+
+    // Make a copy.
+    MonitoredDurationPtr duplicate;
+    duplicate.reset(new MonitoredDuration(*mond));
+
+    // Should have different pointers.
+    EXPECT_NE(duplicate, mond);
+
+    // Key values should be equal (DurationKey::== operator).
+    EXPECT_EQ(*duplicate, *mond);
+
+    // Check non-key members.
+    EXPECT_EQ(duplicate->getIntervalDuration(),mond->getIntervalDuration());
+    EXPECT_FALSE(duplicate->getCurrentInterval());
+    EXPECT_FALSE(duplicate->getPreviousInterval());
+
+    // Add a sample to the original.
+    EXPECT_FALSE(mond->addSample(microseconds(2)));
+
+    // Make a new copy.
+    duplicate.reset(new MonitoredDuration(*mond));
+
+    // Current intervals should exist.
+    ASSERT_TRUE(mond->getCurrentInterval());
+    ASSERT_TRUE(duplicate->getCurrentInterval());
+    // They should not be the same object but the content should be equal.
+    EXPECT_NE(duplicate->getCurrentInterval(), mond->getCurrentInterval());
+    EXPECT_EQ(*duplicate->getCurrentInterval(), *mond->getCurrentInterval());
+    // Previous interval should not exist.
+    ASSERT_FALSE(mond->getPreviousInterval());
+    ASSERT_FALSE(duplicate->getPreviousInterval());
+
+    // Sleep past interval duration.
+    usleep(20);
+
+    // Add anoter sample to the original.
+    EXPECT_TRUE(mond->addSample(microseconds(2)));
+
+    // Make a new copy.
+    duplicate.reset(new MonitoredDuration(*mond));
+
+    // Current intervals should exist.
+    ASSERT_TRUE(mond->getCurrentInterval());
+    ASSERT_TRUE(duplicate->getCurrentInterval());
+    // They should not be the same object but the content should be equal.
+    EXPECT_NE(duplicate->getCurrentInterval(), mond->getCurrentInterval());
+    EXPECT_EQ(*duplicate->getCurrentInterval(), *mond->getCurrentInterval());
+
+    // Current previous should exist.
+    ASSERT_TRUE(mond->getPreviousInterval());
+    ASSERT_TRUE(duplicate->getPreviousInterval());
+    // They should not be the same object but the content should be equal.
+    EXPECT_NE(duplicate->getPreviousInterval(), mond->getPreviousInterval());
+    EXPECT_EQ(*duplicate->getPreviousInterval(), *mond->getPreviousInterval());
+}
+
 // Verifies MonitoredDuration invalid construction.
 TEST(MonitoredDuration, invalidConstructors) {
     MonitoredDurationPtr mond;

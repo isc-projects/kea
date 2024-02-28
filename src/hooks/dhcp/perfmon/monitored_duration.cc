@@ -49,6 +49,17 @@ DurationDataInterval::getAverageDuration() const {
     return (total_duration_ / occurrences_);
 }
 
+bool
+DurationDataInterval::operator==(const DurationDataInterval& other) const {
+    return (
+        (start_time_ == other.start_time_) &&
+        (occurrences_ == other.occurrences_) &&
+        (min_duration_ == other.min_duration_) &&
+        (max_duration_ == other.max_duration_) &&
+        (total_duration_ == other.total_duration_)
+   );
+}
+
 // DurationKey methods
 
 DurationKey::DurationKey(uint16_t family,
@@ -220,6 +231,20 @@ MonitoredDuration::MonitoredDuration(const DurationKey& key,
     if (interval_duration_ <= DurationDataInterval::ZERO_DURATION()) {
         isc_throw(BadValue, "MonitoredDuration - interval_duration " << interval_duration_
                             << ", is invalid, it must be greater than 0");
+    }
+}
+
+MonitoredDuration::MonitoredDuration(const MonitoredDuration& rhs)
+    : DurationKey(rhs),
+      interval_duration_(rhs.interval_duration_),
+      current_interval_(0),
+      previous_interval_(0) {
+    if (rhs.current_interval_) {
+      current_interval_.reset(new DurationDataInterval(*rhs.current_interval_));
+    }
+
+    if (rhs.previous_interval_) {
+      previous_interval_.reset(new DurationDataInterval(*rhs.previous_interval_));
     }
 }
 

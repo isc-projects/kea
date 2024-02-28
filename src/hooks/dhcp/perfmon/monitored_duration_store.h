@@ -25,8 +25,8 @@
 namespace isc {
 namespace perfmon {
 
-/// @brief Exception thrown when an attempt was made to add a duplicate key
-/// to either the duration or alarm stores.
+/// @brief Exception thrown when an attempt was made to add a duplicate duration
+/// to the store.
 class DuplicateDurationKey : public Exception {
 public:
     DuplicateDurationKey(const char* file, size_t line, const char* what) :
@@ -82,16 +82,33 @@ public:
     /// @brief Destructor
     ~MonitoredDurationStore() = default;
 
+    /// @brief Adds a sample to a duration in-place.
+    ///
+    /// If the duration exists in the store then the MonitoredDuration::addSample()
+    /// is invoked on the in-store duration.  If this returns true, indicating a reportable
+    /// condition, then a copy of the in-store duration is returned, otherwise an empty
+    /// pointer is returned.
+    ///
+    /// If The duration does not exist in the store, then one is created and inserted
+    /// into the store after adding the sample.  An empty pointer is returned.
+    ///
+    /// This function does not/must not modify any index keys.
+    ///
+    /// @param key key value of the duration to which to add.
+    /// @param sample duration value to add
+    ///
+    /// @return A copy of the updated duration if it should be reported, an empty
+    /// pointer otherwise.
+    MonitoredDurationPtr addDurationSample(DurationKeyPtr key, const Duration& sample);
+
     /// @brief Creates a new MonitoredDuration and adds it to the store
     ///
     /// @param key key value of the duration to create.
-    /// @param sample An initial sample to add to the duration if not zero.
     ///
     /// @return pointer to the newly created duration.
     /// @throw DuplicateDuration if a duration for the given key already exists in
     /// the store.
-    MonitoredDurationPtr addDuration(DurationKeyPtr key, const Duration& sample
-                                                         = DurationDataInterval::ZERO_DURATION());
+    MonitoredDurationPtr addDuration(DurationKeyPtr key);
 
     /// @brief Fetches a duration from the store for a given key.
     ///

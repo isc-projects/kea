@@ -98,8 +98,7 @@ public:
         // Add four durations with decreaing subnet ids.
         for (int subnet = 4; subnet > 0; --subnet) {
             MonitoredDurationPtr mond;
-            ASSERT_NO_THROW_LOG(mond = store.addDuration(makeKey(family, subnet),
-                                                         interval_duration));
+            ASSERT_NO_THROW_LOG(mond = store.addDuration(makeKey(family, subnet)));
             ASSERT_TRUE(mond);
             monds.push_back(mond);
         }
@@ -137,11 +136,11 @@ public:
 
         // Add a duration.
         MonitoredDurationPtr mond;
-        ASSERT_NO_THROW_LOG(mond = store.addDuration(makeKey(family), interval_duration));
+        ASSERT_NO_THROW_LOG(mond = store.addDuration(makeKey(family)));
         ASSERT_TRUE(mond);
 
         // Attempting to add it again should evoke a duplicate key exception.
-        ASSERT_THROW(store.addDuration(mond, interval_duration), DuplicateDurationKey);
+        ASSERT_THROW(store.addDuration(mond), DuplicateDurationKey);
     }
 
     /// @brief Verifies that duration key must be valid to add a duration to the store.
@@ -153,12 +152,12 @@ public:
         MonitoredDurationStorePtr store(new MonitoredDurationStore(AF_INET, interval_duration));
 
         // Attempting to add with an empty key should throw.
-        ASSERT_THROW_MSG(store->addDuration(DurationKeyPtr(), interval_duration),
+        ASSERT_THROW_MSG(store->addDuration(DurationKeyPtr()),
                          BadValue,
                          "MonitoredDurationStore::addDuration - key is empty");
 
         // Attempting to a v6 key should fail.
-        ASSERT_THROW_MSG(store->addDuration(makeKey(AF_INET6), interval_duration),
+        ASSERT_THROW_MSG(store->addDuration(makeKey(AF_INET6)),
                          BadValue,
                          "MonitoredDurationStore::addDuration"
                          " - family mismatch, key is v6, store is v4");
@@ -167,7 +166,7 @@ public:
         store.reset(new MonitoredDurationStore(AF_INET6, interval_duration));
 
         // Attempting to add a v4 key should fail.
-        ASSERT_THROW_MSG(store->addDuration(makeKey(AF_INET), interval_duration),
+        ASSERT_THROW_MSG(store->addDuration(makeKey(AF_INET)),
                          BadValue,
                          "MonitoredDurationStore::addDuration"
                          " - family mismatch, key is v4, store is v6");
@@ -280,6 +279,7 @@ public:
         // Verify it has the expected current interval.
         DurationDataIntervalPtr current;
         ASSERT_TRUE(current = found->getCurrentInterval());
+        ASSERT_NE(current, mond->getCurrentInterval());
         EXPECT_EQ(current->getOccurrences(), 1);
         EXPECT_EQ(current->getTotalDuration(), milliseconds(75));
     }
@@ -325,6 +325,106 @@ public:
                          BadValue,
                          "MonitoredDurationStore::updateDuration"
                          " - family mismatch, key is v4, store is v6");
+    }
+
+    /// @brief Exercises addDurationSample() valid behavior.
+    ///
+    /// @param family protocol family to test, AF_INET or AF_INET6
+    void addDurationSampleTest(uint16_t family) {
+        // Create a store.
+        Duration interval_duration(milliseconds(50));
+        MonitoredDurationStore store(family, interval_duration);
+
+        // Create valid key.
+        DurationKeyPtr key = makeKey(family);
+
+        // Add a 5 ms sample for the key.
+        MonitoredDurationPtr mond;
+        Duration five_ms(milliseconds(5));
+        ASSERT_NO_THROW_LOG(mond = store.addDurationSample(key, five_ms));
+
+        // Should return an empty pointer as nothing to report yet.
+        EXPECT_FALSE(mond);
+
+        // Make sure the duration was created and stored, and has only
+        // the current interval with 1 occurrence and a total of 5 ms.
+        ASSERT_NO_THROW_LOG(mond = store.getDuration(key));
+        ASSERT_TRUE(mond);
+        auto current_interval = mond->getCurrentInterval();
+        ASSERT_TRUE(current_interval);
+        EXPECT_EQ(current_interval->getOccurrences(), 1);
+        EXPECT_EQ(current_interval->getTotalDuration(), (five_ms));
+        auto previous_interval = mond->getPreviousInterval();
+        ASSERT_FALSE(previous_interval);
+
+        // Now lets add a second sample. We should still be inside the
+        // interval, so it still should return an empty pointer.
+        ASSERT_NO_THROW_LOG(mond = store.addDurationSample(key, five_ms));
+        EXPECT_FALSE(mond);
+
+        // Make sure the duration's current interval (only) was updated
+        ASSERT_NO_THROW_LOG(mond = store.getDuration(key));
+        ASSERT_TRUE(mond);
+        current_interval = mond->getCurrentInterval();
+        ASSERT_TRUE(current_interval);
+        EXPECT_EQ(current_interval->getOccurrences(), 2);
+        EXPECT_EQ(current_interval->getTotalDuration(), (five_ms * 2));
+        previous_interval = mond->getPreviousInterval();
+        ASSERT_FALSE(previous_interval);
+
+        // Sleep til past the end of interval
+        usleep(60 * 1000);
+
+        // Now lets add a third sample. We are past the end of the
+        // interval, so it still return the duration.
+        ASSERT_NO_THROW_LOG(mond = store.addDurationSample(key, five_ms));
+        ASSERT_TRUE(mond);
+
+        // Make sure the duration's current interval and prevous intervals correct.
+        current_interval = mond->getCurrentInterval();
+        ASSERT_TRUE(current_interval);
+        EXPECT_EQ(current_interval->getOccurrences(), 1);
+        EXPECT_EQ(current_interval->getTotalDuration(), (five_ms));
+
+        previous_interval = mond->getPreviousInterval();
+        ASSERT_TRUE(previous_interval);
+        EXPECT_EQ(previous_interval->getOccurrences(), 2);
+        EXPECT_EQ(previous_interval->getTotalDuration(), (five_ms) * 2);
+    }
+
+    /// @brief Test tool for gauging speed.
+    ///
+    /// This test is really just a development tool for gauging performance.
+    /// It does not pass or fail.
+    ///
+    /// @param family protocol family to test, AF_INET or AF_INET6
+    void speedCheckTest(uint16_t family) {
+        // Create a store.
+        Duration interval_duration(milliseconds(5));
+        MonitoredDurationStore store(family, interval_duration);
+
+        // Create keys.
+        size_t num_subnets = 100;
+        std::vector<DurationKeyPtr> keys;
+
+        for (int s = 0; s < num_subnets; ++s) {
+            keys.push_back(makeKey(family, s));
+        }
+        size_t num_passes = 100;
+        size_t report_count = 0;
+        Duration two_us(microseconds(2));
+        for (int p = 0; p < num_passes; ++p) {
+            for (auto k : keys) {
+                if (store.addDurationSample(k, two_us)) {
+                    ++report_count;
+                }
+            }
+        }
+
+        std::cout << "report count: " << report_count << std::endl;
+        auto durations = store.getAll();
+        EXPECT_EQ(durations->size(), 100);
+
     }
 };
 
@@ -426,5 +526,42 @@ TEST_F(MonitoredDurationStoreTest, updateDurationInvalidMultiThreading) {
     MultiThreadingTest mt;
     updateDurationInvalidTest();
 }
+
+TEST_F(MonitoredDurationStoreTest, addDurationSample) {
+    addDurationSampleTest(AF_INET);
+}
+
+TEST_F(MonitoredDurationStoreTest, addDurationSampleMultiThreading) {
+    MultiThreadingTest mt;
+    addDurationSampleTest(AF_INET);
+}
+
+TEST_F(MonitoredDurationStoreTest, addDurationSample6) {
+    addDurationSampleTest(AF_INET6);
+}
+
+TEST_F(MonitoredDurationStoreTest, addDurationSample6MultiThreading) {
+    MultiThreadingTest mt;
+    addDurationSampleTest(AF_INET6);
+}
+
+TEST_F(MonitoredDurationStoreTest, speedCheck) {
+    speedCheckTest(AF_INET);
+}
+
+TEST_F(MonitoredDurationStoreTest, speedCheckMultiThreading) {
+    MultiThreadingTest mt;
+    speedCheckTest(AF_INET);
+}
+
+TEST_F(MonitoredDurationStoreTest, speedCheck6) {
+    speedCheckTest(AF_INET6);
+}
+
+TEST_F(MonitoredDurationStoreTest, speedCheck6MultiThreading) {
+    MultiThreadingTest mt;
+    speedCheckTest(AF_INET6);
+}
+
 
 } // end of anonymous namespace

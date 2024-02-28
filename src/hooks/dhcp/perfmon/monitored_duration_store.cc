@@ -47,18 +47,44 @@ MonitoredDurationStore::validateKey(const std::string& label, DurationKeyPtr key
 }
 
 MonitoredDurationPtr
-MonitoredDurationStore::addDuration(DurationKeyPtr key,
-                                    const Duration& sample /* = ZERO_DURATION()*/) {
+MonitoredDurationStore::addDurationSample(DurationKeyPtr key, const Duration& sample) {
+    validateKey("addDurationSample", key);
+
+    MultiThreadingLock lock(*mutex_);
+    auto& index = durations_.get<DurationKeyTag>();
+    auto duration_iter = index.find(*key);
+    if (duration_iter != index.end()) {
+        // Add sample does not change key so it can be done in place.
+        // If adding the sample returns true, then its time to report
+        // so return a copy.
+        if ((*duration_iter)->addSample(sample)) {
+            return (MonitoredDurationPtr(new MonitoredDuration(**duration_iter)));
+        }
+    } else {
+        // It doesn't exist, add it.
+        MonitoredDurationPtr mond(new MonitoredDuration(*key, interval_duration_));
+        static_cast<void>(mond->addSample(sample));
+        auto ret = durations_.insert(mond);
+        if (ret.second == false) {
+            // Shouldn't be possible.
+            isc_throw(DuplicateDurationKey,
+                      "MonitoredDurationStore::addDurationSample: duration already exists for: "
+                      << key->getLabel());
+        }
+    }
+
+    // Nothing to report.
+    return(MonitoredDurationPtr());
+}
+
+MonitoredDurationPtr
+MonitoredDurationStore::addDuration(DurationKeyPtr key) {
     validateKey("addDuration", key);
 
     // Create the duration instance.
     MonitoredDurationPtr mond;
     try {
         mond.reset(new MonitoredDuration(*key, interval_duration_));
-        // Add the first sample if provided.
-        if (sample > DurationDataInterval::ZERO_DURATION()) {
-            mond->addSample(sample);
-        }
     } catch (const std::exception& ex) {
         isc_throw(BadValue, "MonitoredDurationStore::addDuration failed: " << ex.what());
     }
@@ -77,6 +103,7 @@ MonitoredDurationStore::addDuration(DurationKeyPtr key,
     // Return a copy of what we inserted.
     return (MonitoredDurationPtr(new MonitoredDuration(*mond)));
 }
+
 
 MonitoredDurationPtr
 MonitoredDurationStore::getDuration(DurationKeyPtr key) {
