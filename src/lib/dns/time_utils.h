@@ -69,6 +69,7 @@ getTimeWrapper();
 /// versions, too.
 ///
 /// The timezone is always UTC for these functions.
+
 /// @{
 /// @brief Convert textual DNSSEC time to integer, 64-bit version.
 ///
@@ -110,7 +111,7 @@ timeFromText64(const std::string& time_txt);
 /// value is wrapped around to an unsigned 32-bit integer, simply dropping
 /// the upper 32 bits.
 ///
-/// @param time_txt
+/// @param time_txt Textual time in the form of YYYYMMDDHHmmSS
 ///
 /// @return Seconds since epoch corresponding to @c time_txt as uint_32
 uint32_t
