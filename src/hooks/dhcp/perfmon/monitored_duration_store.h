@@ -39,8 +39,8 @@ struct DurationKeyTag { };
 /// @brief A multi index container holding pointers to MonitoredDurations.
 ///
 /// The durations in the container may be accessed using different indexes:
-/// - using the full key index
-///   <TBD>
+/// - using the index on DurationKey members, DurationKeyTag
+/// - others to follow based on API
 ///
 /// Indexes can be accessed using the index number (from 0 to n) or a
 /// name tag. It is recommended to use the tags to access indexes as
@@ -68,7 +68,7 @@ typedef boost::shared_ptr<MonitoredDurationCollection> MonitoredDurationCollecti
 ///
 /// Provides essential CRUD functions for managing a collection of
 /// MonitoredDurations.  Additionally there are finders that can return
-/// durations by DurationKey  <TBD>
+/// durations by DurationKey (others are TBD)
 /// All finders return copies of the durations found, rather than the
 /// stored duration itself.
 class MonitoredDurationStore {

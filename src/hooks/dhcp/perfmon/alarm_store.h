@@ -38,9 +38,9 @@ struct AlarmPrimaryKeyTag { };
 
 /// @brief A multi index container holding pointers to Alarms.
 ///
-/// The durations in the container may be accessed using different indexes:
-/// - using the full key index
-///   <TBD>
+/// The alarms in the container may be accessed using different indexes:
+/// - using the index on DurationKey members, AlarmPrimaryKeyTag
+/// - others to follow based on API
 ///
 /// Indexes can be accessed using the index number (from 0 to n) or a
 /// name tag. It is recommended to use the tags to access indexes as
@@ -68,7 +68,7 @@ typedef boost::shared_ptr<AlarmCollection> AlarmCollectionPtr;
 ///
 /// Provides essential CRUD functions for managing a collection of
 /// Alarms.  Additionally there are finders that can return
-/// durations by DurationKey  <TBD>
+/// durations by DurationKey (others are TBD).
 /// All finders return copies of the durations found, rather than the
 /// stored duration itself.
 class AlarmStore {
@@ -106,8 +106,8 @@ public:
     ///
     /// @param key key value of the Alarm to create.
     /// @param low_water threshold below which the average duration must fall to clear the alarm
-    /// @brief high_water threshold above which the average duration must rise to trigger the alarm.
-    /// @brief enabled true sets state to CLEAR, otherwise DISABLED, defaults to true.
+    /// @param high_water threshold above which the average duration must rise to trigger the alarm.
+    /// @param enabled true sets state to CLEAR, otherwise DISABLED, defaults to true.
     ///
     /// @return pointer to the newly created Alarm.
     /// @throw DuplicateAlarm if a duration for the given key already exists in

@@ -950,6 +950,7 @@ INPUT                  = ../../src/bin/agent \
                          ../../src/hooks/dhcp/flex_option \
                          ../../src/hooks/dhcp/high_availability \
                          ../../src/hooks/dhcp/lease_cmds \
+                         ../../src/hooks/dhcp/perfmon \
                          ../../src/hooks/dhcp/stat_cmds \
                          ../../src/hooks/dhcp/user_chk \
                          ../../src/lib/asiodns \
