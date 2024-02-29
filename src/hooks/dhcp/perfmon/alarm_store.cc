@@ -57,7 +57,7 @@ AlarmStore::checkDurationSample(DurationKeyPtr key, const Duration& sample,
     }
 
     // Nothing to alarm.
-    return(AlarmPtr());
+    return (AlarmPtr());
 }
 
 AlarmPtr
@@ -89,7 +89,7 @@ AlarmStore::addAlarm(DurationKeyPtr key, const Duration& low_water,
         isc_throw(BadValue, "AlarmStore::addAlarm failed: " << ex.what());
     }
 
-    return(addAlarm(alarm));
+    return (addAlarm(alarm));
 }
 
 AlarmPtr

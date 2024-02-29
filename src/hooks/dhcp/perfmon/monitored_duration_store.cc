@@ -74,7 +74,7 @@ MonitoredDurationStore::addDurationSample(DurationKeyPtr key, const Duration& sa
     }
 
     // Nothing to report.
-    return(MonitoredDurationPtr());
+    return (MonitoredDurationPtr());
 }
 
 MonitoredDurationPtr
