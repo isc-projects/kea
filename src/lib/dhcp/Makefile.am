@@ -110,6 +110,8 @@ libkea_dhcp___include_HEADERS = \
 	option.h \
 	option4_addrlst.h \
 	option4_client_fqdn.h \
+	option4_dnr.h \
+	option6_dnr.h \
 	option6_addrlst.h \
 	option6_auth.h \
 	option6_client_fqdn.h \
@@ -118,6 +120,7 @@ libkea_dhcp___include_HEADERS = \
 	option6_iaprefix.h \
 	option6_pdexclude.h \
 	option6_status_code.h \
+	option_classless_static_route.h \
 	option_custom.h \
 	option_data_types.h \
 	option_definition.h \
