@@ -89,8 +89,7 @@ AAAA::AAAA(const std::string& addrstr) {
 /// \param lexer A \c MasterLexer object parsing a master file for the
 /// RDATA to be created
 AAAA::AAAA(MasterLexer& lexer, const Name*,
-           MasterLoader::Options, MasterLoaderCallbacks&)
-{
+           MasterLoader::Options, MasterLoaderCallbacks&) {
     const MasterToken& token = lexer.getNextToken(MasterToken::STRING);
     convertToIPv6Addr(token.getStringRegion().beg, token.getStringRegion().len,
                       addr_);

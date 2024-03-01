@@ -99,8 +99,8 @@ public:
         complete_(false),
         seen_error_(false),
         warn_rfc1035_ttl_(true),
-        rr_count_(0)
-    {}
+        rr_count_(0) {
+    }
 
     /// \brief Wrapper around \c MasterLexer::pushSource() (file version)
     ///
@@ -147,11 +147,15 @@ public:
 
     /// \brief Return the total size of the input sources pushed so
     /// far. See \c MasterLexer::getTotalSourceSize().
-    size_t getSize() const { return (lexer_.getTotalSourceSize()); }
+    size_t getSize() const {
+        return (lexer_.getTotalSourceSize());
+    }
 
     /// \brief Return the line number being parsed in the pushed input
     /// sources. See \c MasterLexer::getPosition().
-    size_t getPosition() const { return (lexer_.getPosition()); }
+    size_t getPosition() const {
+        return (lexer_.getPosition());
+    }
 
 private:
     /// \brief Report an error using the callbacks that were supplied
@@ -159,8 +163,7 @@ private:
     /// throws \c MasterLoaderError exception if necessary, so the
     /// caller need not throw it.
     void reportError(const std::string& filename, size_t line,
-                     const std::string& reason)
-    {
+                     const std::string& reason) {
         seen_error_ = true;
         callbacks_.error(filename, line, reason);
         if (!many_errors_) {
@@ -634,8 +637,7 @@ genNibbles(int num, unsigned int width, bool uppercase) {
 
 std::string
 MasterLoader::MasterLoaderImpl::generateForIter(const std::string& str,
-                                                const int num)
-{
+                                                const int num) {
   std::string rstr;
 
   for (auto it = str.begin(); it != str.end();) {
@@ -1017,13 +1019,12 @@ MasterLoader::MasterLoader(const char* master_file,
                            const RRClass& zone_class,
                            const MasterLoaderCallbacks& callbacks,
                            const AddRRCallback& add_callback,
-                           Options options)
-{
+                           Options options) {
     if (!add_callback) {
         isc_throw(isc::InvalidParameter, "Empty add RR callback");
     }
-    impl_ = new MasterLoaderImpl(master_file, zone_origin,
-                                 zone_class, callbacks, add_callback, options);
+    impl_.reset(new MasterLoaderImpl(master_file, zone_origin,
+                                     zone_class, callbacks, add_callback, options));
 }
 
 MasterLoader::MasterLoader(std::istream& stream,
@@ -1031,20 +1032,18 @@ MasterLoader::MasterLoader(std::istream& stream,
                            const RRClass& zone_class,
                            const MasterLoaderCallbacks& callbacks,
                            const AddRRCallback& add_callback,
-                           Options options)
-{
+                           Options options) {
     if (!add_callback) {
         isc_throw(isc::InvalidParameter, "Empty add RR callback");
     }
-    unique_ptr<MasterLoaderImpl>
+    boost::shared_ptr<MasterLoaderImpl>
         impl(new MasterLoaderImpl("", zone_origin, zone_class,
                                   callbacks, add_callback, options));
     impl->pushStreamSource(stream);
-    impl_ = impl.release();
+    impl_ = impl;
 }
 
 MasterLoader::~MasterLoader() {
-    delete impl_;
 }
 
 bool

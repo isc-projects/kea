@@ -53,8 +53,8 @@ struct RRSIGImpl {
         covered_(covered), algorithm_(algorithm), labels_(labels),
         originalttl_(originalttl), timeexpire_(timeexpire),
         timeinception_(timeinception), tag_(tag), signer_(signer),
-        signature_(signature)
-    {}
+        signature_(signature) {
+    }
 
     const RRType covered_;
     uint8_t algorithm_;
@@ -68,7 +68,7 @@ struct RRSIGImpl {
 };
 
 // helper function for string and lexer constructors
-RRSIGImpl*
+boost::shared_ptr<RRSIGImpl>
 RRSIG::constructFromLexer(MasterLexer& lexer, const Name* origin) {
     const RRType covered(lexer.getNextToken(MasterToken::STRING).getString());
     const uint32_t algorithm =
@@ -115,9 +115,9 @@ RRSIG::constructFromLexer(MasterLexer& lexer, const Name* origin) {
         decodeBase64(signature_txt, signature);
     }
 
-    return (new RRSIGImpl(covered, algorithm, labels,
-                          originalttl, timeexpire, timeinception,
-                          static_cast<uint16_t>(tag), signer, signature));
+    return (boost::shared_ptr<RRSIGImpl>(new RRSIGImpl(covered, algorithm, labels,
+                                                       originalttl, timeexpire, timeinception,
+                                                       static_cast<uint16_t>(tag), signer, signature)));
 }
 
 /// \brief Constructor from string.
@@ -137,12 +137,11 @@ RRSIG::constructFromLexer(MasterLexer& lexer, const Name* origin) {
 /// \throw Others Exception from the Name constructor.
 /// \throw InvalidRdataText Other general syntax errors.
 RRSIG::RRSIG(const std::string& rrsig_str) :
-    impl_(NULL)
-{
+    impl_(NULL) {
     // We use unique_ptr here because if there is an exception in this
     // constructor, the destructor is not called and there could be a
     // leak of the RRSIGImpl that constructFromLexer() returns.
-    std::unique_ptr<RRSIGImpl> impl_ptr;
+    boost::shared_ptr<RRSIGImpl> impl_ptr;
 
     try {
         std::istringstream iss(rrsig_str);
@@ -160,7 +159,7 @@ RRSIG::RRSIG(const std::string& rrsig_str) :
                   rrsig_str << "': " << ex.what());
     }
 
-    impl_ = impl_ptr.release();
+    impl_ = impl_ptr;
 }
 
 /// \brief Constructor with a context of MasterLexer.
@@ -184,8 +183,7 @@ RRSIG::RRSIG(const std::string& rrsig_str) :
 /// it is non absolute.
 RRSIG::RRSIG(MasterLexer& lexer, const Name* origin,
              MasterLoader::Options, MasterLoaderCallbacks&) :
-    impl_(constructFromLexer(lexer, origin))
-{
+    impl_(constructFromLexer(lexer, origin)) {
 }
 
 RRSIG::RRSIG(InputBuffer& buffer, size_t rdata_len) {
@@ -213,14 +211,14 @@ RRSIG::RRSIG(InputBuffer& buffer, size_t rdata_len) {
     vector<uint8_t> signature(rdata_len);
     buffer.readData(&signature[0], rdata_len);
 
-    impl_ = new RRSIGImpl(covered, algorithm, labels,
-                          originalttl, timeexpire, timeinception, tag,
-                          signer, signature);
+    impl_.reset(new RRSIGImpl(covered, algorithm, labels,
+                              originalttl, timeexpire, timeinception, tag,
+                              signer, signature));
 }
 
 RRSIG::RRSIG(const RRSIG& source) :
-    Rdata(), impl_(new RRSIGImpl(*source.impl_))
-{}
+    Rdata(), impl_(new RRSIGImpl(*source.impl_)) {
+}
 
 RRSIG&
 RRSIG::operator=(const RRSIG& source) {
@@ -228,15 +226,12 @@ RRSIG::operator=(const RRSIG& source) {
         return (*this);
     }
 
-    RRSIGImpl* newimpl = new RRSIGImpl(*source.impl_);
-    delete impl_;
-    impl_ = newimpl;
+    impl_.reset(new RRSIGImpl(*source.impl_));
 
     return (*this);
 }
 
 RRSIG::~RRSIG() {
-    delete impl_;
 }
 
 string

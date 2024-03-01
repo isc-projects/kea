@@ -5,7 +5,9 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #ifndef RRCLASS_H
-#define RRCLASS_H 1
+#define RRCLASS_H
+
+#include <util/buffer.h>
 
 #include <stdint.h>
 
@@ -24,10 +26,6 @@
 #endif
 
 namespace isc {
-namespace util {
-class InputBuffer;
-class OutputBuffer;
-}
 
 namespace dns {
 
@@ -228,7 +226,9 @@ public:
     /// This method never throws an exception.
     ///
     /// \return An 16-bit integer code corresponding to the RRClass.
-    uint16_t getCode() const { return (classcode_); }
+    uint16_t getCode() const {
+        return (classcode_);
+    }
     //@}
 
     ///
@@ -243,10 +243,13 @@ public:
     ///
     /// \param other the \c RRClass object to compare against.
     /// \return true if the two RRClasses are equal; otherwise false.
-    bool equals(const RRClass& other) const
-    { return (classcode_ == other.classcode_); }
+    bool equals(const RRClass& other) const {
+        return (classcode_ == other.classcode_);
+    }
     /// \brief Same as \c equals().
-    bool operator==(const RRClass& other) const { return (equals(other)); }
+    bool operator==(const RRClass& other) const {
+        return (equals(other));
+    }
 
     /// \brief Return true iff two RRClasses are not equal.
     ///
@@ -254,10 +257,13 @@ public:
     ///
     /// \param other the \c RRClass object to compare against.
     /// \return true if the two RRClasses are not equal; otherwise false.
-    bool nequals(const RRClass& other) const
-    { return (classcode_ != other.classcode_); }
+    bool nequals(const RRClass& other) const {
+        return (classcode_ != other.classcode_);
+    }
     /// \brief Same as \c nequals().
-    bool operator!=(const RRClass& other) const { return (nequals(other)); } 
+    bool operator!=(const RRClass& other) const {
+        return (nequals(other));
+    }
 
     /// \brief Less-than comparison for RRClass against \c other
     ///
@@ -274,8 +280,9 @@ public:
     /// \param other the \c RRClass object to compare against.
     /// \return true if \c this RRClass is less than the \c other; otherwise
     /// false.
-    bool operator<(const RRClass& other) const
-    { return (classcode_ < other.classcode_); }
+    bool operator<(const RRClass& other) const {
+        return (classcode_ < other.classcode_);
+    }
 
     // BEGIN_WELL_KNOWN_CLASS_DECLARATIONS
     // END_WELL_KNOWN_CLASS_DECLARATIONS
@@ -306,7 +313,3 @@ operator<<(std::ostream& os, const RRClass& rrclass);
 }
 }
 #endif  // RRCLASS_H
-
-// Local Variables: 
-// mode: c++
-// End: 

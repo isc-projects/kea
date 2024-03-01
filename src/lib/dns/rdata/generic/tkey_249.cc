@@ -16,6 +16,7 @@
 #include <util/encode/encode.h>
 #include <util/time_utilities.h>
 
+#include <dns/tsigerror.h>
 #include <dns/messagerenderer.h>
 #include <dns/name.h>
 #include <dns/rdata.h>
@@ -50,8 +51,8 @@ struct TKEYImpl {
              uint16_t mode, uint16_t error, vector<uint8_t>& key,
              vector<uint8_t>& other_data) :
       algorithm_(algorithm), inception_(inception), expire_(expire),
-      mode_(mode), error_(error), key_(key), other_data_(other_data)
-    {}
+      mode_(mode), error_(error), key_(key), other_data_(other_data) {
+    }
 
     /// \brief Constructor from RDATA field parameters.
     ///
@@ -77,8 +78,8 @@ struct TKEYImpl {
                     vector<uint8_t>(static_cast<const uint8_t*>(other_data),
                                     static_cast<const uint8_t*>(other_data) +
                                     other_len) :
-                    vector<uint8_t>(other_len))
-    {}
+                    vector<uint8_t>(other_len)) {
+    }
 
     /// \brief Common part of toWire methods.
     /// \tparam Output \c OutputBuffer or \c AbstractMessageRenderer.
@@ -108,7 +109,7 @@ struct TKEYImpl {
 };
 
 // helper function for string and lexer constructors
-TKEYImpl*
+boost::shared_ptr<TKEYImpl>
 TKEY::constructFromLexer(MasterLexer& lexer, const Name* origin) {
     const Name& algorithm =
         createNameFromLexer(lexer, origin ? origin : &Name::ROOT_NAME());
@@ -203,8 +204,8 @@ TKEY::constructFromLexer(MasterLexer& lexer, const Name* origin) {
     // RFC2845 says Other Data is "empty unless Error == BADTIME".
     // However, we don't enforce that.
 
-    return (new TKEYImpl(algorithm, inception, expire, mode, error,
-                         key_data, other_data));
+    return (new boost::shared_ptr<TKEYImpl>(algorithm, inception, expire, mode, error,
+                                            key_data, other_data));
 }
 
 /// \brief Constructor from string.
@@ -263,7 +264,7 @@ TKEY::TKEY(const std::string& tkey_str) : impl_(0) {
     // We use unique_ptr here because if there is an exception in this
     // constructor, the destructor is not called and there could be a
     // leak of the TKEYImpl that constructFromLexer() returns.
-    std::unique_ptr<TKEYImpl> impl_ptr;
+    boost::shared_ptr<TKEYImpl> impl_ptr;
 
     try {
         std::istringstream ss(tkey_str);
@@ -282,7 +283,7 @@ TKEY::TKEY(const std::string& tkey_str) : impl_(0) {
                   << ex.what());
     }
 
-    impl_ = impl_ptr.release();
+    impl_ = impl_ptr;
 }
 
 /// \brief Constructor with a context of MasterLexer.
@@ -302,8 +303,7 @@ TKEY::TKEY(const std::string& tkey_str) : impl_(0) {
 /// RDATA to be created
 TKEY::TKEY(MasterLexer& lexer, const Name* origin,
            MasterLoader::Options, MasterLoaderCallbacks&) :
-    impl_(constructFromLexer(lexer, origin))
-{
+    impl_(constructFromLexer(lexer, origin)) {
 }
 
 /// \brief Constructor from wire-format data.
@@ -327,8 +327,7 @@ TKEY::TKEY(MasterLexer& lexer, const Name* origin,
 /// must check consistency between the length parameter and the actual
 /// RDATA length.
 TKEY::TKEY(InputBuffer& buffer, size_t) :
-    impl_(0)
-{
+    impl_(0) {
     Name algorithm(buffer);
 
     const uint32_t inception = buffer.readUint32();
@@ -351,15 +350,14 @@ TKEY::TKEY(InputBuffer& buffer, size_t) :
         buffer.readData(&other_data[0], other_len);
     }
 
-    impl_ = new TKEYImpl(algorithm, inception, expire, mode, error,
-                         key, other_data);
+    impl_.reset(new TKEYImpl(algorithm, inception, expire, mode, error,
+                             key, other_data));
 }
 
 TKEY::TKEY(const Name& algorithm, uint32_t inception, uint32_t expire,
            uint16_t mode, uint16_t error, uint16_t key_len,
            const void* key, uint16_t other_len, const void* other_data) :
-    impl_(0)
-{
+    impl_(0) {
     if ((key_len == 0 && key != 0) || (key_len > 0 && key == 0)) {
         isc_throw(InvalidParameter, "TKEY Key length and data inconsistent");
     }
@@ -368,8 +366,8 @@ TKEY::TKEY(const Name& algorithm, uint32_t inception, uint32_t expire,
         isc_throw(InvalidParameter,
                   "TKEY Other data length and data inconsistent");
     }
-    impl_ = new TKEYImpl(algorithm, inception, expire, mode, error,
-                         key_len, key, other_len, other_data);
+    impl_.reset(new TKEYImpl(algorithm, inception, expire, mode, error,
+                             key_len, key, other_len, other_data));
 }
 
 /// \brief The copy constructor.
@@ -377,8 +375,8 @@ TKEY::TKEY(const Name& algorithm, uint32_t inception, uint32_t expire,
 /// It internally allocates a resource, and if it fails a corresponding
 /// standard exception will be thrown.
 /// This constructor never throws an exception otherwise.
-TKEY::TKEY(const TKEY& source) : Rdata(), impl_(new TKEYImpl(*source.impl_))
-{}
+TKEY::TKEY(const TKEY& source) : Rdata(), impl_(new TKEYImpl(*source.impl_)) {
+}
 
 TKEY&
 TKEY::operator=(const TKEY& source) {
@@ -386,15 +384,12 @@ TKEY::operator=(const TKEY& source) {
         return (*this);
     }
 
-    TKEYImpl* newimpl = new TKEYImpl(*source.impl_);
-    delete impl_;
-    impl_ = newimpl;
+    impl_.reset(new TKEYImpl(*source.impl_));
 
     return (*this);
 }
 
 TKEY::~TKEY() {
-    delete impl_;
 }
 
 /// \brief Convert the \c TKEY to a string.

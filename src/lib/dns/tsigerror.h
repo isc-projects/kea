@@ -5,7 +5,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #ifndef TSIGERROR_H
-#define TSIGERROR_H 1
+#define TSIGERROR_H
 
 #include <ostream>
 #include <string>
@@ -70,7 +70,9 @@ public:
     /// \exception None
     ///
     /// \return The underlying code value corresponding to the \c TSIGError.
-    uint16_t getCode() const { return (code_); }
+    uint16_t getCode() const {
+        return (code_);
+    }
 
     /// \brief Return true iff two \c TSIGError objects are equal.
     ///
@@ -80,11 +82,14 @@ public:
     ///
     /// \param other the \c TSIGError object to compare against.
     /// \return true if the two TSIGError are equal; otherwise false.
-    bool equals(const TSIGError& other) const
-    { return (code_ == other.code_); }
+    bool equals(const TSIGError& other) const {
+        return (code_ == other.code_);
+    }
 
     /// \brief Same as \c equals().
-    bool operator==(const TSIGError& other) const { return (equals(other)); }
+    bool operator==(const TSIGError& other) const {
+        return (equals(other));
+    }
 
     /// \brief Return true iff two \c TSIGError objects are not equal.
     ///
@@ -93,11 +98,14 @@ public:
     /// \param other the \c TSIGError object to compare against.
     /// \return true if the two TSIGError objects are not equal;
     /// otherwise false.
-    bool nequals(const TSIGError& other) const
-    { return (code_ != other.code_); }
+    bool nequals(const TSIGError& other) const {
+        return (code_ != other.code_);
+    }
 
     /// \brief Same as \c nequals().
-    bool operator!=(const TSIGError& other) const { return (nequals(other)); }
+    bool operator!=(const TSIGError& other) const {
+        return (nequals(other));
+    }
 
     /// \brief Convert the \c TSIGError to a string.
     ///
@@ -368,7 +376,3 @@ std::ostream& operator<<(std::ostream& os, const TSIGError& tsig_error);
 }
 
 #endif  // TSIGERROR_H
-
-// Local Variables:
-// mode: c++
-// End:

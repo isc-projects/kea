@@ -12,7 +12,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #ifndef RRTYPE_H
-#define RRTYPE_H 1
+#define RRTYPE_H
 
 #include <stdint.h>
 
@@ -20,6 +20,7 @@
 #include <ostream>
 
 #include <dns/exceptions.h>
+#include <util/buffer.h>
 
 // Solaris x86 defines DS in <sys/regset.h>, which gets pulled in by Boost
 #if defined(__sun) && defined(DS)
@@ -27,10 +28,6 @@
 #endif
 
 namespace isc {
-namespace util {
-class InputBuffer;
-class OutputBuffer;
-}
 
 namespace dns {
 
@@ -208,7 +205,9 @@ public:
     /// This method never throws an exception.
     ///
     /// \return An 16-bit integer code corresponding to the RRType.
-    uint16_t getCode() const { return (typecode_); }
+    uint16_t getCode() const {
+        return (typecode_);
+    }
     //@}
 
     ///
@@ -223,10 +222,13 @@ public:
     ///
     /// \param other the \c RRType object to compare against.
     /// \return true if the two RRTypes are equal; otherwise false.
-    bool equals(const RRType& other) const
-    { return (typecode_ == other.typecode_); }
+    bool equals(const RRType& other) const {
+        return (typecode_ == other.typecode_);
+    }
     /// \brief Same as \c equals().
-    bool operator==(const RRType& other) const { return (equals(other)); }
+    bool operator==(const RRType& other) const {
+        return (equals(other));
+    }
 
     /// \brief Return true iff two RRTypes are not equal.
     ///
@@ -234,10 +236,13 @@ public:
     ///
     /// \param other the \c RRType object to compare against.
     /// \return true if the two RRTypes are not equal; otherwise false.
-    bool nequals(const RRType& other) const
-    { return (typecode_ != other.typecode_); }
+    bool nequals(const RRType& other) const {
+        return (typecode_ != other.typecode_);
+    }
     /// \brief Same as \c nequals().
-    bool operator!=(const RRType& other) const { return (nequals(other)); }
+    bool operator!=(const RRType& other) const {
+        return (nequals(other));
+    }
 
     /// \brief Less-than comparison for RRType against \c other
     ///
@@ -254,76 +259,22 @@ public:
     /// \param other the \c RRType object to compare against.
     /// \return true if \c this RRType is less than the \c other; otherwise
     /// false.
-    bool operator<(const RRType& other) const
-    { return (typecode_ < other.typecode_); }
+    bool operator<(const RRType& other) const {
+        return (typecode_ < other.typecode_);
+    }
     //@}
 
     // BEGIN_WELL_KNOWN_TYPE_DECLARATIONS
     static const RRType& TSIG();
-    static const RRType& A();
-    static const RRType& AFSDB();
-    static const RRType& CAA();
-    static const RRType& CNAME();
-    static const RRType& DLV();
-    static const RRType& DNAME();
-    static const RRType& DNSKEY();
-    static const RRType& DS();
-    static const RRType& HINFO();
-    static const RRType& MINFO();
-    static const RRType& MX();
-    static const RRType& NAPTR();
-    static const RRType& NS();
-    static const RRType& NSEC3();
-    static const RRType& NSEC3PARAM();
-    static const RRType& NSEC();
     static const RRType& OPT();
     static const RRType& PTR();
-    static const RRType& RP();
     static const RRType& RRSIG();
     static const RRType& SOA();
-    static const RRType& SPF();
-    static const RRType& SSHFP();
     static const RRType& TKEY();
-    static const RRType& TLSA();
-    static const RRType& TXT();
+    static const RRType& A();
     static const RRType& AAAA();
     static const RRType& DHCID();
-    static const RRType& SRV();
-    static const RRType& IXFR();
-    static const RRType& AXFR();
     static const RRType& ANY();
-    static const RRType& MD();
-    static const RRType& MF();
-    static const RRType& MB();
-    static const RRType& MG();
-    static const RRType& MR();
-    static const RRType& NXT();
-    static const RRType& A6();
-    static const RRType& MAILA();
-    static const RRType& Null();
-    static const RRType& WKS();
-    static const RRType& X25();
-    static const RRType& RT();
-    static const RRType& NSAP();
-    static const RRType& NSAP_PTR();
-    static const RRType& SIG();
-    static const RRType& ISDN();
-    static const RRType& KEY();
-    static const RRType& PX();
-    static const RRType& GPOS();
-    static const RRType& LOC();
-    static const RRType& KX();
-    static const RRType& CERT();
-    static const RRType& APL();
-    static const RRType& IPSECKEY();
-    static const RRType& HIP();
-    static const RRType& UNSPEC();
-    static const RRType& NID();
-    static const RRType& L32();
-    static const RRType& L64();
-    static const RRType& LP();
-    static const RRType& MAILB();
-    static const RRType& URI();
     // END_WELL_KNOWN_TYPE_DECLARATIONS
 
 private:
@@ -331,6 +282,7 @@ private:
 };
 
 // BEGIN_WELL_KNOWN_TYPE_DEFINITIONS
+
 inline const RRType&
 RRType::TSIG() {
     static RRType rrtype(250);
@@ -340,96 +292,6 @@ RRType::TSIG() {
 inline const RRType&
 RRType::A() {
     static RRType rrtype(1);
-    return (rrtype);
-}
-
-inline const RRType&
-RRType::AFSDB() {
-    static RRType rrtype(18);
-    return (rrtype);
-}
-
-inline const RRType&
-RRType::CAA() {
-    static RRType rrtype(257);
-    return (rrtype);
-}
-
-inline const RRType&
-RRType::CNAME() {
-    static RRType rrtype(5);
-    return (rrtype);
-}
-
-inline const RRType&
-RRType::DLV() {
-    static RRType rrtype(32769);
-    return (rrtype);
-}
-
-inline const RRType&
-RRType::DNAME() {
-    static RRType rrtype(39);
-    return (rrtype);
-}
-
-inline const RRType&
-RRType::DNSKEY() {
-    static RRType rrtype(48);
-    return (rrtype);
-}
-
-inline const RRType&
-RRType::DS() {
-    static RRType rrtype(43);
-    return (rrtype);
-}
-
-inline const RRType&
-RRType::HINFO() {
-    static RRType rrtype(13);
-    return (rrtype);
-}
-
-inline const RRType&
-RRType::MINFO() {
-    static RRType rrtype(14);
-    return (rrtype);
-}
-
-inline const RRType&
-RRType::MX() {
-    static RRType rrtype(15);
-    return (rrtype);
-}
-
-inline const RRType&
-RRType::NAPTR() {
-    static RRType rrtype(35);
-    return (rrtype);
-}
-
-inline const RRType&
-RRType::NS() {
-    static RRType rrtype(2);
-    return (rrtype);
-}
-
-inline const RRType&
-RRType::NSEC3() {
-    static RRType rrtype(50);
-    return (rrtype);
-}
-
-inline const RRType&
-RRType::NSEC3PARAM() {
-    static RRType rrtype(51);
-    return (rrtype);
-}
-
-inline const RRType&
-RRType::NSEC() {
-    static RRType rrtype(47);
     return (rrtype);
 }
 
@@ -446,12 +308,6 @@ RRType::PTR() {
 }
 
 inline const RRType&
-RRType::RP() {
-    static RRType rrtype(17);
-    return (rrtype);
-}
-
-inline const RRType&
 RRType::RRSIG() {
     static RRType rrtype(46);
     return (rrtype);
@@ -464,32 +320,8 @@ RRType::SOA() {
 }
 
 inline const RRType&
-RRType::SPF() {
-    static RRType rrtype(99);
-    return (rrtype);
-}
-
-inline const RRType&
-RRType::SSHFP() {
-    static RRType rrtype(44);
-    return (rrtype);
-}
-
-inline const RRType&
 RRType::TKEY() {
     static RRType rrtype(249);
-    return (rrtype);
-}
-
-inline const RRType&
-RRType::TLSA() {
-    static RRType rrtype(52);
-    return (rrtype);
-}
-
-inline const RRType&
-RRType::TXT() {
-    static RRType rrtype(16);
     return (rrtype);
 }
 
@@ -506,218 +338,8 @@ RRType::DHCID() {
 }
 
 inline const RRType&
-RRType::SRV() {
-    static RRType rrtype(33);
-    return (rrtype);
-}
-
-inline const RRType&
-RRType::IXFR() {
-    static RRType rrtype(251);
-    return (rrtype);
-}
-
-inline const RRType&
-RRType::AXFR() {
-    static RRType rrtype(252);
-    return (rrtype);
-}
-
-inline const RRType&
 RRType::ANY() {
     static RRType rrtype(255);
-    return (rrtype);
-}
-
-inline const RRType&
-RRType::MD() {
-    static RRType rrtype(3);
-    return (rrtype);
-}
-
-inline const RRType&
-RRType::MF() {
-    static RRType rrtype(4);
-    return (rrtype);
-}
-
-inline const RRType&
-RRType::MB() {
-    static RRType rrtype(7);
-    return (rrtype);
-}
-
-inline const RRType&
-RRType::MG() {
-    static RRType rrtype(8);
-    return (rrtype);
-}
-
-inline const RRType&
-RRType::MR() {
-    static RRType rrtype(9);
-    return (rrtype);
-}
-
-inline const RRType&
-RRType::NXT() {
-    static RRType rrtype(30);
-    return (rrtype);
-}
-
-inline const RRType&
-RRType::A6() {
-    static RRType rrtype(38);
-    return (rrtype);
-}
-
-inline const RRType&
-RRType::MAILA() {
-    static RRType rrtype(254);
-    return (rrtype);
-}
-
-inline const RRType&
-RRType::Null() {
-    static RRType rrtype(10);
-    return (rrtype);
-}
-
-inline const RRType&
-RRType::WKS() {
-    static RRType rrtype(11);
-    return (rrtype);
-}
-
-inline const RRType&
-RRType::X25() {
-    static RRType rrtype(19);
-    return (rrtype);
-}
-
-inline const RRType&
-RRType::RT() {
-    static RRType rrtype(21);
-    return (rrtype);
-}
-
-inline const RRType&
-RRType::NSAP() {
-    static RRType rrtype(22);
-    return (rrtype);
-}
-
-inline const RRType&
-RRType::NSAP_PTR() {
-    static RRType rrtype(23);
-    return (rrtype);
-}
-
-inline const RRType&
-RRType::SIG() {
-    static RRType rrtype(24);
-    return (rrtype);
-}
-
-inline const RRType&
-RRType::ISDN() {
-    static RRType rrtype(20);
-    return (rrtype);
-}
-
-inline const RRType&
-RRType::KEY() {
-    static RRType rrtype(25);
-    return (rrtype);
-}
-
-inline const RRType&
-RRType::PX() {
-    static RRType rrtype(26);
-    return (rrtype);
-}
-
-inline const RRType&
-RRType::GPOS() {
-    static RRType rrtype(27);
-    return (rrtype);
-}
-
-inline const RRType&
-RRType::LOC() {
-    static RRType rrtype(29);
-    return (rrtype);
-}
-
-inline const RRType&
-RRType::KX() {
-    static RRType rrtype(36);
-    return (rrtype);
-}
-
-inline const RRType&
-RRType::CERT() {
-    static RRType rrtype(37);
-    return (rrtype);
-}
-
-inline const RRType&
-RRType::APL() {
-    static RRType rrtype(42);
-    return (rrtype);
-}
-
-inline const RRType&
-RRType::IPSECKEY() {
-    static RRType rrtype(45);
-    return (rrtype);
-}
-
-inline const RRType&
-RRType::HIP() {
-    static RRType rrtype(55);
-    return (rrtype);
-}
-
-inline const RRType&
-RRType::UNSPEC() {
-    static RRType rrtype(103);
-    return (rrtype);
-}
-
-inline const RRType&
-RRType::NID() {
-    static RRType rrtype(104);
-    return (rrtype);
-}
-
-inline const RRType&
-RRType::L32() {
-    static RRType rrtype(105);
-    return (rrtype);
-}
-
-inline const RRType&
-RRType::L64() {
-    static RRType rrtype(106);
-    return (rrtype);
-}
-
-inline const RRType&
-RRType::LP() {
-    static RRType rrtype(107);
-    return (rrtype);
-}
-
-inline const RRType&
-RRType::MAILB() {
-    static RRType rrtype(253);
-    return (rrtype);
-}
-
-inline const RRType&
-RRType::URI() {
-    static RRType rrtype(256);
     return (rrtype);
 }
 
@@ -742,7 +364,3 @@ operator<<(std::ostream& os, const RRType& rrtype);
 }
 }
 #endif  // RRTYPE_H
-
-// Local Variables:
-// mode: c++
-// End:

@@ -100,8 +100,8 @@ DHCID::DHCID(InputBuffer& buffer, size_t rdata_len) {
 /// \brief The copy constructor.
 ///
 /// This trivial copy constructor never throws an exception.
-DHCID::DHCID(const DHCID& other) : Rdata(), digest_(other.digest_)
-{}
+DHCID::DHCID(const DHCID& other) : Rdata(), digest_(other.digest_) {
+}
 
 /// \brief Render the \c DHCID in the wire format.
 ///

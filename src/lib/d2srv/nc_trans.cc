@@ -10,6 +10,7 @@
 #include <d2srv/nc_trans.h>
 #include <dns/qid_gen.h>
 #include <dns/rdata.h>
+#include <dns/rdataclass.h>
 #include <hooks/hooks.h>
 #include <hooks/hooks_manager.h>
 
@@ -287,7 +288,7 @@ NameChangeTransaction::retryTransition(const int fail_to_state) {
     if (update_attempts_ < MAX_UPDATE_TRIES_PER_SERVER) {
         // Re-enter the current state with same server selected.
         transition(getCurrState(), SERVER_SELECTED_EVT);
-    } else  {
+    } else {
         // Transition to given fail_to_state state if we are out
         // of retries.
         transition(fail_to_state, SERVER_IO_ERROR_EVT);
@@ -571,7 +572,7 @@ NameChangeTransaction::getUpdateAttempts() const {
 
 const dns::RRType&
 NameChangeTransaction::getAddressRRType() const {
-    return (ncr_->isV4() ?  dns::RRType::A() : dns::RRType::AAAA());
+    return (ncr_->isV4() ? dns::RRType::A() : dns::RRType::AAAA());
 }
 
 } // namespace isc::d2

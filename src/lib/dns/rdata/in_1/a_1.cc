@@ -113,8 +113,7 @@ A::A(const std::string& addrstr) {
 /// \param lexer A \c MasterLexer object parsing a master file for the
 /// RDATA to be created
 A::A(MasterLexer& lexer, const Name*,
-     MasterLoader::Options, MasterLoaderCallbacks&)
-{
+     MasterLoader::Options, MasterLoaderCallbacks&) {
     const MasterToken& token = lexer.getNextToken(MasterToken::STRING);
     convertToIPv4Addr(token.getStringRegion().beg, token.getStringRegion().len,
                       &addr_);
@@ -136,8 +135,8 @@ A::A(InputBuffer& buffer, size_t rdata_len) {
 }
 
 /// \brief Copy constructor.
-A::A(const A& other) : Rdata(), addr_(other.addr_)
-{}
+A::A(const A& other) : Rdata(), addr_(other.addr_) {
+}
 
 void
 A::toWire(OutputBuffer& buffer) const {

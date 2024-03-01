@@ -5,7 +5,9 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #ifndef EDNS_H
-#define EDNS_H 1
+#define EDNS_H
+
+#include <util/buffer.h>
 
 #include <stdint.h>
 
@@ -16,10 +18,6 @@
 #include <dns/rdata.h>
 
 namespace isc {
-namespace util {
-class OutputBuffer;
-}
-
 namespace dns {
 
 class EDNS;
@@ -431,7 +429,3 @@ std::ostream& operator<<(std::ostream& os, const EDNS& edns);
 }
 }
 #endif  // EDNS_H
-
-// Local Variables: 
-// mode: c++
-// End: 

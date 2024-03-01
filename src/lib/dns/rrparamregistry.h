@@ -533,13 +533,9 @@ public:
     //@}
 
 private:
-    RRParamRegistryImpl* impl_;
+    boost::shared_ptr<RRParamRegistryImpl> impl_;
 };
 
 }
 }
 #endif  // RRPARAMREGISTRY_H
-
-// Local Variables:
-// mode: c++
-// End:

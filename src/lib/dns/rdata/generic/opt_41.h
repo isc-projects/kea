@@ -78,7 +78,7 @@ public:
     const std::vector<PseudoRR>& getPseudoRRs() const;
 
 private:
-    OPTImpl* impl_;
+    boost::shared_ptr<OPTImpl> impl_;
 };
 
 // END_RDATA_NAMESPACE

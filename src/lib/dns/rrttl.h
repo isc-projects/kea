@@ -5,20 +5,16 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #ifndef RRTTL_H
-#define RRTTL_H 1
+#define RRTTL_H
 
 #include <dns/exceptions.h>
+#include <util/buffer.h>
 
 #include <boost/optional.hpp>
 
 #include <stdint.h>
 
 namespace isc {
-namespace util {
-class InputBuffer;
-class OutputBuffer;
-}
-
 namespace dns {
 
 // forward declarations
@@ -65,7 +61,8 @@ public:
     /// This constructor never throws an exception.
     ///
     /// \param ttlval An 32-bit integer of the RRTTL.
-    explicit RRTTL(uint32_t ttlval) : ttlval_(ttlval) {}
+    explicit RRTTL(uint32_t ttlval) : ttlval_(ttlval) {
+    }
 
     /// Constructor from a string.
     ///
@@ -173,7 +170,9 @@ public:
     /// This method never throws an exception.
     ///
     /// \return An 32-bit integer corresponding to the RRTTL.
-    uint32_t getValue() const { return (ttlval_); }
+    uint32_t getValue() const {
+        return (ttlval_);
+    }
     //@}
 
     ///
@@ -189,21 +188,25 @@ public:
     /// This method never throws an exception.
     ///
     /// \param other the \c RRTTL object to compare against.
-    bool equals(const RRTTL& other) const
-    { return (ttlval_ == other.ttlval_); }
+    bool equals(const RRTTL& other) const {
+        return (ttlval_ == other.ttlval_);
+    }
     /// \brief Same as \c equals().
-    bool operator==(const RRTTL& other) const
-    { return (ttlval_ == other.ttlval_); }
+    bool operator==(const RRTTL& other) const {
+        return (ttlval_ == other.ttlval_);
+    }
     /// \brief Return true iff two RRTTLs are not equal.
     ///
     /// This method never throws an exception.
     ///
     /// \param other the \c RRTTL object to compare against.
-    bool nequals(const RRTTL& other) const
-    { return (ttlval_ != other.ttlval_); }
+    bool nequals(const RRTTL& other) const {
+        return (ttlval_ != other.ttlval_);
+    }
     /// \brief Same as \c nequals().
-    bool operator!=(const RRTTL& other) const
-    { return (ttlval_ != other.ttlval_); }
+    bool operator!=(const RRTTL& other) const {
+        return (ttlval_ != other.ttlval_);
+    }
     /// \brief Less-than or equal comparison for RRTTL against \c other.
     ///
     /// This method never throws an exception.
@@ -211,12 +214,14 @@ public:
     /// \param other the \c RRTTL object to compare against.
     /// \return true if \c this RRTTL is less than or equal to the \c other;
     /// otherwise false.
-    bool leq(const RRTTL& other) const
-    { return (ttlval_ <= other.ttlval_); }
+    bool leq(const RRTTL& other) const {
+        return (ttlval_ <= other.ttlval_);
+    }
 
     /// Same as \c leq()
-    bool operator<=(const RRTTL& other) const
-    { return (ttlval_ <= other.ttlval_); }
+    bool operator<=(const RRTTL& other) const {
+        return (ttlval_ <= other.ttlval_);
+    }
 
     /// \brief Greater-than or equal comparison for RRTTL against \c other.
     ///
@@ -225,12 +230,14 @@ public:
     /// \param other the \c RRTTL object to compare against.
     /// \return true if \c this RRTTL is greater than or equal to the \c other;
     /// otherwise false.
-    bool geq(const RRTTL& other) const
-    { return (ttlval_ >= other.ttlval_); }
+    bool geq(const RRTTL& other) const {
+        return (ttlval_ >= other.ttlval_);
+    }
 
     /// Same as \c geq()
-    bool operator>=(const RRTTL& other) const
-    { return (ttlval_ >= other.ttlval_); }
+    bool operator>=(const RRTTL& other) const {
+        return (ttlval_ >= other.ttlval_);
+    }
 
     /// \brief Less-than comparison for RRTTL against \c other.
     ///
@@ -239,12 +246,14 @@ public:
     /// \param other the \c RRTTL object to compare against.
     /// \return true if \c this RRTTL is less than the \c other;
     /// otherwise false.
-    bool lthan(const RRTTL& other) const
-    { return (ttlval_ < other.ttlval_); }
+    bool lthan(const RRTTL& other) const {
+        return (ttlval_ < other.ttlval_);
+    }
 
     /// Same as \c lthan()
-    bool operator<(const RRTTL& other) const
-    { return (ttlval_ < other.ttlval_); }
+    bool operator<(const RRTTL& other) const {
+        return (ttlval_ < other.ttlval_);
+    }
 
     /// \brief Greater-than comparison for RRTTL against \c other.
     ///
@@ -253,12 +262,14 @@ public:
     /// \param other the \c RRTTL object to compare against.
     /// \return true if \c this RRTTL is greater than the \c other;
     /// otherwise false.
-    bool gthan(const RRTTL& other) const
-    { return (ttlval_ > other.ttlval_); }
+    bool gthan(const RRTTL& other) const {
+        return (ttlval_ > other.ttlval_);
+    }
 
     /// Same as \c gthan()
-    bool operator>(const RRTTL& other) const
-    { return (ttlval_ > other.ttlval_); }
+    bool operator>(const RRTTL& other) const {
+        return (ttlval_ > other.ttlval_);
+    }
     //@}
 
     ///
@@ -300,7 +311,3 @@ operator<<(std::ostream& os, const RRTTL& rrttl);
 }
 }
 #endif  // RRTTL_H
-
-// Local Variables: 
-// mode: c++
-// End: 

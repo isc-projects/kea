@@ -38,8 +38,8 @@ namespace {     // hide internal-only names from the public namespaces
 /// the buffer.
 struct OffsetItem {
     OffsetItem(size_t hash, size_t pos, size_t len) :
-        hash_(hash), pos_(pos), len_(len)
-    {}
+        hash_(hash), pos_(pos), len_(len) {
+    }
 
     /// The hash value for the stored name calculated by LabelSequence.getHash.
     /// This will help make name comparison in \c NameCompare more efficient.
@@ -71,8 +71,8 @@ struct NameCompare {
     /// \param hash The hash value for the name.
     NameCompare(const OutputBuffer& buffer, InputBuffer& name_buf,
                 size_t hash) :
-        buffer_(&buffer), name_buf_(&name_buf), hash_(hash)
-    {}
+        buffer_(&buffer), name_buf_(&name_buf), hash_(hash) {
+    }
 
     bool operator()(const OffsetItem& item) const {
         // Trivial inequality check.  If either the hash or the total length
@@ -112,8 +112,7 @@ struct NameCompare {
 
 private:
     static uint16_t nextPosition(const OutputBuffer& buffer,
-                                 uint16_t pos, uint16_t& llen)
-    {
+                                 uint16_t pos, uint16_t& llen) {
         if (llen == 0) {
             size_t i = 0;
 
@@ -164,8 +163,7 @@ struct MessageRenderer::MessageRendererImpl {
     /// \brief Constructor
     MessageRendererImpl() :
         msglength_limit_(512), truncated_(false),
-        compress_mode_(MessageRenderer::CASE_INSENSITIVE)
-    {
+        compress_mode_(MessageRenderer::CASE_INSENSITIVE) {
         // Reserve some spaces for hash table items.
         for (size_t i = 0; i < BUCKETS; ++i) {
             table_[i].reserve(RESERVED_ITEMS);
@@ -173,8 +171,7 @@ struct MessageRenderer::MessageRendererImpl {
     }
 
     uint16_t findOffset(const OutputBuffer& buffer, InputBuffer& name_buf,
-                        size_t hash, bool case_sensitive) const
-    {
+                        size_t hash, bool case_sensitive) const {
         // Find a matching entry, if any.  We use some heuristics here: often
         // the same name appears consecutively (like repeating the same owner
         // name for a single RRset), so in case there's a collision in the
@@ -224,7 +221,6 @@ MessageRenderer::MessageRenderer() :
 }
 
 MessageRenderer::~MessageRenderer() {
-    delete impl_;
 }
 
 void
@@ -363,8 +359,7 @@ MessageRenderer::writeName(const Name& name, const bool compress) {
 }
 
 AbstractMessageRenderer::AbstractMessageRenderer() :
-    local_buffer_(0), buffer_(&local_buffer_)
-{
+    local_buffer_(0), buffer_(&local_buffer_) {
 }
 
 void

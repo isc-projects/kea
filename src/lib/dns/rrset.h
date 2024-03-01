@@ -5,7 +5,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #ifndef RRSET_H
-#define RRSET_H 1
+#define RRSET_H
 
 #include <iostream>
 #include <string>
@@ -836,7 +836,7 @@ public:
     }
     //@}
 private:
-    BasicRRsetImpl* impl_;
+    boost::shared_ptr<BasicRRsetImpl> impl_;
 };
 
 /// \brief The \c RRset class is a concrete derived class of
@@ -953,6 +953,3 @@ std::ostream& operator<<(std::ostream& os, const AbstractRRset& rrset);
 } // end of namespace isc
 #endif  // RRSET_H
 
-// Local Variables: 
-// mode: c++
-// End: 

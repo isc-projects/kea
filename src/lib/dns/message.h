@@ -5,7 +5,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #ifndef MESSAGE_H
-#define MESSAGE_H 1
+#define MESSAGE_H
 
 #include <stdint.h>
 
@@ -14,16 +14,13 @@
 #include <ostream>
 
 #include <dns/exceptions.h>
+#include <util/buffer.h>
 
 #include <dns/edns.h>
 #include <dns/question.h>
 #include <dns/rrset.h>
 
 namespace isc {
-namespace util {
-class InputBuffer;
-}
-
 namespace dns {
 class TSIGContext;
 class TSIGRecord;
@@ -643,8 +640,7 @@ public:
     /// \param buffer A input buffer object that stores the wire
     /// data. This method reads from position 0 in the passed buffer.
     /// \param options Parse options
-    void fromWire(isc::util::InputBuffer& buffer, ParseOptions options
-        = PARSE_DEFAULT);
+    void fromWire(isc::util::InputBuffer& buffer, ParseOptions options = PARSE_DEFAULT);
 
     ///
     /// \name Protocol constants

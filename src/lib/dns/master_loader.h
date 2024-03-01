@@ -7,9 +7,11 @@
 #ifndef MASTER_LOADER_H
 #define MASTER_LOADER_H
 
+#include <dns/exceptions.h>
 #include <dns/master_loader_callbacks.h>
 
 #include <boost/noncopyable.hpp>
+#include <boost/shared_ptr.hpp>
 
 namespace isc {
 namespace dns {
@@ -174,14 +176,10 @@ public:
 
 private:
     class MasterLoaderImpl;
-    MasterLoaderImpl* impl_;
+    boost::shared_ptr<MasterLoaderImpl> impl_;
 };
 
 } // end namespace dns
 } // end namespace isc
 
 #endif // MASTER_LOADER_H
-
-// Local Variables:
-// mode: c++
-// End:

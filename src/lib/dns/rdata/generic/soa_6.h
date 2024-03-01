@@ -10,6 +10,7 @@
 
 #include <dns/name.h>
 #include <dns/rdata.h>
+#include <dns/rrttl.h>
 #include <dns/serial.h>
 
 // BEGIN_ISC_NAMESPACE
@@ -45,7 +46,3 @@ private:
 // END_RDATA_NAMESPACE
 // END_ISC_NAMESPACE
 // END_HEADER_GUARD
-
-// Local Variables: 
-// mode: c++
-// End: 

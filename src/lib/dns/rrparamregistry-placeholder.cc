@@ -155,25 +155,21 @@ typedef map<RRType, RdataFactoryPtr> GenericRdataFactoryMap;
 template <typename T>
 class RdataFactory : public AbstractRdataFactory {
 public:
-    virtual RdataPtr create(const string& rdata_str) const
-    {
+    virtual RdataPtr create(const string& rdata_str) const {
         return (RdataPtr(new T(rdata_str)));
     }
 
-    virtual RdataPtr create(InputBuffer& buffer, size_t rdata_len) const
-    {
+    virtual RdataPtr create(InputBuffer& buffer, size_t rdata_len) const {
         return (RdataPtr(new T(buffer, rdata_len)));
     }
 
-    virtual RdataPtr create(const Rdata& source) const
-    {
+    virtual RdataPtr create(const Rdata& source) const {
         return (RdataPtr(new T(dynamic_cast<const T&>(source))));
     }
 
     virtual RdataPtr create(MasterLexer& lexer, const Name* origin,
                             MasterLoader::Options options,
-                            MasterLoaderCallbacks& callbacks) const
-    {
+                            MasterLoaderCallbacks& callbacks) const {
         return (RdataPtr(new T(lexer, origin, options, callbacks)));
     }
 };
@@ -198,21 +194,16 @@ struct RRParamRegistryImpl {
     GenericRdataFactoryMap genericrdata_factories;
 };
 
-RRParamRegistry::RRParamRegistry() {
-    impl_ = new RRParamRegistryImpl;
-
-    // set up parameters for well-known RRs
+RRParamRegistry::RRParamRegistry() : impl_(new RRParamRegistryImpl()) {    // set up parameters for well-known RRs
     try {
         // BEGIN_WELL_KNOWN_PARAMS
         // END_WELL_KNOWN_PARAMS
     } catch (...) {
-        delete impl_;
         throw;
     }
 }
 
 RRParamRegistry::~RRParamRegistry() {
-    delete impl_;
 }
 
 RRParamRegistry&
@@ -274,8 +265,7 @@ RRParamRegistry::add(const std::string& typecode_string, uint16_t typecode,
 
 bool
 RRParamRegistry::removeRdataFactory(const RRType& rrtype,
-                                    const RRClass& rrclass)
-{
+                                    const RRClass& rrclass) {
     RdataFactoryMap::iterator found =
         impl_->rdata_factories.find(RRTypeClass(rrtype, rrclass));
     if (found != impl_->rdata_factories.end()) {
@@ -330,8 +320,7 @@ caseStringEqual(const string& s1, const string& s2, size_t n) {
 ///     InvalidRRClass
 template <typename PT, typename MC, typename MS, typename ET>
 inline bool
-addParam(const string& code_string, uint16_t code, MC& codemap, MS& stringmap)
-{
+addParam(const string& code_string, uint16_t code, MC& codemap, MS& stringmap) {
     // Duplicate type check
     typename MC::const_iterator found = codemap.find(code);
     if (found != codemap.end()) {
@@ -436,8 +425,7 @@ RRParamRegistry::removeType(uint16_t code) {
 
 bool
 RRParamRegistry::textToTypeCode(const string& type_string,
-                                uint16_t& type_code) const
-{
+                                uint16_t& type_code) const {
     return (textToCode<RRTypeParam, StrRRTypeMap>
             (type_string, impl_->str2typemap, type_code));
 }
@@ -462,8 +450,7 @@ RRParamRegistry::removeClass(uint16_t code) {
 
 bool
 RRParamRegistry::textToClassCode(const string& class_string,
-                                 uint16_t& class_code) const
-{
+                                 uint16_t& class_code) const {
     return (textToCode<RRClassParam, StrRRClassMap>
             (class_string, impl_->str2classmap, class_code));
 }
@@ -477,8 +464,7 @@ RRParamRegistry::codeToClassText(uint16_t code) const {
 namespace {
 inline const AbstractRdataFactory*
 findRdataFactory(RRParamRegistryImpl* reg_impl,
-                 const RRType& rrtype, const RRClass& rrclass)
-{
+                 const RRType& rrtype, const RRClass& rrclass) {
     RdataFactoryMap::const_iterator found;
     found = reg_impl->rdata_factories.find(RRTypeClass(rrtype, rrclass));
     if (found != reg_impl->rdata_factories.end()) {
@@ -497,8 +483,7 @@ findRdataFactory(RRParamRegistryImpl* reg_impl,
 
 RdataPtr
 RRParamRegistry::createRdata(const RRType& rrtype, const RRClass& rrclass,
-                             const std::string& rdata_string)
-{
+                             const std::string& rdata_string) {
     // If the text indicates that it's rdata of an "unknown" type (beginning
     // with '\# n'), parse it that way. (TBD)
 
@@ -513,8 +498,7 @@ RRParamRegistry::createRdata(const RRType& rrtype, const RRClass& rrclass,
 
 RdataPtr
 RRParamRegistry::createRdata(const RRType& rrtype, const RRClass& rrclass,
-                             InputBuffer& buffer, size_t rdata_len)
-{
+                             InputBuffer& buffer, size_t rdata_len) {
     const AbstractRdataFactory* factory =
         findRdataFactory(impl_, rrtype, rrclass);
     if (factory != NULL) {
@@ -526,8 +510,7 @@ RRParamRegistry::createRdata(const RRType& rrtype, const RRClass& rrclass,
 
 RdataPtr
 RRParamRegistry::createRdata(const RRType& rrtype, const RRClass& rrclass,
-                             const Rdata& source)
-{
+                             const Rdata& source) {
     const AbstractRdataFactory* factory =
         findRdataFactory(impl_, rrtype, rrclass);
     if (factory != NULL) {
@@ -542,8 +525,7 @@ RdataPtr
 RRParamRegistry::createRdata(const RRType& rrtype, const RRClass& rrclass,
                              MasterLexer& lexer, const Name* name,
                              MasterLoader::Options options,
-                             MasterLoaderCallbacks& callbacks)
-{
+                             MasterLoaderCallbacks& callbacks) {
     const AbstractRdataFactory* factory =
         findRdataFactory(impl_, rrtype, rrclass);
     if (factory != NULL) {

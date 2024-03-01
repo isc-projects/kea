@@ -5,9 +5,8 @@
 ///////////////
 ///////////////
 
-
 #ifndef DNS_RDATACLASS_H
-#define DNS_RDATACLASS_H 1
+#define DNS_RDATACLASS_H
 
 #include <dns/master_loader.h>
 
@@ -25,22 +24,18 @@ class MasterLoaderCallbacks;
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #ifndef ANY_TSIG_250_H
-#define ANY_TSIG_250_H 1
+#define ANY_TSIG_250_H
 
 #include <stdint.h>
 
 #include <string>
 
+#include <util/buffer.h>
 #include <dns/name.h>
 #include <dns/rdata.h>
+#include <boost/shared_ptr.hpp>
 
 namespace isc {
-namespace util {
-
-class InputBuffer;
-class OutputBuffer;
-}
-
 namespace dns {
 
 // BEGIN_COMMON_DECLARATIONS
@@ -178,9 +173,9 @@ public:
     /// This method never throws an exception.
     const void* getOtherData() const;
 private:
-    TSIGImpl* constructFromLexer(MasterLexer& lexer, const Name* origin);
+    boost::shared_ptr<TSIGImpl> constructFromLexer(MasterLexer& lexer, const Name* origin);
 
-    TSIGImpl* impl_;
+    boost::shared_ptr<TSIGImpl> impl_;
 };
 
 } // end of namespace "any"
@@ -195,1279 +190,12 @@ private:
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#ifndef CH_A_1_H
-#define CH_A_1_H 1
-
-#include <string>
-
-#include <dns/rdata.h>
-
-namespace isc {
-namespace util {
-
-class InputBuffer;
-class OutputBuffer;
-}
-
-namespace dns {
-
-// BEGIN_COMMON_DECLARATIONS
-
-class AbstractMessageRenderer;
-
-// END_COMMON_DECLARATIONS
-
-namespace rdata {
-namespace ch {
-
-class A : public Rdata {
-public:
-    // BEGIN_COMMON_MEMBERS
-
-    explicit A(const std::string& type_str);
-    A(isc::util::InputBuffer& buffer, size_t rdata_len);
-    A(const A& other);
-    A(
-        MasterLexer& lexer, const Name* name,
-        MasterLoader::Options options, MasterLoaderCallbacks& callbacks);
-    virtual std::string toText() const;
-    virtual void toWire(isc::util::OutputBuffer& buffer) const;
-    virtual void toWire(AbstractMessageRenderer& renderer) const;
-    virtual int compare(const Rdata& other) const;
-
-    // END_COMMON_MEMBERS
-};
-
-} // end of namespace "ch"
-} // end of namespace "rdata"
-} // end of namespace "dns"
-} // end of namespace "isc"
-#endif // CH_A_1_H
-
-// Copyright (C) 2011-2021 Internet Systems Consortium, Inc. ("ISC")
-//
-// This Source Code Form is subject to the terms of the Mozilla Public
-// License, v. 2.0. If a copy of the MPL was not distributed with this
-// file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
-#ifndef GENERIC_AFSDB_18_H
-#define GENERIC_AFSDB_18_H 1
-
-#include <stdint.h>
-
-#include <string>
-
-#include <dns/name.h>
-#include <dns/rdata.h>
-
-namespace isc {
-namespace util {
-
-class InputBuffer;
-class OutputBuffer;
-}
-
-namespace dns {
-
-// BEGIN_COMMON_DECLARATIONS
-
-class AbstractMessageRenderer;
-
-// END_COMMON_DECLARATIONS
-
-namespace rdata {
-namespace generic {
-
-/// \brief \c rdata::AFSDB class represents the AFSDB RDATA as defined %in
-/// RFC1183.
-///
-/// This class implements the basic interfaces inherited from the abstract
-/// \c rdata::Rdata class, and provides trivial accessors specific to the
-/// AFSDB RDATA.
-class AFSDB : public Rdata {
-public:
-    // BEGIN_COMMON_MEMBERS
-
-    explicit AFSDB(const std::string& type_str);
-    AFSDB(isc::util::InputBuffer& buffer, size_t rdata_len);
-    AFSDB(const AFSDB& other);
-    AFSDB(
-        MasterLexer& lexer, const Name* name,
-        MasterLoader::Options options, MasterLoaderCallbacks& callbacks);
-    virtual std::string toText() const;
-    virtual void toWire(isc::util::OutputBuffer& buffer) const;
-    virtual void toWire(AbstractMessageRenderer& renderer) const;
-    virtual int compare(const Rdata& other) const;
-
-    // END_COMMON_MEMBERS
-
-    /// \brief Assignment operator.
-    ///
-    /// This method never throws an exception.
-    AFSDB& operator=(const AFSDB& source);
-    ///
-    /// Specialized methods
-    ///
-
-    /// \brief Return the value of the server field.
-    ///
-    /// \return A reference to a \c Name class object corresponding to the
-    /// internal server name.
-    ///
-    /// This method never throws an exception.
-    const Name& getServer() const;
-
-    /// \brief Return the value of the subtype field.
-    ///
-    /// This method never throws an exception.
-    uint16_t getSubtype() const;
-
-private:
-    void createFromLexer(MasterLexer& lexer, const Name* origin);
-
-    uint16_t subtype_;
-    Name server_;
-};
-
-} // end of namespace "generic"
-} // end of namespace "rdata"
-} // end of namespace "dns"
-} // end of namespace "isc"
-#endif // GENERIC_AFSDB_18_H
-
-// Copyright (C) 2014-2021 Internet Systems Consortium, Inc. ("ISC")
-//
-// This Source Code Form is subject to the terms of the Mozilla Public
-// License, v. 2.0. If a copy of the MPL was not distributed with this
-// file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
-#ifndef GENERIC_CAA_257_H
-#define GENERIC_CAA_257_H 1
-
-#include <stdint.h>
-
-#include <dns/name.h>
-#include <dns/rdata.h>
-
-#include <string>
-#include <vector>
-
-namespace isc {
-namespace util {
-
-class InputBuffer;
-class OutputBuffer;
-}
-
-namespace dns {
-
-// BEGIN_COMMON_DECLARATIONS
-
-class AbstractMessageRenderer;
-
-// END_COMMON_DECLARATIONS
-
-namespace rdata {
-namespace generic {
-
-struct CAAImpl;
-
-class CAA : public Rdata {
-public:
-    // BEGIN_COMMON_MEMBERS
-
-    explicit CAA(const std::string& type_str);
-    CAA(isc::util::InputBuffer& buffer, size_t rdata_len);
-    CAA(const CAA& other);
-    CAA(
-        MasterLexer& lexer, const Name* name,
-        MasterLoader::Options options, MasterLoaderCallbacks& callbacks);
-    virtual std::string toText() const;
-    virtual void toWire(isc::util::OutputBuffer& buffer) const;
-    virtual void toWire(AbstractMessageRenderer& renderer) const;
-    virtual int compare(const Rdata& other) const;
-
-    // END_COMMON_MEMBERS
-
-    CAA(uint8_t flags, const std::string& tag, const std::string& value);
-    CAA& operator=(const CAA& source);
-    ~CAA();
-
-    ///
-    /// Specialized methods
-    ///
-
-    /// \brief Return the Flags field of the CAA RDATA.
-    uint8_t getFlags() const;
-
-    /// \brief Return the Tag field of the CAA RDATA.
-    const std::string& getTag() const;
-
-    /// \brief Return the Value field of the CAA RDATA.
-    ///
-    /// Note: The const reference which is returned is valid only during
-    /// the lifetime of this \c generic::CAA object. It should not be
-    /// used afterwards.
-    const std::vector<uint8_t>& getValue() const;
-
-private:
-    CAAImpl* constructFromLexer(MasterLexer& lexer);
-
-    CAAImpl* impl_;
-};
-
-} // end of namespace "generic"
-} // end of namespace "rdata"
-} // end of namespace "dns"
-} // end of namespace "isc"
-#endif // GENERIC_CAA_257_H
-
-// Copyright (C) 2010-2021 Internet Systems Consortium, Inc. ("ISC")
-//
-// This Source Code Form is subject to the terms of the Mozilla Public
-// License, v. 2.0. If a copy of the MPL was not distributed with this
-// file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
-#ifndef GENERIC_CNAME_5_H
-#define GENERIC_CNAME_5_H 1
-
-#include <string>
-
-#include <dns/name.h>
-#include <dns/rdata.h>
-
-namespace isc {
-namespace util {
-
-class InputBuffer;
-class OutputBuffer;
-}
-
-namespace dns {
-
-// BEGIN_COMMON_DECLARATIONS
-
-class AbstractMessageRenderer;
-
-// END_COMMON_DECLARATIONS
-
-namespace rdata {
-namespace generic {
-
-class CNAME : public Rdata {
-public:
-    // BEGIN_COMMON_MEMBERS
-
-    explicit CNAME(const std::string& type_str);
-    CNAME(isc::util::InputBuffer& buffer, size_t rdata_len);
-    CNAME(const CNAME& other);
-    CNAME(
-        MasterLexer& lexer, const Name* name,
-        MasterLoader::Options options, MasterLoaderCallbacks& callbacks);
-    virtual std::string toText() const;
-    virtual void toWire(isc::util::OutputBuffer& buffer) const;
-    virtual void toWire(AbstractMessageRenderer& renderer) const;
-    virtual int compare(const Rdata& other) const;
-
-    // END_COMMON_MEMBERS
-
-    // CNAME specific methods
-    CNAME(const Name& cname);
-    const Name& getCname() const;
-private:
-    Name cname_;
-};
-
-} // end of namespace "generic"
-} // end of namespace "rdata"
-} // end of namespace "dns"
-} // end of namespace "isc"
-#endif // GENERIC_CNAME_5_H
-
-// Copyright (C) 2011-2021 Internet Systems Consortium, Inc. ("ISC")
-//
-// This Source Code Form is subject to the terms of the Mozilla Public
-// License, v. 2.0. If a copy of the MPL was not distributed with this
-// file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
-#ifndef GENERIC_DLV_32769_H
-#define GENERIC_DLV_32769_H 1
-
-#include <stdint.h>
-
-#include <string>
-
-#include <dns/name.h>
-#include <dns/rrtype.h>
-#include <dns/rrttl.h>
-#include <dns/rdata.h>
-
-namespace isc {
-namespace util {
-
-class InputBuffer;
-class OutputBuffer;
-}
-
-namespace dns {
-
-// BEGIN_COMMON_DECLARATIONS
-
-class AbstractMessageRenderer;
-
-// END_COMMON_DECLARATIONS
-
-namespace rdata {
-namespace generic {
-
-namespace detail {
-template <class Type, uint16_t typeCode> class DSLikeImpl;
-}
-
-/// \brief \c rdata::generic::DLV class represents the DLV RDATA as defined in
-/// RFC4431.
-///
-/// This class implements the basic interfaces inherited from the abstract
-/// \c rdata::Rdata class, and provides trivial accessors specific to the
-/// DLV RDATA.
-class DLV : public Rdata {
-public:
-    // BEGIN_COMMON_MEMBERS
-
-    explicit DLV(const std::string& type_str);
-    DLV(isc::util::InputBuffer& buffer, size_t rdata_len);
-    DLV(const DLV& other);
-    DLV(
-        MasterLexer& lexer, const Name* name,
-        MasterLoader::Options options, MasterLoaderCallbacks& callbacks);
-    virtual std::string toText() const;
-    virtual void toWire(isc::util::OutputBuffer& buffer) const;
-    virtual void toWire(AbstractMessageRenderer& renderer) const;
-    virtual int compare(const Rdata& other) const;
-
-    // END_COMMON_MEMBERS
-
-    /// \brief Assignment operator.
-    ///
-    /// It internally allocates a resource, and if it fails a corresponding
-    /// standard exception will be thrown.
-    /// This operator never throws an exception otherwise.
-    ///
-    /// This operator provides the strong exception guarantee: When an
-    /// exception is thrown the content of the assignment target will be
-    /// intact.
-    DLV& operator=(const DLV& source);
-
-    /// \brief The destructor.
-    ~DLV();
-
-    /// \brief Return the value of the Tag field.
-    ///
-    /// This method never throws an exception.
-    uint16_t getTag() const;
-private:
-    typedef detail::DSLikeImpl<DLV, 32769> DLVImpl;
-    DLVImpl* impl_;
-};
-
-} // end of namespace "generic"
-} // end of namespace "rdata"
-} // end of namespace "dns"
-} // end of namespace "isc"
-#endif // GENERIC_DLV_32769_H
-
-// Copyright (C) 2010-2021 Internet Systems Consortium, Inc. ("ISC")
-//
-// This Source Code Form is subject to the terms of the Mozilla Public
-// License, v. 2.0. If a copy of the MPL was not distributed with this
-// file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
-#ifndef GENERIC_DNAME_39_H
-#define GENERIC_DNAME_39_H 1
-
-#include <string>
-
-#include <dns/name.h>
-#include <dns/rdata.h>
-
-namespace isc {
-namespace util {
-
-class InputBuffer;
-class OutputBuffer;
-}
-
-namespace dns {
-
-// BEGIN_COMMON_DECLARATIONS
-
-class AbstractMessageRenderer;
-
-// END_COMMON_DECLARATIONS
-
-namespace rdata {
-namespace generic {
-
-class DNAME : public Rdata {
-public:
-    // BEGIN_COMMON_MEMBERS
-
-    explicit DNAME(const std::string& type_str);
-    DNAME(isc::util::InputBuffer& buffer, size_t rdata_len);
-    DNAME(const DNAME& other);
-    DNAME(
-        MasterLexer& lexer, const Name* name,
-        MasterLoader::Options options, MasterLoaderCallbacks& callbacks);
-    virtual std::string toText() const;
-    virtual void toWire(isc::util::OutputBuffer& buffer) const;
-    virtual void toWire(AbstractMessageRenderer& renderer) const;
-    virtual int compare(const Rdata& other) const;
-
-    // END_COMMON_MEMBERS
-
-    // DNAME specific methods
-    DNAME(const Name& dname);
-    const Name& getDname() const;
-private:
-    Name dname_;
-};
-
-} // end of namespace "generic"
-} // end of namespace "rdata"
-} // end of namespace "dns"
-} // end of namespace "isc"
-#endif // GENERIC_DNAME_39_H
-
-// Copyright (C) 2010-2021 Internet Systems Consortium, Inc. ("ISC")
-//
-// This Source Code Form is subject to the terms of the Mozilla Public
-// License, v. 2.0. If a copy of the MPL was not distributed with this
-// file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
-#include <stdint.h>
-
-#include <string>
-
-#include <dns/name.h>
-#include <dns/rrtype.h>
-#include <dns/rrttl.h>
-#include <dns/rdata.h>
-#include <dns/master_lexer.h>
-
-#ifndef GENERIC_DNSKEY_48_H
-#define GENERIC_DNSKEY_48_H 1
-
-namespace isc {
-namespace util {
-
-class InputBuffer;
-class OutputBuffer;
-}
-
-namespace dns {
-
-// BEGIN_COMMON_DECLARATIONS
-
-class AbstractMessageRenderer;
-
-// END_COMMON_DECLARATIONS
-
-namespace rdata {
-namespace generic {
-
-struct DNSKEYImpl;
-
-class DNSKEY : public Rdata {
-public:
-    // BEGIN_COMMON_MEMBERS
-
-    explicit DNSKEY(const std::string& type_str);
-    DNSKEY(isc::util::InputBuffer& buffer, size_t rdata_len);
-    DNSKEY(const DNSKEY& other);
-    DNSKEY(
-        MasterLexer& lexer, const Name* name,
-        MasterLoader::Options options, MasterLoaderCallbacks& callbacks);
-    virtual std::string toText() const;
-    virtual void toWire(isc::util::OutputBuffer& buffer) const;
-    virtual void toWire(AbstractMessageRenderer& renderer) const;
-    virtual int compare(const Rdata& other) const;
-
-    // END_COMMON_MEMBERS
-    DNSKEY& operator=(const DNSKEY& source);
-    ~DNSKEY();
-
-    ///
-    /// Specialized methods
-    ///
-
-    /// \brief Returns the key tag
-    ///
-    /// \throw isc::OutOfRange if the key data for RSA/MD5 is too short
-    /// to support tag extraction.
-    uint16_t getTag() const;
-
-    uint16_t getFlags() const;
-    uint8_t getAlgorithm() const;
-
-private:
-    DNSKEYImpl* constructFromLexer(isc::dns::MasterLexer& lexer);
-
-    DNSKEYImpl* impl_;
-};
-
-} // end of namespace "generic"
-} // end of namespace "rdata"
-} // end of namespace "dns"
-} // end of namespace "isc"
-#endif // GENERIC_DNSKEY_48_H
-
-// Copyright (C) 2011-2021 Internet Systems Consortium, Inc. ("ISC")
-//
-// This Source Code Form is subject to the terms of the Mozilla Public
-// License, v. 2.0. If a copy of the MPL was not distributed with this
-// file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
-#ifndef GENERIC_DS_43_H
-#define GENERIC_DS_43_H 1
-
-#include <stdint.h>
-
-#include <string>
-
-#include <dns/name.h>
-#include <dns/rrtype.h>
-#include <dns/rrttl.h>
-#include <dns/rdata.h>
-
-namespace isc {
-namespace util {
-
-class InputBuffer;
-class OutputBuffer;
-}
-
-namespace dns {
-
-// BEGIN_COMMON_DECLARATIONS
-
-class AbstractMessageRenderer;
-
-// END_COMMON_DECLARATIONS
-
-namespace rdata {
-namespace generic {
-
-namespace detail {
-template <class Type, uint16_t typeCode> class DSLikeImpl;
-}
-
-/// \brief \c rdata::generic::DS class represents the DS RDATA as defined in
-/// RFC3658.
-///
-/// This class implements the basic interfaces inherited from the abstract
-/// \c rdata::Rdata class, and provides trivial accessors specific to the
-/// DS RDATA.
-class DS : public Rdata {
-public:
-    // BEGIN_COMMON_MEMBERS
-
-    explicit DS(const std::string& type_str);
-    DS(isc::util::InputBuffer& buffer, size_t rdata_len);
-    DS(const DS& other);
-    DS(
-        MasterLexer& lexer, const Name* name,
-        MasterLoader::Options options, MasterLoaderCallbacks& callbacks);
-    virtual std::string toText() const;
-    virtual void toWire(isc::util::OutputBuffer& buffer) const;
-    virtual void toWire(AbstractMessageRenderer& renderer) const;
-    virtual int compare(const Rdata& other) const;
-
-    // END_COMMON_MEMBERS
-
-    /// \brief Assignment operator.
-    ///
-    /// It internally allocates a resource, and if it fails a corresponding
-    /// standard exception will be thrown.
-    /// This operator never throws an exception otherwise.
-    ///
-    /// This operator provides the strong exception guarantee: When an
-    /// exception is thrown the content of the assignment target will be
-    /// intact.
-    DS& operator=(const DS& source);
-
-    /// \brief The destructor.
-    ~DS();
-
-    /// \brief Return the value of the Tag field.
-    ///
-    /// This method never throws an exception.
-    uint16_t getTag() const;
-private:
-    typedef detail::DSLikeImpl<DS, 43> DSImpl;
-    DSImpl* impl_;
-};
-
-} // end of namespace "generic"
-} // end of namespace "rdata"
-} // end of namespace "dns"
-} // end of namespace "isc"
-#endif // GENERIC_DS_43_H
-
-// Copyright (C) 2011-2021 Internet Systems Consortium, Inc. ("ISC")
-//
-// This Source Code Form is subject to the terms of the Mozilla Public
-// License, v. 2.0. If a copy of the MPL was not distributed with this
-// file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
-#ifndef GENERIC_HINFO_13_H
-#define GENERIC_HINFO_13_H 1
-#include <stdint.h>
-
-#include <string>
-
-#include <boost/scoped_ptr.hpp>
-#include <boost/noncopyable.hpp>
-
-#include <dns/name.h>
-#include <dns/rdata.h>
-#include <util/buffer.h>
-
-namespace isc {
-namespace util {
-
-class InputBuffer;
-class OutputBuffer;
-}
-
-namespace dns {
-
-// BEGIN_COMMON_DECLARATIONS
-
-class AbstractMessageRenderer;
-
-// END_COMMON_DECLARATIONS
-
-namespace rdata {
-namespace generic {
-
-class HINFOImpl;
-
-/// \brief \c HINFO class represents the HINFO rdata defined in
-/// RFC1034, RFC1035
-///
-/// This class implements the basic interfaces inherited from the
-/// \c rdata::Rdata class, and provides accessors specific to the
-/// HINFO rdata.
-class HINFO : public Rdata {
-public:
-    // BEGIN_COMMON_MEMBERS
-
-    explicit HINFO(const std::string& type_str);
-    HINFO(isc::util::InputBuffer& buffer, size_t rdata_len);
-    HINFO(const HINFO& other);
-    HINFO(
-        MasterLexer& lexer, const Name* name,
-        MasterLoader::Options options, MasterLoaderCallbacks& callbacks);
-    virtual std::string toText() const;
-    virtual void toWire(isc::util::OutputBuffer& buffer) const;
-    virtual void toWire(AbstractMessageRenderer& renderer) const;
-    virtual int compare(const Rdata& other) const;
-
-    // END_COMMON_MEMBERS
-
-    // HINFO specific methods
-    ~HINFO();
-
-    HINFO& operator=(const HINFO&);
-
-    const std::string getCPU() const;
-    const std::string getOS() const;
-
-private:
-    /// Helper template function for toWire()
-    ///
-    /// \param outputer Where to write data in
-    template <typename T>
-    void toWireHelper(T& outputer) const;
-
-    boost::scoped_ptr<HINFOImpl> impl_;
-};
-
-
-} // end of namespace "generic"
-} // end of namespace "rdata"
-} // end of namespace "dns"
-} // end of namespace "isc"
-#endif // GENERIC_HINFO_13_H
-
-// Copyright (C) 2011-2021 Internet Systems Consortium, Inc. ("ISC")
-//
-// This Source Code Form is subject to the terms of the Mozilla Public
-// License, v. 2.0. If a copy of the MPL was not distributed with this
-// file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
-#ifndef GENERIC_MINFO_14_H
-#define GENERIC_MINFO_14_H 1
-
-#include <string>
-
-#include <dns/name.h>
-#include <dns/rdata.h>
-
-namespace isc {
-namespace util {
-
-class InputBuffer;
-class OutputBuffer;
-}
-
-namespace dns {
-
-// BEGIN_COMMON_DECLARATIONS
-
-class AbstractMessageRenderer;
-
-// END_COMMON_DECLARATIONS
-
-namespace rdata {
-namespace generic {
-
-/// \brief \c rdata::generic::MINFO class represents the MINFO RDATA as
-/// defined in RFC1035.
-///
-/// This class implements the basic interfaces inherited from the abstract
-/// \c rdata::Rdata class, and provides trivial accessors specific to the
-/// MINFO RDATA.
-class MINFO : public Rdata {
-public:
-    // BEGIN_COMMON_MEMBERS
-
-    explicit MINFO(const std::string& type_str);
-    MINFO(isc::util::InputBuffer& buffer, size_t rdata_len);
-    MINFO(const MINFO& other);
-    MINFO(
-        MasterLexer& lexer, const Name* name,
-        MasterLoader::Options options, MasterLoaderCallbacks& callbacks);
-    virtual std::string toText() const;
-    virtual void toWire(isc::util::OutputBuffer& buffer) const;
-    virtual void toWire(AbstractMessageRenderer& renderer) const;
-    virtual int compare(const Rdata& other) const;
-
-    // END_COMMON_MEMBERS
-
-    /// \brief Define the assignment operator.
-    ///
-    /// \exception std::bad_alloc Memory allocation fails in copying
-    /// internal member variables (this should be very rare).
-    MINFO& operator=(const MINFO& source);
-
-    /// \brief Return the value of the rmailbox field.
-    ///
-    /// \throw std::bad_alloc If resource allocation for the returned
-    /// \c Name fails.
-    ///
-    /// \note
-    /// Unlike the case of some other RDATA classes (such as
-    /// \c NS::getNSName()), this method constructs a new \c Name object
-    /// and returns it, instead of returning a reference to a \c Name object
-    /// internally maintained in the class (which is a private member).
-    /// This is based on the observation that this method will be rarely
-    /// used and even when it's used it will not be in a performance context
-    /// (for example, a recursive resolver won't need this field in its
-    /// resolution process).  By returning a new object we have flexibility
-    /// of changing the internal representation without the risk of changing
-    /// the interface or method property.
-    /// The same note applies to the \c getEmailbox() method.
-    Name getRmailbox() const { return (rmailbox_); }
-
-    /// \brief Return the value of the emailbox field.
-    ///
-    /// \throw std::bad_alloc If resource allocation for the returned
-    /// \c Name fails.
-    Name getEmailbox() const { return (emailbox_); }
-
-private:
-    Name rmailbox_;
-    Name emailbox_;
-};
-
-} // end of namespace "generic"
-} // end of namespace "rdata"
-} // end of namespace "dns"
-} // end of namespace "isc"
-#endif // GENERIC_MINFO_14_H
-
-// Copyright (C) 2010-2021 Internet Systems Consortium, Inc. ("ISC")
-//
-// This Source Code Form is subject to the terms of the Mozilla Public
-// License, v. 2.0. If a copy of the MPL was not distributed with this
-// file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
-#ifndef GENERIC_MX_15_H
-#define GENERIC_MX_15_H 1
-
-#include <stdint.h>
-
-#include <string>
-
-#include <dns/name.h>
-#include <dns/rdata.h>
-
-namespace isc {
-namespace util {
-
-class InputBuffer;
-class OutputBuffer;
-}
-
-namespace dns {
-
-// BEGIN_COMMON_DECLARATIONS
-
-class AbstractMessageRenderer;
-
-// END_COMMON_DECLARATIONS
-
-namespace rdata {
-namespace generic {
-
-class MX : public Rdata {
-public:
-    // BEGIN_COMMON_MEMBERS
-
-    explicit MX(const std::string& type_str);
-    MX(isc::util::InputBuffer& buffer, size_t rdata_len);
-    MX(const MX& other);
-    MX(
-        MasterLexer& lexer, const Name* name,
-        MasterLoader::Options options, MasterLoaderCallbacks& callbacks);
-    virtual std::string toText() const;
-    virtual void toWire(isc::util::OutputBuffer& buffer) const;
-    virtual void toWire(AbstractMessageRenderer& renderer) const;
-    virtual int compare(const Rdata& other) const;
-
-    // END_COMMON_MEMBERS
-
-    MX(uint16_t preference, const Name& mxname);
-
-    ///
-    /// Specialized methods
-    ///
-    const Name& getMXName() const;
-    uint16_t getMXPref() const;
-
-private:
-    void constructFromLexer(isc::dns::MasterLexer& lexer,
-                            const isc::dns::Name* origin);
-
-    /// Note: this is a prototype version; we may reconsider
-    /// this representation later.
-    uint16_t preference_;
-    Name mxname_;
-};
-
-} // end of namespace "generic"
-} // end of namespace "rdata"
-} // end of namespace "dns"
-} // end of namespace "isc"
-#endif // GENERIC_MX_15_H
-
-// Copyright (C) 2011-2021 Internet Systems Consortium, Inc. ("ISC")
-//
-// This Source Code Form is subject to the terms of the Mozilla Public
-// License, v. 2.0. If a copy of the MPL was not distributed with this
-// file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
-#ifndef GENERIC_NAPTR_35_H
-#define GENERIC_NAPTR_35_H 1
-
-#include <string>
-
-#include <boost/scoped_ptr.hpp>
-
-#include <dns/name.h>
-#include <dns/rdata.h>
-#include <util/buffer.h>
-
-namespace isc {
-namespace util {
-
-class InputBuffer;
-class OutputBuffer;
-}
-
-namespace dns {
-
-// BEGIN_COMMON_DECLARATIONS
-
-class AbstractMessageRenderer;
-
-// END_COMMON_DECLARATIONS
-
-namespace rdata {
-namespace generic {
-
-class NAPTRImpl;
-
-/// \brief \c NAPTR class represents the NAPTR rdata defined in
-/// RFC2915, RFC2168 and RFC3403
-///
-/// This class implements the basic interfaces inherited from the
-/// \c rdata::Rdata class, and provides accessors specific to the
-/// NAPTR rdata.
-class NAPTR : public Rdata {
-public:
-    // BEGIN_COMMON_MEMBERS
-
-    explicit NAPTR(const std::string& type_str);
-    NAPTR(isc::util::InputBuffer& buffer, size_t rdata_len);
-    NAPTR(const NAPTR& other);
-    NAPTR(
-        MasterLexer& lexer, const Name* name,
-        MasterLoader::Options options, MasterLoaderCallbacks& callbacks);
-    virtual std::string toText() const;
-    virtual void toWire(isc::util::OutputBuffer& buffer) const;
-    virtual void toWire(AbstractMessageRenderer& renderer) const;
-    virtual int compare(const Rdata& other) const;
-
-    // END_COMMON_MEMBERS
-
-    // NAPTR specific methods
-    ~NAPTR();
-
-    NAPTR& operator=(const NAPTR& source);
-
-    uint16_t getOrder() const;
-    uint16_t getPreference() const;
-    const std::string getFlags() const;
-    const std::string getServices() const;
-    const std::string getRegexp() const;
-    const Name& getReplacement() const;
-private:
-    /// Helper template function for toWire()
-    ///
-    /// \param outputer Where to write data in
-    template <typename T>
-    void toWireHelper(T& outputer) const;
-
-    boost::scoped_ptr<NAPTRImpl> impl_;
-};
-
-} // end of namespace "generic"
-} // end of namespace "rdata"
-} // end of namespace "dns"
-} // end of namespace "isc"
-#endif // GENERIC_NAPTR_35_H
-
-// Copyright (C) 2010-2021 Internet Systems Consortium, Inc. ("ISC")
-//
-// This Source Code Form is subject to the terms of the Mozilla Public
-// License, v. 2.0. If a copy of the MPL was not distributed with this
-// file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
-#ifndef GENERIC_NS_2_H
-#define GENERIC_NS_2_H 1
-
-#include <string>
-
-#include <dns/name.h>
-#include <dns/rdata.h>
-
-namespace isc {
-namespace util {
-
-class InputBuffer;
-class OutputBuffer;
-}
-
-namespace dns {
-
-// BEGIN_COMMON_DECLARATIONS
-
-class AbstractMessageRenderer;
-
-// END_COMMON_DECLARATIONS
-
-namespace rdata {
-namespace generic {
-
-class NS : public Rdata {
-public:
-    // BEGIN_COMMON_MEMBERS
-
-    explicit NS(const std::string& type_str);
-    NS(isc::util::InputBuffer& buffer, size_t rdata_len);
-    NS(const NS& other);
-    NS(
-        MasterLexer& lexer, const Name* name,
-        MasterLoader::Options options, MasterLoaderCallbacks& callbacks);
-    virtual std::string toText() const;
-    virtual void toWire(isc::util::OutputBuffer& buffer) const;
-    virtual void toWire(AbstractMessageRenderer& renderer) const;
-    virtual int compare(const Rdata& other) const;
-
-    // END_COMMON_MEMBERS
-    ///
-    /// Specialized constructor
-    ///
-    explicit NS(const Name& nsname) : nsname_(nsname) {}
-    ///
-    /// Specialized methods
-    ///
-    const Name& getNSName() const;
-private:
-    Name nsname_;
-};
-
-} // end of namespace "generic"
-} // end of namespace "rdata"
-} // end of namespace "dns"
-} // end of namespace "isc"
-#endif // GENERIC_NS_2_H
-
-// Copyright (C) 2010-2021 Internet Systems Consortium, Inc. ("ISC")
-//
-// This Source Code Form is subject to the terms of the Mozilla Public
-// License, v. 2.0. If a copy of the MPL was not distributed with this
-// file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
-#include <stdint.h>
-
-#include <string>
-#include <vector>
-
-#include <dns/name.h>
-#include <dns/rrtype.h>
-#include <dns/rrttl.h>
-#include <dns/rdata.h>
-#include <dns/master_lexer.h>
-
-#ifndef GENERIC_NSEC3_50_H
-#define GENERIC_NSEC3_50_H 1
-
-namespace isc {
-namespace util {
-
-class InputBuffer;
-class OutputBuffer;
-}
-
-namespace dns {
-
-// BEGIN_COMMON_DECLARATIONS
-
-class AbstractMessageRenderer;
-
-// END_COMMON_DECLARATIONS
-
-namespace rdata {
-namespace generic {
-
-struct NSEC3Impl;
-
-class NSEC3 : public Rdata {
-public:
-    // BEGIN_COMMON_MEMBERS
-
-    explicit NSEC3(const std::string& type_str);
-    NSEC3(isc::util::InputBuffer& buffer, size_t rdata_len);
-    NSEC3(const NSEC3& other);
-    NSEC3(
-        MasterLexer& lexer, const Name* name,
-        MasterLoader::Options options, MasterLoaderCallbacks& callbacks);
-    virtual std::string toText() const;
-    virtual void toWire(isc::util::OutputBuffer& buffer) const;
-    virtual void toWire(AbstractMessageRenderer& renderer) const;
-    virtual int compare(const Rdata& other) const;
-
-    // END_COMMON_MEMBERS
-    NSEC3& operator=(const NSEC3& source);
-    ~NSEC3();
-
-    uint8_t getHashalg() const;
-    uint8_t getFlags() const;
-    uint16_t getIterations() const;
-    const std::vector<uint8_t>& getSalt() const;
-    const std::vector<uint8_t>& getNext() const;
-
-private:
-    NSEC3Impl* constructFromLexer(isc::dns::MasterLexer& lexer);
-
-    NSEC3Impl* impl_;
-};
-
-} // end of namespace "generic"
-} // end of namespace "rdata"
-} // end of namespace "dns"
-} // end of namespace "isc"
-#endif // GENERIC_NSEC3_50_H
-
-// Copyright (C) 2010-2021 Internet Systems Consortium, Inc. ("ISC")
-//
-// This Source Code Form is subject to the terms of the Mozilla Public
-// License, v. 2.0. If a copy of the MPL was not distributed with this
-// file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
-#include <stdint.h>
-
-#include <string>
-#include <vector>
-
-#include <dns/name.h>
-#include <dns/rrtype.h>
-#include <dns/rrttl.h>
-#include <dns/rdata.h>
-#include <dns/master_lexer.h>
-
-#ifndef GENERIC_NSEC3PARAM_51_H
-#define GENERIC_NSEC3PARAM_51_H 1
-
-namespace isc {
-namespace util {
-
-class InputBuffer;
-class OutputBuffer;
-}
-
-namespace dns {
-
-// BEGIN_COMMON_DECLARATIONS
-
-class AbstractMessageRenderer;
-
-// END_COMMON_DECLARATIONS
-
-namespace rdata {
-namespace generic {
-
-struct NSEC3PARAMImpl;
-
-class NSEC3PARAM : public Rdata {
-public:
-    // BEGIN_COMMON_MEMBERS
-
-    explicit NSEC3PARAM(const std::string& type_str);
-    NSEC3PARAM(isc::util::InputBuffer& buffer, size_t rdata_len);
-    NSEC3PARAM(const NSEC3PARAM& other);
-    NSEC3PARAM(
-        MasterLexer& lexer, const Name* name,
-        MasterLoader::Options options, MasterLoaderCallbacks& callbacks);
-    virtual std::string toText() const;
-    virtual void toWire(isc::util::OutputBuffer& buffer) const;
-    virtual void toWire(AbstractMessageRenderer& renderer) const;
-    virtual int compare(const Rdata& other) const;
-
-    // END_COMMON_MEMBERS
-    NSEC3PARAM& operator=(const NSEC3PARAM& source);
-    ~NSEC3PARAM();
-
-    ///
-    /// Specialized methods
-    ///
-    uint8_t getHashalg() const;
-    uint8_t getFlags() const;
-    uint16_t getIterations() const;
-    const std::vector<uint8_t>& getSalt() const;
-
-private:
-    NSEC3PARAMImpl* constructFromLexer(isc::dns::MasterLexer& lexer);
-
-    NSEC3PARAMImpl* impl_;
-};
-
-} // end of namespace "generic"
-} // end of namespace "rdata"
-} // end of namespace "dns"
-} // end of namespace "isc"
-#endif // GENERIC_NSEC3PARAM_51_H
-
-// Copyright (C) 2010-2021 Internet Systems Consortium, Inc. ("ISC")
-//
-// This Source Code Form is subject to the terms of the Mozilla Public
-// License, v. 2.0. If a copy of the MPL was not distributed with this
-// file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
-#include <stdint.h>
-
-#include <string>
-
-#include <dns/name.h>
-#include <dns/rrtype.h>
-#include <dns/rrttl.h>
-#include <dns/rdata.h>
-
-#ifndef GENERIC_NSEC_47_H
-#define GENERIC_NSEC_47_H 1
-
-namespace isc {
-namespace util {
-
-class InputBuffer;
-class OutputBuffer;
-}
-
-namespace dns {
-
-// BEGIN_COMMON_DECLARATIONS
-
-class AbstractMessageRenderer;
-
-// END_COMMON_DECLARATIONS
-
-namespace rdata {
-namespace generic {
-
-struct NSECImpl;
-
-class NSEC : public Rdata {
-public:
-    // BEGIN_COMMON_MEMBERS
-
-    explicit NSEC(const std::string& type_str);
-    NSEC(isc::util::InputBuffer& buffer, size_t rdata_len);
-    NSEC(const NSEC& other);
-    NSEC(
-        MasterLexer& lexer, const Name* name,
-        MasterLoader::Options options, MasterLoaderCallbacks& callbacks);
-    virtual std::string toText() const;
-    virtual void toWire(isc::util::OutputBuffer& buffer) const;
-    virtual void toWire(AbstractMessageRenderer& renderer) const;
-    virtual int compare(const Rdata& other) const;
-
-    // END_COMMON_MEMBERS
-    NSEC& operator=(const NSEC& source);
-    ~NSEC();
-
-    // specialized methods
-
-    /// Return the next domain name.
-    ///
-    /// \exception std::bad_alloc Resource allocation failure in name copy.
-    ///
-    /// \return The next domain name field in the form of \c Name object.
-    const Name& getNextName() const;
-
-private:
-    NSECImpl* impl_;
-};
-
-} // end of namespace "generic"
-} // end of namespace "rdata"
-} // end of namespace "dns"
-} // end of namespace "isc"
-#endif // GENERIC_NSEC_47_H
-
-// Copyright (C) 2010-2021 Internet Systems Consortium, Inc. ("ISC")
-//
-// This Source Code Form is subject to the terms of the Mozilla Public
-// License, v. 2.0. If a copy of the MPL was not distributed with this
-// file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
 #ifndef GENERIC_OPT_41_H
-#define GENERIC_OPT_41_H 1
+#define GENERIC_OPT_41_H
 
 #include <string>
 
+#include <util/buffer.h>
 #include <dns/rdata.h>
 
 #include <boost/shared_ptr.hpp>
@@ -1475,12 +203,6 @@ private:
 #include <vector>
 
 namespace isc {
-namespace util {
-
-class InputBuffer;
-class OutputBuffer;
-}
-
 namespace dns {
 
 // BEGIN_COMMON_DECLARATIONS
@@ -1561,7 +283,7 @@ public:
     const std::vector<PseudoRR>& getPseudoRRs() const;
 
 private:
-    OPTImpl* impl_;
+    boost::shared_ptr<OPTImpl> impl_;
 };
 
 } // end of namespace "generic"
@@ -1577,20 +299,15 @@ private:
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #ifndef GENERIC_PTR_12_H
-#define GENERIC_PTR_12_H 1
+#define GENERIC_PTR_12_H
 
 #include <string>
 
+#include <util/buffer.h>
 #include <dns/name.h>
 #include <dns/rdata.h>
 
 namespace isc {
-namespace util {
-
-class InputBuffer;
-class OutputBuffer;
-}
-
 namespace dns {
 
 // BEGIN_COMMON_DECLARATIONS
@@ -1622,7 +339,8 @@ public:
     ///
     /// Specialized constructor
     ///
-    explicit PTR(const Name& ptr_name) : ptr_name_(ptr_name) {}
+    explicit PTR(const Name& ptr_name) : ptr_name_(ptr_name) {
+    }
     ///
     /// Specialized methods
     ///
@@ -1637,107 +355,6 @@ private:
 } // end of namespace "isc"
 #endif // GENERIC_PTR_12_H
 
-// Copyright (C) 2011-2021 Internet Systems Consortium, Inc. ("ISC")
-//
-// This Source Code Form is subject to the terms of the Mozilla Public
-// License, v. 2.0. If a copy of the MPL was not distributed with this
-// file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
-#ifndef GENERIC_RP_17_H
-#define GENERIC_RP_17_H 1
-
-#include <string>
-
-#include <dns/name.h>
-#include <dns/rdata.h>
-
-namespace isc {
-namespace util {
-
-class InputBuffer;
-class OutputBuffer;
-}
-
-namespace dns {
-
-// BEGIN_COMMON_DECLARATIONS
-
-class AbstractMessageRenderer;
-
-// END_COMMON_DECLARATIONS
-
-namespace rdata {
-namespace generic {
-
-/// \brief \c rdata::generic::RP class represents the RP RDATA as defined in
-/// RFC1183.
-///
-/// This class implements the basic interfaces inherited from the abstract
-/// \c rdata::Rdata class, and provides trivial accessors specific to the
-/// RP RDATA.
-class RP : public Rdata {
-public:
-    // BEGIN_COMMON_MEMBERS
-
-    explicit RP(const std::string& type_str);
-    RP(isc::util::InputBuffer& buffer, size_t rdata_len);
-    RP(const RP& other);
-    RP(
-        MasterLexer& lexer, const Name* name,
-        MasterLoader::Options options, MasterLoaderCallbacks& callbacks);
-    virtual std::string toText() const;
-    virtual void toWire(isc::util::OutputBuffer& buffer) const;
-    virtual void toWire(AbstractMessageRenderer& renderer) const;
-    virtual int compare(const Rdata& other) const;
-
-    // END_COMMON_MEMBERS
-
-    /// We use the default copy constructor and assignment operator.
-
-    /// \brief Constructor from RDATA field parameters.
-    ///
-    /// The parameters are a straightforward mapping of %RP RDATA
-    /// fields as defined in RFC1183.
-    RP(const Name& mailbox, const Name& text) :
-        mailbox_(mailbox), text_(text)
-    {}
-
-    /// \brief Return the value of the mailbox field.
-    ///
-    /// \throw std::bad_alloc If resource allocation for the returned
-    /// \c Name fails.
-    ///
-    /// \note
-    /// Unlike the case of some other RDATA classes (such as
-    /// \c NS::getNSName()), this method constructs a new \c Name object
-    /// and returns it, instead of returning a reference to a \c Name object
-    /// internally maintained in the class (which is a private member).
-    /// This is based on the observation that this method will be rarely used
-    /// and even when it's used it will not be in a performance context
-    /// (for example, a recursive resolver won't need this field in its
-    /// resolution process).  By returning a new object we have flexibility of
-    /// changing the internal representation without the risk of changing
-    /// the interface or method property.
-    /// The same note applies to the \c getText() method.
-    Name getMailbox() const { return (mailbox_); }
-
-    /// \brief Return the value of the text field.
-    ///
-    /// \throw std::bad_alloc If resource allocation for the returned
-    /// \c Name fails.
-    Name getText() const { return (text_); }
-
-private:
-    Name mailbox_;
-    Name text_;
-};
-
-} // end of namespace "generic"
-} // end of namespace "rdata"
-} // end of namespace "dns"
-} // end of namespace "isc"
-#endif // GENERIC_RP_17_H
-
 // Copyright (C) 2010-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
@@ -1751,17 +368,12 @@ private:
 #include <dns/name.h>
 #include <dns/rrtype.h>
 #include <dns/rdata.h>
+#include <boost/shared_ptr.hpp>
 
 #ifndef GENERIC_RRSIG_46_H
-#define GENERIC_RRSIG_46_H 1
+#define GENERIC_RRSIG_46_H
 
 namespace isc {
-namespace util {
-
-class InputBuffer;
-class OutputBuffer;
-}
-
 namespace dns {
 
 // BEGIN_COMMON_DECLARATIONS
@@ -1804,9 +416,9 @@ public:
     const RRType& typeCovered() const;
 private:
     // helper function for string and lexer constructors
-    RRSIGImpl* constructFromLexer(MasterLexer& lexer, const Name* origin);
+    boost::shared_ptr<RRSIGImpl> constructFromLexer(MasterLexer& lexer, const Name* origin);
 
-    RRSIGImpl* impl_;
+    boost::shared_ptr<RRSIGImpl> impl_;
 };
 
 } // end of namespace "generic"
@@ -1822,21 +434,17 @@ private:
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #ifndef GENERIC_SOA_6_H
-#define GENERIC_SOA_6_H 1
+#define GENERIC_SOA_6_H
 
 #include <string>
 
 #include <dns/name.h>
 #include <dns/rdata.h>
+#include <dns/rrttl.h>
 #include <dns/serial.h>
+#include <util/buffer.h>
 
 namespace isc {
-namespace util {
-
-class InputBuffer;
-class OutputBuffer;
-}
-
 namespace dns {
 
 // BEGIN_COMMON_DECLARATIONS
@@ -1888,180 +496,7 @@ private:
 } // end of namespace "dns"
 } // end of namespace "isc"
 #endif // GENERIC_SOA_6_H
-
-// Copyright (C) 2010-2021 Internet Systems Consortium, Inc. ("ISC")
-//
-// This Source Code Form is subject to the terms of the Mozilla Public
-// License, v. 2.0. If a copy of the MPL was not distributed with this
-// file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
-#ifndef GENERIC_SPF_99_H
-#define GENERIC_SPF_99_H 1
-
-#include <stdint.h>
-
-#include <string>
-#include <vector>
-
-#include <dns/rdata.h>
-
-namespace isc {
-namespace util {
-
-class InputBuffer;
-class OutputBuffer;
-}
-
-namespace dns {
-
-// BEGIN_COMMON_DECLARATIONS
-
-class AbstractMessageRenderer;
-
-// END_COMMON_DECLARATIONS
-
-namespace rdata {
-namespace generic {
-
-namespace detail {
-template<class Type, uint16_t typeCode> class TXTLikeImpl;
-}
-
-/// \brief \c rdata::SPF class represents the SPF RDATA as defined %in
-/// RFC4408.
-///
-/// This class implements the basic interfaces inherited from the abstract
-/// \c rdata::Rdata class. The semantics of the class is provided by
-/// a copy of instantiated TXTLikeImpl class common to both TXT and SPF.
-class SPF : public Rdata {
-public:
-    // BEGIN_COMMON_MEMBERS
-
-    explicit SPF(const std::string& type_str);
-    SPF(isc::util::InputBuffer& buffer, size_t rdata_len);
-    SPF(const SPF& other);
-    SPF(
-        MasterLexer& lexer, const Name* name,
-        MasterLoader::Options options, MasterLoaderCallbacks& callbacks);
-    virtual std::string toText() const;
-    virtual void toWire(isc::util::OutputBuffer& buffer) const;
-    virtual void toWire(AbstractMessageRenderer& renderer) const;
-    virtual int compare(const Rdata& other) const;
-
-    // END_COMMON_MEMBERS
-
-    /// \brief Assignment operator.
-    ///
-    /// It internally allocates a resource, and if it fails a corresponding
-    /// standard exception will be thrown.
-    /// This operator never throws an exception otherwise.
-    ///
-    /// This operator provides the strong exception guarantee: When an
-    /// exception is thrown the content of the assignment target will be
-    /// intact.
-    SPF& operator=(const SPF& source);
-
-    /// \brief The destructor.
-    ~SPF();
-
-    ///
-    /// Specialized methods
-    ///
-
-    /// \brief Return a reference to the data strings
-    ///
-    /// This method never throws an exception.
-    const std::vector<std::vector<uint8_t> >& getString() const;
-
-private:
-    typedef isc::dns::rdata::generic::detail::TXTLikeImpl<SPF, 99> SPFImpl;
-    SPFImpl* impl_;
-};
-
-} // end of namespace "generic"
-} // end of namespace "rdata"
-} // end of namespace "dns"
-} // end of namespace "isc"
-#endif // GENERIC_SPF_99_H
-
-// Copyright (C) 2012-2021 Internet Systems Consortium, Inc. ("ISC")
-//
-// This Source Code Form is subject to the terms of the Mozilla Public
-// License, v. 2.0. If a copy of the MPL was not distributed with this
-// file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
-#ifndef GENERIC_SSHFP_44_H
-#define GENERIC_SSHFP_44_H 1
-
-#include <stdint.h>
-
-#include <string>
-#include <vector>
-
-#include <dns/name.h>
-#include <dns/rdata.h>
-
-namespace isc {
-namespace util {
-
-class InputBuffer;
-class OutputBuffer;
-}
-
-namespace dns {
-
-// BEGIN_COMMON_DECLARATIONS
-
-class AbstractMessageRenderer;
-
-// END_COMMON_DECLARATIONS
-
-namespace rdata {
-namespace generic {
-
-struct SSHFPImpl;
-
-class SSHFP : public Rdata {
-public:
-    // BEGIN_COMMON_MEMBERS
-
-    explicit SSHFP(const std::string& type_str);
-    SSHFP(isc::util::InputBuffer& buffer, size_t rdata_len);
-    SSHFP(const SSHFP& other);
-    SSHFP(
-        MasterLexer& lexer, const Name* name,
-        MasterLoader::Options options, MasterLoaderCallbacks& callbacks);
-    virtual std::string toText() const;
-    virtual void toWire(isc::util::OutputBuffer& buffer) const;
-    virtual void toWire(AbstractMessageRenderer& renderer) const;
-    virtual int compare(const Rdata& other) const;
-
-    // END_COMMON_MEMBERS
-
-    SSHFP(uint8_t algorithm, uint8_t fingerprint_type,
-          const std::string& fingerprint);
-    SSHFP& operator=(const SSHFP& source);
-    ~SSHFP();
-
-    ///
-    /// Specialized methods
-    ///
-    uint8_t getAlgorithmNumber() const;
-    uint8_t getFingerprintType() const;
-    const std::vector<uint8_t>& getFingerprint() const;
-    size_t getFingerprintLength() const;
-
-private:
-    SSHFPImpl* constructFromLexer(MasterLexer& lexer);
-
-    SSHFPImpl* impl_;
-};
-
-} // end of namespace "generic"
-} // end of namespace "rdata"
-} // end of namespace "dns"
-} // end of namespace "isc"
-#endif // GENERIC_SSHFP_44_H
+#endif // DNS_RDATACLASS_H
 
 // Copyright (C) 2021 Internet Systems Consortium, Inc. ("ISC")
 //
@@ -2070,22 +505,18 @@ private:
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #ifndef GENERIC_TKEY_249_H
-#define GENERIC_TKEY_249_H 1
+#define GENERIC_TKEY_249_H
 
 #include <stdint.h>
 
 #include <string>
 
+#include <util/buffer.h>
 #include <dns/name.h>
 #include <dns/rdata.h>
+#include <boost/shared_ptr.hpp>
 
 namespace isc {
-namespace util {
-
-class InputBuffer;
-class OutputBuffer;
-}
-
 namespace dns {
 
 // BEGIN_COMMON_DECLARATIONS
@@ -2217,9 +648,9 @@ public:
     static const uint16_t GSS_API_MODE;
 
 private:
-    TKEYImpl* constructFromLexer(MasterLexer& lexer, const Name* origin);
+    boost::shared_ptr<TKEYImpl> constructFromLexer(MasterLexer& lexer, const Name* origin);
 
-    TKEYImpl* impl_;
+    boost::shared_ptr<TKEYImpl> impl_;
 };
 
 } // end of namespace "generic"
@@ -2228,210 +659,6 @@ private:
 } // end of namespace "isc"
 #endif // GENERIC_TKEY_249_H
 
-// Copyright (C) 2014-2021 Internet Systems Consortium, Inc. ("ISC")
-//
-// This Source Code Form is subject to the terms of the Mozilla Public
-// License, v. 2.0. If a copy of the MPL was not distributed with this
-// file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
-#ifndef GENERIC_TLSA_52_H
-#define GENERIC_TLSA_52_H 1
-
-#include <stdint.h>
-
-#include <dns/name.h>
-#include <dns/rdata.h>
-
-#include <string>
-#include <vector>
-
-namespace isc {
-namespace util {
-
-class InputBuffer;
-class OutputBuffer;
-}
-
-namespace dns {
-
-// BEGIN_COMMON_DECLARATIONS
-
-class AbstractMessageRenderer;
-
-// END_COMMON_DECLARATIONS
-
-namespace rdata {
-namespace generic {
-
-struct TLSAImpl;
-
-class TLSA : public Rdata {
-public:
-    // BEGIN_COMMON_MEMBERS
-
-    explicit TLSA(const std::string& type_str);
-    TLSA(isc::util::InputBuffer& buffer, size_t rdata_len);
-    TLSA(const TLSA& other);
-    TLSA(
-        MasterLexer& lexer, const Name* name,
-        MasterLoader::Options options, MasterLoaderCallbacks& callbacks);
-    virtual std::string toText() const;
-    virtual void toWire(isc::util::OutputBuffer& buffer) const;
-    virtual void toWire(AbstractMessageRenderer& renderer) const;
-    virtual int compare(const Rdata& other) const;
-
-    // END_COMMON_MEMBERS
-
-    TLSA(uint8_t certificate_usage, uint8_t selector,
-         uint8_t matching_type, const std::string& certificate_assoc_data);
-    TLSA& operator=(const TLSA& source);
-    ~TLSA();
-
-    ///
-    /// Specialized methods
-    ///
-    uint8_t getCertificateUsage() const;
-    uint8_t getSelector() const;
-    uint8_t getMatchingType() const;
-    const std::vector<uint8_t>& getData() const;
-    size_t getDataLength() const;
-
-private:
-    TLSAImpl* constructFromLexer(MasterLexer& lexer);
-
-    TLSAImpl* impl_;
-};
-
-} // end of namespace "generic"
-} // end of namespace "rdata"
-} // end of namespace "dns"
-} // end of namespace "isc"
-#endif // GENERIC_TLSA_52_H
-
-// Copyright (C) 2010-2021 Internet Systems Consortium, Inc. ("ISC")
-//
-// This Source Code Form is subject to the terms of the Mozilla Public
-// License, v. 2.0. If a copy of the MPL was not distributed with this
-// file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
-#ifndef GENERIC_TXT_16_H
-#define GENERIC_TXT_16_H 1
-
-#include <stdint.h>
-
-#include <string>
-#include <vector>
-
-#include <dns/rdata.h>
-
-namespace isc {
-namespace util {
-
-class InputBuffer;
-class OutputBuffer;
-}
-
-namespace dns {
-
-// BEGIN_COMMON_DECLARATIONS
-
-class AbstractMessageRenderer;
-
-// END_COMMON_DECLARATIONS
-
-namespace rdata {
-namespace generic {
-
-namespace detail {
-template<class Type, uint16_t typeCode> class TXTLikeImpl;
-}
-
-class TXT : public Rdata {
-public:
-    // BEGIN_COMMON_MEMBERS
-
-    explicit TXT(const std::string& type_str);
-    TXT(isc::util::InputBuffer& buffer, size_t rdata_len);
-    TXT(const TXT& other);
-    TXT(
-        MasterLexer& lexer, const Name* name,
-        MasterLoader::Options options, MasterLoaderCallbacks& callbacks);
-    virtual std::string toText() const;
-    virtual void toWire(isc::util::OutputBuffer& buffer) const;
-    virtual void toWire(AbstractMessageRenderer& renderer) const;
-    virtual int compare(const Rdata& other) const;
-
-    // END_COMMON_MEMBERS
-
-    TXT& operator=(const TXT& source);
-    ~TXT();
-
-private:
-    typedef isc::dns::rdata::generic::detail::TXTLikeImpl<TXT, 16> TXTImpl;
-    TXTImpl* impl_;
-};
-
-} // end of namespace "generic"
-} // end of namespace "rdata"
-} // end of namespace "dns"
-} // end of namespace "isc"
-#endif // GENERIC_TXT_16_H
-
-// Copyright (C) 2010-2021 Internet Systems Consortium, Inc. ("ISC")
-//
-// This Source Code Form is subject to the terms of the Mozilla Public
-// License, v. 2.0. If a copy of the MPL was not distributed with this
-// file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
-#ifndef HS_A_1_H
-#define HS_A_1_H 1
-
-#include <string>
-
-#include <dns/rdata.h>
-
-namespace isc {
-namespace util {
-
-class InputBuffer;
-class OutputBuffer;
-}
-
-namespace dns {
-
-// BEGIN_COMMON_DECLARATIONS
-
-class AbstractMessageRenderer;
-
-// END_COMMON_DECLARATIONS
-
-namespace rdata {
-namespace hs {
-
-class A : public Rdata {
-public:
-    // BEGIN_COMMON_MEMBERS
-
-    explicit A(const std::string& type_str);
-    A(isc::util::InputBuffer& buffer, size_t rdata_len);
-    A(const A& other);
-    A(
-        MasterLexer& lexer, const Name* name,
-        MasterLoader::Options options, MasterLoaderCallbacks& callbacks);
-    virtual std::string toText() const;
-    virtual void toWire(isc::util::OutputBuffer& buffer) const;
-    virtual void toWire(AbstractMessageRenderer& renderer) const;
-    virtual int compare(const Rdata& other) const;
-
-    // END_COMMON_MEMBERS
-};
-
-} // end of namespace "hs"
-} // end of namespace "rdata"
-} // end of namespace "dns"
-} // end of namespace "isc"
-#endif // HS_A_1_H
-
 // Copyright (C) 2010-2021 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
@@ -2439,19 +666,14 @@ public:
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #ifndef IN_A_1_H
-#define IN_A_1_H 1
+#define IN_A_1_H
 
 #include <string>
 
+#include <util/buffer.h>
 #include <dns/rdata.h>
 
 namespace isc {
-namespace util {
-
-class InputBuffer;
-class OutputBuffer;
-}
-
 namespace dns {
 
 // BEGIN_COMMON_DECLARATIONS
@@ -2500,21 +722,16 @@ private:
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #ifndef IN_AAAA_28_H
-#define IN_AAAA_28_H 1
+#define IN_AAAA_28_H
 
 #include <stdint.h>
 
 #include <string>
 
+#include <util/buffer.h>
 #include <dns/rdata.h>
 
 namespace isc {
-namespace util {
-
-class InputBuffer;
-class OutputBuffer;
-}
-
 namespace dns {
 
 // BEGIN_COMMON_DECLARATIONS
@@ -2561,20 +778,15 @@ private:
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #ifndef IN_DHCID_49_H
-#define IN_DHCID_49_H 1
+#define IN_DHCID_49_H
 
 #include <string>
 #include <vector>
 
+#include <util/buffer.h>
 #include <dns/rdata.h>
 
 namespace isc {
-namespace util {
-
-class InputBuffer;
-class OutputBuffer;
-}
-
 namespace dns {
 
 // BEGIN_COMMON_DECLARATIONS
@@ -2629,118 +841,3 @@ private:
 } // end of namespace "dns"
 } // end of namespace "isc"
 #endif // IN_DHCID_49_H
-
-// Copyright (C) 2011-2021 Internet Systems Consortium, Inc. ("ISC")
-//
-// This Source Code Form is subject to the terms of the Mozilla Public
-// License, v. 2.0. If a copy of the MPL was not distributed with this
-// file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
-#ifndef IN_SRV_33_H
-#define IN_SRV_33_H 1
-
-#include <stdint.h>
-
-#include <dns/name.h>
-#include <dns/rdata.h>
-
-namespace isc {
-namespace util {
-
-class InputBuffer;
-class OutputBuffer;
-}
-
-namespace dns {
-
-// BEGIN_COMMON_DECLARATIONS
-
-class AbstractMessageRenderer;
-
-// END_COMMON_DECLARATIONS
-
-namespace rdata {
-namespace in {
-
-struct SRVImpl;
-
-/// \brief \c rdata::SRV class represents the SRV RDATA as defined %in
-/// RFC2782.
-///
-/// This class implements the basic interfaces inherited from the abstract
-/// \c rdata::Rdata class, and provides trivial accessors specific to the
-/// SRV RDATA.
-class SRV : public Rdata {
-public:
-    // BEGIN_COMMON_MEMBERS
-
-    explicit SRV(const std::string& type_str);
-    SRV(isc::util::InputBuffer& buffer, size_t rdata_len);
-    SRV(const SRV& other);
-    SRV(
-        MasterLexer& lexer, const Name* name,
-        MasterLoader::Options options, MasterLoaderCallbacks& callbacks);
-    virtual std::string toText() const;
-    virtual void toWire(isc::util::OutputBuffer& buffer) const;
-    virtual void toWire(AbstractMessageRenderer& renderer) const;
-    virtual int compare(const Rdata& other) const;
-
-    // END_COMMON_MEMBERS
-
-    /// \brief Assignment operator.
-    ///
-    /// It internally allocates a resource, and if it fails a corresponding
-    /// standard exception will be thrown.
-    /// This operator never throws an exception otherwise.
-    ///
-    /// This operator provides the strong exception guarantee: When an
-    /// exception is thrown the content of the assignment target will be
-    /// intact.
-    SRV& operator=(const SRV& source);
-
-    /// \brief The destructor.
-    ~SRV();
-
-    ///
-    /// Specialized methods
-    ///
-
-    /// \brief Return the value of the priority field.
-    ///
-    /// This method never throws an exception.
-    uint16_t getPriority() const;
-
-    /// \brief Return the value of the weight field.
-    ///
-    /// This method never throws an exception.
-    uint16_t getWeight() const;
-
-    /// \brief Return the value of the port field.
-    ///
-    /// This method never throws an exception.
-    uint16_t getPort() const;
-
-    /// \brief Return the value of the target field.
-    ///
-    /// \return A reference to a \c Name class object corresponding to the
-    /// internal target name.
-    ///
-    /// This method never throws an exception.
-    const Name& getTarget() const;
-
-private:
-    SRVImpl* impl_;
-};
-
-} // end of namespace "in"
-} // end of namespace "rdata"
-} // end of namespace "dns"
-} // end of namespace "isc"
-#endif // IN_SRV_33_H
-
-
-#endif // DNS_RDATACLASS_H
-
-// Local Variables:
-// mode: c++
-// End:

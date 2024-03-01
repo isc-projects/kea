@@ -60,11 +60,9 @@ TSIGKey::TSIGKeyImpl {
     TSIGKeyImpl(const Name& key_name, const Name& algorithm_name,
                 isc::cryptolink::HashAlgorithm algorithm,
                 size_t digestbits) :
-
         key_name_(key_name), algorithm_name_(algorithm_name),
         algorithm_(algorithm), digestbits_(digestbits),
-        secret_()
-    {
+        secret_() {
         // Convert the key and algorithm names to the canonical form.
         key_name_.downcase();
         if (algorithm == isc::cryptolink::MD5) {
@@ -76,12 +74,10 @@ TSIGKey::TSIGKeyImpl {
                 isc::cryptolink::HashAlgorithm algorithm,
                 size_t digestbits,
                 const void* secret, size_t secret_len) :
-
         key_name_(key_name), algorithm_name_(algorithm_name),
         algorithm_(algorithm), digestbits_(digestbits),
         secret_(static_cast<const uint8_t*>(secret),
-                static_cast<const uint8_t*>(secret) + secret_len)
-    {
+                static_cast<const uint8_t*>(secret) + secret_len) {
         // Convert the key and algorithm names to the canonical form.
         key_name_.downcase();
         if (algorithm == isc::cryptolink::MD5) {
@@ -112,11 +108,11 @@ TSIGKey::TSIGKey(const Name& key_name, const Name& algorithm_name,
                   key_name << ":" << algorithm_name);
     }
     if (secret == NULL) {
-        impl_ = new TSIGKeyImpl(key_name, algorithm_name, algorithm,
-                                digestbits);
+        impl_.reset(new TSIGKey::TSIGKeyImpl(key_name, algorithm_name, algorithm,
+                                             digestbits));
     } else {
-        impl_ = new TSIGKeyImpl(key_name, algorithm_name, algorithm,
-                                digestbits, secret, secret_len);
+        impl_.reset(new TSIGKey::TSIGKeyImpl(key_name, algorithm_name, algorithm,
+                                             digestbits, secret, secret_len));
     }
 }
 
@@ -175,11 +171,11 @@ TSIGKey::TSIGKey(const std::string& str) : impl_(NULL) {
         }
 
         if (secret.empty()) {
-            impl_ = new TSIGKeyImpl(Name(keyname_str), algo_name, algorithm,
-                                    digestbits);
+            impl_.reset(new TSIGKey::TSIGKeyImpl(Name(keyname_str), algo_name, algorithm,
+                                               digestbits));
         } else {
-            impl_ = new TSIGKeyImpl(Name(keyname_str), algo_name, algorithm,
-                                    digestbits, &secret[0], secret.size());
+            impl_.reset(new TSIGKey::TSIGKeyImpl(Name(keyname_str), algo_name, algorithm,
+                                                 digestbits, &secret[0], secret.size()));
         }
     } catch (const isc::Exception& e) {
         // 'reduce' the several types of exceptions name parsing and
@@ -187,7 +183,6 @@ TSIGKey::TSIGKey(const std::string& str) : impl_(NULL) {
         isc_throw(InvalidParameter, e.what());
     }
 }
-
 
 TSIGKey::TSIGKey(const TSIGKey& source) : impl_(new TSIGKeyImpl(*source.impl_)) {
 }
@@ -198,15 +193,11 @@ TSIGKey::operator=(const TSIGKey& source) {
         return (*this);
     }
 
-    TSIGKeyImpl* newimpl = new TSIGKeyImpl(*source.impl_);
-    delete impl_;
-    impl_ = newimpl;
-
+    impl_.reset(new TSIGKey::TSIGKeyImpl(*source.impl_));
     return (*this);
 }
 
 TSIGKey::~TSIGKey() {
-    delete impl_;
 }
 
 const Name&
@@ -315,7 +306,6 @@ TSIGKeyRing::TSIGKeyRing() : impl_(new TSIGKeyRingImpl()) {
 }
 
 TSIGKeyRing::~TSIGKeyRing() {
-    delete impl_;
 }
 
 unsigned int

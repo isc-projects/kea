@@ -34,8 +34,7 @@ using isc::dns::rdata::generic::detail::createNameFromLexer;
 // BEGIN_RDATA_NAMESPACE
 
 SOA::SOA(InputBuffer& buffer, size_t) :
-    mname_(buffer), rname_(buffer)
-{
+    mname_(buffer), rname_(buffer) {
     // we don't need rdata_len for parsing.  if necessary, the caller will
     // check consistency.
     buffer.readData(numdata_, sizeof(numdata_));
@@ -74,8 +73,7 @@ fillParameters(MasterLexer& lexer, uint8_t numdata[20]) {
 /// \throw InvalidRdataText Other general syntax errors.
 SOA::SOA(const std::string& soastr) :
     // Fill in dummy name and replace them soon below.
-    mname_(Name::ROOT_NAME()), rname_(Name::ROOT_NAME())
-{
+    mname_(Name::ROOT_NAME()), rname_(Name::ROOT_NAME()) {
     try {
         std::istringstream ss(soastr);
         MasterLexer lexer;
@@ -117,15 +115,13 @@ SOA::SOA(const std::string& soastr) :
 SOA::SOA(MasterLexer& lexer, const Name* origin,
          MasterLoader::Options, MasterLoaderCallbacks&) :
     mname_(createNameFromLexer(lexer, origin)),
-    rname_(createNameFromLexer(lexer, origin))
-{
+    rname_(createNameFromLexer(lexer, origin)) {
     fillParameters(lexer, numdata_);
 }
 
 SOA::SOA(const Name& mname, const Name& rname, uint32_t serial,
          uint32_t refresh, uint32_t retry, uint32_t expire, uint32_t minimum) :
-    mname_(mname), rname_(rname)
-{
+    mname_(mname), rname_(rname) {
     OutputBuffer b(20);
     b.writeUint32(serial);
     b.writeUint32(refresh);
@@ -137,8 +133,7 @@ SOA::SOA(const Name& mname, const Name& rname, uint32_t serial,
 }
 
 SOA::SOA(const SOA& other) :
-    Rdata(), mname_(other.mname_), rname_(other.rname_)
-{
+    Rdata(), mname_(other.mname_), rname_(other.rname_) {
     memcpy(numdata_, other.numdata_, sizeof(numdata_));
 }
 

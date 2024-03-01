@@ -5,7 +5,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #ifndef LABELSEQUENCE_H
-#define LABELSEQUENCE_H 1
+#define LABELSEQUENCE_H
 
 #include <dns/name.h>
 #include <util/buffer.h>
@@ -65,8 +65,8 @@ public:
         data_(&name.ndata_[0]),
         offsets_(&name.offsets_[0]),
         first_label_(0),
-        last_label_(name.getLabelCount() - 1)
-    {}
+        last_label_(name.getLabelCount() - 1) {
+    }
 
     /// \brief Constructor from serialized image.
     ///
@@ -126,8 +126,8 @@ public:
         data_(ls.data_),
         offsets_(ls.offsets_),
         first_label_(ls.first_label_),
-        last_label_(ls.last_label_)
-    {}
+        last_label_(ls.last_label_) {
+    }
 
     /// \brief Assignment operator.
     ///
@@ -450,7 +450,3 @@ LabelSequence::WILDCARD() {
 } // end namespace isc
 
 #endif
-
-// Local Variables:
-// mode: c++
-// End:

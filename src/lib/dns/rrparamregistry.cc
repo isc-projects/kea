@@ -57,8 +57,7 @@ CICharLess(char c1, char c2) {
 }
 
 struct CIStringLess {
-    bool operator()(const string& s1, const string& s2) const
-    {
+    bool operator()(const string& s1, const string& s2) const {
         return (lexicographical_compare(s1.begin(), s1.end(),
                                         s2.begin(), s2.end(), CICharLess));
     }
@@ -164,25 +163,21 @@ typedef map<RRType, RdataFactoryPtr> GenericRdataFactoryMap;
 template <typename T>
 class RdataFactory : public AbstractRdataFactory {
 public:
-    virtual RdataPtr create(const string& rdata_str) const
-    {
+    virtual RdataPtr create(const string& rdata_str) const {
         return (RdataPtr(new T(rdata_str)));
     }
 
-    virtual RdataPtr create(InputBuffer& buffer, size_t rdata_len) const
-    {
+    virtual RdataPtr create(InputBuffer& buffer, size_t rdata_len) const {
         return (RdataPtr(new T(buffer, rdata_len)));
     }
 
-    virtual RdataPtr create(const Rdata& source) const
-    {
+    virtual RdataPtr create(const Rdata& source) const {
         return (RdataPtr(new T(dynamic_cast<const T&>(source))));
     }
 
     virtual RdataPtr create(MasterLexer& lexer, const Name* origin,
                             MasterLoader::Options options,
-                            MasterLoaderCallbacks& callbacks) const
-    {
+                            MasterLoaderCallbacks& callbacks) const {
         return (RdataPtr(new T(lexer, origin, options, callbacks)));
     }
 };
@@ -207,116 +202,35 @@ struct RRParamRegistryImpl {
     GenericRdataFactoryMap genericrdata_factories;
 };
 
-RRParamRegistry::RRParamRegistry() {
-    impl_ = new RRParamRegistryImpl;
+RRParamRegistry::RRParamRegistry() : impl_(new RRParamRegistryImpl()) {
 
     // set up parameters for well-known RRs
     try {
         // BEGIN_WELL_KNOWN_PARAMS
         add("A", 1, "IN", 1, RdataFactoryPtr(new RdataFactory<in::A>()));
-        add("NS", 2, "IN", 1, RdataFactoryPtr(new RdataFactory<generic::NS>()));
-        add("CNAME", 5, "IN", 1, RdataFactoryPtr(new RdataFactory<generic::CNAME>()));
         add("SOA", 6, "IN", 1, RdataFactoryPtr(new RdataFactory<generic::SOA>()));
         add("PTR", 12, "IN", 1, RdataFactoryPtr(new RdataFactory<generic::PTR>()));
-        add("HINFO", 13, "IN", 1, RdataFactoryPtr(new RdataFactory<generic::HINFO>()));
-        add("MINFO", 14, "IN", 1, RdataFactoryPtr(new RdataFactory<generic::MINFO>()));
-        add("MX", 15, "IN", 1, RdataFactoryPtr(new RdataFactory<generic::MX>()));
-        add("TXT", 16, "IN", 1, RdataFactoryPtr(new RdataFactory<generic::TXT>()));
-        add("RP", 17, "IN", 1, RdataFactoryPtr(new RdataFactory<generic::RP>()));
-        add("AFSDB", 18, "IN", 1, RdataFactoryPtr(new RdataFactory<generic::AFSDB>()));
         add("AAAA", 28, "IN", 1, RdataFactoryPtr(new RdataFactory<in::AAAA>()));
-        add("SRV", 33, "IN", 1, RdataFactoryPtr(new RdataFactory<in::SRV>()));
-        add("NAPTR", 35, "IN", 1, RdataFactoryPtr(new RdataFactory<generic::NAPTR>()));
-        add("DNAME", 39, "IN", 1, RdataFactoryPtr(new RdataFactory<generic::DNAME>()));
         add("OPT", 41, "IN", 1, RdataFactoryPtr(new RdataFactory<generic::OPT>()));
-        add("DS", 43, "IN", 1, RdataFactoryPtr(new RdataFactory<generic::DS>()));
-        add("SSHFP", 44, "IN", 1, RdataFactoryPtr(new RdataFactory<generic::SSHFP>()));
         add("RRSIG", 46, "IN", 1, RdataFactoryPtr(new RdataFactory<generic::RRSIG>()));
-        add("NSEC", 47, "IN", 1, RdataFactoryPtr(new RdataFactory<generic::NSEC>()));
-        add("DNSKEY", 48, "IN", 1, RdataFactoryPtr(new RdataFactory<generic::DNSKEY>()));
         add("DHCID", 49, "IN", 1, RdataFactoryPtr(new RdataFactory<in::DHCID>()));
-        add("NSEC3", 50, "IN", 1, RdataFactoryPtr(new RdataFactory<generic::NSEC3>()));
-        add("NSEC3PARAM", 51, "IN", 1, RdataFactoryPtr(new RdataFactory<generic::NSEC3PARAM>()));
-        add("TLSA", 52, "IN", 1, RdataFactoryPtr(new RdataFactory<generic::TLSA>()));
-        add("SPF", 99, "IN", 1, RdataFactoryPtr(new RdataFactory<generic::SPF>()));
         add("TKEY", 249, "IN", 1, RdataFactoryPtr(new RdataFactory<generic::TKEY>()));
-        add("CAA", 257, "IN", 1, RdataFactoryPtr(new RdataFactory<generic::CAA>()));
-        add("DLV", 32769, "IN", 1, RdataFactoryPtr(new RdataFactory<generic::DLV>()));
-        add("A", 1, "CH", 3, RdataFactoryPtr(new RdataFactory<ch::A>()));
-        add("A", 1, "HS", 4, RdataFactoryPtr(new RdataFactory<hs::A>()));
         add("TSIG", 250, "ANY", 255, RdataFactoryPtr(new RdataFactory<any::TSIG>()));
-        add("NS", 2, RdataFactoryPtr(new RdataFactory<generic::NS>()));
-        add("CNAME", 5, RdataFactoryPtr(new RdataFactory<generic::CNAME>()));
         add("SOA", 6, RdataFactoryPtr(new RdataFactory<generic::SOA>()));
         add("PTR", 12, RdataFactoryPtr(new RdataFactory<generic::PTR>()));
-        add("HINFO", 13, RdataFactoryPtr(new RdataFactory<generic::HINFO>()));
-        add("MINFO", 14, RdataFactoryPtr(new RdataFactory<generic::MINFO>()));
-        add("MX", 15, RdataFactoryPtr(new RdataFactory<generic::MX>()));
-        add("TXT", 16, RdataFactoryPtr(new RdataFactory<generic::TXT>()));
-        add("RP", 17, RdataFactoryPtr(new RdataFactory<generic::RP>()));
-        add("AFSDB", 18, RdataFactoryPtr(new RdataFactory<generic::AFSDB>()));
-        add("NAPTR", 35, RdataFactoryPtr(new RdataFactory<generic::NAPTR>()));
-        add("DNAME", 39, RdataFactoryPtr(new RdataFactory<generic::DNAME>()));
         add("OPT", 41, RdataFactoryPtr(new RdataFactory<generic::OPT>()));
-        add("DS", 43, RdataFactoryPtr(new RdataFactory<generic::DS>()));
-        add("SSHFP", 44, RdataFactoryPtr(new RdataFactory<generic::SSHFP>()));
         add("RRSIG", 46, RdataFactoryPtr(new RdataFactory<generic::RRSIG>()));
-        add("NSEC", 47, RdataFactoryPtr(new RdataFactory<generic::NSEC>()));
-        add("DNSKEY", 48, RdataFactoryPtr(new RdataFactory<generic::DNSKEY>()));
-        add("NSEC3", 50, RdataFactoryPtr(new RdataFactory<generic::NSEC3>()));
-        add("NSEC3PARAM", 51, RdataFactoryPtr(new RdataFactory<generic::NSEC3PARAM>()));
-        add("TLSA", 52, RdataFactoryPtr(new RdataFactory<generic::TLSA>()));
-        add("SPF", 99, RdataFactoryPtr(new RdataFactory<generic::SPF>()));
         add("TKEY", 249, RdataFactoryPtr(new RdataFactory<generic::TKEY>()));
-        add("CAA", 257, RdataFactoryPtr(new RdataFactory<generic::CAA>()));
-        add("DLV", 32769, RdataFactoryPtr(new RdataFactory<generic::DLV>()));
-        // Meta and non-implemented RR types
-        addType("IXFR", 251);
-        addType("AXFR", 252);
         addType("ANY", 255);
-        addType("MD", 3);
-        addType("MF", 4);
-        addType("MB", 7);
-        addType("MG", 8);
-        addType("MR", 9);
-        addType("NXT", 30);
-        addType("A6", 38);
-        addType("MAILA", 254);
-        addType("NULL", 10);
-        addType("WKS", 11);
-        addType("X25", 19);
-        addType("RT", 21);
-        addType("NSAP", 22);
-        addType("NSAP-PTR", 23);
-        addType("SIG", 24);
-        addType("ISDN", 20);
-        addType("KEY", 25);
-        addType("PX", 26);
-        addType("GPOS", 27);
-        addType("LOC", 29);
-        addType("KX", 36);
-        addType("CERT", 37);
-        addType("APL", 42);
-        addType("IPSECKEY", 45);
-        addType("HIP", 55);
-        addType("UNSPEC", 103);
-        addType("NID", 104);
-        addType("L32", 105);
-        addType("L64", 106);
-        addType("LP", 107);
-        addType("MAILB", 253);
-        addType("URI", 256);
         // Meta classes
         addClass("NONE", 254);
         // END_WELL_KNOWN_PARAMS
     } catch (...) {
-        delete impl_;
         throw;
     }
 }
 
 RRParamRegistry::~RRParamRegistry() {
-    delete impl_;
 }
 
 RRParamRegistry&
@@ -328,8 +242,7 @@ RRParamRegistry::getRegistry() {
 
 void
 RRParamRegistry::add(const std::string& typecode_string, uint16_t typecode,
-                     RdataFactoryPtr rdata_factory)
-{
+                     RdataFactoryPtr rdata_factory) {
     bool type_added = false;
     try {
         type_added = addType(typecode_string, typecode);
@@ -347,8 +260,7 @@ RRParamRegistry::add(const std::string& typecode_string, uint16_t typecode,
 void
 RRParamRegistry::add(const std::string& typecode_string, uint16_t typecode,
                      const std::string& classcode_string, uint16_t classcode,
-                     RdataFactoryPtr rdata_factory)
-{
+                     RdataFactoryPtr rdata_factory) {
     // Rollback logic on failure is complicated.  If adding the new type or
     // class fails, we should revert to the original state, cleaning up
     // intermediate state.  But we need to make sure that we don't remove
@@ -378,8 +290,7 @@ RRParamRegistry::add(const std::string& typecode_string, uint16_t typecode,
 
 bool
 RRParamRegistry::removeRdataFactory(const RRType& rrtype,
-                                    const RRClass& rrclass)
-{
+                                    const RRClass& rrclass) {
     RdataFactoryMap::iterator found =
         impl_->rdata_factories.find(RRTypeClass(rrtype, rrclass));
     if (found != impl_->rdata_factories.end()) {
@@ -434,8 +345,7 @@ caseStringEqual(const string& s1, const string& s2, size_t n) {
 ///     InvalidRRClass
 template <typename PT, typename MC, typename MS, typename ET>
 inline bool
-addParam(const string& code_string, uint16_t code, MC& codemap, MS& stringmap)
-{
+addParam(const string& code_string, uint16_t code, MC& codemap, MS& stringmap) {
     // Duplicate type check
     typename MC::const_iterator found = codemap.find(code);
     if (found != codemap.end()) {
@@ -540,8 +450,7 @@ RRParamRegistry::removeType(uint16_t code) {
 
 bool
 RRParamRegistry::textToTypeCode(const string& type_string,
-                                uint16_t& type_code) const
-{
+                                uint16_t& type_code) const {
     return (textToCode<RRTypeParam, StrRRTypeMap>
             (type_string, impl_->str2typemap, type_code));
 }
@@ -566,8 +475,7 @@ RRParamRegistry::removeClass(uint16_t code) {
 
 bool
 RRParamRegistry::textToClassCode(const string& class_string,
-                                 uint16_t& class_code) const
-{
+                                 uint16_t& class_code) const {
     return (textToCode<RRClassParam, StrRRClassMap>
             (class_string, impl_->str2classmap, class_code));
 }
@@ -581,8 +489,7 @@ RRParamRegistry::codeToClassText(uint16_t code) const {
 namespace {
 inline const AbstractRdataFactory*
 findRdataFactory(RRParamRegistryImpl* reg_impl,
-                 const RRType& rrtype, const RRClass& rrclass)
-{
+                 const RRType& rrtype, const RRClass& rrclass) {
     RdataFactoryMap::const_iterator found;
     found = reg_impl->rdata_factories.find(RRTypeClass(rrtype, rrclass));
     if (found != reg_impl->rdata_factories.end()) {
@@ -601,13 +508,12 @@ findRdataFactory(RRParamRegistryImpl* reg_impl,
 
 RdataPtr
 RRParamRegistry::createRdata(const RRType& rrtype, const RRClass& rrclass,
-                             const std::string& rdata_string)
-{
+                             const std::string& rdata_string) {
     // If the text indicates that it's rdata of an "unknown" type (beginning
     // with '\# n'), parse it that way. (TBD)
 
     const AbstractRdataFactory* factory =
-        findRdataFactory(impl_, rrtype, rrclass);
+        findRdataFactory(impl_.get(), rrtype, rrclass);
     if (factory != NULL) {
         return (factory->create(rdata_string));
     }
@@ -617,10 +523,9 @@ RRParamRegistry::createRdata(const RRType& rrtype, const RRClass& rrclass,
 
 RdataPtr
 RRParamRegistry::createRdata(const RRType& rrtype, const RRClass& rrclass,
-                             InputBuffer& buffer, size_t rdata_len)
-{
+                             InputBuffer& buffer, size_t rdata_len) {
     const AbstractRdataFactory* factory =
-        findRdataFactory(impl_, rrtype, rrclass);
+        findRdataFactory(impl_.get(), rrtype, rrclass);
     if (factory != NULL) {
         return (factory->create(buffer, rdata_len));
     }
@@ -630,10 +535,9 @@ RRParamRegistry::createRdata(const RRType& rrtype, const RRClass& rrclass,
 
 RdataPtr
 RRParamRegistry::createRdata(const RRType& rrtype, const RRClass& rrclass,
-                             const Rdata& source)
-{
+                             const Rdata& source) {
     const AbstractRdataFactory* factory =
-        findRdataFactory(impl_, rrtype, rrclass);
+        findRdataFactory(impl_.get(), rrtype, rrclass);
     if (factory != NULL) {
         return (factory->create(source));
     }
@@ -646,10 +550,9 @@ RdataPtr
 RRParamRegistry::createRdata(const RRType& rrtype, const RRClass& rrclass,
                              MasterLexer& lexer, const Name* name,
                              MasterLoader::Options options,
-                             MasterLoaderCallbacks& callbacks)
-{
+                             MasterLoaderCallbacks& callbacks) {
     const AbstractRdataFactory* factory =
-        findRdataFactory(impl_, rrtype, rrclass);
+        findRdataFactory(impl_.get(), rrtype, rrclass);
     if (factory != NULL) {
         return (factory->create(lexer, name, options, callbacks));
     }

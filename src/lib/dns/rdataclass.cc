@@ -18,6 +18,7 @@
 #include <vector>
 
 #include <boost/lexical_cast.hpp>
+#include <boost/shared_ptr.hpp>
 
 #include <util/buffer.h>
 #include <util/encode/encode.h>
@@ -50,8 +51,8 @@ struct TSIGImpl {
              vector<uint8_t>& other_data) :
         algorithm_(algorithm), time_signed_(time_signed), fudge_(fudge),
         mac_(mac), original_id_(original_id), error_(error),
-        other_data_(other_data)
-    {}
+        other_data_(other_data) {
+    }
     TSIGImpl(const Name& algorithm, uint64_t time_signed, uint16_t fudge,
              size_t macsize, const void* mac, uint16_t original_id,
              uint16_t error, size_t other_len, const void* other_data) :
@@ -60,8 +61,8 @@ struct TSIGImpl {
              static_cast<const uint8_t*>(mac) + macsize),
         original_id_(original_id), error_(error),
         other_data_(static_cast<const uint8_t*>(other_data),
-                    static_cast<const uint8_t*>(other_data) + other_len)
-    {}
+                    static_cast<const uint8_t*>(other_data) + other_len) {
+    }
     template <typename Output>
     void toWireCommon(Output& output) const;
 
@@ -75,7 +76,7 @@ struct TSIGImpl {
 };
 
 // helper function for string and lexer constructors
-TSIGImpl*
+boost::shared_ptr<TSIGImpl>
 TSIG::constructFromLexer(MasterLexer& lexer, const Name* origin) {
     const Name& algorithm =
         createNameFromLexer(lexer, origin ? origin : &Name::ROOT_NAME());
@@ -169,8 +170,8 @@ TSIG::constructFromLexer(MasterLexer& lexer, const Name* origin) {
     // RFC2845 says Other Data is "empty unless Error == BADTIME".
     // However, we don't enforce that.
 
-    return (new TSIGImpl(canonical_algorithm_name, time_signed, fudge, mac,
-                         orig_id, error, other_data));
+    return (boost::shared_ptr<TSIGImpl>(new TSIGImpl(canonical_algorithm_name, time_signed, fudge, mac,
+                                                     orig_id, error, other_data)));
 }
 
 /// \brief Constructor from string.
@@ -222,14 +223,14 @@ TSIG::TSIG(const std::string& tsig_str) : impl_(NULL) {
     // We use unique_ptr here because if there is an exception in this
     // constructor, the destructor is not called and there could be a
     // leak of the TSIGImpl that constructFromLexer() returns.
-    std::unique_ptr<TSIGImpl> impl_ptr;
+    boost::shared_ptr<TSIGImpl> impl_ptr;
 
     try {
         std::istringstream ss(tsig_str);
         MasterLexer lexer;
         lexer.pushSource(ss);
 
-        impl_ptr.reset(constructFromLexer(lexer, NULL));
+        impl_ptr = constructFromLexer(lexer, NULL);
 
         if (lexer.getNextToken().getType() != MasterToken::END_OF_FILE) {
             isc_throw(InvalidRdataText,
@@ -241,7 +242,7 @@ TSIG::TSIG(const std::string& tsig_str) : impl_(NULL) {
                   << ex.what());
     }
 
-    impl_ = impl_ptr.release();
+    impl_ = impl_ptr;
 }
 
 /// \brief Constructor with a context of MasterLexer.
@@ -260,9 +261,8 @@ TSIG::TSIG(const std::string& tsig_str) : impl_(NULL) {
 /// \param lexer A \c MasterLexer object parsing a master file for the
 /// RDATA to be created
 TSIG::TSIG(MasterLexer& lexer, const Name* origin,
-           MasterLoader::Options, MasterLoaderCallbacks&) :
-    impl_(constructFromLexer(lexer, origin))
-{
+           MasterLoader::Options, MasterLoaderCallbacks&) {
+    impl_ = constructFromLexer(lexer, origin);
 }
 
 /// \brief Constructor from wire-format data.
@@ -286,8 +286,7 @@ TSIG::TSIG(MasterLexer& lexer, const Name* origin,
 /// must check consistency between the length parameter and the actual
 /// RDATA length.
 TSIG::TSIG(InputBuffer& buffer, size_t) :
-    impl_(NULL)
-{
+    impl_(NULL) {
     Name algorithm(buffer);
 
     uint8_t time_signed_buf[6];
@@ -320,15 +319,14 @@ TSIG::TSIG(InputBuffer& buffer, size_t) :
     const Name& canonical_algorithm_name =
         (algorithm == TSIGKey::HMACMD5_SHORT_NAME()) ?
             TSIGKey::HMACMD5_NAME() : algorithm;
-    impl_ = new TSIGImpl(canonical_algorithm_name, time_signed, fudge, mac,
-                         original_id, error, other_data);
+    impl_.reset(new TSIGImpl(canonical_algorithm_name, time_signed, fudge, mac,
+                             original_id, error, other_data));
 }
 
 TSIG::TSIG(const Name& algorithm, uint64_t time_signed, uint16_t fudge,
            uint16_t mac_size, const void* mac, uint16_t original_id,
            uint16_t error, uint16_t other_len, const void* other_data) :
-    impl_(NULL)
-{
+    impl_(NULL) {
     // Time Signed is a 48-bit value.
     if ((time_signed >> 48) != 0) {
         isc_throw(OutOfRange, "TSIG Time Signed is too large: " <<
@@ -345,8 +343,8 @@ TSIG::TSIG(const Name& algorithm, uint64_t time_signed, uint16_t fudge,
     const Name& canonical_algorithm_name =
         (algorithm == TSIGKey::HMACMD5_SHORT_NAME()) ?
             TSIGKey::HMACMD5_NAME() : algorithm;
-    impl_ = new TSIGImpl(canonical_algorithm_name, time_signed, fudge, mac_size,
-                         mac, original_id, error, other_len, other_data);
+    impl_.reset(new TSIGImpl(canonical_algorithm_name, time_signed, fudge, mac_size,
+                             mac, original_id, error, other_len, other_data));
 }
 
 /// \brief The copy constructor.
@@ -354,8 +352,8 @@ TSIG::TSIG(const Name& algorithm, uint64_t time_signed, uint16_t fudge,
 /// It internally allocates a resource, and if it fails a corresponding
 /// standard exception will be thrown.
 /// This constructor never throws an exception otherwise.
-TSIG::TSIG(const TSIG& source) : Rdata(), impl_(new TSIGImpl(*source.impl_))
-{}
+TSIG::TSIG(const TSIG& source) : Rdata(), impl_(new TSIGImpl(*source.impl_)) {
+}
 
 TSIG&
 TSIG::operator=(const TSIG& source) {
@@ -363,15 +361,12 @@ TSIG::operator=(const TSIG& source) {
         return (*this);
     }
 
-    TSIGImpl* newimpl = new TSIGImpl(*source.impl_);
-    delete impl_;
-    impl_ = newimpl;
+    impl_.reset(new TSIGImpl(*source.impl_));
 
     return (*this);
 }
 
 TSIG::~TSIG() {
-    delete impl_;
 }
 
 /// \brief Convert the \c TSIG to a string.
@@ -584,3061 +579,6 @@ TSIG::getOtherData() const {
 
 #include <config.h>
 
-#include <string>
-
-#include <exceptions/exceptions.h>
-
-#include <util/buffer.h>
-#include <dns/messagerenderer.h>
-#include <dns/rdata.h>
-#include <dns/rdataclass.h>
-
-using namespace std;
-using namespace isc::util;
-
-namespace isc {
-namespace dns {
-namespace rdata {
-namespace ch {
-
-A::A(const std::string&) {
-    // TBD
-}
-
-A::A(MasterLexer&, const Name*,
-     MasterLoader::Options, MasterLoaderCallbacks&)
-{
-    // TBD
-}
-
-A::A(InputBuffer&, size_t) {
-    // TBD
-}
-
-A::A(const A&) : Rdata() {
-    // TBD
-}
-
-void
-A::toWire(OutputBuffer&) const {
-    // TBD
-}
-
-void
-A::toWire(AbstractMessageRenderer&) const {
-    // TBD
-}
-
-string
-A::toText() const {
-    // TBD
-    isc_throw(InvalidRdataText, "Not implemented yet");
-}
-
-int
-A::compare(const Rdata&) const {
-    return (0);                 // dummy.  TBD
-}
-
-} // end of namespace "ch"
-} // end of namespace "rdata"
-} // end of namespace "dns"
-} // end of namespace "isc"
-// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
-//
-// This Source Code Form is subject to the terms of the Mozilla Public
-// License, v. 2.0. If a copy of the MPL was not distributed with this
-// file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
-#include <config.h>
-
-#include <string>
-#include <sstream>
-
-#include <util/buffer.h>
-#include <util/strutil.h>
-
-#include <dns/name.h>
-#include <dns/messagerenderer.h>
-#include <dns/rdata.h>
-#include <dns/rdataclass.h>
-
-#include <boost/lexical_cast.hpp>
-
-#include <dns/rdata/generic/detail/lexer_util.h>
-
-using namespace std;
-using boost::lexical_cast;
-using namespace isc::util;
-using isc::dns::rdata::generic::detail::createNameFromLexer;
-
-namespace isc {
-namespace dns {
-namespace rdata {
-namespace generic {
-
-/// \brief Constructor from string.
-///
-/// \c afsdb_str must be formatted as follows:
-/// \code <subtype> <server name>
-/// \endcode
-/// where server name field must represent a valid domain name.
-///
-/// An example of valid string is:
-/// \code "1 server.example.com." \endcode
-///
-/// <b>Exceptions</b>
-///
-/// \exception InvalidRdataText The number of RDATA fields (must be 2) is
-/// incorrect.
-/// \exception std::bad_alloc Memory allocation fails.
-/// \exception Other The constructor of the \c Name class will throw if the
-/// names in the string is invalid.
-AFSDB::AFSDB(const std::string& afsdb_str) :
-    subtype_(0), server_(Name::ROOT_NAME())
-{
-    try {
-        std::istringstream ss(afsdb_str);
-        MasterLexer lexer;
-        lexer.pushSource(ss);
-
-        createFromLexer(lexer, NULL);
-
-        if (lexer.getNextToken().getType() != MasterToken::END_OF_FILE) {
-            isc_throw(InvalidRdataText, "extra input text for AFSDB: "
-                      << afsdb_str);
-        }
-    } catch (const MasterLexer::LexerError& ex) {
-        isc_throw(InvalidRdataText, "Failed to construct AFSDB from '" <<
-                  afsdb_str << "': " << ex.what());
-    }
-}
-
-/// \brief Constructor with a context of MasterLexer.
-///
-/// The \c lexer should point to the beginning of valid textual representation
-/// of an AFSDB RDATA.  The SERVER field can be non-absolute if \c origin
-/// is non-NULL, in which case \c origin is used to make it absolute.
-/// It must not be represented as a quoted string.
-///
-/// The SUBTYPE field must be a valid decimal representation of an
-/// unsigned 16-bit integer.
-///
-/// \throw MasterLexer::LexerError General parsing error such as missing field.
-/// \throw Other Exceptions from the Name and RRTTL constructors if
-/// construction of textual fields as these objects fail.
-///
-/// \param lexer A \c MasterLexer object parsing a master file for the
-/// RDATA to be created
-/// \param origin If non NULL, specifies the origin of SERVER when it
-/// is non-absolute.
-AFSDB::AFSDB(MasterLexer& lexer, const Name* origin,
-       MasterLoader::Options, MasterLoaderCallbacks&) :
-    subtype_(0), server_(".")
-{
-    createFromLexer(lexer, origin);
-}
-
-void
-AFSDB::createFromLexer(MasterLexer& lexer, const Name* origin)
-{
-    const uint32_t num = lexer.getNextToken(MasterToken::NUMBER).getNumber();
-    if (num > 65535) {
-        isc_throw(InvalidRdataText, "Invalid AFSDB subtype: " << num);
-    }
-    subtype_ = static_cast<uint16_t>(num);
-
-    server_ = createNameFromLexer(lexer, origin);
-}
-
-/// \brief Constructor from wire-format data.
-///
-/// This constructor doesn't check the validity of the second parameter (rdata
-/// length) for parsing.
-/// If necessary, the caller will check consistency.
-///
-/// \exception std::bad_alloc Memory allocation fails.
-/// \exception Other The constructor of the \c Name class will throw if the
-/// names in the wire is invalid.
-AFSDB::AFSDB(InputBuffer& buffer, size_t) :
-    subtype_(buffer.readUint16()), server_(buffer)
-{}
-
-/// \brief Copy constructor.
-///
-/// \exception std::bad_alloc Memory allocation fails in copying internal
-/// member variables (this should be very rare).
-AFSDB::AFSDB(const AFSDB& other) :
-    Rdata(), subtype_(other.subtype_), server_(other.server_)
-{}
-
-AFSDB&
-AFSDB::operator=(const AFSDB& source) {
-    subtype_ = source.subtype_;
-    server_ = source.server_;
-
-    return (*this);
-}
-
-/// \brief Convert the \c AFSDB to a string.
-///
-/// The output of this method is formatted as described in the "from string"
-/// constructor (\c AFSDB(const std::string&))).
-///
-/// \exception std::bad_alloc Internal resource allocation fails.
-///
-/// \return A \c string object that represents the \c AFSDB object.
-string
-AFSDB::toText() const {
-    return (lexical_cast<string>(subtype_) + " " + server_.toText());
-}
-
-/// \brief Render the \c AFSDB in the wire format without name compression.
-///
-/// \exception std::bad_alloc Internal resource allocation fails.
-///
-/// \param buffer An output buffer to store the wire data.
-void
-AFSDB::toWire(OutputBuffer& buffer) const {
-    buffer.writeUint16(subtype_);
-    server_.toWire(buffer);
-}
-
-/// \brief Render the \c AFSDB in the wire format with taking into account
-/// compression.
-///
-/// As specified in RFC3597, TYPE AFSDB is not "well-known", the server
-/// field (domain name) will not be compressed.
-///
-/// \exception std::bad_alloc Internal resource allocation fails.
-///
-/// \param renderer DNS message rendering context that encapsulates the
-/// output buffer and name compression information.
-void
-AFSDB::toWire(AbstractMessageRenderer& renderer) const {
-    renderer.writeUint16(subtype_);
-    renderer.writeName(server_, false);
-}
-
-/// \brief Compare two instances of \c AFSDB RDATA.
-///
-/// See documentation in \c Rdata.
-int
-AFSDB::compare(const Rdata& other) const {
-    const AFSDB& other_afsdb = dynamic_cast<const AFSDB&>(other);
-    if (subtype_ < other_afsdb.subtype_) {
-        return (-1);
-    } else if (subtype_ > other_afsdb.subtype_) {
-        return (1);
-    }
-
-    return (compareNames(server_, other_afsdb.server_));
-}
-
-const Name&
-AFSDB::getServer() const {
-    return (server_);
-}
-
-uint16_t
-AFSDB::getSubtype() const {
-    return (subtype_);
-}
-
-} // end of namespace "generic"
-} // end of namespace "rdata"
-} // end of namespace "dns"
-} // end of namespace "isc"
-// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
-//
-// This Source Code Form is subject to the terms of the Mozilla Public
-// License, v. 2.0. If a copy of the MPL was not distributed with this
-// file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
-#include <config.h>
-
-#include <boost/lexical_cast.hpp>
-#include <boost/algorithm/string.hpp>
-
-#include <exceptions/exceptions.h>
-
-#include <util/buffer.h>
-#include <dns/name.h>
-#include <dns/messagerenderer.h>
-#include <dns/rdata.h>
-#include <dns/rdataclass.h>
-
-#include <dns/rdata/generic/detail/char_string.h>
-
-using namespace std;
-using boost::lexical_cast;
-using namespace isc::util;
-
-namespace isc {
-namespace dns {
-namespace rdata {
-namespace generic {
-
-struct CAAImpl {
-    // straightforward representation of CAA RDATA fields
-    CAAImpl(uint8_t flags, const std::string& tag,
-            const detail::CharStringData& value) :
-        flags_(flags),
-        tag_(tag),
-        value_(value)
-    {
-        if ((sizeof(flags) + 1 + tag_.size() + value_.size()) > 65535) {
-            isc_throw(InvalidRdataLength,
-                      "CAA Value field is too large: " << value_.size());
-        }
-    }
-
-    uint8_t flags_;
-    const std::string tag_;
-    const detail::CharStringData value_;
-};
-
-// helper function for string and lexer constructors
-CAAImpl*
-CAA::constructFromLexer(MasterLexer& lexer) {
-    const uint32_t flags =
-        lexer.getNextToken(MasterToken::NUMBER).getNumber();
-    if (flags > 255) {
-        isc_throw(InvalidRdataText,
-                  "CAA flags field out of range");
-    }
-
-    // Tag field must not be empty.
-    const std::string tag =
-        lexer.getNextToken(MasterToken::STRING).getString();
-    if (tag.empty()) {
-        isc_throw(InvalidRdataText, "CAA tag field is empty");
-    } else if (tag.size() > 255) {
-        isc_throw(InvalidRdataText,
-                  "CAA tag field is too large: " << tag.size());
-    }
-
-    // Value field may be empty.
-    detail::CharStringData value;
-    MasterToken token = lexer.getNextToken(MasterToken::QSTRING, true);
-    if ((token.getType() != MasterToken::END_OF_FILE) &&
-        (token.getType() != MasterToken::END_OF_LINE))
-    {
-        detail::stringToCharStringData(token.getStringRegion(), value);
-    }
-
-    return (new CAAImpl(flags, tag, value));
-}
-
-/// \brief Constructor from string.
-///
-/// The given string must represent a valid CAA RDATA.  There can be
-/// extra space characters at the beginning or end of the text (which
-/// are simply ignored), but other extra text, including a new line,
-/// will make the construction fail with an exception.
-///
-/// The Flags, Tag and Value fields must be within their valid ranges,
-/// but are not constrained to the values defined in RFC6844. The Tag
-/// field must not be empty.
-///
-/// \throw InvalidRdataText if any fields are missing, out of their
-/// valid ranges, incorrect, or empty.
-///
-/// \param caa_str A string containing the RDATA to be created
-CAA::CAA(const string& caa_str) :
-    impl_(NULL)
-{
-    // We use unique_ptr here because if there is an exception in this
-    // constructor, the destructor is not called and there could be a
-    // leak of the CAAImpl that constructFromLexer() returns.
-    std::unique_ptr<CAAImpl> impl_ptr;
-
-    try {
-        std::istringstream ss(caa_str);
-        MasterLexer lexer;
-        lexer.pushSource(ss);
-
-        impl_ptr.reset(constructFromLexer(lexer));
-
-        if (lexer.getNextToken().getType() != MasterToken::END_OF_FILE) {
-            isc_throw(InvalidRdataText, "extra input text for CAA: "
-                      << caa_str);
-        }
-    } catch (const MasterLexer::LexerError& ex) {
-        isc_throw(InvalidRdataText, "Failed to construct CAA from '" <<
-                  caa_str << "': " << ex.what());
-    }
-
-    impl_ = impl_ptr.release();
-}
-
-/// \brief Constructor with a context of MasterLexer.
-///
-/// The \c lexer should point to the beginning of valid textual
-/// representation of an CAA RDATA.
-///
-/// \throw MasterLexer::LexerError General parsing error such as missing
-/// field.
-/// \throw InvalidRdataText Fields are out of their valid ranges,
-/// incorrect, or empty.
-///
-/// \param lexer A \c MasterLexer object parsing a master file for the
-/// RDATA to be created
-CAA::CAA(MasterLexer& lexer, const Name*,
-         MasterLoader::Options, MasterLoaderCallbacks&) :
-    impl_(constructFromLexer(lexer))
-{
-}
-
-/// \brief Constructor from InputBuffer.
-///
-/// The passed buffer must contain a valid CAA RDATA.
-///
-/// The Flags, Tag and Value fields must be within their valid ranges,
-/// but are not constrained to the values defined in RFC6844. The Tag
-/// field must not be empty.
-CAA::CAA(InputBuffer& buffer, size_t rdata_len) {
-    if (rdata_len < 2) {
-        isc_throw(InvalidRdataLength, "CAA record too short");
-    }
-
-    const uint8_t flags = buffer.readUint8();
-    const uint8_t tag_length = buffer.readUint8();
-    rdata_len -= 2;
-    if (tag_length == 0) {
-        isc_throw(InvalidRdataText, "CAA tag field is empty");
-    }
-
-    if (rdata_len < tag_length) {
-        isc_throw(InvalidRdataLength,
-                  "RDATA is too short for CAA tag field");
-    }
-
-    std::vector<uint8_t> tag_vec(tag_length);
-    buffer.readData(&tag_vec[0], tag_length);
-    std::string tag(tag_vec.begin(), tag_vec.end());
-    rdata_len -= tag_length;
-
-    detail::CharStringData value;
-    value.resize(rdata_len);
-    if (rdata_len > 0) {
-        buffer.readData(&value[0], rdata_len);
-    }
-
-    impl_ = new CAAImpl(flags, tag, value);
-}
-
-CAA::CAA(uint8_t flags, const std::string& tag, const std::string& value) :
-    impl_(NULL)
-{
-    if (tag.empty()) {
-        isc_throw(isc::InvalidParameter,
-                  "CAA tag field is empty");
-    } else if (tag.size() > 255) {
-        isc_throw(isc::InvalidParameter,
-                  "CAA tag field is too large: " << tag.size());
-    }
-
-    MasterToken::StringRegion region;
-    region.beg = &value[0]; // note std ensures this works even if str is empty
-    region.len = value.size();
-
-    detail::CharStringData value_vec;
-    detail::stringToCharStringData(region, value_vec);
-
-    impl_ = new CAAImpl(flags, tag, value_vec);
-}
-
-CAA::CAA(const CAA& other) :
-        Rdata(), impl_(new CAAImpl(*other.impl_))
-{}
-
-CAA&
-CAA::operator=(const CAA& source) {
-    if (this == &source) {
-        return (*this);
-    }
-
-    CAAImpl* newimpl = new CAAImpl(*source.impl_);
-    delete impl_;
-    impl_ = newimpl;
-
-    return (*this);
-}
-
-CAA::~CAA() {
-    delete impl_;
-}
-
-void
-CAA::toWire(OutputBuffer& buffer) const {
-    buffer.writeUint8(impl_->flags_);
-
-    // The constructors must ensure that the tag field is not empty.
-    assert(!impl_->tag_.empty());
-    buffer.writeUint8(impl_->tag_.size());
-    buffer.writeData(&impl_->tag_[0], impl_->tag_.size());
-
-    if (!impl_->value_.empty()) {
-        buffer.writeData(&impl_->value_[0],
-                         impl_->value_.size());
-    }
-}
-
-void
-CAA::toWire(AbstractMessageRenderer& renderer) const {
-    renderer.writeUint8(impl_->flags_);
-
-    // The constructors must ensure that the tag field is not empty.
-    assert(!impl_->tag_.empty());
-    renderer.writeUint8(impl_->tag_.size());
-    renderer.writeData(&impl_->tag_[0], impl_->tag_.size());
-
-    if (!impl_->value_.empty()) {
-        renderer.writeData(&impl_->value_[0],
-                           impl_->value_.size());
-    }
-}
-
-std::string
-CAA::toText() const {
-    std::string result;
-
-    result = lexical_cast<std::string>(static_cast<int>(impl_->flags_));
-    result += " " + impl_->tag_;
-    result += " \"" + detail::charStringDataToString(impl_->value_) + "\"";
-
-    return (result);
-}
-
-int
-CAA::compare(const Rdata& other) const {
-    const CAA& other_caa = dynamic_cast<const CAA&>(other);
-
-    if (impl_->flags_ < other_caa.impl_->flags_) {
-        return (-1);
-    } else if (impl_->flags_ > other_caa.impl_->flags_) {
-        return (1);
-    }
-
-    // Do a case-insensitive compare of the tag strings.
-    const int result = boost::ilexicographical_compare
-        <std::string, std::string>(impl_->tag_, other_caa.impl_->tag_);
-    if (result != 0) {
-        return (result);
-    }
-
-    return (detail::compareCharStringDatas(impl_->value_,
-                                           other_caa.impl_->value_));
-}
-
-uint8_t
-CAA::getFlags() const {
-    return (impl_->flags_);
-}
-
-const std::string&
-CAA::getTag() const {
-    return (impl_->tag_);
-}
-
-const std::vector<uint8_t>&
-CAA::getValue() const {
-    return (impl_->value_);
-}
-
-} // end of namespace "generic"
-} // end of namespace "rdata"
-} // end of namespace "dns"
-} // end of namespace "isc"
-// Copyright (C) 2010-2024 Internet Systems Consortium, Inc. ("ISC")
-//
-// This Source Code Form is subject to the terms of the Mozilla Public
-// License, v. 2.0. If a copy of the MPL was not distributed with this
-// file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
-#include <config.h>
-
-#include <string>
-
-#include <util/buffer.h>
-#include <dns/name.h>
-#include <dns/messagerenderer.h>
-#include <dns/rdata.h>
-#include <dns/rdataclass.h>
-
-#include <dns/rdata/generic/detail/lexer_util.h>
-
-using namespace std;
-using namespace isc::util;
-using isc::dns::rdata::generic::detail::createNameFromLexer;
-
-namespace isc {
-namespace dns {
-namespace rdata {
-namespace generic {
-
-/// \brief Constructor from string.
-///
-/// The given string must represent a valid CNAME RDATA.  There can be extra
-/// space characters at the beginning or end of the text (which are simply
-/// ignored), but other extra text, including a new line, will make the
-/// construction fail with an exception.
-///
-/// The CNAME must be absolute since there's no parameter that specifies
-/// the origin name; if it is not absolute, \c MissingNameOrigin
-/// exception will be thrown.  These must not be represented as a quoted
-/// string.
-///
-/// \throw Others Exception from the Name and RRTTL constructors.
-/// \throw InvalidRdataText Other general syntax errors.
-CNAME::CNAME(const std::string& namestr) :
-    // Fill in dummy name and replace it soon below.
-    cname_(Name::ROOT_NAME())
-{
-    try {
-        std::istringstream ss(namestr);
-        MasterLexer lexer;
-        lexer.pushSource(ss);
-
-        cname_ = createNameFromLexer(lexer, NULL);
-
-        if (lexer.getNextToken().getType() != MasterToken::END_OF_FILE) {
-            isc_throw(InvalidRdataText, "extra input text for CNAME: "
-                      << namestr);
-        }
-    } catch (const MasterLexer::LexerError& ex) {
-        isc_throw(InvalidRdataText, "Failed to construct CNAME from '" <<
-                  namestr << "': " << ex.what());
-    }
-}
-
-CNAME::CNAME(InputBuffer& buffer, size_t) :
-    Rdata(), cname_(buffer)
-{
-    // we don't need rdata_len for parsing.  if necessary, the caller will
-    // check consistency.
-}
-
-/// \brief Constructor with a context of MasterLexer.
-///
-/// The \c lexer should point to the beginning of valid textual
-/// representation of a CNAME RDATA.  The CNAME field can be
-/// non-absolute if \c origin is non-NULL, in which case \c origin is
-/// used to make it absolute.  It must not be represented as a quoted
-/// string.
-///
-/// \throw MasterLexer::LexerError General parsing error such as missing field.
-/// \throw Other Exceptions from the Name and RRTTL constructors if
-/// construction of textual fields as these objects fail.
-///
-/// \param lexer A \c MasterLexer object parsing a master file for the
-/// RDATA to be created
-/// \param origin If non NULL, specifies the origin of CNAME when it
-/// is non-absolute.
-CNAME::CNAME(MasterLexer& lexer, const Name* origin,
-             MasterLoader::Options, MasterLoaderCallbacks&) :
-    cname_(createNameFromLexer(lexer, origin))
-{}
-
-CNAME::CNAME(const CNAME& other) :
-    Rdata(), cname_(other.cname_)
-{}
-
-CNAME::CNAME(const Name& cname) :
-    cname_(cname)
-{}
-
-void
-CNAME::toWire(OutputBuffer& buffer) const {
-    cname_.toWire(buffer);
-}
-
-void
-CNAME::toWire(AbstractMessageRenderer& renderer) const {
-    renderer.writeName(cname_);
-}
-
-string
-CNAME::toText() const {
-    return (cname_.toText());
-}
-
-int
-CNAME::compare(const Rdata& other) const {
-    const CNAME& other_cname = dynamic_cast<const CNAME&>(other);
-
-    return (compareNames(cname_, other_cname.cname_));
-}
-
-const Name&
-CNAME::getCname() const {
-    return (cname_);
-}
-
-} // end of namespace "generic"
-} // end of namespace "rdata"
-} // end of namespace "dns"
-} // end of namespace "isc"
-// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
-//
-// This Source Code Form is subject to the terms of the Mozilla Public
-// License, v. 2.0. If a copy of the MPL was not distributed with this
-// file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
-#include <config.h>
-
-#include <string>
-
-#include <util/buffer.h>
-#include <util/encode/encode.h>
-
-#include <dns/messagerenderer.h>
-#include <dns/rdata.h>
-#include <dns/rdataclass.h>
-
-#include <dns/rdata/generic/detail/ds_like.h>
-
-using namespace std;
-using namespace isc::util;
-using namespace isc::util::encode;
-using namespace isc::dns::rdata::generic::detail;
-
-namespace isc {
-namespace dns {
-namespace rdata {
-namespace generic {
-
-/// \brief Constructor from string.
-///
-/// A copy of the implementation object is allocated and constructed.
-DLV::DLV(const std::string& ds_str) :
-    impl_(new DLVImpl(ds_str))
-{}
-
-/// \brief Constructor from wire-format data.
-///
-/// A copy of the implementation object is allocated and constructed.
-DLV::DLV(InputBuffer& buffer, size_t rdata_len) :
-    impl_(new DLVImpl(buffer, rdata_len))
-{}
-
-DLV::DLV(MasterLexer& lexer, const Name* origin, MasterLoader::Options options,
-         MasterLoaderCallbacks& callbacks) :
-    impl_(new DLVImpl(lexer, origin, options, callbacks))
-{}
-
-/// \brief Copy constructor
-///
-/// A copy of the implementation object is allocated and constructed.
-DLV::DLV(const DLV& source) :
-    Rdata(), impl_(new DLVImpl(*source.impl_))
-{}
-
-/// \brief Assignment operator
-///
-/// PIMPL-induced logic
-DLV&
-DLV::operator=(const DLV& source) {
-    if (this == &source) {
-        return (*this);
-    }
-
-    DLVImpl* newimpl = new DLVImpl(*source.impl_);
-    delete impl_;
-    impl_ = newimpl;
-
-    return (*this);
-}
-
-/// \brief Destructor
-///
-/// Deallocates an internal resource.
-DLV::~DLV() {
-    delete impl_;
-}
-
-/// \brief Convert the \c DLV to a string.
-///
-/// A pass-thru to the corresponding implementation method.
-string
-DLV::toText() const {
-    return (impl_->toText());
-}
-
-/// \brief Render the \c DLV in the wire format to a OutputBuffer object
-///
-/// A pass-thru to the corresponding implementation method.
-void
-DLV::toWire(OutputBuffer& buffer) const {
-    impl_->toWire(buffer);
-}
-
-/// \brief Render the \c DLV in the wire format to a AbstractMessageRenderer
-/// object
-///
-/// A pass-thru to the corresponding implementation method.
-void
-DLV::toWire(AbstractMessageRenderer& renderer) const {
-    impl_->toWire(renderer);
-}
-
-/// \brief Compare two instances of \c DLV RDATA.
-///
-/// The type check is performed here. Otherwise, a pass-thru to the
-/// corresponding implementation method.
-int
-DLV::compare(const Rdata& other) const {
-    const DLV& other_ds = dynamic_cast<const DLV&>(other);
-
-    return (impl_->compare(*other_ds.impl_));
-}
-
-/// \brief Tag accessor
-uint16_t
-DLV::getTag() const {
-    return (impl_->getTag());
-}
-
-} // end of namespace "generic"
-} // end of namespace "rdata"
-} // end of namespace "dns"
-} // end of namespace "isc"
-// Copyright (C) 2010-2024 Internet Systems Consortium, Inc. ("ISC")
-//
-// This Source Code Form is subject to the terms of the Mozilla Public
-// License, v. 2.0. If a copy of the MPL was not distributed with this
-// file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
-#include <config.h>
-
-#include <string>
-
-#include <util/buffer.h>
-#include <dns/name.h>
-#include <dns/messagerenderer.h>
-#include <dns/rdata.h>
-#include <dns/rdataclass.h>
-
-#include <dns/rdata/generic/detail/lexer_util.h>
-
-using namespace std;
-using namespace isc::util;
-using isc::dns::rdata::generic::detail::createNameFromLexer;
-
-namespace isc {
-namespace dns {
-namespace rdata {
-namespace generic {
-
-/// \brief Constructor from string.
-///
-/// The given string must represent a valid DNAME RDATA.  There can be extra
-/// space characters at the beginning or end of the text (which are simply
-/// ignored), but other extra text, including a new line, will make the
-/// construction fail with an exception.
-///
-/// The TARGET must be absolute since there's no parameter that specifies
-/// the origin name; if it is not absolute, \c MissingNameOrigin
-/// exception will be thrown.  These must not be represented as a quoted
-/// string.
-///
-/// \throw Others Exception from the Name and RRTTL constructors.
-/// \throw InvalidRdataText Other general syntax errors.
-DNAME::DNAME(const std::string& namestr) :
-    // Fill in dummy name and replace it soon below.
-    dname_(Name::ROOT_NAME())
-{
-    try {
-        std::istringstream ss(namestr);
-        MasterLexer lexer;
-        lexer.pushSource(ss);
-
-        dname_ = createNameFromLexer(lexer, NULL);
-
-        if (lexer.getNextToken().getType() != MasterToken::END_OF_FILE) {
-            isc_throw(InvalidRdataText, "extra input text for DNAME: "
-                      << namestr);
-        }
-    } catch (const MasterLexer::LexerError& ex) {
-        isc_throw(InvalidRdataText, "Failed to construct DNAME from '" <<
-                  namestr << "': " << ex.what());
-    }
-}
-
-DNAME::DNAME(InputBuffer& buffer, size_t) :
-    dname_(buffer)
-{
-    // we don't need rdata_len for parsing.  if necessary, the caller will
-    // check consistency.
-}
-
-/// \brief Constructor with a context of MasterLexer.
-///
-/// The \c lexer should point to the beginning of valid textual
-/// representation of a DNAME RDATA.  The TARGET field can be
-/// non-absolute if \c origin is non-NULL, in which case \c origin is
-/// used to make it absolute.  It must not be represented as a quoted
-/// string.
-///
-/// \throw MasterLexer::LexerError General parsing error such as missing field.
-/// \throw Other Exceptions from the Name and RRTTL constructors if
-/// construction of textual fields as these objects fail.
-///
-/// \param lexer A \c MasterLexer object parsing a master file for the
-/// RDATA to be created
-/// \param origin If non NULL, specifies the origin of TARGET when it
-/// is non-absolute.
-DNAME::DNAME(MasterLexer& lexer, const Name* origin,
-             MasterLoader::Options, MasterLoaderCallbacks&) :
-    dname_(createNameFromLexer(lexer, origin))
-{}
-
-DNAME::DNAME(const DNAME& other) :
-    Rdata(), dname_(other.dname_)
-{}
-
-DNAME::DNAME(const Name& dname) :
-    dname_(dname)
-{}
-
-void
-DNAME::toWire(OutputBuffer& buffer) const {
-    dname_.toWire(buffer);
-}
-
-void
-DNAME::toWire(AbstractMessageRenderer& renderer) const {
-    // Type DNAME is not "well-known", and name compression must be disabled
-    // per RFC3597.
-    renderer.writeName(dname_, false);
-}
-
-string
-DNAME::toText() const {
-    return (dname_.toText());
-}
-
-int
-DNAME::compare(const Rdata& other) const {
-    const DNAME& other_dname = dynamic_cast<const DNAME&>(other);
-
-    return (compareNames(dname_, other_dname.dname_));
-}
-
-const Name&
-DNAME::getDname() const {
-    return (dname_);
-}
-
-} // end of namespace "generic"
-} // end of namespace "rdata"
-} // end of namespace "dns"
-} // end of namespace "isc"
-// Copyright (C) 2010-2024 Internet Systems Consortium, Inc. ("ISC")
-//
-// This Source Code Form is subject to the terms of the Mozilla Public
-// License, v. 2.0. If a copy of the MPL was not distributed with this
-// file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
-#include <config.h>
-
-#include <iostream>
-#include <string>
-#include <sstream>
-#include <vector>
-
-#include <boost/lexical_cast.hpp>
-
-#include <util/encode/encode.h>
-#include <util/buffer.h>
-#include <dns/messagerenderer.h>
-#include <dns/name.h>
-#include <dns/rdata.h>
-#include <dns/rdataclass.h>
-
-#include <memory>
-
-#include <stdio.h>
-#include <time.h>
-
-using namespace std;
-using namespace isc::util;
-using namespace isc::util::encode;
-
-namespace isc {
-namespace dns {
-namespace rdata {
-namespace generic {
-
-struct DNSKEYImpl {
-    // straightforward representation of DNSKEY RDATA fields
-    DNSKEYImpl(uint16_t flags, uint8_t protocol, uint8_t algorithm,
-               const vector<uint8_t>& keydata) :
-        flags_(flags), protocol_(protocol), algorithm_(algorithm),
-        keydata_(keydata)
-    {}
-
-    uint16_t flags_;
-    uint8_t protocol_;
-    uint8_t algorithm_;
-    const vector<uint8_t> keydata_;
-};
-
-/// \brief Constructor from string.
-///
-/// The given string must represent a valid DNSKEY RDATA.  There can be
-/// extra space characters at the beginning or end of the text (which
-/// are simply ignored), but other extra text, including a new line,
-/// will make the construction fail with an exception.
-///
-/// The Protocol and Algorithm fields must be within their valid
-/// ranges. The Public Key field must be present and must contain a
-/// Base64 encoding of the public key. Whitespace is allowed within the
-/// Base64 text.
-///
-/// It is okay for the key data to be missing.  Note: BIND 9 also accepts
-/// DNSKEY missing key data.  While the RFC is silent in this case, and it
-/// may be debatable what an implementation should do, but since this field
-/// is algorithm dependent and this implementations doesn't reject unknown
-/// algorithms, it's lenient here.
-///
-/// \throw InvalidRdataText if any fields are out of their valid range,
-/// or are incorrect.
-///
-/// \param dnskey_str A string containing the RDATA to be created
-DNSKEY::DNSKEY(const std::string& dnskey_str) :
-    impl_(NULL)
-{
-    // We use unique_ptr here because if there is an exception in this
-    // constructor, the destructor is not called and there could be a
-    // leak of the DNSKEYImpl that constructFromLexer() returns.
-    std::unique_ptr<DNSKEYImpl> impl_ptr;
-
-    try {
-        std::istringstream ss(dnskey_str);
-        MasterLexer lexer;
-        lexer.pushSource(ss);
-
-        impl_ptr.reset(constructFromLexer(lexer));
-
-        if (lexer.getNextToken().getType() != MasterToken::END_OF_FILE) {
-            isc_throw(InvalidRdataText,
-                      "Extra input text for DNSKEY: " << dnskey_str);
-        }
-    } catch (const MasterLexer::LexerError& ex) {
-        isc_throw(InvalidRdataText,
-                  "Failed to construct DNSKEY from '" << dnskey_str << "': "
-                  << ex.what());
-    }
-
-    impl_ = impl_ptr.release();
-}
-
-/// \brief Constructor from InputBuffer.
-///
-/// The passed buffer must contain a valid DNSKEY RDATA.
-///
-/// The Protocol and Algorithm fields are not checked for unknown
-/// values.  It is okay for the key data to be missing (see the description
-/// of the constructor from string).
-DNSKEY::DNSKEY(InputBuffer& buffer, size_t rdata_len) :
-    impl_(NULL)
-{
-    if (rdata_len < 4) {
-        isc_throw(InvalidRdataLength, "DNSKEY too short: " << rdata_len);
-    }
-
-    const uint16_t flags = buffer.readUint16();
-    const uint16_t protocol = buffer.readUint8();
-    const uint16_t algorithm = buffer.readUint8();
-
-    rdata_len -= 4;
-
-    vector<uint8_t> keydata;
-    // If key data is missing, it's OK. See the API documentation of the
-    // constructor.
-    if (rdata_len > 0) {
-        keydata.resize(rdata_len);
-        buffer.readData(&keydata[0], rdata_len);
-    }
-
-    impl_ = new DNSKEYImpl(flags, protocol, algorithm, keydata);
-}
-
-/// \brief Constructor with a context of MasterLexer.
-///
-/// The \c lexer should point to the beginning of valid textual
-/// representation of an DNSKEY RDATA.
-///
-/// See \c DNSKEY::DNSKEY(const std::string&) for description of the
-/// expected RDATA fields.
-///
-/// \throw MasterLexer::LexerError General parsing error such as
-/// missing field.
-/// \throw InvalidRdataText if any fields are out of their valid range,
-/// or are incorrect.
-///
-/// \param lexer A \c MasterLexer object parsing a master file for the
-/// RDATA to be created
-DNSKEY::DNSKEY(MasterLexer& lexer, const Name*,
-               MasterLoader::Options, MasterLoaderCallbacks&) :
-    impl_(NULL)
-{
-    impl_ = constructFromLexer(lexer);
-}
-
-DNSKEYImpl*
-DNSKEY::constructFromLexer(MasterLexer& lexer) {
-    const uint32_t flags = lexer.getNextToken(MasterToken::NUMBER).getNumber();
-    if (flags > 0xffff) {
-        isc_throw(InvalidRdataText,
-                  "DNSKEY flags out of range: " << flags);
-    }
-
-    const uint32_t protocol =
-        lexer.getNextToken(MasterToken::NUMBER).getNumber();
-    if (protocol > 0xff) {
-        isc_throw(InvalidRdataText,
-                  "DNSKEY protocol out of range: " << protocol);
-    }
-
-    const uint32_t algorithm =
-        lexer.getNextToken(MasterToken::NUMBER).getNumber();
-    if (algorithm > 0xff) {
-        isc_throw(InvalidRdataText,
-                  "DNSKEY algorithm out of range: " << algorithm);
-    }
-
-    std::string keydata_str;
-    std::string keydata_substr;
-    while (true) {
-        const MasterToken& token =
-            lexer.getNextToken(MasterToken::STRING, true);
-        if ((token.getType() == MasterToken::END_OF_FILE) ||
-            (token.getType() == MasterToken::END_OF_LINE)) {
-            break;
-        }
-
-        // token is now assured to be of type STRING.
-
-        token.getString(keydata_substr);
-        keydata_str.append(keydata_substr);
-    }
-
-    lexer.ungetToken();
-
-    vector<uint8_t> keydata;
-    // If key data is missing, it's OK. See the API documentation of the
-    // constructor.
-    if (keydata_str.size() > 0) {
-        decodeBase64(keydata_str, keydata);
-    }
-
-    return (new DNSKEYImpl(flags, protocol, algorithm, keydata));
-}
-
-DNSKEY::DNSKEY(const DNSKEY& source) :
-    Rdata(), impl_(new DNSKEYImpl(*source.impl_))
-{}
-
-DNSKEY&
-DNSKEY::operator=(const DNSKEY& source) {
-    if (this == &source) {
-        return (*this);
-    }
-
-    DNSKEYImpl* newimpl = new DNSKEYImpl(*source.impl_);
-    delete impl_;
-    impl_ = newimpl;
-
-    return (*this);
-}
-
-DNSKEY::~DNSKEY() {
-    delete impl_;
-}
-
-string
-DNSKEY::toText() const {
-    return (boost::lexical_cast<string>(static_cast<int>(impl_->flags_)) +
-        " " + boost::lexical_cast<string>(static_cast<int>(impl_->protocol_)) +
-        " " + boost::lexical_cast<string>(static_cast<int>(impl_->algorithm_)) +
-        " " + encodeBase64(impl_->keydata_));
-}
-
-void
-DNSKEY::toWire(OutputBuffer& buffer) const {
-    buffer.writeUint16(impl_->flags_);
-    buffer.writeUint8(impl_->protocol_);
-    buffer.writeUint8(impl_->algorithm_);
-    buffer.writeData(&impl_->keydata_[0], impl_->keydata_.size());
-}
-
-void
-DNSKEY::toWire(AbstractMessageRenderer& renderer) const {
-    renderer.writeUint16(impl_->flags_);
-    renderer.writeUint8(impl_->protocol_);
-    renderer.writeUint8(impl_->algorithm_);
-    renderer.writeData(&impl_->keydata_[0], impl_->keydata_.size());
-}
-
-int
-DNSKEY::compare(const Rdata& other) const {
-    const DNSKEY& other_dnskey = dynamic_cast<const DNSKEY&>(other);
-
-    if (impl_->flags_ != other_dnskey.impl_->flags_) {
-        return (impl_->flags_ < other_dnskey.impl_->flags_ ? -1 : 1);
-    }
-    if (impl_->protocol_ != other_dnskey.impl_->protocol_) {
-        return (impl_->protocol_ < other_dnskey.impl_->protocol_ ? -1 : 1);
-    }
-    if (impl_->algorithm_ != other_dnskey.impl_->algorithm_) {
-        return (impl_->algorithm_ < other_dnskey.impl_->algorithm_ ? -1 : 1);
-    }
-
-    const size_t this_len = impl_->keydata_.size();
-    const size_t other_len = other_dnskey.impl_->keydata_.size();
-    const size_t cmplen = min(this_len, other_len);
-    if (cmplen == 0) {
-        return ((this_len == other_len) ? 0 : (this_len < other_len) ? -1 : 1);
-    }
-    const int cmp = memcmp(&impl_->keydata_[0],
-                           &other_dnskey.impl_->keydata_[0], cmplen);
-    if (cmp != 0) {
-        return (cmp);
-    } else {
-        return ((this_len == other_len) ? 0 : (this_len < other_len) ? -1 : 1);
-    }
-}
-
-uint16_t
-DNSKEY::getTag() const {
-    if (impl_->algorithm_ == 1) {
-        // See RFC 4034 appendix B.1 for why the key data must contain
-        // at least 4 bytes with RSA/MD5: 3 trailing bytes to extract
-        // the tag from, and 1 byte of exponent length subfield before
-        // modulus.
-        const int len = impl_->keydata_.size();
-        if (len < 4) {
-            isc_throw(isc::OutOfRange,
-                      "DNSKEY keydata too short for tag extraction");
-        }
-
-        return ((impl_->keydata_[len - 3] << 8) + impl_->keydata_[len - 2]);
-    }
-
-    uint32_t ac = impl_->flags_;
-    ac += (impl_->protocol_ << 8);
-    ac += impl_->algorithm_;
-
-    const size_t size = impl_->keydata_.size();
-    for (size_t i = 0; i < size; i ++) {
-        ac += (i & 1) ? impl_->keydata_[i] : (impl_->keydata_[i] << 8);
-    }
-    ac += (ac >> 16) & 0xffff;
-    return (ac & 0xffff);
-}
-
-uint16_t
-DNSKEY::getFlags() const {
-    return (impl_->flags_);
-}
-
-uint8_t
-DNSKEY::getAlgorithm() const {
-    return (impl_->algorithm_);
-}
-
-} // end of namespace "generic"
-} // end of namespace "rdata"
-} // end of namespace "dns"
-} // end of namespace "isc"
-// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
-//
-// This Source Code Form is subject to the terms of the Mozilla Public
-// License, v. 2.0. If a copy of the MPL was not distributed with this
-// file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
-#include <config.h>
-
-#include <string>
-
-#include <util/buffer.h>
-#include <util/encode/encode.h>
-
-#include <dns/messagerenderer.h>
-#include <dns/rdata.h>
-#include <dns/rdataclass.h>
-
-#include <dns/rdata/generic/detail/ds_like.h>
-
-using namespace std;
-using namespace isc::util;
-using namespace isc::util::encode;
-using namespace isc::dns::rdata::generic::detail;
-
-namespace isc {
-namespace dns {
-namespace rdata {
-namespace generic {
-
-DS::DS(const std::string& ds_str) :
-    impl_(new DSImpl(ds_str))
-{}
-
-DS::DS(InputBuffer& buffer, size_t rdata_len) :
-    impl_(new DSImpl(buffer, rdata_len))
-{}
-
-DS::DS(MasterLexer& lexer, const Name* origin, MasterLoader::Options options,
-       MasterLoaderCallbacks& callbacks) :
-    impl_(new DSImpl(lexer, origin, options, callbacks))
-{}
-
-DS::DS(const DS& source) :
-    Rdata(), impl_(new DSImpl(*source.impl_))
-{}
-
-DS&
-DS::operator=(const DS& source) {
-    if (this == &source) {
-        return (*this);
-    }
-
-    DSImpl* newimpl = new DSImpl(*source.impl_);
-    delete impl_;
-    impl_ = newimpl;
-
-    return (*this);
-}
-
-DS::~DS() {
-    delete impl_;
-}
-
-string
-DS::toText() const {
-    return (impl_->toText());
-}
-
-void
-DS::toWire(OutputBuffer& buffer) const {
-    impl_->toWire(buffer);
-}
-
-void
-DS::toWire(AbstractMessageRenderer& renderer) const {
-    impl_->toWire(renderer);
-}
-
-int
-DS::compare(const Rdata& other) const {
-    const DS& other_ds = dynamic_cast<const DS&>(other);
-
-    return (impl_->compare(*other_ds.impl_));
-}
-
-uint16_t
-DS::getTag() const {
-    return (impl_->getTag());
-}
-
-} // end of namespace "generic"
-} // end of namespace "rdata"
-} // end of namespace "dns"
-} // end of namespace "isc"
-// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
-//
-// This Source Code Form is subject to the terms of the Mozilla Public
-// License, v. 2.0. If a copy of the MPL was not distributed with this
-// file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
-#include <config.h>
-
-#include <exceptions/exceptions.h>
-#include <dns/exceptions.h>
-#include <dns/rdata.h>
-#include <dns/rdataclass.h>
-#include <dns/rdata/generic/detail/char_string.h>
-#include <util/buffer.h>
-
-using namespace std;
-using namespace isc::util;
-using namespace isc::dns;
-
-namespace isc {
-namespace dns {
-namespace rdata {
-namespace generic {
-
-class HINFOImpl {
-public:
-    HINFOImpl(const std::string& hinfo_str) {
-        std::istringstream ss(hinfo_str);
-        MasterLexer lexer;
-        lexer.pushSource(ss);
-
-        try {
-            parseHINFOData(lexer);
-            // Should be at end of data now
-            if (lexer.getNextToken(MasterToken::QSTRING, true).getType() !=
-                MasterToken::END_OF_FILE) {
-                isc_throw(InvalidRdataText,
-                          "Invalid HINFO text format: too many fields.");
-            }
-        } catch (const MasterLexer::LexerError& ex) {
-            isc_throw(InvalidRdataText, "Failed to construct HINFO RDATA from "
-                                        << hinfo_str << "': " << ex.what());
-        }
-    }
-
-    HINFOImpl(InputBuffer& buffer, size_t rdata_len) {
-        rdata_len -= detail::bufferToCharString(buffer, rdata_len, cpu);
-        rdata_len -= detail::bufferToCharString(buffer, rdata_len, os);
-        if (rdata_len != 0) {
-            isc_throw(isc::dns::DNSMessageFORMERR, "Error in parsing " <<
-                      "HINFO RDATA: bytes left at end: " <<
-                      static_cast<int>(rdata_len));
-        }
-    }
-
-    HINFOImpl(MasterLexer& lexer)
-    {
-        parseHINFOData(lexer);
-    }
-
-private:
-    void
-    parseHINFOData(MasterLexer& lexer) {
-        MasterToken token = lexer.getNextToken(MasterToken::QSTRING);
-        stringToCharString(token.getStringRegion(), cpu);
-        token = lexer.getNextToken(MasterToken::QSTRING);
-        stringToCharString(token.getStringRegion(), os);
-    }
-
-public:
-    detail::CharString cpu;
-    detail::CharString os;
-};
-
-HINFO::HINFO(const std::string& hinfo_str) : impl_(new HINFOImpl(hinfo_str))
-{}
-
-
-HINFO::HINFO(InputBuffer& buffer, size_t rdata_len) :
-    impl_(new HINFOImpl(buffer, rdata_len))
-{}
-
-HINFO::HINFO(const HINFO& source):
-    Rdata(), impl_(new HINFOImpl(*source.impl_))
-{
-}
-
-HINFO::HINFO(MasterLexer& lexer, const Name*,
-             MasterLoader::Options, MasterLoaderCallbacks&) :
-    impl_(new HINFOImpl(lexer))
-{}
-
-HINFO&
-HINFO::operator=(const HINFO& source)
-{
-    impl_.reset(new HINFOImpl(*source.impl_));
-    return (*this);
-}
-
-HINFO::~HINFO() {
-}
-
-std::string
-HINFO::toText() const {
-    string result;
-    result += "\"";
-    result += detail::charStringToString(impl_->cpu);
-    result += "\" \"";
-    result += detail::charStringToString(impl_->os);
-    result += "\"";
-    return (result);
-}
-
-void
-HINFO::toWire(OutputBuffer& buffer) const {
-    toWireHelper(buffer);
-}
-
-void
-HINFO::toWire(AbstractMessageRenderer& renderer) const {
-    toWireHelper(renderer);
-}
-
-int
-HINFO::compare(const Rdata& other) const {
-    const HINFO& other_hinfo = dynamic_cast<const HINFO&>(other);
-
-    const int cmp = compareCharStrings(impl_->cpu, other_hinfo.impl_->cpu);
-    if (cmp != 0) {
-        return (cmp);
-    }
-    return (compareCharStrings(impl_->os, other_hinfo.impl_->os));
-}
-
-const std::string
-HINFO::getCPU() const {
-    return (detail::charStringToString(impl_->cpu));
-}
-
-const std::string
-HINFO::getOS() const {
-    return (detail::charStringToString(impl_->os));
-}
-
-template <typename T>
-void
-HINFO::toWireHelper(T& outputer) const {
-    outputer.writeData(&impl_->cpu[0], impl_->cpu.size());
-    outputer.writeData(&impl_->os[0], impl_->os.size());
-}
-
-} // end of namespace "generic"
-} // end of namespace "rdata"
-} // end of namespace "dns"
-} // end of namespace "isc"
-// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
-//
-// This Source Code Form is subject to the terms of the Mozilla Public
-// License, v. 2.0. If a copy of the MPL was not distributed with this
-// file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
-#include <config.h>
-
-#include <string>
-#include <sstream>
-
-#include <util/buffer.h>
-
-#include <dns/messagerenderer.h>
-#include <dns/name.h>
-#include <dns/rdata.h>
-#include <dns/rdataclass.h>
-#include <dns/rdata/generic/detail/lexer_util.h>
-
-using namespace std;
-using namespace isc::dns;
-using namespace isc::util;
-using isc::dns::rdata::generic::detail::createNameFromLexer;
-
-namespace isc {
-namespace dns {
-namespace rdata {
-namespace generic {
-
-/// \brief Constructor from string.
-///
-/// \c minfo_str must be formatted as follows:
-/// \code <rmailbox name> <emailbox name>
-/// \endcode
-/// where both fields must represent a valid domain name.
-///
-/// An example of valid string is:
-/// \code "rmail.example.com. email.example.com." \endcode
-///
-/// \throw InvalidRdataText The number of RDATA fields (must be 2) is
-/// incorrect.
-/// \throw std::bad_alloc Memory allocation for names fails.
-/// \throw Other The constructor of the \c Name class will throw if the
-/// names in the string is invalid.
-MINFO::MINFO(const std::string& minfo_str) :
-    // We cannot construct both names in the initialization list due to the
-    // necessary text processing, so we have to initialize them with a dummy
-    // name and replace them later.
-    rmailbox_(Name::ROOT_NAME()), emailbox_(Name::ROOT_NAME())
-{
-    try {
-        std::istringstream ss(minfo_str);
-        MasterLexer lexer;
-        lexer.pushSource(ss);
-
-        rmailbox_ = createNameFromLexer(lexer, NULL);
-        emailbox_ = createNameFromLexer(lexer, NULL);
-
-        if (lexer.getNextToken().getType() != MasterToken::END_OF_FILE) {
-            isc_throw(InvalidRdataText, "extra input text for MINFO: "
-                      << minfo_str);
-        }
-    } catch (const MasterLexer::LexerError& ex) {
-        isc_throw(InvalidRdataText, "Failed to construct MINFO from '" <<
-                  minfo_str << "': " << ex.what());
-    }
-}
-
-/// \brief Constructor with a context of MasterLexer.
-///
-/// The \c lexer should point to the beginning of valid textual representation
-/// of an MINFO RDATA.  The RMAILBOX and EMAILBOX fields can be non-absolute
-/// if \c origin is non-NULL, in which case \c origin is used to make them
-/// absolute.
-///
-/// \throw MasterLexer::LexerError General parsing error such as missing field.
-/// \throw Other Exceptions from the Name and constructors if construction of
-/// textual fields as these objects fail.
-///
-/// \param lexer A \c MasterLexer object parsing a master file for the
-/// RDATA to be created
-/// \param origin If non NULL, specifies the origin of SERVER when it
-/// is non-absolute.
-MINFO::MINFO(MasterLexer& lexer, const Name* origin,
-             MasterLoader::Options, MasterLoaderCallbacks&) :
-    rmailbox_(createNameFromLexer(lexer, origin)),
-    emailbox_(createNameFromLexer(lexer, origin))
-{
-}
-
-/// \brief Constructor from wire-format data.
-///
-/// This constructor doesn't check the validity of the second parameter (rdata
-/// length) for parsing.
-/// If necessary, the caller will check consistency.
-///
-/// \throw std::bad_alloc Memory allocation for names fails.
-/// \throw Other The constructor of the \c Name class will throw if the
-/// names in the wire is invalid.
-MINFO::MINFO(InputBuffer& buffer, size_t) :
-    rmailbox_(buffer), emailbox_(buffer)
-{}
-
-/// \brief Copy constructor.
-///
-/// \throw std::bad_alloc Memory allocation fails in copying internal
-/// member variables (this should be very rare).
-MINFO::MINFO(const MINFO& other) :
-    Rdata(), rmailbox_(other.rmailbox_), emailbox_(other.emailbox_)
-{}
-
-/// \brief Convert the \c MINFO to a string.
-///
-/// The output of this method is formatted as described in the "from string"
-/// constructor (\c MINFO(const std::string&))).
-///
-/// \throw std::bad_alloc Internal resource allocation fails.
-///
-/// \return A \c string object that represents the \c MINFO object.
-std::string
-MINFO::toText() const {
-    return (rmailbox_.toText() + " " + emailbox_.toText());
-}
-
-/// \brief Render the \c MINFO in the wire format without name compression.
-///
-/// \throw std::bad_alloc Internal resource allocation fails.
-///
-/// \param buffer An output buffer to store the wire data.
-void
-MINFO::toWire(OutputBuffer& buffer) const {
-    rmailbox_.toWire(buffer);
-    emailbox_.toWire(buffer);
-}
-
-MINFO&
-MINFO::operator=(const MINFO& source) {
-    rmailbox_ = source.rmailbox_;
-    emailbox_ = source.emailbox_;
-
-    return (*this);
-}
-
-/// \brief Render the \c MINFO in the wire format with taking into account
-/// compression.
-///
-/// As specified in RFC3597, TYPE MINFO is "well-known", the rmailbox and
-/// emailbox fields (domain names) will be compressed.
-///
-/// \throw std::bad_alloc Internal resource allocation fails.
-///
-/// \param renderer DNS message rendering context that encapsulates the
-/// output buffer and name compression information.
-void
-MINFO::toWire(AbstractMessageRenderer& renderer) const {
-    renderer.writeName(rmailbox_);
-    renderer.writeName(emailbox_);
-}
-
-/// \brief Compare two instances of \c MINFO RDATA.
-///
-/// See documentation in \c Rdata.
-int
-MINFO::compare(const Rdata& other) const {
-    const MINFO& other_minfo = dynamic_cast<const MINFO&>(other);
-
-    const int cmp = compareNames(rmailbox_, other_minfo.rmailbox_);
-    if (cmp != 0) {
-        return (cmp);
-    }
-    return (compareNames(emailbox_, other_minfo.emailbox_));
-}
-
-} // end of namespace "generic"
-} // end of namespace "rdata"
-} // end of namespace "dns"
-} // end of namespace "isc"
-// Copyright (C) 2010-2024 Internet Systems Consortium, Inc. ("ISC")
-//
-// This Source Code Form is subject to the terms of the Mozilla Public
-// License, v. 2.0. If a copy of the MPL was not distributed with this
-// file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
-#include <config.h>
-
-#include <string>
-
-#include <boost/lexical_cast.hpp>
-
-#include <exceptions/exceptions.h>
-
-#include <util/buffer.h>
-#include <dns/name.h>
-#include <dns/messagerenderer.h>
-#include <dns/rdata.h>
-#include <dns/rdataclass.h>
-
-#include <dns/rdata/generic/detail/lexer_util.h>
-
-using namespace std;
-using boost::lexical_cast;
-using namespace isc::util;
-using isc::dns::rdata::generic::detail::createNameFromLexer;
-
-namespace isc {
-namespace dns {
-namespace rdata {
-namespace generic {
-
-MX::MX(InputBuffer& buffer, size_t) :
-    preference_(buffer.readUint16()), mxname_(buffer)
-{
-    // we don't need rdata_len for parsing.  if necessary, the caller will
-    // check consistency.
-}
-
-/// \brief Constructor from string.
-///
-/// The given string must represent a valid MX RDATA.  There can be extra
-/// space characters at the beginning or end of the text (which are simply
-/// ignored), but other extra text, including a new line, will make the
-/// construction fail with an exception.
-///
-/// The EXCHANGE name must be absolute since there's no parameter that
-/// specifies the origin name; if it is not absolute, \c MissingNameOrigin
-/// exception will be thrown. It must not be represented as a quoted
-/// string.
-///
-/// See the construction that takes \c MasterLexer for other fields.
-///
-/// \throw Others Exception from the Name and RRTTL constructors.
-/// \throw InvalidRdataText Other general syntax errors.
-MX::MX(const std::string& mx_str) :
-    // Fill in dummy name and replace them soon below.
-    preference_(0), mxname_(Name::ROOT_NAME())
-{
-    try {
-        std::istringstream ss(mx_str);
-        MasterLexer lexer;
-        lexer.pushSource(ss);
-
-        constructFromLexer(lexer, NULL);
-
-        if (lexer.getNextToken().getType() != MasterToken::END_OF_FILE) {
-            isc_throw(InvalidRdataText, "extra input text for MX: "
-                      << mx_str);
-        }
-    } catch (const MasterLexer::LexerError& ex) {
-        isc_throw(InvalidRdataText, "Failed to construct MX from '" <<
-                  mx_str << "': " << ex.what());
-    }
-}
-
-/// \brief Constructor with a context of MasterLexer.
-///
-/// The \c lexer should point to the beginning of valid textual representation
-/// of an MX RDATA.  The EXCHANGE field can be non-absolute if \c origin
-/// is non-NULL, in which case \c origin is used to make it absolute.
-/// It must not be represented as a quoted string.
-///
-/// The PREFERENCE field must be a valid decimal representation of an
-/// unsigned 16-bit integer.
-///
-/// \throw MasterLexer::LexerError General parsing error such as missing field.
-/// \throw Other Exceptions from the Name and RRTTL constructors if
-/// construction of textual fields as these objects fail.
-///
-/// \param lexer A \c MasterLexer object parsing a master file for the
-/// RDATA to be created
-/// \param origin If non NULL, specifies the origin of EXCHANGE when it
-/// is non-absolute.
-MX::MX(MasterLexer& lexer, const Name* origin,
-       MasterLoader::Options, MasterLoaderCallbacks&) :
-    preference_(0), mxname_(Name::ROOT_NAME())
-{
-    constructFromLexer(lexer, origin);
-}
-
-void
-MX::constructFromLexer(MasterLexer& lexer, const Name* origin) {
-    const uint32_t num = lexer.getNextToken(MasterToken::NUMBER).getNumber();
-    if (num > 65535) {
-        isc_throw(InvalidRdataText, "Invalid MX preference: " << num);
-    }
-    preference_ = static_cast<uint16_t>(num);
-
-    mxname_ = createNameFromLexer(lexer, origin);
-}
-
-MX::MX(uint16_t preference, const Name& mxname) :
-    preference_(preference), mxname_(mxname)
-{}
-
-MX::MX(const MX& other) :
-    Rdata(), preference_(other.preference_), mxname_(other.mxname_)
-{}
-
-void
-MX::toWire(OutputBuffer& buffer) const {
-    buffer.writeUint16(preference_);
-    mxname_.toWire(buffer);
-}
-
-void
-MX::toWire(AbstractMessageRenderer& renderer) const {
-    renderer.writeUint16(preference_);
-    renderer.writeName(mxname_);
-}
-
-string
-MX::toText() const {
-    return (lexical_cast<string>(preference_) + " " + mxname_.toText());
-}
-
-int
-MX::compare(const Rdata& other) const {
-    const MX& other_mx = dynamic_cast<const MX&>(other);
-
-    if (preference_ < other_mx.preference_) {
-        return (-1);
-    } else if (preference_ > other_mx.preference_) {
-        return (1);
-    }
-
-    return (compareNames(mxname_, other_mx.mxname_));
-}
-
-const Name&
-MX::getMXName() const {
-    return (mxname_);
-}
-
-uint16_t
-MX::getMXPref() const {
-    return (preference_);
-}
-
-} // end of namespace "generic"
-} // end of namespace "rdata"
-} // end of namespace "dns"
-} // end of namespace "isc"
-// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
-//
-// This Source Code Form is subject to the terms of the Mozilla Public
-// License, v. 2.0. If a copy of the MPL was not distributed with this
-// file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
-#include <config.h>
-
-#include <dns/name.h>
-#include <dns/messagerenderer.h>
-#include <dns/rdata.h>
-#include <dns/rdataclass.h>
-#include <dns/rdata/generic/detail/char_string.h>
-#include <exceptions/exceptions.h>
-
-#include <string>
-#include <boost/lexical_cast.hpp>
-
-using namespace std;
-using boost::lexical_cast;
-using namespace isc::util;
-using namespace isc::dns;
-
-namespace isc {
-namespace dns {
-namespace rdata {
-namespace generic {
-
-class NAPTRImpl {
-public:
-    NAPTRImpl() : order(0), preference(0), replacement(".") {}
-
-    NAPTRImpl(InputBuffer& buffer, size_t rdata_len) : replacement(".") {
-        if (rdata_len < 4 || buffer.getLength() - buffer.getPosition() < 4) {
-            isc_throw(isc::dns::DNSMessageFORMERR, "Error in parsing "
-                      "NAPTR RDATA wire format: insufficient length ");
-        }
-        order = buffer.readUint16();
-        preference = buffer.readUint16();
-        rdata_len -= 4;
-
-        rdata_len -= detail::bufferToCharString(buffer, rdata_len, flags);
-        rdata_len -= detail::bufferToCharString(buffer, rdata_len, services);
-        rdata_len -= detail::bufferToCharString(buffer, rdata_len, regexp);
-        replacement = Name(buffer);
-        if (rdata_len < 1) {
-            isc_throw(isc::dns::DNSMessageFORMERR, "Error in parsing "
-                      "NAPTR RDATA wire format: missing replacement name");
-        }
-        rdata_len -= replacement.getLength();
-
-        if (rdata_len != 0) {
-            isc_throw(isc::dns::DNSMessageFORMERR, "Error in parsing " <<
-                      "NAPTR RDATA: bytes left at end: " <<
-                      static_cast<int>(rdata_len));
-        }
-    }
-
-    NAPTRImpl(const std::string& naptr_str) : replacement(".") {
-        std::istringstream ss(naptr_str);
-        MasterLexer lexer;
-        lexer.pushSource(ss);
-
-        try {
-            parseNAPTRData(lexer);
-            // Should be at end of data now
-            if (lexer.getNextToken(MasterToken::QSTRING, true).getType() !=
-                MasterToken::END_OF_FILE) {
-                isc_throw(InvalidRdataText,
-                          "Invalid NAPTR text format: too many fields.");
-            }
-        } catch (const MasterLexer::LexerError& ex) {
-            isc_throw(InvalidRdataText, "Failed to construct NAPTR RDATA from "
-                                        << naptr_str << "': " << ex.what());
-        }
-    }
-
-    NAPTRImpl(MasterLexer& lexer) : replacement(".")
-    {
-        parseNAPTRData(lexer);
-    }
-
-private:
-    void
-    parseNAPTRData(MasterLexer& lexer) {
-        MasterToken token = lexer.getNextToken(MasterToken::NUMBER);
-        if (token.getNumber() > 65535) {
-            isc_throw(InvalidRdataText,
-                      "Invalid NAPTR text format: order out of range: "
-                      << token.getNumber());
-        }
-        order = token.getNumber();
-        token = lexer.getNextToken(MasterToken::NUMBER);
-        if (token.getNumber() > 65535) {
-            isc_throw(InvalidRdataText,
-                      "Invalid NAPTR text format: preference out of range: "
-                      << token.getNumber());
-        }
-        preference = token.getNumber();
-
-        token = lexer.getNextToken(MasterToken::QSTRING);
-        stringToCharString(token.getStringRegion(), flags);
-        token = lexer.getNextToken(MasterToken::QSTRING);
-        stringToCharString(token.getStringRegion(), services);
-        token = lexer.getNextToken(MasterToken::QSTRING);
-        stringToCharString(token.getStringRegion(), regexp);
-
-        token = lexer.getNextToken(MasterToken::STRING);
-        replacement = Name(token.getString());
-    }
-
-
-public:
-    uint16_t order;
-    uint16_t preference;
-    detail::CharString flags;
-    detail::CharString services;
-    detail::CharString regexp;
-    Name replacement;
-};
-
-NAPTR::NAPTR(InputBuffer& buffer, size_t rdata_len) :
-    impl_(new NAPTRImpl(buffer, rdata_len))
-{}
-
-NAPTR::NAPTR(const std::string& naptr_str) : impl_(new NAPTRImpl(naptr_str))
-{}
-
-NAPTR::NAPTR(MasterLexer& lexer, const Name*,
-             MasterLoader::Options, MasterLoaderCallbacks&) :
-    impl_(new NAPTRImpl(lexer))
-{}
-
-NAPTR::NAPTR(const NAPTR& naptr) :  Rdata(),
-                                    impl_(new NAPTRImpl(*naptr.impl_))
-{}
-
-NAPTR&
-NAPTR::operator=(const NAPTR& source)
-{
-    impl_.reset(new NAPTRImpl(*source.impl_));
-    return (*this);
-}
-
-NAPTR::~NAPTR() {
-}
-
-void
-NAPTR::toWire(OutputBuffer& buffer) const {
-    toWireHelper(buffer);
-    impl_->replacement.toWire(buffer);
-}
-
-void
-NAPTR::toWire(AbstractMessageRenderer& renderer) const {
-    toWireHelper(renderer);
-    // Type NAPTR is not "well-known", and name compression must be disabled
-    // per RFC3597.
-    renderer.writeName(impl_->replacement, false);
-}
-
-string
-NAPTR::toText() const {
-    string result;
-    result += lexical_cast<string>(impl_->order);
-    result += " ";
-    result += lexical_cast<string>(impl_->preference);
-    result += " \"";
-    result += detail::charStringToString(impl_->flags);
-    result += "\" \"";
-    result += detail::charStringToString(impl_->services);
-    result += "\" \"";
-    result += detail::charStringToString(impl_->regexp);
-    result += "\" ";
-    result += impl_->replacement.toText();
-    return (result);
-}
-
-int
-NAPTR::compare(const Rdata& other) const {
-    const NAPTR other_naptr = dynamic_cast<const NAPTR&>(other);
-
-    if (impl_->order < other_naptr.impl_->order) {
-        return (-1);
-    } else if (impl_->order > other_naptr.impl_->order) {
-        return (1);
-    }
-
-    if (impl_->preference < other_naptr.impl_->preference) {
-        return (-1);
-    } else if (impl_->preference > other_naptr.impl_->preference) {
-        return (1);
-    }
-
-    const int fcmp = detail::compareCharStrings(impl_->flags,
-                                                other_naptr.impl_->flags);
-    if (fcmp != 0) {
-        return (fcmp);
-    }
-
-    const int scmp = detail::compareCharStrings(impl_->services,
-                                                other_naptr.impl_->services);
-    if (scmp != 0) {
-        return (scmp);
-    }
-
-    const int rcmp = detail::compareCharStrings(impl_->regexp,
-                                                other_naptr.impl_->regexp);
-    if (rcmp != 0) {
-        return (rcmp);
-    }
-
-    return (compareNames(impl_->replacement, other_naptr.impl_->replacement));
-}
-
-uint16_t
-NAPTR::getOrder() const {
-    return (impl_->order);
-}
-
-uint16_t
-NAPTR::getPreference() const {
-    return (impl_->preference);
-}
-
-const std::string
-NAPTR::getFlags() const {
-    return (detail::charStringToString(impl_->flags));
-}
-
-const std::string
-NAPTR::getServices() const {
-    return (detail::charStringToString(impl_->services));
-}
-
-const std::string
-NAPTR::getRegexp() const {
-    return (detail::charStringToString(impl_->regexp));
-}
-
-const Name&
-NAPTR::getReplacement() const {
-    return (impl_->replacement);
-}
-
-template <typename T>
-void
-NAPTR::toWireHelper(T& outputer) const {
-    outputer.writeUint16(impl_->order);
-    outputer.writeUint16(impl_->preference);
-
-    outputer.writeData(&impl_->flags[0], impl_->flags.size());
-    outputer.writeData(&impl_->services[0], impl_->services.size());
-    outputer.writeData(&impl_->regexp[0], impl_->regexp.size());
-}
-
-} // end of namespace "generic"
-} // end of namespace "rdata"
-} // end of namespace "dns"
-} // end of namespace "isc"
-// Copyright (C) 2010-2024 Internet Systems Consortium, Inc. ("ISC")
-//
-// This Source Code Form is subject to the terms of the Mozilla Public
-// License, v. 2.0. If a copy of the MPL was not distributed with this
-// file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
-#include <config.h>
-
-#include <string>
-
-#include <util/buffer.h>
-#include <dns/name.h>
-#include <dns/messagerenderer.h>
-#include <dns/rdata.h>
-#include <dns/rdataclass.h>
-
-#include <dns/rdata/generic/detail/lexer_util.h>
-
-using namespace std;
-using namespace isc::util;
-using isc::dns::rdata::generic::detail::createNameFromLexer;
-
-namespace isc {
-namespace dns {
-namespace rdata {
-namespace generic {
-
-/// \brief Constructor from string.
-///
-/// The given string must represent a valid NS RDATA.  There can be extra
-/// space characters at the beginning or end of the text (which are simply
-/// ignored), but other extra text, including a new line, will make the
-/// construction fail with an exception.
-///
-/// The NSDNAME must be absolute since there's no parameter that
-/// specifies the origin name; if it is not absolute, \c
-/// MissingNameOrigin exception will be thrown.  These must not be
-/// represented as a quoted string.
-///
-/// \throw Others Exception from the Name and RRTTL constructors.
-/// \throw InvalidRdataText Other general syntax errors.
-NS::NS(const std::string& namestr) :
-    // Fill in dummy name and replace them soon below.
-    nsname_(Name::ROOT_NAME())
-{
-    try {
-        std::istringstream ss(namestr);
-        MasterLexer lexer;
-        lexer.pushSource(ss);
-
-        nsname_ = createNameFromLexer(lexer, NULL);
-
-        if (lexer.getNextToken().getType() != MasterToken::END_OF_FILE) {
-            isc_throw(InvalidRdataText, "extra input text for NS: "
-                      << namestr);
-        }
-    } catch (const MasterLexer::LexerError& ex) {
-        isc_throw(InvalidRdataText, "Failed to construct NS from '" <<
-                  namestr << "': " << ex.what());
-    }
-}
-
-NS::NS(InputBuffer& buffer, size_t) :
-    nsname_(buffer)
-{
-    // we don't need rdata_len for parsing.  if necessary, the caller will
-    // check consistency.
-}
-
-/// \brief Constructor with a context of MasterLexer.
-///
-/// The \c lexer should point to the beginning of valid textual
-/// representation of an NS RDATA.  The NSDNAME field can be
-/// non-absolute if \c origin is non-NULL, in which case \c origin is
-/// used to make it absolute.  It must not be represented as a quoted
-/// string.
-///
-/// \throw MasterLexer::LexerError General parsing error such as missing field.
-/// \throw Other Exceptions from the Name and RRTTL constructors if
-/// construction of textual fields as these objects fail.
-///
-/// \param lexer A \c MasterLexer object parsing a master file for the
-/// RDATA to be created
-/// \param origin If non NULL, specifies the origin of NSDNAME when it
-/// is non-absolute.
-NS::NS(MasterLexer& lexer, const Name* origin,
-       MasterLoader::Options, MasterLoaderCallbacks&) :
-    nsname_(createNameFromLexer(lexer, origin))
-{}
-
-NS::NS(const NS& other) :
-    Rdata(), nsname_(other.nsname_)
-{}
-
-void
-NS::toWire(OutputBuffer& buffer) const {
-    nsname_.toWire(buffer);
-}
-
-void
-NS::toWire(AbstractMessageRenderer& renderer) const {
-    renderer.writeName(nsname_);
-}
-
-string
-NS::toText() const {
-    return (nsname_.toText());
-}
-
-int
-NS::compare(const Rdata& other) const {
-    const NS& other_ns = dynamic_cast<const NS&>(other);
-
-    return (compareNames(nsname_, other_ns.nsname_));
-}
-
-const Name&
-NS::getNSName() const {
-    return (nsname_);
-}
-
-} // end of namespace "generic"
-} // end of namespace "rdata"
-} // end of namespace "dns"
-} // end of namespace "isc"
-// Copyright (C) 2010-2024 Internet Systems Consortium, Inc. ("ISC")
-//
-// This Source Code Form is subject to the terms of the Mozilla Public
-// License, v. 2.0. If a copy of the MPL was not distributed with this
-// file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
-#include <config.h>
-
-#include <iostream>
-#include <iomanip>
-#include <string>
-#include <sstream>
-#include <vector>
-#include <cassert>
-
-#include <boost/lexical_cast.hpp>
-
-#include <util/encode/encode.h>
-#include <util/buffer.h>
-
-#include <dns/exceptions.h>
-#include <dns/messagerenderer.h>
-#include <dns/name.h>
-#include <dns/rrtype.h>
-#include <dns/rrttl.h>
-#include <dns/rdata.h>
-#include <dns/rdataclass.h>
-#include <dns/rdata/generic/detail/nsec_bitmap.h>
-#include <dns/rdata/generic/detail/nsec3param_common.h>
-
-#include <memory>
-
-#include <stdio.h>
-#include <time.h>
-
-using namespace std;
-using namespace isc::dns::rdata::generic::detail::nsec;
-using namespace isc::dns::rdata::generic::detail::nsec3;
-using namespace isc::util::encode;
-using namespace isc::util;
-
-namespace isc {
-namespace dns {
-namespace rdata {
-namespace generic {
-
-struct NSEC3Impl {
-    // straightforward representation of NSEC3 RDATA fields
-    NSEC3Impl(uint8_t hashalg, uint8_t flags, uint16_t iterations,
-              vector<uint8_t>salt, vector<uint8_t>next,
-              vector<uint8_t> typebits) :
-        hashalg_(hashalg), flags_(flags), iterations_(iterations),
-        salt_(salt), next_(next), typebits_(typebits)
-    {}
-
-    const uint8_t hashalg_;
-    const uint8_t flags_;
-    const uint16_t iterations_;
-    const vector<uint8_t> salt_;
-    const vector<uint8_t> next_;
-    const vector<uint8_t> typebits_;
-};
-
-/// \brief Constructor from string.
-///
-/// The given string must represent a valid NSEC3 RDATA.  There
-/// can be extra space characters at the beginning or end of the
-/// text (which are simply ignored), but other extra text, including
-/// a new line, will make the construction fail with an exception.
-///
-/// The Hash Algorithm, Flags and Iterations fields must be within their
-/// valid ranges. The Salt field may contain "-" to indicate that the
-/// salt is of length 0. The Salt field must not contain any whitespace.
-/// The type mnemonics must be valid, and separated by whitespace. If
-/// any invalid mnemonics are found, InvalidRdataText exception is
-/// thrown.
-///
-/// \throw InvalidRdataText if any fields are out of their valid range,
-/// or are incorrect.
-///
-/// \param nsec3_str A string containing the RDATA to be created
-NSEC3::NSEC3(const std::string& nsec3_str) :
-    impl_(NULL)
-{
-    // We use unique_ptr here because if there is an exception in this
-    // constructor, the destructor is not called and there could be a
-    // leak of the NSEC3Impl that constructFromLexer() returns.
-    std::unique_ptr<NSEC3Impl> impl_ptr;
-
-    try {
-        std::istringstream ss(nsec3_str);
-        MasterLexer lexer;
-        lexer.pushSource(ss);
-
-        impl_ptr.reset(constructFromLexer(lexer));
-
-        if (lexer.getNextToken().getType() != MasterToken::END_OF_FILE) {
-            isc_throw(InvalidRdataText,
-                      "Extra input text for NSEC3: " << nsec3_str);
-        }
-    } catch (const MasterLexer::LexerError& ex) {
-        isc_throw(InvalidRdataText,
-                  "Failed to construct NSEC3 from '" << nsec3_str << "': "
-                  << ex.what());
-    }
-
-    impl_ = impl_ptr.release();
-}
-
-/// \brief Constructor with a context of MasterLexer.
-///
-/// The \c lexer should point to the beginning of valid textual
-/// representation of an NSEC3 RDATA.
-///
-/// See \c NSEC3::NSEC3(const std::string&) for description of the
-/// expected RDATA fields.
-///
-/// \throw MasterLexer::LexerError General parsing error such as
-/// missing field.
-/// \throw InvalidRdataText if any fields are out of their valid range,
-/// or are incorrect.
-///
-/// \param lexer A \c MasterLexer object parsing a master file for the
-/// RDATA to be created
-NSEC3::NSEC3(MasterLexer& lexer, const Name*, MasterLoader::Options,
-             MasterLoaderCallbacks&) :
-    impl_(NULL)
-{
-    impl_ = constructFromLexer(lexer);
-}
-
-NSEC3Impl*
-NSEC3::constructFromLexer(MasterLexer& lexer) {
-    vector<uint8_t> salt;
-    const ParseNSEC3ParamResult params =
-        parseNSEC3ParamFromLexer("NSEC3", lexer, salt);
-
-    const string& nexthash =
-        lexer.getNextToken(MasterToken::STRING).getString();
-    if (*nexthash.rbegin() == '=') {
-        isc_throw(InvalidRdataText, "NSEC3 hash has padding: " << nexthash);
-    }
-
-    vector<uint8_t> next;
-    decodeBase32Hex(nexthash, next);
-    if (next.size() > 255) {
-        isc_throw(InvalidRdataText, "NSEC3 hash is too long: "
-                  << next.size() << " bytes");
-    }
-
-    vector<uint8_t> typebits;
-    // For NSEC3 empty bitmap is possible and allowed.
-    buildBitmapsFromLexer("NSEC3", lexer, typebits, true);
-    return (new NSEC3Impl(params.algorithm, params.flags, params.iterations,
-                          salt, next, typebits));
-}
-
-NSEC3::NSEC3(InputBuffer& buffer, size_t rdata_len) :
-    impl_(NULL)
-{
-    vector<uint8_t> salt;
-    const ParseNSEC3ParamResult params =
-        parseNSEC3ParamWire("NSEC3", buffer, rdata_len, salt);
-
-    if (rdata_len < 1) {
-        isc_throw(DNSMessageFORMERR, "NSEC3 too short to contain hash length, "
-                  "length: " << rdata_len + salt.size() + 5);
-    }
-    const uint8_t nextlen = buffer.readUint8();
-    --rdata_len;
-    if (nextlen == 0 || rdata_len < nextlen) {
-        isc_throw(DNSMessageFORMERR, "NSEC3 invalid hash length: " <<
-                  static_cast<unsigned int>(nextlen));
-    }
-
-    vector<uint8_t> next(nextlen);
-    buffer.readData(&next[0], nextlen);
-    rdata_len -= nextlen;
-
-    vector<uint8_t> typebits(rdata_len);
-    if (rdata_len > 0) {
-        // Read and parse the bitmaps only when they exist; empty bitmap
-        // is possible for NSEC3.
-        buffer.readData(&typebits[0], rdata_len);
-        checkRRTypeBitmaps("NSEC3", typebits);
-    }
-
-    impl_ = new NSEC3Impl(params.algorithm, params.flags, params.iterations,
-                          salt, next, typebits);
-}
-
-NSEC3::NSEC3(const NSEC3& source) :
-    Rdata(), impl_(new NSEC3Impl(*source.impl_))
-{}
-
-NSEC3&
-NSEC3::operator=(const NSEC3& source) {
-    if (this == &source) {
-        return (*this);
-    }
-
-    NSEC3Impl* newimpl = new NSEC3Impl(*source.impl_);
-    delete impl_;
-    impl_ = newimpl;
-
-    return (*this);
-}
-
-NSEC3::~NSEC3() {
-    delete impl_;
-}
-
-string
-NSEC3::toText() const {
-    ostringstream s;
-    bitmapsToText(impl_->typebits_, s);
-
-    using boost::lexical_cast;
-    return (lexical_cast<string>(static_cast<int>(impl_->hashalg_)) +
-            " " + lexical_cast<string>(static_cast<int>(impl_->flags_)) +
-            " " + lexical_cast<string>(static_cast<int>(impl_->iterations_)) +
-            " " + (impl_->salt_.empty() ? "-" : encodeHex(impl_->salt_)) +
-            " " + encodeBase32Hex(impl_->next_) + s.str());
-}
-
-template <typename OUTPUT_TYPE>
-void
-toWireHelper(const NSEC3Impl& impl, OUTPUT_TYPE& output) {
-    output.writeUint8(impl.hashalg_);
-    output.writeUint8(impl.flags_);
-    output.writeUint16(impl.iterations_);
-    output.writeUint8(impl.salt_.size());
-    if (!impl.salt_.empty()) {
-        output.writeData(&impl.salt_[0], impl.salt_.size());
-    }
-    assert(!impl.next_.empty());
-    output.writeUint8(impl.next_.size());
-    output.writeData(&impl.next_[0], impl.next_.size());
-    if (!impl.typebits_.empty()) {
-        output.writeData(&impl.typebits_[0], impl.typebits_.size());
-    }
-}
-
-void
-NSEC3::toWire(OutputBuffer& buffer) const {
-    toWireHelper(*impl_, buffer);
-}
-
-void
-NSEC3::toWire(AbstractMessageRenderer& renderer) const {
-    toWireHelper(*impl_, renderer);
-}
-
-namespace {
-// This is a helper subroutine for compare().  It compares two binary
-// data stored in vector<uint8_t> objects based on the "Canonical RR Ordering"
-// as defined in Section 6.3 of RFC4034, that is, the data are treated
-// "as a left-justified unsigned octet sequence in which the absence of an
-// octet sorts before a zero octet."
-//
-// If check_length_first is true, it treats the compared data as if they
-// began with a single-octet "length" field whose value is the size of the
-// corresponding vector.  In this case, if the sizes of the two vectors are
-// different the shorter one is always considered the "smaller"; the contents
-// of the vector don't matter.
-//
-// This function returns:
-// -1 if v1 is considered smaller than v2
-// 1 if v1 is considered larger than v2
-// 0 otherwise
-int
-compareVectors(const vector<uint8_t>& v1, const vector<uint8_t>& v2,
-               bool check_length_first = true)
-{
-    const size_t len1 = v1.size();
-    const size_t len2 = v2.size();
-    if (check_length_first && len1 != len2) {
-        return (len1 - len2);
-    }
-    const size_t cmplen = min(len1, len2);
-    const int cmp = cmplen == 0 ? 0 : memcmp(&v1.at(0), &v2.at(0), cmplen);
-    if (cmp != 0) {
-        return (cmp);
-    } else {
-        return (len1 - len2);
-    }
-}
-}
-
-int
-NSEC3::compare(const Rdata& other) const {
-    const NSEC3& other_nsec3 = dynamic_cast<const NSEC3&>(other);
-
-    if (impl_->hashalg_ != other_nsec3.impl_->hashalg_) {
-        return (impl_->hashalg_ < other_nsec3.impl_->hashalg_ ? -1 : 1);
-    }
-    if (impl_->flags_ != other_nsec3.impl_->flags_) {
-        return (impl_->flags_ < other_nsec3.impl_->flags_ ? -1 : 1);
-    }
-    if (impl_->iterations_ != other_nsec3.impl_->iterations_) {
-        return (impl_->iterations_ < other_nsec3.impl_->iterations_ ? -1 : 1);
-    }
-
-    int cmp = compareVectors(impl_->salt_, other_nsec3.impl_->salt_);
-    if (cmp != 0) {
-        return (cmp);
-    }
-    cmp = compareVectors(impl_->next_, other_nsec3.impl_->next_);
-    if (cmp != 0) {
-        return (cmp);
-    }
-    // Note that bitmap doesn't have a dedicated length field, so we shouldn't
-    // terminate the comparison just because the lengths are different.
-    return (compareVectors(impl_->typebits_, other_nsec3.impl_->typebits_,
-                           false));
-}
-
-uint8_t
-NSEC3::getHashalg() const {
-    return (impl_->hashalg_);
-}
-
-uint8_t
-NSEC3::getFlags() const {
-    return (impl_->flags_);
-}
-
-uint16_t
-NSEC3::getIterations() const {
-    return (impl_->iterations_);
-}
-
-const vector<uint8_t>&
-NSEC3::getSalt() const {
-    return (impl_->salt_);
-}
-
-const vector<uint8_t>&
-NSEC3::getNext() const {
-    return (impl_->next_);
-}
-
-} // end of namespace "generic"
-} // end of namespace "rdata"
-} // end of namespace "dns"
-} // end of namespace "isc"
-// Copyright (C) 2010-2024 Internet Systems Consortium, Inc. ("ISC")
-//
-// This Source Code Form is subject to the terms of the Mozilla Public
-// License, v. 2.0. If a copy of the MPL was not distributed with this
-// file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
-#include <config.h>
-
-#include <util/buffer.h>
-#include <util/encode/encode.h>
-
-#include <dns/messagerenderer.h>
-#include <dns/rdata.h>
-#include <dns/rdataclass.h>
-#include <dns/rdata/generic/detail/nsec3param_common.h>
-
-#include <boost/lexical_cast.hpp>
-
-#include <memory>
-#include <string>
-#include <sstream>
-#include <vector>
-
-using namespace std;
-using namespace isc::util;
-using namespace isc::util::encode;
-
-namespace isc {
-namespace dns {
-namespace rdata {
-namespace generic {
-
-struct NSEC3PARAMImpl {
-    // straightforward representation of NSEC3PARAM RDATA fields
-    NSEC3PARAMImpl(uint8_t hashalg, uint8_t flags, uint16_t iterations,
-                   const vector<uint8_t>& salt) :
-        hashalg_(hashalg), flags_(flags), iterations_(iterations), salt_(salt)
-    {}
-
-    const uint8_t hashalg_;
-    const uint8_t flags_;
-    const uint16_t iterations_;
-    const vector<uint8_t> salt_;
-};
-
-/// \brief Constructor from string.
-///
-/// The given string must represent a valid NSEC3PARAM RDATA.  There
-/// can be extra space characters at the beginning or end of the
-/// text (which are simply ignored), but other extra text, including
-/// a new line, will make the construction fail with an exception.
-///
-/// The Hash Algorithm, Flags and Iterations fields must be within their
-/// valid ranges. The Salt field may contain "-" to indicate that the
-/// salt is of length 0. The Salt field must not contain any whitespace.
-///
-/// \throw InvalidRdataText if any fields are out of their valid range,
-/// or are incorrect.
-///
-/// \param nsec3param_str A string containing the RDATA to be created
-NSEC3PARAM::NSEC3PARAM(const std::string& nsec3param_str) :
-    impl_(NULL)
-{
-    // We use unique_ptr here because if there is an exception in this
-    // constructor, the destructor is not called and there could be a
-    // leak of the NSEC3PARAMImpl that constructFromLexer() returns.
-    std::unique_ptr<NSEC3PARAMImpl> impl_ptr;
-
-    try {
-        std::istringstream ss(nsec3param_str);
-        MasterLexer lexer;
-        lexer.pushSource(ss);
-
-        impl_ptr.reset(constructFromLexer(lexer));
-
-        if (lexer.getNextToken().getType() != MasterToken::END_OF_FILE) {
-            isc_throw(InvalidRdataText,
-                      "Extra input text for NSEC3PARAM: " << nsec3param_str);
-        }
-    } catch (const MasterLexer::LexerError& ex) {
-        isc_throw(InvalidRdataText,
-                  "Failed to construct NSEC3PARAM from '" << nsec3param_str
-                  << "': " << ex.what());
-    }
-
-    impl_ = impl_ptr.release();
-}
-
-/// \brief Constructor with a context of MasterLexer.
-///
-/// The \c lexer should point to the beginning of valid textual
-/// representation of an NSEC3PARAM RDATA.
-///
-/// See \c NSEC3PARAM::NSEC3PARAM(const std::string&) for description of
-/// the expected RDATA fields.
-///
-/// \throw MasterLexer::LexerError General parsing error such as
-/// missing field.
-/// \throw InvalidRdataText if any fields are out of their valid range,
-/// or are incorrect.
-///
-/// \param lexer A \c MasterLexer object parsing a master file for the
-/// RDATA to be created
-NSEC3PARAM::NSEC3PARAM(MasterLexer& lexer, const Name*, MasterLoader::Options,
-                       MasterLoaderCallbacks&) :
-    impl_(NULL)
-{
-    impl_ = constructFromLexer(lexer);
-}
-
-NSEC3PARAMImpl*
-NSEC3PARAM::constructFromLexer(MasterLexer& lexer) {
-    vector<uint8_t> salt;
-    const ParseNSEC3ParamResult params =
-        parseNSEC3ParamFromLexer("NSEC3PARAM", lexer, salt);
-
-    return (new NSEC3PARAMImpl(params.algorithm, params.flags,
-                               params.iterations, salt));
-}
-
-NSEC3PARAM::NSEC3PARAM(InputBuffer& buffer, size_t rdata_len) :
-    impl_(NULL)
-{
-    vector<uint8_t> salt;
-    const ParseNSEC3ParamResult params =
-        parseNSEC3ParamWire("NSEC3PARAM", buffer, rdata_len, salt);
-
-    impl_ = new NSEC3PARAMImpl(params.algorithm, params.flags,
-                               params.iterations, salt);
-}
-
-NSEC3PARAM::NSEC3PARAM(const NSEC3PARAM& source) :
-    Rdata(), impl_(new NSEC3PARAMImpl(*source.impl_))
-{}
-
-NSEC3PARAM&
-NSEC3PARAM::operator=(const NSEC3PARAM& source) {
-    if (this == &source) {
-        return (*this);
-    }
-
-    NSEC3PARAMImpl* newimpl = new NSEC3PARAMImpl(*source.impl_);
-    delete impl_;
-    impl_ = newimpl;
-
-    return (*this);
-}
-
-NSEC3PARAM::~NSEC3PARAM() {
-    delete impl_;
-}
-
-string
-NSEC3PARAM::toText() const {
-    using boost::lexical_cast;
-    return (lexical_cast<string>(static_cast<int>(impl_->hashalg_)) +
-            " " + lexical_cast<string>(static_cast<int>(impl_->flags_)) +
-            " " + lexical_cast<string>(static_cast<int>(impl_->iterations_)) +
-            " " + (impl_->salt_.empty() ? "-" : encodeHex(impl_->salt_)));
-}
-
-template <typename OUTPUT_TYPE>
-void
-toWireHelper(const NSEC3PARAMImpl& impl, OUTPUT_TYPE& output) {
-    output.writeUint8(impl.hashalg_);
-    output.writeUint8(impl.flags_);
-    output.writeUint16(impl.iterations_);
-    output.writeUint8(impl.salt_.size());
-    if (!impl.salt_.empty()) {
-        output.writeData(&impl.salt_[0], impl.salt_.size());
-    }
-}
-
-void
-NSEC3PARAM::toWire(OutputBuffer& buffer) const {
-    toWireHelper(*impl_, buffer);
-}
-
-void
-NSEC3PARAM::toWire(AbstractMessageRenderer& renderer) const {
-    toWireHelper(*impl_, renderer);
-}
-
-int
-NSEC3PARAM::compare(const Rdata& other) const {
-    const NSEC3PARAM& other_param = dynamic_cast<const NSEC3PARAM&>(other);
-
-    if (impl_->hashalg_ != other_param.impl_->hashalg_) {
-        return (impl_->hashalg_ < other_param.impl_->hashalg_ ? -1 : 1);
-    }
-    if (impl_->flags_ != other_param.impl_->flags_) {
-        return (impl_->flags_ < other_param.impl_->flags_ ? -1 : 1);
-    }
-    if (impl_->iterations_ != other_param.impl_->iterations_) {
-        return (impl_->iterations_ < other_param.impl_->iterations_ ? -1 : 1);
-    }
-
-    const size_t this_len = impl_->salt_.size();
-    const size_t other_len = other_param.impl_->salt_.size();
-    if (this_len != other_len) {
-        return (this_len - other_len);
-    }
-    const size_t cmplen = min(this_len, other_len);
-    const int cmp = (cmplen == 0) ? 0 :
-        memcmp(&impl_->salt_.at(0), &other_param.impl_->salt_.at(0), cmplen);
-    if (cmp != 0) {
-        return (cmp);
-    } else {
-        return (this_len - other_len);
-    }
-}
-
-uint8_t
-NSEC3PARAM::getHashalg() const {
-    return (impl_->hashalg_);
-}
-
-uint8_t
-NSEC3PARAM::getFlags() const {
-    return (impl_->flags_);
-}
-
-uint16_t
-NSEC3PARAM::getIterations() const {
-    return (impl_->iterations_);
-}
-
-const vector<uint8_t>&
-NSEC3PARAM::getSalt() const {
-    return (impl_->salt_);
-}
-
-} // end of namespace "generic"
-} // end of namespace "rdata"
-} // end of namespace "dns"
-} // end of namespace "isc"
-// Copyright (C) 2010-2024 Internet Systems Consortium, Inc. ("ISC")
-//
-// This Source Code Form is subject to the terms of the Mozilla Public
-// License, v. 2.0. If a copy of the MPL was not distributed with this
-// file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
-#include <config.h>
-
-#include <iostream>
-#include <string>
-#include <sstream>
-#include <vector>
-
-#include <util/encode/encode.h>
-#include <util/buffer.h>
-#include <dns/exceptions.h>
-#include <dns/messagerenderer.h>
-#include <dns/name.h>
-#include <dns/rrtype.h>
-#include <dns/rrttl.h>
-#include <dns/rdata.h>
-#include <dns/rdataclass.h>
-#include <dns/rdata/generic/detail/nsec_bitmap.h>
-#include <dns/rdata/generic/detail/lexer_util.h>
-
-#include <stdio.h>
-#include <time.h>
-
-using namespace std;
-using namespace isc::util;
-using namespace isc::util::encode;
-using namespace isc::dns::rdata::generic::detail::nsec;
-using isc::dns::rdata::generic::detail::createNameFromLexer;
-
-namespace isc {
-namespace dns {
-namespace rdata {
-namespace generic {
-
-struct NSECImpl {
-    // straightforward representation of NSEC RDATA fields
-    NSECImpl(const Name& next, vector<uint8_t> typebits) :
-        nextname_(next), typebits_(typebits)
-    {}
-
-    Name nextname_;
-    vector<uint8_t> typebits_;
-};
-
-/// \brief Constructor from string.
-///
-/// The given string must represent a valid NSEC RDATA.  There
-/// can be extra space characters at the beginning or end of the
-/// text (which are simply ignored), but other extra text, including
-/// a new line, will make the construction fail with an exception.
-///
-/// The Next Domain Name field must be absolute since there's no
-/// parameter that specifies the origin name; if it is not absolute,
-/// \c MissingNameOrigin exception will be thrown.  This must not be
-/// represented as a quoted string.
-///
-/// The type mnemonics must be valid, and separated by whitespace. If
-/// any invalid mnemonics are found, InvalidRdataText exception is
-/// thrown.
-///
-/// \throw MissingNameOrigin Thrown when the Next Domain Name is not absolute.
-/// \throw InvalidRdataText if any fields are out of their valid range.
-///
-/// \param nsec_str A string containing the RDATA to be created
-NSEC::NSEC(const std::string& nsec_str) :
-    impl_(NULL)
-{
-    try {
-        std::istringstream ss(nsec_str);
-        MasterLexer lexer;
-        lexer.pushSource(ss);
-
-        const Name origin_name(createNameFromLexer(lexer, NULL));
-
-        vector<uint8_t> typebits;
-        buildBitmapsFromLexer("NSEC", lexer, typebits);
-
-        impl_ = new NSECImpl(origin_name, typebits);
-
-        if (lexer.getNextToken().getType() != MasterToken::END_OF_FILE) {
-            isc_throw(InvalidRdataText,
-                      "Extra input text for NSEC: " << nsec_str);
-        }
-    } catch (const MasterLexer::LexerError& ex) {
-        isc_throw(InvalidRdataText,
-                  "Failed to construct NSEC from '" << nsec_str << "': "
-                  << ex.what());
-    }
-}
-
-NSEC::NSEC(InputBuffer& buffer, size_t rdata_len) {
-    const size_t pos = buffer.getPosition();
-    const Name nextname(buffer);
-
-    // rdata_len must be sufficiently large to hold non empty bitmap.
-    if (rdata_len <= buffer.getPosition() - pos) {
-        isc_throw(DNSMessageFORMERR,
-                  "NSEC RDATA from wire too short: " << rdata_len << "bytes");
-    }
-    rdata_len -= (buffer.getPosition() - pos);
-
-    vector<uint8_t> typebits(rdata_len);
-    buffer.readData(&typebits[0], rdata_len);
-    checkRRTypeBitmaps("NSEC", typebits);
-
-    impl_ = new NSECImpl(nextname, typebits);
-}
-
-/// \brief Constructor with a context of MasterLexer.
-///
-/// The \c lexer should point to the beginning of valid textual
-/// representation of an NSEC RDATA.
-///
-/// The Next Domain Name field can be non-absolute if \c origin is
-/// non-NULL, in which case \c origin is used to make it absolute.  It
-/// must not be represented as a quoted string.
-///
-/// The type mnemonics must be valid, and separated by whitespace. If
-/// any invalid mnemonics are found, InvalidRdataText exception is
-/// thrown.
-///
-/// \throw MasterLexer::LexerError General parsing error such as
-/// missing field.
-/// \throw MissingNameOrigin Thrown when the Next Domain Name is not
-/// absolute and \c origin is NULL.
-/// \throw InvalidRdataText if any fields are out of their valid range.
-///
-/// \param lexer A \c MasterLexer object parsing a master file for the
-/// RDATA to be created
-/// \param origin The origin to use with a relative Next Domain Name
-/// field
-NSEC::NSEC(MasterLexer& lexer, const Name* origin, MasterLoader::Options,
-           MasterLoaderCallbacks&)
-{
-    const Name next_name(createNameFromLexer(lexer, origin));
-
-    vector<uint8_t> typebits;
-    buildBitmapsFromLexer("NSEC", lexer, typebits);
-
-    impl_ = new NSECImpl(next_name, typebits);
-}
-
-NSEC::NSEC(const NSEC& source) :
-    Rdata(), impl_(new NSECImpl(*source.impl_))
-{}
-
-NSEC&
-NSEC::operator=(const NSEC& source) {
-    if (this == &source) {
-        return (*this);
-    }
-
-    NSECImpl* newimpl = new NSECImpl(*source.impl_);
-    delete impl_;
-    impl_ = newimpl;
-
-    return (*this);
-}
-
-NSEC::~NSEC() {
-    delete impl_;
-}
-
-string
-NSEC::toText() const {
-    ostringstream s;
-    s << impl_->nextname_;
-    bitmapsToText(impl_->typebits_, s);
-    return (s.str());
-}
-
-void
-NSEC::toWire(OutputBuffer& buffer) const {
-    impl_->nextname_.toWire(buffer);
-    buffer.writeData(&impl_->typebits_[0], impl_->typebits_.size());
-}
-
-void
-NSEC::toWire(AbstractMessageRenderer& renderer) const {
-    // Type NSEC is not "well-known", and name compression must be disabled
-    // per RFC3597.
-    renderer.writeName(impl_->nextname_, false);
-    renderer.writeData(&impl_->typebits_[0], impl_->typebits_.size());
-}
-
-const Name&
-NSEC::getNextName() const {
-    return (impl_->nextname_);
-}
-
-int
-NSEC::compare(const Rdata& other) const {
-    const NSEC& other_nsec = dynamic_cast<const NSEC&>(other);
-
-    int cmp = compareNames(impl_->nextname_, other_nsec.impl_->nextname_);
-    if (cmp != 0) {
-        return (cmp);
-    }
-
-    const size_t this_len = impl_->typebits_.size();
-    const size_t other_len = other_nsec.impl_->typebits_.size();
-    const size_t cmplen = min(this_len, other_len);
-    cmp = memcmp(&impl_->typebits_[0], &other_nsec.impl_->typebits_[0],
-                 cmplen);
-    if (cmp != 0) {
-        return (cmp);
-    } else {
-        return ((this_len == other_len) ? 0 : (this_len < other_len) ? -1 : 1);
-    }
-}
-
-} // end of namespace "generic"
-} // end of namespace "rdata"
-} // end of namespace "dns"
-} // end of namespace "isc"
-// Copyright (C) 2010-2024 Internet Systems Consortium, Inc. ("ISC")
-//
-// This Source Code Form is subject to the terms of the Mozilla Public
-// License, v. 2.0. If a copy of the MPL was not distributed with this
-// file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
-#include <config.h>
-
 #include <util/buffer.h>
 #include <dns/messagerenderer.h>
 #include <dns/rdata.h>
@@ -3659,8 +599,7 @@ namespace generic {
 OPT::PseudoRR::PseudoRR(uint16_t code,
                         boost::shared_ptr<std::vector<uint8_t> >& data) :
     code_(code),
-    data_(data)
-{
+    data_(data) {
 }
 
 uint16_t
@@ -3680,8 +619,8 @@ OPT::PseudoRR::getLength() const {
 
 struct OPTImpl {
     OPTImpl() :
-        rdlength_(0)
-    {}
+        rdlength_(0) {
+    }
 
     uint16_t rdlength_;
     std::vector<OPT::PseudoRR> pseudo_rrs_;
@@ -3689,8 +628,7 @@ struct OPTImpl {
 
 /// \brief Default constructor.
 OPT::OPT() :
-    impl_(new OPTImpl())
-{
+    impl_(new OPTImpl()) {
 }
 
 /// \brief Constructor from string.
@@ -3699,8 +637,7 @@ OPT::OPT() :
 ///
 /// \throw InvalidRdataText OPT RR cannot be constructed from text.
 OPT::OPT(const std::string&) :
-    impl_(NULL)
-{
+    impl_(NULL) {
     isc_throw(InvalidRdataText, "OPT RR cannot be constructed from text");
 }
 
@@ -3711,15 +648,13 @@ OPT::OPT(const std::string&) :
 /// \throw InvalidRdataText OPT RR cannot be constructed from text.
 OPT::OPT(MasterLexer&, const Name*,
          MasterLoader::Options, MasterLoaderCallbacks&) :
-    impl_(NULL)
-{
+    impl_(NULL) {
     isc_throw(InvalidRdataText, "OPT RR cannot be constructed from text");
 }
 
 OPT::OPT(InputBuffer& buffer, size_t rdata_len) :
-    impl_(NULL)
-{
-    std::unique_ptr<OPTImpl> impl_ptr(new OPTImpl());
+    impl_(NULL) {
+    boost::shared_ptr<OPTImpl> impl_ptr(new OPTImpl());
 
     while (true) {
         if (rdata_len == 0) {
@@ -3737,8 +672,7 @@ OPT::OPT(InputBuffer& buffer, size_t rdata_len) :
         rdata_len -= 4;
 
         if (static_cast<uint16_t>(impl_ptr->rdlength_ + option_length) <
-            impl_ptr->rdlength_)
-        {
+            impl_ptr->rdlength_) {
             isc_throw(InvalidRdataText,
                       "Option length " << option_length
                       << " would overflow OPT RR RDLEN (currently "
@@ -3757,12 +691,11 @@ OPT::OPT(InputBuffer& buffer, size_t rdata_len) :
         rdata_len -= option_length;
     }
 
-    impl_ = impl_ptr.release();
+    impl_ = impl_ptr;
 }
 
 OPT::OPT(const OPT& other) :
-    Rdata(), impl_(new OPTImpl(*other.impl_))
-{
+    Rdata(), impl_(new OPTImpl(*other.impl_)) {
 }
 
 OPT&
@@ -3771,15 +704,12 @@ OPT::operator=(const OPT& source) {
         return (*this);
     }
 
-    OPTImpl* newimpl = new OPTImpl(*source.impl_);
-    delete impl_;
-    impl_ = newimpl;
+    impl_.reset(new OPTImpl(*source.impl_));
 
     return (*this);
 }
 
 OPT::~OPT() {
-    delete impl_;
 }
 
 std::string
@@ -3826,8 +756,7 @@ OPT::appendPseudoRR(uint16_t code, const uint8_t* data, uint16_t length) {
     // pseudo-RR length here, not the whole message length (which should
     // be checked and enforced elsewhere).
     if (static_cast<uint16_t>(impl_->rdlength_ + length) <
-        impl_->rdlength_)
-    {
+        impl_->rdlength_) {
         isc_throw(isc::InvalidParameter,
                   "Option length " << length
                   << " would overflow OPT RR RDLEN (currently "
@@ -3852,6 +781,7 @@ OPT::getPseudoRRs() const {
 } // end of namespace "rdata"
 } // end of namespace "dns"
 } // end of namespace "isc"
+
 // Copyright (C) 2010-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
@@ -3895,8 +825,7 @@ namespace generic {
 /// \throw InvalidRdataText Other general syntax errors.
 PTR::PTR(const std::string& type_str) :
     // Fill in dummy name and replace them soon below.
-    ptr_name_(Name::ROOT_NAME())
-{
+    ptr_name_(Name::ROOT_NAME()) {
     try {
         std::istringstream ss(type_str);
         MasterLexer lexer;
@@ -3915,8 +844,7 @@ PTR::PTR(const std::string& type_str) :
 }
 
 PTR::PTR(InputBuffer& buffer, size_t) :
-    ptr_name_(buffer)
-{
+    ptr_name_(buffer) {
     // we don't need rdata_len for parsing.  if necessary, the caller will
     // check consistency.
 }
@@ -3939,12 +867,12 @@ PTR::PTR(InputBuffer& buffer, size_t) :
 /// is non-absolute.
 PTR::PTR(MasterLexer& lexer, const Name* origin,
          MasterLoader::Options, MasterLoaderCallbacks&) :
-    ptr_name_(createNameFromLexer(lexer, origin))
-{}
+    ptr_name_(createNameFromLexer(lexer, origin)) {
+}
 
 PTR::PTR(const PTR& source) :
-    Rdata(), ptr_name_(source.ptr_name_)
-{}
+    Rdata(), ptr_name_(source.ptr_name_) {
+}
 
 std::string
 PTR::toText() const {
@@ -3979,170 +907,7 @@ PTR::getPTRName() const {
 } // end of namespace "rdata"
 } // end of namespace "dns"
 } // end of namespace "isc"
-// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
-//
-// This Source Code Form is subject to the terms of the Mozilla Public
-// License, v. 2.0. If a copy of the MPL was not distributed with this
-// file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#include <config.h>
-
-#include <string>
-#include <sstream>
-
-#include <util/buffer.h>
-
-#include <dns/messagerenderer.h>
-#include <dns/name.h>
-#include <dns/rdata.h>
-#include <dns/rdataclass.h>
-#include <dns/rdata/generic/detail/lexer_util.h>
-
-using namespace std;
-using namespace isc::dns;
-using namespace isc::util;
-using isc::dns::rdata::generic::detail::createNameFromLexer;
-
-namespace isc {
-namespace dns {
-namespace rdata {
-namespace generic {
-
-/// \brief Constructor from string.
-///
-/// \c rp_str must be formatted as follows:
-/// \code <mailbox name> <text name>
-/// \endcode
-/// where both fields must represent a valid domain name.
-///
-/// \throw InvalidRdataText The number of RDATA fields (must be 2) is
-/// incorrect.
-/// \throw std::bad_alloc Memory allocation for names fails.
-/// \throw Other The constructor of the \c Name class will throw if the
-/// given name is invalid.
-RP::RP(const std::string& rp_str) :
-    // We cannot construct both names in the initialization list due to the
-    // necessary text processing, so we have to initialize them with a dummy
-    // name and replace them later.
-    mailbox_(Name::ROOT_NAME()), text_(Name::ROOT_NAME())
-{
-    try {
-        std::istringstream ss(rp_str);
-        MasterLexer lexer;
-        lexer.pushSource(ss);
-
-        mailbox_ = createNameFromLexer(lexer, NULL);
-        text_ = createNameFromLexer(lexer, NULL);
-
-        if (lexer.getNextToken().getType() != MasterToken::END_OF_FILE) {
-            isc_throw(InvalidRdataText, "extra input text for RP: "
-                      << rp_str);
-        }
-    } catch (const MasterLexer::LexerError& ex) {
-        isc_throw(InvalidRdataText, "Failed to construct RP from '" <<
-                  rp_str << "': " << ex.what());
-    }
-}
-
-/// \brief Constructor with a context of MasterLexer.
-///
-/// The \c lexer should point to the beginning of valid textual representation
-/// of an RP RDATA.  The MAILBOX and TEXT fields can be non-absolute if \c
-/// origin is non-NULL, in which case \c origin is used to make them absolute.
-///
-/// \throw MasterLexer::LexerError General parsing error such as missing field.
-/// \throw Other Exceptions from the Name and constructors if construction of
-/// textual fields as these objects fail.
-///
-/// \param lexer A \c MasterLexer object parsing a master file for the
-/// RDATA to be created
-/// \param origin If non NULL, specifies the origin of SERVER when it
-/// is non-absolute.
-RP::RP(MasterLexer& lexer, const Name* origin,
-       MasterLoader::Options, MasterLoaderCallbacks&) :
-    mailbox_(createNameFromLexer(lexer, origin)),
-    text_(createNameFromLexer(lexer, origin))
-{
-}
-
-/// \brief Constructor from wire-format data.
-///
-/// This constructor doesn't check the validity of the second parameter (rdata
-/// length) for parsing.
-/// If necessary, the caller will check consistency.
-///
-/// \throw std::bad_alloc Memory allocation for names fails.
-/// \throw Other The constructor of the \c Name class will throw if the
-/// names in the wire is invalid.
-RP::RP(InputBuffer& buffer, size_t) : mailbox_(buffer), text_(buffer) {
-}
-
-/// \brief Copy constructor.
-///
-/// \throw std::bad_alloc Memory allocation fails in copying internal
-/// member variables (this should be very rare).
-RP::RP(const RP& other) :
-    Rdata(), mailbox_(other.mailbox_), text_(other.text_)
-{}
-
-/// \brief Convert the \c RP to a string.
-///
-/// The output of this method is formatted as described in the "from string"
-/// constructor (\c RP(const std::string&))).
-///
-/// \throw std::bad_alloc Internal resource allocation fails.
-///
-/// \return A \c string object that represents the \c RP object.
-std::string
-RP::toText() const {
-    return (mailbox_.toText() + " " + text_.toText());
-}
-
-/// \brief Render the \c RP in the wire format without name compression.
-///
-/// \throw std::bad_alloc Internal resource allocation fails.
-///
-/// \param buffer An output buffer to store the wire data.
-void
-RP::toWire(OutputBuffer& buffer) const {
-    mailbox_.toWire(buffer);
-    text_.toWire(buffer);
-}
-
-/// \brief Render the \c RP in the wire format with taking into account
-/// compression.
-///
-// Type RP is not "well-known", and name compression must be disabled
-// per RFC3597.
-///
-/// \throw std::bad_alloc Internal resource allocation fails.
-///
-/// \param renderer DNS message rendering context that encapsulates the
-/// output buffer and name compression information.
-void
-RP::toWire(AbstractMessageRenderer& renderer) const {
-    renderer.writeName(mailbox_, false);
-    renderer.writeName(text_, false);
-}
-
-/// \brief Compare two instances of \c RP RDATA.
-///
-/// See documentation in \c Rdata.
-int
-RP::compare(const Rdata& other) const {
-    const RP& other_rp = dynamic_cast<const RP&>(other);
-
-    const int cmp = compareNames(mailbox_, other_rp.mailbox_);
-    if (cmp != 0) {
-        return (cmp);
-    }
-    return (compareNames(text_, other_rp.text_));
-}
-
-} // end of namespace "generic"
-} // end of namespace "rdata"
-} // end of namespace "dns"
-} // end of namespace "isc"
 // Copyright (C) 2010-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
@@ -4200,8 +965,8 @@ struct RRSIGImpl {
         covered_(covered), algorithm_(algorithm), labels_(labels),
         originalttl_(originalttl), timeexpire_(timeexpire),
         timeinception_(timeinception), tag_(tag), signer_(signer),
-        signature_(signature)
-    {}
+        signature_(signature) {
+    }
 
     const RRType covered_;
     uint8_t algorithm_;
@@ -4215,7 +980,7 @@ struct RRSIGImpl {
 };
 
 // helper function for string and lexer constructors
-RRSIGImpl*
+boost::shared_ptr<RRSIGImpl>
 RRSIG::constructFromLexer(MasterLexer& lexer, const Name* origin) {
     const RRType covered(lexer.getNextToken(MasterToken::STRING).getString());
     const uint32_t algorithm =
@@ -4262,9 +1027,9 @@ RRSIG::constructFromLexer(MasterLexer& lexer, const Name* origin) {
         decodeBase64(signature_txt, signature);
     }
 
-    return (new RRSIGImpl(covered, algorithm, labels,
-                          originalttl, timeexpire, timeinception,
-                          static_cast<uint16_t>(tag), signer, signature));
+    return (boost::shared_ptr<RRSIGImpl>(new RRSIGImpl(covered, algorithm, labels,
+                                                       originalttl, timeexpire, timeinception,
+                                                       static_cast<uint16_t>(tag), signer, signature)));
 }
 
 /// \brief Constructor from string.
@@ -4284,19 +1049,18 @@ RRSIG::constructFromLexer(MasterLexer& lexer, const Name* origin) {
 /// \throw Others Exception from the Name constructor.
 /// \throw InvalidRdataText Other general syntax errors.
 RRSIG::RRSIG(const std::string& rrsig_str) :
-    impl_(NULL)
-{
+    impl_(NULL) {
     // We use unique_ptr here because if there is an exception in this
     // constructor, the destructor is not called and there could be a
     // leak of the RRSIGImpl that constructFromLexer() returns.
-    std::unique_ptr<RRSIGImpl> impl_ptr;
+    boost::shared_ptr<RRSIGImpl> impl_ptr;
 
     try {
         std::istringstream iss(rrsig_str);
         MasterLexer lexer;
         lexer.pushSource(iss);
 
-        impl_ptr.reset(constructFromLexer(lexer, NULL));
+        impl_ptr = constructFromLexer(lexer, NULL);
 
         if (lexer.getNextToken().getType() != MasterToken::END_OF_FILE) {
             isc_throw(InvalidRdataText, "extra input text for RRSIG: "
@@ -4307,7 +1071,7 @@ RRSIG::RRSIG(const std::string& rrsig_str) :
                   rrsig_str << "': " << ex.what());
     }
 
-    impl_ = impl_ptr.release();
+    impl_ = impl_ptr;
 }
 
 /// \brief Constructor with a context of MasterLexer.
@@ -4330,9 +1094,8 @@ RRSIG::RRSIG(const std::string& rrsig_str) :
 /// \param origin If non NULL, specifies the origin of Signer's Name when
 /// it is non absolute.
 RRSIG::RRSIG(MasterLexer& lexer, const Name* origin,
-             MasterLoader::Options, MasterLoaderCallbacks&) :
-    impl_(constructFromLexer(lexer, origin))
-{
+             MasterLoader::Options, MasterLoaderCallbacks&) {
+    impl_ = constructFromLexer(lexer, origin);
 }
 
 RRSIG::RRSIG(InputBuffer& buffer, size_t rdata_len) {
@@ -4360,14 +1123,14 @@ RRSIG::RRSIG(InputBuffer& buffer, size_t rdata_len) {
     vector<uint8_t> signature(rdata_len);
     buffer.readData(&signature[0], rdata_len);
 
-    impl_ = new RRSIGImpl(covered, algorithm, labels,
-                          originalttl, timeexpire, timeinception, tag,
-                          signer, signature);
+    impl_.reset(new RRSIGImpl(covered, algorithm, labels,
+                              originalttl, timeexpire, timeinception, tag,
+                              signer, signature));
 }
 
 RRSIG::RRSIG(const RRSIG& source) :
-    Rdata(), impl_(new RRSIGImpl(*source.impl_))
-{}
+    Rdata(), impl_(new RRSIGImpl(*source.impl_)) {
+}
 
 RRSIG&
 RRSIG::operator=(const RRSIG& source) {
@@ -4375,15 +1138,12 @@ RRSIG::operator=(const RRSIG& source) {
         return (*this);
     }
 
-    RRSIGImpl* newimpl = new RRSIGImpl(*source.impl_);
-    delete impl_;
-    impl_ = newimpl;
+    impl_.reset(new RRSIGImpl(*source.impl_));
 
     return (*this);
 }
 
 RRSIG::~RRSIG() {
-    delete impl_;
 }
 
 string
@@ -4481,6 +1241,7 @@ RRSIG::typeCovered() const {
 } // end of namespace "rdata"
 } // end of namespace "dns"
 } // end of namespace "isc"
+
 // Copyright (C) 2010-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
@@ -4519,8 +1280,7 @@ namespace rdata {
 namespace generic {
 
 SOA::SOA(InputBuffer& buffer, size_t) :
-    mname_(buffer), rname_(buffer)
-{
+    mname_(buffer), rname_(buffer) {
     // we don't need rdata_len for parsing.  if necessary, the caller will
     // check consistency.
     buffer.readData(numdata_, sizeof(numdata_));
@@ -4559,8 +1319,7 @@ fillParameters(MasterLexer& lexer, uint8_t numdata[20]) {
 /// \throw InvalidRdataText Other general syntax errors.
 SOA::SOA(const std::string& soastr) :
     // Fill in dummy name and replace them soon below.
-    mname_(Name::ROOT_NAME()), rname_(Name::ROOT_NAME())
-{
+    mname_(Name::ROOT_NAME()), rname_(Name::ROOT_NAME()) {
     try {
         std::istringstream ss(soastr);
         MasterLexer lexer;
@@ -4602,15 +1361,13 @@ SOA::SOA(const std::string& soastr) :
 SOA::SOA(MasterLexer& lexer, const Name* origin,
          MasterLoader::Options, MasterLoaderCallbacks&) :
     mname_(createNameFromLexer(lexer, origin)),
-    rname_(createNameFromLexer(lexer, origin))
-{
+    rname_(createNameFromLexer(lexer, origin)) {
     fillParameters(lexer, numdata_);
 }
 
 SOA::SOA(const Name& mname, const Name& rname, uint32_t serial,
          uint32_t refresh, uint32_t retry, uint32_t expire, uint32_t minimum) :
-    mname_(mname), rname_(rname)
-{
+    mname_(mname), rname_(rname) {
     OutputBuffer b(20);
     b.writeUint32(serial);
     b.writeUint32(refresh);
@@ -4622,8 +1379,7 @@ SOA::SOA(const Name& mname, const Name& rname, uint32_t serial,
 }
 
 SOA::SOA(const SOA& other) :
-    Rdata(), mname_(other.mname_), rname_(other.rname_)
-{
+    Rdata(), mname_(other.mname_), rname_(other.rname_) {
     memcpy(numdata_, other.numdata_, sizeof(numdata_));
 }
 
@@ -4695,451 +1451,7 @@ SOA::compare(const Rdata& other) const {
 } // end of namespace "rdata"
 } // end of namespace "dns"
 } // end of namespace "isc"
-// Copyright (C) 2010-2024 Internet Systems Consortium, Inc. ("ISC")
-//
-// This Source Code Form is subject to the terms of the Mozilla Public
-// License, v. 2.0. If a copy of the MPL was not distributed with this
-// file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#include <config.h>
-
-#include <stdint.h>
-#include <string.h>
-
-#include <string>
-#include <vector>
-
-#include <util/buffer.h>
-#include <dns/exceptions.h>
-#include <dns/messagerenderer.h>
-#include <dns/rdata.h>
-#include <dns/rdataclass.h>
-
-/// This class implements the basic interfaces inherited from the abstract
-/// \c rdata::Rdata class. The semantics of the class is provided by
-/// a copy of instantiated TXTLikeImpl class common to both TXT and SPF.
-#include <dns/rdata/generic/detail/txt_like.h>
-
-using namespace std;
-using namespace isc::util;
-
-namespace isc {
-namespace dns {
-namespace rdata {
-namespace generic {
-
-/// \brief The assignment operator
-///
-/// It internally allocates a resource, and if it fails a corresponding
-/// standard exception will be thrown.
-/// This method never throws an exception otherwise.
-SPF&
-SPF::operator=(const SPF& source) {
-    if (this == &source) {
-        return (*this);
-    }
-
-    SPFImpl* newimpl = new SPFImpl(*source.impl_);
-    delete impl_;
-    impl_ = newimpl;
-
-    return (*this);
-}
-
-/// \brief The destructor
-SPF::~SPF() {
-    delete impl_;
-}
-
-/// \brief Constructor from wire-format data.
-///
-/// It internally allocates a resource, and if it fails a corresponding
-/// standard exception will be thrown.
-SPF::SPF(InputBuffer& buffer, size_t rdata_len) :
-    impl_(new SPFImpl(buffer, rdata_len))
-{}
-
-/// \brief Constructor using the master lexer.
-///
-/// This implementation only uses the \c lexer parameters; others are
-/// ignored.
-///
-/// \throw CharStringTooLong the parameter string length exceeds maximum.
-/// \throw InvalidRdataText the method cannot process the parameter data
-///
-/// \param lexer A \c MasterLexer object parsing a master file for this
-/// RDATA.
-SPF::SPF(MasterLexer& lexer, const Name*, MasterLoader::Options,
-         MasterLoaderCallbacks&) :
-    impl_(new SPFImpl(lexer))
-{}
-
-/// \brief Constructor from string.
-///
-/// It internally allocates a resource, and if it fails a corresponding
-/// standard exception will be thrown.
-SPF::SPF(const std::string& txtstr) :
-    impl_(new SPFImpl(txtstr))
-{}
-
-/// \brief Copy constructor
-///
-/// It internally allocates a resource, and if it fails a corresponding
-/// standard exception will be thrown.
-SPF::SPF(const SPF& other) :
-    Rdata(), impl_(new SPFImpl(*other.impl_))
-{}
-
-/// \brief Render the \c SPF in the wire format to a OutputBuffer object
-///
-/// \return is the return of the corresponding implementation method.
-void
-SPF::toWire(OutputBuffer& buffer) const {
-    impl_->toWire(buffer);
-}
-
-/// \brief Render the \c SPF in the wire format to an AbstractMessageRenderer
-/// object
-///
-/// \return is the return of the corresponding implementation method.
-void
-SPF::toWire(AbstractMessageRenderer& renderer) const {
-    impl_->toWire(renderer);
-}
-
-/// \brief Convert the \c SPF to a string.
-///
-/// \return is the return of the corresponding implementation method.
-string
-SPF::toText() const {
-    return (impl_->toText());
-}
-
-/// \brief Compare two instances of \c SPF RDATA.
-///
-/// This method compares \c this and the \c other \c SPF objects.
-///
-/// This method is expected to be used in a polymorphic way, and the
-/// parameter to compare against is therefore of the abstract \c Rdata class.
-/// However, comparing two \c Rdata objects of different RR types
-/// is meaningless, and \c other must point to a \c SPF object;
-/// otherwise, the standard \c bad_cast exception will be thrown.
-///
-/// \param other the right-hand operand to compare against.
-/// \return is the return of the corresponding implementation method.
-int
-SPF::compare(const Rdata& other) const {
-    const SPF& other_txt = dynamic_cast<const SPF&>(other);
-
-    return (impl_->compare(*other_txt.impl_));
-}
-
-} // end of namespace "generic"
-} // end of namespace "rdata"
-} // end of namespace "dns"
-} // end of namespace "isc"
-// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
-//
-// This Source Code Form is subject to the terms of the Mozilla Public
-// License, v. 2.0. If a copy of the MPL was not distributed with this
-// file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
-#include <config.h>
-
-#include <boost/lexical_cast.hpp>
-
-#include <exceptions/exceptions.h>
-
-#include <util/buffer.h>
-#include <util/encode/encode.h>
-#include <dns/name.h>
-#include <dns/messagerenderer.h>
-#include <dns/rdata.h>
-#include <dns/rdataclass.h>
-
-using namespace std;
-using boost::lexical_cast;
-using namespace isc::util;
-using namespace isc::util::encode;
-
-namespace isc {
-namespace dns {
-namespace rdata {
-namespace generic {
-
-struct SSHFPImpl {
-    // straightforward representation of SSHFP RDATA fields
-    SSHFPImpl(uint8_t algorithm, uint8_t fingerprint_type,
-              const vector<uint8_t>& fingerprint) :
-        algorithm_(algorithm),
-        fingerprint_type_(fingerprint_type),
-        fingerprint_(fingerprint)
-    {}
-
-    uint8_t algorithm_;
-    uint8_t fingerprint_type_;
-    const vector<uint8_t> fingerprint_;
-};
-
-// helper function for string and lexer constructors
-SSHFPImpl*
-SSHFP::constructFromLexer(MasterLexer& lexer) {
-    const uint32_t algorithm =
-        lexer.getNextToken(MasterToken::NUMBER).getNumber();
-    if (algorithm > 255) {
-        isc_throw(InvalidRdataText, "SSHFP algorithm number out of range");
-    }
-
-    const uint32_t fingerprint_type =
-        lexer.getNextToken(MasterToken::NUMBER).getNumber();
-    if (fingerprint_type > 255) {
-        isc_throw(InvalidRdataText, "SSHFP fingerprint type out of range");
-    }
-
-    std::string fingerprint_str;
-    std::string fingerprint_substr;
-    while (true) {
-        const MasterToken& token =
-            lexer.getNextToken(MasterToken::STRING, true);
-        if ((token.getType() == MasterToken::END_OF_FILE) ||
-            (token.getType() == MasterToken::END_OF_LINE)) {
-            break;
-        }
-        token.getString(fingerprint_substr);
-        fingerprint_str.append(fingerprint_substr);
-    }
-    lexer.ungetToken();
-
-    vector<uint8_t> fingerprint;
-    // If fingerprint is missing, it's OK. See the API documentation of the
-    // constructor.
-    if (fingerprint_str.size() > 0) {
-        try {
-            decodeHex(fingerprint_str, fingerprint);
-        } catch (const isc::BadValue& e) {
-            isc_throw(InvalidRdataText, "Bad SSHFP fingerprint: " << e.what());
-        }
-    }
-
-    return (new SSHFPImpl(algorithm, fingerprint_type, fingerprint));
-}
-
-/// \brief Constructor from string.
-///
-/// The given string must represent a valid SSHFP RDATA.  There can be
-/// extra space characters at the beginning or end of the text (which
-/// are simply ignored), but other extra text, including a new line,
-/// will make the construction fail with an exception.
-///
-/// The Algorithm and Fingerprint Type fields must be within their valid
-/// ranges, but are not constrained to the values defined in RFC4255.
-///
-/// The Fingerprint field may be absent, but if present it must contain a
-/// valid hex encoding of the fingerprint. For compatibility with BIND 9,
-/// whitespace is allowed in the hex text (RFC4255 is silent on the matter).
-///
-/// \throw InvalidRdataText if any fields are missing, are out of their
-/// valid ranges or are incorrect, or if the fingerprint is not a valid
-/// hex string.
-///
-/// \param sshfp_str A string containing the RDATA to be created
-SSHFP::SSHFP(const string& sshfp_str) :
-    impl_(NULL)
-{
-    // We use unique_ptr here because if there is an exception in this
-    // constructor, the destructor is not called and there could be a
-    // leak of the SSHFPImpl that constructFromLexer() returns.
-    std::unique_ptr<SSHFPImpl> impl_ptr;
-
-    try {
-        std::istringstream ss(sshfp_str);
-        MasterLexer lexer;
-        lexer.pushSource(ss);
-
-        impl_ptr.reset(constructFromLexer(lexer));
-
-        if (lexer.getNextToken().getType() != MasterToken::END_OF_FILE) {
-            isc_throw(InvalidRdataText, "extra input text for SSHFP: "
-                      << sshfp_str);
-        }
-    } catch (const MasterLexer::LexerError& ex) {
-        isc_throw(InvalidRdataText, "Failed to construct SSHFP from '" <<
-                  sshfp_str << "': " << ex.what());
-    }
-
-    impl_ = impl_ptr.release();
-}
-
-/// \brief Constructor with a context of MasterLexer.
-///
-/// The \c lexer should point to the beginning of valid textual representation
-/// of an SSHFP RDATA.
-///
-/// \throw MasterLexer::LexerError General parsing error such as missing field.
-/// \throw InvalidRdataText Fields are out of their valid range or are
-/// incorrect, or if the fingerprint is not a valid hex string.
-///
-/// \param lexer A \c MasterLexer object parsing a master file for the
-/// RDATA to be created
-SSHFP::SSHFP(MasterLexer& lexer, const Name*,
-             MasterLoader::Options, MasterLoaderCallbacks&) :
-    impl_(constructFromLexer(lexer))
-{
-}
-
-/// \brief Constructor from InputBuffer.
-///
-/// The passed buffer must contain a valid SSHFP RDATA.
-///
-/// The Algorithm and Fingerprint Type fields are not checked for unknown
-/// values.  It is okay for the fingerprint data to be missing (see the
-/// description of the constructor from string).
-SSHFP::SSHFP(InputBuffer& buffer, size_t rdata_len) {
-    if (rdata_len < 2) {
-        isc_throw(InvalidRdataLength, "SSHFP record too short");
-    }
-
-    const uint8_t algorithm = buffer.readUint8();
-    const uint8_t fingerprint_type = buffer.readUint8();
-
-    vector<uint8_t> fingerprint;
-    rdata_len -= 2;
-    if (rdata_len > 0) {
-        fingerprint.resize(rdata_len);
-        buffer.readData(&fingerprint[0], rdata_len);
-    }
-
-    impl_ = new SSHFPImpl(algorithm, fingerprint_type, fingerprint);
-}
-
-SSHFP::SSHFP(uint8_t algorithm, uint8_t fingerprint_type,
-             const string& fingerprint_txt) :
-    impl_(NULL)
-{
-    vector<uint8_t> fingerprint;
-    try {
-        decodeHex(fingerprint_txt, fingerprint);
-    } catch (const isc::BadValue& e) {
-        isc_throw(InvalidRdataText, "Bad SSHFP fingerprint: " << e.what());
-    }
-
-    impl_ = new SSHFPImpl(algorithm, fingerprint_type, fingerprint);
-}
-
-SSHFP::SSHFP(const SSHFP& other) :
-        Rdata(), impl_(new SSHFPImpl(*other.impl_))
-{}
-
-SSHFP&
-SSHFP::operator=(const SSHFP& source) {
-    if (this == &source) {
-        return (*this);
-    }
-
-    SSHFPImpl* newimpl = new SSHFPImpl(*source.impl_);
-    delete impl_;
-    impl_ = newimpl;
-
-    return (*this);
-}
-
-SSHFP::~SSHFP() {
-    delete impl_;
-}
-
-void
-SSHFP::toWire(OutputBuffer& buffer) const {
-    buffer.writeUint8(impl_->algorithm_);
-    buffer.writeUint8(impl_->fingerprint_type_);
-
-    if (!impl_->fingerprint_.empty()) {
-        buffer.writeData(&impl_->fingerprint_[0],
-                         impl_->fingerprint_.size());
-    }
-}
-
-void
-SSHFP::toWire(AbstractMessageRenderer& renderer) const {
-    renderer.writeUint8(impl_->algorithm_);
-    renderer.writeUint8(impl_->fingerprint_type_);
-
-    if (!impl_->fingerprint_.empty()) {
-        renderer.writeData(&impl_->fingerprint_[0],
-                           impl_->fingerprint_.size());
-    }
-}
-
-string
-SSHFP::toText() const {
-    return (lexical_cast<string>(static_cast<int>(impl_->algorithm_)) + " " +
-            lexical_cast<string>(static_cast<int>(impl_->fingerprint_type_)) +
-            (impl_->fingerprint_.empty() ? "" :
-             " " + encodeHex(impl_->fingerprint_)));
-}
-
-int
-SSHFP::compare(const Rdata& other) const {
-    const SSHFP& other_sshfp = dynamic_cast<const SSHFP&>(other);
-
-    if (impl_->algorithm_ < other_sshfp.impl_->algorithm_) {
-        return (-1);
-    } else if (impl_->algorithm_ > other_sshfp.impl_->algorithm_) {
-        return (1);
-    }
-
-    if (impl_->fingerprint_type_ < other_sshfp.impl_->fingerprint_type_) {
-        return (-1);
-    } else if (impl_->fingerprint_type_ >
-               other_sshfp.impl_->fingerprint_type_) {
-        return (1);
-    }
-
-    const size_t this_len = impl_->fingerprint_.size();
-    const size_t other_len = other_sshfp.impl_->fingerprint_.size();
-    const size_t cmplen = min(this_len, other_len);
-
-    if (cmplen > 0) {
-        const int cmp = memcmp(&impl_->fingerprint_[0],
-                               &other_sshfp.impl_->fingerprint_[0],
-                               cmplen);
-        if (cmp != 0) {
-            return (cmp);
-        }
-    }
-
-    if (this_len == other_len) {
-        return (0);
-    } else if (this_len < other_len) {
-        return (-1);
-    } else {
-        return (1);
-    }
-}
-
-uint8_t
-SSHFP::getAlgorithmNumber() const {
-    return (impl_->algorithm_);
-}
-
-uint8_t
-SSHFP::getFingerprintType() const {
-    return (impl_->fingerprint_type_);
-}
-
-const std::vector<uint8_t>&
-SSHFP::getFingerprint() const {
-    return (impl_->fingerprint_);
-}
-
-size_t
-SSHFP::getFingerprintLength() const {
-    return (impl_->fingerprint_.size());
-}
-
-} // end of namespace "generic"
-} // end of namespace "rdata"
-} // end of namespace "dns"
-} // end of namespace "isc"
 // Copyright (C) 2021-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
@@ -5158,6 +1470,7 @@ SSHFP::getFingerprintLength() const {
 #include <util/encode/encode.h>
 #include <util/time_utilities.h>
 
+#include <dns/tsigerror.h>
 #include <dns/messagerenderer.h>
 #include <dns/name.h>
 #include <dns/rdata.h>
@@ -5194,8 +1507,8 @@ struct TKEYImpl {
              uint16_t mode, uint16_t error, vector<uint8_t>& key,
              vector<uint8_t>& other_data) :
       algorithm_(algorithm), inception_(inception), expire_(expire),
-      mode_(mode), error_(error), key_(key), other_data_(other_data)
-    {}
+      mode_(mode), error_(error), key_(key), other_data_(other_data) {
+    }
 
     /// \brief Constructor from RDATA field parameters.
     ///
@@ -5221,8 +1534,8 @@ struct TKEYImpl {
                     vector<uint8_t>(static_cast<const uint8_t*>(other_data),
                                     static_cast<const uint8_t*>(other_data) +
                                     other_len) :
-                    vector<uint8_t>(other_len))
-    {}
+                    vector<uint8_t>(other_len)) {
+    }
 
     /// \brief Common part of toWire methods.
     /// \tparam Output \c OutputBuffer or \c AbstractMessageRenderer.
@@ -5252,7 +1565,7 @@ struct TKEYImpl {
 };
 
 // helper function for string and lexer constructors
-TKEYImpl*
+boost::shared_ptr<TKEYImpl>
 TKEY::constructFromLexer(MasterLexer& lexer, const Name* origin) {
     const Name& algorithm =
         createNameFromLexer(lexer, origin ? origin : &Name::ROOT_NAME());
@@ -5347,8 +1660,9 @@ TKEY::constructFromLexer(MasterLexer& lexer, const Name* origin) {
     // RFC2845 says Other Data is "empty unless Error == BADTIME".
     // However, we don't enforce that.
 
-    return (new TKEYImpl(algorithm, inception, expire, mode, error,
-                         key_data, other_data));
+    return (boost::shared_ptr<TKEYImpl>(new TKEYImpl(algorithm, inception,
+                                                     expire, mode, error,
+                                                     key_data, other_data)));
 }
 
 /// \brief Constructor from string.
@@ -5407,14 +1721,14 @@ TKEY::TKEY(const std::string& tkey_str) : impl_(0) {
     // We use unique_ptr here because if there is an exception in this
     // constructor, the destructor is not called and there could be a
     // leak of the TKEYImpl that constructFromLexer() returns.
-    std::unique_ptr<TKEYImpl> impl_ptr;
+    boost::shared_ptr<TKEYImpl> impl_ptr;
 
     try {
         std::istringstream ss(tkey_str);
         MasterLexer lexer;
         lexer.pushSource(ss);
 
-        impl_ptr.reset(constructFromLexer(lexer, 0));
+        impl_ptr = constructFromLexer(lexer, 0);
 
         if (lexer.getNextToken().getType() != MasterToken::END_OF_FILE) {
             isc_throw(InvalidRdataText,
@@ -5426,7 +1740,7 @@ TKEY::TKEY(const std::string& tkey_str) : impl_(0) {
                   << ex.what());
     }
 
-    impl_ = impl_ptr.release();
+    impl_ = impl_ptr;
 }
 
 /// \brief Constructor with a context of MasterLexer.
@@ -5445,9 +1759,8 @@ TKEY::TKEY(const std::string& tkey_str) : impl_(0) {
 /// \param lexer A \c MasterLexer object parsing a master file for the
 /// RDATA to be created
 TKEY::TKEY(MasterLexer& lexer, const Name* origin,
-           MasterLoader::Options, MasterLoaderCallbacks&) :
-    impl_(constructFromLexer(lexer, origin))
-{
+           MasterLoader::Options, MasterLoaderCallbacks&) {
+    impl_ = constructFromLexer(lexer, origin);
 }
 
 /// \brief Constructor from wire-format data.
@@ -5471,8 +1784,7 @@ TKEY::TKEY(MasterLexer& lexer, const Name* origin,
 /// must check consistency between the length parameter and the actual
 /// RDATA length.
 TKEY::TKEY(InputBuffer& buffer, size_t) :
-    impl_(0)
-{
+    impl_(0) {
     Name algorithm(buffer);
 
     const uint32_t inception = buffer.readUint32();
@@ -5495,15 +1807,14 @@ TKEY::TKEY(InputBuffer& buffer, size_t) :
         buffer.readData(&other_data[0], other_len);
     }
 
-    impl_ = new TKEYImpl(algorithm, inception, expire, mode, error,
-                         key, other_data);
+    impl_.reset(new TKEYImpl(algorithm, inception, expire, mode, error,
+                             key, other_data));
 }
 
 TKEY::TKEY(const Name& algorithm, uint32_t inception, uint32_t expire,
            uint16_t mode, uint16_t error, uint16_t key_len,
            const void* key, uint16_t other_len, const void* other_data) :
-    impl_(0)
-{
+    impl_(0) {
     if ((key_len == 0 && key != 0) || (key_len > 0 && key == 0)) {
         isc_throw(InvalidParameter, "TKEY Key length and data inconsistent");
     }
@@ -5512,8 +1823,8 @@ TKEY::TKEY(const Name& algorithm, uint32_t inception, uint32_t expire,
         isc_throw(InvalidParameter,
                   "TKEY Other data length and data inconsistent");
     }
-    impl_ = new TKEYImpl(algorithm, inception, expire, mode, error,
-                         key_len, key, other_len, other_data);
+    impl_.reset(new TKEYImpl(algorithm, inception, expire, mode, error,
+                             key_len, key, other_len, other_data));
 }
 
 /// \brief The copy constructor.
@@ -5521,8 +1832,8 @@ TKEY::TKEY(const Name& algorithm, uint32_t inception, uint32_t expire,
 /// It internally allocates a resource, and if it fails a corresponding
 /// standard exception will be thrown.
 /// This constructor never throws an exception otherwise.
-TKEY::TKEY(const TKEY& source) : Rdata(), impl_(new TKEYImpl(*source.impl_))
-{}
+TKEY::TKEY(const TKEY& source) : Rdata(), impl_(new TKEYImpl(*source.impl_)) {
+}
 
 TKEY&
 TKEY::operator=(const TKEY& source) {
@@ -5530,15 +1841,12 @@ TKEY::operator=(const TKEY& source) {
         return (*this);
     }
 
-    TKEYImpl* newimpl = new TKEYImpl(*source.impl_);
-    delete impl_;
-    impl_ = newimpl;
+    impl_.reset(new TKEYImpl(*source.impl_));
 
     return (*this);
 }
 
 TKEY::~TKEY() {
-    delete impl_;
 }
 
 /// \brief Convert the \c TKEY to a string.
@@ -5757,519 +2065,7 @@ TKEY::getOtherData() const {
 } // end of namespace "rdata"
 } // end of namespace "dns"
 } // end of namespace "isc"
-// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
-//
-// This Source Code Form is subject to the terms of the Mozilla Public
-// License, v. 2.0. If a copy of the MPL was not distributed with this
-// file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#include <config.h>
-
-#include <boost/lexical_cast.hpp>
-
-#include <exceptions/exceptions.h>
-
-#include <util/buffer.h>
-#include <util/encode/encode.h>
-#include <dns/name.h>
-#include <dns/messagerenderer.h>
-#include <dns/rdata.h>
-#include <dns/rdataclass.h>
-#include <dns/rdata_pimpl_holder.h>
-
-using namespace std;
-using boost::lexical_cast;
-using namespace isc::util;
-using namespace isc::util::encode;
-
-namespace isc {
-namespace dns {
-namespace rdata {
-namespace generic {
-
-struct TLSAImpl {
-    // straightforward representation of TLSA RDATA fields
-    TLSAImpl(uint8_t certificate_usage, uint8_t selector,
-             uint8_t matching_type, const vector<uint8_t>& data) :
-        certificate_usage_(certificate_usage),
-        selector_(selector),
-        matching_type_(matching_type),
-        data_(data)
-    {}
-
-    uint8_t certificate_usage_;
-    uint8_t selector_;
-    uint8_t matching_type_;
-    const vector<uint8_t> data_;
-};
-
-// helper function for string and lexer constructors
-TLSAImpl*
-TLSA::constructFromLexer(MasterLexer& lexer) {
-    const uint32_t certificate_usage =
-        lexer.getNextToken(MasterToken::NUMBER).getNumber();
-    if (certificate_usage > 255) {
-        isc_throw(InvalidRdataText,
-                  "TLSA certificate usage field out of range");
-    }
-
-    const uint32_t selector =
-        lexer.getNextToken(MasterToken::NUMBER).getNumber();
-    if (selector > 255) {
-        isc_throw(InvalidRdataText,
-                  "TLSA selector field out of range");
-    }
-
-    const uint32_t matching_type =
-        lexer.getNextToken(MasterToken::NUMBER).getNumber();
-    if (matching_type > 255) {
-        isc_throw(InvalidRdataText,
-                  "TLSA matching type field out of range");
-    }
-
-    std::string certificate_assoc_data;
-    std::string data_substr;
-    while (true) {
-        const MasterToken& token =
-            lexer.getNextToken(MasterToken::STRING, true);
-        if ((token.getType() == MasterToken::END_OF_FILE) ||
-            (token.getType() == MasterToken::END_OF_LINE)) {
-            break;
-        }
-
-        token.getString(data_substr);
-        certificate_assoc_data.append(data_substr);
-    }
-    lexer.ungetToken();
-
-    if (certificate_assoc_data.empty()) {
-        isc_throw(InvalidRdataText, "Empty TLSA certificate association data");
-    }
-
-    vector<uint8_t> data;
-    try {
-        decodeHex(certificate_assoc_data, data);
-    } catch (const isc::BadValue& e) {
-        isc_throw(InvalidRdataText,
-                  "Bad TLSA certificate association data: " << e.what());
-    }
-
-    return (new TLSAImpl(certificate_usage, selector, matching_type, data));
-}
-
-/// \brief Constructor from string.
-///
-/// The given string must represent a valid TLSA RDATA.  There can be
-/// extra space characters at the beginning or end of the text (which
-/// are simply ignored), but other extra text, including a new line,
-/// will make the construction fail with an exception.
-///
-/// The Certificate Usage, Selector and Matching Type fields must be
-/// within their valid ranges, but are not constrained to the values
-/// defined in RFC6698.
-///
-/// The Certificate Association Data Field field may be absent, but if
-/// present it must contain a valid hex encoding of the data. Whitespace
-/// is allowed in the hex text.
-///
-/// \throw InvalidRdataText if any fields are missing, out of their
-/// valid ranges, or are incorrect, or Certificate Association Data is
-/// not a valid hex string.
-///
-/// \param tlsa_str A string containing the RDATA to be created
-TLSA::TLSA(const string& tlsa_str) :
-    impl_(NULL)
-{
-    // We use a smart pointer here because if there is an exception in
-    // this constructor, the destructor is not called and there could be
-    // a leak of the TLSAImpl that constructFromLexer() returns.
-    RdataPimplHolder<TLSAImpl> impl_ptr;
-
-    try {
-        std::istringstream ss(tlsa_str);
-        MasterLexer lexer;
-        lexer.pushSource(ss);
-
-        impl_ptr.reset(constructFromLexer(lexer));
-
-        if (lexer.getNextToken().getType() != MasterToken::END_OF_FILE) {
-            isc_throw(InvalidRdataText, "extra input text for TLSA: "
-                      << tlsa_str);
-        }
-    } catch (const MasterLexer::LexerError& ex) {
-        isc_throw(InvalidRdataText, "Failed to construct TLSA from '" <<
-                  tlsa_str << "': " << ex.what());
-    }
-
-    impl_ = impl_ptr.release();
-}
-
-/// \brief Constructor with a context of MasterLexer.
-///
-/// The \c lexer should point to the beginning of valid textual representation
-/// of an TLSA RDATA.
-///
-/// \throw MasterLexer::LexerError General parsing error such as missing field.
-/// \throw InvalidRdataText Fields are out of their valid range, or are
-/// incorrect, or Certificate Association Data is not a valid hex string.
-///
-/// \param lexer A \c MasterLexer object parsing a master file for the
-/// RDATA to be created
-TLSA::TLSA(MasterLexer& lexer, const Name*,
-             MasterLoader::Options, MasterLoaderCallbacks&) :
-    impl_(constructFromLexer(lexer))
-{
-}
-
-/// \brief Constructor from InputBuffer.
-///
-/// The passed buffer must contain a valid TLSA RDATA.
-///
-/// The Certificate Usage, Selector and Matching Type fields must be
-/// within their valid ranges, but are not constrained to the values
-/// defined in RFC6698. It is okay for the certificate association data
-/// to be missing (see the description of the constructor from string).
-TLSA::TLSA(InputBuffer& buffer, size_t rdata_len) {
-    if (rdata_len < 3) {
-        isc_throw(InvalidRdataLength, "TLSA record too short");
-    }
-
-    const uint8_t certificate_usage = buffer.readUint8();
-    const uint8_t selector = buffer.readUint8();
-    const uint8_t matching_type = buffer.readUint8();
-
-    vector<uint8_t> data;
-    rdata_len -= 3;
-
-    if (rdata_len == 0) {
-        isc_throw(InvalidRdataLength,
-                  "Empty TLSA certificate association data");
-    }
-
-    data.resize(rdata_len);
-    buffer.readData(&data[0], rdata_len);
-
-    impl_ = new TLSAImpl(certificate_usage, selector, matching_type, data);
-}
-
-TLSA::TLSA(uint8_t certificate_usage, uint8_t selector,
-           uint8_t matching_type, const std::string& certificate_assoc_data) :
-    impl_(NULL)
-{
-    if (certificate_assoc_data.empty()) {
-        isc_throw(InvalidRdataText, "Empty TLSA certificate association data");
-    }
-
-    vector<uint8_t> data;
-    try {
-        decodeHex(certificate_assoc_data, data);
-    } catch (const isc::BadValue& e) {
-        isc_throw(InvalidRdataText,
-                  "Bad TLSA certificate association data: " << e.what());
-    }
-
-    impl_ = new TLSAImpl(certificate_usage, selector, matching_type, data);
-}
-
-TLSA::TLSA(const TLSA& other) :
-        Rdata(), impl_(new TLSAImpl(*other.impl_))
-{}
-
-TLSA&
-TLSA::operator=(const TLSA& source) {
-    if (this == &source) {
-        return (*this);
-    }
-
-    TLSAImpl* newimpl = new TLSAImpl(*source.impl_);
-    delete impl_;
-    impl_ = newimpl;
-
-    return (*this);
-}
-
-TLSA::~TLSA() {
-    delete impl_;
-}
-
-void
-TLSA::toWire(OutputBuffer& buffer) const {
-    buffer.writeUint8(impl_->certificate_usage_);
-    buffer.writeUint8(impl_->selector_);
-    buffer.writeUint8(impl_->matching_type_);
-
-    // The constructors must ensure that the certificate association
-    // data field is not empty.
-    assert(!impl_->data_.empty());
-    buffer.writeData(&impl_->data_[0], impl_->data_.size());
-}
-
-void
-TLSA::toWire(AbstractMessageRenderer& renderer) const {
-    renderer.writeUint8(impl_->certificate_usage_);
-    renderer.writeUint8(impl_->selector_);
-    renderer.writeUint8(impl_->matching_type_);
-
-    // The constructors must ensure that the certificate association
-    // data field is not empty.
-    assert(!impl_->data_.empty());
-    renderer.writeData(&impl_->data_[0], impl_->data_.size());
-}
-
-string
-TLSA::toText() const {
-    // The constructors must ensure that the certificate association
-    // data field is not empty.
-    assert(!impl_->data_.empty());
-
-    return (lexical_cast<string>(static_cast<int>(impl_->certificate_usage_)) + " " +
-            lexical_cast<string>(static_cast<int>(impl_->selector_)) + " " +
-            lexical_cast<string>(static_cast<int>(impl_->matching_type_)) + " " +
-            encodeHex(impl_->data_));
-}
-
-int
-TLSA::compare(const Rdata& other) const {
-    const TLSA& other_tlsa = dynamic_cast<const TLSA&>(other);
-
-    if (impl_->certificate_usage_ < other_tlsa.impl_->certificate_usage_) {
-        return (-1);
-    } else if (impl_->certificate_usage_ >
-               other_tlsa.impl_->certificate_usage_) {
-        return (1);
-    }
-
-    if (impl_->selector_ < other_tlsa.impl_->selector_) {
-        return (-1);
-    } else if (impl_->selector_ > other_tlsa.impl_->selector_) {
-        return (1);
-    }
-
-    if (impl_->matching_type_ < other_tlsa.impl_->matching_type_) {
-        return (-1);
-    } else if (impl_->matching_type_ >
-               other_tlsa.impl_->matching_type_) {
-        return (1);
-    }
-
-    const size_t this_len = impl_->data_.size();
-    const size_t other_len = other_tlsa.impl_->data_.size();
-    const size_t cmplen = min(this_len, other_len);
-
-    if (cmplen > 0) {
-        const int cmp = memcmp(&impl_->data_[0],
-                               &other_tlsa.impl_->data_[0],
-                               cmplen);
-        if (cmp != 0) {
-            return (cmp);
-        }
-    }
-
-    if (this_len == other_len) {
-        return (0);
-    } else if (this_len < other_len) {
-        return (-1);
-    } else {
-        return (1);
-    }
-}
-
-uint8_t
-TLSA::getCertificateUsage() const {
-    return (impl_->certificate_usage_);
-}
-
-uint8_t
-TLSA::getSelector() const {
-    return (impl_->selector_);
-}
-
-uint8_t
-TLSA::getMatchingType() const {
-    return (impl_->matching_type_);
-}
-
-const std::vector<uint8_t>&
-TLSA::getData() const {
-    return (impl_->data_);
-}
-
-size_t
-TLSA::getDataLength() const {
-    return (impl_->data_.size());
-}
-
-} // end of namespace "generic"
-} // end of namespace "rdata"
-} // end of namespace "dns"
-} // end of namespace "isc"
-// Copyright (C) 2010-2024 Internet Systems Consortium, Inc. ("ISC")
-//
-// This Source Code Form is subject to the terms of the Mozilla Public
-// License, v. 2.0. If a copy of the MPL was not distributed with this
-// file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
-#include <config.h>
-
-#include <stdint.h>
-#include <string.h>
-
-#include <string>
-#include <vector>
-
-#include <util/buffer.h>
-#include <dns/exceptions.h>
-#include <dns/messagerenderer.h>
-#include <dns/rdata.h>
-#include <dns/rdataclass.h>
-#include <dns/rdata/generic/detail/txt_like.h>
-
-using namespace std;
-using namespace isc::util;
-
-namespace isc {
-namespace dns {
-namespace rdata {
-namespace generic {
-
-TXT&
-TXT::operator=(const TXT& source) {
-    if (this == &source) {
-        return (*this);
-    }
-
-    TXTImpl* newimpl = new TXTImpl(*source.impl_);
-    delete impl_;
-    impl_ = newimpl;
-
-    return (*this);
-}
-
-TXT::~TXT() {
-    delete impl_;
-}
-
-TXT::TXT(InputBuffer& buffer, size_t rdata_len) :
-    impl_(new TXTImpl(buffer, rdata_len))
-{}
-
-/// \brief Constructor using the master lexer.
-///
-/// This implementation only uses the \c lexer parameters; others are
-/// ignored.
-///
-/// \throw CharStringTooLong the parameter string length exceeds maximum.
-/// \throw InvalidRdataText the method cannot process the parameter data
-///
-/// \param lexer A \c MasterLexer object parsing a master file for this
-/// RDATA.
-TXT::TXT(MasterLexer& lexer, const Name*, MasterLoader::Options,
-         MasterLoaderCallbacks&) :
-    impl_(new TXTImpl(lexer))
-{}
-
-TXT::TXT(const std::string& txtstr) :
-    impl_(new TXTImpl(txtstr))
-{}
-
-TXT::TXT(const TXT& other) :
-    Rdata(), impl_(new TXTImpl(*other.impl_))
-{}
-
-void
-TXT::toWire(OutputBuffer& buffer) const {
-    impl_->toWire(buffer);
-}
-
-void
-TXT::toWire(AbstractMessageRenderer& renderer) const {
-    impl_->toWire(renderer);
-}
-
-string
-TXT::toText() const {
-    return (impl_->toText());
-}
-
-int
-TXT::compare(const Rdata& other) const {
-    const TXT& other_txt = dynamic_cast<const TXT&>(other);
-
-    return (impl_->compare(*other_txt.impl_));
-}
-
-} // end of namespace "generic"
-} // end of namespace "rdata"
-} // end of namespace "dns"
-} // end of namespace "isc"
-// Copyright (C) 2010-2024 Internet Systems Consortium, Inc. ("ISC")
-//
-// This Source Code Form is subject to the terms of the Mozilla Public
-// License, v. 2.0. If a copy of the MPL was not distributed with this
-// file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
-#include <config.h>
-
-#include <string>
-
-#include <exceptions/exceptions.h>
-
-#include <util/buffer.h>
-#include <dns/messagerenderer.h>
-#include <dns/rdata.h>
-#include <dns/rdataclass.h>
-
-using namespace std;
-using namespace isc::util;
-
-namespace isc {
-namespace dns {
-namespace rdata {
-namespace hs {
-
-A::A(const std::string&) {
-    // TBD
-}
-
-A::A(MasterLexer&, const Name*,
-     MasterLoader::Options, MasterLoaderCallbacks&)
-{
-    // TBD
-}
-
-A::A(InputBuffer&, size_t) {
-    // TBD
-}
-
-A::A(const A&) : Rdata() {
-    // TBD
-}
-
-void
-A::toWire(OutputBuffer&) const {
-    // TBD
-}
-
-void
-A::toWire(AbstractMessageRenderer&) const {
-    // TBD
-}
-
-string
-A::toText() const {
-    // TBD
-    isc_throw(InvalidRdataText, "Not implemented yet");
-}
-
-int
-A::compare(const Rdata&) const {
-    return (0);                 // dummy.  TBD
-}
-
-} // end of namespace "hs"
-} // end of namespace "rdata"
-} // end of namespace "dns"
-} // end of namespace "isc"
 // Copyright (C) 2010-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
@@ -6387,8 +2183,7 @@ A::A(const std::string& addrstr) {
 /// \param lexer A \c MasterLexer object parsing a master file for the
 /// RDATA to be created
 A::A(MasterLexer& lexer, const Name*,
-     MasterLoader::Options, MasterLoaderCallbacks&)
-{
+     MasterLoader::Options, MasterLoaderCallbacks&) {
     const MasterToken& token = lexer.getNextToken(MasterToken::STRING);
     convertToIPv4Addr(token.getStringRegion().beg, token.getStringRegion().len,
                       &addr_);
@@ -6410,8 +2205,8 @@ A::A(InputBuffer& buffer, size_t rdata_len) {
 }
 
 /// \brief Copy constructor.
-A::A(const A& other) : Rdata(), addr_(other.addr_)
-{}
+A::A(const A& other) : Rdata(), addr_(other.addr_) {
+}
 
 void
 A::toWire(OutputBuffer& buffer) const {
@@ -6541,8 +2336,7 @@ AAAA::AAAA(const std::string& addrstr) {
 /// \param lexer A \c MasterLexer object parsing a master file for the
 /// RDATA to be created
 AAAA::AAAA(MasterLexer& lexer, const Name*,
-           MasterLoader::Options, MasterLoaderCallbacks&)
-{
+           MasterLoader::Options, MasterLoaderCallbacks&) {
     const MasterToken& token = lexer.getNextToken(MasterToken::STRING);
     convertToIPv6Addr(token.getStringRegion().beg, token.getStringRegion().len,
                       addr_);
@@ -6709,8 +2503,8 @@ DHCID::DHCID(InputBuffer& buffer, size_t rdata_len) {
 /// \brief The copy constructor.
 ///
 /// This trivial copy constructor never throws an exception.
-DHCID::DHCID(const DHCID& other) : Rdata(), digest_(other.digest_)
-{}
+DHCID::DHCID(const DHCID& other) : Rdata(), digest_(other.digest_) {
+}
 
 /// \brief Render the \c DHCID in the wire format.
 ///
@@ -6764,308 +2558,6 @@ DHCID::compare(const Rdata& other) const {
 const std::vector<uint8_t>&
 DHCID::getDigest() const {
     return (digest_);
-}
-
-} // end of namespace "in"
-} // end of namespace "rdata"
-} // end of namespace "dns"
-} // end of namespace "isc"
-// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
-//
-// This Source Code Form is subject to the terms of the Mozilla Public
-// License, v. 2.0. If a copy of the MPL was not distributed with this
-// file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
-#include <config.h>
-
-#include <iostream>
-#include <sstream>
-
-#include <boost/lexical_cast.hpp>
-
-#include <util/buffer.h>
-#include <util/strutil.h>
-
-#include <dns/messagerenderer.h>
-#include <dns/name.h>
-#include <dns/rdata.h>
-#include <dns/rdataclass.h>
-
-#include <dns/rdata/generic/detail/lexer_util.h>
-
-using namespace std;
-using namespace isc::util;
-using namespace isc::util::str;
-using isc::dns::rdata::generic::detail::createNameFromLexer;
-
-namespace isc {
-namespace dns {
-namespace rdata {
-namespace in {
-
-struct SRVImpl {
-    // straightforward representation of SRV RDATA fields
-    SRVImpl(uint16_t priority, uint16_t weight, uint16_t port,
-           const Name& target) :
-        priority_(priority), weight_(weight), port_(port),
-        target_(target)
-    {}
-
-    uint16_t priority_;
-    uint16_t weight_;
-    uint16_t port_;
-    Name target_;
-};
-
-/// \brief Constructor from string.
-///
-/// The given string must represent a valid SRV RDATA.  There can be extra
-/// space characters at the beginning or end of the text (which are simply
-/// ignored), but other extra text, including a new line, will make the
-/// construction fail with an exception.
-///
-/// The TARGET name must be absolute since there's no parameter that
-/// specifies the origin name; if it is not absolute, \c MissingNameOrigin
-/// exception will be thrown. It must not be represented as a quoted
-/// string.
-///
-/// See the construction that takes \c MasterLexer for other fields.
-///
-/// \throw Others Exception from the Name and RRTTL constructors.
-/// \throw InvalidRdataText Other general syntax errors.
-SRV::SRV(const std::string& srv_str) :
-    impl_(NULL)
-{
-    try {
-        std::istringstream ss(srv_str);
-        MasterLexer lexer;
-        lexer.pushSource(ss);
-
-        uint32_t num = lexer.getNextToken(MasterToken::NUMBER).getNumber();
-        if (num > 65535) {
-            isc_throw(InvalidRdataText, "Invalid SRV priority in: " << srv_str);
-        }
-        const uint16_t priority = static_cast<uint16_t>(num);
-
-        num = lexer.getNextToken(MasterToken::NUMBER).getNumber();
-        if (num > 65535) {
-            isc_throw(InvalidRdataText, "Invalid SRV weight in: " << srv_str);
-        }
-        const uint16_t weight = static_cast<uint16_t>(num);
-
-        num = lexer.getNextToken(MasterToken::NUMBER).getNumber();
-        if (num > 65535) {
-            isc_throw(InvalidRdataText, "Invalid SRV port in: " << srv_str);
-        }
-        const uint16_t port = static_cast<uint16_t>(num);
-
-        const Name targetname = createNameFromLexer(lexer, NULL);
-
-        if (lexer.getNextToken().getType() != MasterToken::END_OF_FILE) {
-            isc_throw(InvalidRdataText, "extra input text for SRV: "
-                      << srv_str);
-        }
-
-        impl_ = new SRVImpl(priority, weight, port, targetname);
-    } catch (const MasterLexer::LexerError& ex) {
-        isc_throw(InvalidRdataText, "Failed to construct SRV from '" <<
-                  srv_str << "': " << ex.what());
-    }
-}
-
-/// \brief Constructor from wire-format data.
-///
-/// When a read operation on \c buffer fails (e.g., due to a corrupted
-/// message) a corresponding exception from the \c InputBuffer class will
-/// be thrown.
-/// If the wire-format data does not end with a valid domain name,
-/// a corresponding exception from the \c Name class will be thrown.
-/// In addition, this constructor internally involves resource allocation,
-/// and if it fails a corresponding standard exception will be thrown.
-///
-/// According to RFC2782, the Target field must be a non compressed form
-/// of domain name.  But this implementation accepts a %SRV RR even if that
-/// field is compressed as suggested in RFC3597.
-///
-/// \param buffer A buffer storing the wire format data.
-/// \param rdata_len The length of the RDATA in bytes, normally expected
-/// to be the value of the RDLENGTH field of the corresponding RR.
-SRV::SRV(InputBuffer& buffer, size_t rdata_len) {
-    if (rdata_len < 6) {
-        isc_throw(InvalidRdataLength, "SRV too short");
-    }
-
-    const uint16_t priority = buffer.readUint16();
-    const uint16_t weight = buffer.readUint16();
-    const uint16_t port = buffer.readUint16();
-    const Name targetname(buffer);
-
-    impl_ = new SRVImpl(priority, weight, port, targetname);
-}
-
-/// \brief Constructor with a context of MasterLexer.
-///
-/// The \c lexer should point to the beginning of valid textual representation
-/// of an SRV RDATA.  The TARGET field can be non-absolute if \c origin
-/// is non-NULL, in which case \c origin is used to make it absolute.
-/// It must not be represented as a quoted string.
-///
-/// The PRIORITY, WEIGHT and PORT fields must each be a valid decimal
-/// representation of an unsigned 16-bit integers respectively.
-///
-/// \throw MasterLexer::LexerError General parsing error such as missing field.
-/// \throw Other Exceptions from the Name and RRTTL constructors if
-/// construction of textual fields as these objects fail.
-///
-/// \param lexer A \c MasterLexer object parsing a master file for the
-/// RDATA to be created
-/// \param origin If non NULL, specifies the origin of TARGET when it
-/// is non-absolute.
-SRV::SRV(MasterLexer& lexer, const Name* origin,
-         MasterLoader::Options, MasterLoaderCallbacks&)
-{
-    uint32_t num = lexer.getNextToken(MasterToken::NUMBER).getNumber();
-    if (num > 65535) {
-        isc_throw(InvalidRdataText, "Invalid SRV priority: " << num);
-    }
-    const uint16_t priority = static_cast<uint16_t>(num);
-
-    num = lexer.getNextToken(MasterToken::NUMBER).getNumber();
-    if (num > 65535) {
-        isc_throw(InvalidRdataText, "Invalid SRV weight: " << num);
-    }
-    const uint16_t weight = static_cast<uint16_t>(num);
-
-    num = lexer.getNextToken(MasterToken::NUMBER).getNumber();
-    if (num > 65535) {
-        isc_throw(InvalidRdataText, "Invalid SRV port: " << num);
-    }
-    const uint16_t port = static_cast<uint16_t>(num);
-
-    const Name targetname = createNameFromLexer(lexer, origin);
-
-    impl_ = new SRVImpl(priority, weight, port, targetname);
-}
-
-/// \brief The copy constructor.
-///
-/// It internally allocates a resource, and if it fails a corresponding
-/// standard exception will be thrown.
-/// This constructor never throws an exception otherwise.
-SRV::SRV(const SRV& source) :
-    Rdata(), impl_(new SRVImpl(*source.impl_))
-{}
-
-SRV&
-SRV::operator=(const SRV& source) {
-    if (this == &source) {
-        return (*this);
-    }
-
-    SRVImpl* newimpl = new SRVImpl(*source.impl_);
-    delete impl_;
-    impl_ = newimpl;
-
-    return (*this);
-}
-
-SRV::~SRV() {
-    delete impl_;
-}
-
-/// \brief Convert the \c SRV to a string.
-///
-/// The output of this method is formatted as described in the "from string"
-/// constructor (\c SRV(const std::string&))).
-///
-/// If internal resource allocation fails, a corresponding
-/// standard exception will be thrown.
-///
-/// \return A \c string object that represents the \c SRV object.
-string
-SRV::toText() const {
-    using boost::lexical_cast;
-    return (lexical_cast<string>(impl_->priority_) +
-        " " + lexical_cast<string>(impl_->weight_) +
-        " " + lexical_cast<string>(impl_->port_) +
-        " " + impl_->target_.toText());
-}
-
-/// \brief Render the \c SRV in the wire format without name compression.
-///
-/// If internal resource allocation fails, a corresponding
-/// standard exception will be thrown.
-/// This method never throws an exception otherwise.
-///
-/// \param buffer An output buffer to store the wire data.
-void
-SRV::toWire(OutputBuffer& buffer) const {
-    buffer.writeUint16(impl_->priority_);
-    buffer.writeUint16(impl_->weight_);
-    buffer.writeUint16(impl_->port_);
-    impl_->target_.toWire(buffer);
-}
-
-/// \brief Render the \c SRV in the wire format with taking into account
-/// compression.
-///
-/// As specified in RFC2782, the Target field (a domain name) will not be
-/// compressed.  However, the domain name could be a target of compression
-/// of other compressible names (though pretty unlikely), the offset
-/// information of the algorithm name may be recorded in \c renderer.
-///
-/// If internal resource allocation fails, a corresponding
-/// standard exception will be thrown.
-/// This method never throws an exception otherwise.
-///
-/// \param renderer DNS message rendering context that encapsulates the
-/// output buffer and name compression information.
-void
-SRV::toWire(AbstractMessageRenderer& renderer) const {
-    renderer.writeUint16(impl_->priority_);
-    renderer.writeUint16(impl_->weight_);
-    renderer.writeUint16(impl_->port_);
-    renderer.writeName(impl_->target_, false);
-}
-
-/// \brief Compare two instances of \c SRV RDATA.
-///
-/// See documentation in \c Rdata.
-int
-SRV::compare(const Rdata& other) const {
-    const SRV& other_srv = dynamic_cast<const SRV&>(other);
-
-    if (impl_->priority_ != other_srv.impl_->priority_) {
-        return (impl_->priority_ < other_srv.impl_->priority_ ? -1 : 1);
-    }
-    if (impl_->weight_ != other_srv.impl_->weight_) {
-        return (impl_->weight_ < other_srv.impl_->weight_ ? -1 : 1);
-    }
-    if (impl_->port_ != other_srv.impl_->port_) {
-        return (impl_->port_ < other_srv.impl_->port_ ? -1 : 1);
-    }
-
-    return (compareNames(impl_->target_, other_srv.impl_->target_));
-}
-
-uint16_t
-SRV::getPriority() const {
-    return (impl_->priority_);
-}
-
-uint16_t
-SRV::getWeight() const {
-    return (impl_->weight_);
-}
-
-uint16_t
-SRV::getPort() const {
-    return (impl_->port_);
-}
-
-const Name&
-SRV::getTarget() const {
-    return (impl_->target_);
 }
 
 } // end of namespace "in"

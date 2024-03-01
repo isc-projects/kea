@@ -5,7 +5,10 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #ifndef NAME_H
-#define NAME_H 1
+#define NAME_H
+
+#include <util/buffer.h>
+#include <dns/messagerenderer.h>
 
 #include <stdint.h>
 
@@ -15,14 +18,7 @@
 #include <dns/exceptions.h>
 
 namespace isc {
-namespace util {
-class InputBuffer;
-class OutputBuffer;
-}
-
 namespace dns {
-class AbstractMessageRenderer;
-
 ///
 /// \brief A standard DNS module exception that is thrown if the name parser
 /// encounters an empty label in the middle of a name.
@@ -760,7 +756,3 @@ operator<<(std::ostream& os, const Name& name);
 }
 }
 #endif // NAME_H
-
-// Local Variables:
-// mode: c++
-// End:

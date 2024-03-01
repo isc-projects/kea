@@ -11,7 +11,7 @@
 #include <ostream>
 
 #ifndef RCODE_H
-#define RCODE_H 1
+#define RCODE_H
 
 namespace isc {
 namespace dns {
@@ -103,7 +103,9 @@ public:
     /// This method never throws an exception.
     ///
     /// \return The underlying code value corresponding to the \c Rcode.
-    uint16_t getCode() const { return (code_); }
+    uint16_t getCode() const {
+        return (code_);
+    }
 
     /// \brief Returns the upper 8-bit of the \c Rcode code value.
     ///
@@ -124,11 +126,14 @@ public:
     ///
     /// \param other the \c Rcode object to compare against.
     /// \return true if the two Rcodes are equal; otherwise false.
-    bool equals(const Rcode& other) const
-    { return (code_ == other.code_); }
+    bool equals(const Rcode& other) const {
+        return (code_ == other.code_);
+    }
 
     /// \brief Same as \c equals().
-    bool operator==(const Rcode& other) const { return (equals(other)); }
+    bool operator==(const Rcode& other) const {
+        return (equals(other));
+    }
 
     /// \brief Return true iff two Rcodes are not equal.
     ///
@@ -136,11 +141,14 @@ public:
     ///
     /// \param other the \c Rcode object to compare against.
     /// \return true if the two Rcodes are not equal; otherwise false.
-    bool nequals(const Rcode& other) const
-    { return (code_ != other.code_); }
+    bool nequals(const Rcode& other) const {
+        return (code_ != other.code_);
+    }
 
     /// \brief Same as \c nequals().
-    bool operator!=(const Rcode& other) const { return (nequals(other)); }
+    bool operator!=(const Rcode& other) const {
+        return (nequals(other));
+    }
 
     /// \brief Convert the \c Rcode to a string.
     ///
@@ -332,7 +340,3 @@ std::ostream& operator<<(std::ostream& os, const Rcode& rcode);
 }
 }
 #endif  // RCODE_H
-
-// Local Variables: 
-// mode: c++
-// End: 

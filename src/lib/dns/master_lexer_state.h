@@ -5,7 +5,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #ifndef MASTER_LEXER_STATE_H
-#define MASTER_LEXER_STATE_H 1
+#define MASTER_LEXER_STATE_H
 
 #include <dns/master_lexer.h>
 
@@ -124,7 +124,7 @@ protected:
     /// \return A pointer to the implementation class object of the given
     /// lexer.  This is never NULL.
     MasterLexer::MasterLexerImpl* getLexerImpl(MasterLexer& lexer) const {
-        return (lexer.impl_);
+        return (lexer.impl_.get());
     }
 };
 
@@ -132,7 +132,3 @@ protected:
 } // namespace dns
 } // namespace isc
 #endif  // MASTER_LEXER_STATE_H
-
-// Local Variables:
-// mode: c++
-// End:

@@ -5,7 +5,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #ifndef TSIGKEY_H
-#define TSIGKEY_H 1
+#define TSIGKEY_H
 
 #include <cryptolink/cryptolink.h>
 
@@ -221,7 +221,7 @@ public:
 
 private:
     struct TSIGKeyImpl;
-    const TSIGKeyImpl* impl_;
+    boost::shared_ptr<TSIGKeyImpl> impl_;
 };
 
 /// \brief A simple repository of a set of \c TSIGKey objects.
@@ -269,8 +269,8 @@ public:
     /// variables.
     struct FindResult {
         FindResult(Result param_code, const TSIGKey* param_key) :
-            code(param_code), key(param_key)
-        {}
+            code(param_code), key(param_key) {
+        }
         const Result code;
         const TSIGKey* const key;
     };
@@ -379,13 +379,9 @@ public:
 
 private:
     struct TSIGKeyRingImpl;
-    TSIGKeyRingImpl* impl_;
+    boost::shared_ptr<TSIGKeyRingImpl> impl_;
 };
 }
 }
 
 #endif  // TSIGKEY_H
-
-// Local Variables:
-// mode: c++
-// End:

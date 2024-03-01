@@ -5,7 +5,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #ifndef MASTER_LEXER_H
-#define MASTER_LEXER_H 1
+#define MASTER_LEXER_H
 
 #include <dns/exceptions.h>
 
@@ -15,6 +15,7 @@
 #include <stdint.h>
 
 #include <boost/noncopyable.hpp>
+#include <boost/shared_ptr.hpp>
 
 namespace isc {
 namespace dns {
@@ -125,8 +126,7 @@ public:
     /// \param str_len The size of the string in bytes
     /// \param quoted true if it's a quoted string; false otherwise.
     MasterToken(const char* str_beg, size_t str_len, bool quoted = false) :
-        type_(quoted ? QSTRING : STRING)
-    {
+        type_(quoted ? QSTRING : STRING) {
         val_.str_region_.beg = str_beg;
         val_.str_region_.len = str_len;
     }
@@ -154,7 +154,9 @@ public:
     /// \brief Return the token type.
     ///
     /// \throw none
-    Type getType() const { return (type_); }
+    Type getType() const {
+        return (type_);
+    }
 
     /// \brief Return the value of a string-variant token.
     ///
@@ -656,7 +658,7 @@ public:
 
 private:
     struct MasterLexerImpl;
-    MasterLexerImpl* impl_;
+    boost::shared_ptr<MasterLexerImpl> impl_;
 };
 
 /// \brief Operator to combine \c MasterLexer options
@@ -672,7 +674,3 @@ operator|(MasterLexer::Options o1, MasterLexer::Options o2) {
 } // namespace dns
 } // namespace isc
 #endif  // MASTER_LEXER_H
-
-// Local Variables:
-// mode: c++
-// End:

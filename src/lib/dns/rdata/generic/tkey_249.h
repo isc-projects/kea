@@ -12,6 +12,7 @@
 
 #include <dns/name.h>
 #include <dns/rdata.h>
+#include <boost/shared_ptr.hpp>
 
 // BEGIN_ISC_NAMESPACE
 
@@ -128,15 +129,11 @@ public:
     static const uint16_t GSS_API_MODE;
 
 private:
-    TKEYImpl* constructFromLexer(MasterLexer& lexer, const Name* origin);
+    boost::shared_ptr<TKEYImpl> constructFromLexer(MasterLexer& lexer, const Name* origin);
 
-    TKEYImpl* impl_;
+    boost::shared_ptr<TKEYImpl> impl_;
 };
 
 // END_RDATA_NAMESPACE
 // END_ISC_NAMESPACE
 // END_HEADER_GUARD
-
-// Local Variables:
-// mode: c++
-// End:

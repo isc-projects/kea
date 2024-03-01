@@ -14,8 +14,6 @@
 #include <algorithm>
 
 #include <exceptions/isc_assert.h>
-#include <util/buffer.h>
-#include <dns/exceptions.h>
 #include <dns/name.h>
 #include <dns/name_internal.h>
 #include <dns/messagerenderer.h>
@@ -23,7 +21,6 @@
 
 using namespace std;
 using namespace isc::util;
-using isc::dns::NameComparisonResult;
 using namespace isc::dns::name::internal;
 
 namespace isc {
@@ -311,8 +308,7 @@ Name::Name(const std::string &namestring, bool downcase) {
 }
 
 Name::Name(const char* namedata, size_t data_len, const Name* origin,
-           bool downcase)
-{
+           bool downcase) {
     // Check validity of data
     if (namedata == NULL || data_len == 0) {
         isc_throw(isc::InvalidParameter,

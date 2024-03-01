@@ -26,8 +26,7 @@ QidGenerator::getInstance() {
     return (qid_generator_instance);
 }
 
-QidGenerator::QidGenerator()
-{
+QidGenerator::QidGenerator() {
 }
 
 uint16_t

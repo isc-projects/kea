@@ -32,7 +32,3 @@ private:
 // END_RDATA_NAMESPACE
 // END_ISC_NAMESPACE
 // END_HEADER_GUARD
-
-// Local Variables: 
-// mode: c++
-// End: 

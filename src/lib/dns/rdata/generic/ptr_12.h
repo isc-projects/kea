@@ -26,7 +26,8 @@ public:
     ///
     /// Specialized constructor
     ///
-    explicit PTR(const Name& ptr_name) : ptr_name_(ptr_name) {}
+    explicit PTR(const Name& ptr_name) : ptr_name_(ptr_name) {
+    }
     ///
     /// Specialized methods
     ///
@@ -38,7 +39,3 @@ private:
 // END_RDATA_NAMESPACE
 // END_ISC_NAMESPACE
 // END_HEADER_GUARD
-
-// Local Variables: 
-// mode: c++
-// End: 

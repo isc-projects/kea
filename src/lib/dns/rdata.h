@@ -5,23 +5,19 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #ifndef RDATA_H
-#define RDATA_H 1
+#define RDATA_H
 
 #include <dns/master_lexer.h>
 #include <dns/master_loader.h>
 #include <dns/master_loader_callbacks.h>
-
 #include <dns/exceptions.h>
+#include <util/buffer.h>
 
 #include <boost/shared_ptr.hpp>
 
 #include <stdint.h>
 
 namespace isc {
-namespace util {
-class InputBuffer;
-class OutputBuffer;
-}
 namespace dns {
 class AbstractMessageRenderer;
 class RRType;
@@ -385,9 +381,9 @@ public:
     //@}
 
 private:
-    GenericImpl* constructFromLexer(MasterLexer& lexer);
+    boost::shared_ptr<GenericImpl> constructFromLexer(MasterLexer& lexer);
 
-    GenericImpl* impl_;
+    boost::shared_ptr<GenericImpl> impl_;
 };
 
 ///
@@ -576,7 +572,3 @@ int compareNames(const Name& n1, const Name& n2);
 }
 }
 #endif  // RDATA_H
-
-// Local Variables:
-// mode: c++
-// End:

@@ -43,8 +43,8 @@ TSIGRecord::TSIGRecord(const Name& key_name,
     key_name_(key_name), rdata_(tsig_rdata),
     length_(RR_COMMON_LEN + RDATA_COMMON_LEN + key_name_.getLength() +
             rdata_.getAlgorithm().getLength() +
-            rdata_.getMACSize() + rdata_.getOtherLen())
-{}
+            rdata_.getMACSize() + rdata_.getOtherLen()) {
+}
 
 namespace {
 // This is a straightforward wrapper of dynamic_cast<const any::TSIG&>.
@@ -67,8 +67,7 @@ castToTSIGRdata(const rdata::Rdata& rdata) {
 TSIGRecord::TSIGRecord(const Name& name, const RRClass& rrclass,
                        const RRTTL& ttl, const rdata::Rdata& rdata,
                        size_t length) :
-    key_name_(name), rdata_(castToTSIGRdata(rdata)), length_(length)
-{
+    key_name_(name), rdata_(castToTSIGRdata(rdata)), length_(length) {
     if (rrclass != getClass()) {
         isc_throw(DNSMessageFORMERR, "Unexpected TSIG RR class: " << rrclass);
     }

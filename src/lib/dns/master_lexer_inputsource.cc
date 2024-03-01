@@ -90,8 +90,8 @@ InputSource::InputSource(std::istream& input_stream) :
     total_pos_(0),
     name_(createStreamName(input_stream)),
     input_(input_stream),
-    input_size_(getStreamSize(input_))
-{}
+    input_size_(getStreamSize(input_)) {
+}
 
 namespace {
 // A helper to initialize InputSource::input_ in the member initialization
@@ -122,11 +122,10 @@ InputSource::InputSource(const char* filename) :
     total_pos_(0),
     name_(filename),
     input_(openFileStream(file_stream_, filename)),
-    input_size_(getStreamSize(input_))
-{}
+    input_size_(getStreamSize(input_)) {
+}
 
-InputSource::~InputSource()
-{
+InputSource::~InputSource() {
     if (file_stream_.is_open()) {
         file_stream_.close();
     }

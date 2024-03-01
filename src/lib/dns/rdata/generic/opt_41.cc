@@ -24,8 +24,7 @@ using namespace isc::util;
 OPT::PseudoRR::PseudoRR(uint16_t code,
                         boost::shared_ptr<std::vector<uint8_t> >& data) :
     code_(code),
-    data_(data)
-{
+    data_(data) {
 }
 
 uint16_t
@@ -45,8 +44,8 @@ OPT::PseudoRR::getLength() const {
 
 struct OPTImpl {
     OPTImpl() :
-        rdlength_(0)
-    {}
+        rdlength_(0) {
+    }
 
     uint16_t rdlength_;
     std::vector<OPT::PseudoRR> pseudo_rrs_;
@@ -54,8 +53,7 @@ struct OPTImpl {
 
 /// \brief Default constructor.
 OPT::OPT() :
-    impl_(new OPTImpl())
-{
+    impl_(new OPTImpl()) {
 }
 
 /// \brief Constructor from string.
@@ -64,8 +62,7 @@ OPT::OPT() :
 ///
 /// \throw InvalidRdataText OPT RR cannot be constructed from text.
 OPT::OPT(const std::string&) :
-    impl_(NULL)
-{
+    impl_(NULL) {
     isc_throw(InvalidRdataText, "OPT RR cannot be constructed from text");
 }
 
@@ -76,15 +73,13 @@ OPT::OPT(const std::string&) :
 /// \throw InvalidRdataText OPT RR cannot be constructed from text.
 OPT::OPT(MasterLexer&, const Name*,
          MasterLoader::Options, MasterLoaderCallbacks&) :
-    impl_(NULL)
-{
+    impl_(NULL) {
     isc_throw(InvalidRdataText, "OPT RR cannot be constructed from text");
 }
 
 OPT::OPT(InputBuffer& buffer, size_t rdata_len) :
-    impl_(NULL)
-{
-    std::unique_ptr<OPTImpl> impl_ptr(new OPTImpl());
+    impl_(NULL) {
+    boost::shared_ptr<OPTImpl> impl_ptr(new OPTImpl());
 
     while (true) {
         if (rdata_len == 0) {
@@ -102,8 +97,7 @@ OPT::OPT(InputBuffer& buffer, size_t rdata_len) :
         rdata_len -= 4;
 
         if (static_cast<uint16_t>(impl_ptr->rdlength_ + option_length) <
-            impl_ptr->rdlength_)
-        {
+            impl_ptr->rdlength_) {
             isc_throw(InvalidRdataText,
                       "Option length " << option_length
                       << " would overflow OPT RR RDLEN (currently "
@@ -122,12 +116,11 @@ OPT::OPT(InputBuffer& buffer, size_t rdata_len) :
         rdata_len -= option_length;
     }
 
-    impl_ = impl_ptr.release();
+    impl_ = impl_ptr;
 }
 
 OPT::OPT(const OPT& other) :
-    Rdata(), impl_(new OPTImpl(*other.impl_))
-{
+    Rdata(), impl_(new OPTImpl(*other.impl_)) {
 }
 
 OPT&
@@ -137,14 +130,12 @@ OPT::operator=(const OPT& source) {
     }
 
     OPTImpl* newimpl = new OPTImpl(*source.impl_);
-    delete impl_;
     impl_ = newimpl;
 
     return (*this);
 }
 
 OPT::~OPT() {
-    delete impl_;
 }
 
 std::string
@@ -191,8 +182,7 @@ OPT::appendPseudoRR(uint16_t code, const uint8_t* data, uint16_t length) {
     // pseudo-RR length here, not the whole message length (which should
     // be checked and enforced elsewhere).
     if (static_cast<uint16_t>(impl_->rdlength_ + length) <
-        impl_->rdlength_)
-    {
+        impl_->rdlength_) {
         isc_throw(isc::InvalidParameter,
                   "Option length " << length
                   << " would overflow OPT RR RDLEN (currently "

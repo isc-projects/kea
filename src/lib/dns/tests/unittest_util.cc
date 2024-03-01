@@ -21,7 +21,7 @@
 #include <dns/tests/unittest_util.h>
 
 using namespace std;
-using namespace isc::dns;
+//using namespace isc::dns;
 
 using isc::UnitTestUtil;
 
@@ -94,8 +94,7 @@ UnitTestUtil::addDataPath(const string& directory) {
 
 void
 UnitTestUtil::readWireData(const string& datastr,
-                           vector<unsigned char>& data)
-{
+                           vector<unsigned char>& data) {
     istringstream iss(datastr);
 
     do {
@@ -121,56 +120,4 @@ UnitTestUtil::readWireData(const string& datastr,
             data.push_back(static_cast<unsigned char>(ch));
         }
     } while (!iss.eof());
-}
-
-::testing::AssertionResult
-UnitTestUtil::matchName(const char*, const char*,
-                        const isc::dns::Name& name1,
-                        const isc::dns::Name& name2)
-{
-    ::testing::Message msg;
-
-    NameComparisonResult cmpresult = name1.compare(name2);
-    if (cmpresult.getOrder() != 0 ||
-        cmpresult.getRelation() != NameComparisonResult::EQUAL) {
-        msg << "Two names are expected to be equal but not:\n"
-            << "  One: " << name1 << "\n"
-            << "Other: " << name2 << "\n";
-        return (::testing::AssertionFailure(msg));
-    }
-    return (::testing::AssertionSuccess());
-}
-
-void
-UnitTestUtil::createRequestMessage(Message& message,
-                                   const Opcode& opcode,
-                                   const uint16_t qid,
-                                   const Name& name,
-                                   const RRClass& rrclass,
-                                   const RRType& rrtype)
-{
-    message.clear(Message::RENDER);
-    message.setOpcode(opcode);
-    message.setRcode(Rcode::NOERROR());
-    message.setQid(qid);
-    message.addQuestion(Question(name, rrclass, rrtype));
-}
-
-void
-UnitTestUtil::createDNSSECRequestMessage(Message& message,
-                                         const Opcode& opcode,
-                                         const uint16_t qid,
-                                         const Name& name,
-                                         const RRClass& rrclass,
-                                         const RRType& rrtype)
-{
-    message.clear(Message::RENDER);
-    message.setOpcode(opcode);
-    message.setRcode(Rcode::NOERROR());
-    message.setQid(qid);
-    message.addQuestion(Question(name, rrclass, rrtype));
-    EDNSPtr edns(new EDNS());
-    edns->setUDPSize(4096);
-    edns->setDNSSECAwareness(true);
-    message.setEDNS(edns);
 }

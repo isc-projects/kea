@@ -22,8 +22,7 @@ using namespace isc::util;
 namespace isc {
 namespace dns {
 Question::Question(InputBuffer& buffer) :
-    name_(buffer), rrtype_(0), rrclass_(0)
-{
+    name_(buffer), rrtype_(0), rrclass_(0) {
     // In theory, we could perform this in the member initialization list,
     // and it would be a little bit more efficient.  We don't do this, however,
     // because the initialization ordering is crucial (type must be first)

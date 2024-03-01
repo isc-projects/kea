@@ -11,6 +11,7 @@
 #include <dns/name.h>
 #include <dns/rrtype.h>
 #include <dns/rdata.h>
+#include <boost/shared_ptr.hpp>
 
 // BEGIN_HEADER_GUARD
 
@@ -40,15 +41,11 @@ public:
     const RRType& typeCovered() const;
 private:
     // helper function for string and lexer constructors
-    RRSIGImpl* constructFromLexer(MasterLexer& lexer, const Name* origin);
+    boost::shared_ptr<RRSIGImpl> constructFromLexer(MasterLexer& lexer, const Name* origin);
 
-    RRSIGImpl* impl_;
+    boost::shared_ptr<RRSIGImpl> impl_;
 };
 
 // END_RDATA_NAMESPACE
 // END_ISC_NAMESPACE
 // END_HEADER_GUARD
-
-// Local Variables: 
-// mode: c++
-// End: 

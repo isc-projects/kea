@@ -12,7 +12,6 @@
 #include <dns/master_lexer_inputsource.h>
 #include <dns/master_lexer_state.h>
 
-#include <boost/shared_ptr.hpp>
 #include <boost/lexical_cast.hpp>
 
 #include <bitset>
@@ -38,15 +37,13 @@ typedef boost::shared_ptr<master_lexer_internal::InputSource> InputSourcePtr;
 } // end unnamed namespace
 using namespace master_lexer_internal;
 
-
 struct MasterLexer::MasterLexerImpl {
     MasterLexerImpl() : source_(NULL), token_(MasterToken::NOT_STARTED),
                         total_size_(0), popped_size_(0),
                         paren_count_(0), last_was_eol_(true),
                         has_previous_(false),
                         previous_paren_count_(0),
-                        previous_was_eol_(false)
-    {
+                        previous_was_eol_(false) {
         separators_.set('\r');
         separators_.set('\n');
         separators_.set(' ');
@@ -130,7 +127,6 @@ MasterLexer::MasterLexer() : impl_(new MasterLexerImpl()) {
 }
 
 MasterLexer::~MasterLexer() {
-    delete impl_;
 }
 
 bool

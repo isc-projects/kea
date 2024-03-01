@@ -41,8 +41,8 @@ struct TSIGImpl {
              vector<uint8_t>& other_data) :
         algorithm_(algorithm), time_signed_(time_signed), fudge_(fudge),
         mac_(mac), original_id_(original_id), error_(error),
-        other_data_(other_data)
-    {}
+        other_data_(other_data) {
+    }
     TSIGImpl(const Name& algorithm, uint64_t time_signed, uint16_t fudge,
              size_t macsize, const void* mac, uint16_t original_id,
              uint16_t error, size_t other_len, const void* other_data) :
@@ -51,8 +51,8 @@ struct TSIGImpl {
              static_cast<const uint8_t*>(mac) + macsize),
         original_id_(original_id), error_(error),
         other_data_(static_cast<const uint8_t*>(other_data),
-                    static_cast<const uint8_t*>(other_data) + other_len)
-    {}
+                    static_cast<const uint8_t*>(other_data) + other_len) {
+    }
     template <typename Output>
     void toWireCommon(Output& output) const;
 
@@ -66,7 +66,7 @@ struct TSIGImpl {
 };
 
 // helper function for string and lexer constructors
-TSIGImpl*
+boost::shared_ptr<TSIGImpl>
 TSIG::constructFromLexer(MasterLexer& lexer, const Name* origin) {
     const Name& algorithm =
         createNameFromLexer(lexer, origin ? origin : &Name::ROOT_NAME());
@@ -160,8 +160,9 @@ TSIG::constructFromLexer(MasterLexer& lexer, const Name* origin) {
     // RFC2845 says Other Data is "empty unless Error == BADTIME".
     // However, we don't enforce that.
 
-    return (new TSIGImpl(canonical_algorithm_name, time_signed, fudge, mac,
-                         orig_id, error, other_data));
+    return (boost::shared_ptr<TSIGImpl>(new TSIGImpl(canonical_algorithm_name,
+                                                     time_signed, fudge, mac,
+                                                     orig_id, error, other_data)));
 }
 
 /// \brief Constructor from string.
@@ -213,7 +214,7 @@ TSIG::TSIG(const std::string& tsig_str) : impl_(NULL) {
     // We use unique_ptr here because if there is an exception in this
     // constructor, the destructor is not called and there could be a
     // leak of the TSIGImpl that constructFromLexer() returns.
-    std::unique_ptr<TSIGImpl> impl_ptr;
+    boost::shared_ptr<TSIGImpl> impl_ptr;
 
     try {
         std::istringstream ss(tsig_str);
@@ -232,7 +233,7 @@ TSIG::TSIG(const std::string& tsig_str) : impl_(NULL) {
                   << ex.what());
     }
 
-    impl_ = impl_ptr.release();
+    impl_ = impl_ptr;
 }
 
 /// \brief Constructor with a context of MasterLexer.
@@ -252,8 +253,7 @@ TSIG::TSIG(const std::string& tsig_str) : impl_(NULL) {
 /// RDATA to be created
 TSIG::TSIG(MasterLexer& lexer, const Name* origin,
            MasterLoader::Options, MasterLoaderCallbacks&) :
-    impl_(constructFromLexer(lexer, origin))
-{
+    impl_(constructFromLexer(lexer, origin)) {
 }
 
 /// \brief Constructor from wire-format data.
@@ -277,8 +277,7 @@ TSIG::TSIG(MasterLexer& lexer, const Name* origin,
 /// must check consistency between the length parameter and the actual
 /// RDATA length.
 TSIG::TSIG(InputBuffer& buffer, size_t) :
-    impl_(NULL)
-{
+    impl_(NULL) {
     Name algorithm(buffer);
 
     uint8_t time_signed_buf[6];
@@ -311,15 +310,14 @@ TSIG::TSIG(InputBuffer& buffer, size_t) :
     const Name& canonical_algorithm_name =
         (algorithm == TSIGKey::HMACMD5_SHORT_NAME()) ?
             TSIGKey::HMACMD5_NAME() : algorithm;
-    impl_ = new TSIGImpl(canonical_algorithm_name, time_signed, fudge, mac,
-                         original_id, error, other_data);
+    impl_.reset(new TSIGImpl(canonical_algorithm_name, time_signed, fudge, mac,
+                             original_id, error, other_data));
 }
 
 TSIG::TSIG(const Name& algorithm, uint64_t time_signed, uint16_t fudge,
            uint16_t mac_size, const void* mac, uint16_t original_id,
            uint16_t error, uint16_t other_len, const void* other_data) :
-    impl_(NULL)
-{
+    impl_(NULL) {
     // Time Signed is a 48-bit value.
     if ((time_signed >> 48) != 0) {
         isc_throw(OutOfRange, "TSIG Time Signed is too large: " <<
@@ -336,8 +334,8 @@ TSIG::TSIG(const Name& algorithm, uint64_t time_signed, uint16_t fudge,
     const Name& canonical_algorithm_name =
         (algorithm == TSIGKey::HMACMD5_SHORT_NAME()) ?
             TSIGKey::HMACMD5_NAME() : algorithm;
-    impl_ = new TSIGImpl(canonical_algorithm_name, time_signed, fudge, mac_size,
-                         mac, original_id, error, other_len, other_data);
+    impl_.reset(new TSIGImpl(canonical_algorithm_name, time_signed, fudge, mac_size,
+                             mac, original_id, error, other_len, other_data));
 }
 
 /// \brief The copy constructor.
@@ -345,8 +343,8 @@ TSIG::TSIG(const Name& algorithm, uint64_t time_signed, uint16_t fudge,
 /// It internally allocates a resource, and if it fails a corresponding
 /// standard exception will be thrown.
 /// This constructor never throws an exception otherwise.
-TSIG::TSIG(const TSIG& source) : Rdata(), impl_(new TSIGImpl(*source.impl_))
-{}
+TSIG::TSIG(const TSIG& source) : Rdata(), impl_(new TSIGImpl(*source.impl_)) {
+}
 
 TSIG&
 TSIG::operator=(const TSIG& source) {
@@ -354,15 +352,12 @@ TSIG::operator=(const TSIG& source) {
         return (*this);
     }
 
-    TSIGImpl* newimpl = new TSIGImpl(*source.impl_);
-    delete impl_;
-    impl_ = newimpl;
+    impl_.reset(new TSIGImpl(*source.impl_));
 
     return (*this);
 }
 
 TSIG::~TSIG() {
-    delete impl_;
 }
 
 /// \brief Convert the \c TSIG to a string.

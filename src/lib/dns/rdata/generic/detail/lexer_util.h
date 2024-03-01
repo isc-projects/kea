@@ -5,7 +5,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #ifndef DNS_RDATA_LEXER_UTIL_H
-#define DNS_RDATA_LEXER_UTIL_H 1
+#define DNS_RDATA_LEXER_UTIL_H
 
 #include <dns/name.h>
 #include <dns/master_lexer.h>
@@ -56,7 +56,3 @@ createNameFromLexer(MasterLexer& lexer, const Name* origin) {
 } // namespace dns
 } // namespace isc
 #endif  // DNS_RDATA_LEXER_UTIL_H
-
-// Local Variables:
-// mode: c++
-// End:

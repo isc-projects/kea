@@ -5,14 +5,15 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #ifndef RRTYPE_H
-#define RRTYPE_H 1
+#define RRTYPE_H
 
 #include <stdint.h>
 
 #include <string>
 #include <ostream>
 
-#include <dns/exceptions.h>
+#include <dns/exceptions.h>'
+#include <util/buffer.h>
 
 // Solaris x86 defines DS in <sys/regset.h>, which gets pulled in by Boost
 #if defined(__sun) && defined(DS)
@@ -20,36 +21,10 @@
 #endif
 
 namespace isc {
-namespace util {
-class InputBuffer;
-class OutputBuffer;
-}
-
 namespace dns {
 
 // forward declarations
 class AbstractMessageRenderer;
-
-///
-/// \brief A standard DNS module exception that is thrown if an RRType object
-/// is being constructed from an unrecognized string.
-///
-class InvalidRRType : public DNSTextError {
-public:
-    InvalidRRType(const char* file, size_t line, const char* what) :
-        DNSTextError(file, line, what) {}
-};
-
-///
-/// \brief A standard DNS module exception that is thrown if an RRType object
-/// is being constructed from a incomplete (too short) wire-format data.
-///
-class IncompleteRRType : public isc::dns::Exception {
-public:
-    IncompleteRRType(const char* file, size_t line, const char* what) :
-        isc::dns::Exception(file, line, what) {}
-};
-
 ///
 /// The \c RRType class encapsulates DNS resource record types.
 ///
@@ -151,47 +126,6 @@ public:
     //@}
     /// We use the default copy assignment operator intentionally.
     ///
-
-    ///
-    /// \name Converter methods
-    ///
-    //@{
-    /// \brief Convert the \c RRType to a string.
-    ///
-    /// If a "well known" textual representation for the type code is registered
-    /// in the RR parameter registry (see the class description), that will be
-    /// used as the return value of this method.  Otherwise, this method creates
-    /// a new string for an "unknown" RR type in the format defined in RFC3597,
-    /// i.e., "TYPEnnnn", and returns it.
-    ///
-    /// If resource allocation for the string fails, a corresponding standard
-    /// exception will be thrown.
-    ///
-    /// \return A string representation of the \c RRType.
-    const std::string toText() const;
-    /// \brief Render the \c RRType in the wire format.
-    ///
-    /// This method renders the type code in network byte order via \c renderer,
-    /// which encapsulates output buffer and other rendering contexts.
-    ///
-    /// If resource allocation in rendering process fails, a corresponding
-    /// standard exception will be thrown.
-    ///
-    /// \param renderer DNS message rendering context that encapsulates the
-    /// output buffer in which the RRType is to be stored.
-    void toWire(AbstractMessageRenderer& renderer) const;
-    /// \brief Render the \c RRType in the wire format.
-    ///
-    /// This method renders the type code in network byte order into the
-    /// \c buffer.
-    ///
-    /// If resource allocation in rendering process fails, a corresponding
-    /// standard exception will be thrown.
-    ///
-    /// \param buffer An output buffer to store the wire data.
-    void toWire(isc::util::OutputBuffer& buffer) const;
-    //@}
-
     ///
     /// \name Getter Methods
     ///
@@ -201,56 +135,10 @@ public:
     /// This method never throws an exception.
     ///
     /// \return An 16-bit integer code corresponding to the RRType.
-    uint16_t getCode() const { return (typecode_); }
+    uint16_t getCode() const {
+        return (typecode_);
+    }
     //@}
-
-    ///
-    /// \name Comparison methods
-    ///
-    //@{
-    /// \brief Return true iff two RRTypes are equal.
-    ///
-    /// Two RRTypes are equal iff their type codes are equal.
-    ///
-    /// This method never throws an exception.
-    ///
-    /// \param other the \c RRType object to compare against.
-    /// \return true if the two RRTypes are equal; otherwise false.
-    bool equals(const RRType& other) const
-    { return (typecode_ == other.typecode_); }
-    /// \brief Same as \c equals().
-    bool operator==(const RRType& other) const { return (equals(other)); }
-
-    /// \brief Return true iff two RRTypes are not equal.
-    ///
-    /// This method never throws an exception.
-    ///
-    /// \param other the \c RRType object to compare against.
-    /// \return true if the two RRTypes are not equal; otherwise false.
-    bool nequals(const RRType& other) const
-    { return (typecode_ != other.typecode_); }
-    /// \brief Same as \c nequals().
-    bool operator!=(const RRType& other) const { return (nequals(other)); }
-
-    /// \brief Less-than comparison for RRType against \c other
-    ///
-    /// We define the less-than relationship based on their type codes;
-    /// one RRType is less than the other iff the code of the former is less
-    /// than that of the other as unsigned integers.
-    /// The relationship is meaningless in terms of DNS protocol; the only
-    /// reason we define this method is that RRType objects can be stored in
-    /// STL containers without requiring user-defined less-than relationship.
-    /// We therefore don't define other comparison operators.
-    ///
-    /// This method never throws an exception.
-    ///
-    /// \param other the \c RRType object to compare against.
-    /// \return true if \c this RRType is less than the \c other; otherwise
-    /// false.
-    bool operator<(const RRType& other) const
-    { return (typecode_ < other.typecode_); }
-    //@}
-
     // BEGIN_WELL_KNOWN_TYPE_DECLARATIONS
     // END_WELL_KNOWN_TYPE_DECLARATIONS
 
@@ -260,27 +148,6 @@ private:
 
 // BEGIN_WELL_KNOWN_TYPE_DEFINITIONS
 // END_WELL_KNOWN_TYPE_DEFINITIONS
-
-///
-/// \brief Insert the \c RRType as a string into stream.
-///
-/// This method convert the \c rrtype into a string and inserts it into the
-/// output stream \c os.
-///
-/// This function overloads the global operator<< to behave as described in
-/// ostream::operator<< but applied to \c RRType objects.
-///
-/// \param os A \c std::ostream object on which the insertion operation is
-/// performed.
-/// \param rrtype The \c RRType object output by the operation.
-/// \return A reference to the same \c std::ostream object referenced by
-/// parameter \c os after the insertion operation.
-std::ostream&
-operator<<(std::ostream& os, const RRType& rrtype);
 }
 }
 #endif  // RRTYPE_H
-
-// Local Variables:
-// mode: c++
-// End:

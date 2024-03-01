@@ -61,8 +61,7 @@ LabelSequence::LabelSequence(const void* buf) {
 }
 
 LabelSequence::LabelSequence(const LabelSequence& src,
-                             uint8_t buf[MAX_SERIALIZED_LENGTH])
-{
+                             uint8_t buf[MAX_SERIALIZED_LENGTH]) {
     size_t data_len;
     const uint8_t *data = src.getData(&data_len);
     std::memcpy(buf, data, data_len);
@@ -102,8 +101,7 @@ namespace {
 // - beginning of buffer is on or after ep
 bool
 isOutOfRange(const uint8_t* bp, const uint8_t* ep,
-             const uint8_t* buf, size_t buf_len)
-{
+             const uint8_t* buf, size_t buf_len) {
     return (bp >= buf + buf_len || // end of buffer is before bp
             ep <= buf);            // beginning of buffer is on or after ep
 }
@@ -167,8 +165,7 @@ LabelSequence::equals(const LabelSequence& other, bool case_sensitive) const {
 
 NameComparisonResult
 LabelSequence::compare(const LabelSequence& other,
-                       bool case_sensitive) const
-{
+                       bool case_sensitive) const {
     // Determine the relative ordering under the DNSSEC order relation of
     // 'this' and 'other', and also determine the hierarchical relationship
     // of the labels.
@@ -418,8 +415,7 @@ LabelSequence::toText() const {
 
 void
 LabelSequence::extend(const LabelSequence& labels,
-                      uint8_t buf[MAX_SERIALIZED_LENGTH])
-{
+                      uint8_t buf[MAX_SERIALIZED_LENGTH]) {
     // collect data to perform steps before anything is changed
     size_t label_count = last_label_ + 1;
     // Since we may have been stripped, do not use getDataLength(), but

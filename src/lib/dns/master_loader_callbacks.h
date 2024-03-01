@@ -72,8 +72,7 @@ public:
     MasterLoaderCallbacks(const IssueCallback& error,
                           const IssueCallback& warning) :
         error_(error),
-        warning_(warning)
-    {
+        warning_(warning) {
         if (!error_ || !warning_) {
             isc_throw(isc::InvalidParameter,
                       "Empty function passed as callback");
@@ -92,8 +91,7 @@ public:
     /// If the caller of the loader wants to abort, it is possible to throw
     /// from the callback, which aborts the load.
     void error(const std::string& source_name, size_t source_line,
-               const std::string& reason) const
-    {
+               const std::string& reason) const {
         error_(source_name, source_line, reason);
     }
 
@@ -109,23 +107,12 @@ public:
     /// may be false positives), it is possible to throw from inside the
     /// callback.
     void warning(const std::string& source_name, size_t source_line,
-                 const std::string& reason) const
-    {
+                 const std::string& reason) const {
         warning_(source_name, source_line, reason);
     }
-
-    /// \brief Return a callbacks instance with null callbacks
-    ///
-    /// This is a convenience wrapper to generate a
-    /// \c MasterLoaderCallbacks object with both callbacks being nothing.
-    /// This will be useful for applications that only need to run
-    /// \c MasterLoader and get the end result.
-    ///
-    /// \throw None
-    static MasterLoaderCallbacks getNullCallbacks();
-
 private:
-    const IssueCallback error_, warning_;
+    const IssueCallback error_;
+    const IssueCallback warning_;
 };
 
 }

@@ -98,8 +98,7 @@ struct TSIGContext::TSIGContextImpl {
     // the caller of verify(), so that verify() can call this method within
     // its 'return' statement.
     TSIGError postVerifyUpdate(TSIGError error, const void* digest,
-                               uint16_t digest_len)
-    {
+                               uint16_t digest_len) {
         if (state_ == INIT) {
             state_ = RECEIVED_REQUEST;
         } else if (state_ == SENT_REQUEST && error == TSIGError::NOERROR()) {
@@ -276,15 +275,14 @@ TSIGContext::TSIGContext(const Name& key_name, const Name& algorithm_name,
         // parameters and empty secret.  In the common scenario this will
         // be used in subsequent response with a TSIG indicating a BADKEY
         // error.
-        impl_ = new TSIGContextImpl(TSIGKey(key_name, algorithm_name,
-                                            NULL, 0), TSIGError::BAD_KEY());
+        impl_.reset(new TSIGContextImpl(TSIGKey(key_name, algorithm_name,
+                                                NULL, 0), TSIGError::BAD_KEY()));
     } else {
-        impl_ = new TSIGContextImpl(*result.key);
+        impl_.reset(new TSIGContextImpl(*result.key));
     }
 }
 
 TSIGContext::~TSIGContext() {
-    delete impl_;
 }
 
 size_t

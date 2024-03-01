@@ -104,11 +104,6 @@ def import_classheader(class_txt, type_txt, type_code, file):
             continue
         if re.match('// BEGIN_ISC_NAMESPACE', line):
             content += 'namespace isc {\n'
-            content += 'namespace util {\n'
-            content += '''
-class InputBuffer;
-class OutputBuffer;\n'''
-            content += '}\n\n'
             content += 'namespace dns {\n'
             continue
         if re.match('// BEGIN_RDATA_NAMESPACE', line):
@@ -230,7 +225,7 @@ def generate_rdatahdr(file, heading, declarations, basemtime):
         return
     heading += '''
 #ifndef DNS_RDATACLASS_H
-#define DNS_RDATACLASS_H 1
+#define DNS_RDATACLASS_H
 
 #include <dns/master_loader.h>
 
@@ -244,10 +239,6 @@ class MasterLoaderCallbacks;
 '''
     declarations += '''
 #endif // DNS_RDATACLASS_H
-
-// Local Variables:
-// mode: c++
-// End:
 '''
     rdata_header = open(file, 'w')
     rdata_header.write(heading)

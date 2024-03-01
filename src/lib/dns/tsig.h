@@ -8,7 +8,7 @@
 // it was fixed, cf RFC 8945. Note that Kea uses only the client side.
 
 #ifndef TSIG_H
-#define TSIG_H 1
+#define TSIG_H
 
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
@@ -429,7 +429,7 @@ protected:
 
 private:
     struct TSIGContextImpl;
-    TSIGContextImpl* impl_;
+    boost::shared_ptr<TSIGContextImpl> impl_;
 };
 
 typedef boost::shared_ptr<TSIGContext> TSIGContextPtr;
@@ -439,7 +439,3 @@ typedef boost::shared_ptr<TSIGKey> TSIGKeyPtr;
 }
 
 #endif  // TSIG_H
-
-// Local Variables:
-// mode: c++
-// End:

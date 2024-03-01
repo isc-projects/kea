@@ -10,7 +10,7 @@
 // package.
 
 #ifndef DNS_EXCEPTIONS_H
-#define DNS_EXCEPTIONS_H 1
+#define DNS_EXCEPTIONS_H
 
 #include <exceptions/exceptions.h>
 
@@ -70,7 +70,3 @@ public:
 }
 }
 #endif  // DNS_EXCEPTIONS_H
-
-// Local Variables: 
-// mode: c++
-// End: 

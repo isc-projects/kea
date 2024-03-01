@@ -54,16 +54,14 @@ Rdata::getLength() const {
 // function signature with that given in the header file.
 RdataPtr
 createRdata(const RRType& rrtype, const RRClass& rrclass,
-            const std::string& rdata_string)
-{
+            const std::string& rdata_string) {
     return (RRParamRegistry::getRegistry().createRdata(rrtype, rrclass,
                                                        rdata_string));
 }
 
 RdataPtr
 createRdata(const RRType& rrtype, const RRClass& rrclass,
-            isc::util::InputBuffer& buffer, size_t len)
-{
+            isc::util::InputBuffer& buffer, size_t len) {
     if (len > MAX_RDLENGTH) {
         isc_throw(InvalidRdataLength, "RDLENGTH too large");
     }
@@ -83,8 +81,7 @@ createRdata(const RRType& rrtype, const RRClass& rrclass,
 }
 
 RdataPtr
-createRdata(const RRType& rrtype, const RRClass& rrclass, const Rdata& source)
-{
+createRdata(const RRType& rrtype, const RRClass& rrclass, const Rdata& source) {
     return (RRParamRegistry::getRegistry().createRdata(rrtype, rrclass,
                                                        source));
 }
@@ -93,8 +90,7 @@ namespace {
 void
 fromtextError(bool& error_issued, const MasterLexer& lexer,
               MasterLoaderCallbacks& callbacks,
-              const MasterToken* token, const char* reason)
-{
+              const MasterToken* token, const char* reason) {
     // Don't be too noisy if there are many issues for single RDATA
     if (error_issued) {
         return;
@@ -133,8 +129,7 @@ RdataPtr
 createRdata(const RRType& rrtype, const RRClass& rrclass,
             MasterLexer& lexer, const Name* origin,
             MasterLoader::Options options,
-            MasterLoaderCallbacks& callbacks)
-{
+            MasterLoaderCallbacks& callbacks) {
     RdataPtr rdata;
 
     bool error_issued = false;
@@ -212,10 +207,10 @@ Generic::Generic(isc::util::InputBuffer& buffer, size_t rdata_len) {
         buffer.readData(&data[0], rdata_len);
     }
 
-    impl_ = new GenericImpl(data);
+    impl_.reset(new GenericImpl(data));
 }
 
-GenericImpl*
+boost::shared_ptr<GenericImpl>
 Generic::constructFromLexer(MasterLexer& lexer) {
     const MasterToken& token = lexer.getNextToken(MasterToken::STRING);
     if (token.getString() != "\\#") {
@@ -274,23 +269,22 @@ Generic::constructFromLexer(MasterLexer& lexer) {
                   << data.size() << " vs. " << rdlen);
     }
 
-    return (new GenericImpl(data));
+    return (boost::shared_ptr<GenericImpl>(new GenericImpl(data)));
 }
 
 Generic::Generic(const std::string& rdata_string) :
-    impl_(NULL)
-{
+    impl_(NULL) {
     // We use unique_ptr here because if there is an exception in this
     // constructor, the destructor is not called and there could be a
     // leak of the GenericImpl that constructFromLexer() returns.
-    std::unique_ptr<GenericImpl> impl_ptr;
+    boost::shared_ptr<GenericImpl> impl_ptr;
 
     try {
         std::istringstream ss(rdata_string);
         MasterLexer lexer;
         lexer.pushSource(ss);
 
-        impl_ptr.reset(constructFromLexer(lexer));
+        impl_ptr = constructFromLexer(lexer);
 
         if (lexer.getNextToken().getType() != MasterToken::END_OF_FILE) {
             isc_throw(InvalidRdataText, "extra input text for unknown RDATA: "
@@ -301,23 +295,21 @@ Generic::Generic(const std::string& rdata_string) :
                   "from '" << rdata_string << "': " << ex.what());
     }
 
-    impl_ = impl_ptr.release();
+    impl_ = impl_ptr;
 }
 
 Generic::Generic(MasterLexer& lexer, const Name*,
                  MasterLoader::Options,
-                 MasterLoaderCallbacks&) :
-    impl_(constructFromLexer(lexer))
-{
+                 MasterLoaderCallbacks&) {
+    impl_ = constructFromLexer(lexer);
 }
 
 Generic::~Generic() {
-    delete impl_;
 }
 
 Generic::Generic(const Generic& source) :
-    Rdata(), impl_(new GenericImpl(*source.impl_))
-{}
+    Rdata(), impl_(new GenericImpl(*source.impl_)) {
+}
 
 Generic&
 // Our check is better than the usual if (this == &source),
@@ -328,9 +320,7 @@ Generic::operator=(const Generic& source) {
         return (*this);
     }
 
-    GenericImpl* newimpl = new GenericImpl(*source.impl_);
-    delete impl_;
-    impl_ = newimpl;
+    impl_.reset(new GenericImpl(*source.impl_));
 
     return (*this);
 }

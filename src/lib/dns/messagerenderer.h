@@ -5,10 +5,11 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #ifndef MESSAGERENDERER_H
-#define MESSAGERENDERER_H 1
+#define MESSAGERENDERER_H
 
 #include <util/buffer.h>
 
+#include <boost/shared_ptr.hpp>
 #include <boost/noncopyable.hpp>
 
 namespace isc {
@@ -384,7 +385,7 @@ public:
 
 private:
     struct MessageRendererImpl;
-    MessageRendererImpl* impl_;
+    boost::shared_ptr<MessageRendererImpl> impl_;
 };
 }
 }
