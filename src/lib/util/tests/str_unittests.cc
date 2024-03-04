@@ -14,6 +14,7 @@
 #include <exception>
 #include <sstream>
 #include <string>
+#include <unordered_set>
 #include <vector>
 
 #include <gtest/gtest.h>
@@ -391,8 +392,22 @@ TEST_F(StringUtilTest, decodeFormattedHexString) {
 TEST_F(StringUtilTest, stringSanitizer) {
     // Bad regular expression should throw.
     StringSanitizerPtr ss;
-    ASSERT_THROW_MSG(ss.reset(new StringSanitizer("[bogus-regex", "")), BadValue,
-                     "invalid regex: '[bogus-regex', Invalid range in bracket expression.");
+
+    try {
+        ss.reset(new StringSanitizer("[bogus-regex", ""));
+    } catch (BadValue const& ex) {
+        unordered_set<string> expected{
+            // BSD
+            "invalid regex: '[bogus-regex', The expression contained mismatched [ and ].",
+            // Linux
+            "invalid regex: '[bogus-regex', Invalid range in bracket expression.",
+        };
+        if (!expected.count(ex.what())) {
+            FAIL() << "unexpected BadValue exception message: " << ex.what();
+        }
+    } catch (exception const& ex) {
+        FAIL() << "unexpected exception: " << ex.what();
+    }
 
     string good_data(StringSanitizer::MAX_DATA_SIZE, '0');
     string bad_data(StringSanitizer::MAX_DATA_SIZE + 1, '0');
