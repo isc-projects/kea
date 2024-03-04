@@ -1,29 +1,29 @@
-SUBDIRS = . 
- 
+SUBDIRS = .
+
 AM_CPPFLAGS  =
 AM_CPPFLAGS += -DABS_SRCDIR=\"$(abs_srcdir)\"
 AM_CPPFLAGS += -DTEST_DATA_BUILDDIR=\"$(abs_builddir)\"
 AM_CPPFLAGS += -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
- 
-if USE_STATIC_LINK 
-AM_LDFLAGS = -static 
-endif 
- 
-CLEANFILES = *.gcno *.gcda 
+
+if USE_STATIC_LINK
+AM_LDFLAGS = -static
+endif
+
+CLEANFILES = *.gcno *.gcda
 # CSV files are created by unit tests for CSVFile class.
 CLEANFILES += *.csv
- 
+
 TESTS_ENVIRONMENT = $(LIBTOOL) --mode=execute $(VALGRIND_COMMAND)
 
-TESTS = 
-if HAVE_GTEST 
-TESTS += run_unittests 
+TESTS =
+if HAVE_GTEST
+TESTS += run_unittests
 run_unittests_SOURCES  = run_unittests.cc
 run_unittests_SOURCES += bigint_unittest.cc
 run_unittests_SOURCES += boost_time_utils_unittest.cc
-run_unittests_SOURCES += buffer_unittest.cc 
+run_unittests_SOURCES += buffer_unittest.cc
 run_unittests_SOURCES += chrono_time_utils_unittest.cc
 run_unittests_SOURCES += csv_file_unittest.cc
 run_unittests_SOURCES += dhcp_space_unittest.cc
@@ -55,14 +55,14 @@ run_unittests_SOURCES += versioned_csv_file_unittest.cc
 run_unittests_SOURCES += watch_socket_unittests.cc
 run_unittests_SOURCES += watched_thread_unittest.cc
 
-run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES) 
-run_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS) 
- 
+run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
+run_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
+
 run_unittests_LDADD  = $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
 run_unittests_LDADD += $(top_builddir)/src/lib/util/io/libkea-util-io.la
 run_unittests_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
 run_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 run_unittests_LDADD += $(GTEST_LDADD)
-endif 
- 
-noinst_PROGRAMS = $(TESTS) 
+endif
+
+noinst_PROGRAMS = $(TESTS)
