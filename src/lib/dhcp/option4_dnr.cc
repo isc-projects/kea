@@ -8,6 +8,8 @@
 
 #include <dhcp/option4_dnr.h>
 #include <dns/labelsequence.h>
+#include <util/io.h>
+#include <util/str.h>
 
 using namespace isc::asiolink;
 using namespace isc::util;

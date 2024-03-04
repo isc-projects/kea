@@ -10,7 +10,6 @@
 #include <dhcp/option6_client_fqdn.h>
 #include <dns/labelsequence.h>
 #include <util/buffer.h>
-#include <util/io.h>
 #include <util/str.h>
 #include <sstream>
 

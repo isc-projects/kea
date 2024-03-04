@@ -11,7 +11,6 @@
 #include <dhcp/option6_pdexclude.h>
 #include <exceptions/exceptions.h>
 #include <util/encode/encode.h>
-#include <util/io.h>
 
 #include <boost/dynamic_bitset.hpp>
 #include <iostream>

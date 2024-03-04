@@ -48,7 +48,6 @@
 #include <hooks/hooks_manager.h>
 #include <stats/stats_mgr.h>
 #include <util/encode/encode.h>
-#include <util/io.h>
 #include <util/pointer_util.h>
 #include <util/range_utilities.h>
 #include <log/logger.h>

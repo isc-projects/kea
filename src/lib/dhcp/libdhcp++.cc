@@ -21,6 +21,7 @@
 #include <exceptions/exceptions.h>
 #include <exceptions/isc_assert.h>
 #include <util/buffer.h>
+#include <util/io.h>
 
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>

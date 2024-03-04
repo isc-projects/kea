@@ -10,7 +10,6 @@
 #include <dhcp/dhcp6.h>
 #include <dhcp/option6_status_code.h>
 #include <dhcp/option_data_types.h>
-#include <util/io.h>
 #include <iterator>
 #include <sstream>
 

@@ -13,6 +13,7 @@
 
 #include <asiolink/crypto_tls.h>
 #include <asiolink/tcp_socket.h>
+#include <util/io.h>
 
 #include <boost/noncopyable.hpp>
 

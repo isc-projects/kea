@@ -8,7 +8,6 @@
 
 #include <dhcp/duid.h>
 #include <exceptions/exceptions.h>
-#include <util/io.h>
 #include <iomanip>
 #include <cctype>
 #include <sstream>

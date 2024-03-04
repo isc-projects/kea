@@ -9,6 +9,8 @@
 #include <exceptions/exceptions.h>
 #include <dhcp/opaque_data_tuple.h>
 #include <dhcp/option_vendor_class.h>
+#include <util/io.h>
+
 #include <sstream>
 
 namespace isc {

@@ -14,6 +14,7 @@
 #include <process/logging_info.h>
 #include <testutils/gtest_utils.h>
 #include <testutils/test_to_element.h>
+#include <util/str.h>
 
 #include <gtest/gtest.h>
 

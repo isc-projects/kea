@@ -38,8 +38,6 @@
 #include <log/interprocess/interprocess_sync_file.h>
 #include <log/interprocess/interprocess_sync_null.h>
 
-#include <util/str.h>
-
 // Note: as log4cplus and the Kea logger have many concepts in common, and
 // thus many similar names, to disambiguate types we don't "use" the log4cplus
 // namespace: instead, all log4cplus types are explicitly qualified.

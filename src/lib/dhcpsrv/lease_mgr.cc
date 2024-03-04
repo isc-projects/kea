@@ -14,6 +14,7 @@
 #include <exceptions/exceptions.h>
 #include <stats/stats_mgr.h>
 #include <util/encode/encode.h>
+#include <util/str.h>
 
 #include <boost/algorithm/string.hpp>
 

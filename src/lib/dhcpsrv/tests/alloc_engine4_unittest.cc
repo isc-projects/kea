@@ -19,6 +19,7 @@
 #include <hooks/callout_handle.h>
 #include <stats/stats_mgr.h>
 #include <testutils/gtest_utils.h>
+#include <util/str.h>
 
 #if defined HAVE_MYSQL
 #include <mysql/testutils/mysql_schema.h>

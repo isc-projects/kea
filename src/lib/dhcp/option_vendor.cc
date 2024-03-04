@@ -9,6 +9,8 @@
 #include <dhcp/dhcp4.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/option_vendor.h>
+#include <util/io.h>
+
 #include <sstream>
 
 using namespace isc::dhcp;

@@ -11,7 +11,6 @@
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option6_addrlst.h>
 #include <exceptions/exceptions.h>
-#include <util/io.h>
 
 #include <sstream>
 

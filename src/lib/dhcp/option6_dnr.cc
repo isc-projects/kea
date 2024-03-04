@@ -7,6 +7,7 @@
 #include <config.h>
 
 #include <dhcp/option6_dnr.h>
+#include <util/io.h>
 
 using namespace isc::asiolink;
 using namespace isc::util;

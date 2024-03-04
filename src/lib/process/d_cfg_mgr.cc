@@ -13,7 +13,6 @@
 #include <process/daemon.h>
 #include <process/redact_config.h>
 #include <util/encode/encode.h>
-#include <util/str.h>
 
 #include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string.hpp>

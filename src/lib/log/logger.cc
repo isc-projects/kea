@@ -16,8 +16,6 @@
 #include <log/message_dictionary.h>
 #include <log/message_types.h>
 
-#include <util/str.h>
-
 using namespace std;
 
 namespace isc {

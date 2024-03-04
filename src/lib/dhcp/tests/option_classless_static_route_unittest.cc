@@ -7,7 +7,6 @@
 #include <config.h>
 
 #include <dhcp/option_classless_static_route.h>
-#include <util/str.h>
 
 #include <gtest/gtest.h>
 

@@ -7,6 +7,7 @@
 #include <config.h>
 
 #include <asiolink/io_error.h>
+#include <util/io.h>
 #include <util/str.h>
 
 #include <option_classless_static_route.h>

@@ -7,6 +7,7 @@
 #include <config.h>
 
 #include <dhcp/opaque_data_tuple.h>
+#include <util/io.h>
 
 namespace isc {
 namespace dhcp {

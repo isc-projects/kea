@@ -16,7 +16,6 @@
 #include <dhcp/option_data_types.h>
 #include <dns/name.h>
 #include <util/encode/utf8.h>
-#include <util/str.h>
 
 #include <map>
 #include <set>
