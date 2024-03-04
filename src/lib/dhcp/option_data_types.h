@@ -11,7 +11,7 @@
 #include <dhcp/opaque_data_tuple.h>
 #include <dhcp/option.h>
 #include <exceptions/exceptions.h>
-#include <util/io_utilities.h>
+#include <util/io.h>
 
 #include <stdint.h>
 #include <utility>

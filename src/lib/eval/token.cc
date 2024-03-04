@@ -10,7 +10,7 @@
 #include <eval/eval_log.h>
 #include <eval/eval_context.h>
 #include <util/encode/encode.h>
-#include <util/io_utilities.h>
+#include <util/io.h>
 #include <asiolink/io_address.h>
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt6.h>

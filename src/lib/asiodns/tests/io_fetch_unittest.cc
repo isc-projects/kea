@@ -17,7 +17,7 @@
 #include <dns/name.h>
 #include <dns/rcode.h>
 #include <util/buffer.h>
-#include <util/io_utilities.h>
+#include <util/io.h>
 
 #include <gtest/gtest.h>
 #include <boost/date_time/posix_time/posix_time_types.hpp>

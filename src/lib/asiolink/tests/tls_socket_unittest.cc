@@ -17,7 +17,7 @@
 #include <asiolink/tls_socket.h>
 #include <asiolink/testutils/test_tls.h>
 #include <util/buffer.h>
-#include <util/io_utilities.h>
+#include <util/io.h>
 
 #include <boost/shared_ptr.hpp>
 #include <gtest/gtest.h>

@@ -9,7 +9,7 @@
 #include <asiolink/io_address.h>
 #include <dhcp/option4_addrlst.h>
 #include <exceptions/exceptions.h>
-#include <util/io_utilities.h>
+#include <util/io.h>
 
 #include <iomanip>
 #include <sstream>

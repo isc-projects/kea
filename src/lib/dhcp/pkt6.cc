@@ -14,7 +14,7 @@
 #include <dhcp/option_vendor.h>
 #include <dhcp/pkt6.h>
 #include <dhcp/docsis3_option_defs.h>
-#include <util/io_utilities.h>
+#include <util/io.h>
 #include <exceptions/exceptions.h>
 #include <dhcp/duid.h>
 #include <dhcp/iface_mgr.h>

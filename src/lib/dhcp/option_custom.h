@@ -11,7 +11,7 @@
 #include <dhcp/option.h>
 #include <dhcp/option_definition.h>
 #include <exceptions/isc_assert.h>
-#include <util/io_utilities.h>
+#include <util/io.h>
 
 namespace isc {
 namespace dhcp {

@@ -9,7 +9,7 @@
 
 #include <dhcp/option.h>
 #include <util/buffer.h>
-#include <util/io_utilities.h>
+#include <util/io.h>
 
 #include <iostream>
 #include <iterator>

@@ -10,7 +10,7 @@
 #include <dhcp/option6_ia.h>
 #include <dhcp/option_space.h>
 #include <exceptions/exceptions.h>
-#include <util/io_utilities.h>
+#include <util/io.h>
 
 #include <arpa/inet.h>
 #include <sstream>

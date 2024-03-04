@@ -21,7 +21,7 @@
 #include <boost/numeric/conversion/cast.hpp>
 
 #include <util/buffer.h>
-#include <util/io_utilities.h>
+#include <util/io.h>
 
 #include <asiolink/io_asio_socket.h>
 #include <asiolink/io_endpoint.h>

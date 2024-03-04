@@ -11,7 +11,7 @@
 #include <dhcp/option.h>
 #include <dhcp/option_data_types.h>
 #include <dhcp/option_space.h>
-#include <util/io_utilities.h>
+#include <util/io.h>
 
 #include <stdint.h>
 #include <sstream>

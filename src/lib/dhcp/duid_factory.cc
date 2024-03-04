@@ -9,7 +9,7 @@
 #include <dhcp/duid_factory.h>
 #include <dhcp/iface_mgr.h>
 #include <exceptions/exceptions.h>
-#include <util/io_utilities.h>
+#include <util/io.h>
 #include <util/range_utilities.h>
 #include <util/strutil.h>
 #include <ctime>

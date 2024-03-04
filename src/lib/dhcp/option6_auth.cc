@@ -10,7 +10,7 @@
 #include <dhcp/option6_auth.h>
 #include <dhcp/option_space.h>
 #include <exceptions/exceptions.h>
-#include <util/io_utilities.h>
+#include <util/io.h>
 #include <util/encode/encode.h>
 
 #include <sstream>
