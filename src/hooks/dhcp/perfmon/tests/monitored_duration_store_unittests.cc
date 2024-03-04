@@ -376,7 +376,7 @@ public:
         usleep(60 * 1000);
 
         // Now lets add a third sample. We are past the end of the
-        // interval, so it still return the duration.
+        // interval, so it should return the duration.
         ASSERT_NO_THROW_LOG(mond = store.addDurationSample(key, five_ms));
         ASSERT_TRUE(mond);
 
@@ -392,16 +392,16 @@ public:
         EXPECT_EQ(previous_interval->getTotalDuration(), (five_ms) * 2);
     }
 
-    /// @todo TAKE THIS OUT
     /// @brief Test tool for gauging speed.
     ///
     /// This test is really just a development tool for gauging performance.
-    /// It does not pass or fail.
+    /// of adding duration samples. It does not pass or fail and thus is not
+    /// included in explicit UTs.
     ///
     /// @param family protocol family to test, AF_INET or AF_INET6
-    void speedCheckTest(uint16_t family) {
+    void speedCheck(uint16_t family) {
         // Create a store.
-        Duration interval_duration(milliseconds(5));
+        Duration interval_duration(microseconds(100));
         MonitoredDurationStore store(family, interval_duration);
 
         // Create keys.
@@ -437,7 +437,8 @@ public:
         auto durations = store.getAll();
         EXPECT_EQ(durations->size(), num_subnets);
 
-        std::cout << "add keys time   : " << (add_keys_time - start_time) << std::endl
+        std::cout << "report count: " << report_count << std::endl
+                  << "add keys time   : " << (add_keys_time - start_time) << std::endl
                   << "add samples time: " << (add_samples_time - add_keys_time) << std::endl
                   << "time per sample: "
                   << (add_samples_time - add_keys_time) / (num_subnets * num_passes) << std::endl;
@@ -559,25 +560,6 @@ TEST_F(MonitoredDurationStoreTest, addDurationSample6) {
 TEST_F(MonitoredDurationStoreTest, addDurationSample6MultiThreading) {
     MultiThreadingTest mt;
     addDurationSampleTest(AF_INET6);
-}
-
-/// @todo TAKE THESE OUT
-TEST_F(MonitoredDurationStoreTest, speedCheck) {
-    speedCheckTest(AF_INET);
-}
-
-TEST_F(MonitoredDurationStoreTest, speedCheckMultiThreading) {
-    MultiThreadingTest mt;
-    speedCheckTest(AF_INET);
-}
-
-TEST_F(MonitoredDurationStoreTest, speedCheck6) {
-    speedCheckTest(AF_INET6);
-}
-
-TEST_F(MonitoredDurationStoreTest, speedCheck6MultiThreading) {
-    MultiThreadingTest mt;
-    speedCheckTest(AF_INET6);
 }
 
 } // end of anonymous namespace

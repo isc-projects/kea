@@ -54,23 +54,34 @@ MonitoredDurationStore::addDurationSample(DurationKeyPtr key, const Duration& sa
     auto& index = durations_.get<DurationKeyTag>();
     auto duration_iter = index.find(*key);
     if (duration_iter != index.end()) {
-        // Add sample does not change key so it can be done in place.
-        // If adding the sample returns true, then its time to report
-        // so return a copy.
-        if ((*duration_iter)->addSample(sample)) {
-            return (MonitoredDurationPtr(new MonitoredDuration(**duration_iter)));
-        }
-    } else {
-        // It doesn't exist, add it.
-        MonitoredDurationPtr mond(new MonitoredDuration(*key, interval_duration_));
-        static_cast<void>(mond->addSample(sample));
-        auto ret = durations_.insert(mond);
-        if (ret.second == false) {
-            // Shouldn't be possible.
-            isc_throw(DuplicateDurationKey,
-                      "MonitoredDurationStore::addDurationSample: duration already exists for: "
+        bool should_report = false;
+        // Modify updates in place and only re-indexes if keys change.
+        bool modified = index.modify(duration_iter,
+                               [sample, &should_report](MonitoredDurationPtr mond){
+            should_report = mond->addSample(sample);
+        });
+
+        if (!modified) {
+            // Possible but unlikely.
+            isc_throw(Unexpected,
+                      "MonitoredDurationStore::addDurationSample - modify failed for: "
                       << key->getLabel());
         }
+
+        // If it's time to report return a copy otherwise an empty pointer.
+        return (should_report ? MonitoredDurationPtr(new MonitoredDuration(**duration_iter))
+                              : MonitoredDurationPtr());
+    }
+
+    // It doesn't exist, add it.
+    MonitoredDurationPtr mond(new MonitoredDuration(*key, interval_duration_));
+    static_cast<void>(mond->addSample(sample));
+    auto ret = durations_.insert(mond);
+    if (ret.second == false) {
+        // Shouldn't be possible.
+        isc_throw(DuplicateDurationKey,
+                  "MonitoredDurationStore::addDurationSample: duration already exists for: "
+                  << key->getLabel());
     }
 
     // Nothing to report.

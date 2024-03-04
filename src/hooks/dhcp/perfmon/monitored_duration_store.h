@@ -36,6 +36,9 @@ public:
 /// @brief Tag for index by primary key (DurationKey).
 struct DurationKeyTag { };
 
+/// @brief Tag for index by interval start time.
+struct IntervalStartTag { };
+
 /// @brief A multi index container holding pointers to MonitoredDurations.
 ///
 /// The durations in the container may be accessed using different indexes:
@@ -54,6 +57,14 @@ typedef boost::multi_index_container<
         boost::multi_index::ordered_unique<
             boost::multi_index::tag<DurationKeyTag>,
             boost::multi_index::identity<DurationKey>
+        >,
+
+        // Specification of the second index starts here.
+        // This index sorts durations by current interval start time.
+        boost::multi_index::ordered_non_unique<
+            boost::multi_index::tag<IntervalStartTag>,
+            boost::multi_index::const_mem_fun<MonitoredDuration, Timestamp,
+                                              &MonitoredDuration::getCurrentIntervalStart>
         >
     >
 > MonitoredDurationContainer;

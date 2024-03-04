@@ -50,10 +50,22 @@ AlarmStore::checkDurationSample(DurationKeyPtr key, const Duration& sample,
 
     // If we find an alarm the check the sample.  Alarm::checkSample()
     //does not alter the key so it can be done in-place.
-    if (alarm_iter != index.end() &&
-        (*alarm_iter)->checkSample(sample, report_interval)) {
-        // Alarm state needs to be reported, return a copy of the alarm.
-        return (AlarmPtr(new Alarm(**alarm_iter)));
+    if (alarm_iter != index.end()) {
+        bool should_report = false;
+        bool modified = index.modify(alarm_iter,
+                                     [sample, report_interval, &should_report](AlarmPtr alarm) {
+            should_report = alarm->checkSample(sample, report_interval);
+        });
+
+        if (!modified) {
+            // Possible but unlikely.
+            isc_throw(Unexpected, "AlarmStore::checkDurationSample - modify failed for: " << key->getLabel());
+        }
+
+        if (should_report) {
+            // Alarm state needs to be reported, return a copy of the alarm.
+            return (AlarmPtr(new Alarm(**alarm_iter)));
+        }
     }
 
     // Nothing to alarm.
@@ -62,14 +74,11 @@ AlarmStore::checkDurationSample(DurationKeyPtr key, const Duration& sample,
 
 AlarmPtr
 AlarmStore::addAlarm(AlarmPtr alarm) {
-    {
-        MultiThreadingLock lock(*mutex_);
-        auto ret = alarms_.insert(alarm);
-        if (ret.second == false) {
-            isc_throw(DuplicateAlarm,
-                      "AlarmStore::addAlarm: alarm already exists for: "
-                      << alarm->getLabel());
-        }
+    MultiThreadingLock lock(*mutex_);
+    auto ret = alarms_.insert(alarm);
+    if (ret.second == false) {
+        isc_throw(DuplicateAlarm, "AlarmStore::addAlarm: alarm already exists for: "
+                  << alarm->getLabel());
     }
 
     // Return a copy of what we inserted.
