@@ -40,7 +40,6 @@ using namespace isc::data;
 using namespace isc::http;
 using namespace isc::http::test;
 using namespace isc::util;
-namespace ph = std::placeholders;
 
 /// @todo: put the common part of client and server tests in its own file(s).
 

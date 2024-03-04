@@ -12,7 +12,7 @@
 #include <database/db_exceptions.h>
 #include <database/db_log.h>
 #include <pgsql/pgsql_connection.h>
-#include <util/file_utilities.h>
+#include <util/filesystem.h>
 
 #include <exception>
 #include <unordered_map>

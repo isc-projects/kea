@@ -109,8 +109,7 @@ get_pid_from_file() {
         ;;
     esac
 
-    # Extract the name portion (from last slash to last dot) of the config file name
-    # File name and extension are documented in src/lib/util/filename.h
+    # Extract the name portion (from last slash to last dot) of the config file name.
     local conf_name
     conf_name=$(basename -- "${kea_config_file}" | rev | cut -f2- -d'.' | rev)
 

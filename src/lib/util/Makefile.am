@@ -15,8 +15,7 @@ libkea_util_la_SOURCES += chrono_time_utils.h chrono_time_utils.cc
 libkea_util_la_SOURCES += csv_file.h csv_file.cc
 libkea_util_la_SOURCES += dhcp_space.h dhcp_space.cc
 libkea_util_la_SOURCES += doubles.h
-libkea_util_la_SOURCES += file_utilities.h file_utilities.cc
-libkea_util_la_SOURCES += filename.h filename.cc
+libkea_util_la_SOURCES += filesystem.h filesystem.cc
 libkea_util_la_SOURCES += hash.h
 libkea_util_la_SOURCES += labeled_value.h labeled_value.cc
 libkea_util_la_SOURCES += memory_segment.h
@@ -60,8 +59,7 @@ libkea_util_include_HEADERS = \
 	chrono_time_utils.h \
 	dhcp_space.h \
 	doubles.h \
-	file_utilities.h \
-	filename.h \
+	filesystem.h \
 	hash.h \
 	io_utilities.h \
 	labeled_value.h \

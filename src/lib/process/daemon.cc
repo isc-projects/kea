@@ -14,7 +14,7 @@
 #include <log/logger_support.h>
 #include <process/config_base.h>
 #include <process/redact_config.h>
-#include <util/filename.h>
+#include <util/filesystem.h>
 
 #include <functional>
 #include <sstream>
@@ -23,7 +23,7 @@
 #include <errno.h>
 
 using namespace isc::data;
-namespace ph = std::placeholders;
+using namespace isc::util::file;
 
 /// @brief provides default implementation for basic daemon operations
 ///
@@ -116,10 +116,10 @@ Daemon::checkConfigFile() const {
         isc_throw(isc::BadValue, "config file name is not set");
     }
 
-    // Create Filename instance from the config_file_ pathname, and
+    // Create Path instance from the config_file_ pathname, and
     // check the file name component.
-    isc::util::Filename file(config_file_);
-    if (file.name().empty()) {
+    Path file(config_file_);
+    if (file.stem().empty()) {
         isc_throw(isc::BadValue, "config file:" << config_file_
                   << " is missing file name");
     }
@@ -176,10 +176,10 @@ Daemon::makePIDFileName() const {
                   "Daemon::makePIDFileName config file name is not set");
     }
 
-    // Create Filename instance from the config_file_ pathname, so we can
+    // Create Path instance from the config_file_ pathname, so we can
     // extract the fname component.
-    isc::util::Filename file(config_file_);
-    if (file.name().empty()) {
+    Path file(config_file_);
+    if (file.stem().empty()) {
         isc_throw(isc::BadValue, "Daemon::makePIDFileName config file:"
                   << config_file_ << " is missing file name");
     }
@@ -192,7 +192,7 @@ Daemon::makePIDFileName() const {
     // Make the pathname for the PID file from the runtime directory,
     // configuration name and process name.
     std::ostringstream stream;
-    stream  << pid_file_dir_ << "/" << file.name()
+    stream  << pid_file_dir_ << "/" << file.stem()
             << "." << proc_name_ << ".pid";
 
     return(stream.str());

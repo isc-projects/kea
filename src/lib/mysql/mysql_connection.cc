@@ -12,7 +12,7 @@
 #include <database/db_log.h>
 #include <exceptions/exceptions.h>
 #include <mysql/mysql_connection.h>
-#include <util/file_utilities.h>
+#include <util/filesystem.h>
 
 #include <boost/lexical_cast.hpp>
 

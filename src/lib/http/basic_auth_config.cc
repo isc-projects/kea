@@ -8,7 +8,7 @@
 
 #include <http/auth_log.h>
 #include <http/basic_auth_config.h>
-#include <util/file_utilities.h>
+#include <util/filesystem.h>
 #include <util/strutil.h>
 
 using namespace isc;
