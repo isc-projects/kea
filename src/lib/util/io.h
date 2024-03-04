@@ -32,7 +32,7 @@ readUint(void const* const buffer, size_t const length) {
                                   << (length == 1 ? "" : "s") << " instead");
     }
 
-    uint8_t const* const byte_buffer(static_cast<uint8_t const* const>(buffer));
+    uint8_t const* const byte_buffer(static_cast<uint8_t const*>(buffer));
     uint_t result;
     uint8_t* pointer_to_result(static_cast<uint8_t*>(static_cast<void*>(&result)));
 
@@ -60,9 +60,8 @@ writeUint(uint_t const value, void* const buffer, size_t const length) {
                                   << (length == 1 ? "" : "s") << " instead");
     }
 
-    uint8_t const* const pointer_to_value(
-        static_cast<uint8_t const* const>(static_cast<void const* const>(&value)));
-    uint8_t* const byte_buffer(static_cast<uint8_t* const>(buffer));
+    uint8_t const* pointer_to_value(static_cast<uint8_t const*>(static_cast<void const*>(&value)));
+    uint8_t* byte_buffer(static_cast<uint8_t*>(buffer));
 
     std::reverse_copy(pointer_to_value, pointer_to_value + size, byte_buffer);
 
