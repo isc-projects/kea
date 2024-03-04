@@ -7,22 +7,22 @@
 #include <config.h>
 
 #include <exceptions/exceptions.h>
-#include <util/buffer.h>
 #include <dns/name.h>
 #include <dns/name_internal.h>
 #include <dns/labelsequence.h>
 #include <dns/messagerenderer.h>
+#include <util/buffer.h>
 
 #include <boost/array.hpp>
 #include <boost/static_assert.hpp>
-
 #include <limits>
 #include <cassert>
 #include <vector>
 
-using namespace std;
 using namespace isc::util;
 using isc::dns::name::internal::maptolower;
+
+using namespace std;
 
 namespace isc {
 namespace dns {

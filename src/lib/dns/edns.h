@@ -304,8 +304,8 @@ public:
     /// \param extended_rcode Upper 8 bits of extended RCODE to be rendered as
     /// part of the EDNS OPT RR.
     /// \return 1 if the OPT RR fits in the message size limit; otherwise 0.
-    unsigned int toWire(AbstractMessageRenderer& renderer,
-                        const uint8_t extended_rcode) const;
+    uint32_t toWire(AbstractMessageRenderer& renderer,
+                    const uint8_t extended_rcode) const;
 
     /// \brief Render the \c EDNS in the wire format.
     ///
@@ -313,8 +313,8 @@ public:
     /// except it renders the OPT RR in an \c OutputBuffer and therefore
     /// does not care about message size limit.
     /// As a consequence it always returns 1.
-    unsigned int toWire(isc::util::OutputBuffer& buffer,
-                        const uint8_t extended_rcode) const;
+    uint32_t toWire(isc::util::OutputBuffer& buffer,
+                    const uint8_t extended_rcode) const;
 
     /// \brief Convert the EDNS to a string.
     ///

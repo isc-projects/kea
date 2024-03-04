@@ -21,7 +21,7 @@
 #include <dns/tests/unittest_util.h>
 
 using namespace std;
-//using namespace isc::dns;
+using namespace isc::dns;
 
 using isc::UnitTestUtil;
 
@@ -120,4 +120,21 @@ UnitTestUtil::readWireData(const string& datastr,
             data.push_back(static_cast<unsigned char>(ch));
         }
     } while (!iss.eof());
+}
+
+::testing::AssertionResult
+UnitTestUtil::matchName(const char*, const char*,
+                        const isc::dns::Name& name1,
+                        const isc::dns::Name& name2) {
+    ::testing::Message msg;
+
+    NameComparisonResult cmpresult = name1.compare(name2);
+    if (cmpresult.getOrder() != 0 ||
+        cmpresult.getRelation() != NameComparisonResult::EQUAL) {
+        msg << "Two names are expected to be equal but not:\n"
+            << "  One: " << name1 << "\n"
+            << "Other: " << name2 << "\n";
+        return (::testing::AssertionFailure(msg));
+    }
+    return (::testing::AssertionSuccess());
 }

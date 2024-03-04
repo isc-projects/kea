@@ -6,33 +6,29 @@
 
 #include <config.h>
 
-#include <sys/time.h>
-
-#include <stdint.h>
-
-#include <cassert>
-#include <vector>
-
-#include <boost/shared_ptr.hpp>
-
 #include <exceptions/exceptions.h>
-
-#include <util/buffer.h>
-#include <util/time_utilities.h>
-
+#include <cryptolink/cryptolink.h>
+#include <cryptolink/crypto_hmac.h>
 #include <dns/rdataclass.h>
 #include <dns/rrclass.h>
 #include <dns/tsig.h>
 #include <dns/tsigerror.h>
 #include <dns/tsigkey.h>
+#include <util/buffer.h>
+#include <util/time_utilities.h>
 
-#include <cryptolink/cryptolink.h>
-#include <cryptolink/crypto_hmac.h>
+#include <cassert>
+#include <sys/time.h>
+#include <stdint.h>
+#include <vector>
+#include <boost/shared_ptr.hpp>
 
-using namespace std;
 using namespace isc::util;
 using namespace isc::cryptolink;
 using namespace isc::dns::rdata;
+
+using namespace std;
+
 
 namespace isc {
 namespace dns {
@@ -187,10 +183,11 @@ TSIGContext::TSIGContextImpl::digestPreviousMAC(HMACPtr hmac) {
 }
 
 void
-TSIGContext::TSIGContextImpl::digestTSIGVariables(
-    HMACPtr hmac, uint16_t rrclass, uint32_t rrttl, uint64_t time_signed,
-    uint16_t fudge, uint16_t error, uint16_t otherlen, const void* otherdata,
-    bool time_variables_only) const {
+TSIGContext::TSIGContextImpl::digestTSIGVariables(HMACPtr hmac, uint16_t rrclass,
+                                                  uint32_t rrttl, uint64_t time_signed,
+                                                  uint16_t fudge, uint16_t error,
+                                                  uint16_t otherlen, const void* otherdata,
+                                                  bool time_variables_only) const {
     // It's bit complicated, but we can still predict the necessary size of
     // the data to be digested.  So we precompute it to avoid possible
     // reallocation inside OutputBuffer (not absolutely necessary, but this

@@ -13,7 +13,6 @@
 #include <boost/noncopyable.hpp>
 
 namespace isc {
-
 namespace dns {
 // forward declarations
 class Name;

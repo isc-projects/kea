@@ -37,6 +37,18 @@ public:
     static void readWireData(const std::string& datastr,
                              std::vector<unsigned char>& data);
 
+    ///
+    /// Compare two names.
+    ///
+    /// This check method uses \c Name::compare() for comparison, which performs
+    /// deeper checks including the equality of offsets, and should be better
+    /// than EXPECT_EQ, which uses operator==.  Like the \c matchWireData()
+    /// method, the usage is a bit awkward; the caller should use
+    /// \c EXPECT_PRED_FORMAT2.
+    ///
+    static ::testing::AssertionResult
+    matchName(const char* nameexp1, const char* nameexp2,
+              const isc::dns::Name& name1, const isc::dns::Name& name2);
 };
 }
 #endif // UNITTEST_UTIL_H

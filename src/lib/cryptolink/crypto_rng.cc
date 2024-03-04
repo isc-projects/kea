@@ -28,5 +28,12 @@ random(size_t len) {
     return (rng->random(len));
 }
 
+uint16_t generateQid() {
+    uint16_t val;
+    std::vector<uint8_t> rnd = random(sizeof(uint16_t));
+    memmove(&val, &rnd[0], sizeof(uint16_t));
+    return (val);
+}
+
 } // namespace cryptolink
 } // namespace isc

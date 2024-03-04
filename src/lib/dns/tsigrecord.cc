@@ -6,16 +6,15 @@
 
 #include <config.h>
 
-#include <ostream>
-#include <string>
-
-#include <util/buffer.h>
-
 #include <dns/exceptions.h>
 #include <dns/messagerenderer.h>
 #include <dns/rrclass.h>
 #include <dns/rrttl.h>
 #include <dns/tsigrecord.h>
+#include <util/buffer.h>
+
+#include <ostream>
+#include <string>
 
 using namespace isc::util;
 using namespace isc::dns::rdata;
@@ -105,7 +104,7 @@ toWireCommon(OUTPUT& output, const rdata::any::TSIG& rdata) {
 }
 }
 
-int
+uint32_t
 TSIGRecord::toWire(AbstractMessageRenderer& renderer) const {
     // If adding the TSIG would exceed the size limit, don't do it.
     if (renderer.getLength() + length_ > renderer.getLengthLimit()) {
@@ -119,7 +118,7 @@ TSIGRecord::toWire(AbstractMessageRenderer& renderer) const {
     return (1);
 }
 
-int
+uint32_t
 TSIGRecord::toWire(OutputBuffer& buffer) const {
     key_name_.toWire(buffer);
     toWireCommon(buffer, rdata_);

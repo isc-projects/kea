@@ -1,3 +1,9 @@
+// Copyright (C) 2010-2020 Internet Systems Consortium, Inc. ("ISC")
+//
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
 #include <config.h>
 
 #include <string>
@@ -18,10 +24,14 @@
 
 using namespace std;
 using namespace isc::dns;
-using namespace isc::util;
 using namespace isc::dns::rdata;
+using namespace isc::util;
 
 namespace {
+void
+nullCallback(const std::string&, size_t, const std::string&) {
+}
+
 class RRParamRegistryTest : public ::testing::Test {
 protected:
     RRParamRegistryTest()
@@ -155,7 +165,7 @@ createRdataHelper(const std::string& str) {
     MasterLexer lexer;
     lexer.pushSource(ss);
 
-    MasterLoaderCallbacks callbacks(MasterLoaderCallbacks::getNullCallbacks());
+    MasterLoaderCallbacks callbacks(nullCallback, nullCallback);
     const Name origin("example.org.");
 
     return (rdf->create(lexer, &origin,

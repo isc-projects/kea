@@ -6,18 +6,19 @@
 
 #include <config.h>
 
-#include <iostream>
-#include <string>
-
-#include <util/buffer.h>
 #include <dns/messagerenderer.h>
 #include <dns/name.h>
 #include <dns/question.h>
 #include <dns/rrclass.h>
 #include <dns/rrtype.h>
+#include <util/buffer.h>
+
+#include <iostream>
+#include <string>
+
+using namespace isc::util;
 
 using namespace std;
-using namespace isc::util;
 
 namespace isc {
 namespace dns {
@@ -44,7 +45,7 @@ Question::toText(bool newline) const {
     return (r);
 }
 
-unsigned int
+uint32_t
 Question::toWire(OutputBuffer& buffer) const {
     name_.toWire(buffer);
     rrtype_.toWire(buffer);
@@ -53,7 +54,7 @@ Question::toWire(OutputBuffer& buffer) const {
     return (1);
 }
 
-unsigned int
+uint32_t
 Question::toWire(AbstractMessageRenderer& renderer) const {
     const size_t pos0 = renderer.getLength();
 

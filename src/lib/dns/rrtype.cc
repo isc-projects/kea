@@ -6,21 +6,20 @@
 
 #include <config.h>
 
-#include <stdint.h>
-
-#include <string>
-#include <ostream>
-
 #include <exceptions/exceptions.h>
-
-#include <util/buffer.h>
 #include <dns/messagerenderer.h>
 #include <dns/rrparamregistry.h>
 #include <dns/rrtype.h>
+#include <util/buffer.h>
 
-using namespace std;
+#include <stdint.h>
+#include <string>
+#include <ostream>
+
 using namespace isc::util;
 using isc::dns::RRType;
+
+using namespace std;
 
 namespace isc {
 namespace dns {

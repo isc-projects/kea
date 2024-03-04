@@ -6,21 +6,7 @@
 
 #include <config.h>
 
-#include <stdint.h>
-
-#include <algorithm>
-#include <cassert>
-#include <string>
-#include <sstream>
-#include <vector>
-
-#include <boost/lexical_cast.hpp>
-#include <boost/shared_ptr.hpp>
-
 #include <exceptions/exceptions.h>
-
-#include <util/buffer.h>
-
 #include <dns/edns.h>
 #include <dns/exceptions.h>
 #include <dns/message.h>
@@ -35,11 +21,22 @@
 #include <dns/rrttl.h>
 #include <dns/rrset.h>
 #include <dns/tsig.h>
+#include <util/buffer.h>
+
+#include <stdint.h>
+#include <algorithm>
+#include <cassert>
+#include <string>
+#include <sstream>
+#include <vector>
+#include <boost/lexical_cast.hpp>
+#include <boost/shared_ptr.hpp>
+
+using namespace isc::dns::rdata;
+using namespace isc::util;
 
 using namespace std;
 using boost::lexical_cast;
-using namespace isc::dns::rdata;
-using namespace isc::util;
 
 namespace isc {
 namespace dns {

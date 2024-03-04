@@ -18,7 +18,7 @@
 #include <asiodns/logger.h>
 #include <dns/messagerenderer.h>
 #include <dns/opcode.h>
-#include <dns/qid_gen.h>
+#include <cryptolink/crypto_rng.h>
 #include <dns/rcode.h>
 #include <util/buffer.h>
 
@@ -83,7 +83,7 @@ struct IOFetchData : boost::noncopyable {
     isc::log::MessageID         origin;     ///< Origin of last asynchronous I/O
     uint8_t                     staging[IOFetch::STAGING_LENGTH];
                                             ///< Temporary array for received data
-    isc::dns::qid_t             qid;         ///< The QID set in the query
+    isc::dns::qid_t             qid;        ///< The QID set in the query
 
     /// \brief Constructor
     ///
@@ -132,7 +132,7 @@ struct IOFetchData : boost::noncopyable {
         packet(false),
         origin(ASIODNS_UNKNOWN_ORIGIN),
         staging(),
-        qid(QidGenerator::getInstance().generateQid()) {
+        qid(cryptolink::generateQid()) {
     }
 
     /// \brief Destructor

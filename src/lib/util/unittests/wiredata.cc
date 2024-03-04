@@ -21,10 +21,8 @@ namespace unittests {
 
 void
 matchWireData(const void* expected_data, size_t expected_len,
-              const void* actual_data, size_t actual_len)
-{
+              const void* actual_data, size_t actual_len) {
     const size_t cmplen = std::min(expected_len, actual_len);
-
     for (size_t i = 0; i < cmplen; ++i) {
         const int ebyte = static_cast<const uint8_t*>(expected_data)[i];
         const int abyte = static_cast<const uint8_t*>(actual_data)[i];

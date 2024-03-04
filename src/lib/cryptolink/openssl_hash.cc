@@ -145,8 +145,7 @@ private:
     EVP_MD_CTX* md_;
 };
 
-Hash::Hash(const HashAlgorithm hash_algorithm)
-{
+Hash::Hash(const HashAlgorithm hash_algorithm) {
     impl_ = new HashImpl(hash_algorithm);
 }
 

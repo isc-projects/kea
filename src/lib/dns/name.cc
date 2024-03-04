@@ -6,6 +6,12 @@
 
 #include <config.h>
 
+#include <exceptions/isc_assert.h>
+#include <dns/name.h>
+#include <dns/name_internal.h>
+#include <dns/messagerenderer.h>
+#include <dns/labelsequence.h>
+
 #include <cctype>
 #include <iterator>
 #include <functional>
@@ -13,15 +19,10 @@
 #include <iostream>
 #include <algorithm>
 
-#include <exceptions/isc_assert.h>
-#include <dns/name.h>
-#include <dns/name_internal.h>
-#include <dns/messagerenderer.h>
-#include <dns/labelsequence.h>
-
-using namespace std;
 using namespace isc::util;
 using namespace isc::dns::name::internal;
+
+using namespace std;
 
 namespace isc {
 namespace dns {

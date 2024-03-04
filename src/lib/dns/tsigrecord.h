@@ -244,7 +244,7 @@ public:
     /// \param renderer DNS message rendering context that encapsulates the
     /// output buffer and name compression information.
     /// \return 1 if the TSIG RR fits in the message size limit; otherwise 0.
-    int toWire(AbstractMessageRenderer& renderer) const;
+    uint32_t toWire(AbstractMessageRenderer& renderer) const;
 
     /// \brief Render the \c TSIG RR in the wire format.
     ///
@@ -252,7 +252,7 @@ public:
     /// except it renders the RR in an \c OutputBuffer and therefore
     /// does not care about message size limit.
     /// As a consequence it always returns 1.
-    int toWire(isc::util::OutputBuffer& buffer) const;
+    uint32_t toWire(isc::util::OutputBuffer& buffer) const;
 
     /// Convert the TSIG record to a string.
     ///

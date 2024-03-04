@@ -1,5 +1,0 @@
-[custom]
-sections: minfo
-# bogus rmailbox name
-[minfo]
-rmailbox: "01234567890123456789012345678901234567890123456789012345678901234"

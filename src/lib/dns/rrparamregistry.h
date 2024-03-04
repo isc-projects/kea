@@ -94,7 +94,8 @@ public:
     /// \c Rdata to parse.
     /// \param rdata_len The length in buffer of the \c Rdata.  In bytes.
     /// \return An \c RdataPtr object pointing to the created \c Rdata object.
-    virtual RdataPtr create(isc::util::InputBuffer& buffer, size_t rdata_len) const = 0;
+    virtual RdataPtr create(isc::util::InputBuffer& buffer,
+                            size_t rdata_len) const = 0;
 
     /// \brief Create RDATA from another \c Rdata object of the same type.
     ///

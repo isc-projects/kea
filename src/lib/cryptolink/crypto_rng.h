@@ -57,6 +57,11 @@ private:
 /// \param len The length of the data
 std::vector<uint8_t> random(size_t len);
 
+/// \brief Generate a Qid
+///
+/// \return A random Qid
+uint16_t generateQid();
+
 } // namespace cryptolink
 } // namespace isc
 

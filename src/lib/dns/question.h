@@ -17,7 +17,6 @@
 #include <dns/rrtype.h>
 
 namespace isc {
-
 namespace dns {
 class Question;
 
@@ -214,7 +213,7 @@ public:
     /// output buffer and name compression information.
     ///
     /// \return 1 on success; 0 if it causes truncation
-    unsigned int toWire(AbstractMessageRenderer& renderer) const;
+    uint32_t toWire(AbstractMessageRenderer& renderer) const;
 
     /// \brief Render the Question in the wire format without name compression.
     ///
@@ -224,7 +223,7 @@ public:
     ///
     /// \param buffer An output buffer to store the wire data.
     /// \return 1
-    unsigned int toWire(isc::util::OutputBuffer& buffer) const;
+    uint32_t toWire(isc::util::OutputBuffer& buffer) const;
     //@}
 
     ///

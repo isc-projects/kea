@@ -6,18 +6,17 @@
 
 #include <config.h>
 
-#include <stdint.h>
+#include <dns/messagerenderer.h>
+#include <dns/rrttl.h>
+#include <util/buffer.h>
 
+#include <algorithm>
+#include <cctype>
+#include <stdint.h>
 #include <sstream>
 #include <ostream>
 
-#include <util/buffer.h>
-#include <dns/messagerenderer.h>
-#include <dns/rrttl.h>
-
 #include <boost/lexical_cast.hpp>
-#include <algorithm>
-#include <cctype>
 
 using namespace std;
 using namespace isc::dns;

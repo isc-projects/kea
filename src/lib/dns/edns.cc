@@ -6,14 +6,7 @@
 
 #include <config.h>
 
-#include <stdint.h>
-
-#include <cassert>
-
-#include <boost/lexical_cast.hpp>
-
 #include <exceptions/exceptions.h>
-
 #include <dns/edns.h>
 #include <dns/exceptions.h>
 #include <dns/message.h>
@@ -25,10 +18,14 @@
 #include <dns/rrttl.h>
 #include <dns/rrtype.h>
 
+#include <stdint.h>
+#include <boost/lexical_cast.hpp>
+
+using namespace isc::util;
+using namespace isc::dns::rdata;
+
 using namespace std;
 using boost::lexical_cast;
-using namespace isc::dns::rdata;
-using namespace isc::util;
 
 namespace isc {
 namespace dns {
@@ -104,7 +101,7 @@ namespace {
 /// Helper function to define unified implementation for the public versions
 /// of toWire().
 template <typename Output>
-int
+uint32_t
 toWireCommon(Output& output, const uint8_t version,
              const uint16_t udp_size, const bool dnssec_aware,
              const uint8_t extended_rcode) {
@@ -127,7 +124,7 @@ toWireCommon(Output& output, const uint8_t version,
 }
 }
 
-unsigned int
+uint32_t
 EDNS::toWire(AbstractMessageRenderer& renderer,
              const uint8_t extended_rcode) const {
     // If adding the OPT RR would exceed the size limit, don't do it.
@@ -141,7 +138,7 @@ EDNS::toWire(AbstractMessageRenderer& renderer,
                          extended_rcode));
 }
 
-unsigned int
+uint32_t
 EDNS::toWire(isc::util::OutputBuffer& buffer,
              const uint8_t extended_rcode) const {
     return (toWireCommon(buffer, version_, udp_size_, dnssec_aware_,

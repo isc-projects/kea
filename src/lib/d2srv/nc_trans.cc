@@ -8,7 +8,7 @@
 
 #include <d2srv/d2_log.h>
 #include <d2srv/nc_trans.h>
-#include <dns/qid_gen.h>
+#include <cryptolink/crypto_rng.h>
 #include <dns/rdata.h>
 #include <dns/rdataclass.h>
 #include <hooks/hooks.h>
@@ -352,7 +352,7 @@ NameChangeTransaction::prepNewRequest(DdnsDomainPtr domain) {
         D2UpdateMessagePtr request(new D2UpdateMessage(D2UpdateMessage::
                                                        OUTBOUND));
         // Set the query id
-        request->setId(dns::QidGenerator::getInstance().generateQid());
+        request->setId(cryptolink::generateQid());
         // Construct the Zone Section.
         dns::Name zone_name(domain->getName());
         request->setZone(zone_name, dns::RRClass::IN());

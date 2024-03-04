@@ -7,20 +7,17 @@
 #include <config.h>
 
 #include <exceptions/exceptions.h>
-
-#include <util/buffer.h>
-#include <util/encode/encode.h>
-
 #include <dns/name.h>
 #include <dns/messagerenderer.h>
 #include <dns/master_lexer.h>
 #include <dns/rdata.h>
 #include <dns/rrparamregistry.h>
 #include <dns/rrtype.h>
+#include <util/buffer.h>
+#include <util/encode/encode.h>
 
 #include <boost/lexical_cast.hpp>
 #include <boost/shared_ptr.hpp>
-
 #include <algorithm>
 #include <cctype>
 #include <string>
@@ -29,13 +26,13 @@
 #include <ios>
 #include <ostream>
 #include <vector>
-
 #include <stdint.h>
 #include <string.h>
 
+using namespace isc::util;
+
 using namespace std;
 using boost::lexical_cast;
-using namespace isc::util;
 
 namespace isc {
 namespace dns {
@@ -61,7 +58,7 @@ createRdata(const RRType& rrtype, const RRClass& rrclass,
 
 RdataPtr
 createRdata(const RRType& rrtype, const RRClass& rrclass,
-            isc::util::InputBuffer& buffer, size_t len) {
+            InputBuffer& buffer, size_t len) {
     if (len > MAX_RDLENGTH) {
         isc_throw(InvalidRdataLength, "RDLENGTH too large");
     }
@@ -197,7 +194,7 @@ struct GenericImpl {
     vector<uint8_t> data_;
 };
 
-Generic::Generic(isc::util::InputBuffer& buffer, size_t rdata_len) {
+Generic::Generic(InputBuffer& buffer, size_t rdata_len) {
     if (rdata_len > MAX_RDLENGTH) {
         isc_throw(InvalidRdataLength, "RDLENGTH too large");
     }
@@ -256,7 +253,7 @@ Generic::constructFromLexer(MasterLexer& lexer) {
         }
 
         try {
-            isc::util::encode::decodeHex(hex_txt, data);
+            encode::decodeHex(hex_txt, data);
         } catch (const isc::BadValue& ex) {
             isc_throw(InvalidRdataText,
                       "Invalid hex encoding of generic RDATA: " << ex.what());
@@ -351,7 +348,7 @@ Generic::toText() const {
 }
 
 void
-Generic::toWire(isc::util::OutputBuffer& buffer) const {
+Generic::toWire(OutputBuffer& buffer) const {
     buffer.writeData(&impl_->data_[0], impl_->data_.size());
 }
 
