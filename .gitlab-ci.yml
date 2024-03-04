@@ -138,6 +138,11 @@ duplicate-includes:
   script:
     - ./tools/check-for-duplicate-includes.sh
 
+uninstalled-headers:
+  stage: test
+  script:
+    - ./tools/find-uninstalled-headers.py
+
 missing-api-commands:
   stage: test
   script:
