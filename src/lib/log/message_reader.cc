@@ -16,7 +16,7 @@
 #include <log/log_messages.h>
 #include <log/message_exception.h>
 #include <log/message_reader.h>
-#include <util/strutil.h>
+#include <util/str.h>
 
 using namespace std;
 

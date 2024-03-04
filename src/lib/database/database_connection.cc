@@ -12,7 +12,7 @@
 #include <database/db_log.h>
 #include <database/db_messages.h>
 #include <exceptions/exceptions.h>
-#include <util/strutil.h>
+#include <util/str.h>
 
 #include <boost/algorithm/string.hpp>
 #include <vector>

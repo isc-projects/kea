@@ -9,7 +9,7 @@
 #include <dhcp/hwaddr.h>
 #include <dhcp/dhcp4.h>
 #include <exceptions/exceptions.h>
-#include <util/strutil.h>
+#include <util/str.h>
 #include <iomanip>
 #include <sstream>
 #include <vector>

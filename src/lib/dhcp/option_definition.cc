@@ -31,7 +31,7 @@
 #include <util/encode/encode.h>
 #include <dns/labelsequence.h>
 #include <dns/name.h>
-#include <util/strutil.h>
+#include <util/str.h>
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/replace.hpp>

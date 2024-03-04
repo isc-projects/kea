@@ -11,7 +11,7 @@
 #include <dhcpsrv/timer_mgr.h>
 #include <util/reconnect_ctl.h>
 #include <util/multi_threading_mgr.h>
-#include <util/strutil.h>
+#include <util/str.h>
 #include <algorithm>
 #include <functional>
 

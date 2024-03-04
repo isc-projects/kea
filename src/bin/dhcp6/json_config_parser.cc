@@ -45,7 +45,7 @@
 #include <process/config_ctl_parser.h>
 #include <util/encode/encode.h>
 #include <util/multi_threading_mgr.h>
-#include <util/strutil.h>
+#include <util/str.h>
 #include <util/triplet.h>
 
 #include <boost/algorithm/string.hpp>

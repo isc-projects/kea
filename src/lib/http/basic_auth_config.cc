@@ -9,7 +9,7 @@
 #include <http/auth_log.h>
 #include <http/basic_auth_config.h>
 #include <util/filesystem.h>
-#include <util/strutil.h>
+#include <util/str.h>
 
 using namespace isc;
 using namespace isc::data;

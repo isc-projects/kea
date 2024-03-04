@@ -31,7 +31,7 @@
 #include <cc/user_context.h>
 #include <cc/simple_parser.h>
 #include <util/optional.h>
-#include <util/strutil.h>
+#include <util/str.h>
 
 #include <boost/shared_ptr.hpp>
 #include <vector>

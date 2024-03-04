@@ -11,7 +11,7 @@
 #include <dns/labelsequence.h>
 #include <util/buffer.h>
 #include <util/io.h>
-#include <util/strutil.h>
+#include <util/str.h>
 #include <sstream>
 
 namespace isc {

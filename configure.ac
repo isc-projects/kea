@@ -667,8 +667,8 @@ int main() {
 # When cross-compiling we don't have any way to check if regex is
 # usable or not.
 # Let's be optimistic and assume it is by testing only the negative case.
-if test "x$usable_regex" != "xno" ; then
-        AC_DEFINE(USE_REGEX, 1, [Define to 1 if C++11 regex is usable])
+if test "${usable_regex}" = 'no'; then
+  AC_MSG_ERROR([Need proper regex functionality.])]
 fi
 
 # Check for NETCONF support. If NETCONF was enabled in the build, and this check

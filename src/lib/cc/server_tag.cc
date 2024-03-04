@@ -8,7 +8,7 @@
 
 #include <cc/server_tag.h>
 #include <exceptions/exceptions.h>
-#include <util/strutil.h>
+#include <util/str.h>
 #include <boost/algorithm/string.hpp>
 
 namespace isc {

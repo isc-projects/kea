@@ -11,7 +11,7 @@
 #include <exceptions/exceptions.h>
 #include <util/io.h>
 #include <util/range_utilities.h>
-#include <util/strutil.h>
+#include <util/str.h>
 #include <ctime>
 #include <fstream>
 #include <stdlib.h>

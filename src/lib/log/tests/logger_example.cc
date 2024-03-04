@@ -24,7 +24,7 @@
 #include <string>
 #include <vector>
 
-#include <util/strutil.h>
+#include <util/str.h>
 
 #include <log/logger.h>
 #include <log/logger_level.h>

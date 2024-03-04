@@ -8,10 +8,14 @@
 #define DUID_H
 
 #include <asiolink/io_address.h>
-#include <util/strutil.h>
-#include <boost/shared_ptr.hpp>
+#include <util/str.h>
+
+#include <cstdint>
+#include <iomanip>
 #include <vector>
-#include <stdint.h>
+
+#include <boost/shared_ptr.hpp>
+
 #include <unistd.h>
 
 namespace isc {

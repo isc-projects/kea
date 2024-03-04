@@ -16,7 +16,7 @@
 #include <dhcpsrv/parsers/simple_parser4.h>
 #include <dhcpsrv/parsers/simple_parser6.h>
 #include <util/encode/encode.h>
-#include <util/strutil.h>
+#include <util/str.h>
 #include <boost/make_shared.hpp>
 #include <limits>
 #include <vector>

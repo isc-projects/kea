@@ -32,7 +32,7 @@ libkea_util_la_SOURCES += staged_value.h
 libkea_util_la_SOURCES += state_model.cc state_model.h
 libkea_util_la_SOURCES += stopwatch.cc stopwatch.h
 libkea_util_la_SOURCES += stopwatch_impl.cc stopwatch_impl.h
-libkea_util_la_SOURCES += strutil.h strutil.cc
+libkea_util_la_SOURCES += str.h str.cc
 libkea_util_la_SOURCES += thread_pool.h
 libkea_util_la_SOURCES += triplet.h
 libkea_util_la_SOURCES += unlock_guard.h
@@ -77,7 +77,7 @@ libkea_util_include_HEADERS = \
 	state_model.h \
 	stopwatch.h \
 	stopwatch_impl.h \
-	strutil.h \
+	str.h \
 	thread_pool.h \
 	triplet.h \
 	unlock_guard.h \

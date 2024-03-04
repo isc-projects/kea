@@ -10,7 +10,7 @@
 #include <asiolink/addr_utilities.h>
 #include <dhcpsrv/lease.h>
 #include <util/pointer_util.h>
-#include <util/strutil.h>
+#include <util/str.h>
 #include <boost/algorithm/string.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <sstream>

@@ -7,7 +7,7 @@
 #include <config.h>
 
 #include <tcp/tcp_stream_msg.h>
-#include <util/strutil.h>
+#include <util/str.h>
 
 #include <iomanip>
 #include <sstream>

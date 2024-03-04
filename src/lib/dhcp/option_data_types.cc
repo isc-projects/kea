@@ -9,7 +9,7 @@
 #include <dhcp/option_data_types.h>
 #include <dns/labelsequence.h>
 #include <dns/name.h>
-#include <util/strutil.h>
+#include <util/str.h>
 #include <util/encode/encode.h>
 #include <algorithm>
 #include <limits>

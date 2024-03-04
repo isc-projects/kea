@@ -19,7 +19,7 @@
 #include <dhcpsrv/parsers/simple_parser6.h>
 #include <dhcpsrv/cfg_mac_source.h>
 #include <util/encode/encode.h>
-#include <util/strutil.h>
+#include <util/str.h>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/foreach.hpp>

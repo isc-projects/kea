@@ -28,7 +28,7 @@
 #include <log/logger_specification.h>
 #include <dhcp/pkt.h>
 #include <stats/stats_mgr.h>
-#include <util/strutil.h>
+#include <util/str.h>
 
 #include <boost/make_shared.hpp>
 

@@ -8,7 +8,7 @@
 
 #include <flex_option.h>
 #include <flex_option_log.h>
-#include <util/strutil.h>
+#include <util/str.h>
 #include <cc/simple_parser.h>
 #include <dhcp/dhcp4.h>
 #include <dhcp/libdhcp++.h>

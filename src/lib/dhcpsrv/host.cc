@@ -14,7 +14,7 @@
 #include <exceptions/exceptions.h>
 
 #include <util/encode/encode.h>
-#include <util/strutil.h>
+#include <util/str.h>
 
 #include <boost/foreach.hpp>
 #include <sstream>

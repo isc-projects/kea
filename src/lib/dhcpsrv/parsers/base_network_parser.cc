@@ -9,7 +9,7 @@
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/parsers/base_network_parser.h>
 #include <util/optional.h>
-#include <util/strutil.h>
+#include <util/str.h>
 
 using namespace isc::data;
 using namespace isc::util;

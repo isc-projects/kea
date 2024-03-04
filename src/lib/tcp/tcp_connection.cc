@@ -11,7 +11,7 @@
 #include <tcp/tcp_connection_pool.h>
 #include <tcp/tcp_log.h>
 #include <tcp/tcp_messages.h>
-#include <util/strutil.h>
+#include <util/str.h>
 #include <boost/make_shared.hpp>
 
 #include <iomanip>

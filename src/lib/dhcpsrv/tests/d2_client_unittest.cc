@@ -10,7 +10,7 @@
 #include <dhcpsrv/d2_client_mgr.h>
 #include <testutils/test_to_element.h>
 #include <exceptions/exceptions.h>
-#include <util/strutil.h>
+#include <util/str.h>
 
 #include <boost/algorithm/string.hpp>
 #include <gtest/gtest.h>

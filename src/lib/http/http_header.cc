@@ -8,7 +8,7 @@
 
 #include <exceptions/exceptions.h>
 #include <http/http_header.h>
-#include <util/strutil.h>
+#include <util/str.h>
 #include <boost/lexical_cast.hpp>
 
 namespace isc {

@@ -22,7 +22,7 @@
 #include <exceptions/exceptions.h>
 
 #include <util/filesystem.h>
-#include <util/strutil.h>
+#include <util/str.h>
 
 #include <log/log_messages.h>
 #include <log/message_dictionary.h>

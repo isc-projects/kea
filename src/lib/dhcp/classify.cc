@@ -8,7 +8,7 @@
 
 #include <cc/data.h>
 #include <dhcp/classify.h>
-#include <util/strutil.h>
+#include <util/str.h>
 
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/constants.hpp>

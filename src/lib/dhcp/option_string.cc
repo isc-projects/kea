@@ -7,7 +7,7 @@
 #include <config.h>
 
 #include <dhcp/option_string.h>
-#include <util/strutil.h>
+#include <util/str.h>
 #include <sstream>
 
 namespace isc {

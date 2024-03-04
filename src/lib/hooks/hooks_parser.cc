@@ -10,7 +10,7 @@
 #include <cc/dhcp_config_error.h>
 #include <hooks/hooks_parser.h>
 #include <boost/algorithm/string.hpp>
-#include <util/strutil.h>
+#include <util/str.h>
 #include <vector>
 
 using namespace std;
