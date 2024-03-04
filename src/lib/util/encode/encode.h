@@ -47,6 +47,7 @@ public:
     /// @brief Encodes binary data using the encoder's algorithm
     ///
     /// @param input binary data to encode
+    ///
     /// @return resultant encoded data string
     /// @throw BadValue if an error occurs during encoding
     std::string encode(const std::vector<uint8_t>& input);
@@ -55,12 +56,14 @@ public:
     ///
     /// @param encoded_str encoded string to decode
     /// @param[out] output vector into which the decoded data is stored
+    ///
     /// @throw BadValue if an error occurs during decoding
     void decode(const std::string& encoded_str, std::vector<uint8_t>& output);
 
     /// @brief Translate a byte of binary data into the appropriate algorithm digit
     ///
     /// @param bits binary value to translate
+    ///
     /// @return char containing the digit corresponding to the binary value
     /// @throw BadValue if the bits value is out of range
     char bitsToDigit(uint8_t bits);
@@ -72,6 +75,7 @@ public:
     /// char is invalid.
     ///
     /// @param digit the algorithm digit to translate
+    ///
     /// @return byte containing the binary value corresponding to the digit
     uint8_t digitToBits(uint8_t digit);
 
@@ -249,6 +253,7 @@ std::string encodeBase32Hex(const std::vector<uint8_t>& binary);
 ///
 /// @param encoded_str string containing a base32-hex encoded value.
 /// @param[out] output vector into which the decoded binary data is stored.
+///
 /// @throw BadValue if the input string is invalid.
 void decodeBase32Hex(const std::string& encoded_str, std::vector<uint8_t>& output);
 
@@ -262,6 +267,7 @@ std::string encodeBase64(const std::vector<uint8_t>& binary);
 ///
 /// @param encoded_str string containing a base64 encoded value.
 /// @param[out] output vector into which the decoded binary data is stored.
+///
 /// @throw BadValue if the input string is invalid.
 void decodeBase64(const std::string& encoded_str, std::vector<uint8_t>& output);
 
@@ -275,12 +281,14 @@ std::string encodeHex(const std::vector<uint8_t>& binary);
 ///
 /// @param encoded_str string containing a base16 encoded value.
 /// @param[out] output vector into which the decoded binary data is stored.
+///
 /// @throw BadValue if the input string is invalid.
 void decodeHex(const std::string& encoded_str, std::vector<uint8_t>& output);
 
 /// @brief Encode in hexadecimal inline.
 ///
 /// @param value the value to encode.
+///
 /// @return 0x followed by the value encoded in hex.
 inline std::string toHex(std::string value) {
     std::vector<uint8_t> bin(value.begin(), value.end());

@@ -252,7 +252,7 @@ TEST_F(BufferTest, outputBufferAssign) {
         another = obuffer;
         ASSERT_EQ(sizeof(testdata), another.getLength());
         ASSERT_NE(obuffer.getData(), another.getData());
-        for (int i = 0; i < sizeof(testdata); i ++) {
+        for (size_t i = 0; i < sizeof(testdata); ++i) {
             EXPECT_EQ(testdata[i], another[i]);
             if (i + 1 < sizeof(testdata)) {
                 obuffer.writeUint16At(0, i);

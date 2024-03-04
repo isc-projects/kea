@@ -80,7 +80,7 @@ BaseNEncoder::encode(const std::vector<uint8_t>& input) {
     // the digit and start the index value over.
 
     int digit_idx = 0;          // Digit index we are currently constructing.
-    int cnt = 0;                // How many bits we have in the current digit idx
+    size_t cnt = 0;             // How many bits we have in the current digit idx
     int cur_byte = 0;           // Current input byte.
     uint8_t cur_bit_mask = 0x0; // Bitmask of the current bit in the current byte.
     auto bytes = input.begin(); // Start with the first byte.
@@ -199,7 +199,7 @@ BaseNEncoder::decode(const std::string& encoded_str, std::vector<uint8_t>& outpu
         dig_bits <<= shift_bits;
 
         // Add digit's decoded bits to current byte.
-        for (auto i = 0; i < bits_per_digit_; ++i) {
+        for (size_t i = 0; i < bits_per_digit_; ++i) {
             if (cur_bit_cnt < 8) {
                 // Shift contents over one to make room for next bit.
                 cur_byte <<= 1;

@@ -36,7 +36,7 @@ clockToText(std::chrono::system_clock::time_point t, size_t fsecs_precision) {
         auto fsecs = frac.count();
         size_t width = MAX_FSECS_PRECISION;
         if (fsecs_precision < width) {
-            for (auto i = 0; i < width - fsecs_precision; ++i) {
+            for (size_t i = 0; i < width - fsecs_precision; ++i) {
                 fsecs /= 10;
             }
 
@@ -72,7 +72,7 @@ durationToText(Duration dur, size_t fsecs_precision) {
         auto fsecs = frac.count();
         size_t width = MAX_FSECS_PRECISION;
         if (fsecs_precision < width) {
-            for (auto i = 0; i < width - fsecs_precision; ++i) {
+            for (size_t i = 0; i < width - fsecs_precision; ++i) {
                 fsecs /= 10;
             }
 

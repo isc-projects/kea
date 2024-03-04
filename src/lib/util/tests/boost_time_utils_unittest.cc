@@ -31,7 +31,7 @@ TEST(BoostTimeUtilsTest, epoch) {
     // secs/1000 and so on.  The initial string has no fraction seconds.
     std::string expected("1970-01-01 00:00:00");
     std::string sepoch;
-    for (int precision = 0; precision <= MAX_FSECS_PRECISION; ++precision) {
+    for (size_t precision = 0; precision <= MAX_FSECS_PRECISION; ++precision) {
         if (precision == 1) {
             // Adding fractional seconds so we need append a decimal point.
             expected.push_back('.');
@@ -71,7 +71,7 @@ TEST(BoostTimeUtilsTest, bastilleDay) {
     // secs/1000 and so on.  The initial string has no fraction seconds.
     std::string expected("2015-07-14 12:13:14");
     std::string sbast;
-    for (int precision = 0; precision <= MAX_FSECS_PRECISION; ++precision) {
+    for (size_t precision = 0; precision <= MAX_FSECS_PRECISION; ++precision) {
         if (precision == 1) {
             // Adding fractional seconds so we need append a decimal point
             // and the digit 5 (i.e. 500 ms = .5 secs).

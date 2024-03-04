@@ -1,30 +1,30 @@
 // Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
-//
+// 
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
+ 
 #ifndef KEA_UTIL_STR_H
 #define KEA_UTIL_STR_H
 
 #include <exceptions/exceptions.h>
-
-#include <algorithm>
+ 
+#include <algorithm> 
 #include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <sstream>
 #include <string>
-#include <vector>
+#include <vector> 
 
 #include <boost/lexical_cast.hpp>
-
-namespace isc {
-namespace util {
-namespace str {
-
+ 
+namespace isc { 
+namespace util { 
+namespace str { 
+ 
 /// @brief A Set of C++ Utilities for Manipulating Strings
-
+ 
 ///
 /// @brief A standard string util exception that is thrown if getToken or
 /// numToToken are called with bad input data
@@ -36,16 +36,16 @@ public:
 };
 
 /// @brief Trim leading and trailing spaces.
-///
-/// Returns a copy of the input string but with any leading or trailing spaces
-/// or tabs removed.
-///
+/// 
+/// Returns a copy of the input string but with any leading or trailing spaces 
+/// or tabs removed. 
+/// 
 /// @param input Input string to modify.
-///
+/// 
 /// @return String with leading and trailing spaces removed.
 std::string
 trim(const std::string& input);
-
+ 
 /// @brief Finds the "trimmed" end of a buffer
 ///
 /// Works backward from the end of the buffer, looking for the first
@@ -68,71 +68,71 @@ seekTrimmed(Iterator const& begin, Iterator end, uint8_t const trim_val) {
     }
     return (end);
 }
-
+ 
 /// @brief Split string into tokens.
-///
-/// Splits a string into tokens (the tokens being delimited by one or more of
+/// 
+/// Splits a string into tokens (the tokens being delimited by one or more of 
 /// the delimiter characters) and returns the tokens in a vector.
 /// Adjacent delimiters are considered to be a single delimiter.
-///
-/// Special cases are:
-/// -# The empty string is considered to be zero tokens.
-/// -# A string comprising nothing but delimiters is considered to be zero
-///    tokens.
-///
-/// The reasoning behind this is that the string can be thought of as having
-/// invisible leading and trailing delimiter characters.  Therefore both cases
-/// reduce to a set of contiguous delimiters, which are considered a single
-/// delimiter (so getting rid of the string).
+/// 
+/// Special cases are: 
+/// -# The empty string is considered to be zero tokens. 
+/// -# A string comprising nothing but delimiters is considered to be zero 
+///    tokens. 
+/// 
+/// The reasoning behind this is that the string can be thought of as having 
+/// invisible leading and trailing delimiter characters.  Therefore both cases 
+/// reduce to a set of contiguous delimiters, which are considered a single 
+/// delimiter (so getting rid of the string). 
 /// Optional escape allows to escape delimiter characters (and *only* them
 /// and the escape character itself) using backslash.
-///
-/// We could use Boost for this, but this (simple) function eliminates one
-/// dependency in the code.
-///
+/// 
+/// We could use Boost for this, but this (simple) function eliminates one 
+/// dependency in the code. 
+/// 
 /// @param text String to be split.  Passed by value as the internal copy is
-/// altered during the processing.
+/// altered during the processing. 
 /// @param delim Delimiter characters
 /// @param escape Use backslash to escape delimiter characters
-///
+/// 
 /// @return Vector of tokens.
 std::vector<std::string>
 tokens(const std::string& text, const std::string& delim = " \t\n", bool escape = false);
-
+ 
 /// @brief Convert character to uppercase.
-///
+/// 
 /// Used in uppercase() to pass as a parameter to std::transform().  The
 /// function std::toupper() can't be used as it takes an "int" as its parameter;
-/// this confuses the template expansion mechanism because dereferencing a
-/// string::iterator returns a char.
-///
+/// this confuses the template expansion mechanism because dereferencing a 
+/// string::iterator returns a char. 
+/// 
 /// @param chr Character to be upper-cased.
-///
+/// 
 /// @return Uppercase version of the input character.
 char
 toUpper(char const chr);
-
+ 
 /// @brief Convert string to uppercase.
-///
+/// 
 /// @param text String to be upper-cased.
 void
 uppercase(std::string& text);
-
+ 
 /// @brief Convert character to lowercase.
-///
+/// 
 /// Used in lowercase() to pass as a parameter to std::transform().  The
 /// function std::tolower() can't be used as it takes an "int" as its parameter;
-/// this confuses the template expansion mechanism because dereferencing a
-/// string::iterator returns a char.
-///
+/// this confuses the template expansion mechanism because dereferencing a 
+/// string::iterator returns a char. 
+/// 
 /// @param chr Character to be lower-cased.
-///
+/// 
 /// @return Lowercase version of the input character.
 char
 toLower(char const chr);
-
+ 
 /// @brief Convert string to lowercase.
-///
+/// 
 /// @param text String to be lower-cased.
 void
 lowercase(std::string& text);
@@ -288,5 +288,5 @@ dumpAsHex(const uint8_t* data, size_t length);
 }  // namespace str
 }  // namespace util
 }  // namespace isc
-
+ 
 #endif  // KEA_UTIL_STR_H

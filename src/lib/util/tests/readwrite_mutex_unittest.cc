@@ -418,7 +418,7 @@ TEST_F(ReadWriteMutexTest, readWriteRead) {
 
                 // Verify the reader thread is waiting for the read lock.
                 cout << "pausing for one second" << std::endl;
-                bool ret = syncr_.done_cv.wait_for(doner_lock, chrono::seconds(1), [this](){ return syncr_.done; });
+                ret = syncr_.done_cv.wait_for(doner_lock, chrono::seconds(1), [this](){ return syncr_.done; });
 
                 EXPECT_FALSE(syncr_.done);
                 EXPECT_FALSE(ret);

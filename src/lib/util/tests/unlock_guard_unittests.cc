@@ -174,7 +174,7 @@ TEST_F(UnlockGuardTest, testMutex) {
         {
             // call lock_guard constructor which locks mutex resulting in an
             // exception as the mutex is already locked (dead lock)
-            EXPECT_THROW(lock_guard<TestMutex> lock(*test_mutex.get()),
+            EXPECT_THROW(lock_guard<TestMutex> lock2(*test_mutex.get()),
                          isc::InvalidOperation);
             // expect lock 1 lock_count 1 unlock_count 0 dead_lock true
             // you should not be able to get here...using a real mutex
@@ -198,7 +198,7 @@ TEST_F(UnlockGuardTest, testMutex) {
         {
             // call lock_guard constructor which locks mutex but does not block
             // as this is done on the same thread and the mutex is recursive
-            EXPECT_NO_THROW(lock_guard<TestMutex> lock(*test_mutex.get()));
+            EXPECT_NO_THROW(lock_guard<TestMutex> lock2(*test_mutex.get()));
             // expect lock 1 lock_count 2 unlock_count 1 dead_lock false
             // the destructor was already called in EXPECT_NO_THROW scope
             test_mutex->testMutexState(1, 2, 1, false);
