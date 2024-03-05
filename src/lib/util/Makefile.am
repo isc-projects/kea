@@ -57,6 +57,7 @@ libkea_util_include_HEADERS = \
 	boost_time_utils.h \
 	buffer.h \
 	csv_file.h \
+	chrono_time_utils.h \
 	dhcp_space.h \
 	doubles.h \
 	file_utilities.h \
@@ -95,4 +96,5 @@ libkea_util_io_include_HEADERS = \
 	io/fd.h \
 	io/fd_share.h \
 	io/pktinfo_utilities.h \
-	io/sockaddr_util.h
+	io/sockaddr_util.h \
+	io/socketsession.h
