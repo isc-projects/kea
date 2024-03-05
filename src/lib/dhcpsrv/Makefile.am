@@ -397,8 +397,8 @@ endif
 if ENABLE_AFL
 libkea_dhcpsrv_include_HEADERS += \
 	fuzz.h \
-    fuzz_log.h \
-    fuzz_messages.h
+	fuzz_log.h \
+	fuzz_messages.h
 endif
 
 # Specify parsers' headers for copying into installation directory tree.
