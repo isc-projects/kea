@@ -4039,4 +4039,65 @@ TEST_F(HooksDhcpv4SrvTest, lease4OfferDiscoverDecline) {
     EXPECT_EQ(expected_address, callback_lease4_->addr_);
 }
 
+// Checks that postponed hook start service can fail.
+TEST_F(LoadUnloadDhcpv4SrvTest, StartServiceFail) {
+    boost::shared_ptr<ControlledDhcpv4Srv> srv(new ControlledDhcpv4Srv(0));
+
+    // Ensure no marker files to start with.
+    ASSERT_FALSE(checkMarkerFileExists(LOAD_MARKER_FILE));
+    ASSERT_FALSE(checkMarkerFileExists(UNLOAD_MARKER_FILE));
+    ASSERT_FALSE(checkMarkerFileExists(SRV_CONFIG_MARKER_FILE));
+
+    // Minimal valid configuration for the server. It includes the
+    // section which loads the callout library #4, which implements
+    // dhcp4_srv_configured callout and a failing start service.
+    string config_str =
+        "{"
+        "    \"interfaces-config\": {"
+        "        \"interfaces\": [ ]"
+        "    },"
+        "    \"rebind-timer\": 2000,"
+        "    \"renew-timer\": 1000,"
+        "    \"subnet4\": [ ],"
+        "    \"valid-lifetime\": 4000,"
+        "    \"lease-database\": {"
+        "         \"type\": \"memfile\","
+        "         \"persist\": false"
+        "    },"
+        "    \"hooks-libraries\": ["
+        "        {"
+        "            \"library\": \"" + std::string(CALLOUT_LIBRARY_4) + "\""
+        "        }"
+        "    ]"
+        "}";
+
+    ConstElementPtr config = Element::fromJSON(config_str);
+
+    // Configure the server.
+    ConstElementPtr answer;
+    ASSERT_NO_THROW(answer = srv->processConfig(config));
+
+    // Make sure there was an error with expected message.
+    int status_code;
+    parseAnswer(status_code, answer);
+    EXPECT_EQ(1, status_code);
+    EXPECT_EQ(answer->str(),
+              R"({ "result": 1, "text": "Error initializing hooks: start service failed" })");
+
+    // The hook library should have been loaded.
+    EXPECT_TRUE(checkMarkerFile(LOAD_MARKER_FILE, "4"));
+    EXPECT_FALSE(checkMarkerFileExists(UNLOAD_MARKER_FILE));
+    // The dhcp4_srv_configured should have been invoked and the provided
+    // parameters should be recorded.
+    EXPECT_TRUE(checkMarkerFile(SRV_CONFIG_MARKER_FILE,
+                                "4io_contextjson_confignetwork_stateserver_config"));
+
+    // Destroy the server, instance which should unload the libraries.
+    srv.reset();
+
+    // The server was destroyed, so the unload() function should now
+    // include the library number in its marker file.
+    EXPECT_TRUE(checkMarkerFile(UNLOAD_MARKER_FILE, "4"));
+}
+
 }  // namespace

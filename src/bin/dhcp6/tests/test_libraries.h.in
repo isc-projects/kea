@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -20,6 +20,7 @@ namespace {
 const char* const CALLOUT_LIBRARY_1 = "@abs_builddir@/.libs/libco1.so";
 const char* const CALLOUT_LIBRARY_2 = "@abs_builddir@/.libs/libco2.so";
 const char* const CALLOUT_LIBRARY_3 = "@abs_builddir@/.libs/libco3.so";
+const char* const CALLOUT_LIBRARY_4 = "@abs_builddir@/.libs/libco4.so";
 
 // Name of a library which is not present.
 const char* const NOT_PRESENT_LIBRARY = "@abs_builddir@/.libs/libnothere.so";

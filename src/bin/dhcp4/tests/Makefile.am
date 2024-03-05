@@ -64,8 +64,13 @@ libco3_la_CXXFLAGS = $(AM_CXXFLAGS)
 libco3_la_CPPFLAGS = $(AM_CPPFLAGS)
 libco3_la_LDFLAGS = -avoid-version -export-dynamic -module -rpath /nowhere
 
+libco4_la_SOURCES  = callout_library_4.cc callout_library_common.h
+libco4_la_CXXFLAGS = $(AM_CXXFLAGS)
+libco4_la_CPPFLAGS = $(AM_CPPFLAGS)
+libco4_la_LDFLAGS = -avoid-version -export-dynamic -module -rpath /nowhere
+
 # Don't install test libraries.
-noinst_LTLIBRARIES = libco1.la libco2.la libco3.la
+noinst_LTLIBRARIES = libco1.la libco2.la libco3.la libco4.la
 
 # C++ tests
 PROGRAM_TESTS = dhcp4_unittests
