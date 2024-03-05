@@ -394,6 +394,13 @@ libkea_dhcpsrv_include_HEADERS += \
 	pgsql_lease_mgr.h
 endif
 
+if ENABLE_AFL
+libkea_dhcpsrv_include_HEADERS += \
+	fuzz.h \
+    fuzz_log.h \
+    fuzz_messages.h
+endif
+
 # Specify parsers' headers for copying into installation directory tree.
 libkea_dhcpsrv_parsers_includedir = $(pkgincludedir)/dhcpsrv/parsers
 libkea_dhcpsrv_parsers_include_HEADERS = \
