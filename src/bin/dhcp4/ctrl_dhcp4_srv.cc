@@ -1077,6 +1077,7 @@ ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
     } catch (const std::exception& ex) {
         err << "Error initializing the lease allocators: "
             << ex.what();
+        return (isc::config::createAnswer(CONTROL_RESULT_ERROR, err.str()));
     }
 
     // Apply multi threading settings.
@@ -1087,6 +1088,15 @@ ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
         CfgMultiThreading::apply(CfgMgr::instance().getStagingCfg()->getDHCPMultiThreading());
     } catch (const std::exception& ex) {
         err << "Error applying multi threading settings: "
+            << ex.what();
+        return (isc::config::createAnswer(CONTROL_RESULT_ERROR, err.str()));
+    }
+
+    /// Let postponed hook initializations to run.
+    try {
+        ControlledDhcpv4Srv::getInstance()->getIOService()->poll();
+    } catch (const std::exception& ex) {
+        err << "Error initializing hooks: "
             << ex.what();
         return (isc::config::createAnswer(CONTROL_RESULT_ERROR, err.str()));
     }
