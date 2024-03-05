@@ -1,3 +1,10 @@
+2209.	[func]		fdupont
+	Some hooks using multi-threading postpone their start
+	routing at the end of configuration processing.
+	Now these routines can safely throw when they detect
+	a problem: a configuration error is reported.
+	(Gitlab #2692)
+
 Kea 2.5.6 (development) released on February 28, 2024
 
 2208.	[build]		razvan
