@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -41,41 +41,73 @@ protected:
     size_t expected_size;
     uint16_t data16;
     uint32_t data32;
+    std::vector<uint8_t> datav;
 };
 
 const uint8_t BufferTest::testdata[5] = {1, 2, 3, 4, 5};
 
 TEST_F(BufferTest, inputBufferRead) {
     EXPECT_EQ(5, ibuffer.getLength());
+    EXPECT_EQ(1, ibuffer.peekUint8());
+    EXPECT_EQ(0, ibuffer.getPosition());
     EXPECT_EQ(1, ibuffer.readUint8());
     EXPECT_EQ(1, ibuffer.getPosition());
-    data16 = ibuffer.readUint16();
+    data16 = ibuffer.peekUint16();
+    EXPECT_EQ(1, ibuffer.getPosition());
+    EXPECT_EQ(data16, ibuffer.readUint16());
     EXPECT_EQ((2 << 8) | 3, data16);
     EXPECT_EQ(3, ibuffer.getPosition());
     ibuffer.setPosition(1);
     EXPECT_EQ(1, ibuffer.getPosition());
-    data32 = ibuffer.readUint32();
+    data32 = ibuffer.peekUint32();
+    EXPECT_EQ(1, ibuffer.getPosition());
+    EXPECT_EQ(data32, ibuffer.readUint32());
     EXPECT_EQ((2 << 24) | (3 << 16) | (4 << 8) | 5, data32);
     ibuffer.setPosition(0);
     memset(vdata, 0, sizeof(vdata));
+    ibuffer.peekData(vdata, sizeof(vdata));
+    EXPECT_EQ(0, memcmp(vdata, testdata, sizeof(testdata)));
+    EXPECT_EQ(0, ibuffer.getPosition());
+    memset(vdata, 0, sizeof(vdata));
     ibuffer.readData(vdata, sizeof(vdata));
     EXPECT_EQ(0, memcmp(vdata, testdata, sizeof(testdata)));
+    EXPECT_EQ(sizeof(vdata), ibuffer.getPosition());
+    ibuffer.setPosition(0);
+    datav.clear();
+    ibuffer.peekVector(datav, sizeof(vdata));
+    ASSERT_EQ(sizeof(vdata), datav.size());
+    EXPECT_EQ(0, memcmp(&vdata[0], testdata, sizeof(testdata)));
+    EXPECT_EQ(0, ibuffer.getPosition());
+    datav.clear();
+    ibuffer.readVector(datav, sizeof(vdata));
+    ASSERT_EQ(sizeof(vdata), datav.size());
+    EXPECT_EQ(0, memcmp(&vdata[0], testdata, sizeof(testdata)));
+    EXPECT_EQ(sizeof(vdata), ibuffer.getPosition());
 }
 
 TEST_F(BufferTest, inputBufferException) {
     EXPECT_THROW(ibuffer.setPosition(6), isc::util::InvalidBufferPosition);
 
     ibuffer.setPosition(sizeof(testdata));
+    EXPECT_THROW(ibuffer.peekUint8(), isc::util::InvalidBufferPosition);
     EXPECT_THROW(ibuffer.readUint8(), isc::util::InvalidBufferPosition);
 
     ibuffer.setPosition(sizeof(testdata) - 1);
+    EXPECT_THROW(ibuffer.peekUint16(), isc::util::InvalidBufferPosition);
     EXPECT_THROW(ibuffer.readUint16(), isc::util::InvalidBufferPosition);
 
     ibuffer.setPosition(sizeof(testdata) - 3);
+    EXPECT_THROW(ibuffer.peekUint32(), isc::util::InvalidBufferPosition);
     EXPECT_THROW(ibuffer.readUint32(), isc::util::InvalidBufferPosition);
 
     ibuffer.setPosition(sizeof(testdata) - 4);
+    EXPECT_THROW(ibuffer.peekData(vdata, sizeof(vdata)),
+                 isc::util::InvalidBufferPosition);
     EXPECT_THROW(ibuffer.readData(vdata, sizeof(vdata)),
+                 isc::util::InvalidBufferPosition);
+    EXPECT_THROW(ibuffer.peekVector(datav, sizeof(vdata)),
+                 isc::util::InvalidBufferPosition);
+    EXPECT_THROW(ibuffer.readVector(datav, sizeof(vdata)),
                  isc::util::InvalidBufferPosition);
 }
 

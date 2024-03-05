@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -24,10 +24,10 @@ namespace util {
 /// \brief A standard DNS module exception that is thrown if an out-of-range
 /// buffer operation is being performed.
 ///
-class InvalidBufferPosition : public Exception {
+class InvalidBufferPosition : public isc::OutOfRange {
 public:
     InvalidBufferPosition(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) {}
+        isc::OutOfRange(file, line, what) {}
 };
 
 ///\brief The \c InputBuffer class is a buffer abstraction for manipulating
@@ -73,11 +73,18 @@ public:
 /// be a perfect solution, we have adopted what we thought a "least bad" one.
 ///
 /// Methods for reading data from the buffer generally work like an input
+
+/// Methods for reading data from the buffer generally work like an input
 /// stream: it begins with the head of the data, and once some length of data
 /// is read from the buffer, the next read operation will take place from the
 /// head of the unread data.  An object of this class internally holds (a
 /// notion of) where the next read operation should start.  We call it the
-/// <em>read position</em> in this document.
+/// <em>current pointer</em> in this document.
+///
+/// The inequality base_ <= current_ <= end_ is enforced, current_ == base_
+/// at the initial state, current_ == end_ when the whole buffer was read.
+/// Even the difference of two pointers is a std::ptrdiff_t it is safe to
+/// cast to a size_t because of the inequality.
 class InputBuffer {
 public:
     ///
@@ -90,16 +97,23 @@ public:
     /// \param data A pointer to the data stored in the buffer.
     /// \param len The length of the data in bytes.
     InputBuffer(const void* data, size_t len) :
-        position_(0), data_(static_cast<const uint8_t*>(data)), len_(len) {}
+      base_(static_cast<const uint8_t*>(data)), current_(base_),
+      end_(base_ + len) {
+    }
     //@}
 
     ///
     /// \name Getter Methods
     //@{
     /// \brief Return the length of the data stored in the buffer.
-    size_t getLength() const { return (len_); }
+    size_t getLength() const {
+        return (static_cast<size_t>(end_ - base_));
+    }
+
     /// \brief Return the current read position.
-    size_t getPosition() const { return (position_); }
+    size_t getPosition() const {
+        return (static_cast<size_t>(current_ - base_));
+    }
     //@}
 
     ///
@@ -113,69 +127,114 @@ public:
     /// \param position The new position (offset from the beginning of the
     /// buffer).
     void setPosition(size_t position) {
-        if (position > len_) {
+        if (base_ + position > end_) {
             throwError("position is too large");
         }
-        position_ = position;
+        current_ = base_ + position;
     }
     //@}
 
     ///
     /// \name Methods for reading data from the buffer.
     //@{
+    /// \brief Peek an unsigned 8-bit integer from the buffer and return it.
+    ///
+    /// If the remaining length of the buffer is smaller than 8-bit, an
+    /// exception of class \c isc::dns::InvalidBufferPosition will be thrown.
+    uint8_t peekUint8() {
+        if (current_ + sizeof(uint8_t) > end_) {
+            throwError("read beyond end of buffer");
+        }
+
+        return (*current_);
+    }
+
     /// \brief Read an unsigned 8-bit integer from the buffer and return it.
     ///
     /// If the remaining length of the buffer is smaller than 8-bit, an
     /// exception of class \c isc::dns::InvalidBufferPosition will be thrown.
     uint8_t readUint8() {
-        if (position_ + sizeof(uint8_t) > len_) {
+        uint8_t ret = peekUint8();
+        current_ += sizeof(uint8_t);
+
+        return (ret);
+    }
+
+    /// \brief Peek an unsigned 16-bit integer in network byte order from the
+    /// buffer, and return it.
+    ///
+    /// If the remaining length of the buffer is smaller than 16-bit, an
+    /// exception of class \c isc::dns::InvalidBufferPosition will be thrown.
+    uint16_t peekUint16() {
+        if (current_ + sizeof(uint16_t) > end_) {
             throwError("read beyond end of buffer");
         }
 
-        return (data_[position_++]);
+        uint16_t ret;
+        ret = (static_cast<uint16_t>(current_[0])) << 8;
+        ret |= (static_cast<uint16_t>(current_[1]));
+
+        return (ret);
     }
+
     /// \brief Read an unsigned 16-bit integer in network byte order from the
-    /// buffer, convert it to host byte order, and return it.
+    /// buffer, and return it.
     ///
     /// If the remaining length of the buffer is smaller than 16-bit, an
     /// exception of class \c isc::dns::InvalidBufferPosition will be thrown.
     uint16_t readUint16() {
-        uint16_t data;
-        const uint8_t* cp;
+        uint16_t ret = peekUint16();
+        current_ += sizeof(uint16_t);
 
-        if (position_ + sizeof(data) > len_) {
+        return (ret);
+    }
+
+    /// \brief Read an unsigned 32-bit integer in network byte order from the
+    /// buffer, and return it.
+    ///
+    /// If the remaining length of the buffer is smaller than 32-bit, an
+    /// exception of class \c isc::dns::InvalidBufferPosition will be thrown.
+    uint32_t peekUint32() {
+        if (current_ + sizeof(uint32_t) > end_) {
             throwError("read beyond end of buffer");
         }
 
-        cp = &data_[position_];
-        data = ((unsigned int)(cp[0])) << 8;
-        data |= ((unsigned int)(cp[1]));
-        position_ += sizeof(data);
+        uint32_t ret;
+        ret = (static_cast<uint32_t>(current_[0])) << 24;
+        ret |= (static_cast<uint32_t>(current_[1])) << 16;
+        ret |= (static_cast<uint32_t>(current_[2])) << 8;
+        ret |= (static_cast<uint32_t>(current_[3]));
 
-        return (data);
+        return (ret);
     }
+
     /// \brief Read an unsigned 32-bit integer in network byte order from the
-    /// buffer, convert it to host byte order, and return it.
+    /// buffer, and return it.
     ///
     /// If the remaining length of the buffer is smaller than 32-bit, an
     /// exception of class \c isc::dns::InvalidBufferPosition will be thrown.
     uint32_t readUint32() {
-        uint32_t data;
-        const uint8_t* cp;
+        uint32_t ret = peekUint32();
+        current_ += sizeof(uint32_t);
 
-        if (position_ + sizeof(data) > len_) {
+        return (ret);
+    }
+
+    /// \brief Peek data of the specified length from the buffer and copy it to
+    /// the caller supplied buffer.
+    ///
+    /// The data is copied as stored in the buffer; no conversion is performed.
+    /// If the remaining length of the buffer is smaller than the specified
+    /// length, an exception of class \c isc::dns::InvalidBufferPosition will
+    /// be thrown.
+    void peekData(void* data, size_t len) {
+        if (current_ + len > end_) {
             throwError("read beyond end of buffer");
         }
 
-        cp = &data_[position_];
-        data = ((unsigned int)(cp[0])) << 24;
-        data |= ((unsigned int)(cp[1])) << 16;
-        data |= ((unsigned int)(cp[2])) << 8;
-        data |= ((unsigned int)(cp[3]));
-        position_ += sizeof(data);
-
-        return (data);
+        static_cast<void>(std::memmove(data, current_, len));
     }
+
     /// \brief Read data of the specified length from the buffer and copy it to
     /// the caller supplied buffer.
     ///
@@ -184,14 +243,26 @@ public:
     /// length, an exception of class \c isc::dns::InvalidBufferPosition will
     /// be thrown.
     void readData(void* data, size_t len) {
-        if (position_ + len > len_) {
+        peekData(data, len);
+        current_ += len;
+    }
+
+    /// @brief Peek specified number of bytes as a vector.
+    ///
+    /// If specified buffer is too short, it will be expanded
+    /// using vector::resize() method.
+    ///
+    /// @param data Reference to a buffer (data will be stored there).
+    /// @param len Size specified number of bytes to read in a vector.
+    ///
+    void peekVector(std::vector<uint8_t>& data, size_t len) {
+        if (current_ + len > end_) {
             throwError("read beyond end of buffer");
         }
 
-        static_cast<void>(std::memmove(data, &data_[position_], len));
-        position_ += len;
+        data.resize(len);
+        peekData(&data[0], len);
     }
-    //@}
 
     /// @brief Read specified number of bytes as a vector.
     ///
@@ -202,13 +273,10 @@ public:
     /// @param len Size specified number of bytes to read in a vector.
     ///
     void readVector(std::vector<uint8_t>& data, size_t len) {
-        if (position_ + len > len_) {
-            throwError("read beyond end of buffer");
-        }
-
-        data.resize(len);
-        readData(&data[0], len);
+        peekVector(data, len);
+        current_ += len;
     }
+    //@}
 
 private:
     /// \brief A common helper to throw an exception on invalid operation.
@@ -220,14 +288,14 @@ private:
         isc_throw(InvalidBufferPosition, msg);
     }
 
-    size_t position_;
+    /// \brief Base of the buffer.
+    const uint8_t* base_;
 
-    // XXX: The following must be private, but for a short term workaround with
-    // Boost.Python binding, we changed it to protected.  We should soon
-    // revisit it.
-protected:
-    const uint8_t* data_;
-    size_t len_;
+    /// \brief Current poisition in the buffer.
+    const uint8_t* current_;
+
+    /// \brief End of the buffer (address of the byte after).
+    const uint8_t* end_;
 };
 
 ///
