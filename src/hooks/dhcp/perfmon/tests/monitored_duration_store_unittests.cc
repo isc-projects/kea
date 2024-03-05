@@ -392,6 +392,93 @@ public:
         EXPECT_EQ(previous_interval->getTotalDuration(), (five_ms) * 2);
     }
 
+    /// @brief Veriries getReportsNext and getOverdueReports
+    ///
+    /// @param family protocol family to test, AF_INET or AF_INET6
+    void reportDueTest(uint16_t family) {
+        // Create a store.
+        Duration interval_duration(milliseconds(100));
+        MonitoredDurationStore store(family, interval_duration);
+
+        // Create durations in the store, none of them will have intervals.
+        size_t num_subnets = 4;
+        std::vector<DurationKeyPtr> keys;
+        for (int s = 0; s < num_subnets; ++s) {
+            auto key = makeKey(family, s);
+            store.addDuration(key);
+            keys.push_back(key);
+        }
+
+        // No duration should be due to report.
+        MonitoredDurationPtr mond;
+        ASSERT_NO_THROW_LOG(mond = store.getReportsNext());
+        ASSERT_FALSE(mond);
+
+        // No durations should be over due to report.
+        MonitoredDurationCollectionPtr durations;
+        ASSERT_NO_THROW_LOG(durations = store.getOverdueReports());
+        ASSERT_TRUE(durations);
+        EXPECT_TRUE(durations->empty());
+
+        // Now add a 5ms sample to all four durations in reverse order
+        // This should give us a list of durations (by key) as follows:
+        //
+        // key[0] - interval start = now + 54ms
+        // key[1] - interval start = now + 52ms
+        // key[2] - interval start = now + 2ms
+        // key[3] - interval start = now
+        auto five_ms(milliseconds(5));
+        for (auto k = keys.rbegin(); k != keys.rend();  ++k ) {
+            ASSERT_NO_THROW_LOG(store.addDurationSample(*k, five_ms));
+            if ((*k)->getSubnetId() != 2) {
+                usleep(2 * 1000);   // put 2ms gap between them
+            } else {
+                usleep(50 * 1000);  // put 50ms gap between them.
+            }
+        }
+
+        // Key[3] should be returned by getReportsNext().
+        ASSERT_NO_THROW_LOG(mond = store.getReportsNext());
+        ASSERT_TRUE(mond);
+        EXPECT_EQ(*mond, *keys[3]) << "mond: " << mond->getLabel();
+
+        // None should be returned by getOverdueReports().
+        ASSERT_NO_THROW_LOG(durations = store.getOverdueReports());
+        ASSERT_TRUE(durations);
+        EXPECT_TRUE(durations->empty());
+
+        // Sleep for 50 ms.
+        usleep(50 * 1000);
+
+        // Key[1] should be returned by getReportsNext().
+        ASSERT_NO_THROW_LOG(mond = store.getReportsNext());
+        ASSERT_TRUE(mond);
+        EXPECT_EQ(*mond, *keys[1]) << "mond: " << mond->getLabel();
+
+        // Key[3] and key[2] should be returned by getOverdueReports().
+        ASSERT_NO_THROW_LOG(durations = store.getOverdueReports());
+        ASSERT_TRUE(durations);
+        EXPECT_EQ(durations->size(), 2);
+        EXPECT_EQ(*(*durations)[0], *keys[3]);
+        EXPECT_EQ(*(*durations)[1], *keys[2]);
+
+        // Sleep for 50 ms.
+        usleep(50 * 1000);
+
+        // None should report as reports next.
+        ASSERT_NO_THROW_LOG(mond = store.getReportsNext());
+        ASSERT_FALSE(mond);
+
+        // All should be found overdue.
+        ASSERT_NO_THROW_LOG(durations = store.getOverdueReports());
+        ASSERT_TRUE(durations);
+        EXPECT_EQ(durations->size(), keys.size());
+        EXPECT_EQ(*(*durations)[0], *keys[3]);
+        EXPECT_EQ(*(*durations)[1], *keys[2]);
+        EXPECT_EQ(*(*durations)[2], *keys[1]);
+        EXPECT_EQ(*(*durations)[3], *keys[0]);
+    }
+
     /// @brief Test tool for gauging speed.
     ///
     /// This test is really just a development tool for gauging performance.
@@ -560,6 +647,24 @@ TEST_F(MonitoredDurationStoreTest, addDurationSample6) {
 TEST_F(MonitoredDurationStoreTest, addDurationSample6MultiThreading) {
     MultiThreadingTest mt;
     addDurationSampleTest(AF_INET6);
+}
+
+TEST_F(MonitoredDurationStoreTest, reportDue) {
+    reportDueTest(AF_INET);
+}
+
+TEST_F(MonitoredDurationStoreTest, reportDueMultiThreading) {
+    MultiThreadingTest mt;
+    reportDueTest(AF_INET);
+}
+
+TEST_F(MonitoredDurationStoreTest, reportDue6) {
+    reportDueTest(AF_INET);
+}
+
+TEST_F(MonitoredDurationStoreTest, reportDue6MultiThreading) {
+    MultiThreadingTest mt;
+    reportDueTest(AF_INET6);
 }
 
 } // end of anonymous namespace

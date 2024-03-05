@@ -481,4 +481,42 @@ TEST(MonitoredDuration, addSampleAndClear) {
     EXPECT_FALSE(mond->getPreviousInterval());
 }
 
+TEST(MonitoredDuration, expireInterval) {
+    MonitoredDurationPtr mond;
+    Duration interval_duration(milliseconds(50));
+    auto start_time = PktEvent::now();
+    auto ten_ms = milliseconds(10);
+
+    // Create valid v4 duration with interval duration of 50ms.
+    ASSERT_NO_THROW_LOG(mond.reset(new MonitoredDuration(AF_INET, DHCPDISCOVER, DHCPOFFER,
+                                                         "process_started", "process_completed",
+                                                         SUBNET_ID_GLOBAL, interval_duration)));
+    ASSERT_TRUE(mond);
+
+    // Initially there are no intervals.
+    EXPECT_FALSE(mond->getCurrentInterval());
+    EXPECT_FALSE(mond->getPreviousInterval());
+    EXPECT_EQ(mond->getCurrentIntervalStart(), PktEvent::MIN_TIME());
+
+    ASSERT_THROW_MSG(mond->expireCurrentInterval(), InvalidOperation,
+                     "MonitoredDuration::expireInterval - no current interval for:"
+                     " DHCPDISCOVER-DHCPOFFER.process_started-process_completed.0");
+
+    ASSERT_NO_THROW(mond->addSample(ten_ms));
+    auto current_interval = mond->getCurrentInterval();
+    ASSERT_TRUE(current_interval);
+    EXPECT_EQ(current_interval->getOccurrences(), 1);
+    EXPECT_EQ(current_interval->getTotalDuration(), ten_ms);
+    EXPECT_FALSE(mond->getPreviousInterval());
+    EXPECT_GE(mond->getCurrentIntervalStart(), start_time);
+    EXPECT_EQ(mond->getCurrentIntervalStart(), current_interval->getStartTime());
+
+    ASSERT_NO_THROW_LOG(mond->expireCurrentInterval());
+    EXPECT_FALSE(mond->getCurrentInterval());
+
+    auto previous_interval = mond->getPreviousInterval();
+    EXPECT_EQ(previous_interval, current_interval);
+    EXPECT_EQ(mond->getCurrentIntervalStart(), PktEvent::MIN_TIME());
+}
+
 } // end of anonymous namespace

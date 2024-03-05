@@ -23,10 +23,7 @@ namespace perfmon {
 DurationDataInterval::DurationDataInterval(const Timestamp& start_time /* = PktEvent::now()*/)
     : start_time_(start_time), occurrences_(0),
       min_duration_(pos_infin), max_duration_(neg_infin),
-      total_duration_(microseconds(0)) {
-}
-
-void
+      total_duration_(microseconds(0)) { } void
 DurationDataInterval::addDuration(const Duration& duration) {
     ++occurrences_;
     if (duration < min_duration_) {
@@ -248,6 +245,12 @@ MonitoredDuration::MonitoredDuration(const MonitoredDuration& rhs)
     }
 }
 
+Timestamp
+MonitoredDuration::getCurrentIntervalStart() const {
+    return (current_interval_ ? current_interval_->getStartTime()
+                              : dhcp::PktEvent::MIN_TIME());
+}
+
 bool
 MonitoredDuration::addSample(const Duration& sample) {
     auto now = PktEvent::now();
@@ -262,6 +265,17 @@ MonitoredDuration::addSample(const Duration& sample) {
 
     current_interval_->addDuration(sample);
     return (do_report);
+}
+
+void
+MonitoredDuration::expireCurrentInterval() {
+    if (!current_interval_) {
+        isc_throw(InvalidOperation, "MonitoredDuration::expireInterval"
+                                    " - no current interval for: " << getLabel());
+    }
+
+    previous_interval_ = current_interval_;
+    current_interval_.reset();
 }
 
 void

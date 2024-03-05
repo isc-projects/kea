@@ -121,9 +121,25 @@ public:
     /// @brief Fetch an empty timestamp, used for logic comparisons
     ///
     /// @return an unset ptime.
-    static boost::posix_time::ptime EMPTY_TIME() {
+    static boost::posix_time::ptime& EMPTY_TIME() {
         static boost::posix_time::ptime empty_time;
         return (empty_time);
+    }
+
+    /// @brief Fetches the minimum timestamp
+    ///
+    /// @return the minimum timestamp
+    static boost::posix_time::ptime& MIN_TIME() {
+        static auto min_time = boost::posix_time::ptime(boost::posix_time::min_date_time);
+        return (min_time);
+    }
+
+    /// @brief Fetches the maximum timestamp
+    ///
+    /// @return the maximum timestamp
+    static boost::posix_time::ptime& MAX_TIME() {
+        static auto max_time = boost::posix_time::ptime(boost::posix_time::max_date_time);
+        return (max_time);
     }
 
     /// @brief Label identifying this event.

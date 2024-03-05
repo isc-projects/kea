@@ -11,7 +11,9 @@
 #include <util/multi_threading_mgr.h>
 
 using namespace isc;
+using namespace isc::dhcp;
 using namespace isc::util;
+using namespace boost::posix_time;
 
 namespace isc {
 namespace perfmon {
@@ -175,6 +177,36 @@ void
 MonitoredDurationStore::clear() {
     MultiThreadingLock lock(*mutex_);
     durations_.clear();
+}
+
+MonitoredDurationPtr
+MonitoredDurationStore::getReportsNext() {
+    MultiThreadingLock lock(*mutex_);
+    const auto& index = durations_.get<IntervalStartTag>();
+    // We want to find the oldest interval that is less than interval_duration in the past.
+    auto duration_iter = index.lower_bound(dhcp::PktEvent::now() - interval_duration_);
+    return (duration_iter == index.end() ? MonitoredDurationPtr()
+            : MonitoredDurationPtr(new MonitoredDuration(**duration_iter)));
+}
+
+MonitoredDurationCollectionPtr
+MonitoredDurationStore::getOverdueReports(const Timestamp& since /* = PktEvent::now() */) {
+    MultiThreadingLock lock(*mutex_);
+    // We use a lower bound of MIN + 1us to avoid dormant durations
+    static Timestamp lower_limit_time(PktEvent::MIN_TIME() + microseconds(1));
+
+    // We want to find anything since the start of time that who's start time
+    // is more than interval_duration_ in the past.
+    const auto& index = durations_.get<IntervalStartTag>();
+    auto lower_limit = index.lower_bound(lower_limit_time);
+    auto upper_limit = index.upper_bound(since - interval_duration_);
+
+    MonitoredDurationCollectionPtr collection(new MonitoredDurationCollection());
+    for (auto duration_iter = lower_limit; duration_iter != upper_limit; ++duration_iter) {
+        collection->push_back(MonitoredDurationPtr(new MonitoredDuration(**duration_iter)));
+    }
+
+    return (collection);
 }
 
 } // end of namespace perfmon

@@ -149,6 +149,21 @@ public:
     /// @return a collection of all durations in the store.
     MonitoredDurationCollectionPtr getAll();
 
+    /// @brief Fetches the duration which is due to report next.
+    ///
+    /// @return pointer to the matching duration or an empty pointer if
+    /// not found.
+    MonitoredDurationPtr getReportsNext();
+
+    /// @brief Fetches all durations that are overdue to report.
+    ///
+    /// @param since timestamp to search by. Defaults to current time.
+    ///
+    /// @return a collection of the matching durations, ordered by current interval
+    /// start time.
+    MonitoredDurationCollectionPtr getOverdueReports(const Timestamp& since
+                                                     = dhcp::PktEvent::now());
+
     /// @brief Removes all durations from the store.
     void clear();
 

@@ -313,13 +313,11 @@ public:
         return (current_interval_);
     }
 
-    /// @brief Get the current interval.
+    /// @brief Get the current interval start time.
     ///
-    /// @return Pointer to the current interval if it exists or an empty pointer.
-    Timestamp getCurrentIntervalStart() const {
-        return (current_interval_ ? current_interval_->getStartTime()
-                                  : dhcp::PktEvent::EMPTY_TIME());
-    }
+    /// @return Current interval's start time or MIN_TIME if there's no
+    /// current interval.
+    Timestamp getCurrentIntervalStart() const;
 
     /// @brief Add a sample to the duration's current interval.
     ///
@@ -332,6 +330,13 @@ public:
     ///
     /// @return True if there is a newly completed (i.e. previous) interval to report.
     bool addSample(const Duration& sample);
+
+    /// @brief Concludes the current interval
+    ///
+    /// Rotates current interval to previous and resets curent interval to empty.
+    ///
+    /// @throw InvalidOperation if there is no current interval.
+    void expireCurrentInterval();
 
     /// @brief Deletes the current and previous intervals.
     void clear();
