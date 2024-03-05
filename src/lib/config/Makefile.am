@@ -76,6 +76,9 @@ libkea_cfgclient_includedir = $(pkgincludedir)/config
 libkea_cfgclient_include_HEADERS = \
 	base_command_mgr.h \
 	client_connection.h \
+	cmd_http_listener.h \
+	cmd_response_creator.h \
+	cmd_response_creator_factory.h \
 	cmds_impl.h \
 	command_mgr.h \
 	config_log.h \
