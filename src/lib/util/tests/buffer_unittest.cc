@@ -125,19 +125,19 @@ TEST_F(BufferTest, outputBufferWrite) {
     obuffer.writeUint8(1);
     expected_size += sizeof(uint8_t);
     EXPECT_EQ(expected_size, obuffer.getLength());
-    cp = static_cast<const uint8_t*>(obuffer.getData());
+    cp = obuffer.getData();
     EXPECT_EQ(1, *cp);
 
     obuffer.writeUint16(data16);
     expected_size += sizeof(data16);
-    cp = static_cast<const uint8_t*>(obuffer.getData());
+    cp = obuffer.getData();
     EXPECT_EQ(expected_size, obuffer.getLength());
     EXPECT_EQ(2, *(cp + 1));
     EXPECT_EQ(3, *(cp + 2));
 
     obuffer.writeUint32(data32);
     expected_size += sizeof(data32);
-    cp = static_cast<const uint8_t*>(obuffer.getData());
+    cp = obuffer.getData();
     EXPECT_EQ(expected_size, obuffer.getLength());
     EXPECT_EQ(4, *(cp + 3));
     EXPECT_EQ(5, *(cp + 4));
@@ -147,31 +147,31 @@ TEST_F(BufferTest, outputBufferWrite) {
     obuffer.writeData(testdata, sizeof(testdata));
     expected_size += sizeof(testdata);
     EXPECT_EQ(expected_size, obuffer.getLength());
-    cp = static_cast<const uint8_t*>(obuffer.getData());
+    cp = obuffer.getData();
     EXPECT_EQ(0, memcmp(cp + 7, testdata, sizeof(testdata)));
 }
 
-TEST_F(BufferTest, outputBufferWriteat) {
+TEST_F(BufferTest, outputBufferWriteAt) {
     obuffer.writeUint32(data32);
     expected_size += sizeof(data32);
 
     // overwrite 2nd byte
     obuffer.writeUint8At(4, 1);
     EXPECT_EQ(expected_size, obuffer.getLength()); // length shouldn't change
-    const uint8_t* cp = static_cast<const uint8_t*>(obuffer.getData());
+    const uint8_t* cp = obuffer.getData();
     EXPECT_EQ(4, *(cp + 1));
 
     // overwrite 2nd and 3rd bytes
     obuffer.writeUint16At(data16, 1);
     EXPECT_EQ(expected_size, obuffer.getLength()); // length shouldn't change
-    cp = static_cast<const uint8_t*>(obuffer.getData());
+    cp = obuffer.getData();
     EXPECT_EQ(2, *(cp + 1));
     EXPECT_EQ(3, *(cp + 2));
 
     // overwrite 3rd and 4th bytes
     obuffer.writeUint16At(data16, 2);
     EXPECT_EQ(expected_size, obuffer.getLength());
-    cp = static_cast<const uint8_t*>(obuffer.getData());
+    cp = obuffer.getData();
     EXPECT_EQ(2, *(cp + 2));
     EXPECT_EQ(3, *(cp + 3));
 
@@ -210,35 +210,18 @@ TEST_F(BufferTest, outputBufferTrim) {
 
 TEST_F(BufferTest, outputBufferReadAt) {
     obuffer.writeData(testdata, sizeof(testdata));
-    for (int i = 0; i < sizeof(testdata); i ++) {
+    for (size_t i = 0; i < sizeof(testdata); ++i) {
         EXPECT_EQ(testdata[i], obuffer[i]);
     }
     EXPECT_THROW(obuffer[sizeof(testdata)], isc::util::InvalidBufferPosition);
 }
 
 TEST_F(BufferTest, outputBufferClear) {
-    const uint8_t* cp;
-
     obuffer.writeData(testdata, sizeof(testdata));
-    cp = static_cast<const uint8_t*>(obuffer.getData());
+    const uint8_t* cp = obuffer.getData();
     obuffer.clear();
     EXPECT_EQ(0, obuffer.getLength());
-    EXPECT_EQ(*cp, 1);
-}
-
-TEST_F(BufferTest, outputBufferWipe) {
-    const uint8_t* cp;
-
-    obuffer.writeData(testdata, sizeof(testdata));
-    cp = static_cast<const uint8_t*>(obuffer.getData());
-    obuffer.wipe();
-    EXPECT_EQ(0, obuffer.getLength());
-    EXPECT_EQ(*cp, 0);
-}
-
-TEST_F(BufferTest, emptyOutputBufferWipe) {
-    ASSERT_NO_THROW(obuffer.wipe());
-    EXPECT_EQ(0, obuffer.getLength());
+    EXPECT_FALSE(obuffer.getData());
 }
 
 TEST_F(BufferTest, outputBufferCopy) {
@@ -264,6 +247,7 @@ TEST_F(BufferTest, outputEmptyBufferCopy) {
     EXPECT_NO_THROW({
         OutputBuffer copy(obuffer);
         ASSERT_EQ(0, copy.getLength());
+        EXPECT_FALSE(copy.getData());
     });
 }
 
@@ -294,7 +278,7 @@ TEST_F(BufferTest, outputEmptyBufferAssign) {
         copy = obuffer;
     });
     ASSERT_EQ(0, copy.getLength());
-    EXPECT_EQ(NULL, copy.getData());
+    EXPECT_EQ(0, copy.getData());
 }
 
 // Check assign to self doesn't break stuff
@@ -312,22 +296,6 @@ TEST_F(BufferTest, outputBufferZeroSize) {
     });
 }
 
-TEST_F(BufferTest, inputBufferReadVectorAll) {
-    std::vector<uint8_t> vec;
-
-    // check that vector can read the whole buffer
-    ibuffer.readVector(vec, 5);
-
-    ASSERT_EQ(5, vec.size());
-    EXPECT_EQ(0, memcmp(&vec[0], testdata, 5));
-
-    // ibuffer is 5 bytes long. Can't read past it.
-    EXPECT_THROW(
-        ibuffer.readVector(vec, 1),
-        isc::util::InvalidBufferPosition
-    );
-}
-
 TEST_F(BufferTest, inputBufferReadVectorChunks) {
     std::vector<uint8_t> vec;
 
@@ -341,7 +309,8 @@ TEST_F(BufferTest, inputBufferReadVectorChunks) {
         ibuffer.readVector(vec, 2)
     );
 
-    EXPECT_EQ(0, memcmp(&vec[0], testdata+3, 2));
+    ASSERT_EQ(2, vec.size());
+    EXPECT_EQ(0, memcmp(&vec[0], &testdata[3], 2));
 }
 
 // Tests whether uint64 can be written properly.
@@ -357,7 +326,7 @@ TEST_F(BufferTest, writeUint64) {
 
     obuffer.writeUint64(val1);
     ASSERT_EQ(sizeof(uint64_t), obuffer.getLength());
-    cp = static_cast<const uint8_t*>(obuffer.getData());
+    cp = obuffer.getData();
     EXPECT_TRUE(cp);
     EXPECT_FALSE(memcmp(exp_val1, obuffer.getData(), sizeof(uint64_t)));
 
@@ -365,7 +334,7 @@ TEST_F(BufferTest, writeUint64) {
 
     obuffer.writeUint64(val2);
     ASSERT_EQ(sizeof(uint64_t), obuffer.getLength());
-    cp = static_cast<const uint8_t*>(obuffer.getData());
+    cp = obuffer.getData();
     EXPECT_TRUE(cp);
     EXPECT_FALSE(memcmp(exp_val2, obuffer.getData(), sizeof(uint64_t)));
 }

@@ -322,7 +322,7 @@ PktFilterInet6::send(const Iface&, uint16_t sockfd, const Pkt6Ptr& pkt) {
     // to assign const void* to void*.
     struct iovec v;
     memset(&v, 0, sizeof(v));
-    v.iov_base = const_cast<void *>(pkt->getBuffer().getData());
+    v.iov_base = const_cast<void *>(pkt->getBuffer().getDataAsVP());
     v.iov_len = pkt->getBuffer().getLength();
     m.msg_iov = &v;
     m.msg_iovlen = 1;

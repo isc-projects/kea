@@ -315,7 +315,7 @@ private:
 /// // pass the buffer to a DNS message object to construct a wire-format
 /// // DNS message.
 /// struct sockaddr to;
-/// sendto(s, buffer.getData(), buffer.getLength(), 0, &to, sizeof(to));
+/// sendto(s, buffer.getDataAsVP(), buffer.getLength(), 0, &to, sizeof(to));
 /// \endcode
 ///
 /// where the \c getData() method gives a reference to the internal memory
@@ -367,19 +367,11 @@ public:
     //@{
     /// \brief Constructor from the initial size of the buffer.
     ///
-    /// \param len The initial length of the buffer in bytes.
-    OutputBuffer(size_t len) :
-        buffer_(NULL),
-        size_(0),
-        allocated_(len)
+    /// \param len The initial allocated length of the buffer in bytes.
+    OutputBuffer(size_t len) : buffer_()
     {
-        // We use malloc and free instead of C++ new[] and delete[].
-        // This way we can use realloc, which may in fact do it without a copy.
-        if (allocated_ != 0) {
-            buffer_ = static_cast<uint8_t*>(malloc(allocated_));
-            if (buffer_ == NULL) {
-                throw std::bad_alloc();
-            }
+        if (len != 0) {
+            buffer_.reserve(len);
         }
     }
 
@@ -391,22 +383,17 @@ public:
     /// size_ <= allocated_, and that if allocated_ is greater than zero,
     /// buffer_ points to valid memory.
     OutputBuffer(const OutputBuffer& other) :
-        buffer_(NULL),
-        size_(other.size_),
-        allocated_(other.allocated_)
+        buffer_(other.buffer_)
     {
-        if (allocated_ != 0) {
-            buffer_ = static_cast<uint8_t*>(malloc(allocated_));
-            if (buffer_ == NULL) {
-                throw std::bad_alloc();
-            }
-            static_cast<void>(std::memmove(buffer_, other.buffer_, other.size_));
+        size_t len = other.buffer_.capacity();
+        if (len != 0) {
+            buffer_.reserve(len);
         }
     }
 
     /// \brief Destructor
     ~OutputBuffer() {
-        free(buffer_);
+        buffer_.clear();
     }
     //@}
 
@@ -420,35 +407,11 @@ public:
     OutputBuffer& operator =(const OutputBuffer& other) {
         if (this != &other) {
             // Not self-assignment.
-            if (other.allocated_ != 0) {
-
-                // There is something in the source object, so allocate memory
-                // and copy it.  The pointer to the allocated memory is placed
-                // in a temporary variable so that if the allocation fails and
-                // an exception is thrown, the destination object ("this") is
-                // unchanged.
-                uint8_t* newbuff = static_cast<uint8_t*>(malloc(other.allocated_));
-                if (newbuff == NULL) {
-                    throw std::bad_alloc();
-                }
-
-                // Memory allocated, update the source object and copy data
-                // across.
-                free(buffer_);
-                buffer_ = newbuff;
-                static_cast<void>(std::memmove(buffer_, other.buffer_, other.size_));
-
-            } else {
-
-                // Nothing allocated in the source object, so zero the buffer
-                // in the destination.
-                free(buffer_);
-                buffer_ = NULL;
+            buffer_ = other.buffer_;
+            size_t len = other.buffer_.capacity();
+            if (len != 0) {
+                buffer_.reserve(len);
             }
-
-            // Update the other member variables.
-            size_ = other.size_;
-            allocated_ = other.allocated_;
         }
         return (*this);
     }
@@ -458,7 +421,10 @@ public:
     ///
     //@{
     /// \brief Return the current capacity of the buffer.
-    size_t getCapacity() const { return (allocated_); }
+    size_t getCapacity() const {
+        return (buffer_.capacity());
+    }
+
     /// \brief Return a pointer to the head of the data stored in the buffer.
     ///
     /// The caller can assume that the subsequent \c getLength() bytes are
@@ -466,9 +432,24 @@ public:
     ///
     /// Note: The pointer returned by this method may be invalidated after a
     /// subsequent write operation.
-    const void* getData() const { return (buffer_); }
+    const uint8_t* getData() const {
+        if (!buffer_.empty()) {
+            return (&buffer_[0]);
+        } else {
+            return (0);
+        }
+    }
+
+    /// \brief Return data as a pointer to void.
+    const void* getDataAsVP() const {
+        return (static_cast<const void*>(getData()));
+    }
+
     /// \brief Return the length of data written in the buffer.
-    size_t getLength() const { return (size_); }
+    size_t getLength() const {
+        return (buffer_.size());
+    }
+
     /// \brief Return the value of the buffer at the specified position.
     ///
     /// \c pos must specify the valid position of the buffer; otherwise an
@@ -476,11 +457,16 @@ public:
     ///
     /// \param pos The position in the buffer to be returned.
     uint8_t operator[](size_t pos) const {
-        if (pos >= size_) {
+        if (pos >= buffer_.size()) {
             isc_throw(InvalidBufferPosition,
-                      "[]: pos (" << pos << ") >= size (" << size_ << ")");
+                      "[]: pos (" << pos << ") >= size (" << buffer_.size() << ")");
         }
         return (buffer_[pos]);
+    }
+
+    /// \brief Return the buffer.
+    const std::vector<uint8_t>& getVector() const {
+        return (buffer_);
     }
     //@}
 
@@ -495,8 +481,7 @@ public:
     /// that is to be filled in later, e.g, by \ref writeUint16At().
     /// \param len The length of the gap to be inserted in bytes.
     void skip(size_t len) {
-        ensureAllocated(size_ + len);
-        size_ += len;
+        buffer_.resize(buffer_.size() + len);
     }
 
     /// \brief Trim the specified length of data from the end of the buffer.
@@ -507,33 +492,22 @@ public:
     ///
     /// \param len The length of data that should be trimmed.
     void trim(size_t len) {
-        if (len > size_) {
+        if (len > buffer_.size()) {
             isc_throw(OutOfRange, "trimming too large from output buffer");
         }
-        size_ -= len;
+        buffer_.resize(buffer_.size() - len);
     }
-    /// \brief Clear buffer content.
-    ///
-    /// This method can be used to re-initialize and reuse the buffer without
-    /// constructing a new one. Note it must keep current content.
-    void clear() { size_ = 0; }
 
-    /// \brief Wipe buffer content.
-    ///
-    /// This method is the destructive alternative to clear().
-    void wipe() {
-        if (buffer_ != NULL) {
-            static_cast<void>(std::memset(buffer_, 0, allocated_));
-        }
-        size_ = 0;
+    /// \brief Clear buffer content.
+    void clear() {
+        buffer_.clear();
     }
 
     /// \brief Write an unsigned 8-bit integer into the buffer.
     ///
     /// \param data The 8-bit integer to be written into the buffer.
     void writeUint8(uint8_t data) {
-        ensureAllocated(size_ + 1);
-        buffer_[size_ ++] = data;
+        buffer_.push_back(data);
     }
 
     /// \brief Write an unsigned 8-bit integer into the buffer.
@@ -545,7 +519,7 @@ public:
     /// \param data The 8-bit integer to be written into the buffer.
     /// \param pos The position in the buffer to write the data.
     void writeUint8At(uint8_t data, size_t pos) {
-        if (pos + sizeof(data) > size_) {
+        if (pos + sizeof(data) > buffer_.size()) {
             isc_throw(InvalidBufferPosition, "write at invalid position");
         }
         buffer_[pos] = data;
@@ -556,9 +530,8 @@ public:
     ///
     /// \param data The 16-bit integer to be written into the buffer.
     void writeUint16(uint16_t data) {
-        ensureAllocated(size_ + sizeof(data));
-        buffer_[size_ ++] = static_cast<uint8_t>((data & 0xff00U) >> 8);
-        buffer_[size_ ++] = static_cast<uint8_t>(data & 0x00ffU);
+        buffer_.push_back(static_cast<uint8_t>((data & 0xff00U) >> 8));
+        buffer_.push_back(static_cast<uint8_t>(data & 0x00ffU));
     }
 
     /// \brief Write an unsigned 16-bit integer in host byte order at the
@@ -573,7 +546,7 @@ public:
     /// \param data The 16-bit integer to be written into the buffer.
     /// \param pos The beginning position in the buffer to write the data.
     void writeUint16At(uint16_t data, size_t pos) {
-        if (pos + sizeof(data) > size_) {
+        if (pos + sizeof(data) > buffer_.size()) {
             isc_throw(InvalidBufferPosition, "write at invalid position");
         }
 
@@ -586,11 +559,10 @@ public:
     ///
     /// \param data The 32-bit integer to be written into the buffer.
     void writeUint32(uint32_t data) {
-        ensureAllocated(size_ + sizeof(data));
-        buffer_[size_ ++] = static_cast<uint8_t>((data & 0xff000000) >> 24);
-        buffer_[size_ ++] = static_cast<uint8_t>((data & 0x00ff0000) >> 16);
-        buffer_[size_ ++] = static_cast<uint8_t>((data & 0x0000ff00) >> 8);
-        buffer_[size_ ++] = static_cast<uint8_t>(data & 0x000000ff);
+        buffer_.push_back(static_cast<uint8_t>((data & 0xff000000) >> 24));
+        buffer_.push_back(static_cast<uint8_t>((data & 0x00ff0000) >> 16));
+        buffer_.push_back(static_cast<uint8_t>((data & 0x0000ff00) >> 8));
+        buffer_.push_back(static_cast<uint8_t>(data & 0x000000ff));
     }
 
     /// \brief Write an unsigned 64-bit integer in host byte order
@@ -598,15 +570,14 @@ public:
     ///
     /// \param data The 64-bit integer to be written into the buffer.
     void writeUint64(uint64_t data) {
-        ensureAllocated(size_ + sizeof(data));
-        buffer_[size_ ++] = static_cast<uint8_t>((data & 0xff00000000000000) >> 56);
-        buffer_[size_ ++] = static_cast<uint8_t>((data & 0x00ff000000000000) >> 48);
-        buffer_[size_ ++] = static_cast<uint8_t>((data & 0x0000ff0000000000) >> 40);
-        buffer_[size_ ++] = static_cast<uint8_t>((data & 0x000000ff00000000) >> 32);
-        buffer_[size_ ++] = static_cast<uint8_t>((data & 0x00000000ff000000) >> 24);
-        buffer_[size_ ++] = static_cast<uint8_t>((data & 0x0000000000ff0000) >> 16);
-        buffer_[size_ ++] = static_cast<uint8_t>((data & 0x000000000000ff00) >> 8);
-        buffer_[size_ ++] = static_cast<uint8_t>(data &  0x00000000000000ff);
+        buffer_.push_back(static_cast<uint8_t>((data & 0xff00000000000000) >> 56));
+        buffer_.push_back(static_cast<uint8_t>((data & 0x00ff000000000000) >> 48));
+        buffer_.push_back(static_cast<uint8_t>((data & 0x0000ff0000000000) >> 40));
+        buffer_.push_back(static_cast<uint8_t>((data & 0x000000ff00000000) >> 32));
+        buffer_.push_back(static_cast<uint8_t>((data & 0x00000000ff000000) >> 24));
+        buffer_.push_back(static_cast<uint8_t>((data & 0x0000000000ff0000) >> 16));
+        buffer_.push_back(static_cast<uint8_t>((data & 0x000000000000ff00) >> 8));
+        buffer_.push_back(static_cast<uint8_t>(data &  0x00000000000000ff));
     }
 
     /// \brief Copy an arbitrary length of data into the buffer.
@@ -620,45 +591,14 @@ public:
             return;
         }
 
-        ensureAllocated(size_ + len);
-        static_cast<void>(std::memmove(buffer_ + size_, data, len));
-        size_ += len;
+        const uint8_t* ptr = static_cast<const uint8_t*>(data);
+        buffer_.insert(buffer_.end(), ptr, ptr + len);
     }
     //@}
 
 private:
     /// The actual data
-    uint8_t* buffer_;
-    /// How many bytes are used
-    size_t size_;
-    /// How many bytes do we have preallocated (eg. the capacity)
-    size_t allocated_;
-
-    /// \brief Ensure buffer is appropriate size
-    ///
-    /// Checks that the buffer equal to or larger than the size given as
-    /// argument and extends it to at least that size if not.
-    ///
-    /// \param needed_size The number of bytes required in the buffer
-    void ensureAllocated(size_t needed_size) {
-        if (allocated_ < needed_size) {
-            // Guess some bigger size
-            size_t new_size = (allocated_ == 0) ? 1024 : allocated_;
-            while (new_size < needed_size) {
-                new_size *= 2;
-            }
-            // Allocate bigger space.  Note that buffer_ may be NULL,
-            // in which case realloc acts as malloc.
-            uint8_t* new_buffer_(static_cast<uint8_t*>(realloc(buffer_,
-                new_size)));
-            if (new_buffer_ == NULL) {
-                // If it fails, the original block is left intact by it
-                throw std::bad_alloc();
-            }
-            buffer_ = new_buffer_;
-            allocated_ = new_size;
-        }
-    }
+    std::vector<uint8_t> buffer_;
 };
 
 /// \brief Pointer-like types pointing to \c InputBuffer or \c OutputBuffer

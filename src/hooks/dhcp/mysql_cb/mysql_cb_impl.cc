@@ -967,7 +967,7 @@ MySqlConfigBackendImpl::createOptionValueBinding(const OptionDescriptorPtr& opti
     if (option->formatted_value_.empty() && (opt->len() > opt->getHeaderLen())) {
         OutputBuffer buf(opt->len());
         opt->pack(buf);
-        const char* buf_ptr = static_cast<const char*>(buf.getData());
+        const uint8_t* buf_ptr = buf.getData();
         std::vector<uint8_t> blob(buf_ptr + opt->getHeaderLen(),
                                   buf_ptr + buf.getLength());
         return (MySqlBinding::createBlob(blob.begin(), blob.end()));

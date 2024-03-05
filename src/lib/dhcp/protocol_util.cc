@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -186,11 +186,11 @@ writeIpUdpHeader(const Pkt4Ptr& pkt, util::OutputBuffer& out_buf) {
     // 4 bytes of source address and 4 bytes of destination address.
     // The IPPROTO_UDP and udp_len are also added up to the checksum.
     uint16_t pseudo_hdr_checksum =
-        calcChecksum(static_cast<const uint8_t*>(out_buf.getData()) + out_buf.getLength() - 8,
+        calcChecksum(out_buf.getData() + out_buf.getLength() - 8,
                      8, IPPROTO_UDP + udp_len);
 
     // Calculate IP header checksum.
-    uint16_t ip_checksum = ~calcChecksum(static_cast<const uint8_t*>(out_buf.getData())
+    uint16_t ip_checksum = ~calcChecksum(out_buf.getData()
                                          + out_buf.getLength() - 20, 20);
     // Write checksum in the IP header. The offset of the checksum is 10 bytes
     // back from the tail of the current buffer.
@@ -206,8 +206,8 @@ writeIpUdpHeader(const Pkt4Ptr& pkt, util::OutputBuffer& out_buf) {
     // tail of the current buffer. These 6 bytes contain source and destination port
     // as well as the length of the header.
     uint16_t udp_checksum =
-        ~calcChecksum(static_cast<const uint8_t*>(out_buf.getData()) + out_buf.getLength() - 6, 6,
-                      calcChecksum(static_cast<const uint8_t*>(pkt->getBuffer().getData()),
+        ~calcChecksum(out_buf.getData() + out_buf.getLength() - 6, 6,
+                      calcChecksum(pkt->getBuffer().getData(),
                                    pkt->getBuffer().getLength(),
                                    pseudo_hdr_checksum));
     // Write UDP checksum.

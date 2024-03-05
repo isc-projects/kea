@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -270,9 +270,7 @@ TEST(OptionOpaqueDataTuples, pack4) {
         0x66, 0x6F, 0x6F                    // foo
     };
     // Compare the buffer with reference data.
-    EXPECT_EQ(0, memcmp(static_cast<const void*>(ref),
-                        static_cast<const void*>(buf.getData()),
-                        buf.getLength()));
+    EXPECT_EQ(0, memcmp(ref, buf.getData(), buf.getLength()));
 }
 
 // Check that the DHCPv4 option is rendered to the buffer in wire format,
@@ -304,9 +302,7 @@ TEST(OptionOpaqueDataTuples, pack4_with_ltf) {
         0x66, 0x6F, 0x6F                    // foo
     };
     // Compare the buffer with reference data.
-    EXPECT_EQ(0, memcmp(static_cast<const void*>(ref),
-                        static_cast<const void*>(buf.getData()),
-                        buf.getLength()));
+    EXPECT_EQ(0, memcmp(ref, buf.getData(), buf.getLength()));
 }
 
 // Check that the DHCPv6 option is rendered to the buffer in wire format.
@@ -336,9 +332,7 @@ TEST(OptionOpaqueDataTuples, pack6) {
         0x66, 0x6F, 0x6F                    // foo
     };
     // Compare the buffer with reference data.
-    EXPECT_EQ(0, memcmp(static_cast<const void*>(ref),
-                        static_cast<const void*>(buf.getData()),
-                        buf.getLength()));
+    EXPECT_EQ(0, memcmp(ref, buf.getData(), buf.getLength()));
 }
 
 // This function checks that the DHCPv4 option with two opaque data tuples

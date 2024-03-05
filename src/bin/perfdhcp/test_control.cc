@@ -631,8 +631,7 @@ TestControl::printTemplate(const uint8_t packet_type) const {
         if ((pkt_it != template_packets_v4_.end()) &&
             pkt_it->second) {
             const util::OutputBuffer& out_buf(pkt_it->second->getBuffer());
-            const char* out_buf_data =
-                static_cast<const char*>(out_buf.getData());
+            const uint8_t* out_buf_data = out_buf.getData();
             std::vector<uint8_t> buf(out_buf_data, out_buf_data + out_buf.getLength());
             hex_buf = vector2Hex(buf);
         }
@@ -645,8 +644,7 @@ TestControl::printTemplate(const uint8_t packet_type) const {
         if (pkt_it != template_packets_v6_.end() &&
             pkt_it->second) {
             const util::OutputBuffer& out_buf(pkt_it->second->getBuffer());
-            const char* out_buf_data =
-                static_cast<const char*>(out_buf.getData());
+            const uint8_t* out_buf_data = out_buf.getData();
             std::vector<uint8_t> buf(out_buf_data, out_buf_data + out_buf.getLength());
             hex_buf = vector2Hex(buf);
         }

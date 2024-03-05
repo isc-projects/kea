@@ -874,8 +874,9 @@ public:
                       expected_data_len);
         }
         // Verify that the data is correct. Do not verify suboptions and a header.
-        const uint8_t* data = static_cast<const uint8_t*>(buf.getData());
-        EXPECT_EQ(0, memcmp(expected_data, data + option_desc.option_->getHeaderLen(),
+        const uint8_t* data = buf.getData();
+        EXPECT_EQ(0, memcmp(expected_data,
+                            data + option_desc.option_->getHeaderLen(),
                             expected_data_len));
     }
 

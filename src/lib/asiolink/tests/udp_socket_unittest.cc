@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -194,7 +194,7 @@ TEST(UDPSocket, processReceivedData) {
         EXPECT_EQ(0, offset);
         EXPECT_EQ(sizeof(inbuff), expected);
 
-        const uint8_t* dataptr = static_cast<const uint8_t*>(outbuff->getData());
+        const uint8_t* dataptr = outbuff->getData();
         EXPECT_TRUE(equal(inbuff, inbuff + sizeof(inbuff) - 1, dataptr));
     }
 }
@@ -310,7 +310,7 @@ TEST(UDPSocket, SequenceTest) {
     EXPECT_EQ(client_cb.getLength(), client_buffer->getLength());
 
     // ...and check that the data was copied to the output client buffer.
-    const char* client_char_data = static_cast<const char*>(client_buffer->getData());
+    const uint8_t* client_char_data = client_buffer->getData();
     EXPECT_TRUE(equal(&data[0], &data[client_cb.getLength() - 1], client_char_data));
 
     // Close client and server.

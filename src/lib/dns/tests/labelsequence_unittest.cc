@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -816,10 +816,8 @@ TEST_F(LabelSequenceTest, serialize) {
     // Copy wire data of the name
     isc::util::OutputBuffer ob(0);
     n_maxlabel.toWire(ob);
-    expected_data7.insert(expected_data7.end(),
-                          static_cast<const uint8_t*>(ob.getData()),
-                          static_cast<const uint8_t*>(ob.getData()) +
-                          ob.getLength());
+    expected_data7.insert(expected_data7.end(), ob.getData(),
+                          ob.getData() + ob.getLength());
     expected.push_back(DataPair(expected_data7.size(), &expected_data7[0]));
 
     // For each data set, serialize the labels and compare the data to the

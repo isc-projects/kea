@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -65,7 +65,7 @@ TEST(asioutil, writeUint16) {
         writeUint16(i16, test, sizeof(test));
 
         // ... and compare
-        const uint8_t* ref = static_cast<const uint8_t*>(buffer.getData());
+        const uint8_t* ref = buffer.getData();
         EXPECT_EQ(ref[0], test[0]);
         EXPECT_EQ(ref[1], test[1]);
     }

@@ -2345,7 +2345,7 @@ Dhcpv6Srv::createNameChangeRequests(const Pkt6Ptr& answer,
     // DHCID.
     OutputBuffer name_buf(1);
     opt_fqdn->packDomainName(name_buf);
-    const uint8_t* name_data = static_cast<const uint8_t*>(name_buf.getData());
+    const uint8_t* name_data = name_buf.getData();
     // @todo currently D2Dhcid accepts a vector holding FQDN.
     // However, it will be faster if we used a pointer name_data.
     std::vector<uint8_t> buf_vec(name_data, name_data + name_buf.getLength());

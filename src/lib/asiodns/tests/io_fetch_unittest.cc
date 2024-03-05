@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -200,7 +200,7 @@ public:
         // identical, then check that the data is identical as well.
         EXPECT_EQ(msgbuf_->getLength(), length);
         EXPECT_TRUE(equal(receive_buffer_, (receive_buffer_ + length - 1),
-        static_cast<const uint8_t*>(msgbuf_->getData())));
+                          msgbuf_->getData()));
 
         // Return a message back to the IOFetch object.
         if (!bad_qid) {
@@ -313,7 +313,7 @@ public:
 
         receive_buffer_[2] = receive_buffer_[3] = 0;
         EXPECT_TRUE(equal((receive_buffer_ + 2), (receive_buffer_ + cumulative_ - 2),
-            static_cast<const uint8_t*>(msgbuf_->getData())));
+                          msgbuf_->getData()));
 
         // ... and return a message back.  This has to be preceded by a two-byte
         // count field.
@@ -473,7 +473,7 @@ public:
                     result_buff_->writeUint8At(return_data_[0], 0);
                     result_buff_->writeUint8At(return_data_[1], 1);
                 }
-                const uint8_t* start = static_cast<const uint8_t*>(result_buff_->getData());
+                const uint8_t* start = result_buff_->getData();
                 EXPECT_TRUE(equal(return_data_.begin(), return_data_.end(), start));
             }
         }

@@ -808,7 +808,7 @@ DnrInstance::parseAlpnSvcParam(const std::string& svc_param_val) {
         alpn_id_tuple.pack(out_buf);
     }
 
-    svc_param_val_tuple.append(static_cast<const char*>(out_buf.getData()), out_buf.getLength());
+    svc_param_val_tuple.append(out_buf.getData(), out_buf.getLength());
     svc_params_map_.insert(std::make_pair(1, svc_param_val_tuple));
     out_buf.clear();
 }
@@ -830,7 +830,7 @@ DnrInstance::parsePortSvcParam(const std::string& svc_param_val) {
     }
 
     out_buf.writeUint16(port);
-    svc_param_val_tuple.append(static_cast<const char*>(out_buf.getData()), out_buf.getLength());
+    svc_param_val_tuple.append(out_buf.getData(), out_buf.getLength());
     out_buf.clear();
     svc_params_map_.insert(std::make_pair(3, svc_param_val_tuple));
 }

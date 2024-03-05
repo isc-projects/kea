@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -310,8 +310,7 @@ NameChangeUDPSender::doSend(NameChangeRequestPtr& ncr) {
 
     // Copy the wire-ized request to callback.  This way we know after
     // send completes what we sent (or attempted to send).
-    send_callback_->putData(static_cast<const uint8_t*>(ncr_buffer.getData()),
-                            ncr_buffer.getLength());
+    send_callback_->putData(ncr_buffer.getData(), ncr_buffer.getLength());
 
     // Call the socket's asynchronous send, passing our callback
     socket_->asyncSend(send_callback_->getData(), send_callback_->getPutLen(),

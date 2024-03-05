@@ -585,8 +585,7 @@ Dhcpv4SrvTest::createPacketFromBuffer(const Pkt4Ptr& src_pkt,
     // Create a copy of the packet using the output buffer from the source
     // packet.
     try {
-        dst_pkt.reset(new Pkt4(static_cast<const uint8_t*>(buf.getData()),
-                               buf.getLength()));
+        dst_pkt.reset(new Pkt4(buf.getData(), buf.getLength()));
     } catch (const Exception& ex) {
         return (::testing::AssertionFailure(::testing::Message()
                                             << "Failed to create a"

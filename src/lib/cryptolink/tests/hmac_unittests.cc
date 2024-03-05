@@ -60,8 +60,7 @@ namespace {
                      size_t len)
     {
         ASSERT_EQ(len, buf.getLength());
-        checkData(static_cast<const uint8_t*>(buf.getData()), expected,
-                  len);
+        checkData(buf.getData(), expected, len);
     }
 
     /// @brief Sign and verify with the convenience functions

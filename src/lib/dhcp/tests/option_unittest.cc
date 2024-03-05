@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -244,7 +244,7 @@ TEST_F(OptionTest, v6_data1) {
     opt->pack(outBuf_);
     EXPECT_EQ(11, outBuf_.getLength());
 
-    const uint8_t* out = static_cast<const uint8_t*>(outBuf_.getData());
+    const uint8_t* out = outBuf_.getData();
     EXPECT_EQ(out[0], 333 / 256); // Type
     EXPECT_EQ(out[1], 333 % 256);
 
@@ -280,7 +280,7 @@ TEST_F(OptionTest, v6_data2) {
 
     // Check if pack worked properly:
     // If option type is correct
-    const uint8_t* out = static_cast<const uint8_t*>(outBuf_.getData());
+    const uint8_t* out = outBuf_.getData();
 
     EXPECT_EQ(D6O_CLIENTID, out[0] * 256 + out[1]);
 
@@ -521,7 +521,7 @@ TEST_F(OptionTest, setData) {
     opt1->setData(buf_.begin(), buf_.end());
     opt1->pack(outBuf_);
     ASSERT_EQ(outBuf_.getLength() - opt1->getHeaderLen(), buf_.size());
-    const uint8_t* test_data = static_cast<const uint8_t*>(outBuf_.getData());
+    const uint8_t* test_data = outBuf_.getData();
     EXPECT_TRUE(0 == memcmp(&buf_[0], test_data + opt1->getHeaderLen(),
                             buf_.size()));
 
@@ -534,7 +534,7 @@ TEST_F(OptionTest, setData) {
     opt2->setData(buf_.begin(), buf_.end());
     opt2->pack(outBuf_);
     ASSERT_EQ(outBuf_.getLength() - opt1->getHeaderLen(), buf_.size());
-    test_data = static_cast<const uint8_t*>(outBuf_.getData());
+    test_data = outBuf_.getData();
     EXPECT_TRUE(0 == memcmp(&buf_[0], test_data + opt1->getHeaderLen(),
                             buf_.size()));
 }

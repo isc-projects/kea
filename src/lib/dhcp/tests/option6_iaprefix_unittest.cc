@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -107,7 +107,7 @@ public:
     /// @param expected_type expected option type
     void checkOutputBuffer(uint16_t expected_type) {
         // Check if pack worked properly:
-        const uint8_t* out = static_cast<const uint8_t*>(out_buf_.getData());
+        const uint8_t* out = out_buf_.getData();
 
         // - if option type is correct
         EXPECT_EQ(expected_type, out[0]*256 + out[1]);

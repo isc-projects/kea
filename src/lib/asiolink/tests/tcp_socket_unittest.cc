@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -283,7 +283,7 @@ TEST(TCPSocket, processReceivedData) {
     EXPECT_EQ(PACKET_SIZE, expected);
     EXPECT_EQ(2, outbuff->getLength());
 
-    const uint8_t* dataptr = static_cast<const uint8_t*>(outbuff->getData());
+    const uint8_t* dataptr = outbuff->getData();
     EXPECT_TRUE(equal(inbuff + 2, inbuff + cumulative, dataptr));
 
     // And add the remaining data.  Remember that "inbuff" is "PACKET_SIZE + 2"
@@ -296,7 +296,7 @@ TEST(TCPSocket, processReceivedData) {
     EXPECT_EQ(0, offset);
     EXPECT_EQ(PACKET_SIZE, expected);
     EXPECT_EQ(PACKET_SIZE, outbuff->getLength());
-    dataptr = static_cast<const uint8_t*>(outbuff->getData());
+    dataptr = outbuff->getData();
     EXPECT_TRUE(equal(inbuff + 2, inbuff + cumulative, dataptr));
 }
 
@@ -505,7 +505,7 @@ TEST(TCPSocket, sequenceTest) {
     EXPECT_EQ(sizeof(INBOUND_DATA) + 2, server_cb.length());
 
     // ... and that what was sent is what was received.
-    const uint8_t* received = static_cast<const uint8_t*>(client_buffer->getData());
+    const uint8_t* received = client_buffer->getData();
     EXPECT_TRUE(equal(INBOUND_DATA, (INBOUND_DATA + (sizeof(INBOUND_DATA) - 1)),
                       received));
 

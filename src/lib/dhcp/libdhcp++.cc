@@ -1193,7 +1193,7 @@ LibDHCP::splitOptions4(OptionCollection& options,
                     }
                     // Create new option with data starting from offset and
                     // containing truncated length.
-                    const uint8_t* data = static_cast<const uint8_t*>(buf.getData());
+                    const uint8_t* data = buf.getData();
                     data += header_len;
                     OptionPtr new_option(new Option(candidate->getUniverse(),
                                                     candidate->getType(),

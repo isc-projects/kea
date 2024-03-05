@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -172,8 +172,7 @@ TEST_F(PerfPkt4Test, RawPack) {
     // DHO_BOOT_SIZE options.
     util::OutputBuffer pkt_output = pkt->getBuffer();
     ASSERT_EQ(buf.size(), pkt_output.getLength());
-    const uint8_t* out_buf_data =
-        static_cast<const uint8_t*>(pkt_output.getData());
+    const uint8_t* out_buf_data = pkt_output.getData();
 
     // Check if options we read from buffer is valid.
     EXPECT_EQ(0, memcmp(buf_hostname,
@@ -321,8 +320,7 @@ TEST_F(PerfPkt4Test, PackTransactionId) {
     // Get packet's output buffer and make sure it has valid size.
     util::OutputBuffer out_buf = pkt1->getBuffer();
     ASSERT_EQ(buf.size(), out_buf.getLength());
-    const uint8_t *out_buf_data =
-        static_cast<const uint8_t*>(out_buf.getData());
+    const uint8_t *out_buf_data = out_buf.getData();
 
     // Initialize reference data for transaction id.
     const uint8_t ref_data[] = { 0, 0, 1, 2 };
@@ -398,7 +396,7 @@ TEST_F(PerfPkt4Test, Writes) {
     const util::OutputBuffer& out_buf = pkt1->getBuffer();
     ASSERT_EQ(in_data.size(), out_buf.getLength());
     // Verify that 4,5,6,7 has been written to the packet's buffer.
-    const char* out_data = static_cast<const char*>(out_buf.getData());
+    const uint8_t* out_data = out_buf.getData();
     EXPECT_TRUE(std::equal(write_buf.begin() + 3, write_buf.begin() + 7,
                           out_data + 10));
     // Write 1 octet (0x51) at position 10.

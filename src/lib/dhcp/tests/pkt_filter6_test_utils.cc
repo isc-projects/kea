@@ -119,7 +119,7 @@ PktFilter6Test::sendMessage() {
     // The iovec structure holds the packet data.
     struct iovec v;
     memset(&v, 0, sizeof(v));
-    v.iov_base = const_cast<void *>(test_message_->getBuffer().getData());
+    v.iov_base = const_cast<void *>(test_message_->getBuffer().getDataAsVP());
     v.iov_len = test_message_->getBuffer().getLength();
     // Assign the iovec to msghdr structure.
     m.msg_iov = &v;

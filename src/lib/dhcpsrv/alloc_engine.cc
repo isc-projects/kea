@@ -5066,7 +5066,7 @@ AllocEngine::updateLease6ExtendedInfo(const Lease6Ptr& lease,
             LibDHCP::packOptions6(buf, relay.options_);
 
             if (buf.getLength() > 0) {
-                const uint8_t* cp = static_cast<const uint8_t*>(buf.getData());
+                const uint8_t* cp = buf.getData();
                 std::vector<uint8_t> bytes;
                 std::stringstream ss;
 

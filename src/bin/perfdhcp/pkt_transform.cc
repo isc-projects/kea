@@ -139,8 +139,7 @@ PktTransform::packOptions(const OptionBuffer& in_buffer,
             // OutputBuffer class has nice functions that write
             // data at the specified position so we can use it to
             // inject contents of temporary buffer to output buffer.
-            const uint8_t *buf_data =
-                static_cast<const uint8_t*>(buf.getData());
+            const uint8_t *buf_data = buf.getData();
             for (size_t i = 0; i < buf.getLength(); ++i) {
                 out_buffer.writeUint8At(buf_data[i], offset + i);
             }

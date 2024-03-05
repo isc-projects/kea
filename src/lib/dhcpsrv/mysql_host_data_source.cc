@@ -1859,7 +1859,7 @@ public:
                 // option and store it in the database as a blob.
                 OutputBuffer buf(opt_desc.option_->len());
                 opt_desc.option_->pack(buf);
-                const char* buf_ptr = static_cast<const char*>(buf.getData());
+                const uint8_t* buf_ptr = buf.getData();
                 value_.assign(buf_ptr + opt_desc.option_->getHeaderLen(),
                               buf_ptr + buf.getLength());
                 value_len_ = value_.size();

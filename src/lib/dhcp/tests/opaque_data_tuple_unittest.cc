@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -275,7 +275,7 @@ TEST(OpaqueDataTuple, pack1Byte) {
     OutputBuffer out_buf(10);
     ASSERT_NO_THROW(tuple.pack(out_buf));
     ASSERT_EQ(1, out_buf.getLength());
-    const uint8_t* zero_len = static_cast<const uint8_t*>(out_buf.getData());
+    const uint8_t* zero_len = out_buf.getData();
     ASSERT_EQ(0, *zero_len);
     // Reset the output buffer for another test.
     out_buf.clear();
@@ -292,8 +292,7 @@ TEST(OpaqueDataTuple, pack1Byte) {
     ASSERT_EQ(101, out_buf.getLength());
     // Get the rendered data into the vector for convenience.
     std::vector<uint8_t>
-        render_data(static_cast<const uint8_t*>(out_buf.getData()),
-                    static_cast<const uint8_t*>(out_buf.getData()) + 101);
+        render_data(out_buf.getData(), out_buf.getData() + 101);
     // The first byte is a length byte. It should hold the length of 100.
     EXPECT_EQ(100, render_data[0]);
     // Verify that the rendered data is correct.
@@ -314,8 +313,7 @@ TEST(OpaqueDataTuple, pack1Byte) {
     // opaque data length, the remaining bytes hold the actual data.
     ASSERT_EQ(256, out_buf.getLength());
     // Check that the data is correct.
-    render_data.assign(static_cast<const uint8_t*>(out_buf.getData()),
-                       static_cast<const uint8_t*>(out_buf.getData()) + 256);
+    render_data.assign(out_buf.getData(), out_buf.getData() + 256);
     EXPECT_EQ(255, render_data[0]);
     EXPECT_TRUE(std::equal(render_data.begin() + 1, render_data.end(),
                            data.begin()));
@@ -339,8 +337,10 @@ TEST(OpaqueDataTuple, pack2Bytes) {
     OutputBuffer out_buf(10);
     ASSERT_NO_THROW(tuple.pack(out_buf));
     ASSERT_EQ(2, out_buf.getLength());
-    const uint16_t* zero_len = static_cast<const uint16_t*>(out_buf.getData());
-    ASSERT_EQ(0, *zero_len);
+    const uint8_t* out_data = out_buf.getData();
+    ASSERT_LE(sizeof(uint16_t), out_buf.getLength());
+    ASSERT_EQ(0, out_data[0]);
+    ASSERT_EQ(0, out_data[1]);
     // Reset the output buffer for another test.
     out_buf.clear();
     // Set the data for tuple.
@@ -356,8 +356,7 @@ TEST(OpaqueDataTuple, pack2Bytes) {
     ASSERT_EQ(514, out_buf.getLength());
     // Get the rendered data into the vector for convenience.
     std::vector<uint8_t>
-        render_data(static_cast<const uint8_t*>(out_buf.getData()),
-                    static_cast<const uint8_t*>(out_buf.getData()) + 514);
+        render_data(out_buf.getData(), out_buf.getData() + 514);
     // The first two bytes hold the length of 512.
     uint16_t len = (render_data[0] << 8) + render_data[1];
     EXPECT_EQ(512, len);

@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -181,7 +181,7 @@ Dhcp4to6IpcTest::createDHCPv4MsgOption() const {
     // Make a wire representation of the DHCPv4 message.
     pkt->pack();
     OutputBuffer& output_buffer = pkt->getBuffer();
-    const uint8_t* data = static_cast<const uint8_t*>(output_buffer.getData());
+    const uint8_t* data = output_buffer.getData();
     OptionBuffer option_buffer(data, data + output_buffer.getLength());
 
     // Create the DHCPv4 Message option holding the created message.
@@ -335,7 +335,7 @@ TEST_F(Dhcp4to6IpcTest, process) {
     // Make a wire representation of the DHCPv4 message.
     infreq->pack();
     OutputBuffer& output_buffer = infreq->getBuffer();
-    const uint8_t* data = static_cast<const uint8_t*>(output_buffer.getData());
+    const uint8_t* data = output_buffer.getData();
     OptionBuffer option_buffer(data, data + output_buffer.getLength());
 
     // Create the DHCPv4 Message option holding the created message.

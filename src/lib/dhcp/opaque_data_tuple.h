@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -102,6 +102,9 @@ public:
     /// @tparam InputIterator Type of the iterator pointing to the beginning of
     /// the source buffer.
     void append(const char* data, const size_t len) {
+        data_.insert(data_.end(), data, data + len);
+    }
+    void append(const uint8_t* data, const size_t len) {
         data_.insert(data_.end(), data, data + len);
     }
     void append(InputIterator data, const size_t len) {

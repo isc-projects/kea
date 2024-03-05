@@ -76,7 +76,7 @@ TEST(Option6PDExcludeTest, pack) {
     ASSERT_EQ(expected_vec.size(), buf.getLength());
 
     // Check that the generated wire format is correct.
-    const uint8_t* data = static_cast<const uint8_t*>(buf.getData());
+    const uint8_t* data = buf.getData();
     std::vector<uint8_t> vec(data, data + buf.getLength());
     ASSERT_TRUE(std::equal(vec.begin(), vec.end(), expected_vec.begin()));
 }

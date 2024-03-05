@@ -317,7 +317,7 @@ TEST_F(Pkt4Test, fixedFieldsPack) {
 
     // Redundant but MUCH easier for debug in gdb
     const uint8_t* exp = &expectedFormat[0];
-    const uint8_t* got = static_cast<const uint8_t*>(pkt->getBuffer().getData());
+    const uint8_t* got = pkt->getBuffer().getData();
 
     EXPECT_EQ(0, memcmp(exp, got, Pkt4::DHCPV4_PKT_HDR_LEN));
 }
@@ -405,8 +405,7 @@ TEST_F(Pkt4Test, hwAddr) {
         );
 
         // CHADDR starts at offset 28 in DHCP packet
-        const uint8_t* ptr =
-            static_cast<const uint8_t*>(pkt->getBuffer().getData()) + 28;
+        const uint8_t* ptr = pkt->getBuffer().getData() + 28;
 
         EXPECT_EQ(0, memcmp(ptr, expectedChaddr, Pkt4::MAX_CHADDR_LEN));
 
@@ -481,8 +480,7 @@ TEST_F(Pkt4Test, sname) {
         );
 
         // SNAME starts at offset 44 in DHCP packet
-        const uint8_t* ptr =
-            static_cast<const uint8_t*>(pkt->getBuffer().getData()) + 44;
+        const uint8_t* ptr = pkt->getBuffer().getData() + 44;
         EXPECT_EQ(0, memcmp(ptr, sname, Pkt4::MAX_SNAME_LEN));
 
         pkt.reset();
@@ -526,8 +524,7 @@ TEST_F(Pkt4Test, file) {
         );
 
         // FILE starts at offset 108 in DHCP packet.
-        const uint8_t* ptr =
-            static_cast<const uint8_t*>(pkt->getBuffer().getData()) + 108;
+        const uint8_t* ptr = pkt->getBuffer().getData() + 108;
         EXPECT_EQ(0, memcmp(ptr, file, Pkt4::MAX_FILE_LEN));
 
         pkt.reset();
@@ -592,7 +589,7 @@ TEST_F(Pkt4Test, options) {
               buf.getLength());
 
     // That that this extra data actually contain our options
-    const uint8_t* ptr = static_cast<const uint8_t*>(buf.getData());
+    const uint8_t* ptr = buf.getData();
 
     // Rewind to end of fixed part.
     ptr += Pkt4::DHCPV4_PKT_HDR_LEN + sizeof(DHCP_OPTIONS_COOKIE);
@@ -1440,7 +1437,7 @@ TEST_F(Pkt4Test, nullTerminatedOptions) {
           DHO_ROOT_PATH, 4, 'n', 'o', 'n', 'e',
         };
 
-    const uint8_t* packed = static_cast<const uint8_t*>(pkt->getBuffer().getData());
+    const uint8_t* packed = pkt->getBuffer().getData();
     int packed_len = pkt->getBuffer().getLength();
 
     // Packed message options should be 3 bytes smaller than original onwire data.

@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -227,7 +227,7 @@ Dhcp4o6IpcBaseTest::createDHCPv4MsgOption(TestIpc::EndpointType src) {
     // Make a wire representation of the DHCPv4 message.
     pkt->pack();
     OutputBuffer& output_buffer = pkt->getBuffer();
-    const uint8_t* data = static_cast<const uint8_t*>(output_buffer.getData());
+    const uint8_t* data = output_buffer.getData();
     OptionBuffer option_buffer(data, data + output_buffer.getLength());
 
     // Create the DHCPv4 Message option holding the created message.
@@ -338,7 +338,7 @@ Dhcp4o6IpcBaseTest::testReceiveError(const Pkt6Ptr& pkt) {
     buf.clear();
     ASSERT_NO_THROW(pkt->pack());
 
-    ASSERT_NE(-1, ::send(ipc_src.getSocketFd(), buf.getData(),
+    ASSERT_NE(-1, ::send(ipc_src.getSocketFd(), buf.getDataAsVP(),
                          buf.getLength(), 0));
 
     // Call receive with a timeout. The data should appear on the socket
