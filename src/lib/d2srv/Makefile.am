@@ -88,4 +88,10 @@ libkea_d2srv_include_HEADERS = \
 	d2_config.h \
 	d2_log.h \
 	d2_messages.h \
-	d2_simple_parser.h
+	d2_stats.h \
+    d2_tsig_key.h \
+    d2_update_message.h \
+    d2_zone.h \
+	d2_simple_parser.h \
+	dns_client.h \
+    nc_trans.h
