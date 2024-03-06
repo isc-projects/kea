@@ -993,6 +993,7 @@ Dhcpv6Srv::processDhcp6Query(Pkt6Ptr query) {
     return (processLocalizedQuery6(ctx));
 }
 
+
 void
 Dhcpv6Srv::processLocalizedQuery6AndSendResponse(Pkt6Ptr query,
                                                  AllocEngine::ClientContext6& ctx) {
@@ -2005,7 +2006,8 @@ Dhcpv6Srv::selectSubnet(const Pkt6Ptr& question, bool& drop) {
         // reset when this object goes out of scope. All hook points must do
         // it to prevent possible circular dependency between the callout
         // handle and its arguments.
-        ScopedCalloutHandleState callout_handle_state(callout_handle);
+        shared_ptr<ScopedCalloutHandleState> callout_handle_state(
+            std::make_shared<ScopedCalloutHandleState>(callout_handle));
 
         // Enable copying options from the packet within hook library.
         ScopedEnableOptionsCopy<Pkt6> query6_options_copy(question);
@@ -2024,10 +2026,19 @@ Dhcpv6Srv::selectSubnet(const Pkt6Ptr& question, bool& drop) {
         // We proactively park the packet.
         // Not MT compatible because the unparking callback can be called
         // before the current thread exists from this block.
-        HooksManager::park("subnet6_select", question,
-                           [this, question] () {
-                               processLocalizedQuery6AndSendResponse(question);
-                           });
+        HooksManager::park("subnet6_select", question, [this, question, callout_handle_state]() {
+            if (MultiThreadingMgr::instance().getMode()) {
+                boost::shared_ptr<function<void()>> callback(
+                    boost::make_shared<function<void()>>([this, question]() mutable {
+                        processLocalizedQuery6AndSendResponse(question);
+                    }));
+                callout_handle_state->on_completion_ = [callback]() {
+                    MultiThreadingMgr::instance().getThreadPool().add(callback);
+                };
+            } else {
+                processLocalizedQuery6AndSendResponse(question);
+            }
+        });
 
         // Call user (and server-side) callouts
         try {

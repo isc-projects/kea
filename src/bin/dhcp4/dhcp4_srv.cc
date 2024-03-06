@@ -744,7 +744,8 @@ Dhcpv4Srv::selectSubnet(const Pkt4Ptr& query, bool& drop,
         // reset when this object goes out of scope. All hook points must do
         // it to prevent possible circular dependency between the callout
         // handle and its arguments.
-        ScopedCalloutHandleState callout_handle_state(callout_handle);
+        shared_ptr<ScopedCalloutHandleState> callout_handle_state(
+            std::make_shared<ScopedCalloutHandleState>(callout_handle));
 
         // Enable copying options from the packet within hook library.
         ScopedEnableOptionsCopy<Pkt4> query4_options_copy(query);
@@ -757,13 +758,21 @@ Dhcpv4Srv::selectSubnet(const Pkt4Ptr& query, bool& drop,
                                     getCfgSubnets4()->getAll());
 
         // We proactively park the packet.
-        // Not MT compatible because the unparking callback can be called
-        // before the current thread exists from this block.
-        HooksManager::park("subnet4_select", query,
-                           [this, query, allow_answer_park] () {
-                               processLocalizedQuery4AndSendResponse(query,
-                                                                     allow_answer_park);
-                           });
+        HooksManager::park(
+            "subnet4_select", query, [this, query, allow_answer_park, callout_handle_state]() {
+                if (MultiThreadingMgr::instance().getMode()) {
+                    boost::shared_ptr<function<void()>> callback(
+                        boost::make_shared<function<void()>>(
+                            [this, query, allow_answer_park]() mutable {
+                                processLocalizedQuery4AndSendResponse(query, allow_answer_park);
+                            }));
+                    callout_handle_state->on_completion_ = [callback]() {
+                        MultiThreadingMgr::instance().getThreadPool().add(callback);
+                    };
+                } else {
+                    processLocalizedQuery4AndSendResponse(query, allow_answer_park);
+                }
+            });
 
         // Call user (and server-side) callouts
         try {
@@ -891,7 +900,8 @@ Dhcpv4Srv::selectSubnet4o6(const Pkt4Ptr& query, bool& drop,
         // reset when this object goes out of scope. All hook points must do
         // it to prevent possible circular dependency between the callout
         // handle and its arguments.
-        ScopedCalloutHandleState callout_handle_state(callout_handle);
+        shared_ptr<ScopedCalloutHandleState> callout_handle_state(
+            std::make_shared<ScopedCalloutHandleState>(callout_handle));
 
         // Enable copying options from the packet within hook library.
         ScopedEnableOptionsCopy<Pkt4> query4_options_copy(query);
@@ -904,13 +914,21 @@ Dhcpv4Srv::selectSubnet4o6(const Pkt4Ptr& query, bool& drop,
                                     getCfgSubnets4()->getAll());
 
         // We proactively park the packet.
-        // Not MT compatible because the unparking callback can be called
-        // before the current thread exists from this block.
-        HooksManager::park("subnet4_select", query,
-                           [this, query, allow_answer_park] () {
-                               processLocalizedQuery4AndSendResponse(query,
-                                                                     allow_answer_park);
-                           });
+        HooksManager::park(
+            "subnet4_select", query, [this, query, allow_answer_park, callout_handle_state]() {
+                if (MultiThreadingMgr::instance().getMode()) {
+                    boost::shared_ptr<function<void()>> callback(
+                        boost::make_shared<function<void()>>(
+                            [this, query, allow_answer_park]() mutable {
+                                processLocalizedQuery4AndSendResponse(query, allow_answer_park);
+                            }));
+                    callout_handle_state->on_completion_ = [callback]() {
+                        MultiThreadingMgr::instance().getThreadPool().add(callback);
+                    };
+                } else {
+                    processLocalizedQuery4AndSendResponse(query, allow_answer_park);
+                }
+            });
 
         // Call user (and server-side) callouts
         try {
