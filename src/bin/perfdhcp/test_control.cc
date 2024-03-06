@@ -630,10 +630,7 @@ TestControl::printTemplate(const uint8_t packet_type) const {
             template_packets_v4_.find(packet_type);
         if ((pkt_it != template_packets_v4_.end()) &&
             pkt_it->second) {
-            const util::OutputBuffer& out_buf(pkt_it->second->getBuffer());
-            const uint8_t* out_buf_data = out_buf.getData();
-            std::vector<uint8_t> buf(out_buf_data, out_buf_data + out_buf.getLength());
-            hex_buf = vector2Hex(buf);
+            hex_buf = vector2Hex(pkt_it->second->getBuffer().getVector());
         }
     } else if (options_.getIpVersion() == 6) {
         if (packet_type == DHCPV6_REQUEST) {
@@ -643,10 +640,7 @@ TestControl::printTemplate(const uint8_t packet_type) const {
             template_packets_v6_.find(packet_type);
         if (pkt_it != template_packets_v6_.end() &&
             pkt_it->second) {
-            const util::OutputBuffer& out_buf(pkt_it->second->getBuffer());
-            const uint8_t* out_buf_data = out_buf.getData();
-            std::vector<uint8_t> buf(out_buf_data, out_buf_data + out_buf.getLength());
-            hex_buf = vector2Hex(buf);
+            hex_buf = vector2Hex(pkt_it->second->getBuffer().getVector());
         }
     }
     std::cout << "xid-offset=" << getTransactionIdOffset(arg_idx) << std::endl;

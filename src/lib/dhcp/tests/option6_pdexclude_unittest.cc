@@ -77,8 +77,8 @@ TEST(Option6PDExcludeTest, pack) {
 
     // Check that the generated wire format is correct.
     const uint8_t* data = buf.getData();
-    std::vector<uint8_t> vec(data, data + buf.getLength());
-    ASSERT_TRUE(std::equal(vec.begin(), vec.end(), expected_vec.begin()));
+    const std::vector<uint8_t>& vec = buf.getVector();
+    ASSERT_TRUE(std::equal(vec.cbegin(), vec.cend(), expected_vec.cbegin()));
 }
 
 // This test verifies parsing option wire format with subnet id of

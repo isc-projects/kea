@@ -36,9 +36,7 @@ Pkt4o6::Pkt4o6(const Pkt4Ptr& pkt4, const Pkt6Ptr& pkt6)
 void Pkt4o6::pack() {
     // Convert wire-format Pkt4 data in the form of OptionBuffer.
     Pkt4::pack();
-    OutputBuffer& buf = getBuffer();
-    const uint8_t* ptr = buf.getData();
-    OptionBuffer msg(ptr, ptr + buf.getLength());
+    const OptionBuffer& msg = getBuffer().getVector();
 
     // Build the DHCPv4 Message option for the DHCPv6 message, and pack the
     // entire stuff.

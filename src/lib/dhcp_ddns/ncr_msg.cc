@@ -318,7 +318,7 @@ NameChangeRequest::fromFormat(const NameChangeFormat format,
             // NameChangeRequest instance.  Note the factory may throw
             // NcrMessageError.
             ncr = NameChangeRequest::fromJSON(string_data);
-        } catch (const isc::util::InvalidBufferPosition& ex) {
+        } catch (const isc::Exception& ex) {
             // Read error accessing data in InputBuffer.
             isc_throw(NcrMessageError, "fromFormat: buffer read error: "
                       << ex.what());

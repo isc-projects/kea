@@ -465,6 +465,8 @@ public:
     }
 
     /// \brief Return the buffer.
+    ///
+    /// \note The main use is to avoid a copy.
     const std::vector<uint8_t>& getVector() const {
         return (buffer_);
     }

@@ -86,29 +86,25 @@ TEST_F(BufferTest, inputBufferRead) {
 }
 
 TEST_F(BufferTest, inputBufferException) {
-    EXPECT_THROW(ibuffer.setPosition(6), isc::util::InvalidBufferPosition);
+    EXPECT_THROW(ibuffer.setPosition(6), isc::OutOfRange);
 
     ibuffer.setPosition(sizeof(testdata));
-    EXPECT_THROW(ibuffer.peekUint8(), isc::util::InvalidBufferPosition);
-    EXPECT_THROW(ibuffer.readUint8(), isc::util::InvalidBufferPosition);
+    EXPECT_THROW(ibuffer.peekUint8(), isc::OutOfRange);
+    EXPECT_THROW(ibuffer.readUint8(), isc::OutOfRange);
 
     ibuffer.setPosition(sizeof(testdata) - 1);
-    EXPECT_THROW(ibuffer.peekUint16(), isc::util::InvalidBufferPosition);
-    EXPECT_THROW(ibuffer.readUint16(), isc::util::InvalidBufferPosition);
+    EXPECT_THROW(ibuffer.peekUint16(), isc::OutOfRange);
+    EXPECT_THROW(ibuffer.readUint16(), isc::OutOfRange);
 
     ibuffer.setPosition(sizeof(testdata) - 3);
-    EXPECT_THROW(ibuffer.peekUint32(), isc::util::InvalidBufferPosition);
-    EXPECT_THROW(ibuffer.readUint32(), isc::util::InvalidBufferPosition);
+    EXPECT_THROW(ibuffer.peekUint32(), isc::OutOfRange);
+    EXPECT_THROW(ibuffer.readUint32(), isc::OutOfRange);
 
     ibuffer.setPosition(sizeof(testdata) - 4);
-    EXPECT_THROW(ibuffer.peekData(vdata, sizeof(vdata)),
-                 isc::util::InvalidBufferPosition);
-    EXPECT_THROW(ibuffer.readData(vdata, sizeof(vdata)),
-                 isc::util::InvalidBufferPosition);
-    EXPECT_THROW(ibuffer.peekVector(datav, sizeof(vdata)),
-                 isc::util::InvalidBufferPosition);
-    EXPECT_THROW(ibuffer.readVector(datav, sizeof(vdata)),
-                 isc::util::InvalidBufferPosition);
+    EXPECT_THROW(ibuffer.peekData(vdata, sizeof(vdata)), isc::OutOfRange);
+    EXPECT_THROW(ibuffer.readData(vdata, sizeof(vdata)), isc::OutOfRange);
+    EXPECT_THROW(ibuffer.peekVector(datav, sizeof(vdata)), isc::OutOfRange);
+    EXPECT_THROW(ibuffer.readVector(datav, sizeof(vdata)), isc::OutOfRange);
 }
 
 TEST_F(BufferTest, outputBufferExtend) {
@@ -149,6 +145,13 @@ TEST_F(BufferTest, outputBufferWrite) {
     EXPECT_EQ(expected_size, obuffer.getLength());
     cp = obuffer.getData();
     EXPECT_EQ(0, memcmp(cp + 7, testdata, sizeof(testdata)));
+
+    datav = obuffer.getVector();
+    ASSERT_EQ(expected_size, datav.size());
+    std::vector<uint8_t> expected = { 1, 2, 3, 4, 5, 6, 7 };
+    expected.insert(expected.end(), testdata, testdata + sizeof(testdata));
+    ASSERT_EQ(expected_size, expected.size());
+    EXPECT_EQ(0, memcmp(&expected[0], &datav[0], expected_size));
 }
 
 TEST_F(BufferTest, outputBufferWriteAt) {
@@ -175,16 +178,11 @@ TEST_F(BufferTest, outputBufferWriteAt) {
     EXPECT_EQ(2, *(cp + 2));
     EXPECT_EQ(3, *(cp + 3));
 
-    EXPECT_THROW(obuffer.writeUint8At(data16, 5),
-                 isc::util::InvalidBufferPosition);
-    EXPECT_THROW(obuffer.writeUint8At(data16, 4),
-                 isc::util::InvalidBufferPosition);
-    EXPECT_THROW(obuffer.writeUint16At(data16, 3),
-                 isc::util::InvalidBufferPosition);
-    EXPECT_THROW(obuffer.writeUint16At(data16, 4),
-                 isc::util::InvalidBufferPosition);
-    EXPECT_THROW(obuffer.writeUint16At(data16, 5),
-                 isc::util::InvalidBufferPosition);
+    EXPECT_THROW(obuffer.writeUint8At(data16, 5), isc::OutOfRange);
+    EXPECT_THROW(obuffer.writeUint8At(data16, 4), isc::OutOfRange);
+    EXPECT_THROW(obuffer.writeUint16At(data16, 3), isc::OutOfRange);
+    EXPECT_THROW(obuffer.writeUint16At(data16, 4), isc::OutOfRange);
+    EXPECT_THROW(obuffer.writeUint16At(data16, 5), isc::OutOfRange);
 }
 
 TEST_F(BufferTest, outputBufferSkip) {
@@ -213,7 +211,7 @@ TEST_F(BufferTest, outputBufferReadAt) {
     for (size_t i = 0; i < sizeof(testdata); ++i) {
         EXPECT_EQ(testdata[i], obuffer[i]);
     }
-    EXPECT_THROW(obuffer[sizeof(testdata)], isc::util::InvalidBufferPosition);
+    EXPECT_THROW(obuffer[sizeof(testdata)], isc::OutOfRange);
 }
 
 TEST_F(BufferTest, outputBufferClear) {

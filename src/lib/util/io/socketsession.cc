@@ -425,7 +425,7 @@ SocketSessionReceiver::pop() {
         return (SocketSession(passed_sock.release(), family, type, protocol,
                               impl_->sa_local_, impl_->sa_remote_,
                               &impl_->data_buf_[0], data_len));
-    } catch (const InvalidBufferPosition& ex) {
+    } catch (const OutOfRange& ex) {
         // We catch the case where the given header is too short and convert
         // the exception to SocketSessionError.
         isc_throw(SocketSessionError, "bogus socket session header: " <<

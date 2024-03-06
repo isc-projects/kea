@@ -226,9 +226,7 @@ Dhcp4o6IpcBaseTest::createDHCPv4MsgOption(TestIpc::EndpointType src) {
                          1234));
     // Make a wire representation of the DHCPv4 message.
     pkt->pack();
-    OutputBuffer& output_buffer = pkt->getBuffer();
-    const uint8_t* data = output_buffer.getData();
-    OptionBuffer option_buffer(data, data + output_buffer.getLength());
+    const OptionBuffer& option_buffer = pkt->getBuffer().getVector();
 
     // Create the DHCPv4 Message option holding the created message.
     OptionPtr opt_msg(new Option(Option::V6, D6O_DHCPV4_MSG, option_buffer));

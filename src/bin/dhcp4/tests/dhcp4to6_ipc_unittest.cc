@@ -180,9 +180,7 @@ Dhcp4to6IpcTest::createDHCPv4MsgOption() const {
     Pkt4Ptr pkt(new Pkt4(DHCPREQUEST, 1234));
     // Make a wire representation of the DHCPv4 message.
     pkt->pack();
-    OutputBuffer& output_buffer = pkt->getBuffer();
-    const uint8_t* data = output_buffer.getData();
-    OptionBuffer option_buffer(data, data + output_buffer.getLength());
+    const OptionBuffer& option_buffer = pkt->getBuffer().getVector();
 
     // Create the DHCPv4 Message option holding the created message.
     OptionPtr opt_msg(new Option(Option::V6, D6O_DHCPV4_MSG, option_buffer));
@@ -334,9 +332,7 @@ TEST_F(Dhcp4to6IpcTest, process) {
     infreq->setCiaddr(IOAddress("192.0.1.2"));
     // Make a wire representation of the DHCPv4 message.
     infreq->pack();
-    OutputBuffer& output_buffer = infreq->getBuffer();
-    const uint8_t* data = output_buffer.getData();
-    OptionBuffer option_buffer(data, data + output_buffer.getLength());
+    const OptionBuffer& option_buffer = infreq->getBuffer().getVector();
 
     // Create the DHCPv4 Message option holding the created message.
     OptionPtr opt_msg(new Option(Option::V6, D6O_DHCPV4_MSG, option_buffer));

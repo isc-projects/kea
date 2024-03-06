@@ -816,8 +816,9 @@ TEST_F(LabelSequenceTest, serialize) {
     // Copy wire data of the name
     isc::util::OutputBuffer ob(0);
     n_maxlabel.toWire(ob);
-    expected_data7.insert(expected_data7.end(), ob.getData(),
-                          ob.getData() + ob.getLength());
+    expected_data7.insert(expected_data7.end(),
+                          ob.getVector().cbegin(),
+                          ob.getVector().cend());
     expected.push_back(DataPair(expected_data7.size(), &expected_data7[0]));
 
     // For each data set, serialize the labels and compare the data to the
