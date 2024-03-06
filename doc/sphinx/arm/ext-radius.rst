@@ -172,6 +172,13 @@ flags:
 -  ``session-history`` (default ``""``) - is the name of the file providing
    persistent storage for accounting session history.
 
+ - ``thread-pool-size`` (default ``0``) indicates the number of threads that
+   should be used for sending asynchronous RADIUS requests for both access and
+   accounting services. A value of ``0`` instructs the RADIUS hook library to
+   use the same number of threads used for DHCP processing. This value is only
+   relevant if Kea core is configured as multi-threaded. Single-threaded Kea
+   core makes the RADIUS hook library also be single-threaded.
+
 -  ``timeout`` (default ``10``) - is the number of seconds during which a
    response is awaited.
 
