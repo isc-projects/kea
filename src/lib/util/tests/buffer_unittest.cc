@@ -6,29 +6,25 @@
 
 #include <config.h>
 
-#include <gtest/gtest.h>
-
 #include <exceptions/exceptions.h>
+#include <util/buffer.h>
 
 #ifdef EXPECT_DEATH
 #include <util/unittests/resource.h>
 #include <util/unittests/check_valgrind.h>
 #endif /* EXPECT_DEATH */
 
-#include <util/buffer.h>
+#include <gtest/gtest.h>
 
 using namespace isc;
+using namespace isc::util;
 
 namespace {
-
-using isc::util::InputBuffer;
-using isc::util::OutputBuffer;
 
 class BufferTest : public ::testing::Test {
 protected:
     BufferTest() : ibuffer(testdata, sizeof(testdata)), obuffer(0),
-                   expected_size(0)
-    {
+                   expected_size(0) {
         data16 = (2 << 8) | 3;
         data32 = (4 << 24) | (5 << 16) | (6 << 8) | 7;
         memset(vdata, 0, sizeof(testdata));
@@ -116,12 +112,10 @@ TEST_F(BufferTest, outputBufferExtend) {
 }
 
 TEST_F(BufferTest, outputBufferWrite) {
-    const uint8_t* cp;
-
     obuffer.writeUint8(1);
     expected_size += sizeof(uint8_t);
     EXPECT_EQ(expected_size, obuffer.getLength());
-    cp = obuffer.getData();
+    const uint8_t* cp = obuffer.getData();
     EXPECT_EQ(1, *cp);
 
     obuffer.writeUint16(data16);
@@ -223,13 +217,13 @@ TEST_F(BufferTest, outputBufferClear) {
 }
 
 TEST_F(BufferTest, outputBufferCopy) {
-    obuffer.writeData(testdata, sizeof(testdata));
-
     EXPECT_NO_THROW({
+        obuffer.writeData(testdata, sizeof(testdata));
+
         OutputBuffer copy(obuffer);
         ASSERT_EQ(sizeof(testdata), copy.getLength());
         ASSERT_NE(obuffer.getData(), copy.getData());
-        for (int i = 0; i < sizeof(testdata); i ++) {
+        for (size_t i = 0; i < sizeof(testdata); ++i) {
             EXPECT_EQ(testdata[i], copy[i]);
             if (i + 1 < sizeof(testdata)) {
                 obuffer.writeUint16At(0, i);
@@ -250,11 +244,11 @@ TEST_F(BufferTest, outputEmptyBufferCopy) {
 }
 
 TEST_F(BufferTest, outputBufferAssign) {
-    OutputBuffer another(0);
-    another.clear();
-    obuffer.writeData(testdata, sizeof(testdata));
-
     EXPECT_NO_THROW({
+        OutputBuffer another(0);
+        another.clear();
+        obuffer.writeData(testdata, sizeof(testdata));
+
         another = obuffer;
         ASSERT_EQ(sizeof(testdata), another.getLength());
         ASSERT_NE(obuffer.getData(), another.getData());
@@ -272,10 +266,8 @@ TEST_F(BufferTest, outputBufferAssign) {
 
 TEST_F(BufferTest, outputEmptyBufferAssign) {
     OutputBuffer copy(0);
-    ASSERT_NO_THROW({
-        copy = obuffer;
-    });
-    ASSERT_EQ(0, copy.getLength());
+    EXPECT_NO_THROW(copy = obuffer;);
+    EXPECT_EQ(0, copy.getLength());
     EXPECT_EQ(0, copy.getData());
 }
 
@@ -284,52 +276,32 @@ TEST_F(BufferTest, outputBufferAssignSelf) {
     EXPECT_NO_THROW(obuffer = obuffer);
 }
 
-TEST_F(BufferTest, outputBufferZeroSize) {
-    // Some OSes might return NULL on malloc for 0 size, so check it works
-    EXPECT_NO_THROW({
-        OutputBuffer first(0);
-        OutputBuffer copy(first);
-        OutputBuffer second(0);
-        second = first;
-    });
-}
-
 TEST_F(BufferTest, inputBufferReadVectorChunks) {
     std::vector<uint8_t> vec;
 
     // check that vector can read the whole buffer
     ibuffer.readVector(vec, 3);
     EXPECT_EQ(3, vec.size());
-
     EXPECT_EQ(0, memcmp(&vec[0], testdata, 3));
-
-    EXPECT_NO_THROW(
-        ibuffer.readVector(vec, 2)
-    );
-
+    EXPECT_NO_THROW(ibuffer.readVector(vec, 2));
     ASSERT_EQ(2, vec.size());
     EXPECT_EQ(0, memcmp(&vec[0], &testdata[3], 2));
 }
 
 // Tests whether uint64 can be written properly.
 TEST_F(BufferTest, writeUint64) {
-
     uint64_t val1 = 0x0102030405060708ul;
     uint64_t val2 = 0xfffffffffffffffful;
-
     uint8_t exp_val1[] = { 1, 2, 3, 4, 5, 6, 7, 8 };
     uint8_t exp_val2[] = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
 
-    const uint8_t* cp;
-
     obuffer.writeUint64(val1);
     ASSERT_EQ(sizeof(uint64_t), obuffer.getLength());
-    cp = obuffer.getData();
+    const uint8_t* cp = obuffer.getData();
     EXPECT_TRUE(cp);
     EXPECT_FALSE(memcmp(exp_val1, obuffer.getData(), sizeof(uint64_t)));
 
     EXPECT_NO_THROW(obuffer.clear());
-
     obuffer.writeUint64(val2);
     ASSERT_EQ(sizeof(uint64_t), obuffer.getLength());
     cp = obuffer.getData();
