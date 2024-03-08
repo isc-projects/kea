@@ -11,7 +11,8 @@
 #include <dns/master_loader_callbacks.h>
 
 #include <boost/noncopyable.hpp>
-#include <boost/shared_ptr.hpp>
+
+#include <memory>
 
 namespace isc {
 namespace dns {
@@ -176,7 +177,7 @@ public:
 
 private:
     class MasterLoaderImpl;
-    boost::shared_ptr<MasterLoaderImpl> impl_;
+    std::unique_ptr<MasterLoaderImpl> impl_;
 };
 
 } // end namespace dns

@@ -15,6 +15,7 @@
 
 #include <boost/shared_ptr.hpp>
 
+#include <memory>
 #include <stdint.h>
 
 namespace isc {
@@ -381,9 +382,9 @@ public:
     //@}
 
 private:
-    boost::shared_ptr<GenericImpl> constructFromLexer(MasterLexer& lexer);
+    std::unique_ptr<GenericImpl> constructFromLexer(MasterLexer& lexer);
 
-    boost::shared_ptr<GenericImpl> impl_;
+    std::unique_ptr<GenericImpl> impl_;
 };
 
 ///

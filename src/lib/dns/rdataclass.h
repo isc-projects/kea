@@ -15,10 +15,12 @@
 #include <dns/serial.h>
 #include <util/buffer.h>
 
+#include <boost/shared_ptr.hpp>
+
+#include <memory>
 #include <stdint.h>
 #include <string>
 #include <vector>
-#include <boost/shared_ptr.hpp>
 
 namespace isc {
 namespace dns {
@@ -153,9 +155,9 @@ public:
     /// This method never throws an exception.
     const void* getOtherData() const;
 private:
-    boost::shared_ptr<TSIGImpl> constructFromLexer(MasterLexer& lexer, const Name* origin);
+    std::unique_ptr<TSIGImpl> constructFromLexer(MasterLexer& lexer, const Name* origin);
 
-    boost::shared_ptr<TSIGImpl> impl_;
+    std::unique_ptr<TSIGImpl> impl_;
 };
 
 } // end of namespace "any"
@@ -263,7 +265,7 @@ public:
 
     private:
         uint16_t code_;
-        boost::shared_ptr<std::vector<uint8_t> > data_;
+        boost::shared_ptr<std::vector<uint8_t>> data_;
     };
 
     /// \brief Append a pseudo RR (option) in this OPT RR.
@@ -285,7 +287,7 @@ public:
     const std::vector<PseudoRR>& getPseudoRRs() const;
 
 private:
-    boost::shared_ptr<OPTImpl> impl_;
+    std::unique_ptr<OPTImpl> impl_;
 };
 
 class PTR : public Rdata {
@@ -342,9 +344,9 @@ public:
     const RRType& typeCovered() const;
 private:
     // helper function for string and lexer constructors
-    boost::shared_ptr<RRSIGImpl> constructFromLexer(MasterLexer& lexer, const Name* origin);
+    std::unique_ptr<RRSIGImpl> constructFromLexer(MasterLexer& lexer, const Name* origin);
 
-    boost::shared_ptr<RRSIGImpl> impl_;
+    std::unique_ptr<RRSIGImpl> impl_;
 };
 
 class SOA : public Rdata {
@@ -494,9 +496,9 @@ public:
     static const uint16_t GSS_API_MODE;
 
 private:
-    boost::shared_ptr<TKEYImpl> constructFromLexer(MasterLexer& lexer, const Name* origin);
+    std::unique_ptr<TKEYImpl> constructFromLexer(MasterLexer& lexer, const Name* origin);
 
-    boost::shared_ptr<TKEYImpl> impl_;
+    std::unique_ptr<TKEYImpl> impl_;
 };
 
 class TXT : public Rdata {
@@ -517,7 +519,7 @@ public:
 
 private:
     typedef isc::dns::rdata::generic::detail::TXTLikeImpl<TXT, 16> TXTImpl;
-    boost::shared_ptr<TXTImpl> impl_;
+    std::unique_ptr<TXTImpl> impl_;
 };
 } // namespace generic
 

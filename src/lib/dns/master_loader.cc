@@ -1036,11 +1036,9 @@ MasterLoader::MasterLoader(std::istream& stream,
     if (!add_callback) {
         isc_throw(isc::InvalidParameter, "Empty add RR callback");
     }
-    boost::shared_ptr<MasterLoaderImpl>
-        impl(new MasterLoaderImpl("", zone_origin, zone_class,
-                                  callbacks, add_callback, options));
-    impl->pushStreamSource(stream);
-    impl_ = impl;
+    impl_.reset(new MasterLoaderImpl("", zone_origin, zone_class,
+                                     callbacks, add_callback, options));
+    impl_->pushStreamSource(stream);
 }
 
 MasterLoader::~MasterLoader() {

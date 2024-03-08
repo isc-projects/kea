@@ -87,7 +87,7 @@ struct TSIGImpl {
 };
 
 // helper function for string and lexer constructors
-boost::shared_ptr<TSIGImpl>
+std::unique_ptr<TSIGImpl>
 TSIG::constructFromLexer(MasterLexer& lexer, const Name* origin) {
     const Name& algorithm =
         createNameFromLexer(lexer, origin ? origin : &Name::ROOT_NAME());
@@ -181,8 +181,8 @@ TSIG::constructFromLexer(MasterLexer& lexer, const Name* origin) {
     // RFC2845 says Other Data is "empty unless Error == BADTIME".
     // However, we don't enforce that.
 
-    return (boost::shared_ptr<TSIGImpl>(new TSIGImpl(canonical_algorithm_name, time_signed, fudge, mac,
-                                                     orig_id, error, other_data)));
+    return (std::unique_ptr<TSIGImpl>(new TSIGImpl(canonical_algorithm_name, time_signed, fudge, mac,
+                                                   orig_id, error, other_data)));
 }
 
 /// \brief Constructor from string.
@@ -230,18 +230,13 @@ TSIG::constructFromLexer(MasterLexer& lexer, const Name* origin) {
 /// \throw BadValue if MAC or Other Data is not validly encoded in base-64.
 ///
 /// \param tsig_str A string containing the RDATA to be created
-TSIG::TSIG(const std::string& tsig_str) : impl_(NULL) {
-    // We use unique_ptr here because if there is an exception in this
-    // constructor, the destructor is not called and there could be a
-    // leak of the TSIGImpl that constructFromLexer() returns.
-    boost::shared_ptr<TSIGImpl> impl_ptr;
-
+TSIG::TSIG(const std::string& tsig_str) {
     try {
         std::istringstream ss(tsig_str);
         MasterLexer lexer;
         lexer.pushSource(ss);
 
-        impl_ptr = constructFromLexer(lexer, NULL);
+        impl_ = constructFromLexer(lexer, NULL);
 
         if (lexer.getNextToken().getType() != MasterToken::END_OF_FILE) {
             isc_throw(InvalidRdataText,
@@ -252,8 +247,6 @@ TSIG::TSIG(const std::string& tsig_str) : impl_(NULL) {
                   "Failed to construct TSIG from '" << tsig_str << "': "
                   << ex.what());
     }
-
-    impl_ = impl_ptr;
 }
 
 /// \brief Constructor with a context of MasterLexer.
@@ -296,8 +289,7 @@ TSIG::TSIG(MasterLexer& lexer, const Name* origin,
 /// But this constructor does not use this parameter; if necessary, the caller
 /// must check consistency between the length parameter and the actual
 /// RDATA length.
-TSIG::TSIG(InputBuffer& buffer, size_t) :
-    impl_(NULL) {
+TSIG::TSIG(InputBuffer& buffer, size_t) {
     Name algorithm(buffer);
 
     uint8_t time_signed_buf[6];
@@ -336,8 +328,7 @@ TSIG::TSIG(InputBuffer& buffer, size_t) :
 
 TSIG::TSIG(const Name& algorithm, uint64_t time_signed, uint16_t fudge,
            uint16_t mac_size, const void* mac, uint16_t original_id,
-           uint16_t error, uint16_t other_len, const void* other_data) :
-    impl_(NULL) {
+           uint16_t error, uint16_t other_len, const void* other_data) {
     // Time Signed is a 48-bit value.
     if ((time_signed >> 48) != 0) {
         isc_throw(OutOfRange, "TSIG Time Signed is too large: " <<
@@ -715,8 +706,7 @@ OPT::OPT() :
 /// This constructor cannot be used, and always throws an exception.
 ///
 /// \throw InvalidRdataText OPT RR cannot be constructed from text.
-OPT::OPT(const std::string&) :
-    impl_(NULL) {
+OPT::OPT(const std::string&) {
     isc_throw(InvalidRdataText, "OPT RR cannot be constructed from text");
 }
 
@@ -726,14 +716,12 @@ OPT::OPT(const std::string&) :
 ///
 /// \throw InvalidRdataText OPT RR cannot be constructed from text.
 OPT::OPT(MasterLexer&, const Name*,
-         MasterLoader::Options, MasterLoaderCallbacks&) :
-    impl_(NULL) {
+         MasterLoader::Options, MasterLoaderCallbacks&) {
     isc_throw(InvalidRdataText, "OPT RR cannot be constructed from text");
 }
 
-OPT::OPT(InputBuffer& buffer, size_t rdata_len) :
-    impl_(NULL) {
-    boost::shared_ptr<OPTImpl> impl_ptr(new OPTImpl());
+OPT::OPT(InputBuffer& buffer, size_t rdata_len) {
+    impl_.reset(new OPTImpl());
 
     while (true) {
         if (rdata_len == 0) {
@@ -750,12 +738,12 @@ OPT::OPT(InputBuffer& buffer, size_t rdata_len) :
         const uint16_t option_length = buffer.readUint16();
         rdata_len -= 4;
 
-        if (static_cast<uint16_t>(impl_ptr->rdlength_ + option_length) <
-            impl_ptr->rdlength_) {
+        if (static_cast<uint16_t>(impl_->rdlength_ + option_length) <
+            impl_->rdlength_) {
             isc_throw(InvalidRdataText,
                       "Option length " << option_length
                       << " would overflow OPT RR RDLEN (currently "
-                      << impl_ptr->rdlength_ << ").");
+                      << impl_->rdlength_ << ").");
         }
 
         if (rdata_len < option_length) {
@@ -765,12 +753,10 @@ OPT::OPT(InputBuffer& buffer, size_t rdata_len) :
         boost::shared_ptr<std::vector<uint8_t> >
             option_data(new std::vector<uint8_t>(option_length));
         buffer.readData(&(*option_data)[0], option_length);
-        impl_ptr->pseudo_rrs_.push_back(PseudoRR(option_code, option_data));
-        impl_ptr->rdlength_ += option_length;
+        impl_->pseudo_rrs_.push_back(PseudoRR(option_code, option_data));
+        impl_->rdlength_ += option_length;
         rdata_len -= option_length;
     }
-
-    impl_ = impl_ptr;
 }
 
 OPT::OPT(const OPT& other) :
@@ -983,7 +969,7 @@ struct RRSIGImpl {
 };
 
 // helper function for string and lexer constructors
-boost::shared_ptr<RRSIGImpl>
+std::unique_ptr<RRSIGImpl>
 RRSIG::constructFromLexer(MasterLexer& lexer, const Name* origin) {
     const RRType covered(lexer.getNextToken(MasterToken::STRING).getString());
     const uint32_t algorithm =
@@ -1030,9 +1016,9 @@ RRSIG::constructFromLexer(MasterLexer& lexer, const Name* origin) {
         decodeBase64(signature_txt, signature);
     }
 
-    return (boost::shared_ptr<RRSIGImpl>(new RRSIGImpl(covered, algorithm, labels,
-                                                       originalttl, timeexpire, timeinception,
-                                                       static_cast<uint16_t>(tag), signer, signature)));
+    return (std::unique_ptr<RRSIGImpl>(new RRSIGImpl(covered, algorithm, labels,
+                                                     originalttl, timeexpire, timeinception,
+                                                     static_cast<uint16_t>(tag), signer, signature)));
 }
 
 /// \brief Constructor from string.
@@ -1051,8 +1037,7 @@ RRSIG::constructFromLexer(MasterLexer& lexer, const Name* origin) {
 ///
 /// \throw Others Exception from the Name constructor.
 /// \throw InvalidRdataText Other general syntax errors.
-RRSIG::RRSIG(const std::string& rrsig_str) :
-    impl_(NULL) {
+RRSIG::RRSIG(const std::string& rrsig_str) {
     // We use unique_ptr here because if there is an exception in this
     // constructor, the destructor is not called and there could be a
     // leak of the RRSIGImpl that constructFromLexer() returns.
@@ -1063,7 +1048,7 @@ RRSIG::RRSIG(const std::string& rrsig_str) :
         MasterLexer lexer;
         lexer.pushSource(iss);
 
-        impl_ptr = constructFromLexer(lexer, NULL);
+        impl_ = constructFromLexer(lexer, NULL);
 
         if (lexer.getNextToken().getType() != MasterToken::END_OF_FILE) {
             isc_throw(InvalidRdataText, "extra input text for RRSIG: "
@@ -1073,8 +1058,6 @@ RRSIG::RRSIG(const std::string& rrsig_str) :
         isc_throw(InvalidRdataText, "Failed to construct RRSIG from '" <<
                   rrsig_str << "': " << ex.what());
     }
-
-    impl_ = impl_ptr;
 }
 
 /// \brief Constructor with a context of MasterLexer.
@@ -1483,7 +1466,7 @@ struct TKEYImpl {
 };
 
 // helper function for string and lexer constructors
-boost::shared_ptr<TKEYImpl>
+std::unique_ptr<TKEYImpl>
 TKEY::constructFromLexer(MasterLexer& lexer, const Name* origin) {
     const Name& algorithm =
         createNameFromLexer(lexer, origin ? origin : &Name::ROOT_NAME());
@@ -1578,9 +1561,9 @@ TKEY::constructFromLexer(MasterLexer& lexer, const Name* origin) {
     // RFC2845 says Other Data is "empty unless Error == BADTIME".
     // However, we don't enforce that.
 
-    return (boost::shared_ptr<TKEYImpl>(new TKEYImpl(algorithm, inception,
-                                                     expire, mode, error,
-                                                     key_data, other_data)));
+    return (std::unique_ptr<TKEYImpl>(new TKEYImpl(algorithm, inception,
+                                                   expire, mode, error,
+                                                   key_data, other_data)));
 }
 
 /// \brief Constructor from string.
@@ -1635,18 +1618,14 @@ TKEY::constructFromLexer(MasterLexer& lexer, const Name* origin) {
 /// in base-64.
 ///
 /// \param tkey_str A string containing the RDATA to be created
-TKEY::TKEY(const std::string& tkey_str) : impl_(0) {
-    // We use unique_ptr here because if there is an exception in this
-    // constructor, the destructor is not called and there could be a
-    // leak of the TKEYImpl that constructFromLexer() returns.
-    boost::shared_ptr<TKEYImpl> impl_ptr;
+TKEY::TKEY(const std::string& tkey_str) {
 
     try {
         std::istringstream ss(tkey_str);
         MasterLexer lexer;
         lexer.pushSource(ss);
 
-        impl_ptr = constructFromLexer(lexer, 0);
+        impl_ = constructFromLexer(lexer, 0);
 
         if (lexer.getNextToken().getType() != MasterToken::END_OF_FILE) {
             isc_throw(InvalidRdataText,
@@ -1657,8 +1636,6 @@ TKEY::TKEY(const std::string& tkey_str) : impl_(0) {
                   "Failed to construct TKEY from '" << tkey_str << "': "
                   << ex.what());
     }
-
-    impl_ = impl_ptr;
 }
 
 /// \brief Constructor with a context of MasterLexer.
@@ -1701,8 +1678,7 @@ TKEY::TKEY(MasterLexer& lexer, const Name* origin,
 /// But this constructor does not use this parameter; if necessary, the caller
 /// must check consistency between the length parameter and the actual
 /// RDATA length.
-TKEY::TKEY(InputBuffer& buffer, size_t) :
-    impl_(0) {
+TKEY::TKEY(InputBuffer& buffer, size_t) {
     Name algorithm(buffer);
 
     const uint32_t inception = buffer.readUint32();
@@ -1731,8 +1707,7 @@ TKEY::TKEY(InputBuffer& buffer, size_t) :
 
 TKEY::TKEY(const Name& algorithm, uint32_t inception, uint32_t expire,
            uint16_t mode, uint16_t error, uint16_t key_len,
-           const void* key, uint16_t other_len, const void* other_data) :
-    impl_(0) {
+           const void* key, uint16_t other_len, const void* other_data) {
     if ((key_len == 0 && key != 0) || (key_len > 0 && key == 0)) {
         isc_throw(InvalidParameter, "TKEY Key length and data inconsistent");
     }

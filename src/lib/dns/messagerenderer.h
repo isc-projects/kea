@@ -9,8 +9,9 @@
 
 #include <util/buffer.h>
 
-#include <boost/shared_ptr.hpp>
 #include <boost/noncopyable.hpp>
+
+#include <memory>
 
 namespace isc {
 namespace dns {
@@ -384,7 +385,7 @@ public:
 
 private:
     struct MessageRendererImpl;
-    boost::shared_ptr<MessageRendererImpl> impl_;
+    std::unique_ptr<MessageRendererImpl> impl_;
 };
 }
 }
