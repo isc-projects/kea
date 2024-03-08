@@ -19,7 +19,6 @@
 namespace isc {
 namespace util {
 
-///
 /// @brief A standard DNS module exception that is thrown if an out-of-range
 /// buffer operation is being performed.
 ///
@@ -87,24 +86,17 @@ public:
 /// cast to a size_t because of the inequality.
 class InputBuffer {
 public:
-    ///
-    /// @name Constructors and Destructor
-    //@{
-    /// @brief Constructor from variable length of data.
+    /// @brief Constructor.
     ///
     /// It is caller's responsibility to ensure that the data is valid as long
     /// as the buffer exists.
     /// @param data A pointer to the data stored in the buffer.
     /// @param len The length of the data in bytes.
-    InputBuffer(const void* data, size_t len) :
-      base_(static_cast<const uint8_t*>(data)), current_(base_),
-      end_(base_ + len) {
+    InputBuffer(const void* data, size_t len)
+        : base_(static_cast<const uint8_t*>(data)), current_(base_),
+          end_(base_ + len) {
     }
-    //@}
 
-    ///
-    /// @name Getter Methods
-    //@{
     /// @brief Return the length of the data stored in the buffer.
     size_t getLength() const {
         return (static_cast<size_t>(end_ - base_));
@@ -114,12 +106,7 @@ public:
     size_t getPosition() const {
         return (static_cast<size_t>(current_ - base_));
     }
-    //@}
 
-    ///
-    /// @name Setter Methods
-    ///
-    //@{
     /// @brief Set the read position of the buffer to the given value.
     ///
     /// The new position must be in the valid range of the buffer; otherwise
@@ -132,11 +119,7 @@ public:
         }
         current_ = base_ + position;
     }
-    //@}
 
-    ///
-    /// @name Methods for reading data from the buffer.
-    //@{
     /// @brief Peek an unsigned 8-bit integer from the buffer and return it.
     ///
     /// If the remaining length of the buffer is smaller than 8-bit, an
@@ -254,7 +237,6 @@ public:
     ///
     /// @param data Reference to a buffer (data will be stored there).
     /// @param len Size specified number of bytes to read in a vector.
-    ///
     void peekVector(std::vector<uint8_t>& data, size_t len) {
         if (current_ + len > end_) {
             throwError("read beyond end of buffer");
@@ -271,12 +253,10 @@ public:
     ///
     /// @param data Reference to a buffer (data will be stored there).
     /// @param len Size specified number of bytes to read in a vector.
-    ///
     void readVector(std::vector<uint8_t>& data, size_t len) {
         peekVector(data, len);
         current_ += len;
     }
-    //@}
 
 private:
     /// @brief A common helper to throw an exception on invalid operation.
@@ -298,7 +278,9 @@ private:
     const uint8_t* end_;
 };
 
-///
+/// @brief Type of pointers to input buffer.
+typedef boost::shared_ptr<InputBuffer> InputBufferPtr;
+
 /// @brief The @c OutputBuffer class is a buffer abstraction for manipulating
 /// mutable data.
 ///
@@ -361,30 +343,23 @@ private:
 /// the @c InputBuffer and @c MessageRenderer classes.
 class OutputBuffer {
 public:
-    ///
-    /// @name Constructors and Destructor
-    ///
-    //@{
-    /// @brief Constructor from the initial size of the buffer.
+    /// @brief Constructor.
     ///
     /// @param len The initial allocated length of the buffer in bytes.
-    OutputBuffer(size_t len) : buffer_()
-    {
+    OutputBuffer(size_t len) : buffer_() {
         if (len != 0) {
             buffer_.reserve(len);
         }
     }
 
-    /// @brief Copy constructor
+    /// @brief Copy constructor.
     ///
     /// @param other Source object from which to make a copy.
     ///
     /// @note It is assumed that the source object is consistent, i.e.
     /// size_ <= allocated_, and that if allocated_ is greater than zero,
     /// buffer_ points to valid memory.
-    OutputBuffer(const OutputBuffer& other) :
-        buffer_(other.buffer_)
-    {
+    OutputBuffer(const OutputBuffer& other) : buffer_(other.buffer_) {
         size_t len = other.buffer_.capacity();
         if (len != 0) {
             buffer_.reserve(len);
@@ -392,12 +367,9 @@ public:
     }
 
     /// @brief Destructor
-    ~OutputBuffer() {
-        buffer_.clear();
-    }
-    //@}
+    ~OutputBuffer() = default;
 
-    /// @brief Assignment operator
+    /// @brief Assignment operator.
     ///
     /// @param other Object to copy into "this".
     ///
@@ -416,10 +388,6 @@ public:
         return (*this);
     }
 
-    ///
-    /// @name Getter Methods
-    ///
-    //@{
     /// @brief Return the current capacity of the buffer.
     size_t getCapacity() const {
         return (buffer_.capacity());
@@ -470,12 +438,7 @@ public:
     const std::vector<uint8_t>& getVector() const {
         return (buffer_);
     }
-    //@}
 
-    ///
-    /// @name Methods for writing data into the buffer.
-    ///
-    //@{
     /// @brief Insert a specified length of gap at the end of the buffer.
     ///
     /// The caller should not assume any particular value to be inserted.
@@ -596,23 +559,16 @@ public:
         const uint8_t* ptr = static_cast<const uint8_t*>(data);
         buffer_.insert(buffer_.end(), ptr, ptr + len);
     }
-    //@}
 
 private:
-    /// The actual data
+    /// The actual data.
     std::vector<uint8_t> buffer_;
 };
 
-/// @brief Pointer-like types pointing to @c InputBuffer or @c OutputBuffer
-///
-/// These types are expected to be used as an argument in asynchronous
-/// callback functions.  The internal reference-counting will ensure that
-/// that ongoing state information will not be lost if the object
-/// that originated the asynchronous call falls out of scope.
-typedef boost::shared_ptr<InputBuffer> InputBufferPtr;
+/// @brief Type of pointers to output buffers.
 typedef boost::shared_ptr<OutputBuffer> OutputBufferPtr;
 
-} // namespace util
-} // namespace isc
+} // end of namespace util
+} // end of namespace isc
 
-#endif  // BUFFER_H
+#endif // BUFFER_H
