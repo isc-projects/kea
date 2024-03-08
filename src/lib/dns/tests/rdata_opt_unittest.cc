@@ -50,7 +50,7 @@ TEST_F(Rdata_OPT_Test, createFromWire) {
     // we can only check these don't throw.
     EXPECT_NO_THROW(rdataFactoryFromFile(RRType::OPT(), RRClass("CLASS4096"),
                                          "rdata_opt_fromWire1"));
-    EXPECT_NO_THROW(rdataFactoryFromFile(RRType::OPT(), RRClass::ANY(),
+    EXPECT_NO_THROW(rdataFactoryFromFile(RRType::OPT(), RRClass::CH(),
                                          "rdata_opt_fromWire1", 2));
 
     // Short RDLEN. This throws InvalidRdataLength even if subsequent
@@ -119,7 +119,7 @@ TEST_F(Rdata_OPT_Test, compare) {
     const generic::OPT rdata_opt;
 
     EXPECT_THROW(rdata_opt.compare(
-                  *rdataFactoryFromFile(RRType::OPT(), RRClass::ANY(),
+                  *rdataFactoryFromFile(RRType::OPT(), RRClass::CH(),
                                         "rdata_opt_fromWire1", 2)),
                  isc::InvalidOperation);
 

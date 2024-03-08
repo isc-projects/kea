@@ -6,12 +6,12 @@
 
 #include <config.h>
 
+#include <exceptions/isc_assert.h>
 #include <dns/master_lexer_inputsource.h>
 #include <dns/master_lexer.h>
 
 #include <istream>
 #include <iostream>
-#include <cassert>
 #include <cerrno>
 #include <cstring>
 
@@ -72,7 +72,7 @@ getStreamSize(std::istream& is) {
         isc_throw(InputSource::OpenError,
                   "failed to seek beginning of input source");
     }
-    assert(len >= 0 || ret == MasterLexer::SOURCE_SIZE_UNKNOWN);
+    isc_throw_assert(len >= 0 || ret == MasterLexer::SOURCE_SIZE_UNKNOWN);
     return (ret);
 }
 
@@ -186,7 +186,7 @@ InputSource::ungetChar() {
 
 void
 InputSource::ungetAll() {
-    assert(total_pos_ >= buffer_pos_);
+    isc_throw_assert(total_pos_ >= buffer_pos_);
     total_pos_ -= buffer_pos_;
     buffer_pos_ = 0;
     line_ = saved_line_;

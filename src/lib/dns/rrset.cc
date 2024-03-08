@@ -6,6 +6,7 @@
 
 #include <config.h>
 
+#include <exceptions/isc_assert.h>
 #include <dns/messagerenderer.h>
 #include <dns/name.h>
 #include <dns/rrclass.h>
@@ -97,7 +98,7 @@ rrsetToWire(const AbstractRRset& rrset, T& output, const size_t limit) {
     // other options.  Details to be considered.
     do {
         const size_t pos0 = output.getLength();
-        assert(pos0 < 65536);
+        isc_throw_assert(pos0 < 65536);
 
         rrset.getName().toWire(output);
         rrset.getType().toWire(output);
@@ -203,7 +204,7 @@ BasicRRsetImpl::toWire(AbstractMessageRenderer& renderer, size_t limit) const {
     // other options.  Details to be considered.
     for (auto const& rdata : rdatalist_) {
         const size_t pos0 = renderer.getLength();
-        assert(pos0 < 65536);
+        isc_throw_assert(pos0 < 65536);
 
         name_.toWire(renderer);
         rrtype_.toWire(renderer);
@@ -320,7 +321,7 @@ BasicRRset::getLength() const {
         rrlen += 2; // RDLENGTH field
         rrlen += it->getCurrent().getLength();
 
-        assert(length + rrlen < 65536);
+        isc_throw_assert(length + rrlen < 65536);
         length += rrlen;
 
         it->next();
@@ -369,7 +370,7 @@ RRset::getLength() const {
         const uint16_t rrsigs_length = rrsig_->getLength();
         // the uint16_ts are promoted to ints during addition below, so
         // it won't overflow a 16-bit register.
-        assert(length + rrsigs_length < 65536);
+        isc_throw_assert(length + rrsigs_length < 65536);
         length += rrsigs_length;
     }
 

@@ -384,7 +384,7 @@ public:
     /// case of failure.
     ///
     /// \return true if pushing the file succeeds; false otherwise.
-    bool pushSource(const char* filename, std::string* error = NULL);
+    bool pushSource(const char* filename, std::string* error = 0);
 
     /// \brief Make the given stream the current input source of MasterLexer.
     ///

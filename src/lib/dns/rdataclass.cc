@@ -7,6 +7,7 @@
 #include <config.h>
 
 #include <exceptions/exceptions.h>
+#include <exceptions/isc_assert.h>
 #include <dns/exceptions.h>
 #include <dns/master_lexer.h>
 #include <dns/master_loader.h>
@@ -1318,7 +1319,7 @@ SOA::SOA(const Name& mname, const Name& rname, uint32_t serial,
     b.writeUint32(retry);
     b.writeUint32(expire);
     b.writeUint32(minimum);
-    assert(b.getLength() == sizeof(numdata_));
+    isc_throw_assert(b.getLength() == sizeof(numdata_));
     memcpy(numdata_, b.getData(), sizeof(numdata_));
 }
 

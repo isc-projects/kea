@@ -7,6 +7,7 @@
 #include <config.h>
 
 #include <exceptions/exceptions.h>
+#include <exceptions/isc_assert.h>
 #include <dns/name.h>
 #include <dns/name_internal.h>
 #include <dns/labelsequence.h>
@@ -126,7 +127,7 @@ private:
                 // on a valid name, which is an assumption for this class.
                 // But we'll abort if a bug could cause an infinite loop.
                 i += 2;
-                assert(i < Name::MAX_WIRE);
+                isc_throw_assert(i < Name::MAX_WIRE);
             }
             llen = buffer[pos];
         } else {

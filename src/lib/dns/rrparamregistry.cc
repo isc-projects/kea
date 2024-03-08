@@ -7,6 +7,7 @@
 #include <config.h>
 
 #include <exceptions/exceptions.h>
+#include <exceptions/isc_assert.h>
 #include <dns/rrparamregistry.h>
 #include <dns/rrclass.h>
 #include <dns/rrtype.h>
@@ -194,7 +195,6 @@ RRParamRegistry::RRParamRegistry() : impl_(new RRParamRegistryImpl()) {
 
     // set up parameters for well-known RRs
     try {
-        // BEGIN_WELL_KNOWN_PARAMS
         add("A", 1, "IN", 1, RdataFactoryPtr(new RdataFactory<in::A>()));
         add("NS", 2, "IN", 1, RdataFactoryPtr(new RdataFactory<generic::NS>()));
         add("SOA", 6, "IN", 1, RdataFactoryPtr(new RdataFactory<generic::SOA>()));
@@ -300,7 +300,6 @@ RRParamRegistry::RRParamRegistry() : impl_(new RRParamRegistryImpl()) {
         // Meta classes
         addClass("CH", 3);
         addClass("NONE", 254);
-        // END_WELL_KNOWN_PARAMS
     } catch (...) {
         throw;
     }
@@ -403,7 +402,7 @@ bool CICharEqual(char c1, char c2) {
 
 bool
 caseStringEqual(const string& s1, const string& s2, size_t n) {
-    assert(s1.size() >= n && s2.size() >= n);
+    isc_throw_assert(s1.size() >= n && s2.size() >= n);
 
     return (mismatch(s1.begin(), s1.begin() + n, s2.begin(), CICharEqual).first
             == s1.begin() + n);
@@ -457,7 +456,7 @@ removeParam(uint16_t code, MC& codemap, MS& stringmap) {
     if (found != codemap.end()) {
         size_t erased = stringmap.erase(found->second->code_string_);
         // We must have a corresponding entry of the str2 map exists
-        assert(erased == 1);
+        isc_throw_assert(erased == 1);
 
         codemap.erase(found);
 

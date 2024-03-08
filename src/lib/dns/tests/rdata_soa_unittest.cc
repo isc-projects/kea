@@ -36,7 +36,7 @@ protected:
     {}
 
     template <typename ExForString, typename ExForLexer>
-    void checkFromTextSOA(const string& soa_txt, const Name* origin = NULL,
+    void checkFromTextSOA(const string& soa_txt, const Name* origin = 0,
                           bool throw_str_version = true,
                           bool throw_lexer_version = true)
     {

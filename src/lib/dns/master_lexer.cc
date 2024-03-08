@@ -7,7 +7,7 @@
 #include <config.h>
 
 #include <exceptions/exceptions.h>
-
+#include <exceptions/isc_assert.h>
 #include <dns/master_lexer.h>
 #include <dns/master_lexer_inputsource.h>
 #include <dns/master_lexer_state.h>
@@ -15,7 +15,6 @@
 #include <boost/lexical_cast.hpp>
 
 #include <bitset>
-#include <cassert>
 #include <limits>
 #include <string>
 #include <vector>
@@ -84,7 +83,7 @@ struct MasterLexer::MasterLexerImpl {
     }
 
     void setTotalSize() {
-        assert(source_ != NULL);
+        isc_throw_assert(source_);
         if (total_size_ != SOURCE_SIZE_UNKNOWN) {
             const size_t current_size = source_->getSize();
             if (current_size != SOURCE_SIZE_UNKNOWN) {
@@ -236,8 +235,8 @@ MasterLexer::getNextToken(Options options) {
     }
     // Make sure a token was produced. Since this Can Not Happen, we assert
     // here instead of throwing.
-    assert(impl_->token_.getType() != MasterToken::ERROR ||
-           impl_->token_.getErrorCode() != MasterToken::NO_TOKEN_PRODUCED);
+    isc_throw_assert(impl_->token_.getType() != MasterToken::ERROR ||
+                     impl_->token_.getErrorCode() != MasterToken::NO_TOKEN_PRODUCED);
     return (impl_->token_);
 }
 
@@ -287,7 +286,7 @@ MasterLexer::getNextToken(MasterToken::Type expect, bool eol_ok) {
             throw LexerError(__FILE__, __LINE__,
                              MasterToken(MasterToken::UNEXPECTED_END));
         }
-        assert(expect == MasterToken::NUMBER);
+        isc_throw_assert(expect == MasterToken::NUMBER);
         throw LexerError(__FILE__, __LINE__,
                          MasterToken(MasterToken::BAD_NUMBER));
     }
@@ -329,7 +328,7 @@ MasterToken::getErrorText() const {
     }
 
     // The class integrity ensures the following:
-    assert(val_.error_code_ < error_text_max_count);
+    isc_throw_assert(val_.error_code_ < error_text_max_count);
     return (error_text[val_.error_code_]);
 }
 
@@ -426,7 +425,7 @@ State::getInstance(ID state_id) {
     // This is a bug of the caller, and this method is only expected to be
     // used by tests, so we just forcefully make it fail by asserting the
     // condition.
-    assert(false);
+    isc_throw_assert(false);
     return (STRING_STATE); // a dummy return, to silence some compilers.
 }
 
@@ -540,7 +539,7 @@ QString::handle(MasterLexer& lexer) const {
         } else if (c == '"') {
             if (escaped) {
                 // found escaped '"'. overwrite the preceding backslash.
-                assert(!data.empty());
+                isc_throw_assert(!data.empty());
                 escaped = false;
                 data.back() = '"';
             } else {

@@ -153,8 +153,8 @@ TEST_F(RRClassTest, LeftShiftOperator) {
 // http://www.iana.org/assignments/dns-parameters/dns-parameters.xml
 struct ClassParam {
     const char* const txt;      // "IN", "CH", etc
-    const uint16_t code;        // 1, 3,
-    const RRClass& (*obj)();     // RRClass::IN(), etc
+    const uint16_t code;        // 1, 3, etc
+    const RRClass& (*obj)();    // RRClass::IN(), RRClass::CH(), etc
 } known_classes[] = {
     {"IN", 1, RRClass::IN}, {"CH", 3, RRClass::CH},
     {"NONE", 254, RRClass::NONE}, {"ANY", 255, RRClass::ANY},

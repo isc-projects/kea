@@ -97,7 +97,8 @@ public:
     /// This constructor never throws an exception.
     ///
     /// \param classcode An 16-bit integer code corresponding to the RRClass.
-    explicit RRClass(uint16_t classcode) : classcode_(classcode) {}
+    explicit RRClass(uint16_t classcode) : classcode_(classcode) {
+    }
     ///
     /// A valid string is one of "well-known" textual class representations
     /// such as "IN" or "CH", or in the standard format for "unknown"
@@ -285,18 +286,15 @@ public:
         return (classcode_ < other.classcode_);
     }
 
-    // BEGIN_WELL_KNOWN_CLASS_DECLARATIONS
     static const RRClass& ANY();
     static const RRClass& IN();
     static const RRClass& CH();
     static const RRClass& NONE();
-    // END_WELL_KNOWN_CLASS_DECLARATIONS
 
 private:
     uint16_t classcode_;
 };
 
-// BEGIN_WELL_KNOWN_CLASS_DEFINITIONS
 inline const RRClass&
 RRClass::ANY() {
     static RRClass rrclass(255);
@@ -320,8 +318,6 @@ RRClass::NONE() {
     static RRClass rrclass(254);
     return (rrclass);
 }
-
-// END_WELL_KNOWN_CLASS_DEFINITIONS
 
 ///
 /// \brief Insert the \c RRClass as a string into stream.

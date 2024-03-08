@@ -24,7 +24,7 @@ LabelSequence::LabelSequence(const void* buf) {
     // will lead to a crash, so disabling this check is not
     // unsafe. Except for a programming mistake, this case should not
     // happen.
-    if (buf == NULL) {
+    if (!buf) {
         isc_throw(BadValue,
                   "Null pointer passed to LabelSequence constructor");
     }

@@ -7,6 +7,7 @@
 #include <config.h>
 
 #include <exceptions/exceptions.h>
+#include <exceptions/isc_assert.h>
 #include <dns/name.h>
 #include <dns/messagerenderer.h>
 #include <dns/master_lexer.h>
@@ -165,7 +166,7 @@ createRdata(const RRType& rrtype, const RRClass& rrclass,
     } while (true);
 
     // We shouldn't reach here
-    assert(false);
+    isc_throw_assert(false);
     return (RdataPtr()); // add explicit return to silence some compilers
 }
 

@@ -104,7 +104,8 @@ public:
     /// This constructor never throws an exception.
     ///
     /// \param typecode An 16-bit integer code corresponding to the RRType.
-    explicit RRType(uint16_t typecode) : typecode_(typecode) {}
+    explicit RRType(uint16_t typecode) : typecode_(typecode) {
+    }
     /// Constructor from a string.
     ///
     /// A valid string is one of "well-known" textual type representations
@@ -257,7 +258,6 @@ public:
     }
     //@}
 
-    // BEGIN_WELL_KNOWN_TYPE_DECLARATIONS
     static const RRType& A();
     static const RRType& NS();
     static const RRType& SOA();
@@ -270,13 +270,10 @@ public:
     static const RRType& TKEY();
     static const RRType& TSIG();
     static const RRType& ANY();
-    // END_WELL_KNOWN_TYPE_DECLARATIONS
 
 private:
     uint16_t typecode_;
 };
-
-// BEGIN_WELL_KNOWN_TYPE_DEFINITIONS
 
 inline const RRType&
 RRType::A() {
@@ -349,8 +346,6 @@ RRType::ANY() {
     static RRType rrtype(255);
     return (rrtype);
 }
-
-// END_WELL_KNOWN_TYPE_DEFINITIONS
 
 ///
 /// \brief Insert the \c RRType as a string into stream.

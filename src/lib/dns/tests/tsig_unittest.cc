@@ -210,9 +210,9 @@ commonSignChecks(ConstTSIGRecordPtr tsig, uint16_t expected_qid,
                  const uint8_t* expected_mac, size_t expected_maclen,
                  uint16_t expected_error = 0,
                  uint16_t expected_otherlen = 0,
-                 const uint8_t* expected_otherdata = NULL,
+                 const uint8_t* expected_otherdata = 0,
                  const Name& expected_algorithm = TSIGKey::HMACMD5_NAME()) {
-    ASSERT_TRUE(tsig != NULL);
+    ASSERT_TRUE(tsig);
     const TSIG& tsig_rdata = tsig->getRdata();
 
     EXPECT_EQ(expected_algorithm, tsig_rdata.getAlgorithm());
@@ -567,7 +567,7 @@ TEST_F(TSIGTest, signContinuation) {
     // Create and sign the AXFR request
     ConstTSIGRecordPtr tsig = createMessageAndSign(axfr_qid, zone_name,
                                                    tsig_ctx.get(), 0,
-                                                   RRType(252));
+                                                   RRType("AXFR"));
     // Then verify it (the wire format test data should contain the same
     // message data, and verification should succeed).
     received_data.clear();
@@ -581,7 +581,7 @@ TEST_F(TSIGTest, signContinuation) {
 
     // Create and sign the first response message
     tsig = createMessageAndSign(axfr_qid, zone_name, tsig_verify_ctx.get(),
-                                AA_FLAG|QR_FLAG, RRType(252),
+                                AA_FLAG|QR_FLAG, RRType("AXFR"),
                                 "ns.example.com. root.example.com. "
                                 "2011041503 7200 3600 2592000 1200",
                                 &RRType::SOA());
@@ -603,7 +603,7 @@ TEST_F(TSIGTest, signContinuation) {
     {
         SCOPED_TRACE("Sign test for continued response in TCP stream");
         tsig = createMessageAndSign(axfr_qid, zone_name, tsig_verify_ctx.get(),
-                                    AA_FLAG|QR_FLAG, RRType(252),
+                                    AA_FLAG|QR_FLAG, RRType("AXFR"),
                                     "ns.example.com.", &RRType::NS(), false);
         commonSignChecks(tsig, axfr_qid, 0x4da8e951, expected_mac,
                          sizeof(expected_mac));

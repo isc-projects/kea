@@ -583,7 +583,7 @@ public:
     /// \param tsig_ctx A TSIG context that is to be used for signing the
     /// message
     void toWire(AbstractMessageRenderer& renderer,
-                TSIGContext* tsig_ctx = NULL);
+                TSIGContext* tsig_ctx = 0);
 
     /// Parse options.
     ///

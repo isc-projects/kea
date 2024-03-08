@@ -45,7 +45,7 @@ protected:
                        const RdataType& rdata_expected,
                        bool throw_str_version = true,
                        bool throw_lexer_version = true,
-                       const Name* origin = NULL) {
+                       const Name* origin = 0) {
         SCOPED_TRACE(rdata_txt);
 
         if (throw_str_version) {

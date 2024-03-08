@@ -240,7 +240,7 @@ makeLargest(vector<uint8_t>& data) {
     data.push_back(254);
     data.insert(data.end(), 254, ch);
 
-    assert(data.size() == 65535);
+    ASSERT_TRUE(data.size() == 65535);
 }
 
 TYPED_TEST(Rdata_TXT_LIKE_Test, createFromWire) {

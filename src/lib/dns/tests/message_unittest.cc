@@ -859,7 +859,7 @@ commonTSIGToWireCheck(Message& message, MessageRenderer& renderer,
                       TSIGContext& tsig_ctx, const char* const expected_file,
                       unsigned int message_flags = RD_FLAG,
                       RRType qtype = RRType::A(),
-                      const vector<const char*>* answer_data = NULL) {
+                      const vector<const char*>* answer_data = 0) {
     message.setOpcode(Opcode::QUERY());
     message.setRcode(Rcode::NOERROR());
     if ((message_flags & QR_FLAG) != 0) {
@@ -874,7 +874,7 @@ commonTSIGToWireCheck(Message& message, MessageRenderer& renderer,
     message.addQuestion(Question(Name("www.example.com"), RRClass::IN(),
                                  qtype));
 
-    if (answer_data != NULL) {
+    if (answer_data) {
         RRsetPtr ans_rrset(new RRset(Name("www.example.com"), RRClass::IN(),
                                      qtype, RRTTL(86400)));
         for (auto const& it : *answer_data) {
@@ -1026,7 +1026,7 @@ TEST_F(MessageTest, toWireTSIGTruncation3) {
     EXPECT_TRUE(message_parse.getHeaderFlag(Message::HEADERFLAG_TC));
     // Note that the number of questions are 66, not 67 as we tried to add.
     EXPECT_EQ(66, message_parse.getRRCount(Message::SECTION_QUESTION));
-    EXPECT_TRUE(message_parse.getTSIGRecord() != NULL);
+    EXPECT_TRUE(message_parse.getTSIGRecord());
 }
 
 TEST_F(MessageTest, toWireTSIGNoTruncation) {

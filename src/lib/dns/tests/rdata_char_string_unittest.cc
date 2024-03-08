@@ -161,7 +161,7 @@ TEST_F(CharStringTest, charStringToString) {
         uint8_t idata[32];
         size_t length = std::strlen(cur->data);
         // length (1 byte) + string (length bytes)
-        assert(sizeof(idata) > length);
+        ASSERT_TRUE(sizeof(idata) > length);
         idata[0] = static_cast<uint8_t>(length);
         std::memcpy(idata + 1, cur->data, length);
         const CharString test_data(idata, idata + length + 1);

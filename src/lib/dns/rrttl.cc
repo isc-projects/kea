@@ -6,6 +6,7 @@
 
 #include <config.h>
 
+#include <exceptions/isc_assert.h>
 #include <dns/messagerenderer.h>
 #include <dns/rrttl.h>
 #include <util/buffer.h>
@@ -127,7 +128,7 @@ parseTTLString(const string& ttlstr, uint32_t& ttlval, string* error_txt) {
 
             // seconds cannot be out of range at this point.
             const uint64_t seconds = value * multiply;
-            assert(seconds <= 0xffffffff);
+            isc_throw_assert(seconds <= 0xffffffff);
 
             // Add what we found
             val += seconds;

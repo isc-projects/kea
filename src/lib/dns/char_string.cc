@@ -16,7 +16,6 @@
 
 #include <boost/lexical_cast.hpp>
 
-#include <cassert>
 #include <cctype>
 #include <cstring>
 #include <vector>
@@ -66,7 +65,10 @@ stringToCharString(const MasterToken::StringRegion& str_region,
         int c = (*s & 0xff);
         if (escape && std::isdigit(c) != 0) {
             c = decimalToNumber(s, s_end);
-            assert(n >= 3);
+            // decimalToNumber() already throws if (s_end - s) is less
+            // than 3. 'n' is an unsigned type (size_t) and can underflow.
+            // 'n' and 's' are also updated by 1 in the for statement's
+            // expression, so we update them by 2 instead of 3 here.
             n -= 2;
             s += 2;
         } else if (!escape && c == '\\') {
@@ -98,10 +100,7 @@ stringToCharStringData(const MasterToken::StringRegion& str_region,
         if (escape && std::isdigit(c) != 0) {
             c = decimalToNumber(s, s_end);
             // decimalToNumber() already throws if (s_end - s) is less
-            // than 3, so the following assertion is unnecessary. But we
-            // assert it anyway. 'n' is an unsigned type (size_t) and
-            // can underflow.
-            assert(n >= 3);
+            // than 3. 'n' is an unsigned type (size_t) and can underflow.
             // 'n' and 's' are also updated by 1 in the for statement's
             // expression, so we update them by 2 instead of 3 here.
             n -= 2;

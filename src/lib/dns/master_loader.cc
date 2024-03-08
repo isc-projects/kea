@@ -6,6 +6,7 @@
 
 #include <config.h>
 
+#include <exceptions/isc_assert.h>
 #include <dns/master_loader.h>
 #include <dns/master_lexer.h>
 #include <dns/name.h>
@@ -190,7 +191,7 @@ private:
 
         // We move in tandem, there's an extra item included during the
         // initialization, so we can never run out of them
-        assert(!include_info_.empty());
+        isc_throw_assert(!include_info_.empty());
         const IncludeInfo& info(include_info_.back());
         active_origin_ = info.first;
         last_name_ = info.second;
@@ -259,7 +260,7 @@ private:
         } else {
             // If it is not optional, we must not get anything but
             // a string token.
-            assert(is_optional);
+            isc_throw_assert(is_optional);
 
             // We return the newline there. This is because we want to
             // behave the same if there is or isn't the name, leaving the
@@ -443,7 +444,7 @@ private:
                                "last explicitly stated TTL");
             warn_rfc1035_ttl_ = false; // we only warn about this once
         }
-        assert(current_ttl_);
+        isc_throw_assert(current_ttl_);
         return (*current_ttl_);
     }
 
@@ -961,7 +962,7 @@ MasterLoader::MasterLoaderImpl::loadIncremental(size_t count_limit) {
             }
             // We are going to parse an RR, have known the owner name,
             // and are now seeing the next string token in the rest of the RR.
-            assert(next_token.getType() == MasterToken::STRING);
+            isc_throw_assert(next_token.getType() == MasterToken::STRING);
 
             bool explicit_ttl = false;
             const RRType rrtype = parseRRParams(explicit_ttl, next_token);

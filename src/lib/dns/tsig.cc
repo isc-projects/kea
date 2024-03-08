@@ -7,6 +7,7 @@
 #include <config.h>
 
 #include <exceptions/exceptions.h>
+#include <exceptions/isc_assert.h>
 #include <cryptolink/cryptolink.h>
 #include <cryptolink/crypto_hmac.h>
 #include <dns/rdataclass.h>
@@ -164,7 +165,7 @@ void
 TSIGContext::TSIGContextImpl::digestPreviousMAC(HMACPtr hmac) {
     // We should have ensured the digest size fits 16 bits within this class
     // implementation.
-    assert(previous_digest_.size() <= 0xffff);
+    isc_throw_assert(previous_digest_.size() <= 0xffff);
 
     if (previous_digest_.empty()) {
         // The previous digest was already used. We're in the middle of
@@ -400,7 +401,7 @@ TSIGContext::sign(const uint16_t qid, const void* const data,
 
     // Get the final digest, update internal state, then finish.
     vector<uint8_t> digest = hmac->sign(impl_->digest_len_);
-    assert(digest.size() <= 0xffff); // cryptolink API should have ensured it.
+    isc_throw_assert(digest.size() <= 0xffff); // cryptolink API should have ensured it.
     ConstTSIGRecordPtr tsig(new TSIGRecord(
                                 impl_->key_.getKeyName(),
                                 any::TSIG(impl_->key_.getAlgorithmName(),
