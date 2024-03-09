@@ -121,7 +121,7 @@ TEST_F(EDNSTest, BadWireData) {
     // OPT RR of a non root name
     EXPECT_THROW(EDNS(Name("example.com"), rrclass, rrtype,
                       rrttl_do_on, *opt_rdata), DNSMessageFORMERR);
-                 
+
     // Unsupported Version
     EXPECT_THROW(EDNS(Name::ROOT_NAME(), rrclass, rrtype,
                       rrttl_badver, *opt_rdata), DNSMessageBADVERS);

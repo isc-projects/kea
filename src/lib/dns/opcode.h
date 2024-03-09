@@ -95,7 +95,7 @@ public:
     bool operator==(const Opcode& other) const {
         return (equals(other));
     }
-    
+
     /// \brief Return true iff two Opcodes are not equal.
     ///
     /// This method never throws an exception.

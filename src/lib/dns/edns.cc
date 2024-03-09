@@ -68,7 +68,7 @@ EDNS::EDNS(const Name& name, const RRClass& rrclass, const RRType& rrtype,
                   "EDNS is being created with incompatible RR type: "
                   << rrtype);
     }
-    
+
     if (version_ > EDNS::SUPPORTED_VERSION) {
         isc_throw(DNSMessageBADVERS, "unsupported EDNS version: " <<
                   static_cast<unsigned int>(version_));

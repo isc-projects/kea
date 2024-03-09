@@ -50,9 +50,6 @@ public:
     matchName(const char* nameexp1, const char* nameexp2,
               const isc::dns::Name& name1, const isc::dns::Name& name2);
 };
+
 }
 #endif // UNITTEST_UTIL_H
-
-// Local Variables: 
-// mode: c++
-// End: 

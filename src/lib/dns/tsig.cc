@@ -274,7 +274,7 @@ TSIGContext::TSIGContext(const Name& key_name, const Name& algorithm_name,
         // be used in subsequent response with a TSIG indicating a BADKEY
         // error.
         impl_.reset(new TSIGContextImpl(TSIGKey(key_name, algorithm_name, 0, 0),
-					TSIGError::BAD_KEY()));
+                                        TSIGError::BAD_KEY()));
     } else {
         impl_.reset(new TSIGContextImpl(*result.key));
     }

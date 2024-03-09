@@ -146,6 +146,7 @@ TEST_F(Rdata_IN_AAAA_Test, compare) {
     EXPECT_LT(0, large2.compare(small2));
 
     // comparison attempt between incompatible RR types should be rejected
-    EXPECT_THROW(rdata_in_aaaa.compare(*RdataTest::rdata_nomatch), bad_cast); 
+    EXPECT_THROW(rdata_in_aaaa.compare(*RdataTest::rdata_nomatch), bad_cast);
 }
+
 }
