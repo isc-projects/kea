@@ -152,7 +152,7 @@ public:
     ///
     /// If the given text represents a valid RRClass, it returns a
     /// pointer to a new \c RRClass object. If the given text does not
-    /// represent a valid RRClass, it returns \c NULL.
+    /// represent a valid RRClass, it returns null.
     ///
     /// One main purpose of this function is to minimize the overhead
     /// when the given text does not represent a valid RR class.  For
@@ -167,8 +167,7 @@ public:
     /// This function never throws the \c InvalidRRClass exception.
     ///
     /// \param class_str A string representation of the \c RRClass.
-    /// \return A new RRClass object for the given text or a \c NULL
-    /// value.
+    /// \return A new RRClass object for the given text or a null value.
     static RRClass* createFromText(const std::string& class_str);
 
     ///

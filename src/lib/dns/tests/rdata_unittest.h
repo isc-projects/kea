@@ -38,7 +38,7 @@ protected:
     // ExForString for the string version, and ExForLexer for the lexer
     // version.  throw_str_version and throw_lexer_version are set to true
     // iff the string/lexer version is expected to throw, respectively.
-    // Parameter origin can be set to non NULL for the origin parameter of
+    // Parameter origin can be set to non null for the origin parameter of
     // the lexer version of Rdata constructor.
     template <typename RdataType, typename ExForString, typename ExForLexer>
     void checkFromText(const std::string& rdata_txt,

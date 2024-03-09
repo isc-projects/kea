@@ -156,9 +156,11 @@ struct ClassParam {
     const uint16_t code;        // 1, 3, etc
     const RRClass& (*obj)();    // RRClass::IN(), RRClass::CH(), etc
 } known_classes[] = {
-    {"IN", 1, RRClass::IN}, {"CH", 3, RRClass::CH},
-    {"NONE", 254, RRClass::NONE}, {"ANY", 255, RRClass::ANY},
-    {NULL, 0, NULL}
+    {"IN", 1, RRClass::IN},
+    {"CH", 3, RRClass::CH},
+    {"NONE", 254, RRClass::NONE},
+    {"ANY", 255, RRClass::ANY},
+    {0, 0, 0}
 };
 
 TEST(RRClassConstTest, wellKnowns) {

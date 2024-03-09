@@ -178,9 +178,9 @@ TEST_F(MasterLoaderTest, include) {
         "$Include",
         "$InCluDe",
         "\"$INCLUDE\"",
-        NULL
+        0
     };
-    for (const char** include = includes; *include != NULL; ++include) {
+    for (const char** include = includes; *include != 0; ++include) {
         SCOPED_TRACE(*include);
 
         clear();
@@ -267,9 +267,9 @@ TEST_F(MasterLoaderTest, origin) {
         "$Origin",
         "$OrigiN",
         "\"$ORIGIN\"",
-        NULL
+        0
     };
-    for (const char** origin = origins; *origin != NULL; ++origin) {
+    for (const char** origin = origins; *origin != 0; ++origin) {
         SCOPED_TRACE(*origin);
 
         clear();
@@ -311,9 +311,9 @@ TEST_F(MasterLoaderTest, generate) {
         "$Generate",
         "$GeneratE",
         "\"$GENERATE\"",
-        NULL
+        0
     };
-    for (const char** generate = generates; *generate != NULL; ++generate) {
+    for (const char** generate = generates; *generate != 0; ++generate) {
         SCOPED_TRACE(*generate);
 
         clear();
@@ -864,13 +864,13 @@ TEST_F(MasterLoaderTest, invalidFile) {
 
 struct ErrorCase {
     const char* const line;    // The broken line in master file
-    const char* const reason;  // If non NULL, the reason string
+    const char* const reason;  // If non null, the reason string
     const char* const problem; // Description of the problem for SCOPED_TRACE
 } const error_cases[] = {
-    { "www...   3600    IN  A   192.0.2.1", NULL, "Invalid name" },
-    { "www      FORTNIGHT   IN  A   192.0.2.1", NULL, "Invalid TTL" },
-    { "www      3600    XX  A   192.0.2.1", NULL, "Invalid class" },
-    { "www      3600    IN  A   bad_ip", NULL, "Invalid Rdata" },
+    { "www...   3600    IN  A   192.0.2.1", 0, "Invalid name" },
+    { "www      FORTNIGHT   IN  A   192.0.2.1", 0, "Invalid TTL" },
+    { "www      3600    XX  A   192.0.2.1", 0, "Invalid class" },
+    { "www      3600    IN  A   bad_ip", 0, "Invalid Rdata" },
 
     // Parameter ordering errors
     { "www      IN      A   3600 192.168.2.7",
@@ -910,27 +910,27 @@ struct ErrorCase {
       "createRdata from text failed: unexpected end of input",
       "Missing Rdata" },
 
-    { "www      3600    IN", NULL, "Unexpected EOLN" },
+    { "www      3600    IN", 0, "Unexpected EOLN" },
     { "www      3600    CH  TXT nothing", "Class mismatch: CH vs. IN",
       "Class mismatch" },
-    { "www      \"3600\"  IN  A   192.0.2.1", NULL, "Quoted TTL" },
-    { "www      3600    \"IN\"  A   192.0.2.1", NULL, "Quoted class" },
-    { "www      3600    IN  \"A\"   192.0.2.1", NULL, "Quoted type" },
-    { "unbalanced)paren 3600    IN  A   192.0.2.1", NULL, "Token error 1" },
-    { "www  3600    unbalanced)paren    A   192.0.2.1", NULL,
+    { "www      \"3600\"  IN  A   192.0.2.1", 0, "Quoted TTL" },
+    { "www      3600    \"IN\"  A   192.0.2.1", 0, "Quoted class" },
+    { "www      3600    IN  \"A\"   192.0.2.1", 0, "Quoted type" },
+    { "unbalanced)paren 3600    IN  A   192.0.2.1", 0, "Token error 1" },
+    { "www  3600    unbalanced)paren    A   192.0.2.1", 0,
       "Token error 2" },
     // Check the unknown directive. The rest looks like ordinary RR,
     // so we see the $ is actually special.
-    { "$UNKNOWN 3600    IN  A   192.0.2.1", NULL, "Unknown $ directive" },
+    { "$UNKNOWN 3600    IN  A   192.0.2.1", 0, "Unknown $ directive" },
     { "$INCLUD " TEST_DATA_SRCDIR "/example.org", "Unknown directive 'INCLUD'",
         "Include too short" },
     { "$INCLUDES " TEST_DATA_SRCDIR "/example.org",
         "Unknown directive 'INCLUDES'", "Include too long" },
     { "$INCLUDE", "unexpected end of input", "Missing include path" },
     // The following two error messages are system dependent, omitting
-    { "$INCLUDE /file/not/found", NULL, "Include file not found" },
+    { "$INCLUDE /file/not/found", 0, "Include file not found" },
     { "$INCLUDE /file/not/found example.org. and here goes bunch of garbage",
-        NULL, "Include file not found and garbage at the end of line" },
+        0, "Include file not found and garbage at the end of line" },
     { "$ORIGIN", "unexpected end of input", "Missing origin name" },
     { "$ORIGIN invalid...name", "duplicate period in invalid...name",
         "Invalid name for origin" },
@@ -947,13 +947,13 @@ struct ErrorCase {
     { "$TTL \"100\"", "unexpected quotes", "bad TTL, quoted" },
     { "$TT 100", "Unknown directive 'TT'", "bad directive, too short" },
     { "$TTLLIKE 100", "Unknown directive 'TTLLIKE'", "bad directive, extra" },
-    { NULL, NULL, NULL }
+    { 0, 0, 0 }
 };
 
 // Test a broken zone is handled properly. We test several problems,
 // both in strict and lenient mode.
 TEST_F(MasterLoaderTest, brokenZone) {
-    for (const ErrorCase* ec = error_cases; ec->line != NULL; ++ec) {
+    for (const ErrorCase* ec = error_cases; ec->line; ++ec) {
         SCOPED_TRACE(ec->problem);
         const string zone(prepareZone(ec->line, true));
 
@@ -967,7 +967,7 @@ TEST_F(MasterLoaderTest, brokenZone) {
             EXPECT_THROW(loader_->load(), MasterLoaderError);
             EXPECT_FALSE(loader_->loadedSuccessfully());
             EXPECT_EQ(1, errors_.size());
-            if (ec->reason != NULL) {
+            if (ec->reason) {
                 checkCallbackMessage(errors_.at(0), ec->reason, 2);
             }
             EXPECT_TRUE(warnings_.empty());

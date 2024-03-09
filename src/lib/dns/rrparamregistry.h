@@ -523,7 +523,7 @@ public:
     /// the Rdata; it doesn't update the lexer to reach the end of line or
     /// file or doesn't care about whether there's an extra (garbage) token
     /// after the textual RDATA representation.  Another difference is that
-    /// this method can throw on error and never returns a NULL pointer.
+    /// this method can throw on error and never returns a null pointer.
     ///
     /// For other details and parameters, see the description of
     /// \c rdata::createRdata().

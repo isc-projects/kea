@@ -69,9 +69,9 @@ public:
     /// otherwise, an exception of type \c OutOfRange will be thrown.
     ///
     /// \c mac_size and \c mac correspond to the MAC Size and MAC fields,
-    /// respectively.  When the MAC field is empty, \c mac must be NULL.
+    /// respectively.  When the MAC field is empty, \c mac must be null.
     /// \c mac_size and \c mac must be consistent %in that \c mac_size is 0 if
-    /// and only if \c mac is NULL; otherwise an exception of type
+    /// and only if \c mac is null; otherwise an exception of type
     /// InvalidParameter will be thrown.
     ///
     /// The same restriction applies to \c other_len and \c other_data,
@@ -121,7 +121,7 @@ public:
 
     /// \brief Return the value of the MAC field.
     ///
-    /// If the MAC field is empty, it returns NULL.
+    /// If the MAC field is empty, it returns null.
     /// Otherwise, the memory region beginning at the address returned by
     /// this method is valid up to the bytes specified by the return value
     /// of \c getMACSize().
@@ -180,7 +180,7 @@ namespace detail {
 ///
 /// \param lexer A \c MasterLexer object.  Its next token is expected to be
 /// a string that represent a domain name.
-/// \param origin If non NULL, specifies the origin of the name to be
+/// \param origin If non null, specifies the origin of the name to be
 /// constructed.
 ///
 /// \return A new Name object that corresponds to the next string token of

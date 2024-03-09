@@ -66,7 +66,7 @@ public:
     /// <code>static const</code> member functions.
     ///
     /// Other names are still accepted as long as the secret is empty
-    /// (\c secret is \c NULL and \c secret_len is 0), however; in some cases
+    /// (\c secret is null and \c secret_len is 0), however; in some cases
     /// we might want to treat just the pair of key name and algorithm name
     /// opaquely, e.g., when generating a response TSIG with a BADKEY error
     /// because the algorithm is unknown as specified in Section 3.2 of
@@ -87,7 +87,7 @@ public:
     /// specified, an exception of type \c InvalidParameter will be thrown.
     ///
     /// \c secret and \c secret_len must be consistent in that the latter
-    /// is 0 if and only if the former is \c NULL;
+    /// is 0 if and only if the former is null;
     /// otherwise an exception of type \c InvalidParameter will be thrown.
     ///
     /// \c digestbits is the truncated length in bits or 0 which means no
@@ -104,7 +104,7 @@ public:
     /// form of domain name.  For example, it can be
     /// \c TSIGKey::HMACSHA256_NAME() for HMAC-SHA256.
     /// \param secret Point to a binary sequence of the shared secret to be
-    /// used for this key, or \c NULL if the secret is empty.
+    /// used for this key, or null if the secret is empty.
     /// \param secret_len The size of the binary %data (\c secret) in bytes.
     /// \param digestbits The number of bits to include in the digest
     /// (0 means to include all)
@@ -179,7 +179,7 @@ public:
 
     /// Return the value of the TSIG secret.
     ///
-    /// If it returns a non NULL pointer, the memory region beginning at the
+    /// If it returns a non null pointer, the memory region beginning at the
     /// address returned by this method is valid up to the bytes specified
     /// by the return value of \c getSecretLength().
     ///
@@ -259,7 +259,7 @@ public:
     /// to the found key to represent the result of \c find().
     /// We use this in order to avoid overloading the return value for both
     /// the result code ("success" or "not found") and the found object,
-    /// i.e., avoid using \c NULL to mean "not found", etc.
+    /// i.e., avoid using null to mean "not found", etc.
     ///
     /// This is a simple value class with no internal state, so for
     /// convenience we allow the applications to refer to the members
@@ -341,7 +341,7 @@ public:
     /// object as follows:
     /// - \c code: \c SUCCESS if a key is found; otherwise \c NOTFOUND.
     /// - \c key: A pointer to the found \c TSIGKey object if one is found;
-    /// otherwise \c NULL.
+    /// otherwise null.
     ///
     /// The pointer returned in the \c FindResult object is only valid until
     /// the corresponding key is removed from the key ring.
@@ -363,7 +363,7 @@ public:
     /// object as follows:
     /// - \c code: \c SUCCESS if a key is found; otherwise \c NOTFOUND.
     /// - \c key: A pointer to the found \c TSIGKey object if one is found;
-    /// otherwise \c NULL.
+    /// otherwise null.
     ///
     /// The pointer returned in the \c FindResult object is only valid until
     /// the corresponding key is removed from the key ring.

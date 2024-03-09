@@ -328,7 +328,7 @@ TEST_F(Rdata_RRSIG_Test, createFromLexer) {
         *test::createRdataUsingLexer(RRType::RRSIG(), RRClass::IN(),
                                      rrsig_txt)));
 
-    // Exceptions cause NULL to be returned.
+    // Exceptions cause null to be returned.
     EXPECT_FALSE(test::createRdataUsingLexer(RRType::RRSIG(), RRClass::IN(),
                                              "INVALIDINPUT"));
 }

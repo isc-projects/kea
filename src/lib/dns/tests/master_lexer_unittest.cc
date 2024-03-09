@@ -99,7 +99,7 @@ TEST_F(MasterLexerTest, pushFile) {
     EXPECT_EQ(0, lexer.getSourceCount());
     EXPECT_EQ(143, lexer.getTotalSourceSize()); // this shouldn't change
 
-    // If we give a non NULL string pointer, its content will be intact
+    // If we give a non null string pointer, its content will be intact
     // if pushSource succeeds.
     std::string error_txt = "dummy";
     EXPECT_TRUE(lexer.pushSource(TEST_DATA_SRCDIR "/masterload.txt",
@@ -108,7 +108,7 @@ TEST_F(MasterLexerTest, pushFile) {
 }
 
 TEST_F(MasterLexerTest, pushBadFileName) {
-    EXPECT_THROW(lexer.pushSource(NULL), isc::InvalidParameter);
+    EXPECT_THROW(lexer.pushSource(0), isc::InvalidParameter);
 }
 
 TEST_F(MasterLexerTest, pushFileFail) {
@@ -119,9 +119,9 @@ TEST_F(MasterLexerTest, pushFileFail) {
     EXPECT_FALSE(lexer.pushSource("no-such-file", &error_txt));
     EXPECT_FALSE(error_txt.empty());
 
-    // It's safe to pass NULL error_txt (either explicitly or implicitly as
+    // It's safe to pass null error_txt (either explicitly or implicitly as
     // the default)
-    EXPECT_FALSE(lexer.pushSource("no-such-file", NULL));
+    EXPECT_FALSE(lexer.pushSource("no-such-file", 0));
     EXPECT_FALSE(lexer.pushSource("no-such-file"));
 }
 

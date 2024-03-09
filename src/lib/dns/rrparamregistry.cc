@@ -577,7 +577,7 @@ findRdataFactory(RRParamRegistryImpl* reg_impl,
         return (genfound->second.get());
     }
 
-    return (NULL);
+    return (0);
 }
 }
 
@@ -589,7 +589,7 @@ RRParamRegistry::createRdata(const RRType& rrtype, const RRClass& rrclass,
 
     const AbstractRdataFactory* factory =
         findRdataFactory(impl_.get(), rrtype, rrclass);
-    if (factory != NULL) {
+    if (factory) {
         return (factory->create(rdata_string));
     }
 
@@ -601,7 +601,7 @@ RRParamRegistry::createRdata(const RRType& rrtype, const RRClass& rrclass,
                              InputBuffer& buffer, size_t rdata_len) {
     const AbstractRdataFactory* factory =
         findRdataFactory(impl_.get(), rrtype, rrclass);
-    if (factory != NULL) {
+    if (factory) {
         return (factory->create(buffer, rdata_len));
     }
 
@@ -613,7 +613,7 @@ RRParamRegistry::createRdata(const RRType& rrtype, const RRClass& rrclass,
                              const Rdata& source) {
     const AbstractRdataFactory* factory =
         findRdataFactory(impl_.get(), rrtype, rrclass);
-    if (factory != NULL) {
+    if (factory) {
         return (factory->create(source));
     }
 
@@ -628,7 +628,7 @@ RRParamRegistry::createRdata(const RRType& rrtype, const RRClass& rrclass,
                              MasterLoaderCallbacks& callbacks) {
     const AbstractRdataFactory* factory =
         findRdataFactory(impl_.get(), rrtype, rrclass);
-    if (factory != NULL) {
+    if (factory) {
         return (factory->create(lexer, name, options, callbacks));
     }
 

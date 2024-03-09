@@ -89,7 +89,7 @@ public:
     Message::Mode mode_;
     qid_t qid_;
 
-    // We want to use NULL for [op,r]code_ to mean the code being not
+    // We want to use null for [op,r]code_ to mean the code being not
     // correctly parsed or set.  We store the real code object in
     // xxcode_placeholder_ and have xxcode_ refer to it when the object
     // is valid.
@@ -149,8 +149,8 @@ void
 MessageImpl::init() {
     flags_ = 0;
     qid_ = 0;
-    rcode_ = NULL;
-    opcode_ = NULL;
+    rcode_ = 0;
+    opcode_ = 0;
     edns_ = EDNSPtr();
     tsig_rr_ = ConstTSIGRecordPtr();
 
@@ -237,11 +237,11 @@ MessageImpl::toWire(AbstractMessageRenderer& renderer, TSIGContext* tsig_ctx) {
         isc_throw(InvalidMessageOperation,
                   "Message rendering attempted in non render mode");
     }
-    if (rcode_ == NULL) {
+    if (!rcode_) {
         isc_throw(InvalidMessageOperation,
                   "Message rendering attempted without Rcode set");
     }
-    if (opcode_ == NULL) {
+    if (!opcode_) {
         isc_throw(InvalidMessageOperation,
                   "Message rendering attempted without Opcode set");
     }
@@ -250,7 +250,7 @@ MessageImpl::toWire(AbstractMessageRenderer& renderer, TSIGContext* tsig_ctx) {
     // case correctly later when that happens.  orig_xxx variables remember
     // some configured parameters of renderer in case they are needed in
     // truncation processing below.
-    const size_t tsig_len = (tsig_ctx != NULL) ? tsig_ctx->getTSIGLength() : 0;
+    const size_t tsig_len = (tsig_ctx ? tsig_ctx->getTSIGLength() : 0);
     const size_t orig_msg_len_limit = renderer.getLengthLimit();
     const AbstractMessageRenderer::CompressMode orig_compress_mode =
         renderer.getCompressMode();
@@ -324,7 +324,7 @@ MessageImpl::toWire(AbstractMessageRenderer& renderer, TSIGContext* tsig_ctx) {
     // If we're adding a TSIG to a truncated message, clear all RRsets
     // from the message except for the question before adding the TSIG.
     // If even (some of) the question doesn't fit, don't include it.
-    if (tsig_ctx != NULL && renderer.isTruncated()) {
+    if (tsig_ctx && renderer.isTruncated()) {
         renderer.clear();
         renderer.setLengthLimit(orig_msg_len_limit - tsig_len);
         renderer.setCompressMode(orig_compress_mode);
@@ -368,7 +368,7 @@ MessageImpl::toWire(AbstractMessageRenderer& renderer, TSIGContext* tsig_ctx) {
     renderer.writeUint16At(arcount, header_pos);
 
     // Add TSIG, if necessary, at the end of the message.
-    if (tsig_ctx != NULL) {
+    if (tsig_ctx) {
         // Release the reserved space in the renderer.
         renderer.setLengthLimit(orig_msg_len_limit);
 
@@ -433,7 +433,7 @@ Message::setQid(qid_t qid) {
 
 const Rcode&
 Message::getRcode() const {
-    if (impl_->rcode_ == NULL) {
+    if (!impl_->rcode_) {
         isc_throw(InvalidMessageOperation, "getRcode attempted before set");
     }
     return (*impl_->rcode_);
@@ -450,7 +450,7 @@ Message::setRcode(const Rcode& rcode) {
 
 const Opcode&
 Message::getOpcode() const {
-    if (impl_->opcode_ == NULL) {
+    if (!impl_->opcode_) {
         isc_throw(InvalidMessageOperation, "getOpcode attempted before set");
     }
     return (*impl_->opcode_);
@@ -501,7 +501,7 @@ void
 Message::addRRset(const Section section, RRsetPtr rrset) {
     if (!rrset) {
         isc_throw(InvalidParameter,
-                  "NULL RRset is given to Message::addRRset");
+                  "null RRset is given to Message::addRRset");
     }
     if (impl_->mode_ != Message::RENDER) {
         isc_throw(InvalidMessageOperation,
@@ -886,11 +886,11 @@ struct SectionFormatter {
 
 string
 Message::toText() const {
-    if (impl_->rcode_ == NULL) {
+    if (!impl_->rcode_) {
         isc_throw(InvalidMessageOperation,
                   "Message::toText() attempted without Rcode set");
     }
-    if (impl_->opcode_ == NULL) {
+    if (!impl_->opcode_) {
         isc_throw(InvalidMessageOperation,
                   "Message::toText() attempted without Opcode set");
     }
@@ -933,15 +933,15 @@ Message::toText() const {
         lexical_cast<string>(impl_->counts_[SECTION_AUTHORITY]);
 
     unsigned int arcount = impl_->counts_[SECTION_ADDITIONAL];
-    if (impl_->edns_ != NULL) {
+    if (impl_->edns_) {
         ++arcount;
     }
-    if (impl_->tsig_rr_ != NULL) {
+    if (impl_->tsig_rr_) {
         ++arcount;
     }
     s += ", ADDITIONAL: " + lexical_cast<string>(arcount) + "\n";
 
-    if (impl_->edns_ != NULL) {
+    if (impl_->edns_) {
         s += "\n;; OPT PSEUDOSECTION:\n";
         s += impl_->edns_->toText();
     }
@@ -975,7 +975,7 @@ Message::toText() const {
                  SectionFormatter<RRsetPtr>(SECTION_ADDITIONAL, s));
     }
 
-    if (impl_->tsig_rr_ != NULL) {
+    if (impl_->tsig_rr_) {
         s += "\n;; TSIG PSEUDOSECTION:\n";
         s += impl_->tsig_rr_->toText();
     }

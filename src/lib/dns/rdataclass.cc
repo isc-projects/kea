@@ -237,7 +237,7 @@ TSIG::TSIG(const std::string& tsig_str) {
         MasterLexer lexer;
         lexer.pushSource(ss);
 
-        impl_ = constructFromLexer(lexer, NULL);
+        impl_ = constructFromLexer(lexer, 0);
 
         if (lexer.getNextToken().getType() != MasterToken::END_OF_FILE) {
             isc_throw(InvalidRdataText,
@@ -335,11 +335,10 @@ TSIG::TSIG(const Name& algorithm, uint64_t time_signed, uint16_t fudge,
         isc_throw(OutOfRange, "TSIG Time Signed is too large: " <<
                   time_signed);
     }
-    if ((mac_size == 0 && mac != NULL) || (mac_size > 0 && mac == NULL)) {
+    if ((mac_size == 0 && mac) || (mac_size > 0 && !mac)) {
         isc_throw(InvalidParameter, "TSIG MAC size and data inconsistent");
     }
-    if ((other_len == 0 && other_data != NULL) ||
-        (other_len > 0 && other_data == NULL)) {
+    if ((other_len == 0 && other_data) || (other_len > 0 && !other_data)) {
         isc_throw(InvalidParameter,
                   "TSIG Other data length and data inconsistent");
     }
@@ -542,7 +541,7 @@ TSIG::getMAC() const {
     if (!impl_->mac_.empty()) {
         return (&impl_->mac_[0]);
     } else {
-        return (NULL);
+        return (0);
     }
 }
 
@@ -566,7 +565,7 @@ TSIG::getOtherData() const {
     if (!impl_->other_data_.empty()) {
         return (&impl_->other_data_[0]);
     } else {
-        return (NULL);
+        return (0);
     }
 }
 
@@ -596,7 +595,7 @@ NS::NS(const std::string& namestr) :
         MasterLexer lexer;
         lexer.pushSource(ss);
 
-        nsname_ = createNameFromLexer(lexer, NULL);
+        nsname_ = createNameFromLexer(lexer, 0);
 
         if (lexer.getNextToken().getType() != MasterToken::END_OF_FILE) {
             isc_throw(InvalidRdataText, "extra input text for NS: "
@@ -618,7 +617,7 @@ NS::NS(InputBuffer& buffer, size_t) :
 ///
 /// The \c lexer should point to the beginning of valid textual
 /// representation of an NS RDATA.  The NSDNAME field can be
-/// non-absolute if \c origin is non-NULL, in which case \c origin is
+/// non-absolute if \c origin is non-null, in which case \c origin is
 /// used to make it absolute.  It must not be represented as a quoted
 /// string.
 ///
@@ -628,7 +627,7 @@ NS::NS(InputBuffer& buffer, size_t) :
 ///
 /// \param lexer A \c MasterLexer object parsing a master file for the
 /// RDATA to be created
-/// \param origin If non NULL, specifies the origin of NSDNAME when it
+/// \param origin If non null, specifies the origin of NSDNAME when it
 /// is non-absolute.
 NS::NS(MasterLexer& lexer, const Name* origin,
        MasterLoader::Options, MasterLoaderCallbacks&) :
@@ -865,7 +864,7 @@ PTR::PTR(const std::string& type_str) :
         MasterLexer lexer;
         lexer.pushSource(ss);
 
-        ptr_name_ = createNameFromLexer(lexer, NULL);
+        ptr_name_ = createNameFromLexer(lexer, 0);
 
         if (lexer.getNextToken().getType() != MasterToken::END_OF_FILE) {
             isc_throw(InvalidRdataText, "extra input text for PTR: "
@@ -887,7 +886,7 @@ PTR::PTR(InputBuffer& buffer, size_t) :
 ///
 /// The \c lexer should point to the beginning of valid textual
 /// representation of a PTR RDATA.  The PTRDNAME field can be
-/// non-absolute if \c origin is non-NULL, in which case \c origin is
+/// non-absolute if \c origin is non-null, in which case \c origin is
 /// used to make it absolute.  It must not be represented as a quoted
 /// string.
 ///
@@ -897,7 +896,7 @@ PTR::PTR(InputBuffer& buffer, size_t) :
 ///
 /// \param lexer A \c MasterLexer object parsing a master file for the
 /// RDATA to be created
-/// \param origin If non NULL, specifies the origin of PTRDNAME when it
+/// \param origin If non null, specifies the origin of PTRDNAME when it
 /// is non-absolute.
 PTR::PTR(MasterLexer& lexer, const Name* origin,
          MasterLoader::Options, MasterLoaderCallbacks&) :
@@ -1049,7 +1048,7 @@ RRSIG::RRSIG(const std::string& rrsig_str) {
         MasterLexer lexer;
         lexer.pushSource(iss);
 
-        impl_ = constructFromLexer(lexer, NULL);
+        impl_ = constructFromLexer(lexer, 0);
 
         if (lexer.getNextToken().getType() != MasterToken::END_OF_FILE) {
             isc_throw(InvalidRdataText, "extra input text for RRSIG: "
@@ -1065,7 +1064,7 @@ RRSIG::RRSIG(const std::string& rrsig_str) {
 ///
 /// The \c lexer should point to the beginning of valid textual representation
 /// of an RRSIG RDATA.  The Signer's Name fields can be non absolute if \c
-/// origin is non NULL, in which case \c origin is used to make it absolute.
+/// origin is non null, in which case \c origin is used to make it absolute.
 /// This must not be represented as a quoted string.
 ///
 /// The Original TTL field is a valid decimal representation of an unsigned
@@ -1078,7 +1077,7 @@ RRSIG::RRSIG(const std::string& rrsig_str) {
 ///
 /// \param lexer A \c MasterLexer object parsing a master file for the
 /// RDATA to be created
-/// \param origin If non NULL, specifies the origin of Signer's Name when
+/// \param origin If non null, specifies the origin of Signer's Name when
 /// it is non absolute.
 RRSIG::RRSIG(MasterLexer& lexer, const Name* origin,
              MasterLoader::Options, MasterLoaderCallbacks&) {
@@ -1270,8 +1269,8 @@ SOA::SOA(const std::string& soastr) :
         MasterLexer lexer;
         lexer.pushSource(ss);
 
-        mname_ = createNameFromLexer(lexer, NULL);
-        rname_ = createNameFromLexer(lexer, NULL);
+        mname_ = createNameFromLexer(lexer, 0);
+        rname_ = createNameFromLexer(lexer, 0);
         fillParameters(lexer, numdata_);
 
         if (lexer.getNextToken().getType() != MasterToken::END_OF_FILE) {
@@ -1288,7 +1287,7 @@ SOA::SOA(const std::string& soastr) :
 ///
 /// The \c lexer should point to the beginning of valid textual representation
 /// of an SOA RDATA.  The MNAME and RNAME fields can be non absolute if
-/// \c origin is non NULL, in which case \c origin is used to make them
+/// \c origin is non null, in which case \c origin is used to make them
 /// absolute.  These must not be represented as a quoted string.
 ///
 /// The REFRESH, RETRY, EXPIRE, and MINIMUM fields can be either a valid
@@ -1301,7 +1300,7 @@ SOA::SOA(const std::string& soastr) :
 ///
 /// \param lexer A \c MasterLexer object parsing a master file for the
 /// RDATA to be created
-/// \param origin If non NULL, specifies the origin of MNAME and RNAME when
+/// \param origin If non null, specifies the origin of MNAME and RNAME when
 /// they are non absolute.
 SOA::SOA(MasterLexer& lexer, const Name* origin,
          MasterLoader::Options, MasterLoaderCallbacks&) :
@@ -2143,7 +2142,7 @@ string
 A::toText() const {
     char addr_string[sizeof("255.255.255.255")];
 
-    if (inet_ntop(AF_INET, &addr_, addr_string, sizeof(addr_string)) == NULL) {
+    if (inet_ntop(AF_INET, &addr_, addr_string, sizeof(addr_string)) == 0) {
         isc_throw(Unexpected,
                   "Failed to convert IN/A RDATA to textual IPv4 address");
     }
@@ -2259,8 +2258,7 @@ string
 AAAA::toText() const {
     char addr_string[sizeof("ffff:ffff:ffff:ffff:ffff:ffff:255.255.255.255")];
 
-    if (inet_ntop(AF_INET6, &addr_, addr_string, sizeof(addr_string))
-        == NULL) {
+    if (inet_ntop(AF_INET6, &addr_, addr_string, sizeof(addr_string)) == 0) {
         isc_throw(Unexpected,
                   "Failed to convert IN/AAAA RDATA to textual IPv6 address");
     }

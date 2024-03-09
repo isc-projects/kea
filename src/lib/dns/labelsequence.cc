@@ -20,7 +20,7 @@ namespace dns {
 
 LabelSequence::LabelSequence(const void* buf) {
 #ifdef ENABLE_DEBUG
-    // In non-debug mode, dereferencing the NULL pointer further below
+    // In non-debug mode, dereferencing the null pointer further below
     // will lead to a crash, so disabling this check is not
     // unsafe. Except for a programming mistake, this case should not
     // happen.

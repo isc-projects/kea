@@ -94,7 +94,7 @@ public:
     using pointer = T*;
     using reference = T&;
 
-    SectionIterator() : impl_(NULL) {}
+    SectionIterator() : impl_(0) {}
     SectionIterator(const SectionIteratorImpl<T>& impl);
     ~SectionIterator();
     SectionIterator(const SectionIterator<T>& source);
@@ -386,7 +386,7 @@ public:
     ///
     /// \exception InvalidMessageOperation Message is not in the PARSE mode.
     ///
-    /// \return A pointer to the stored \c TSIGRecord or \c NULL.
+    /// \return A pointer to the stored \c TSIGRecord or null.
     const TSIGRecord* getTSIGRecord() const;
 
     /// \brief Returns the number of RRs contained in the given section.
@@ -463,13 +463,13 @@ public:
     /// data before inserting RRsets.  The caller is responsible for
     /// checking for these (see \c hasRRset() below).
     ///
-    /// \throw InvalidParameter rrset is NULL
+    /// \throw InvalidParameter rrset is null
     /// \throw InvalidMessageOperation The message is not in the \c RENDER
     /// mode.
     /// \throw OutOfRange \c section doesn't specify a valid \c Section value.
     ///
     /// \param section The message section to which the rrset is to be added
-    /// \param rrset The rrset to be added.  Must not be NULL.
+    /// \param rrset The rrset to be added.  Must not be null.
     void addRRset(const Section section, RRsetPtr rrset);
 
     /// \brief Determine whether the given section already has an RRset
@@ -556,7 +556,7 @@ public:
     /// \c Rcode must have been set beforehand; otherwise, an exception of
     /// class \c InvalidMessageOperation will be thrown.
     ///
-    /// If a non-NULL \c tsig_ctx is passed, it will also add a TSIG RR
+    /// If a non-null \c tsig_ctx is passed, it will also add a TSIG RR
     /// with (in many cases) the TSIG MAC for the message along with the
     /// given TSIG context (\c tsig_ctx).  The TSIG RR will be placed at
     /// the end of \c renderer. The \c TSIGContext at \c tsig_ctx will

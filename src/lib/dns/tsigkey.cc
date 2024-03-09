@@ -94,10 +94,10 @@ TSIGKey::TSIGKeyImpl {
 
 TSIGKey::TSIGKey(const Name& key_name, const Name& algorithm_name,
                  const void* secret, size_t secret_len,
-                 size_t digestbits /*= 0*/) : impl_(NULL) {
+                 size_t digestbits /*= 0*/) : impl_(0) {
     const HashAlgorithm algorithm = convertAlgorithmName(algorithm_name);
-    if ((secret != NULL && secret_len == 0) ||
-        (secret == NULL && secret_len != 0)) {
+    if ((secret && secret_len == 0) ||
+        (!secret && secret_len != 0)) {
         isc_throw(InvalidParameter,
                   "TSIGKey secret and its length are inconsistent: " <<
                   key_name << ":" << algorithm_name);
@@ -107,7 +107,7 @@ TSIGKey::TSIGKey(const Name& key_name, const Name& algorithm_name,
                   "TSIGKey with unknown algorithm has non empty secret: " <<
                   key_name << ":" << algorithm_name);
     }
-    if (secret == NULL) {
+    if (!secret) {
         impl_.reset(new TSIGKey::TSIGKeyImpl(key_name, algorithm_name, algorithm,
                                              digestbits));
     } else {
@@ -116,7 +116,7 @@ TSIGKey::TSIGKey(const Name& key_name, const Name& algorithm_name,
     }
 }
 
-TSIGKey::TSIGKey(const std::string& str) : impl_(NULL) {
+TSIGKey::TSIGKey(const std::string& str) : impl_(0) {
     try {
         istringstream iss(str);
 
@@ -222,7 +222,7 @@ TSIGKey::getDigestbits() const {
 
 const void*
 TSIGKey::getSecret() const {
-    return ((impl_->secret_.size() > 0) ? &impl_->secret_[0] : NULL);
+    return ((impl_->secret_.size() > 0) ? &impl_->secret_[0] : 0);
 }
 
 size_t
@@ -334,7 +334,7 @@ TSIGKeyRing::find(const Name& key_name) const {
     TSIGKeyRingImpl::TSIGKeyMap::const_iterator found =
         impl_->keys.find(key_name);
     if (found == impl_->keys.end()) {
-        return (FindResult(NOTFOUND, NULL));
+        return (FindResult(NOTFOUND, 0));
     }
     return (FindResult(SUCCESS, &((*found).second)));
 }
@@ -345,7 +345,7 @@ TSIGKeyRing::find(const Name& key_name, const Name& algorithm_name) const {
         impl_->keys.find(key_name);
     if (found == impl_->keys.end() ||
         (*found).second.getAlgorithmName() != algorithm_name) {
-        return (FindResult(NOTFOUND, NULL));
+        return (FindResult(NOTFOUND, 0));
     }
     return (FindResult(SUCCESS, &((*found).second)));
 }

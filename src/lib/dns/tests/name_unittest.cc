@@ -325,7 +325,7 @@ TEST_F(NameTest, copyOrigin) {
     EXPECT_EQ(origin_name, Name("@", 1, &origin_name_upper, true));
     EXPECT_EQ(origin_name_upper, Name("@", 1, &origin_name_upper, true));
     // If we don't provide the origin, it throws
-    EXPECT_THROW(Name("@", 1, NULL), MissingNameOrigin);
+    EXPECT_THROW(Name("@", 1, 0), MissingNameOrigin);
 }
 
 // Test the master-file constructor does not append the origin when the
@@ -336,7 +336,7 @@ TEST_F(NameTest, dontAppendOrigin) {
     EXPECT_EQ(example_name, Name("WWW.EXAMPLE.COM.", 16, &origin_name, true));
     EXPECT_EQ(example_name_upper, Name("WWW.EXAMPLE.COM.", 16, &origin_name));
     // And it does not require the origin to be provided
-    EXPECT_NO_THROW(Name("www.example.com.", 16, NULL));
+    EXPECT_NO_THROW(Name("www.example.com.", 16, 0));
 }
 
 // Test the master-file constructor properly appends the origin when
@@ -350,14 +350,14 @@ TEST_F(NameTest, appendOrigin) {
     // Check we can prepend more than one label
     EXPECT_EQ(Name("a.b.c.d.example.com."), Name("a.b.c.d", 7, &origin_name));
     // When the name is relative, we throw.
-    EXPECT_THROW(Name("www", 3, NULL), MissingNameOrigin);
+    EXPECT_THROW(Name("www", 3, 0), MissingNameOrigin);
 }
 
 // When we don't provide the data, it throws
 TEST_F(NameTest, noDataProvided) {
-    EXPECT_THROW(Name(NULL, 10, NULL), isc::InvalidParameter);
-    EXPECT_THROW(Name(NULL, 10, &origin_name), isc::InvalidParameter);
-    EXPECT_THROW(Name("www", 0, NULL), isc::InvalidParameter);
+    EXPECT_THROW(Name(0, 10, 0), isc::InvalidParameter);
+    EXPECT_THROW(Name(0, 10, &origin_name), isc::InvalidParameter);
+    EXPECT_THROW(Name("www", 0, 0), isc::InvalidParameter);
     EXPECT_THROW(Name("www", 0, &origin_name), isc::InvalidParameter);
 }
 
@@ -381,7 +381,7 @@ TEST_F(NameTest, combinedTooLong) {
 TEST_F(NameTest, atSign) {
     // If it is alone, it is the origin
     EXPECT_EQ(origin_name, Name("@", 1, &origin_name));
-    EXPECT_THROW(Name("@", 1, NULL), MissingNameOrigin);
+    EXPECT_THROW(Name("@", 1, 0), MissingNameOrigin);
     EXPECT_EQ(Name::ROOT_NAME(), Name("@"));
 
     // It is not alone. It is taken verbatim. We check the name converted
@@ -389,7 +389,7 @@ TEST_F(NameTest, atSign) {
     // may be wrong -- if we create it wrong the same way as the tested
     // object.
     EXPECT_EQ("\\@.", Name("@.").toText());
-    EXPECT_EQ("\\@.", Name("@.", 2, NULL).toText());
+    EXPECT_EQ("\\@.", Name("@.", 2, 0).toText());
     EXPECT_EQ("\\@something.", Name("@something").toText());
     EXPECT_EQ("something\\@.", Name("something@").toText());
     EXPECT_EQ("\\@x.example.com.", Name("@x", 2, &origin_name).toText());

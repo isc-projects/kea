@@ -668,21 +668,21 @@ const char* const root_servers[] = {
     "d.root-servers.net", "e.root-servers.net", "f.root-servers.net",
     "g.root-servers.net", "h.root-servers.net", "i.root-servers.net",
     "j.root-servers.net", "k.root-servers.net", "l.root-servers.net",
-    "m.root-servers.net", NULL
+    "m.root-servers.net", 0
 };
 
 const char* const jp_servers[] = {
     "a.dns.jp", "b.dns.jp", "c.dns.jp", "d.dns.jp", "e.dns.jp",
-    "f.dns.jp", "g.dns.jp", NULL
+    "f.dns.jp", "g.dns.jp", 0
 };
 const char* const cn_servers[] = {
     "a.dns.cn", "b.dns.cn", "c.dns.cn", "d.dns.cn", "e.dns.cn",
-    "ns.cernet.net", NULL
+    "ns.cernet.net", 0
 };
 const char* const ca_servers[] = {
     "k.ca-servers.ca", "e.ca-servers.ca", "a.ca-servers.ca", "z.ca-servers.ca",
     "tld.isc-sns.net", "c.ca-servers.ca", "j.ca-servers.ca", "l.ca-servers.ca",
-    "sns-pb.isc.org", "f.ca-servers.ca", NULL
+    "sns-pb.isc.org", "f.ca-servers.ca", 0
 };
 
 // A helper function used in the getHash test below.
@@ -695,7 +695,7 @@ hashDistributionCheck(const char* const* servers) {
     // Store all test names and their super domain names (excluding the
     // "root" label) in the set, calculates their hash values, and increments
     // the counter for the corresponding hash "bucket".
-    for (size_t i = 0; servers[i] != NULL; ++i) {
+    for (size_t i = 0; servers[i]; ++i) {
         const Name name(servers[i]);
         for (size_t l = 0; l < name.getLabelCount() - 1; ++l) {
             pair<set<Name>::const_iterator, bool> ret =
@@ -875,7 +875,7 @@ TEST_F(LabelSequenceTest, serialize) {
 // These checks are enabled only in debug mode in the LabelSequence
 // class.
 TEST_F(LabelSequenceTest, badDeserialize) {
-    EXPECT_THROW(LabelSequence(NULL), isc::BadValue);
+    EXPECT_THROW(LabelSequence(0), isc::BadValue);
     const uint8_t zero_offsets[] = { 0 };
     EXPECT_THROW(LabelSequence ls(zero_offsets), isc::BadValue);
     const uint8_t toomany_offsets[] = { Name::MAX_LABELS + 1 };

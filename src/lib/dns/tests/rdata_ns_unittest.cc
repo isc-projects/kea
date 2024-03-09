@@ -103,7 +103,7 @@ TEST_F(Rdata_NS_Test, createFromLexer) {
         *test::createRdataUsingLexer(RRType::NS(), RRClass::IN(),
                                      "ns8")));
 
-    // Exceptions cause NULL to be returned.
+    // Exceptions cause null to be returned.
     EXPECT_FALSE(test::createRdataUsingLexer(RRType::NS(), RRClass::IN(),
                                              ""));
 

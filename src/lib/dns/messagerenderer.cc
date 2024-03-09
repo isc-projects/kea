@@ -365,16 +365,16 @@ AbstractMessageRenderer::AbstractMessageRenderer() :
 
 void
 AbstractMessageRenderer::setBuffer(OutputBuffer* buffer) {
-    if (buffer != NULL && buffer_->getLength() != 0) {
+    if (buffer && buffer_->getLength() != 0) {
         isc_throw(isc::InvalidParameter,
                   "MessageRenderer buffer cannot be set when in use");
     }
-    if (buffer == NULL && buffer_ == &local_buffer_) {
+    if (!buffer && buffer_ == &local_buffer_) {
         isc_throw(isc::InvalidParameter,
                   "Default MessageRenderer buffer cannot be reset");
     }
 
-    if (buffer == NULL) {
+    if (!buffer) {
         // Reset to the default buffer, then clear other internal resources.
         // The order is important; we need to keep the used buffer intact.
         buffer_ = &local_buffer_;

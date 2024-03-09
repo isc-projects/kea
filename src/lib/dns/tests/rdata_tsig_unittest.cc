@@ -112,11 +112,11 @@ TEST_F(Rdata_TSIG_Test, fromText) {
     EXPECT_EQ(1286779327, rdata_tsig.getTimeSigned());
     EXPECT_EQ(300, rdata_tsig.getFudge());
     EXPECT_EQ(0, rdata_tsig.getMACSize());
-    EXPECT_EQ(static_cast<void*>(NULL), rdata_tsig.getMAC());
+    EXPECT_FALSE(rdata_tsig.getMAC());
     EXPECT_EQ(16020, rdata_tsig.getOriginalID());
     EXPECT_EQ(TSIGError::BAD_KEY_CODE, rdata_tsig.getError());
     EXPECT_EQ(0, rdata_tsig.getOtherLen());
-    EXPECT_EQ(static_cast<void*>(NULL), rdata_tsig.getOtherData());
+    EXPECT_FALSE(rdata_tsig.getOtherData());
 
     TSIG tsig2(valid_text2);
     EXPECT_EQ(12, tsig2.getMACSize());
@@ -206,7 +206,7 @@ fromWireCommonChecks(const TSIG& tsig) {
     EXPECT_EQ(2845, tsig.getOriginalID());
 
     EXPECT_EQ(0, tsig.getOtherLen());
-    EXPECT_EQ(static_cast<const void*>(NULL), tsig.getOtherData());
+    EXPECT_FALSE(tsig.getOtherData());
 }
 
 TEST_F(Rdata_TSIG_Test, createFromWire) {
@@ -239,7 +239,7 @@ TEST_F(Rdata_TSIG_Test, createFromWireWithoutMAC) {
     const TSIG& tsig(dynamic_cast<TSIG&>(*rdata));
     EXPECT_EQ(16, tsig.getError());
     EXPECT_EQ(0, tsig.getMACSize());
-    EXPECT_EQ(static_cast<const void*>(NULL), tsig.getMAC());
+    EXPECT_FALSE(tsig.getMAC());
 }
 
 TEST_F(Rdata_TSIG_Test, createFromWireWithCompression) {
@@ -286,12 +286,12 @@ TEST_F(Rdata_TSIG_Test, copyConstruct) {
 
 TEST_F(Rdata_TSIG_Test, createFromParams) {
     EXPECT_EQ(0, rdata_tsig.compare(TSIG(Name("hmac-md5.sig-alg.reg.int"),
-                                         1286779327, 300, 0, NULL, 16020, 17, 0, NULL)));
+                                         1286779327, 300, 0, 0, 16020, 17, 0, 0)));
 
     const uint8_t fake_data[] = { 0x14, 0x02, 0x84, 0x14, 0x02, 0x84,
                                   0x14, 0x02, 0x84, 0x14, 0x02, 0x84 };
     EXPECT_EQ(0, TSIG(valid_text2).compare(TSIG(Name("hmac-sha256"), 1286779327, 300, 12,
-                                                fake_data, 16020, 16, 0, NULL)));
+                                                fake_data, 16020, 16, 0, 0)));
 
     const uint8_t fake_data2[] = { 0x14, 0x02, 0x84, 0x14, 0x02, 0x84 };
     EXPECT_EQ(0, TSIG(valid_text3).compare(TSIG(Name("hmac-sha1"), 1286779327, 300, 12,
@@ -299,13 +299,13 @@ TEST_F(Rdata_TSIG_Test, createFromParams) {
 
     EXPECT_THROW(TSIG(Name("hmac-sha256"), 1ULL << 48, 300, 12, fake_data, 16020, 18, 6, fake_data2),
                  isc::OutOfRange);
-    EXPECT_THROW(TSIG(Name("hmac-sha256"), 0, 300, 0, fake_data, 16020, 18, 0, NULL),
+    EXPECT_THROW(TSIG(Name("hmac-sha256"), 0, 300, 0, fake_data, 16020, 18, 0, 0),
                  isc::InvalidParameter);
-    EXPECT_THROW(TSIG(Name("hmac-sha256"), 0, 300, 12, NULL, 16020, 18, 0, NULL),
+    EXPECT_THROW(TSIG(Name("hmac-sha256"), 0, 300, 12, 0, 16020, 18, 0, 0),
                  isc::InvalidParameter);
-    EXPECT_THROW(TSIG(Name("hmac-sha256"), 0, 300, 0, NULL, 16020, 18, 0, fake_data),
+    EXPECT_THROW(TSIG(Name("hmac-sha256"), 0, 300, 0, 0, 16020, 18, 0, fake_data),
                  isc::InvalidParameter);
-    EXPECT_THROW(TSIG(Name("hmac-sha256"), 0, 300, 0, NULL, 16020, 18, 6, NULL),
+    EXPECT_THROW(TSIG(Name("hmac-sha256"), 0, 300, 0, 0, 16020, 18, 6, 0),
                  isc::InvalidParameter);
 }
 

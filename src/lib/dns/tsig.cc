@@ -101,7 +101,7 @@ struct TSIGContext::TSIGContextImpl {
         } else if (state_ == SENT_REQUEST && error == TSIGError::NOERROR()) {
             state_ = VERIFIED_RESPONSE;
         }
-        if (digest != NULL) {
+        if (digest) {
             previous_digest_.assign(static_cast<const uint8_t*>(digest),
                                     static_cast<const uint8_t*>(digest) +
                                     digest_len);
@@ -265,7 +265,7 @@ TSIGContext::TSIGContext(const TSIGKey& key) : impl_(new TSIGContextImpl(key)) {
 }
 
 TSIGContext::TSIGContext(const Name& key_name, const Name& algorithm_name,
-                         const TSIGKeyRing& keyring) : impl_(NULL) {
+                         const TSIGKeyRing& keyring) : impl_(0) {
     const TSIGKeyRing::FindResult result(keyring.find(key_name,
                                                       algorithm_name));
     if (result.code == TSIGKeyRing::NOTFOUND) {
@@ -273,8 +273,8 @@ TSIGContext::TSIGContext(const Name& key_name, const Name& algorithm_name,
         // parameters and empty secret.  In the common scenario this will
         // be used in subsequent response with a TSIG indicating a BADKEY
         // error.
-        impl_.reset(new TSIGContextImpl(TSIGKey(key_name, algorithm_name,
-                                                NULL, 0), TSIGError::BAD_KEY()));
+        impl_.reset(new TSIGContextImpl(TSIGKey(key_name, algorithm_name, 0, 0),
+					TSIGError::BAD_KEY()));
     } else {
         impl_.reset(new TSIGContextImpl(*result.key));
     }
@@ -340,7 +340,7 @@ TSIGContext::sign(const uint16_t qid, const void* const data,
                   "TSIG sign attempt after verifying a response");
     }
 
-    if (data == NULL || data_len == 0) {
+    if (!data || data_len == 0) {
         isc_throw(InvalidParameter, "TSIG sign error: empty data is given");
     }
 
@@ -358,8 +358,8 @@ TSIGContext::sign(const uint16_t qid, const void* const data,
         ConstTSIGRecordPtr tsig(new TSIGRecord(
                                     impl_->key_.getKeyName(),
                                     any::TSIG(impl_->key_.getAlgorithmName(),
-                                              now, DEFAULT_FUDGE, 0, NULL,
-                                              qid, error.getCode(), 0, NULL)));
+                                              now, DEFAULT_FUDGE, 0, 0,
+                                              qid, error.getCode(), 0, 0)));
         impl_->previous_digest_.clear();
         impl_->state_ = SENT_RESPONSE;
         return (tsig);
@@ -389,7 +389,7 @@ TSIGContext::sign(const uint16_t qid, const void* const data,
             otherdatabuf.writeUint32(now & 0xffffffff);
     }
     const void* const otherdata =
-        (otherlen == 0) ? NULL : otherdatabuf.getData();
+        (otherlen == 0) ? 0 : otherdatabuf.getData();
     // Then calculate the digest.  If state_ is SENT_RESPONSE we are sending
     // a continued message in the same TCP stream so skip digesting
     // variables except for time related variables (RFC2845 4.4).
@@ -423,7 +423,7 @@ TSIGContext::verify(const TSIGRecord* const record, const void* const data,
                   "TSIG verify attempt after sending a response");
     }
 
-    if (record == NULL) {
+    if (!record) {
         if (impl_->last_sig_dist_ >= 0 && impl_->last_sig_dist_ < 99) {
             // It is not signed, but in the middle of TCP stream. We just
             // update the HMAC state and consider this message OK.
@@ -432,13 +432,13 @@ TSIGContext::verify(const TSIGRecord* const record, const void* const data,
             // now.
             impl_->last_sig_dist_++;
             // No digest to return now. Just say it's OK.
-            return (impl_->postVerifyUpdate(TSIGError::NOERROR(), NULL, 0));
+            return (impl_->postVerifyUpdate(TSIGError::NOERROR(), 0, 0));
         }
         // This case happens when we sent a signed request and have received an
         // unsigned response.  According to RFC2845 Section 4.6 this case should be
         // considered a "format error" (although the specific error code
         // wouldn't matter much for the caller).
-        return (impl_->postVerifyUpdate(TSIGError::FORMERR(), NULL, 0));
+        return (impl_->postVerifyUpdate(TSIGError::FORMERR(), 0, 0));
     }
 
     const any::TSIG& tsig_rdata = record->getRdata();
@@ -448,7 +448,7 @@ TSIGContext::verify(const TSIGRecord* const record, const void* const data,
         isc_throw(InvalidParameter,
                   "TSIG verify: data length is invalid: " << data_len);
     }
-    if (data == NULL) {
+    if (!data) {
         isc_throw(InvalidParameter, "TSIG verify: empty data is invalid");
     }
 
@@ -459,11 +459,11 @@ TSIGContext::verify(const TSIGRecord* const record, const void* const data,
     // it using the consistent key in the context.  If the check fails we are
     // done with BADKEY.
     if (impl_->state_ == INIT && impl_->error_ == TSIGError::BAD_KEY()) {
-        return (impl_->postVerifyUpdate(TSIGError::BAD_KEY(), NULL, 0));
+        return (impl_->postVerifyUpdate(TSIGError::BAD_KEY(), 0, 0));
     }
     if (impl_->key_.getKeyName() != record->getName() ||
         impl_->key_.getAlgorithmName() != tsig_rdata.getAlgorithm()) {
-        return (impl_->postVerifyUpdate(TSIGError::BAD_KEY(), NULL, 0));
+        return (impl_->postVerifyUpdate(TSIGError::BAD_KEY(), 0, 0));
     }
 
     // Check time: the current time must be in the range of
@@ -476,7 +476,7 @@ TSIGContext::verify(const TSIGRecord* const record, const void* const data,
     const uint64_t now = getTSIGTime();
     if (tsig_rdata.getTimeSigned() + DEFAULT_FUDGE < now ||
         tsig_rdata.getTimeSigned() - DEFAULT_FUDGE > now) {
-        const void* digest = NULL;
+        const void* digest = 0;
         size_t digest_len = 0;
         if (impl_->state_ == INIT) {
             digest = tsig_rdata.getMAC();
@@ -497,7 +497,7 @@ TSIGContext::verify(const TSIGRecord* const record, const void* const data,
         if (error != TSIGError::BAD_SIG() && error != TSIGError::BAD_KEY()) {
             error = TSIGError::BAD_SIG();
         }
-        return (impl_->postVerifyUpdate(error, NULL, 0));
+        return (impl_->postVerifyUpdate(error, 0, 0));
     }
 
     HMACPtr hmac(impl_->createHMAC());
@@ -511,16 +511,16 @@ TSIGContext::verify(const TSIGRecord* const record, const void* const data,
     // Signature length check based on RFC 4635 3.1
     if (tsig_rdata.getMACSize() > hmac->getOutputLength()) {
         // signature length too big
-        return (impl_->postVerifyUpdate(TSIGError::FORMERR(), NULL, 0));
+        return (impl_->postVerifyUpdate(TSIGError::FORMERR(), 0, 0));
     }
     if ((tsig_rdata.getMACSize() < 10) ||
         (tsig_rdata.getMACSize() < (hmac->getOutputLength() / 2))) {
         // signature length below minimum
-        return (impl_->postVerifyUpdate(TSIGError::FORMERR(), NULL, 0));
+        return (impl_->postVerifyUpdate(TSIGError::FORMERR(), 0, 0));
     }
     if (tsig_rdata.getMACSize() < impl_->digest_len_) {
         // (truncated) signature length too small
-        return (impl_->postVerifyUpdate(TSIGError::BAD_TRUNC(), NULL, 0));
+        return (impl_->postVerifyUpdate(TSIGError::BAD_TRUNC(), 0, 0));
     }
 
     //
@@ -551,7 +551,7 @@ TSIGContext::verify(const TSIGRecord* const record, const void* const data,
                                         tsig_rdata.getMACSize()));
     }
 
-    return (impl_->postVerifyUpdate(TSIGError::BAD_SIG(), NULL, 0));
+    return (impl_->postVerifyUpdate(TSIGError::BAD_SIG(), 0, 0));
 }
 
 bool

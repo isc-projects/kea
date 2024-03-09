@@ -247,7 +247,7 @@ TEST_F(MessageRendererTest, setBuffer) {
 
     // Reset the buffer to the default again.  Other internal states and
     // resources should be cleared.  The used buffer should be intact.
-    renderer.setBuffer(NULL);
+    renderer.setBuffer(0);
     EXPECT_EQ(sizeof(uint32_t), new_buffer.getLength());
     EXPECT_EQ(0, renderer.getLength());
     EXPECT_EQ(512, renderer.getLengthLimit());
@@ -266,12 +266,12 @@ TEST_F(MessageRendererTest, setBufferErrors) {
     EXPECT_THROW(renderer.setBuffer(&new_buffer), isc::InvalidParameter);
 
     // Resetting the buffer isn't allowed for the default buffer.
-    renderer.setBuffer(NULL);
-    EXPECT_THROW(renderer.setBuffer(NULL), isc::InvalidParameter);
+    renderer.setBuffer(0);
+    EXPECT_THROW(renderer.setBuffer(0), isc::InvalidParameter);
 
     // It's okay to reset a temporary buffer without using it.
     renderer.setBuffer(&new_buffer);
-    EXPECT_NO_THROW(renderer.setBuffer(NULL));
+    EXPECT_NO_THROW(renderer.setBuffer(0));
 }
 
 TEST_F(MessageRendererTest, manyRRs) {

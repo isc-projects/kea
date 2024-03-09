@@ -74,7 +74,7 @@ TEST_F(Rdata_OPT_Test, createFromWire) {
 }
 
 TEST_F(Rdata_OPT_Test, createFromLexer) {
-    // OPT RR cannot be created from text. Exceptions cause NULL to be
+    // OPT RR cannot be created from text. Exceptions cause null to be
     // returned.
     EXPECT_FALSE(test::createRdataUsingLexer(RRType::OPT(), RRClass::IN(),
                                              "this does not matter"));
@@ -133,7 +133,7 @@ TEST_F(Rdata_OPT_Test, appendPseudoRR) {
     generic::OPT rdata_opt;
 
     // Append empty option data
-    rdata_opt.appendPseudoRR(0x0042, NULL, 0);
+    rdata_opt.appendPseudoRR(0x0042, 0, 0);
 
     // Append simple option data
     const uint8_t option_data[] = {'H', 'e', 'l', 'l', 'o'};

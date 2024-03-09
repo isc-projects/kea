@@ -104,7 +104,7 @@ TEST_F(Rdata_DHCID_Test, createFromWire) {
                   *rdataFactoryFromFile(RRType("DHCID"), RRClass("IN"),
                                         "rdata_dhcid_fromWire")));
 
-    InputBuffer buffer(NULL, 0);
+    InputBuffer buffer(0, 0);
     EXPECT_THROW(in::DHCID(buffer, 0), InvalidRdataLength);
 
     // TBD: more tests

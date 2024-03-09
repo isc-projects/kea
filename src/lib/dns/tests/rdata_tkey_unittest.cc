@@ -124,9 +124,9 @@ TEST_F(Rdata_TKEY_Test, fromText) {
     EXPECT_EQ(3, rdata_tkey.getMode());
     EXPECT_EQ(0, rdata_tkey.getError());
     EXPECT_EQ(0, rdata_tkey.getKeyLen());
-    EXPECT_EQ(static_cast<void*>(0), rdata_tkey.getKey());
+    EXPECT_FALSE(rdata_tkey.getKey());
     EXPECT_EQ(0, rdata_tkey.getOtherLen());
-    EXPECT_EQ(static_cast<void*>(0), rdata_tkey.getOtherData());
+    EXPECT_FALSE(rdata_tkey.getOtherData());
 
     generic::TKEY tkey2(valid_text2);
     EXPECT_EQ(12, tkey2.getKeyLen());
@@ -220,7 +220,7 @@ fromWireCommonChecks(const generic::TKEY& tkey) {
                   tkey.getKey(), tkey.getKeyLen());
 
     EXPECT_EQ(0, tkey.getOtherLen());
-    EXPECT_EQ(static_cast<const void*>(0), tkey.getOtherData());
+    EXPECT_FALSE(tkey.getOtherData());
 }
 
 TEST_F(Rdata_TKEY_Test, createFromWire) {
@@ -248,7 +248,7 @@ TEST_F(Rdata_TKEY_Test, createFromWireWithoutKey) {
                                         "rdata_tkey_fromWire3.wire"));
     const generic::TKEY& tkey(dynamic_cast<generic::TKEY&>(*rdata));
     EXPECT_EQ(0, tkey.getKeyLen());
-    EXPECT_EQ(static_cast<const void*>(0), tkey.getKey());
+    EXPECT_FALSE(tkey.getKey());
 
     vector<uint8_t> expect_data = { 'a', 'b', 'c', 'd', '0', '1', '2', '3' };
     matchWireData(&expect_data[0], expect_data.size(),

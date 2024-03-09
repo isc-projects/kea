@@ -119,7 +119,7 @@ private:
 
     /// \brief Buffer to store data.
     ///
-    /// Note that the class interface ensures this pointer is never NULL;
+    /// Note that the class interface ensures this pointer is never null;
     /// it either refers to \c local_buffer_ or to an application-supplied
     /// buffer by \c setBuffer().
     ///
@@ -182,9 +182,9 @@ public:
     /// This method can be used for an application that manages an output
     /// buffer separately from the message renderer and wants to keep reusing
     /// the renderer.  When the renderer is associated with the default buffer
-    /// and the given pointer is non NULL, the given buffer will be
+    /// and the given pointer is non null, the given buffer will be
     /// (temporarily) used for subsequent message rendering; if the renderer
-    /// is associated with a temporary buffer and the given pointer is NULL,
+    /// is associated with a temporary buffer and the given pointer is null,
     /// the renderer will be reset with the default buffer.  In the latter
     /// case any additional resources (possibly specific to a derived renderer
     /// class) will be cleared, but the temporary buffer is kept as the latest
@@ -194,7 +194,7 @@ public:
     /// that could cause disruption such as dereferencing an invalid object.
     /// First, a temporary buffer must not be set when the associated buffer
     /// is in use, that is, any data are stored in the buffer.  Also, the
-    /// default buffer cannot be "reset"; when NULL is specified a temporary
+    /// default buffer cannot be "reset"; when null is specified a temporary
     /// buffer must have been set beforehand.  If these conditions aren't met
     /// an isc::InvalidParameter exception will be thrown.  This method is
     /// exception free otherwise.
@@ -202,7 +202,7 @@ public:
     /// \throw isc::InvalidParameter A restrictions of the method usage isn't
     /// met.
     ///
-    /// \param buffer A pointer to a temporary output buffer or NULL for reset
+    /// \param buffer A pointer to a temporary output buffer or null for reset
     /// it.
     void setBuffer(isc::util::OutputBuffer* buffer);
 

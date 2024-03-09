@@ -339,15 +339,15 @@ protected:
 
 TEST_F(RRsetRRSIGTest, getRRsig) {
     RRsetPtr sp = rrset_a->getRRsig();
-    EXPECT_EQ(static_cast<void*>(NULL), sp.get());
+    EXPECT_FALSE(sp);
 
     sp = rrset_aaaa->getRRsig();
-    EXPECT_NE(static_cast<void*>(NULL), sp.get());
+    EXPECT_TRUE(sp);
 }
 
 TEST_F(RRsetRRSIGTest, addRRsig) {
     RRsetPtr sp = rrset_a->getRRsig();
-    EXPECT_EQ(static_cast<void*>(NULL), sp.get());
+    EXPECT_FALSE(sp);
 
     rrset_rrsig = RRsetPtr(new RRset(test_name, RRClass::IN(),
                                      RRType::RRSIG(), RRTTL(3600)));
@@ -362,7 +362,7 @@ TEST_F(RRsetRRSIGTest, addRRsig) {
     rrset_a->addRRsig(rrset_rrsig);
 
     sp = rrset_a->getRRsig();
-    EXPECT_NE(static_cast<void*>(NULL), sp.get());
+    EXPECT_TRUE(sp);
     EXPECT_EQ(2, sp->getRdataCount());
 
     // add to existing RRSIG

@@ -521,7 +521,7 @@ private:
     MasterLoaderCallbacks callbacks_;
     const AddRRCallback add_callback_;
     boost::scoped_ptr<RRTTL> default_ttl_; // Default TTL of RRs used when
-                                           // unspecified.  If NULL no default
+                                           // unspecified.  If null no default
                                            // is known.
     boost::scoped_ptr<RRTTL> current_ttl_; // The TTL used most recently.
                                            // Initially unset. Once set
@@ -841,7 +841,7 @@ MasterLoader::MasterLoaderImpl::doGenerate() {
 
         const rdata::RdataPtr rdata =
             rdata::createRdata(rrtype, zone_class_, generated_rdata);
-        // In case we get NULL, it means there was error creating the
+        // In case we get null, it means there was error creating the
         // Rdata. The errors should have been reported by callbacks_
         // already. We need to decide if we want to continue or not.
         if (rdata) {
@@ -881,7 +881,7 @@ MasterLoader::MasterLoaderImpl::handleInitialToken() {
         }
 
         // This means the same name as previous.
-        if (last_name_.get() == NULL) {
+        if (!last_name_) {
             isc_throw(InternalException, "No previous name to use in "
                       "place of initial whitespace");
         } else if (!previous_name_) {
@@ -972,7 +972,7 @@ MasterLoader::MasterLoaderImpl::loadIncremental(size_t count_limit) {
                 rdata::createRdata(rrtype, zone_class_, lexer_,
                                    &active_origin_, options_, callbacks_);
 
-            // In case we get NULL, it means there was error creating
+            // In case we get null, it means there was error creating
             // the Rdata. The errors should have been reported by
             // callbacks_ already. We need to decide if we want to continue
             // or not.

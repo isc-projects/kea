@@ -244,7 +244,7 @@ struct TypeParam {
     // Unassigned  262-32767
     {"TA", 32768, []() -> const RRType& {static const RRType r("TA"); return (r);}},
     {"DLV", 32769, []() -> const RRType& {static const RRType r("DLV"); return (r);}},
-    {NULL, 0, NULL}
+    {0, 0, 0}
 };
 
 TEST(RRTypeConstTest, wellKnowns) {

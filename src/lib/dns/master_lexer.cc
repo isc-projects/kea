@@ -37,7 +37,7 @@ typedef boost::shared_ptr<master_lexer_internal::InputSource> InputSourcePtr;
 using namespace master_lexer_internal;
 
 struct MasterLexer::MasterLexerImpl {
-    MasterLexerImpl() : source_(NULL), token_(MasterToken::NOT_STARTED),
+    MasterLexerImpl() : source_(0), token_(MasterToken::NOT_STARTED),
                         total_size_(0), popped_size_(0),
                         paren_count_(0), last_was_eol_(true),
                         has_previous_(false),
@@ -95,7 +95,7 @@ struct MasterLexer::MasterLexerImpl {
     }
 
     std::vector<InputSourcePtr> sources_;
-    InputSource* source_;       // current source (NULL if sources_ is empty)
+    InputSource* source_;       // current source (null if sources_ is empty)
     MasterToken token_;         // currently recognized token (set by a state)
     std::vector<char> data_;    // placeholder for string data
 
@@ -130,14 +130,14 @@ MasterLexer::~MasterLexer() {
 
 bool
 MasterLexer::pushSource(const char* filename, std::string* error) {
-    if (filename == NULL) {
+    if (!filename) {
         isc_throw(InvalidParameter,
-                  "NULL filename for MasterLexer::pushSource");
+                  "null filename for MasterLexer::pushSource");
     }
     try {
         impl_->sources_.push_back(InputSourcePtr(new InputSource(filename)));
     } catch (const InputSource::OpenError& ex) {
-        if (error != NULL) {
+        if (error) {
             *error = ex.what();
         }
         return (false);
@@ -173,7 +173,7 @@ MasterLexer::popSource() {
     }
     impl_->popped_size_ += impl_->source_->getPosition();
     impl_->sources_.pop_back();
-    impl_->source_ = impl_->sources_.empty() ? NULL :
+    impl_->source_ = impl_->sources_.empty() ? 0 :
         impl_->sources_.back().get();
     impl_->has_previous_ = false;
 }
@@ -215,7 +215,7 @@ MasterLexer::getPosition() const {
 
 const MasterToken&
 MasterLexer::getNextToken(Options options) {
-    if (impl_->source_ == NULL) {
+    if (impl_->source_ == 0) {
         isc_throw(isc::InvalidOperation, "No source to read tokens from");
     }
     // Store the current state so we can restore it in ungetToken
@@ -230,7 +230,7 @@ MasterLexer::getNextToken(Options options) {
 
     // This actually handles EOF internally too.
     const State* state = State::start(*this, options);
-    if (state != NULL) {
+    if (state) {
         state->handle(*this);
     }
     // Make sure a token was produced. Since this Can Not Happen, we assert
@@ -445,23 +445,23 @@ State::start(MasterLexer& lexer, MasterLexer::Options options) {
             if (paren_count != 0) {
                 lexerimpl.token_ = MasterToken(MasterToken::UNBALANCED_PAREN);
                 paren_count = 0; // reset to 0; this helps in lenient mode.
-                return (NULL);
+                return (0);
             }
             lexerimpl.token_ = MasterToken(MasterToken::END_OF_FILE);
-            return (NULL);
+            return (0);
         } else if (c == ' ' || c == '\t') {
             // If requested and we are not in (), recognize the initial space.
             if (lexerimpl.last_was_eol_ && paren_count == 0 &&
                 (options & MasterLexer::INITIAL_WS) != 0) {
                 lexerimpl.last_was_eol_ = false;
                 lexerimpl.token_ = MasterToken(MasterToken::INITIAL_WS);
-                return (NULL);
+                return (0);
             }
         } else if (c == '\n') {
             lexerimpl.last_was_eol_ = true;
             if (paren_count == 0) { // we don't recognize EOL if we are in ()
                 lexerimpl.token_ = MasterToken(MasterToken::END_OF_LINE);
-                return (NULL);
+                return (0);
             }
         } else if (c == '\r') {
             if (paren_count == 0) { // check if we are in () (see above)
@@ -473,7 +473,7 @@ State::start(MasterLexer& lexer, MasterLexer::Options options) {
                 return (&QSTRING_STATE);
             } else {
                 lexerimpl.token_ = MasterToken(MasterToken::UNEXPECTED_QUOTES);
-                return (NULL);
+                return (0);
             }
         } else if (c == '(') {
             lexerimpl.last_was_eol_ = false;
@@ -482,7 +482,7 @@ State::start(MasterLexer& lexer, MasterLexer::Options options) {
             lexerimpl.last_was_eol_ = false;
             if (paren_count == 0) {
                 lexerimpl.token_ = MasterToken(MasterToken::UNBALANCED_PAREN);
-                return (NULL);
+                return (0);
             }
             --paren_count;
         } else if ((options & MasterLexer::NUMBER) != 0 &&isdigit(c)) {

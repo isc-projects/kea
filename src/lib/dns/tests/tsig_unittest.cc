@@ -85,15 +85,15 @@ public:
 class TSIGTest : public ::testing::Test {
 protected:
     TSIGTest() :
-        tsig_ctx(NULL), qid(0x2d65), test_name("www.example.com"),
+        tsig_ctx(0), qid(0x2d65), test_name("www.example.com"),
         badkey_name("badkey.example.com"), test_class(RRClass::IN()),
         test_ttl(86400), message(Message::RENDER),
         dummy_data(1024, 0xdd),  // should be sufficiently large for all tests
         dummy_record(badkey_name, TSIG(TSIGKey::HMACMD5_NAME(), 0x4da8877a,
-                                       TSIGContext::DEFAULT_FUDGE, 0, NULL, qid, 0, 0, NULL)) {
+                                       TSIGContext::DEFAULT_FUDGE, 0, 0, qid, 0, 0, 0)) {
         // Make sure we use the system time by default so that we won't be
         // confused due to other tests that tweak the time.
-        isc::util::detail::gettimeFunction = NULL;
+        isc::util::detail::gettimeFunction = 0;
 
         decodeBase64("SFuWd/q99SzF8Yzd1QbB9g==", secret);
         tsig_ctx.reset(new TestTSIGContext(TSIGKey(test_name,
@@ -106,7 +106,7 @@ protected:
                                                       secret.size())));
     }
     ~TSIGTest() {
-        isc::util::detail::gettimeFunction = NULL;
+        isc::util::detail::gettimeFunction = 0;
     }
 
     // Many of the tests below create some DNS message and sign it under
@@ -117,8 +117,8 @@ protected:
                                             unsigned int message_flags =
                                             RD_FLAG,
                                             RRType qtype = RRType::A(),
-                                            const char* answer_data = NULL,
-                                            const RRType* answer_type = NULL,
+                                            const char* answer_data = 0,
+                                            const RRType* answer_type = 0,
                                             bool add_question = true,
                                             Rcode rcode = Rcode::NOERROR());
 
@@ -168,8 +168,8 @@ TSIGTest::createMessageAndSign(uint16_t id, const Name& qname,
     if (add_question) {
         message.addQuestion(Question(qname, test_class, qtype));
     }
-    if (answer_data != NULL) {
-        if (answer_type == NULL) {
+    if (answer_data) {
+        if (!answer_type) {
             answer_type = &qtype;
         }
         RRsetPtr answer_rrset(new RRset(qname, test_class, *answer_type,
@@ -241,7 +241,7 @@ commonVerifyChecks(TSIGContext& ctx, const TSIGRecord* record,
     if (last_should_throw) {
         EXPECT_THROW(ctx.lastHadSignature(), TSIGContextError);
     } else {
-        EXPECT_EQ(record != NULL, ctx.lastHadSignature());
+        EXPECT_EQ(record != 0, ctx.lastHadSignature());
     }
 }
 
@@ -266,7 +266,7 @@ TEST_F(TSIGTest, constructFromKeyRing) {
     // Add a matching key (we don't use the secret so leave it empty), and
     // construct it again.  This time it should be constructed with a valid
     // key.
-    keyring.add(TSIGKey(test_name, TSIGKey::HMACMD5_NAME(), NULL, 0));
+    keyring.add(TSIGKey(test_name, TSIGKey::HMACMD5_NAME(), 0, 0));
     TSIGContext ctx2(test_name, TSIGKey::HMACMD5_NAME(), keyring);
     EXPECT_EQ(TSIGContext::INIT, ctx2.getState());
     EXPECT_EQ(TSIGError::NOERROR(), ctx2.getError());
@@ -346,7 +346,7 @@ TEST_F(TSIGTest, signAtActualTime) {
     // Sign the message using the actual time, and check the accuracy of it.
     // We cannot reasonably predict the expected MAC, so don't bother to
     // check it.
-    const uint64_t now = static_cast<uint64_t>(time(NULL));
+    const uint64_t now = static_cast<uint64_t>(time(0));
 
     {
         SCOPED_TRACE("Sign test for query at actual time");
@@ -366,7 +366,7 @@ TEST_F(TSIGTest, signAtActualTime) {
 TEST_F(TSIGTest, signBadData) {
     // some specific bad data should be rejected proactively.
     const unsigned char dummy_data = 0;
-    EXPECT_THROW(tsig_ctx->sign(0, NULL, 10), InvalidParameter);
+    EXPECT_THROW(tsig_ctx->sign(0, 0, 10), InvalidParameter);
     EXPECT_THROW(tsig_ctx->sign(0, &dummy_data, 0), InvalidParameter);
 }
 
@@ -380,8 +380,8 @@ TEST_F(TSIGTest, verifyBadData) {
     // Still nothing verified
     EXPECT_THROW(tsig_ctx->lastHadSignature(), TSIGContextError);
 
-    // And the data must not be NULL.
-    EXPECT_THROW(tsig_ctx->verify(&dummy_record, NULL,
+    // And the data must not be null.
+    EXPECT_THROW(tsig_ctx->verify(&dummy_record, 0,
                                   12 + dummy_record.getLength()),
                  InvalidParameter);
 
@@ -449,7 +449,7 @@ TEST_F(TSIGTest, signUsingHMACSHA1) {
         SCOPED_TRACE("Sign test using HMAC-SHA1");
         commonSignChecks(createMessageAndSign(sha1_qid, test_name, &sha1_ctx),
                          sha1_qid, 0x4dae7d5f, expected_mac,
-                         sizeof(expected_mac), 0, 0, NULL,
+                         sizeof(expected_mac), 0, 0, 0,
                          TSIGKey::HMACSHA1_NAME());
     }
 }
@@ -472,7 +472,7 @@ TEST_F(TSIGTest, signUsingHMACSHA224) {
         SCOPED_TRACE("Sign test using HMAC-SHA224");
         commonSignChecks(createMessageAndSign(sha1_qid, test_name, &sha1_ctx),
                          sha1_qid, 0x4dae7d5f, expected_mac,
-                         sizeof(expected_mac), 0, 0, NULL,
+                         sizeof(expected_mac), 0, 0, 0,
                          TSIGKey::HMACSHA224_NAME());
     }
 }
@@ -651,7 +651,7 @@ TEST_F(TSIGTest, badtimeResponse) {
 
     // make and sign a response in the context of TSIG error.
     tsig = createMessageAndSign(test_qid, test_name, tsig_verify_ctx.get(),
-                                QR_FLAG, RRType::SOA(), NULL, NULL,
+                                QR_FLAG, RRType::SOA(), 0, 0,
                                 true, Rcode::NOTAUTH());
     const uint8_t expected_otherdata[] = { 0, 0, 0x4d, 0xa8, 0xbe, 0x86 };
     const uint8_t expected_mac[] = {
@@ -748,7 +748,7 @@ TEST_F(TSIGTest, badsigResponse) {
     {
         SCOPED_TRACE("Sign test for response with BADSIG error");
         commonSignChecks(createMessageAndSign(qid, test_name, &bad_ctx),
-                         message.getQid(), 0x4da8877a, NULL, 0,
+                         message.getQid(), 0x4da8877a, 0, 0,
                          16);   // 16: BADSIG
     }
 }
@@ -770,7 +770,7 @@ TEST_F(TSIGTest, badkeyResponse) {
         ConstTSIGRecordPtr sig = createMessageAndSign(qid, test_name,
                                                       tsig_ctx.get());
         EXPECT_EQ(badkey_name, sig->getName());
-        commonSignChecks(sig, qid, 0x4da8877a, NULL, 0, 17);   // 17: BADKEY
+        commonSignChecks(sig, qid, 0x4da8877a, 0, 0, 17);   // 17: BADKEY
     }
 }
 
@@ -788,7 +788,7 @@ TEST_F(TSIGTest, badkeyForResponse) {
     const TSIGRecord dummy_record2(test_name, TSIG(TSIGKey::HMACSHA1_NAME(),
                                                    0x4da8877a,
                                                    TSIGContext::DEFAULT_FUDGE,
-                                                   0, NULL, qid, 0, 0, NULL));
+                                                   0, 0, qid, 0, 0, 0));
     {
         SCOPED_TRACE("Verify a response resulting in BADKEY due to bad alg");
         commonVerifyChecks(*tsig_ctx, &dummy_record2, &dummy_data[0],
@@ -833,7 +833,7 @@ TEST_F(TSIGTest, nosigThenValidate) {
 
     {
         SCOPED_TRACE("Verify a response without TSIG that should exist");
-        commonVerifyChecks(*tsig_ctx, NULL, &dummy_data[0],
+        commonVerifyChecks(*tsig_ctx, 0, &dummy_data[0],
                            dummy_data.size(), TSIGError::FORMERR(),
                            TSIGContext::SENT_REQUEST, true);
     }
@@ -1126,7 +1126,7 @@ TEST_F(TSIGTest, verifyMulti) {
         // internals here a little bit to generate correct test data
         tsig_ctx->update(renderer.getData(), renderer.getLength());
 
-        commonVerifyChecks(*tsig_verify_ctx, NULL,
+        commonVerifyChecks(*tsig_verify_ctx, 0,
                            renderer.getData(), renderer.getLength(),
                            TSIGError(Rcode::NOERROR()),
                            TSIGContext::VERIFIED_RESPONSE);
@@ -1167,7 +1167,7 @@ TEST_F(TSIGTest, verifyMulti) {
 
             // 99 unsigned messages is OK. But the 100th must be signed, according
             // to the RFC2845, section 4.4
-            commonVerifyChecks(*tsig_verify_ctx, NULL,
+            commonVerifyChecks(*tsig_verify_ctx, 0,
                                renderer.getData(), renderer.getLength(),
                                i == 99 ? TSIGError::FORMERR() :
                                    TSIGError(Rcode::NOERROR()),

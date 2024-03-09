@@ -61,7 +61,7 @@ RRClass::createFromText(const string& class_str) {
                                                        class_code)) {
         return (new RRClass(class_code));
     }
-    return (NULL);
+    return (0);
 }
 
 ostream&

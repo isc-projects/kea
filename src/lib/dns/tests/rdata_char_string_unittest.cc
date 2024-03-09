@@ -153,11 +153,11 @@ const struct TestData {
     {"Test\x1fTest", "Test\\031Test"},
     {"Test ~ Test", "Test ~ Test"},
     {"Test\x7fTest", "Test\\127Test"},
-    {NULL, NULL}
+    {0, 0}
 };
 
 TEST_F(CharStringTest, charStringToString) {
-    for (const TestData* cur = conversion_data; cur->data != NULL; ++cur) {
+    for (const TestData* cur = conversion_data; cur->data; ++cur) {
         uint8_t idata[32];
         size_t length = std::strlen(cur->data);
         // length (1 byte) + string (length bytes)

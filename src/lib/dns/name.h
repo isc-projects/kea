@@ -84,11 +84,11 @@ public:
         NameParserException(file, line, what) {}
 };
 
-/// \brief Thrown when origin is NULL and is needed.
+/// \brief Thrown when origin is null and is needed.
 ///
 /// The exception is thrown when the Name constructor for master file
 /// is used, the provided data is relative and the origin parameter is
-/// set to NULL.
+/// set to null.
 class MissingNameOrigin : public NameParserException {
 public:
     MissingNameOrigin(const char* file, size_t line, const char* what) :
@@ -257,7 +257,7 @@ public:
     /// This acts similar to the above. But the data is passed as raw C-string
     /// instead of wrapped-up C++ std::string.
     ///
-    /// Also, when the origin is non-NULL and the name_data is not ending with
+    /// Also, when the origin is non-null and the name_data is not ending with
     /// a dot, it is considered relative and the origin is appended to it.
     ///
     /// If the name_data is equal to "@", the content of origin is copied.
@@ -265,13 +265,13 @@ public:
     /// \param name_data The raw data of the name.
     /// \param data_len How many bytes in name_data is valid and considered
     ///     part of the name.
-    /// \param origin If non-NULL, it is taken as the origin to complete
+    /// \param origin If non-null, it is taken as the origin to complete
     ///     relative names.
     /// \param downcase Whether to convert upper case letters to lower case.
     /// \throw NameParserException or any of its descendants in case the
     ///     input data is invalid.
-    /// \throw isc::InvalidParameter In case name_data is NULL or data_len is
-    ///     0.
+    /// \throw isc::InvalidParameter In case name_data is null or
+    ///     data_len is 0.
     /// \throw std::bad_alloc In case allocation fails.
     /// \note This constructor is specially designed for the use of master
     ///     file parser. It mimics the behaviour of names in the master file

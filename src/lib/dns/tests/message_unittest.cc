@@ -195,7 +195,7 @@ TEST_F(MessageTest, setEDNS) {
 
 TEST_F(MessageTest, fromWireWithTSIG) {
     // Initially there should be no TSIG
-    EXPECT_EQ(static_cast<void*>(NULL), message_parse.getTSIGRecord());
+    EXPECT_FALSE(message_parse.getTSIGRecord());
 
     // getTSIGRecord() is only valid in the parse mode.
     EXPECT_THROW(message_render.getTSIGRecord(), InvalidMessageOperation);
@@ -206,7 +206,7 @@ TEST_F(MessageTest, fromWireWithTSIG) {
         0x21, 0xce, 0x6c, 0x6f, 0xff, 0x1e, 0x9e, 0xf3
     };
     const TSIGRecord* tsig_rr = message_parse.getTSIGRecord();
-    ASSERT_NE(static_cast<void*>(NULL), tsig_rr);
+    ASSERT_TRUE(tsig_rr);
     EXPECT_EQ(Name("www.example.com"), tsig_rr->getName());
     EXPECT_EQ(85, tsig_rr->getLength()); // see TSIGRecordTest.getLength
     EXPECT_EQ(TSIGKey::HMACMD5_NAME(), tsig_rr->getRdata().getAlgorithm());
@@ -217,18 +217,18 @@ TEST_F(MessageTest, fromWireWithTSIG) {
                   tsig_rr->getRdata().getMACSize());
     EXPECT_EQ(0, tsig_rr->getRdata().getError());
     EXPECT_EQ(0, tsig_rr->getRdata().getOtherLen());
-    EXPECT_EQ(static_cast<void*>(NULL), tsig_rr->getRdata().getOtherData());
+    EXPECT_FALSE(tsig_rr->getRdata().getOtherData());
 
     // If we clear the message for reuse, the recorded TSIG will be cleared.
     message_parse.clear(Message::PARSE);
-    EXPECT_EQ(static_cast<void*>(NULL), message_parse.getTSIGRecord());
+    EXPECT_FALSE(message_parse.getTSIGRecord());
 }
 
 TEST_F(MessageTest, fromWireWithTSIGCompressed) {
     // Mostly same as fromWireWithTSIG, but the TSIG owner name is compressed.
     factoryFromFile(message_parse, "message_fromWire12.wire");
     const TSIGRecord* tsig_rr = message_parse.getTSIGRecord();
-    ASSERT_NE(static_cast<void*>(NULL), tsig_rr);
+    ASSERT_TRUE(tsig_rr);
     EXPECT_EQ(Name("www.example.com"), tsig_rr->getName());
     // len(www.example.com) = 17, but when fully compressed, the length is
     // 2 bytes.  So the length of the record should be 15 bytes shorter.

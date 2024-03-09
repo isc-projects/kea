@@ -151,7 +151,7 @@ TEST_F(RdataTest, createRdataWithLexer) {
     // Valid case.
     ++line;
     ConstRdataPtr rdata = createRdata(RRType::AAAA(), RRClass::IN(), lexer,
-                                      NULL, MasterLoader::MANY_ERRORS,
+                                      0, MasterLoader::MANY_ERRORS,
                                       callbacks);
     EXPECT_EQ(0, aaaa_rdata.compare(*rdata));
     EXPECT_FALSE(callback.isCalled());
@@ -160,16 +160,16 @@ TEST_F(RdataTest, createRdataWithLexer) {
     // It should cause any confusion.
     ++line;
     callback.clear();
-    rdata = createRdata(RRType::AAAA(), RRClass::IN(), lexer, NULL,
+    rdata = createRdata(RRType::AAAA(), RRClass::IN(), lexer, 0,
                         MasterLoader::MANY_ERRORS, callbacks);
     EXPECT_EQ(0, aaaa_rdata.compare(*rdata));
     EXPECT_FALSE(callback.isCalled());
 
-    // Broken RDATA text: extra token.  createRdata() returns NULL, error
+    // Broken RDATA text: extra token.  createRdata() returns null, error
     // callback is called.
     ++line;
     callback.clear();
-    EXPECT_FALSE(createRdata(RRType::AAAA(), RRClass::IN(), lexer, NULL,
+    EXPECT_FALSE(createRdata(RRType::AAAA(), RRClass::IN(), lexer, 0,
                              MasterLoader::MANY_ERRORS, callbacks));
     callback.check(src_name, line, CreateRdataCallback::ERROR,
                    "createRdata from text failed near 'extra-token': "
@@ -179,7 +179,7 @@ TEST_F(RdataTest, createRdataWithLexer) {
     // callback.
     ++line;
     callback.clear();
-    EXPECT_FALSE(createRdata(RRType::AAAA(), RRClass::IN(), lexer, NULL,
+    EXPECT_FALSE(createRdata(RRType::AAAA(), RRClass::IN(), lexer, 0,
                              MasterLoader::MANY_ERRORS, callbacks));
     callback.check(src_name, line, CreateRdataCallback::ERROR,
                    "createRdata from text failed near 'extra': "
@@ -188,7 +188,7 @@ TEST_F(RdataTest, createRdataWithLexer) {
     // Lexer error will happen, corresponding error callback will be triggered.
     ++line;
     callback.clear();
-    EXPECT_FALSE(createRdata(RRType::AAAA(), RRClass::IN(), lexer, NULL,
+    EXPECT_FALSE(createRdata(RRType::AAAA(), RRClass::IN(), lexer, 0,
                              MasterLoader::MANY_ERRORS, callbacks));
     callback.check(src_name, line, CreateRdataCallback::ERROR,
                    "createRdata from text failed: unbalanced parentheses");
@@ -197,7 +197,7 @@ TEST_F(RdataTest, createRdataWithLexer) {
     // triggered.
     ++line;
     callback.clear();
-    EXPECT_FALSE(createRdata(RRType::AAAA(), RRClass::IN(), lexer, NULL,
+    EXPECT_FALSE(createRdata(RRType::AAAA(), RRClass::IN(), lexer, 0,
                              MasterLoader::MANY_ERRORS, callbacks));
     callback.check(src_name, line, CreateRdataCallback::ERROR,
                    "createRdata from text failed: Bad IN/AAAA RDATA text: "
@@ -207,7 +207,7 @@ TEST_F(RdataTest, createRdataWithLexer) {
     // file is not ended with a newline.
     ++line;
     callback.clear();
-    rdata = createRdata(RRType::AAAA(), RRClass::IN(), lexer, NULL,
+    rdata = createRdata(RRType::AAAA(), RRClass::IN(), lexer, 0,
                         MasterLoader::MANY_ERRORS, callbacks);
     EXPECT_EQ(0, aaaa_rdata.compare(*rdata));
     callback.check(src_name, line, CreateRdataCallback::WARN,

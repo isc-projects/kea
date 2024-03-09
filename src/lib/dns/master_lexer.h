@@ -92,7 +92,7 @@ public:
     /// beg[len] is \0.  This means the application can use the bytes as a
     /// validly nul-terminated C string if there is no intermediate nul
     /// character.  Note also that due to this property beg is always non
-    /// NULL; for an empty string len will be set to 0 and beg[0] is \0.
+    /// null; for an empty string len will be set to 0 and beg[0] is \0.
     struct StringRegion {
         const char* beg;        ///< The start address of the string
         size_t len;             ///< The length of the string in bytes
@@ -368,7 +368,7 @@ public:
     ///
     /// In the case possible system errors in opening the file (most likely
     /// because of specifying a non-existent or unreadable file), it returns
-    /// false, and if the optional \c error parameter is non NULL, it will be
+    /// false, and if the optional \c error parameter is non null, it will be
     /// set to a description of the error (any existing content of the string
     /// will be discarded).  If opening the file succeeds, the given
     /// \c error parameter will be intact.
@@ -378,8 +378,8 @@ public:
     /// by throwing an exception.  See the note for the class description
     /// about the distinction.
     ///
-    /// \throw InvalidParameter filename is NULL
-    /// \param filename A non NULL string specifying a master file
+    /// \throw InvalidParameter filename is null
+    /// \param filename A non null string specifying a master file
     /// \param error If non null, a placeholder to set error description in
     /// case of failure.
     ///

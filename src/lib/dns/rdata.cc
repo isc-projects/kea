@@ -95,7 +95,7 @@ fromtextError(bool& error_issued, const MasterLexer& lexer,
     }
     error_issued = true;
 
-    if (token == NULL) {
+    if (!token) {
         callbacks.error(lexer.getSourceName(), lexer.getSourceLine(),
                         "createRdata from text failed: " + string(reason));
         return;
@@ -140,7 +140,7 @@ createRdata(const RRType& rrtype, const RRClass& rrclass,
         // Catching all isc::Exception is too broad, but right now we don't
         // have better granularity.  When we complete #2518 we can make this
         // finer.
-        fromtextError(error_issued, lexer, callbacks, NULL, ex.what());
+        fromtextError(error_issued, lexer, callbacks, 0, ex.what());
     }
     // Other exceptions mean a serious implementation bug or fatal system
     // error; it doesn't make sense to catch and try to recover from them
@@ -158,7 +158,7 @@ createRdata(const RRType& rrtype, const RRClass& rrclass,
                               "file does not end with newline");
             return (rdata);
         default:
-            rdata.reset();      // we'll return NULL
+            rdata.reset();      // we'll return null
             fromtextError(error_issued, lexer, callbacks, &token,
                           "extra input text");
             // Continue until we see EOL or EOF

@@ -39,7 +39,7 @@ protected:
     TSIGRecordTest() :
         test_name("www.example.com"), test_mac(16, 0xda),
         test_rdata(TSIG(TSIGKey::HMACMD5_NAME(), 0x4da8877a, TSIGContext::DEFAULT_FUDGE,
-                        test_mac.size(), &test_mac[0], 0x2d65, 0, 0, NULL)),
+                        test_mac.size(), &test_mac[0], 0x2d65, 0, 0, 0)),
         test_record(test_name, test_rdata),
         buffer(0) {
     }

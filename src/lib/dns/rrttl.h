@@ -104,7 +104,7 @@ public:
     ///
     /// If the given text represents a valid RRTTL, it returns a pointer
     /// to a new RRTTL object. If the given text does not represent a
-    /// valid RRTTL, it returns \c NULL..
+    /// valid RRTTL, it returns null..
     ///
     /// One main purpose of this function is to minimize the overhead
     /// when the given text does not represent a valid RR TTL.  For this
@@ -118,7 +118,7 @@ public:
     /// This function never throws the \c InvalidRRTTL exception.
     ///
     /// \param ttlstr A string representation of the \c RRTTL.
-    /// \return A new RRTTL object for the given text or a \c NULL value.
+    /// \return A new RRTTL object for the given text or a null value.
     static RRTTL* createFromText(const std::string& ttlstr);
     ///
     //@}

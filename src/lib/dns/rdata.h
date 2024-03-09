@@ -505,7 +505,7 @@ RdataPtr createRdata(const RRType& rrtype, const RRClass& rrclass,
 /// cases quite differently from other versions.  It internally catches
 /// most of syntax and semantics errors of the input (reported as exceptions),
 /// calls the corresponding callback specified by the \c callbacks parameters,
-/// and returns a NULL smart pointer.  If the caller rather wants to get
+/// and returns a null smart pointer.  If the caller rather wants to get
 /// an exception in these cases, it can pass a callback that internally
 /// throws on error.  Some critical exceptions such as \c std::bad_alloc are
 /// still propagated to the upper layer as it doesn't make sense to try
@@ -522,14 +522,14 @@ RdataPtr createRdata(const RRType& rrtype, const RRClass& rrclass,
 /// \param rrclass An \c RRClass object specifying the type/class pair.
 /// \param lexer A \c MasterLexer object parsing a master file for the
 /// RDATA to be created
-/// \param origin If non NULL, specifies the origin of any domain name fields
+/// \param origin If non null, specifies the origin of any domain name fields
 /// of the RDATA that are non absolute.
 /// \param options Master loader options controlling how to deal with errors
 /// or non critical issues in the parsed RDATA.
 /// \param callbacks Callback to be called when an error or non critical issue
 /// is found.
 /// \return An \c RdataPtr object pointing to the created
-/// \c Rdata object.  Will be NULL if parsing fails.
+/// \c Rdata object.  Will be null if parsing fails.
 RdataPtr createRdata(const RRType& rrtype, const RRClass& rrclass,
                      MasterLexer& lexer, const Name* origin,
                      MasterLoader::Options options,
