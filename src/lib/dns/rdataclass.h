@@ -162,6 +162,24 @@ private:
 
 } // end of namespace "any"
 
+namespace ch {
+
+class A : public Rdata {
+public:
+    explicit A(const std::string& type_str);
+    A(isc::util::InputBuffer& buffer, size_t rdata_len);
+    A(const A& other);
+    A(
+        MasterLexer& lexer, const Name* name,
+        MasterLoader::Options options, MasterLoaderCallbacks& callbacks);
+    virtual std::string toText() const;
+    virtual void toWire(isc::util::OutputBuffer& buffer) const;
+    virtual void toWire(AbstractMessageRenderer& renderer) const;
+    virtual int compare(const Rdata& other) const;
+};
+
+} // end of namespace "ch"
+
 namespace generic {
 namespace detail {
 

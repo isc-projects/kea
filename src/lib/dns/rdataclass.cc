@@ -571,6 +571,49 @@ TSIG::getOtherData() const {
 
 } // end of namespace "any"
 
+namespace ch {
+
+A::A(const std::string&) {
+    // TBD
+}
+
+A::A(MasterLexer&, const Name*,
+     MasterLoader::Options, MasterLoaderCallbacks&)
+{
+    // TBD
+}
+
+A::A(InputBuffer&, size_t) {
+    // TBD
+}
+
+A::A(const A&) : Rdata() {
+    // TBD
+}
+
+void
+A::toWire(OutputBuffer&) const {
+    // TBD
+}
+
+void
+A::toWire(AbstractMessageRenderer&) const {
+    // TBD
+}
+
+string
+A::toText() const {
+    // TBD
+    isc_throw(InvalidRdataText, "Not implemented yet");
+}
+
+int
+A::compare(const Rdata&) const {
+    return (0);                 // dummy.  TBD
+}
+
+} // end of namespace "ch"
+
 namespace generic {
 
 /// \brief Constructor from string.
@@ -1016,9 +1059,15 @@ RRSIG::constructFromLexer(MasterLexer& lexer, const Name* origin) {
         decodeBase64(signature_txt, signature);
     }
 
-    return (std::unique_ptr<RRSIGImpl>(new RRSIGImpl(covered, algorithm, labels,
-                                                     originalttl, timeexpire, timeinception,
-                                                     static_cast<uint16_t>(tag), signer, signature)));
+    return (std::unique_ptr<RRSIGImpl>(new RRSIGImpl(covered,
+                                                     algorithm,
+                                                     labels,
+                                                     originalttl,
+                                                     timeexpire,
+                                                     timeinception,
+                                                     static_cast<uint16_t>(tag),
+                                                     signer,
+                                                     signature)));
 }
 
 /// \brief Constructor from string.

@@ -215,7 +215,7 @@ MasterLexer::getPosition() const {
 
 const MasterToken&
 MasterLexer::getNextToken(Options options) {
-    if (impl_->source_ == 0) {
+    if (!impl_->source_) {
         isc_throw(isc::InvalidOperation, "No source to read tokens from");
     }
     // Store the current state so we can restore it in ungetToken
