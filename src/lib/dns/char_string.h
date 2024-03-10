@@ -5,7 +5,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #ifndef DNS_RDATA_CHARSTRING_H
-#define DNS_RDATA_CHARSTRING_H 1
+#define DNS_RDATA_CHARSTRING_H
 
 #include <dns/master_lexer.h>
 

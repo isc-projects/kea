@@ -5,7 +5,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #ifndef RRPARAMREGISTRY_H
-#define RRPARAMREGISTRY_H 1
+#define RRPARAMREGISTRY_H
 
 #include <string>
 

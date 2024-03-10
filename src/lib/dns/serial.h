@@ -5,7 +5,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #ifndef SERIAL_H
-#define SERIAL_H 1
+#define SERIAL_H
 
 #include <stdint.h>
 #include <iostream>

@@ -5,7 +5,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #ifndef UNITTEST_UTIL_H
-#define UNITTEST_UTIL_H 1
+#define UNITTEST_UTIL_H
 
 #include <vector>
 #include <string>

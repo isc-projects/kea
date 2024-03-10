@@ -5,7 +5,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #ifndef TXT_LIKE_H
-#define TXT_LIKE_H 1
+#define TXT_LIKE_H
 
 #include <dns/master_lexer.h>
 #include <dns/char_string.h>
