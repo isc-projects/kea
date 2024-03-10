@@ -195,7 +195,13 @@ RRParamRegistry::RRParamRegistry() : impl_(new RRParamRegistryImpl()) {
 
     // set up parameters for well-known RRs
     try {
+        // ANY class well known RR types.
+        add("TSIG", 250, "ANY", 255, RdataFactoryPtr(new RdataFactory<any::TSIG>()));
+        // CH class well known RR types.
+        add("A", 1, "CH", 3, RdataFactoryPtr(new RdataFactory<ch::A>()));
+        // IN class well known RR types.
         add("A", 1, "IN", 1, RdataFactoryPtr(new RdataFactory<in::A>()));
+;
         add("NS", 2, "IN", 1, RdataFactoryPtr(new RdataFactory<generic::NS>()));
         add("SOA", 6, "IN", 1, RdataFactoryPtr(new RdataFactory<generic::SOA>()));
         add("PTR", 12, "IN", 1, RdataFactoryPtr(new RdataFactory<generic::PTR>()));
@@ -205,7 +211,7 @@ RRParamRegistry::RRParamRegistry() : impl_(new RRParamRegistryImpl()) {
         add("RRSIG", 46, "IN", 1, RdataFactoryPtr(new RdataFactory<generic::RRSIG>()));
         add("DHCID", 49, "IN", 1, RdataFactoryPtr(new RdataFactory<in::DHCID>()));
         add("TKEY", 249, "IN", 1, RdataFactoryPtr(new RdataFactory<generic::TKEY>()));
-        add("TSIG", 250, "ANY", 255, RdataFactoryPtr(new RdataFactory<any::TSIG>()));
+        // Generic well known RR types.
         add("NS", 2, RdataFactoryPtr(new RdataFactory<generic::NS>()));
         add("SOA", 6, RdataFactoryPtr(new RdataFactory<generic::SOA>()));
         add("PTR", 12, RdataFactoryPtr(new RdataFactory<generic::PTR>()));
@@ -213,6 +219,9 @@ RRParamRegistry::RRParamRegistry() : impl_(new RRParamRegistryImpl()) {
         add("OPT", 41, RdataFactoryPtr(new RdataFactory<generic::OPT>()));
         add("RRSIG", 46, RdataFactoryPtr(new RdataFactory<generic::RRSIG>()));
         add("TKEY", 249, RdataFactoryPtr(new RdataFactory<generic::TKEY>()));
+        // Meta and Not supported RR classes.
+        addClass("HS", 4);
+        addClass("NONE", 254);
         // Meta and non-implemented RR types
         addType("MD", 3);
         addType("MF", 4);
@@ -266,7 +275,7 @@ RRParamRegistry::RRParamRegistry() : impl_(new RRParamRegistryImpl()) {
         addType("CDS", 59);
         addType("CDNSKEY", 60);
         addType("OPENPGPKEY", 61);
-        addType("CSYNC", 62 );
+        addType("CSYNC", 62);
         addType("ZONEMD", 63);
         addType("SVCB", 64);
         addType("HTTPS", 65);
@@ -297,9 +306,6 @@ RRParamRegistry::RRParamRegistry() : impl_(new RRParamRegistryImpl()) {
         // Unassigned  262-32767
         addType("TA", 32768);
         addType("DLV", 32769);
-        // Meta classes
-        addClass("CH", 3);
-        addClass("NONE", 254);
     } catch (...) {
         throw;
     }
