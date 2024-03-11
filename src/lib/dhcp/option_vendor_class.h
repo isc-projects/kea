@@ -36,7 +36,7 @@ namespace dhcp {
 /// Vendor Class option is controlled by the @c u (universe) parameter passed
 /// to the constructor.
 ///
-/// @Currently, the enterprise id field is set to a value of the first
+/// Currently, the enterprise id field is set to a value of the first
 /// enterprise id occurrence in the parsed option. This assumes that
 /// all tuples in the same option are for the same vendor.
 class OptionVendorClass : public Option {

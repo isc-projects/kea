@@ -41,7 +41,6 @@ public:
         isc::Exception(file, line, what) { };
 };
 
-
 /// @brief Defines the types of DNS updates that can be requested.
 enum NameChangeType {
   CHG_ADD,
@@ -90,7 +89,7 @@ extern std::string ncrFormatToString(NameChangeFormat format);
 
 /// @brief Function which converts string to ConflictResolutionMode enum values.
 ///
-/// @param fmt_str text to convert to an enum.
+/// @param mode_str text to convert to an enum.
 /// Valid string values: "check-with-dhcid", "no-check-with-dhcid",
 ///                      "check-exists-with-dhcid", "no-check-without-dhcid"
 ///
@@ -102,7 +101,7 @@ ConflictResolutionMode StringToConflictResolutionMode(const std::string& mode_st
 
 /// @brief Function which converts ConflictResolutionMode enums to text labels.
 ///
-/// @param format enum value to convert to label
+/// @param mode ConflictResolutionMode enum value to convert to string.
 ///
 /// @return std:string containing the text label if the value is valid, or
 /// "unknown" if not.

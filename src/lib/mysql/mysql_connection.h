@@ -291,6 +291,8 @@ public:
     ///
     /// @param parameters A data structure relating keywords and values
     ///     concerned with the database.
+    /// @param cb The dbReconnect callback.
+    /// @param timer_name The DB reconnect timer name.
     ///
     /// @throw isc::db::ScehamInitializationFailed if the initialization fails
     static void

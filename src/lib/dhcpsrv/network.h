@@ -793,7 +793,7 @@ public:
 
     /// @brief Sets new ib-ddns-conflict-resolution-mode
     ///
-    /// @param ddns_use_conflict_resolution New value to use.
+    /// @param ddns_conflict_resolution_mode New value to use.
     void setDdnsConflictResolutionMode(const util::Optional<std::string>& ddns_conflict_resolution_mode) {
         ddns_conflict_resolution_mode_ = ddns_conflict_resolution_mode;
     }

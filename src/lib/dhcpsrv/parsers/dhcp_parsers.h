@@ -973,6 +973,7 @@ public:
     /// @param subnets_list pointer to a list of IPv6 subnets
     /// @param encapsulate_options a boolean parameter indicating if the
     /// parsed options should be encapsulated with suboptions.
+
     /// @throw DhcpConfigError if CfgMgr rejects the subnet (e.g. subnet-id is a duplicate)
     size_t parse(SrvConfigPtr cfg, data::ConstElementPtr subnets_list,
                  bool encapsulate_options = true);
@@ -981,6 +982,9 @@ public:
     ///
     /// @param [out] subnets Container where parsed subnets will be stored.
     /// @param subnets_list pointer to a list of IPv6 subnets
+    /// @param encapsulate_options a boolean parameter indicating if the
+    /// parsed options should be encapsulated with suboptions.
+    ///
     /// @return Number of subnets created.
     size_t parse(Subnet6Collection& subnets,
                  data::ConstElementPtr subnets_list,

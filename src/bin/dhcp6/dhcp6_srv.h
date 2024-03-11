@@ -856,7 +856,7 @@ protected:
     ///
     /// @note This is done in two phases: first the content of the
     /// vendor-class-identifier options are used as classes, by
-    /// calling @ref classifyByVendor(). Second, the classification match
+    /// calling (private) classifyByVendor. Second, the classification match
     /// expressions are evaluated. The resulting classes will be stored
     /// in the packet (see @ref isc::dhcp::Pkt6::classes_ and
     /// @ref isc::dhcp::Pkt6::inClass).

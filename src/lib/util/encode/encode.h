@@ -20,7 +20,7 @@ namespace encode {
 class BaseNEncoder {
 public:
 
-    /// @Brief Constructor
+    /// @brief Constructor
     ///
     /// @param algorithm name of the algorithm, used for logging
     /// @param digit_set set of digits (i.e. alphabet) used for encoding
@@ -41,7 +41,7 @@ public:
                  size_t max_pad,
                  bool case_sensitive);
 
-    /// @Brief Destructor
+    /// @brief Destructor
     virtual ~BaseNEncoder() = default;
 
     /// @brief Encodes binary data using the encoder's algorithm
@@ -62,7 +62,7 @@ public:
     ///
     /// @param bits binary value to translate
     /// @return char containing the digit corresponding to the binary value
-    /// @isc_throw BadValue if the bits value is out of range
+    /// @throw BadValue if the bits value is out of range
     char bitsToDigit(uint8_t bits);
 
     /// @brief Translate a digit into the appropriate algorithm bit value

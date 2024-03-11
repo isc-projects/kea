@@ -544,8 +544,8 @@ and can be retrieved from CfgMgr using isc::dhcp::SrvConfig::getClientClassDicti
 This is convenient as there are often multiple classes associated with a given scope.
 
 Client classification is done in isc::dhcp::Dhcpv6Srv::classifyPacket. First, the old
-"built-in" (see @ref dhcpv6ClassifierSimple) classification is called (see @ref
-isc::dhcp::Dhcpv6Srv::classifyByVendor). Then the code iterates over all class definitions
+"built-in" (see @ref dhcpv6ClassifierSimple) classification is called (see private
+isc::dhcp::Dhcpv6Srv::classifyByVendor()). Then the code iterates over all class definitions
 and for each class definition it calls isc::dhcp::evaluate, which is implemented in libeval
 (see @ref libeval). If the evaluation is successful, the class name is added to the packet
 (by calling isc::dhcp::pkt::addClass).

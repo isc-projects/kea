@@ -241,6 +241,7 @@ public:
     /// If the packet belongs to the class, the class is added to the packet.
     ///
     /// @param pkt The packet checked if it belongs to the class.
+    /// @param expr_ptr Expression the class will use to determine membership
     virtual void test(PktPtr pkt, const ExpressionPtr& expr_ptr);
 
     /// @brief Unparse a configuration object
@@ -324,6 +325,7 @@ public:
     /// If the packet belongs to the class, the class is added to the packet.
     ///
     /// @param pkt The packet checked if it belongs to the class.
+    /// @param expr_ptr Expression the class will use to determine membership
     virtual void test(PktPtr pkt, const ExpressionPtr& expr_ptr) override;
 
     /// @brief Unparse a configuration object
@@ -383,6 +385,8 @@ public:
     /// @param filename boot-file-name value for this class (optional)
     /// @param valid valid-lifetime triplet (optional)
     /// @param preferred preferred-lifetime triplet (optional)
+    /// @param is_template true if class is a template class. Defaults to false.
+    /// @param offer_lft the offer lifetime assigned to the class (may be empty if not defined)
     ///
     /// @throw DuplicateClientClassDef if class already exists within the
     /// dictionary.  See @ref dhcp::ClientClassDef::ClientClassDef() for

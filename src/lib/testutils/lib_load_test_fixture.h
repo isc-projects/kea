@@ -20,7 +20,7 @@ class LibLoadTest : public ::testing::Test {
 public:
     /// @brief Constructor. Unloads any previously loaded libraries.
     ///
-    /// @param lib_so_name_ full pathname to the library so file under test
+    /// @param lib_so_name full pathname to the library so file under test
     LibLoadTest(const std::string lib_so_name = "no-lib-specified")
         : lib_so_name_(lib_so_name) {
         unloadLibraries();
@@ -101,8 +101,6 @@ public:
 
     /// @brief Verifies that an invalid daemon cannot load the library.
     ///
-    /// @param libname full path to the library's SO. Typically this
-    /// value is defined in the Makefile (e.g. -DLIBDHCP_BOOTP_SO=...)
     /// @param daemon_name name of the daemon that should try to load the library
     /// @param family Protocol family of the loading daemon, either
     /// AF_INET or AF_INET6. Defaults to AF_INET.

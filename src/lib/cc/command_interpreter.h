@@ -118,7 +118,7 @@ parseAnswer(int &status_code, const isc::data::ConstElementPtr& msg);
 /// This method returns the text status. If you need to get the arguments provided,
 /// please use @ref parseAnswer.
 ///
-/// @param status_code This value will be set to the return code contained in
+/// @param rcode This value will be set to the return code contained in
 ///              the message
 /// @param msg The message to parse
 /// @return The optional argument in the message (or null)

@@ -83,6 +83,8 @@ public:
     /// @param vars Environment variables for the program to be executed.
     /// @param inherit_env whether the spawned process will inherit the
     ///        environment before adding 'vars' on top.
+    /// @param sync enables syncrhonous mode (spawning thread waits on
+    /// child to cmplete if true)
     ProcessSpawnImpl(IOServicePtr io_service,
                      const std::string& executable,
                      const ProcessArgs& args,

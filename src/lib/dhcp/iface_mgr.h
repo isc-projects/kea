@@ -826,7 +826,7 @@ public:
 
     /// @brief Detects network interfaces.
     ///
-    /// If the @ref detect_callback_ returns true, the specific system calls are
+    /// If the detect callback returns true, the specific system calls are
     /// executed, otherwise the @ref detectIfaces will return immediately.
     ///
     /// @param update_only Only add interfaces that do not exist and update
@@ -1618,7 +1618,7 @@ private:
     /// @brief Detect callback used to perform actions before system dependent
     /// function calls.
     ///
-    /// If the @ref detect_callback_ returns true, the specific system calls are
+    /// If this call back returns true, the specific system calls are
     /// executed, otherwise the @ref detectIfaces will return immediately.
     DetectCallback detect_callback_;
 

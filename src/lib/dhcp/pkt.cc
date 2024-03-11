@@ -318,7 +318,7 @@ Pkt::getMACFromIPv6(const isc::asiolink::IOAddress& addr) {
 
 
 void
-Pkt::addPktEvent(const std::string& label, const ptime& timestamp) {
+Pkt::addPktEvent(const std::string& label, const boost::posix_time::ptime& timestamp) {
     events_.push_back(PktEvent(label, timestamp));
 }
 
