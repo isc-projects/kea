@@ -29,7 +29,3 @@ extern const uint8_t maptolower[];
 } // end of dns
 } // end of isc
 #endif // NAME_INTERNAL_H
-
-// Local Variables:
-// mode: c++
-// End:

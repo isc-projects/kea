@@ -6,22 +6,7 @@
 
 #include <config.h>
 
-#include <time.h>
-#include <string>
-#include <stdexcept>
-#include <vector>
-
-#include <boost/scoped_ptr.hpp>
-
-#include <gtest/gtest.h>
-
 #include <exceptions/exceptions.h>
-
-#include <util/buffer.h>
-#include <util/encode/encode.h>
-#include <util/unittests/newhook.h>
-#include <util/time_utilities.h>
-
 #include <dns/message.h>
 #include <dns/messagerenderer.h>
 #include <dns/question.h>
@@ -32,9 +17,21 @@
 #include <dns/tsig.h>
 #include <dns/tsigkey.h>
 #include <dns/tsigrecord.h>
-
 #include <dns/tests/unittest_util.h>
+#include <util/buffer.h>
+#include <util/encode/encode.h>
+#include <util/unittests/newhook.h>
+#include <util/time_utilities.h>
 #include <util/unittests/wiredata.h>
+
+#include <time.h>
+#include <string>
+#include <stdexcept>
+#include <vector>
+
+#include <boost/scoped_ptr.hpp>
+
+#include <gtest/gtest.h>
 
 using namespace std;
 using namespace isc;

@@ -94,7 +94,8 @@ public:
     using pointer = T*;
     using reference = T&;
 
-    SectionIterator() : impl_(0) {}
+    SectionIterator() : impl_(0) {
+    }
     SectionIterator(const SectionIteratorImpl<T>& impl);
     ~SectionIterator();
     SectionIterator(const SectionIterator<T>& source);

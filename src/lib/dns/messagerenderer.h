@@ -390,7 +390,3 @@ private:
 }
 }
 #endif // MESSAGERENDERER_H
-
-// Local Variables:
-// mode: c++
-// End:

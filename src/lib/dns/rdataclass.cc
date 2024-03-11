@@ -578,8 +578,7 @@ A::A(const std::string&) {
 }
 
 A::A(MasterLexer&, const Name*,
-     MasterLoader::Options, MasterLoaderCallbacks&)
-{
+     MasterLoader::Options, MasterLoaderCallbacks&) {
     // TBD
 }
 
@@ -609,7 +608,8 @@ A::toText() const {
 
 int
 A::compare(const Rdata&) const {
-    return (0);                 // dummy.  TBD
+    // TBD
+    return (0);
 }
 
 } // end of namespace "ch"

@@ -231,7 +231,3 @@ private:
 }      // namespace isc
 
 #endif //  TXT_LIKE_H
-
-// Local Variables:
-// mode: c++
-// End:
