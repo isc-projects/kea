@@ -70,7 +70,7 @@ TEST_F(Rdata_OPT_Test, createFromWire) {
     // short buffer case.
     EXPECT_THROW(rdataFactoryFromFile(RRType::OPT(), RRClass::IN(),
                                       "rdata_opt_fromWire1", 11),
-                 InvalidBufferPosition);
+                 isc::OutOfRange);
 }
 
 TEST_F(Rdata_OPT_Test, createFromLexer) {

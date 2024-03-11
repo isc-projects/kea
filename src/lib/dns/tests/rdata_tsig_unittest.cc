@@ -266,11 +266,11 @@ TEST_F(Rdata_TSIG_Test, badFromWire) {
     // MAC size is bogus:
     EXPECT_THROW(rdataFactoryFromFile(RRType::TSIG(), RRClass::ANY(),
                                       "rdata_tsig_fromWire8.wire"),
-                 InvalidBufferPosition);
+                 isc::OutOfRange);
     // Other-data length is bogus:
     EXPECT_THROW(rdataFactoryFromFile(RRType::TSIG(), RRClass::ANY(),
                                       "rdata_tsig_fromWire9.wire"),
-                 InvalidBufferPosition);
+                 isc::OutOfRange);
 }
 
 TEST_F(Rdata_TSIG_Test, copyConstruct) {

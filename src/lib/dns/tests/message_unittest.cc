@@ -279,7 +279,7 @@ TEST_F(MessageTest, getRRCount) {
     EXPECT_EQ(0, message_render.getRRCount(Message::SECTION_ADDITIONAL));
 
     // out-of-band section ID
-    EXPECT_THROW(message_parse.getRRCount(bogus_section), OutOfRange);
+    EXPECT_THROW(message_parse.getRRCount(bogus_section), isc::OutOfRange);
 }
 
 TEST_F(MessageTest, addRRset) {
@@ -306,7 +306,7 @@ TEST_F(MessageTest, badAddRRset) {
     EXPECT_THROW(message_parse.addRRset(Message::SECTION_ANSWER,
                                         rrset_a), InvalidMessageOperation);
     // out-of-band section ID
-    EXPECT_THROW(message_render.addRRset(bogus_section, rrset_a), OutOfRange);
+    EXPECT_THROW(message_render.addRRset(bogus_section, rrset_a), isc::OutOfRange);
 
     // NULL RRset
     EXPECT_THROW(message_render.addRRset(Message::SECTION_ANSWER, RRsetPtr()),
@@ -334,7 +334,7 @@ TEST_F(MessageTest, hasRRset) {
     // out-of-band section ID
     EXPECT_THROW(message_render.hasRRset(bogus_section, test_name,
                                          RRClass::IN(), RRType::A()),
-                 OutOfRange);
+                 isc::OutOfRange);
 
     // Repeat the checks having created an RRset of the appropriate type.
 
@@ -355,7 +355,7 @@ TEST_F(MessageTest, hasRRset) {
     RRsetPtr rrs5(new RRset(test_name, RRClass::IN(), RRType::AAAA(), RRTTL(5)));
     EXPECT_FALSE(message_render.hasRRset(Message::SECTION_ANSWER, rrs4));
 
-    EXPECT_THROW(message_render.hasRRset(bogus_section, rrs1), OutOfRange);
+    EXPECT_THROW(message_render.hasRRset(bogus_section, rrs1), isc::OutOfRange);
 }
 
 TEST_F(MessageTest, removeRRset) {
@@ -457,21 +457,21 @@ TEST_F(MessageTest, badClearSection) {
     EXPECT_THROW(message_parse.clearSection(Message::SECTION_QUESTION),
                  InvalidMessageOperation);
     // attempt of clearing out-of-range section
-    EXPECT_THROW(message_render.clearSection(bogus_section), OutOfRange);
+    EXPECT_THROW(message_render.clearSection(bogus_section), isc::OutOfRange);
 }
 
 TEST_F(MessageTest, badBeginSection) {
     // valid cases are tested via other tests
     EXPECT_THROW(message_render.beginSection(Message::SECTION_QUESTION),
                  InvalidMessageSection);
-    EXPECT_THROW(message_render.beginSection(bogus_section), OutOfRange);
+    EXPECT_THROW(message_render.beginSection(bogus_section), isc::OutOfRange);
 }
 
 TEST_F(MessageTest, badEndSection) {
     // valid cases are tested via other tests
     EXPECT_THROW(message_render.endSection(Message::SECTION_QUESTION),
                  InvalidMessageSection);
-    EXPECT_THROW(message_render.endSection(bogus_section), OutOfRange);
+    EXPECT_THROW(message_render.endSection(bogus_section), isc::OutOfRange);
 }
 
 TEST_F(MessageTest, appendSection) {
@@ -479,7 +479,7 @@ TEST_F(MessageTest, appendSection) {
 
     // Section check
     EXPECT_THROW(target.appendSection(bogus_section, message_render),
-                 OutOfRange);
+                 isc::OutOfRange);
 
     // Make sure nothing is copied if there is nothing to copy
     target.appendSection(Message::SECTION_QUESTION, message_render);
@@ -635,7 +635,7 @@ TEST_F(MessageTest, fromWireShortBuffer) {
     // fromWire() should throw an exception while parsing the trimmed RR.
     UnitTestUtil::readWireData("message_fromWire22.wire", received_data);
     InputBuffer buffer(&received_data[0], received_data.size() - 1);
-    EXPECT_THROW(message_parse.fromWire(buffer), InvalidBufferPosition);
+    EXPECT_THROW(message_parse.fromWire(buffer), isc::OutOfRange);
 }
 
 TEST_F(MessageTest, fromWireCombineRRs) {

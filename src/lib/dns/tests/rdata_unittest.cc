@@ -324,7 +324,7 @@ TEST_F(Rdata_Unknown_Test, createFromWire) {
     // buffer too short.  the error should be detected in buffer read
     EXPECT_THROW(rdataFactoryFromFile(unknown_rrtype, RRClass::IN(),
                                       "rdata_unknown_fromWire", 8),
-                 InvalidBufferPosition);
+                 isc::OutOfRange);
 
     // too large data
     vector<uint8_t> v;

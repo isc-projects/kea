@@ -19,15 +19,6 @@
 namespace isc {
 namespace util {
 
-/// @brief A standard DNS module exception that is thrown if an out-of-range
-/// buffer operation is being performed.
-///
-class InvalidBufferPosition : public isc::OutOfRange {
-public:
-    InvalidBufferPosition(const char* file, size_t line, const char* what) :
-        isc::OutOfRange(file, line, what) {}
-};
-
 /// @brief The @c InputBuffer class is a buffer abstraction for
 /// manipulating read-only data.
 ///
@@ -114,14 +105,14 @@ public:
     /// @brief Set the read position of the buffer to the given value.
     ///
     /// The new position must be in the valid range of the buffer;
-    /// otherwise an exception of class @c
-    /// isc::dns::InvalidBufferPosition will be thrown.
+    /// otherwise an exception of class @c isc::OutOfRange will be thrown.
     ///
     /// @param position The new position (offset from the beginning of
     /// the buffer).
     void setPosition(size_t position) {
         if (base_ + position > end_) {
-            throwError("position is too large");
+            isc_throw(OutOfRange,
+                      "InputBuffer::setPosition position is too large");
         }
         current_ = base_ + position;
     }
@@ -129,11 +120,11 @@ public:
     /// @brief Peek an unsigned 8-bit integer from the buffer and return it.
     ///
     /// If the remaining length of the buffer is smaller than 8-bit,
-    /// an exception of class @c isc::dns::InvalidBufferPosition will
-    /// be thrown.
+    /// an exception of class @c isc::OutOfRange will be thrown.
     uint8_t peekUint8() {
         if (current_ + sizeof(uint8_t) > end_) {
-            throwError("read beyond end of buffer");
+            isc_throw(OutOfRange,
+                      "InputBuffer::peekUint8 read beyond end of buffer");
         }
 
         return (*current_);
@@ -142,8 +133,7 @@ public:
     /// @brief Read an unsigned 8-bit integer from the buffer and return it.
     ///
     /// If the remaining length of the buffer is smaller than 8-bit,
-    /// an exception of class @c isc::dns::InvalidBufferPosition will
-    /// be thrown.
+    /// an exception of class @c isc::OutOfRange will be thrown.
     uint8_t readUint8() {
         uint8_t ret = peekUint8();
         current_ += sizeof(uint8_t);
@@ -155,11 +145,11 @@ public:
     /// from the buffer, and return it.
     ///
     /// If the remaining length of the buffer is smaller than 16-bit,
-    /// an exception of class @c isc::dns::InvalidBufferPosition will
-    /// be thrown.
+    /// an exception of class @c isc::OutOfRange will be thrown.
     uint16_t peekUint16() {
         if (current_ + sizeof(uint16_t) > end_) {
-            throwError("read beyond end of buffer");
+            isc_throw(OutOfRange,
+                      "InputBuffer::peekUint16 read beyond end of buffer");
         }
 
         uint16_t ret;
@@ -173,8 +163,7 @@ public:
     /// from the buffer, and return it.
     ///
     /// If the remaining length of the buffer is smaller than 16-bit,
-    /// an exception of class @c isc::dns::InvalidBufferPosition will
-    /// be thrown.
+    /// an exception of class @c isc::OutOfRange will be thrown.
     uint16_t readUint16() {
         uint16_t ret = peekUint16();
         current_ += sizeof(uint16_t);
@@ -186,11 +175,11 @@ public:
     /// from the buffer, and return it.
     ///
     /// If the remaining length of the buffer is smaller than 32-bit,
-    /// an exception of class @c isc::dns::InvalidBufferPosition will
-    /// be thrown.
+    /// an exception of class @c isc::OutOfRange will be thrown.
     uint32_t peekUint32() {
         if (current_ + sizeof(uint32_t) > end_) {
-            throwError("read beyond end of buffer");
+            isc_throw(OutOfRange,
+                      "InputBuffer::peekUint32 read beyond end of buffer");
         }
 
         uint32_t ret;
@@ -206,8 +195,7 @@ public:
     /// from the buffer, and return it.
     ///
     /// If the remaining length of the buffer is smaller than 32-bit,
-    /// an exception of class @c isc::dns::InvalidBufferPosition will
-    /// be thrown.
+    /// an exception of class @c isc::OutOfRange will be thrown.
     uint32_t readUint32() {
         uint32_t ret = peekUint32();
         current_ += sizeof(uint32_t);
@@ -220,11 +208,12 @@ public:
     ///
     /// The data is copied as stored in the buffer; no conversion is
     /// performed.  If the remaining length of the buffer is smaller
-    /// than the specified length, an exception of class @c
-    /// isc::dns::InvalidBufferPosition will be thrown.
+    /// than the specified length, an exception of class @c isc::OutOfRange
+    /// will be thrown.
     void peekData(void* data, size_t len) {
         if (current_ + len > end_) {
-            throwError("read beyond end of buffer");
+            isc_throw(OutOfRange,
+                      "InputBuffer::peekData read beyond end of buffer");
         }
 
         static_cast<void>(std::memmove(data, current_, len));
@@ -235,8 +224,8 @@ public:
     ///
     /// The data is copied as stored in the buffer; no conversion is
     /// performed.  If the remaining length of the buffer is smaller
-    /// than the specified length, an exception of class @c
-    /// isc::dns::InvalidBufferPosition will be thrown.
+    /// than the specified length, an exception of class @c isc::OutOfRange
+    /// will be thrown.
     void readData(void* data, size_t len) {
         peekData(data, len);
         current_ += len;
@@ -245,13 +234,16 @@ public:
     /// @brief Peek specified number of bytes as a vector.
     ///
     /// If specified buffer is too short, it will be expanded using
-    /// vector::resize() method.
+    /// vector::resize() method. If the remaining length of the buffer
+    /// is smaller than the specified length, an exception of class
+    /// @c isc::OutOfRange will be thrown.
     ///
     /// @param data Reference to a buffer (data will be stored there).
     /// @param len Size specified number of bytes to read in a vector.
     void peekVector(std::vector<uint8_t>& data, size_t len) {
         if (current_ + len > end_) {
-            throwError("read beyond end of buffer");
+            isc_throw(OutOfRange,
+                      "InputBuffer::peekVector read beyond end of buffer");
         }
 
         data.resize(len);
@@ -261,7 +253,9 @@ public:
     /// @brief Read specified number of bytes as a vector.
     ///
     /// If specified buffer is too short, it will be expanded using
-    /// vector::resize() method.
+    /// vector::resize() method. If the remaining length of the buffer
+    /// is smaller than the specified length, an exception of class
+    /// @c isc::OutOfRange will be thrown.
     ///
     /// @param data Reference to a buffer (data will be stored there).
     /// @param len Size specified number of bytes to read in a vector.
@@ -271,11 +265,6 @@ public:
     }
 
 private:
-    /// @brief A common helper to throw an exception on invalid operation.
-    static void throwError(const char* msg) {
-        isc_throw(InvalidBufferPosition, msg);
-    }
-
     /// @brief Base of the buffer.
     const uint8_t* base_;
 
@@ -433,8 +422,9 @@ public:
     /// @param pos The position in the buffer to be returned.
     uint8_t operator[](size_t pos) const {
         if (pos >= buffer_.size()) {
-            isc_throw(InvalidBufferPosition,
-                      "[]: pos (" << pos << ") >= size (" << buffer_.size() << ")");
+            isc_throw(OutOfRange,
+                      "OutputBuffer::[]: pos (" << pos
+                      << ") >= size (" << buffer_.size() << ")");
         }
         return (buffer_[pos]);
     }
@@ -467,7 +457,8 @@ public:
     /// @param len The length of data that should be trimmed.
     void trim(size_t len) {
         if (len > buffer_.size()) {
-            isc_throw(OutOfRange, "trimming too large from output buffer");
+            isc_throw(OutOfRange,
+                      "OutputBuffer::trim length too large from output buffer");
         }
         buffer_.resize(buffer_.size() - len);
     }
@@ -494,7 +485,8 @@ public:
     /// @param pos The position in the buffer to write the data.
     void writeUint8At(uint8_t data, size_t pos) {
         if (pos + sizeof(data) > buffer_.size()) {
-            isc_throw(InvalidBufferPosition, "write at invalid position");
+            isc_throw(OutOfRange,
+                      "OutputBuffer::writeUint8At write at invalid position");
         }
         buffer_[pos] = data;
     }
@@ -521,7 +513,8 @@ public:
     /// @param pos The beginning position in the buffer to write the data.
     void writeUint16At(uint16_t data, size_t pos) {
         if (pos + sizeof(data) > buffer_.size()) {
-            isc_throw(InvalidBufferPosition, "write at invalid position");
+            isc_throw(OutOfRange,
+                      "OutputBuffer::writeUint16At write at invalid position");
         }
 
         buffer_[pos] = static_cast<uint8_t>((data & 0xff00U) >> 8);

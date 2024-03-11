@@ -277,10 +277,10 @@ public:
     ///
     /// \c rdata_len must not exceed \c MAX_RDLENGTH; otherwise, an exception
     /// of class \c InvalidRdataLength will be thrown.
-    /// If resource allocation to hold the data fails, a corresponding standard
-    /// exception will be thrown; if the \c buffer doesn't contain \c rdata_len
-    /// bytes of unread data, an exception of class \c InvalidBufferPosition
-    /// will be thrown.
+    /// If resource allocation to hold the data fails, a corresponding
+    /// standard exception will be thrown; if the \c buffer doesn't
+    /// contain \c rdata_len bytes of unread data, an exception of
+    /// class \c isc::OutOfRange will be thrown.
     ///
     /// \param buffer A reference to an \c InputBuffer object storing the
     /// \c Rdata to parse.

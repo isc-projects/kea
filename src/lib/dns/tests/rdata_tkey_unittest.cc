@@ -279,11 +279,11 @@ TEST_F(Rdata_TKEY_Test, badFromWire) {
     // Key length is bogus:
     EXPECT_THROW(rdataFactoryFromFile(RRType::TKEY(), RRClass::ANY(),
                                       "rdata_tkey_fromWire8.wire"),
-                 InvalidBufferPosition);
+                 isc::OutOfRange);
     // Other-data length is bogus:
     EXPECT_THROW(rdataFactoryFromFile(RRType::TKEY(), RRClass::ANY(),
                                       "rdata_tkey_fromWire9.wire"),
-                 InvalidBufferPosition);
+                 isc::OutOfRange);
 }
 
 TEST_F(Rdata_TKEY_Test, copyConstruct) {

@@ -283,8 +283,7 @@ public:
     ///
     /// The buffer must have a sufficient room to store the given data at the
     /// given position, that is, <code>pos + 2 < getLength()</code>;
-    /// otherwise an exception of class \c isc::dns::InvalidBufferPosition will
-    /// be thrown.
+    /// otherwise an exception of class \c isc::OutOfRange will be thrown.
     /// Note also that this method never extends the internal buffer.
     ///
     /// \param data The 16-bit integer to be written into the internal buffer.
