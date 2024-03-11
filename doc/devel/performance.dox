@@ -6,8 +6,10 @@
 
 /**
 
- @page Performance
+ @page performance Performance Testing
 
-This section is for topics pertaining to Kea runtime performance.
+ This section is for topics pertaining to Kea runtime performance.
+
+ @subpage perfdhcpInternals perfdhcp Internals
 
 */

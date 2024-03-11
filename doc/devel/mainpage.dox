@@ -44,8 +44,7 @@
  *   - @subpage unitTestsDatabaseConfig
  *   - @subpage unitTestsSysrepo
  *   - @subpage writingShellScriptsAndTests
- * - @subpage Performance
- *   - @subpage perfdhcpInternals
+ * - @subpage performance
  * - @subpage fuzzer
  * - @subpage qa
  *   - @subpage ciGithub
