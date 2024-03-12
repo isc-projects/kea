@@ -38,7 +38,7 @@ TEST(Alarm, validConstructors) {
     EXPECT_EQ(alarm->getQueryType(), DHCPDISCOVER);
     EXPECT_EQ(alarm->getResponseType(), DHCPOFFER);
     EXPECT_EQ(alarm->getStartEventLabel(), "process_started");
-    EXPECT_EQ(alarm->getEndEventLabel(), "process_completed");
+    EXPECT_EQ(alarm->getStopEventLabel(), "process_completed");
     EXPECT_EQ(alarm->getSubnetId(), SUBNET_ID_GLOBAL);
     EXPECT_EQ("DHCPDISCOVER-DHCPOFFER.process_started-process_completed.0", alarm->getLabel());
     EXPECT_EQ(alarm->getSubnetId(), SUBNET_ID_GLOBAL);
@@ -60,7 +60,7 @@ TEST(Alarm, validConstructors) {
     EXPECT_EQ(alarm->getQueryType(), DHCPV6_SOLICIT);
     EXPECT_EQ(alarm->getResponseType(), DHCPV6_ADVERTISE);
     EXPECT_EQ(alarm->getStartEventLabel(), "mt_queued");
-    EXPECT_EQ(alarm->getEndEventLabel(), "process_started");
+    EXPECT_EQ(alarm->getStopEventLabel(), "process_started");
     EXPECT_EQ(alarm->getSubnetId(), 77);
     EXPECT_EQ("SOLICIT-ADVERTISE.mt_queued-process_started.77", alarm->getLabel());
     EXPECT_EQ(alarm->getLowWater(), low_water);

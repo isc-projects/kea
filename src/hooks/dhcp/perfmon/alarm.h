@@ -32,13 +32,13 @@ public:
     /// @param query_type message type of the query packet
     /// @param response_type message type of the response packet
     /// @param start_event_label label of the start event
-    /// @param end_event_label label of the end event
+    /// @param stop_event_label label of the end event
     /// @param subnet_id SubnetID of the selected subnet
     /// @param low_water threshold below which the average duration must fall to clear the alarm
     /// @param high_water threshold above which the average duration must rise to trigger the alarm.
     /// @param enabled true sets state to CLEAR, otherwise DISABLED, defaults to true.
     Alarm(uint16_t family, uint8_t query_type, uint8_t response_type,
-          const std::string& start_event_label, const std::string& end_event_label,
+          const std::string& start_event_label, const std::string& stop_event_label,
           dhcp::SubnetID subnet_id,
           const Duration& low_water, const Duration& high_water, bool enabled = true);
 

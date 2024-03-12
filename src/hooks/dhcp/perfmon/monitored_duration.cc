@@ -63,13 +63,13 @@ DurationKey::DurationKey(uint16_t family,
                          uint8_t query_type,
                          uint8_t response_type,
                          const std::string& start_event_label,
-                         const std::string& end_event_label,
+                         const std::string& stop_event_label,
                          dhcp::SubnetID subnet_id)
     : family_(family),
       query_type_(query_type),
       response_type_(response_type),
       start_event_label_(start_event_label),
-      end_event_label_(end_event_label),
+      stop_event_label_(stop_event_label),
       subnet_id_(subnet_id) {
     if (family != AF_INET && family != AF_INET6) {
         isc_throw (BadValue, "DurationKey: family must be AF_INET or AF_INET6");
@@ -166,7 +166,7 @@ DurationKey::getLabel() const {
             << (response_type_ == DHCPV6_NOTYPE ? "NONE" : Pkt6::getName(response_type_));
     }
 
-    oss << "." << start_event_label_ << "-" << end_event_label_
+    oss << "." << start_event_label_ << "-" << stop_event_label_
         << "." << subnet_id_;
 
     return (oss.str());
@@ -178,7 +178,7 @@ DurationKey::operator==(const DurationKey& other) const {
         (query_type_ == other.query_type_) &&
         (response_type_ == other.response_type_) &&
         (start_event_label_ == other.start_event_label_) &&
-        (end_event_label_ == other.end_event_label_) &&
+        (stop_event_label_ == other.stop_event_label_) &&
         (subnet_id_ == other.subnet_id_)
     );
 }
@@ -194,7 +194,7 @@ DurationKey::operator<(const DurationKey& other) const {
         (query_type_ < other.query_type_) ||
         (response_type_ < other.response_type_) ||
         (start_event_label_ < other.start_event_label_) ||
-        (end_event_label_ < other.end_event_label_) ||
+        (stop_event_label_ < other.stop_event_label_) ||
         (subnet_id_ < other.subnet_id_)
     );
 }
@@ -206,10 +206,10 @@ MonitoredDuration::MonitoredDuration(uint16_t family,
                                      uint8_t query_type,
                                      uint8_t response_type,
                                      const std::string& start_event_label,
-                                     const std::string& end_event_label,
+                                     const std::string& stop_event_label,
                                      dhcp::SubnetID subnet_id,
                                      const Duration& interval_duration)
-    : DurationKey(family, query_type, response_type, start_event_label, end_event_label, subnet_id),
+    : DurationKey(family, query_type, response_type, start_event_label, stop_event_label, subnet_id),
       interval_duration_(interval_duration),
       current_interval_(0),
       previous_interval_(0) {

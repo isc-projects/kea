@@ -127,7 +127,7 @@ typedef boost::shared_ptr<DurationDataInterval> DurationDataIntervalPtr;
 /// -# Query Packet Type
 /// -# Response Packet Type
 /// -# Start Event
-/// -# End Event
+/// -# Stop Event
 /// -# Subnet ID can be GLOBAL_SUBNET_ID for aggregate durations
 class DurationKey {
 public:
@@ -137,10 +137,10 @@ public:
     /// @param query_type message type of the query packet
     /// @param response_type message type of the response packet
     /// @param start_event_label label of the start event
-    /// @param end_event_label label of the end event
+    /// @param stop_event_label label of the end event
     /// @param subnet_id id of the selected subnet
     DurationKey(uint16_t family, uint8_t query_type, uint8_t response_type,
-                const std::string& start_event_label, const std::string& end_event_label,
+                const std::string& start_event_label, const std::string& stop_event_label,
                 dhcp::SubnetID subnet_id);
 
     /// @brief Destructor
@@ -177,8 +177,8 @@ public:
     /// @brief Get the end event label.
     ///
     /// @return the end event label.
-    std::string getEndEventLabel() const {
-        return (end_event_label_);
+    std::string getStopEventLabel() const {
+        return (stop_event_label_);
     }
 
     /// @brief Get the subnet id.
@@ -194,7 +194,7 @@ public:
     /// The format of the string:
     ///
     /// @code
-    ///     <query type>-<response type>.<start_event>-<end_event>.<subnet id>
+    ///     <query type>-<response type>.<start_event>-<stop_event>.<subnet id>
     ///
     /// Example:
     ///
@@ -254,7 +254,7 @@ protected:
     std::string start_event_label_;
 
     /// @brief Label of the end event which ends the duration.
-    std::string end_event_label_;
+    std::string stop_event_label_;
 
     /// @brief Subnet ID of the subnet selected during query fulfillment.
     isc::dhcp::SubnetID subnet_id_;
@@ -271,11 +271,11 @@ public:
     /// @param query_type message type of the query packet
     /// @param response_type message type of the response packet
     /// @param start_event_label label of the start event
-    /// @param end_event_label label of the end event
+    /// @param stop_event_label label of the end event
     /// @param subnet_id id of the selected subnet
     /// @param interval_duration the interval duration
     MonitoredDuration(uint16_t family, uint8_t query_type, uint8_t response_type,
-                      const std::string& start_event_label, const std::string& end_event_label,
+                      const std::string& start_event_label, const std::string& stop_event_label,
                       dhcp::SubnetID subnet_id, const Duration& interval_duration);
 
     /// @brief Constructor

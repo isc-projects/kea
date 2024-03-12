@@ -93,7 +93,7 @@ TEST(DurationKey, basics) {
     EXPECT_EQ(key->getQueryType(), DHCPDISCOVER);
     EXPECT_EQ(key->getResponseType(), DHCPOFFER);
     EXPECT_EQ(key->getStartEventLabel(), "process_started");
-    EXPECT_EQ(key->getEndEventLabel(), "process_completed");
+    EXPECT_EQ(key->getStopEventLabel(), "process_completed");
     EXPECT_EQ(key->getSubnetId(), SUBNET_ID_GLOBAL);
     EXPECT_EQ("DHCPDISCOVER-DHCPOFFER.process_started-process_completed.0", key->getLabel());
 
@@ -105,7 +105,7 @@ TEST(DurationKey, basics) {
     EXPECT_EQ(key->getQueryType(), DHCPV6_SOLICIT);
     EXPECT_EQ(key->getResponseType(), DHCPV6_ADVERTISE);
     EXPECT_EQ(key->getStartEventLabel(), "mt_queued");
-    EXPECT_EQ(key->getEndEventLabel(), "process_started");
+    EXPECT_EQ(key->getStopEventLabel(), "process_started");
     EXPECT_EQ(key->getSubnetId(), 77);
     EXPECT_EQ("SOLICIT-ADVERTISE.mt_queued-process_started.77", key->getLabel());
 
@@ -263,7 +263,7 @@ TEST(MonitoredDuration, validConstructors) {
     EXPECT_EQ(mond->getQueryType(), DHCPDISCOVER);
     EXPECT_EQ(mond->getResponseType(), DHCPOFFER);
     EXPECT_EQ(mond->getStartEventLabel(), "process_started");
-    EXPECT_EQ(mond->getEndEventLabel(), "process_completed");
+    EXPECT_EQ(mond->getStopEventLabel(), "process_completed");
     EXPECT_EQ(mond->getSubnetId(), SUBNET_ID_GLOBAL);
     EXPECT_EQ("DHCPDISCOVER-DHCPOFFER.process_started-process_completed.0", mond->getLabel());
     EXPECT_EQ(mond->getIntervalDuration(), interval_duration);
@@ -281,7 +281,7 @@ TEST(MonitoredDuration, validConstructors) {
     EXPECT_EQ(mond->getQueryType(), DHCPV6_SOLICIT);
     EXPECT_EQ(mond->getResponseType(), DHCPV6_ADVERTISE);
     EXPECT_EQ(mond->getStartEventLabel(), "mt_queued");
-    EXPECT_EQ(mond->getEndEventLabel(), "process_started");
+    EXPECT_EQ(mond->getStopEventLabel(), "process_started");
     EXPECT_EQ(mond->getSubnetId(), 77);
     EXPECT_EQ("SOLICIT-ADVERTISE.mt_queued-process_started.77", mond->getLabel());
     EXPECT_EQ(mond->getIntervalDuration(), interval_duration);
