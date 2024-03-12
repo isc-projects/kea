@@ -92,7 +92,7 @@ namespace test {
 /// if the given expression is true.  This works around the lack of
 /// GTEST_SKIP prior to googletest 1.10.
 ///
-/// @note  This macro cannot be used in testing::Test::SetUp()
+/// @note This macro cannot be used in testing::Test::SetUp()
 /// to skip tests (unless running with googletest 1.10 or later).
 /// It must be used directly within the body of each unit test.
 ///
