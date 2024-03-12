@@ -370,7 +370,6 @@ public:
     ///
     /// @note This should be used only to iterate over the class set.
     /// @note SubClasses are always last.
-    /// @param required return classes or required to be evaluated classes.
     /// @return if required is false (the default) the classes the
     /// packet belongs to else the classes which are required to be
     /// evaluated.

@@ -411,7 +411,6 @@ public:
     /// @param query A pointer to the unparked packet.
     /// @param ctx Pointer to The client context.
     /// @param allow_answer_park Indicates if parking a packet is allowed.
-    /// @return A pointer to the response.
     void processLocalizedQuery4AndSendResponse(Pkt4Ptr query,
                                                AllocEngine::ClientContext4Ptr& ctx,
                                                bool allow_answer_park);
@@ -423,7 +422,6 @@ public:
     ///
     /// @param query A pointer to the unparked packet.
     /// @param allow_answer_park Indicates if parking a packet is allowed.
-    /// @return A pointer to the response.
     void processLocalizedQuery4AndSendResponse(Pkt4Ptr query,
                                                bool allow_answer_park);
 
