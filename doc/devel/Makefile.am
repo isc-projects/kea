@@ -12,6 +12,7 @@ EXTRA_DIST += mainpage.dox
 EXTRA_DIST += qa.dox
 EXTRA_DIST += terminology.dox
 EXTRA_DIST += unit-tests.dox
+EXTRA_DIST += performance.dox
 
 all: # do nothing, used only by developers manually
 
