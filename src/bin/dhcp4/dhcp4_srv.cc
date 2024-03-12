@@ -77,6 +77,7 @@
 using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::cryptolink;
+using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::dhcp_ddns;
 using namespace isc::hooks;
@@ -757,6 +758,18 @@ Dhcpv4Srv::selectSubnet(const Pkt4Ptr& query, bool& drop,
                                     cfgmgr.getCurrentCfg()->
                                     getCfgSubnets4()->getAll());
 
+        auto const tpl(parkingLimitExceeded("subnet4_select"));
+        bool const exceeded(get<0>(tpl));
+        if (exceeded) {
+            uint32_t const limit(get<1>(tpl));
+            // We can't park it so we're going to throw it on the floor.
+            LOG_DEBUG(packet4_logger, DBGLVL_PKT_HANDLING,
+                      DHCP4_HOOK_SUBNET4_SELECT_PARKING_LOT_FULL)
+                .arg(limit)
+                .arg(query->getLabel());
+            return (Subnet4Ptr());
+        }
+
         // We proactively park the packet.
         HooksManager::park(
             "subnet4_select", query, [this, query, allow_answer_park, callout_handle_state]() {
@@ -912,6 +925,18 @@ Dhcpv4Srv::selectSubnet4o6(const Pkt4Ptr& query, bool& drop,
         callout_handle->setArgument("subnet4collection",
                                     cfgmgr.getCurrentCfg()->
                                     getCfgSubnets4()->getAll());
+
+        auto const tpl(parkingLimitExceeded("subnet4_select"));
+        bool const exceeded(get<0>(tpl));
+        if (exceeded) {
+            uint32_t const limit(get<1>(tpl));
+            // We can't park it so we're going to throw it on the floor.
+            LOG_DEBUG(packet4_logger, DBGLVL_PKT_HANDLING,
+                      DHCP4_HOOK_SUBNET4_SELECT_4O6_PARKING_LOT_FULL)
+                .arg(limit)
+                .arg(query->getLabel());
+            return (Subnet4Ptr());
+        }
 
         // We proactively park the packet.
         HooksManager::park(
@@ -1653,27 +1678,17 @@ Dhcpv4Srv::processLocalizedQuery4(AllocEngine::ClientContext4Ptr& ctx,
             }
 
             if (allow_answer_park) {
-                // Get the parking limit. Parsing should ensure the value is present.
-                uint32_t parked_packet_limit = 0;
-                data::ConstElementPtr ppl = CfgMgr::instance().getCurrentCfg()->
-                    getConfiguredGlobal(CfgGlobals::PARKED_PACKET_LIMIT);
-                if (ppl) {
-                    parked_packet_limit = ppl->intValue();
-                }
-
-                if (parked_packet_limit) {
-                    auto const& parking_lot =
-                        ServerHooks::getServerHooks().getParkingLotPtr(hook_label);
-
-                    if (parking_lot && (parking_lot->size() >= parked_packet_limit)) {
-                        // We can't park it so we're going to throw it on the floor.
-                        LOG_DEBUG(packet4_logger, DBGLVL_PKT_HANDLING, parking_lot_full_msg)
-                            .arg(parked_packet_limit)
-                            .arg(query->getLabel());
-                        isc::stats::StatsMgr::instance().addValue("pkt4-receive-drop",
-                                                                  static_cast<int64_t>(1));
-                        return (Pkt4Ptr());
-                    }
+                auto const tpl(parkingLimitExceeded(hook_label));
+                bool const exceeded(get<0>(tpl));
+                if (exceeded) {
+                    uint32_t const limit(get<1>(tpl));
+                    // We can't park it so we're going to throw it on the floor.
+                    LOG_DEBUG(packet4_logger, DBGLVL_PKT_HANDLING, parking_lot_full_msg)
+                        .arg(limit)
+                        .arg(query->getLabel());
+                    isc::stats::StatsMgr::instance().addValue("pkt4-receive-drop",
+                                                                static_cast<int64_t>(1));
+                    return (Pkt4Ptr());
                 }
 
                 // We proactively park the packet. We'll unpark it without invoking
@@ -3633,6 +3648,27 @@ Dhcpv4Srv::getNetmaskOption(const Subnet4Ptr& subnet) {
                   DHO_SUBNET_MASK, netmask));
 
     return (opt);
+}
+
+tuple<bool, uint32_t>
+Dhcpv4Srv::parkingLimitExceeded(string const& hook_label) {
+    // Get the parking limit. Parsing should ensure the value is present.
+    uint32_t parked_packet_limit(0);
+    ConstElementPtr const& ppl(
+        CfgMgr::instance().getCurrentCfg()->getConfiguredGlobal(CfgGlobals::PARKED_PACKET_LIMIT));
+    if (ppl) {
+        parked_packet_limit = ppl->intValue();
+    }
+
+    if (parked_packet_limit) {
+        ParkingLotPtr const& parking_lot(
+            ServerHooks::getServerHooks().getParkingLotPtr(hook_label));
+
+        if (parking_lot && parked_packet_limit <= parking_lot->size()) {
+            return make_tuple(true, parked_packet_limit);
+        }
+    }
+    return make_tuple(false, parked_packet_limit);
 }
 
 Pkt4Ptr

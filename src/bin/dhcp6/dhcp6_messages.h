@@ -8,6 +8,7 @@
 namespace isc {
 namespace dhcp {
 
+extern const isc::log::MessageID DHCP4_HOOK_SUBNET6_SELECT_PARKING_LOT_FULL;
 extern const isc::log::MessageID DHCP6_ACTIVATE_INTERFACE;
 extern const isc::log::MessageID DHCP6_ADD_GLOBAL_STATUS_CODE;
 extern const isc::log::MessageID DHCP6_ADD_STATUS_CODE_FOR_IA;

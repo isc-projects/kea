@@ -82,6 +82,7 @@
 using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::cryptolink;
+using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::dhcp_ddns;
 using namespace isc::hooks;
@@ -2022,6 +2023,18 @@ Dhcpv6Srv::selectSubnet(const Pkt6Ptr& question, bool& drop) {
         callout_handle->setArgument("subnet6collection",
                                     CfgMgr::instance().getCurrentCfg()->
                                     getCfgSubnets6()->getAll());
+
+        auto const tpl(parkingLimitExceeded("subnet6_select"));
+        bool const exceeded(get<0>(tpl));
+        if (exceeded) {
+            uint32_t const limit(get<1>(tpl));
+            // We can't park it so we're going to throw it on the floor.
+            LOG_DEBUG(packet6_logger, DBGLVL_PKT_HANDLING,
+                      DHCP4_HOOK_SUBNET6_SELECT_PARKING_LOT_FULL)
+                .arg(limit)
+                .arg(question->getLabel());
+            return (Subnet6Ptr());
+        }
 
         // We proactively park the packet.
         // Not MT compatible because the unparking callback can be called
@@ -4802,6 +4815,28 @@ Dhcpv6Srv::requestedInORO(const Pkt6Ptr& query, const uint16_t code) const {
 
     return (false);
 }
+
+tuple<bool, uint32_t>
+Dhcpv6Srv::parkingLimitExceeded(string const& hook_label) {
+    // Get the parking limit. Parsing should ensure the value is present.
+    uint32_t parked_packet_limit(0);
+    ConstElementPtr const& ppl(
+        CfgMgr::instance().getCurrentCfg()->getConfiguredGlobal(CfgGlobals::PARKED_PACKET_LIMIT));
+    if (ppl) {
+        parked_packet_limit = ppl->intValue();
+    }
+
+    if (parked_packet_limit) {
+        ParkingLotPtr const& parking_lot(
+            ServerHooks::getServerHooks().getParkingLotPtr(hook_label));
+
+        if (parking_lot && parked_packet_limit <= parking_lot->size()) {
+            return make_tuple(true, parked_packet_limit);
+        }
+    }
+    return make_tuple(false, parked_packet_limit);
+}
+
 
 void Dhcpv6Srv::discardPackets() {
     // Dump all of our current packets, anything that is mid-stream

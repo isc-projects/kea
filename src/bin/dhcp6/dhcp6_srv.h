@@ -1155,6 +1155,14 @@ private:
     /// @return true if option has been requested in the ORO.
     bool requestedInORO(const Pkt6Ptr& query, const uint16_t code) const;
 
+    /// @brief Check if the parking limit has been exceeded for given hook label.
+    ///
+    /// @brief hook_label Hook point name.
+    ///
+    /// @return tuple with boolean value concluding whether the limit has been
+    /// exceeded, and the integer limit as a second value.
+    static std::tuple<bool, uint32_t> parkingLimitExceeded(std::string const& hook_label);
+
 protected:
     /// UDP port number on which server listens.
     uint16_t server_port_;

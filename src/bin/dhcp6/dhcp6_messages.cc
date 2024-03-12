@@ -7,6 +7,7 @@
 namespace isc {
 namespace dhcp {
 
+extern const isc::log::MessageID DHCP4_HOOK_SUBNET6_SELECT_PARKING_LOT_FULL = "DHCP4_HOOK_SUBNET6_SELECT_PARKING_LOT_FULL";
 extern const isc::log::MessageID DHCP6_ACTIVATE_INTERFACE = "DHCP6_ACTIVATE_INTERFACE";
 extern const isc::log::MessageID DHCP6_ADD_GLOBAL_STATUS_CODE = "DHCP6_ADD_GLOBAL_STATUS_CODE";
 extern const isc::log::MessageID DHCP6_ADD_STATUS_CODE_FOR_IA = "DHCP6_ADD_STATUS_CODE_FOR_IA";
@@ -182,6 +183,7 @@ extern const isc::log::MessageID DHCP6_USING_SERVERID = "DHCP6_USING_SERVERID";
 namespace {
 
 const char* values[] = {
+    "DHCP4_HOOK_SUBNET6_SELECT_PARKING_LOT_FULL", "The parked-packet-limit %1, has been reached, dropping query: %2",
     "DHCP6_ACTIVATE_INTERFACE", "activating interface %1",
     "DHCP6_ADD_GLOBAL_STATUS_CODE", "%1: adding Status Code to DHCPv6 packet: %2",
     "DHCP6_ADD_STATUS_CODE_FOR_IA", "%1: adding Status Code to IA with iaid=%2: %3",

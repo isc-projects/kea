@@ -1181,7 +1181,6 @@ protected:
 
 private:
 
-    /// @public
     /// @brief Assign class using vendor-class-identifier option
     ///
     /// @note This is the first part of @ref classifyPacket
@@ -1189,12 +1188,19 @@ private:
     /// @param pkt packet to be classified
     void classifyByVendor(const Pkt4Ptr& pkt);
 
-    /// @private
     /// @brief Constructs netmask option based on subnet4
     /// @param subnet subnet for which the netmask will be calculated
     ///
     /// @return Option that contains netmask information
     static OptionPtr getNetmaskOption(const Subnet4Ptr& subnet);
+
+    /// @brief Check if the parking limit has been exceeded for given hook label.
+    ///
+    /// @brief hook_label Hook point name.
+    ///
+    /// @return tuple with boolean value concluding whether the limit has been
+    /// exceeded, and the integer limit as a second value.
+    static std::tuple<bool, uint32_t> parkingLimitExceeded(std::string const& hook_label);
 
 protected:
 
