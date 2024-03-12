@@ -69,7 +69,7 @@ void stringToCharStringData(const MasterToken::StringRegion& str_region,
 /// special characters in the process. For example, characters like
 /// double-quotes, semi-colon and backspace are prefixed with backspace
 /// character, and characters not in the printable range of [0x20, 0x7e]
-/// (inclusive) are converted to the \xxx 3-digit decimal
+/// (inclusive) are converted to the \\xxx 3-digit decimal
 /// representation.
 ///
 /// \param char_string The \c CharString to convert.

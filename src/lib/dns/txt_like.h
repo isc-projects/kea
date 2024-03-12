@@ -149,7 +149,7 @@ public:
     /// \brief Render the TXT-like data in the wire format to an
     /// AbstractMessageRenderer object.
     ///
-    /// \param buffer An output AbstractMessageRenderer to send the wire data
+    /// \param renderer An output AbstractMessageRenderer to send the wire data
     /// to.
     void
     toWire(AbstractMessageRenderer& renderer) const {
