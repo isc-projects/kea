@@ -184,13 +184,6 @@ CfgSubnets4::merge(CfgOptionDefPtr cfg_def, CfgSharedNetworks4Ptr networks,
 }
 
 ConstSubnet4Ptr
-CfgSubnets4::getBySubnetId(const SubnetID& subnet_id) const {
-    auto const& index = subnets_.get<SubnetSubnetIdIndexTag>();
-    auto subnet_it = index.find(subnet_id);
-    return ((subnet_it != index.cend()) ? (*subnet_it) : ConstSubnet4Ptr());
-}
-
-ConstSubnet4Ptr
 CfgSubnets4::getByPrefix(const std::string& subnet_text) const {
     auto const& index = subnets_.get<SubnetPrefixIndexTag>();
     auto subnet_it = index.find(subnet_text);
@@ -459,15 +452,10 @@ CfgSubnets4::selectSubnet(const std::string& iface,
 }
 
 Subnet4Ptr
-CfgSubnets4::getSubnet(const SubnetID id) const {
-    /// @todo: Once this code is migrated to multi-index container, use
-    /// an index rather than full scan.
-    for (auto const& subnet : subnets_) {
-        if (subnet->getID() == id) {
-            return (subnet);
-        }
-    }
-    return (Subnet4Ptr());
+CfgSubnets4::getSubnet(const SubnetID subnet_id) const {
+    auto const& index = subnets_.get<SubnetSubnetIdIndexTag>();
+    auto subnet_it = index.find(subnet_id);
+    return ((subnet_it != index.cend()) ? (*subnet_it) : Subnet4Ptr());
 }
 
 Subnet4Ptr

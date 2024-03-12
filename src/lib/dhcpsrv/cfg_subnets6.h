@@ -136,7 +136,9 @@ public:
     ///
     /// @return Pointer to the @c Subnet6 object or null pointer if such
     /// subnet doesn't exist.
-    ConstSubnet6Ptr getBySubnetId(const SubnetID& subnet_id) const;
+    ConstSubnet6Ptr getBySubnetId(const SubnetID& subnet_id) const {
+        return (getSubnet(subnet_id));
+    }
 
     /// @brief Returns const pointer to a subnet which matches the specified
     /// prefix in the canonical form.
@@ -203,11 +205,9 @@ public:
 
     /// @brief Returns subnet with specified subnet-id value
     ///
-    /// Warning: this method uses full scan. Its use is not recommended for
-    /// packet processing.
     /// Please use @ref getBySubnetId instead when possible.
     ///
-    /// @return Subnet (or NULL)
+    /// @return Subnet (or null)
     Subnet6Ptr getSubnet(const SubnetID id) const;
 
     /// @brief Selects the subnet using a specified address.
