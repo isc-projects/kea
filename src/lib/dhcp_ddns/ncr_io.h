@@ -53,6 +53,7 @@
 #include <exceptions/exceptions.h>
 
 #include <boost/scoped_ptr.hpp>
+#include <boost/enable_shared_from_this.hpp>
 
 #include <deque>
 #include <mutex>
@@ -179,7 +180,7 @@ public:
     /// Applications which will receive NameChangeRequests must provide a
     /// derivation of this class to the listener constructor in order to
     /// receive NameChangeRequests.
-    class RequestReceiveHandler {
+    class RequestReceiveHandler : public boost::enable_shared_from_this<RequestReceiveHandler> {
     public:
 
         /// @brief Function operator implementing a NCR receive callback.
@@ -201,11 +202,14 @@ public:
         }
     };
 
+    /// @brief Defines a smart pointer to an instance of a request receive handler.
+    typedef boost::shared_ptr<RequestReceiveHandler> RequestReceiveHandlerPtr;
+
     /// @brief Constructor
     ///
     /// @param recv_handler is a pointer the application layer handler to be
     /// invoked each time a NCR is received or a receive error occurs.
-    NameChangeListener(RequestReceiveHandler& recv_handler);
+    NameChangeListener(RequestReceiveHandlerPtr recv_handler);
 
     /// @brief Destructor
     virtual ~NameChangeListener() {
@@ -346,7 +350,7 @@ private:
     bool io_pending_;
 
     /// @brief Application level NCR receive completion handler.
-    RequestReceiveHandler& recv_handler_;
+    RequestReceiveHandlerPtr recv_handler_;
 };
 
 /// @brief Defines a smart pointer to an instance of a listener.
@@ -483,7 +487,7 @@ public:
     /// Applications which will send NameChangeRequests must provide a
     /// derivation of this class to the sender constructor in order to
     /// receive send outcome notifications.
-    class RequestSendHandler {
+    class RequestSendHandler : public boost::enable_shared_from_this<RequestSendHandler> {
     public:
 
         /// @brief Function operator implementing a NCR send callback.
@@ -504,6 +508,9 @@ public:
         }
     };
 
+    /// @brief Defines a smart pointer to an instance of a request send handler.
+    typedef boost::shared_ptr<RequestSendHandler> RequestSendHandlerPtr;
+
     /// @brief Constructor
     ///
     /// @param send_handler is a pointer the application layer handler to be
@@ -511,7 +518,7 @@ public:
     /// @param send_queue_max is the maximum number of entries allowed in the
     /// send queue.  Once the maximum number is reached, all calls to
     /// sendRequest will fail with an exception.
-    NameChangeSender(RequestSendHandler& send_handler,
+    NameChangeSender(RequestSendHandlerPtr send_handler,
                      size_t send_queue_max = MAX_QUEUE_DEFAULT);
 
     /// @brief Destructor
@@ -831,7 +838,7 @@ private:
     bool sending_;
 
     /// @brief A pointer to registered send completion handler.
-    RequestSendHandler& send_handler_;
+    RequestSendHandlerPtr send_handler_;
 
     /// @brief Maximum number of entries permitted in the send queue.
     size_t send_queue_max_;

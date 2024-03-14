@@ -68,7 +68,7 @@ D2ClientMgr::setD2ClientConfig(D2ClientConfigPtr& new_config) {
                                                 new_config->getServerIp(),
                                                 new_config->getServerPort(),
                                                 new_config->getNcrFormat(),
-                                                *this,
+                                                shared_from_this(),
                                                 new_config->getMaxQueueSize()));
                 break;
                 }

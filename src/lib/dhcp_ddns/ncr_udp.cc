@@ -65,7 +65,7 @@ UDPCallback::putData(const uint8_t* src, size_t len) {
 NameChangeUDPListener::
 NameChangeUDPListener(const isc::asiolink::IOAddress& ip_address,
                       const uint32_t port, const NameChangeFormat format,
-                      RequestReceiveHandler& ncr_recv_handler,
+                      RequestReceiveHandlerPtr ncr_recv_handler,
                       const bool reuse_address)
     : NameChangeListener(ncr_recv_handler), ip_address_(ip_address),
       port_(port), format_(format), reuse_address_(reuse_address) {
@@ -208,7 +208,7 @@ NameChangeUDPSender(const isc::asiolink::IOAddress& ip_address,
                     const uint32_t port,
                     const isc::asiolink::IOAddress& server_address,
                     const uint32_t server_port, const NameChangeFormat format,
-                    RequestSendHandler& ncr_send_handler,
+                    RequestSendHandlerPtr ncr_send_handler,
                     const size_t send_que_max, const bool reuse_address)
     : NameChangeSender(ncr_send_handler, send_que_max),
       ip_address_(ip_address), port_(port), server_address_(server_address),

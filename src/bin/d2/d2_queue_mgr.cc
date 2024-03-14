@@ -108,9 +108,8 @@ D2QueueMgr::initUDPListener(const isc::asiolink::IOAddress& ip_address,
 
     // Instantiate a UDP listener and set state to INITTED.
     // Note UDP listener constructor does not throw.
-    listener_.reset(new dhcp_ddns::
-                    NameChangeUDPListener(ip_address, port, format, *this,
-                                          reuse_address));
+    listener_.reset(new dhcp_ddns::NameChangeUDPListener(ip_address, port, format,
+                                                         shared_from_this(), reuse_address));
     mgr_state_ = INITTED;
 }
 

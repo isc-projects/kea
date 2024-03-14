@@ -1327,10 +1327,6 @@ Connection::closeInternal() {
         tls_socket_->close();
     }
 
-    auto f = [](IntervalTimerPtr, std::shared_ptr<TCPSocket<SocketCallback>>,
-                std::shared_ptr<TLSSocket<SocketCallback>>) {};
-    io_service_->post(std::bind(f, timer_, tcp_socket_, tls_socket_));
-
     resetState();
 }
 

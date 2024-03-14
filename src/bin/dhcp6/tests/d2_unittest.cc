@@ -25,9 +25,8 @@ namespace test {
 
 /// @todo
 void
-D2Dhcpv6Srv::d2ClientErrorHandler(const
-                                dhcp_ddns::NameChangeSender::Result result,
-                                dhcp_ddns::NameChangeRequestPtr& ncr) {
+D2Dhcpv6Srv::d2ClientErrorHandler(const dhcp_ddns::NameChangeSender::Result result,
+                                  dhcp_ddns::NameChangeRequestPtr& ncr) {
     ++error_count_;
     // call base class error handler
     Dhcpv6Srv::d2ClientErrorHandler(result, ncr);

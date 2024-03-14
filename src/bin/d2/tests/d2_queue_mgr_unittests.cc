@@ -201,29 +201,44 @@ bool checkSendVsReceived(NameChangeRequestPtr sent_ncr,
         (*sent_ncr == *received_ncr));
 }
 
+class QueueMgrUDPTestRequestHandler : public NameChangeSender::RequestSendHandler {
+public:
+    /// @brief Constructor
+    QueueMgrUDPTestRequestHandler() : send_result_(NameChangeSender::SUCCESS) {
+    }
+
+    /// @brief Implements the send completion handler.
+    virtual void operator ()(const NameChangeSender::Result result,
+                             NameChangeRequestPtr& ncr) {
+        // save the result and the NCR sent.
+        send_result_ = result;
+        sent_ncrs_.push_back(ncr);
+    }
+
+    NameChangeSender::Result send_result_;
+    std::vector<NameChangeRequestPtr> sent_ncrs_;
+};
+
 /// @brief Text fixture that allows testing a listener and sender together
 /// It derives from both the receive and send handler classes and contains
 /// and instance of UDP listener and UDP sender.
-class QueueMgrUDPTest : public virtual ::testing::Test, public D2StatTest,
-                        NameChangeSender::RequestSendHandler {
+class QueueMgrUDPTest : public virtual ::testing::Test, public D2StatTest {
 public:
     asiolink::IOServicePtr io_service_;
     NameChangeSenderPtr sender_;
     isc::asiolink::IntervalTimer test_timer_;
     D2QueueMgrPtr queue_mgr_;
-
-    NameChangeSender::Result send_result_;
-    std::vector<NameChangeRequestPtr> sent_ncrs_;
+    boost::shared_ptr<QueueMgrUDPTestRequestHandler> handle_;
     std::vector<NameChangeRequestPtr> received_ncrs_;
 
     QueueMgrUDPTest() : io_service_(new isc::asiolink::IOService()),
                         test_timer_(io_service_),
-                        send_result_(NameChangeSender::SUCCESS) {
+                        handle_(new QueueMgrUDPTestRequestHandler()) {
         isc::asiolink::IOAddress addr(TEST_ADDRESS);
         // Create our sender instance. Note that reuse_address is true.
         sender_.reset(new NameChangeUDPSender(addr, SENDER_PORT,
                                               addr, LISTENER_PORT,
-                                              FMT_JSON, *this, 100, true));
+                                              FMT_JSON, handle_, 100, true));
 
         // Set the test timeout to break any running tasks if they hang.
         test_timer_.setup(std::bind(&QueueMgrUDPTest::testTimeoutHandler,
@@ -241,16 +256,8 @@ public:
     }
 
     void reset_results() {
-        sent_ncrs_.clear();
+        handle_->sent_ncrs_.clear();
         received_ncrs_.clear();
-    }
-
-    /// @brief Implements the send completion handler.
-    virtual void operator ()(const NameChangeSender::Result result,
-                             NameChangeRequestPtr& ncr) {
-        // save the result and the NCR sent.
-        send_result_ = result;
-        sent_ncrs_.push_back(ncr);
     }
 
     /// @brief Handler invoked when test timeout is hit.
@@ -287,13 +294,13 @@ TEST_F (QueueMgrUDPTest, stateModel) {
     // Verify that initializing the listener moves us to INITTED state.
     isc::asiolink::IOAddress addr(TEST_ADDRESS);
     EXPECT_NO_THROW(queue_mgr_->initUDPListener(addr, LISTENER_PORT,
-                                              FMT_JSON, true));
+                                                FMT_JSON, true));
     EXPECT_EQ(D2QueueMgr::INITTED, queue_mgr_->getMgrState());
 
     // Verify that attempting to initialize the listener, from INITTED
     // is not allowed.
     EXPECT_THROW(queue_mgr_->initUDPListener(addr, LISTENER_PORT,
-                                              FMT_JSON, true),
+                                             FMT_JSON, true),
                  D2QueueMgrError);
 
     // Verify that we can enter the RUNNING from INITTED by starting the
@@ -360,7 +367,7 @@ TEST_F (QueueMgrUDPTest, liveFeed) {
 
     isc::asiolink::IOAddress addr(TEST_ADDRESS);
     ASSERT_NO_THROW(queue_mgr_->initUDPListener(addr, LISTENER_PORT,
-                                              FMT_JSON, true));
+                                                FMT_JSON, true));
     ASSERT_EQ(D2QueueMgr::INITTED, queue_mgr_->getMgrState());
 
     ASSERT_NO_THROW(queue_mgr_->startListening());

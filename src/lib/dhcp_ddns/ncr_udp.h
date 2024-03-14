@@ -109,6 +109,7 @@
 #include <util/watch_socket.h>
 
 #include <boost/shared_array.hpp>
+#include <boost/enable_shared_from_this.hpp>
 
 /// responsibility of the completion handler to perform the steps necessary
 /// to interpret the raw data provided by the service outcome.   The
@@ -126,8 +127,7 @@ public:
 
 class UDPCallback;
 /// @brief Defines a function pointer for NameChangeRequest completion handlers.
-typedef std::function<void(const bool, const UDPCallback*)>
-          UDPCompletionHandler;
+typedef std::function<void(const bool, const UDPCallback*)> UDPCompletionHandler;
 
 /// @brief Defines a dynamically allocated shared array.
 typedef boost::shared_array<uint8_t> RawBufferPtr;
@@ -162,8 +162,7 @@ public:
         /// send.
         /// @param buf_size is the capacity of the buffer
         /// @param data_source storage for UDP endpoint which supplied the data
-        Data(RawBufferPtr& buffer, const size_t buf_size,
-             UDPEndpointPtr& data_source)
+        Data(RawBufferPtr& buffer, const size_t buf_size, UDPEndpointPtr& data_source)
             : buffer_(buffer), buf_size_(buf_size), data_source_(data_source),
               put_len_(0), error_code_(), bytes_transferred_(0) {
         };
@@ -205,9 +204,9 @@ public:
     ///
     /// @throw NcrUDPError if either the handler or buffer pointers
     /// are invalid.
-    UDPCallback (RawBufferPtr& buffer, const size_t buf_size,
-                 UDPEndpointPtr& data_source,
-                 const UDPCompletionHandler& handler);
+    UDPCallback(RawBufferPtr& buffer, const size_t buf_size,
+                UDPEndpointPtr& data_source,
+                const UDPCompletionHandler& handler);
 
     /// @brief Operator that will be invoked by the asiolink layer.
     ///
@@ -318,8 +317,7 @@ typedef isc::asiolink::UDPSocket<UDPCallback> NameChangeUDPSocket;
 class NameChangeUDPListener : public NameChangeListener {
 public:
     /// @brief Defines the maximum size packet that can be received.
-    static const size_t RECV_BUF_MAX = isc::asiolink::
-                                       UDPSocket<UDPCallback>::MIN_SIZE;
+    static const size_t RECV_BUF_MAX = isc::asiolink::UDPSocket<UDPCallback>::MIN_SIZE;
 
     /// @brief Constructor
     ///
@@ -336,7 +334,7 @@ public:
     NameChangeUDPListener(const isc::asiolink::IOAddress& ip_address,
                           const uint32_t port,
                           const NameChangeFormat format,
-                          RequestReceiveHandler& ncr_recv_handler,
+                          RequestReceiveHandlerPtr ncr_recv_handler,
                           const bool reuse_address = false);
 
     /// @brief Destructor.
@@ -465,7 +463,7 @@ public:
     NameChangeUDPSender(const isc::asiolink::IOAddress& ip_address,
         const uint32_t port, const isc::asiolink::IOAddress& server_address,
         const uint32_t server_port, const NameChangeFormat format,
-        RequestSendHandler& ncr_send_handler,
+        RequestSendHandlerPtr ncr_send_handler,
         const size_t send_que_max = NameChangeSender::MAX_QUEUE_DEFAULT,
         const bool reuse_address = false);
 

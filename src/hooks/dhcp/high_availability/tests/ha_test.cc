@@ -82,13 +82,11 @@ HATest::runIOService(long ms) {
     io_service_->restart();
     timer_.reset(new IntervalTimer(io_service_));
     timer_->setup(std::bind(&IOService::stop, io_service_), ms,
-                 IntervalTimer::ONE_SHOT);
+                  IntervalTimer::ONE_SHOT);
 
     io_service_->run();
 
     timer_->cancel();
-    auto f = [](IntervalTimerPtr) {};
-    io_service_->post(std::bind(f, timer_));
 }
 
 void
@@ -104,8 +102,6 @@ HATest::runIOService(long ms, std::function<bool()> stop_condition) {
     }
 
     timer_->cancel();
-    auto f = [](IntervalTimerPtr) {};
-    io_service_->post(std::bind(f, timer_));
 }
 
 boost::shared_ptr<std::thread>

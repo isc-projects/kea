@@ -51,7 +51,7 @@ std::string ncrProtocolToString(NameChangeProtocol protocol) {
 
 //************************** NameChangeListener ***************************
 
-NameChangeListener::NameChangeListener(RequestReceiveHandler& recv_handler)
+NameChangeListener::NameChangeListener(RequestReceiveHandlerPtr recv_handler)
     : listening_(false), io_pending_(false), recv_handler_(recv_handler) {
 };
 
@@ -115,7 +115,7 @@ NameChangeListener::invokeRecvHandler(const Result result,
     // report it.
     try {
         io_pending_ = false;
-        recv_handler_(result, ncr);
+        (*recv_handler_)(result, ncr);
     } catch (const std::exception& ex) {
         LOG_ERROR(dhcp_ddns_logger, DHCP_DDNS_UNCAUGHT_NCR_RECV_HANDLER_ERROR)
                   .arg(ex.what());
@@ -144,7 +144,7 @@ NameChangeListener::invokeRecvHandler(const Result result,
             NameChangeRequestPtr empty;
             try {
                 io_pending_ = false;
-                recv_handler_(ERROR, empty);
+                (*recv_handler_)(ERROR, empty);
             } catch (const std::exception& ex) {
                 LOG_ERROR(dhcp_ddns_logger,
                           DHCP_DDNS_UNCAUGHT_NCR_RECV_HANDLER_ERROR)
@@ -156,7 +156,7 @@ NameChangeListener::invokeRecvHandler(const Result result,
 
 //************************* NameChangeSender ******************************
 
-NameChangeSender::NameChangeSender(RequestSendHandler& send_handler,
+NameChangeSender::NameChangeSender(RequestSendHandlerPtr send_handler,
                                    size_t send_queue_max)
     : sending_(false), send_handler_(send_handler),
       send_queue_max_(send_queue_max), mutex_(new mutex()) {
@@ -314,7 +314,7 @@ NameChangeSender::invokeSendHandlerInternal(const NameChangeSender::Result resul
     // not supposed to throw, but in the event it does we will at least
     // report it.
     try {
-        send_handler_(result, ncr_to_send_);
+        (*send_handler_)(result, ncr_to_send_);
     } catch (const std::exception& ex) {
         LOG_ERROR(dhcp_ddns_logger, DHCP_DDNS_UNCAUGHT_NCR_SEND_HANDLER_ERROR)
                   .arg(ex.what());
@@ -343,7 +343,7 @@ NameChangeSender::invokeSendHandlerInternal(const NameChangeSender::Result resul
         // not supposed to throw, but in the event it does we will at least
         // report it.
         try {
-            send_handler_(ERROR, ncr_to_send_);
+            (*send_handler_)(ERROR, ncr_to_send_);
         } catch (const std::exception& ex) {
             LOG_ERROR(dhcp_ddns_logger,
                       DHCP_DDNS_UNCAUGHT_NCR_SEND_HANDLER_ERROR).arg(ex.what());

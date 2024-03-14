@@ -318,7 +318,7 @@ private:
     util::Optional<std::string> datadir_;
 
     /// @brief Manages the DHCP-DDNS client and its configuration.
-    D2ClientMgr d2_client_mgr_;
+    D2ClientMgrPtr d2_client_mgr_;
 
     /// @brief Server configuration
     ///

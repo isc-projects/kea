@@ -36,8 +36,7 @@ public:
     }
 
     /// @brief Override the error handler.
-    virtual void d2ClientErrorHandler(const dhcp_ddns::NameChangeSender::
-                                      Result result,
+    virtual void d2ClientErrorHandler(const dhcp_ddns::NameChangeSender::Result result,
                                       dhcp_ddns::NameChangeRequestPtr& ncr);
 };
 

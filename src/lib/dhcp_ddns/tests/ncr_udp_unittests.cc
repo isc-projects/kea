@@ -83,6 +83,9 @@ public:
     }
 };
 
+/// @brief Defines a smart pointer to an instance of a listener handler.
+typedef boost::shared_ptr<SimpleListenHandler> SimpleListenHandlerPtr;
+
 /// @brief Tests the NameChangeUDPListener constructors.
 /// This test verifies that:
 /// 1. Given valid parameters, the listener constructor works
@@ -90,7 +93,7 @@ TEST(NameChangeUDPListenerBasicTest, constructionTests) {
     // Verify the default constructor works.
     IOAddress ip_address(TEST_ADDRESS);
     uint32_t port = LISTENER_PORT;
-    SimpleListenHandler ncr_handler;
+    SimpleListenHandlerPtr ncr_handler(new SimpleListenHandler());
     // Verify that valid constructor works.
     EXPECT_NO_THROW(NameChangeUDPListener(ip_address, port, FMT_JSON,
                                           ncr_handler));
@@ -107,7 +110,7 @@ TEST(NameChangeUDPListenerBasicTest, basicListenTests) {
     IOAddress ip_address(TEST_ADDRESS);
     uint32_t port = LISTENER_PORT;
     IOServicePtr io_service(new IOService());
-    SimpleListenHandler ncr_handler;
+    SimpleListenHandlerPtr ncr_handler(new SimpleListenHandler());
 
     NameChangeListenerPtr listener;
     ASSERT_NO_THROW(listener.reset(
@@ -150,14 +153,34 @@ bool checkSendVsReceived(NameChangeRequestPtr sent_ncr,
     return ((sent_ncr && received_ncr) && (*sent_ncr == *received_ncr));
 }
 
+class NameChangeUDPListenerTestHandler : public virtual NameChangeListener::RequestReceiveHandler {
+public:
+    NameChangeListener::Result result_;
+    NameChangeRequestPtr received_ncr_;
+
+    /// @brief Constructor
+    NameChangeUDPListenerTestHandler() : result_(NameChangeListener::SUCCESS) {
+    }
+
+    /// @brief RequestReceiveHandler operator implementation for receiving NCRs.
+    ///
+    /// The fixture acts as the "application" layer.  It derives from
+    /// RequestReceiveHandler and as such implements operator() in order to
+    /// receive NCRs.
+    virtual void operator ()(const NameChangeListener::Result result,
+                             NameChangeRequestPtr& ncr) {
+        // save the result and the NCR we received
+        result_ = result;
+        received_ncr_ = ncr;
+    }
+};
+
 /// @brief Text fixture for testing NameChangeUDPListener
-class NameChangeUDPListenerTest : public virtual ::testing::Test,
-                                  NameChangeListener::RequestReceiveHandler {
+class NameChangeUDPListenerTest : public virtual ::testing::Test {
 public:
     IOServicePtr io_service_;
-    NameChangeListener::Result result_;
+    boost::shared_ptr<NameChangeUDPListenerTestHandler> handle_;
     NameChangeRequestPtr sent_ncr_;
-    NameChangeRequestPtr received_ncr_;
     NameChangeListenerPtr listener_;
     IntervalTimer test_timer_;
 
@@ -166,12 +189,11 @@ public:
     // Instantiates the listener member and the test timer. The timer is used
     // to ensure a test doesn't go awry and hang forever.
     NameChangeUDPListenerTest()
-        : io_service_(new IOService()), result_(NameChangeListener::SUCCESS),
+        : io_service_(new IOService()), handle_(new NameChangeUDPListenerTestHandler()),
           test_timer_(io_service_) {
         IOAddress addr(TEST_ADDRESS);
         listener_.reset(new NameChangeUDPListener(addr, LISTENER_PORT,
-                                              FMT_JSON, *this, true));
-
+                                                  FMT_JSON, handle_, true));
         // Set the test timeout to break any running tasks if they hang.
         test_timer_.setup(std::bind(&NameChangeUDPListenerTest::
                                     testTimeoutHandler, this),
@@ -186,7 +208,6 @@ public:
         } catch (...) {
         }
     }
-
 
     /// @brief Converts JSON string into an NCR and sends it to the listener.
     ///
@@ -215,17 +236,7 @@ public:
                            ncr_buffer.getLength()), listener_endpoint);
     }
 
-    /// @brief RequestReceiveHandler operator implementation for receiving NCRs.
-    ///
-    /// The fixture acts as the "application" layer.  It derives from
-    /// RequestReceiveHandler and as such implements operator() in order to
-    /// receive NCRs.
-    virtual void operator ()(const NameChangeListener::Result result,
-                             NameChangeRequestPtr& ncr) {
-        // save the result and the NCR we received
-        result_ = result;
-        received_ncr_ = ncr;
-    }
+
 
     /// @brief Handler invoked when test timeout is hit
     ///
@@ -258,12 +269,12 @@ TEST_F(NameChangeUDPListenerTest, basicReceiveTests) {
         EXPECT_NO_THROW(io_service_->runOne());
 
         // Verify the "application" status value for a successful complete.
-        EXPECT_EQ(NameChangeListener::SUCCESS, result_);
+        EXPECT_EQ(NameChangeListener::SUCCESS, handle_->result_);
 
         // Verify the received request matches the sent request.
-        EXPECT_TRUE(checkSendVsReceived(sent_ncr_, received_ncr_))
+        EXPECT_TRUE(checkSendVsReceived(sent_ncr_, handle_->received_ncr_))
             << "sent_ncr_" << (sent_ncr_ ? sent_ncr_->toText() : "<null>")
-            << "recv_ncr_ " << (received_ncr_ ? received_ncr_->toText() : "<null>");
+            << "recv_ncr_ " << (handle_->received_ncr_ ? handle_->received_ncr_->toText() : "<null>");
     }
 
     // Verify we can gracefully stop listening.
@@ -294,6 +305,9 @@ public:
     int error_count_;
 };
 
+/// @brief Defines a smart pointer to an instance of a send handler.
+typedef boost::shared_ptr<SimpleSendHandler> SimpleSendHandlerPtr;
+
 /// @brief Text fixture for testing NameChangeUDPListener
 class NameChangeUDPSenderBasicTest : public virtual ::testing::Test {
 public:
@@ -317,7 +331,7 @@ public:
 TEST_F(NameChangeUDPSenderBasicTest, constructionTests) {
     IOAddress ip_address(TEST_ADDRESS);
     uint32_t port = SENDER_PORT;
-    SimpleSendHandler ncr_handler;
+    SimpleSendHandlerPtr ncr_handler(new SimpleSendHandler());
 
     // Verify that constructing with an queue size of zero is not allowed.
     EXPECT_THROW(NameChangeUDPSender(ip_address, port,
@@ -353,7 +367,7 @@ TEST_F(NameChangeUDPSenderBasicTest, constructionTestsMultiThreading) {
 
     IOAddress ip_address(TEST_ADDRESS);
     uint32_t port = SENDER_PORT;
-    SimpleSendHandler ncr_handler;
+    SimpleSendHandlerPtr ncr_handler(new SimpleSendHandler());
 
     // Verify that constructing with an queue size of zero is not allowed.
     EXPECT_THROW(NameChangeUDPSender(ip_address, port,
@@ -381,7 +395,7 @@ TEST_F(NameChangeUDPSenderBasicTest, constructionTestsMultiThreading) {
 TEST_F(NameChangeUDPSenderBasicTest, basicSendTests) {
     IOAddress ip_address(TEST_ADDRESS);
     IOServicePtr io_service(new IOService());
-    SimpleSendHandler ncr_handler;
+    SimpleSendHandlerPtr ncr_handler(new SimpleSendHandler());
 
     // Tests are based on a list of messages, get the count now.
     int num_msgs = sizeof(valid_msgs)/sizeof(char*);
@@ -509,7 +523,7 @@ TEST_F(NameChangeUDPSenderBasicTest, basicSendTestsMultiThreading) {
 
     IOAddress ip_address(TEST_ADDRESS);
     IOServicePtr io_service(new IOService());
-    SimpleSendHandler ncr_handler;
+    SimpleSendHandlerPtr ncr_handler(new SimpleSendHandler());
 
     // Tests are based on a list of messages, get the count now.
     int num_msgs = sizeof(valid_msgs)/sizeof(char*);
@@ -635,7 +649,7 @@ TEST_F(NameChangeUDPSenderBasicTest, basicSendTestsMultiThreading) {
 TEST_F(NameChangeUDPSenderBasicTest, autoStart) {
     IOAddress ip_address(TEST_ADDRESS);
     IOServicePtr io_service(new IOService());
-    SimpleSendHandler ncr_handler;
+    SimpleSendHandlerPtr ncr_handler(new SimpleSendHandler());
 
     // Tests are based on a list of messages, get the count now.
     int num_msgs = sizeof(valid_msgs)/sizeof(char*);
@@ -690,7 +704,7 @@ TEST_F(NameChangeUDPSenderBasicTest, autoStartMultiThreading) {
 
     IOAddress ip_address(TEST_ADDRESS);
     IOServicePtr io_service(new IOService());
-    SimpleSendHandler ncr_handler;
+    SimpleSendHandlerPtr ncr_handler(new SimpleSendHandler());
 
     // Tests are based on a list of messages, get the count now.
     int num_msgs = sizeof(valid_msgs)/sizeof(char*);
@@ -742,7 +756,7 @@ TEST_F(NameChangeUDPSenderBasicTest, anyAddressSend) {
     IOAddress ip_address(TEST_ADDRESS);
     IOAddress any_address("0.0.0.0");
     IOServicePtr io_service(new IOService());
-    SimpleSendHandler ncr_handler;
+    SimpleSendHandlerPtr ncr_handler(new SimpleSendHandler());
 
     // Tests are based on a list of messages, get the count now.
     int num_msgs = sizeof(valid_msgs)/sizeof(char*);
@@ -780,7 +794,7 @@ TEST_F(NameChangeUDPSenderBasicTest, anyAddressSendMultiThreading) {
     IOAddress ip_address(TEST_ADDRESS);
     IOAddress any_address("0.0.0.0");
     IOServicePtr io_service(new IOService());
-    SimpleSendHandler ncr_handler;
+    SimpleSendHandlerPtr ncr_handler(new SimpleSendHandler());
 
     // Tests are based on a list of messages, get the count now.
     int num_msgs = sizeof(valid_msgs)/sizeof(char*);
@@ -815,7 +829,7 @@ TEST_F(NameChangeUDPSenderBasicTest, assumeQueue) {
     IOAddress ip_address(TEST_ADDRESS);
     uint32_t port = SENDER_PORT;
     IOServicePtr io_service(new IOService());
-    SimpleSendHandler ncr_handler;
+    SimpleSendHandlerPtr ncr_handler(new SimpleSendHandler());
     NameChangeRequestPtr ncr;
 
     // Tests are based on a list of messages, get the count now.
@@ -887,7 +901,7 @@ TEST_F(NameChangeUDPSenderBasicTest, assumeQueueMultiThreading) {
     IOAddress ip_address(TEST_ADDRESS);
     uint32_t port = SENDER_PORT;
     IOServicePtr io_service(new IOService());
-    SimpleSendHandler ncr_handler;
+    SimpleSendHandlerPtr ncr_handler(new SimpleSendHandler());
     NameChangeRequestPtr ncr;
 
     // Tests are based on a list of messages, get the count now.
@@ -951,40 +965,71 @@ TEST_F(NameChangeUDPSenderBasicTest, assumeQueueMultiThreading) {
     ASSERT_THROW(sender2.assumeQueue(sender1), NcrSenderError);
 }
 
+class NameChangeUDPTestReceiveHandler : public virtual NameChangeListener::RequestReceiveHandler {
+public:
+    /// @brief Constructor
+    NameChangeUDPTestReceiveHandler() : recv_result_(NameChangeListener::SUCCESS) {
+    }
+
+    /// @brief Implements the receive completion handler.
+    virtual void operator ()(const NameChangeListener::Result result,
+                             NameChangeRequestPtr& ncr) {
+        // save the result and the NCR received.
+        recv_result_ = result;
+        received_ncrs_.push_back(ncr);
+    }
+
+    NameChangeListener::Result recv_result_;
+    std::vector<NameChangeRequestPtr> received_ncrs_;
+};
+
+class NameChangeUDPTestSendHandler : public virtual NameChangeSender::RequestSendHandler {
+    public:
+    /// @brief Constructor
+    NameChangeUDPTestSendHandler() : send_result_(NameChangeSender::SUCCESS) {
+    }
+
+    /// @brief Implements the send completion handler.
+    virtual void operator ()(const NameChangeSender::Result result,
+                             NameChangeRequestPtr& ncr) {
+        // save the result and the NCR sent.
+        send_result_ = result;
+        sent_ncrs_.push_back(ncr);
+    }
+
+    NameChangeSender::Result send_result_;
+    std::vector<NameChangeRequestPtr> sent_ncrs_;
+};
+
 /// @brief Text fixture that allows testing a listener and sender together
 /// It derives from both the receive and send handler classes and contains
 /// and instance of UDP listener and UDP sender.
-class NameChangeUDPTest : public virtual ::testing::Test,
-                          NameChangeListener::RequestReceiveHandler,
-                          NameChangeSender::RequestSendHandler {
+class NameChangeUDPTest : public virtual ::testing::Test {
 public:
     IOServicePtr io_service_;
-    NameChangeListener::Result recv_result_;
-    NameChangeSender::Result send_result_;
+    boost::shared_ptr<NameChangeUDPTestReceiveHandler> r_handle_;
+    boost::shared_ptr<NameChangeUDPTestSendHandler> s_handle_;
     NameChangeListenerPtr listener_;
-    NameChangeSenderPtr   sender_;
+    NameChangeSenderPtr sender_;
     IntervalTimer test_timer_;
 
-    std::vector<NameChangeRequestPtr> sent_ncrs_;
-    std::vector<NameChangeRequestPtr> received_ncrs_;
-
     NameChangeUDPTest()
-        : io_service_(new IOService()), recv_result_(NameChangeListener::SUCCESS),
-          send_result_(NameChangeSender::SUCCESS), test_timer_(io_service_) {
+        : io_service_(new IOService()),
+          r_handle_(new NameChangeUDPTestReceiveHandler()),
+          s_handle_(new NameChangeUDPTestSendHandler()),
+          test_timer_(io_service_) {
         IOAddress addr(TEST_ADDRESS);
         // Create our listener instance. Note that reuse_address is true.
         listener_.reset(
-            new NameChangeUDPListener(addr, LISTENER_PORT, FMT_JSON,
-                                      *this, true));
+            new NameChangeUDPListener(addr, LISTENER_PORT, FMT_JSON, r_handle_, true));
 
         // Create our sender instance. Note that reuse_address is true.
          sender_.reset(
              new NameChangeUDPSender(addr, SENDER_PORT, addr, LISTENER_PORT,
-                                     FMT_JSON, *this, 100, true));
+                                     FMT_JSON, s_handle_, 100, true));
 
         // Set the test timeout to break any running tasks if they hang.
-        test_timer_.setup(std::bind(&NameChangeUDPTest::testTimeoutHandler,
-                                    this),
+        test_timer_.setup(std::bind(&NameChangeUDPTest::testTimeoutHandler, this),
                           TEST_TIMEOUT);
         // Disable multi-threading
         MultiThreadingMgr::instance().setMode(false);
@@ -1001,25 +1046,13 @@ public:
         MultiThreadingMgr::instance().setMode(false);
     }
 
+    void SetUp() {
+
+    }
+
     void reset_results() {
-        sent_ncrs_.clear();
-        received_ncrs_.clear();
-    }
-
-    /// @brief Implements the receive completion handler.
-    virtual void operator ()(const NameChangeListener::Result result,
-                             NameChangeRequestPtr& ncr) {
-        // save the result and the NCR received.
-        recv_result_ = result;
-        received_ncrs_.push_back(ncr);
-    }
-
-    /// @brief Implements the send completion handler.
-    virtual void operator ()(const NameChangeSender::Result result,
-                             NameChangeRequestPtr& ncr) {
-        // save the result and the NCR sent.
-        send_result_ = result;
-        sent_ncrs_.push_back(ncr);
+        s_handle_->sent_ncrs_.clear();
+        r_handle_->received_ncrs_.clear();
     }
 
     /// @brief Handler invoked when test timeout is hit
@@ -1104,7 +1137,7 @@ TEST_F(NameChangeUDPTest, roundTripTest) {
     }
 
     // Execute callbacks until we have sent and received all of messages.
-    while (sender_->getQueueSize() > 0 || (received_ncrs_.size() < num_msgs)) {
+    while (sender_->getQueueSize() > 0 || (r_handle_->received_ncrs_.size() < num_msgs)) {
         EXPECT_NO_THROW(io_service_->runOne());
     }
 
@@ -1112,11 +1145,11 @@ TEST_F(NameChangeUDPTest, roundTripTest) {
     EXPECT_EQ(0, sender_->getQueueSize());
 
     // We should have the same number of sends and receives as we do messages.
-    ASSERT_EQ(num_msgs, sent_ncrs_.size());
-    ASSERT_EQ(num_msgs, received_ncrs_.size());
+    ASSERT_EQ(num_msgs, s_handle_->sent_ncrs_.size());
+    ASSERT_EQ(num_msgs, r_handle_->received_ncrs_.size());
 
     // Check if the payload was received, ignoring the order if necessary.
-    checkUnordered(num_msgs, sent_ncrs_, received_ncrs_);
+    checkUnordered(num_msgs, s_handle_->sent_ncrs_, r_handle_->received_ncrs_);
 
     // Verify that we can gracefully stop listening.
     EXPECT_NO_THROW(listener_->stopListening());
@@ -1158,7 +1191,7 @@ TEST_F(NameChangeUDPTest, roundTripTestMultiThreading) {
     }
 
     // Execute callbacks until we have sent and received all of messages.
-    while (sender_->getQueueSize() > 0 || (received_ncrs_.size() < num_msgs)) {
+    while (sender_->getQueueSize() > 0 || (r_handle_->received_ncrs_.size() < num_msgs)) {
         EXPECT_NO_THROW(io_service_->runOne());
     }
 
@@ -1166,12 +1199,12 @@ TEST_F(NameChangeUDPTest, roundTripTestMultiThreading) {
     EXPECT_EQ(0, sender_->getQueueSize());
 
     // We should have the same number of sends and receives as we do messages.
-    ASSERT_EQ(num_msgs, sent_ncrs_.size());
-    ASSERT_EQ(num_msgs, received_ncrs_.size());
+    ASSERT_EQ(num_msgs, s_handle_->sent_ncrs_.size());
+    ASSERT_EQ(num_msgs, r_handle_->received_ncrs_.size());
 
     // Verify that what we sent matches what we received. Ignore the order
     // if necessary.
-    checkUnordered(num_msgs, sent_ncrs_, received_ncrs_);
+    checkUnordered(num_msgs, s_handle_->sent_ncrs_, r_handle_->received_ncrs_);
 
     // Verify that we can gracefully stop listening.
     EXPECT_NO_THROW(listener_->stopListening());
@@ -1191,7 +1224,7 @@ TEST_F(NameChangeUDPTest, roundTripTestMultiThreading) {
 TEST_F(NameChangeUDPSenderBasicTest, watchClosedBeforeSendRequest) {
     IOAddress ip_address(TEST_ADDRESS);
     IOServicePtr io_service(new IOService());
-    SimpleSendHandler ncr_handler;
+    SimpleSendHandlerPtr ncr_handler(new SimpleSendHandler());
 
     // Create the sender and put into send mode.
     NameChangeUDPSender sender(ip_address, 0, ip_address, LISTENER_PORT,
@@ -1210,8 +1243,8 @@ TEST_F(NameChangeUDPSenderBasicTest, watchClosedBeforeSendRequest) {
     ASSERT_THROW(sender.sendRequest(ncr), util::WatchSocketError);
 
     // Verify we didn't invoke the handler.
-    EXPECT_EQ(0, ncr_handler.pass_count_);
-    EXPECT_EQ(0, ncr_handler.error_count_);
+    EXPECT_EQ(0, ncr_handler->pass_count_);
+    EXPECT_EQ(0, ncr_handler->error_count_);
 
     // Request remains in the queue. Technically it was sent but its
     // completion handler won't get called.
@@ -1226,7 +1259,7 @@ TEST_F(NameChangeUDPSenderBasicTest, watchClosedBeforeSendRequestMultiThreading)
 
     IOAddress ip_address(TEST_ADDRESS);
     IOServicePtr io_service(new IOService());
-    SimpleSendHandler ncr_handler;
+    SimpleSendHandlerPtr ncr_handler(new SimpleSendHandler());
 
     // Create the sender and put into send mode.
     NameChangeUDPSender sender(ip_address, 0, ip_address, LISTENER_PORT,
@@ -1245,8 +1278,8 @@ TEST_F(NameChangeUDPSenderBasicTest, watchClosedBeforeSendRequestMultiThreading)
     ASSERT_THROW(sender.sendRequest(ncr), util::WatchSocketError);
 
     // Verify we didn't invoke the handler.
-    EXPECT_EQ(0, ncr_handler.pass_count_);
-    EXPECT_EQ(0, ncr_handler.error_count_);
+    EXPECT_EQ(0, ncr_handler->pass_count_);
+    EXPECT_EQ(0, ncr_handler->error_count_);
 
     // Request remains in the queue. Technically it was sent but its
     // completion handler won't get called.
@@ -1258,7 +1291,7 @@ TEST_F(NameChangeUDPSenderBasicTest, watchClosedBeforeSendRequestMultiThreading)
 TEST_F(NameChangeUDPSenderBasicTest, watchClosedAfterSendRequest) {
     IOAddress ip_address(TEST_ADDRESS);
     IOServicePtr io_service(new IOService());
-    SimpleSendHandler ncr_handler;
+    SimpleSendHandlerPtr ncr_handler(new SimpleSendHandler());
 
     // Create the sender and put into send mode.
     NameChangeUDPSender sender(ip_address, 0, ip_address, LISTENER_PORT,
@@ -1285,8 +1318,8 @@ TEST_F(NameChangeUDPSenderBasicTest, watchClosedAfterSendRequest) {
     // Verify handler got called twice. First request should have be sent
     // without error, second call should have failed to send due to watch
     // socket markReady failure.
-    EXPECT_EQ(1, ncr_handler.pass_count_);
-    EXPECT_EQ(1, ncr_handler.error_count_);
+    EXPECT_EQ(1, ncr_handler->pass_count_);
+    EXPECT_EQ(1, ncr_handler->error_count_);
 
     // The second request should still be in the queue.
     EXPECT_EQ(1, sender.getQueueSize());
@@ -1300,7 +1333,7 @@ TEST_F(NameChangeUDPSenderBasicTest, watchClosedAfterSendRequestMultiThreading) 
 
     IOAddress ip_address(TEST_ADDRESS);
     IOServicePtr io_service(new IOService());
-    SimpleSendHandler ncr_handler;
+    SimpleSendHandlerPtr ncr_handler(new SimpleSendHandler());
 
     // Create the sender and put into send mode.
     NameChangeUDPSender sender(ip_address, 0, ip_address, LISTENER_PORT,
@@ -1327,8 +1360,8 @@ TEST_F(NameChangeUDPSenderBasicTest, watchClosedAfterSendRequestMultiThreading) 
     // Verify handler got called twice. First request should have be sent
     // without error, second call should have failed to send due to watch
     // socket markReady failure.
-    EXPECT_EQ(1, ncr_handler.pass_count_);
-    EXPECT_EQ(1, ncr_handler.error_count_);
+    EXPECT_EQ(1, ncr_handler->pass_count_);
+    EXPECT_EQ(1, ncr_handler->error_count_);
 
     // The second request should still be in the queue.
     EXPECT_EQ(1, sender.getQueueSize());
@@ -1340,7 +1373,7 @@ TEST_F(NameChangeUDPSenderBasicTest, watchClosedAfterSendRequestMultiThreading) 
 TEST_F(NameChangeUDPSenderBasicTest, watchSocketBadRead) {
     IOAddress ip_address(TEST_ADDRESS);
     IOServicePtr io_service(new IOService());
-    SimpleSendHandler ncr_handler;
+    SimpleSendHandlerPtr ncr_handler(new SimpleSendHandler());
 
     // Create the sender and put into send mode.
     NameChangeUDPSender sender(ip_address, 0, ip_address, LISTENER_PORT,
@@ -1376,8 +1409,8 @@ TEST_F(NameChangeUDPSenderBasicTest, watchSocketBadRead) {
     // Verify handler got called twice. First request should have be sent
     // without error, second call should have failed to send due to watch
     // socket markReady failure.
-    EXPECT_EQ(1, ncr_handler.pass_count_);
-    EXPECT_EQ(1, ncr_handler.error_count_);
+    EXPECT_EQ(1, ncr_handler->pass_count_);
+    EXPECT_EQ(1, ncr_handler->error_count_);
 
     // The second request should still be in the queue.
     EXPECT_EQ(1, sender.getQueueSize());
@@ -1391,7 +1424,7 @@ TEST_F(NameChangeUDPSenderBasicTest, watchSocketBadReadMultiThreading) {
 
     IOAddress ip_address(TEST_ADDRESS);
     IOServicePtr io_service(new IOService());
-    SimpleSendHandler ncr_handler;
+    SimpleSendHandlerPtr ncr_handler(new SimpleSendHandler());
 
     // Create the sender and put into send mode.
     NameChangeUDPSender sender(ip_address, 0, ip_address, LISTENER_PORT,
@@ -1427,8 +1460,8 @@ TEST_F(NameChangeUDPSenderBasicTest, watchSocketBadReadMultiThreading) {
     // Verify handler got called twice. First request should have be sent
     // without error, second call should have failed to send due to watch
     // socket markReady failure.
-    EXPECT_EQ(1, ncr_handler.pass_count_);
-    EXPECT_EQ(1, ncr_handler.error_count_);
+    EXPECT_EQ(1, ncr_handler->pass_count_);
+    EXPECT_EQ(1, ncr_handler->error_count_);
 
     // The second request should still be in the queue.
     EXPECT_EQ(1, sender.getQueueSize());
