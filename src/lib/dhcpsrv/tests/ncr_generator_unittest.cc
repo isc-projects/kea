@@ -97,6 +97,7 @@ public:
 
     /// @brief Disables DHCP-DDNS updates.
     void disableD2() {
+        d2_mgr_.stop();
         d2_mgr_.stopSender();
         // Default constructor creates a config with DHCP-DDNS updates
         // disabled.

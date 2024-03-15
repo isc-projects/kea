@@ -4812,6 +4812,7 @@ Dhcpv4Srv::stopD2() {
     D2ClientMgr& d2_mgr = CfgMgr::instance().getD2ClientMgr();
     if (d2_mgr.ddnsEnabled()) {
         // Updates are enabled, so lets stop the sender
+        d2_mgr.stop();
         d2_mgr.stopSender();
     }
 }

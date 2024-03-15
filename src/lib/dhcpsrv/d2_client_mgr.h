@@ -394,6 +394,9 @@ public:
     /// it will not accept additional messages.
     void suspendUpdates();
 
+    /// @brief Stop the sender
+    void stop();
+
 protected:
     /// @brief Function operator implementing the NCR sender callback.
     ///
@@ -429,6 +432,7 @@ protected:
     int getRegisteredSelectFd();
 
 private:
+
     /// @brief Container class for DHCP-DDNS configuration parameters.
     D2ClientConfigPtr d2_client_config_;
 

@@ -9,9 +9,11 @@
 #include <asiolink/io_service.h>
 #include <cc/command_interpreter.h>
 #include <d2srv/testutils/nc_test_utils.h>
+#include <d2/d2_controller.h>
 #include <d2/d2_process.h>
 #include <d2/tests/test_configured_libraries.h>
 #include <dhcp_ddns/ncr_io.h>
+#include <hooks/hooks_manager.h>
 #include <process/testutils/d_test_stubs.h>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
@@ -25,6 +27,7 @@ using namespace isc;
 using namespace isc::config;
 using namespace isc::d2;
 using namespace isc::data;
+using namespace isc::hooks;
 using namespace isc::process;
 using namespace boost::posix_time;
 
@@ -64,6 +67,8 @@ public:
     D2ProcessTest() :
         D2Process("d2test",
                   asiolink::IOServicePtr(new isc::asiolink::IOService())) {
+        HooksManager::setTestMode(false);
+        D2Controller::instance();
     }
 
     /// @brief Destructor

@@ -1046,10 +1046,6 @@ public:
         MultiThreadingMgr::instance().setMode(false);
     }
 
-    void SetUp() {
-
-    }
-
     void reset_results() {
         s_handle_->sent_ncrs_.clear();
         r_handle_->received_ncrs_.clear();

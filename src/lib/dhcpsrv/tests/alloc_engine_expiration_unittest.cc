@@ -202,6 +202,7 @@ public:
         if (mgr.amSending()) {
             mgr.stopSender();
             mgr.clearQueue();
+            mgr.stop();
         }
 
         // Clear configuration.

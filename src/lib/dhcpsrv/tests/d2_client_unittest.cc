@@ -300,6 +300,7 @@ TEST(D2ClientMgr, validConfig) {
     // and not the original configuration.
     EXPECT_EQ(*new_cfg, *updated_config);
     EXPECT_NE(*original_config, *updated_config);
+    d2_client_mgr->stop();
 }
 
 /// @brief Checks passing the D2ClientMgr a valid D2 client configuration
@@ -335,6 +336,7 @@ TEST(D2ClientMgr, ipv6Config) {
     // and not the original configuration.
     EXPECT_EQ(*new_cfg, *updated_config);
     EXPECT_NE(*original_config, *updated_config);
+    d2_client_mgr->stop();
 }
 
 /// @brief Test class for execerising manager functions that are

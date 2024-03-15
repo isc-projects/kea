@@ -86,6 +86,7 @@ NameChangeUDPListener::~NameChangeUDPListener() {
 
 void
 NameChangeUDPListener::open(const isc::asiolink::IOServicePtr& io_service) {
+
     // create our endpoint and bind the low level socket to it.
     isc::asiolink::UDPEndpoint endpoint(ip_address_, port_);
 
@@ -299,7 +300,6 @@ NameChangeUDPSender::close() {
 
     closeWatchSocket();
     watch_socket_.reset();
-    io_service_.reset();
 }
 
 void
@@ -327,6 +327,9 @@ NameChangeUDPSender::doSend(NameChangeRequestPtr& ncr) {
 void
 NameChangeUDPSender::sendCompletionHandler(const bool successful,
                                            const UDPCallback *send_callback) {
+    if (!watch_socket_) {
+        return;
+    }
     // Clear the IO ready marker.
     try {
         watch_socket_->clearReady();
@@ -369,7 +372,7 @@ NameChangeUDPSender::getSelectFd() {
                                   " not in send mode");
     }
 
-    return(watch_socket_->getSelectFd());
+    return (watch_socket_->getSelectFd());
 }
 
 bool

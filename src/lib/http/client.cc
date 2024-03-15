@@ -1845,6 +1845,15 @@ public:
         if (thread_pool_) {
             thread_pool_->stop();
         }
+
+        if (thread_io_service_) {
+            thread_io_service_->restart();
+            try {
+                thread_io_service_->poll();
+            } catch (...) {
+            }
+            thread_io_service_->stop();
+        }
     }
 
     /// @brief Pauses the client's thread pool.
@@ -1963,6 +1972,7 @@ HttpClient::HttpClient(const IOServicePtr& io_service, bool multi_threading_enab
 }
 
 HttpClient::~HttpClient() {
+    impl_->stop();
 }
 
 void

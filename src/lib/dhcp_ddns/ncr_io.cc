@@ -48,13 +48,11 @@ std::string ncrProtocolToString(NameChangeProtocol protocol) {
     return (stream.str());
 }
 
-
 //************************** NameChangeListener ***************************
 
 NameChangeListener::NameChangeListener(RequestReceiveHandlerPtr recv_handler)
     : listening_(false), io_pending_(false), recv_handler_(recv_handler) {
 };
-
 
 void
 NameChangeListener::startListening(const isc::asiolink::IOServicePtr& io_service) {
@@ -229,6 +227,18 @@ NameChangeSender::stopSending() {
         // it but we won't propagate the throw.
         LOG_ERROR(dhcp_ddns_logger,
                   DHCP_DDNS_NCR_SEND_CLOSE_ERROR).arg(ex.what());
+    }
+
+    if (io_service_) {
+        try {
+            io_service_->restart();
+            io_service_->poll();
+        } catch (const std::exception& ex) {
+            // Swallow exceptions. If we have some sort of error we'll log
+            // it but we won't propagate the throw.
+            LOG_ERROR(dhcp_ddns_logger,
+                      DHCP_DDNS_NCR_FLUSH_IO_ERROR).arg(ex.what());
+        }
     }
 
     io_service_.reset();

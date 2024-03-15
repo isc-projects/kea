@@ -593,7 +593,7 @@ private:
     /// @brief Prepares the IO for transmission in a thread safe context.
     ///
     /// @param io_service is the IOService that will handle IO event processing.
-    void startSendingInternal(const isc::asiolink::IOServicePtr & io_service);
+    void startSendingInternal(const isc::asiolink::IOServicePtr& io_service);
 
     /// @brief Queues the given request to be sent in a thread safe context.
     ///

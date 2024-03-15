@@ -247,12 +247,15 @@ public:
     }
 
     virtual ~QueueMgrUDPTest() {
+        sender_->stopSending();
+        queue_mgr_->stopListening();
         test_timer_.cancel();
         io_service_->restart();
         try {
             io_service_->poll();
         } catch (...) {
         }
+        queue_mgr_->removeListener();
     }
 
     void reset_results() {

@@ -370,6 +370,7 @@ TEST_F(Dhcp4SrvD2Test, DISABLED_forceUDPSendFailure) {
 
     // First message is off the queue.
     EXPECT_EQ(2, mgr.getQueueSize());
+    mgr.stop();
 }
 
 // Tests error handling of D2ClientMgr::sendRequest() failure

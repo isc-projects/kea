@@ -25,7 +25,8 @@ D2ClientMgr::D2ClientMgr() : d2_client_config_(new D2ClientConfig()),
     // Default constructor initializes with a disabled configuration.
 }
 
-D2ClientMgr::~D2ClientMgr(){
+D2ClientMgr::~D2ClientMgr() {
+    stop();
     stopSender();
 }
 
@@ -177,7 +178,6 @@ D2ClientMgr::generateFqdn(const asiolink::IOAddress& address,
     return (qualifyName(gen_name.str(), ddns_params, trailing_dot));
 }
 
-
 std::string
 D2ClientMgr::qualifyName(const std::string& partial_name,
                          const DdnsParams& ddns_params,
@@ -312,6 +312,14 @@ D2ClientMgr::stopSender() {
         name_change_sender_->stopSending();
         LOG_INFO(dhcpsrv_logger, DHCPSRV_DHCP_DDNS_SENDER_STOPPED);
     }
+
+    if (private_io_service_) {
+        private_io_service_->restart();
+        try {
+            private_io_service_->poll();
+        } catch (...) {
+        }
+    }
 }
 
 void
@@ -354,7 +362,7 @@ D2ClientMgr::getQueueSize() const {
         isc_throw(D2ClientError, "D2ClientMgr::getQueueSize sender is null");
     }
 
-    return(name_change_sender_->getQueueSize());
+    return (name_change_sender_->getQueueSize());
 }
 
 size_t
@@ -363,10 +371,8 @@ D2ClientMgr::getQueueMaxSize() const {
         isc_throw(D2ClientError, "D2ClientMgr::getQueueMaxSize sender is null");
     }
 
-    return(name_change_sender_->getQueueMaxSize());
+    return (name_change_sender_->getQueueMaxSize());
 }
-
-
 
 const dhcp_ddns::NameChangeRequestPtr&
 D2ClientMgr::peekAt(const size_t index) const {
@@ -397,6 +403,11 @@ D2ClientMgr::operator()(const dhcp_ddns::NameChangeSender::Result result,
     }
 }
 
+void
+D2ClientMgr::stop() {
+    name_change_sender_.reset();
+}
+
 int
 D2ClientMgr::getSelectFd() {
     if (!amSending()) {
@@ -418,6 +429,5 @@ D2ClientMgr::runReadyIO() {
     name_change_sender_->runReadyIO();
 }
 
-};  // namespace dhcp
-
-};  // namespace isc
+}  // namespace dhcp
+}  // namespace isc
