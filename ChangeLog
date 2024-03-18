@@ -1,8 +1,9 @@
 2209.	[func]		fdupont
-	Some hooks using multi-threading postpone their start
-	routing at the end of configuration processing.
-	Now these routines can safely throw when they detect
-	a problem: a configuration error is reported.
+	Some hooks using multi-threading postpone their startup until
+	after the configuration has been completed.  If the hook
+	subsequently failed the startup, the error would not have been
+	properly propagated. The fix ensures that the errors are
+	reported during the configuration stage.
 	(Gitlab #2692)
 
 Kea 2.5.6 (development) released on February 28, 2024

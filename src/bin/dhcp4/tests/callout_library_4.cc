@@ -1,12 +1,14 @@
-// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 /// @file
-/// @brief Callout library for testing execution of the dhcp4_srv_configured
-/// hook point.
+/// @brief Callout library for testing the scenarios when a hook library
+/// posts some work to the IO service as a result of configuration.
+/// Using a callout that always throws we can ensure that the server polls
+/// this initial work before it starts working.
 ///
 static const int LIBRARY_NUMBER = 4;
 

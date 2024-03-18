@@ -4040,7 +4040,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4OfferDiscoverDecline) {
 }
 
 // Checks that postponed hook start service can fail.
-TEST_F(LoadUnloadDhcpv4SrvTest, StartServiceFail) {
+TEST_F(LoadUnloadDhcpv4SrvTest, startServiceFail) {
     boost::shared_ptr<ControlledDhcpv4Srv> srv(new ControlledDhcpv4Srv(0));
 
     // Ensure no marker files to start with.

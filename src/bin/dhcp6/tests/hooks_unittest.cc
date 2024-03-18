@@ -5834,7 +5834,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6ParkedPacketLimit) {
 }
 
 // Checks that postponed hook start service can fail.
-TEST_F(LoadUnloadDhcpv6SrvTest, StartServiceFail) {
+TEST_F(LoadUnloadDhcpv6SrvTest, startServiceFail) {
     boost::shared_ptr<ControlledDhcpv6Srv> srv(new ControlledDhcpv6Srv(0));
 
     // Ensure no marker files to start with.
