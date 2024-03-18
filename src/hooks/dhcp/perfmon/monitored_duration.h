@@ -237,7 +237,7 @@ public:
     ///
     /// less than operator to compare two DurationKey objects.
     /// @param other DurationKey to be compared against.
-    /// @return True other is less than this key
+    /// @return True key is less than the other key
     bool operator<(const DurationKey& other) const;
 
 protected:

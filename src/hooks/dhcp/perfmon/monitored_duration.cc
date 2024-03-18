@@ -23,7 +23,10 @@ namespace perfmon {
 DurationDataInterval::DurationDataInterval(const Timestamp& start_time /* = PktEvent::now()*/)
     : start_time_(start_time), occurrences_(0),
       min_duration_(pos_infin), max_duration_(neg_infin),
-      total_duration_(microseconds(0)) { } void
+      total_duration_(microseconds(0)) {
+}
+
+void
 DurationDataInterval::addDuration(const Duration& duration) {
     ++occurrences_;
     if (duration < min_duration_) {
@@ -48,13 +51,11 @@ DurationDataInterval::getAverageDuration() const {
 
 bool
 DurationDataInterval::operator==(const DurationDataInterval& other) const {
-    return (
-        (start_time_ == other.start_time_) &&
-        (occurrences_ == other.occurrences_) &&
-        (min_duration_ == other.min_duration_) &&
-        (max_duration_ == other.max_duration_) &&
-        (total_duration_ == other.total_duration_)
-   );
+    return ((start_time_ == other.start_time_) &&
+            (occurrences_ == other.occurrences_) &&
+            (min_duration_ == other.min_duration_) &&
+            (max_duration_ == other.max_duration_) &&
+            (total_duration_ == other.total_duration_));
 }
 
 // DurationKey methods
@@ -190,13 +191,11 @@ DurationKey::operator!=(const DurationKey& other) const {
 
 bool
 DurationKey::operator<(const DurationKey& other) const {
-    return (
-        (query_type_ < other.query_type_) ||
-        (response_type_ < other.response_type_) ||
-        (start_event_label_ < other.start_event_label_) ||
-        (stop_event_label_ < other.stop_event_label_) ||
-        (subnet_id_ < other.subnet_id_)
-    );
+    return ((query_type_ < other.query_type_) ||
+            (response_type_ < other.response_type_) ||
+            (start_event_label_ < other.start_event_label_) ||
+            (stop_event_label_ < other.stop_event_label_) ||
+            (subnet_id_ < other.subnet_id_));
 }
 
 
@@ -237,11 +236,11 @@ MonitoredDuration::MonitoredDuration(const MonitoredDuration& rhs)
       current_interval_(0),
       previous_interval_(0) {
     if (rhs.current_interval_) {
-      current_interval_.reset(new DurationDataInterval(*rhs.current_interval_));
+        current_interval_.reset(new DurationDataInterval(*rhs.current_interval_));
     }
 
     if (rhs.previous_interval_) {
-      previous_interval_.reset(new DurationDataInterval(*rhs.previous_interval_));
+        previous_interval_.reset(new DurationDataInterval(*rhs.previous_interval_));
     }
 }
 

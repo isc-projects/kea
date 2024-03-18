@@ -289,7 +289,7 @@ TEST(MonitoredDuration, validConstructors) {
     EXPECT_FALSE(mond->getPreviousInterval());
 }
 
-// Verifies Copy construction.  Since current and preivous intervals are not
+// Verifies Copy construction.  Since current and previous intervals are not
 // exposed, this test relies on addSample() to alter them.
 TEST(MonitoredDuration, copyConstructors) {
     MonitoredDurationPtr mond;
@@ -297,7 +297,7 @@ TEST(MonitoredDuration, copyConstructors) {
 
     // Create valid v4 duration, verify contents and label.
     ASSERT_NO_THROW_LOG(mond.reset(new MonitoredDuration(AF_INET, DHCPDISCOVER, DHCPOFFER,
-                                  "process_started", "process_completed",
+                                   "process_started", "process_completed",
                                    SUBNET_ID_GLOBAL, interval_duration)));
 
     // Make a copy.
@@ -307,11 +307,11 @@ TEST(MonitoredDuration, copyConstructors) {
     // Should have different pointers.
     EXPECT_NE(duplicate, mond);
 
-    // Key values should be equal (DurationKey::== operator).
+    // Key values should be equal (DurationKey::operator==).
     EXPECT_EQ(*duplicate, *mond);
 
     // Check non-key members.
-    EXPECT_EQ(duplicate->getIntervalDuration(),mond->getIntervalDuration());
+    EXPECT_EQ(duplicate->getIntervalDuration(), mond->getIntervalDuration());
     EXPECT_FALSE(duplicate->getCurrentInterval());
     EXPECT_FALSE(duplicate->getPreviousInterval());
 

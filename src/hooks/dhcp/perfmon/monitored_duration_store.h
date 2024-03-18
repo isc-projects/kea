@@ -39,7 +39,7 @@ struct DurationKeyTag { };
 /// @brief Tag for index by interval start time.
 struct IntervalStartTag { };
 
-/// @brief A multi index container holding pointers to MonitoredDurations.
+/// @brief A multi index container holding pointers to durations.
 ///
 /// The durations in the container may be accessed using different indexes:
 /// - using the index on DurationKey members, DurationKeyTag
@@ -75,10 +75,10 @@ typedef std::vector<MonitoredDurationPtr> MonitoredDurationCollection;
 /// @brief Type for a pointer to a collection of MonitoredDurationPtrs.
 typedef boost::shared_ptr<MonitoredDurationCollection> MonitoredDurationCollectionPtr;
 
-/// @brief Maintains an in-memory store of MonitoredDurations
+/// @brief Maintains an in-memory store of durations
 ///
 /// Provides essential CRUD functions for managing a collection of
-/// MonitoredDurations.  Additionally there are finders that can return
+/// durations.  Additionally there are finders that can return
 /// durations by DurationKey (others are TBD)
 /// All finders return copies of the durations found, rather than the
 /// stored duration itself.
@@ -100,7 +100,7 @@ public:
     /// condition, then a copy of the in-store duration is returned, otherwise an empty
     /// pointer is returned.
     ///
-    /// If The duration does not exist in the store, then one is created and inserted
+    /// If the duration does not exist in the store, then one is created and inserted
     /// into the store after adding the sample.  An empty pointer is returned.
     ///
     /// This function does not/must not modify any index keys.
@@ -112,7 +112,7 @@ public:
     /// pointer otherwise.
     MonitoredDurationPtr addDurationSample(DurationKeyPtr key, const Duration& sample);
 
-    /// @brief Creates a new MonitoredDuration and adds it to the store
+    /// @brief Creates a new duration and adds it to the store
     ///
     /// @param key key value of the duration to create.
     ///
@@ -134,7 +134,7 @@ public:
     ///
     /// @param duration duration to update.
     ///
-    /// @throw InvalidOperation if MonitoredDuration does not exist in the store.
+    /// @throw InvalidOperation if duration does not exist in the store.
     void updateDuration(MonitoredDurationPtr& duration);
 
     /// @brief Removes the duration from the store.
@@ -161,8 +161,7 @@ public:
     ///
     /// @return a collection of the matching durations, ordered by current interval
     /// start time.
-    MonitoredDurationCollectionPtr getOverdueReports(const Timestamp& since
-                                                     = dhcp::PktEvent::now());
+    MonitoredDurationCollectionPtr getOverdueReports(const Timestamp& since = dhcp::PktEvent::now());
 
     /// @brief Removes all durations from the store.
     void clear();
@@ -178,7 +177,7 @@ private:
     /// @brief Convenience method to verify a key is valid for an operation.
     ///
     /// @param label description of where the check is being made, appears in exception text.
-    /// @param key key to validate
+    /// @param key key to validate.
     ///
     /// @throw BadValue if the key is either empty or its family does not
     /// match the store.
@@ -187,7 +186,7 @@ private:
     /// @brief Protocol family AF_INET or AF_INET6.
     uint16_t family_;
 
-    /// @brief The length of time over data for a single MonitoredDuration is
+    /// @brief The length of time over data for a single duration is
     /// accumulated before reporting.
     Duration interval_duration_;
 

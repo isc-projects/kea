@@ -48,8 +48,8 @@ AlarmStore::checkDurationSample(DurationKeyPtr key, const Duration& sample,
     auto& index = alarms_.get<AlarmPrimaryKeyTag>();
     auto alarm_iter = index.find(*key);
 
-    // If we find an alarm the check the sample.  Alarm::checkSample()
-    //does not alter the key so it can be done in-place.
+    // If we find an alarm then we check the sample.  Alarm::checkSample()
+    // does not alter the key so it can be done in-place.
     if (alarm_iter != index.end()) {
         bool should_report = false;
         bool modified = index.modify(alarm_iter,
@@ -87,7 +87,7 @@ AlarmStore::addAlarm(AlarmPtr alarm) {
 
 AlarmPtr
 AlarmStore::addAlarm(DurationKeyPtr key, const Duration& low_water,
-                      const Duration& high_water, bool enabled /* = true */) {
+                     const Duration& high_water, bool enabled /* = true */) {
     validateKey("addAlarm", key);
 
     // Create the alarm instance.
@@ -149,8 +149,8 @@ AlarmStore::getAll() {
     MultiThreadingLock lock(*mutex_);
     const auto& index = alarms_.get<AlarmPrimaryKeyTag>();
     AlarmCollectionPtr collection(new AlarmCollection());
-    for (auto alarm_iter = index.begin(); alarm_iter != index.end(); ++alarm_iter) {
-        collection->push_back(AlarmPtr(new Alarm(**alarm_iter)));
+    for (auto const& alarm : index) {
+        collection->push_back(AlarmPtr(new Alarm(*alarm)));
     }
 
     return (collection);

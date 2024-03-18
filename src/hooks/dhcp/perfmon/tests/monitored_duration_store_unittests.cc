@@ -11,6 +11,7 @@
 #include <testutils/gtest_utils.h>
 #include <testutils/multi_threading_utils.h>
 
+#include <boost/range/adaptor/reversed.hpp>
 #include <gtest/gtest.h>
 #include <sstream>
 
@@ -156,7 +157,7 @@ public:
                          BadValue,
                          "MonitoredDurationStore::addDuration - key is empty");
 
-        // Attempting to a v6 key should fail.
+        // Attempting to add a v6 key should fail.
         ASSERT_THROW_MSG(store->addDuration(makeKey(AF_INET6)),
                          BadValue,
                          "MonitoredDurationStore::addDuration"
@@ -217,7 +218,7 @@ public:
     ///
     /// Tests both v4 and v6.
     void deleteDurationInvalidTest() {
-         // Create a v4 store.
+        // Create a v4 store.
         Duration interval_duration(milliseconds(10));
         MonitoredDurationStorePtr store(new MonitoredDurationStore(AF_INET, interval_duration));
 
@@ -291,7 +292,7 @@ public:
         Duration interval_duration(seconds(60));
         MonitoredDurationPtr mond;
 
-         // Create a v4 store.
+        // Create a v4 store.
         MonitoredDurationStorePtr store(new MonitoredDurationStore(AF_INET, interval_duration));
 
         // Attempting to update an empty key should throw.
@@ -428,9 +429,9 @@ public:
         // key[2] - interval start = now + 2ms
         // key[3] - interval start = now
         auto five_ms(milliseconds(5));
-        for (auto k = keys.rbegin(); k != keys.rend();  ++k ) {
-            ASSERT_NO_THROW_LOG(store.addDurationSample(*k, five_ms));
-            if ((*k)->getSubnetId() != 2) {
+        for (auto const& k : boost::adaptors::reverse(keys)) {
+            ASSERT_NO_THROW_LOG(store.addDurationSample(k, five_ms));
+            if (k->getSubnetId() != 2) {
                 usleep(2 * 1000);   // put 2ms gap between them
             } else {
                 usleep(50 * 1000);  // put 50ms gap between them.
@@ -525,7 +526,7 @@ public:
         EXPECT_EQ(durations->size(), num_subnets);
 
         std::cout << "report count: " << report_count << std::endl
-                  << "add keys time   : " << (add_keys_time - start_time) << std::endl
+                  << "add keys time: " << (add_keys_time - start_time) << std::endl
                   << "add samples time: " << (add_samples_time - add_keys_time) << std::endl
                   << "time per sample: "
                   << (add_samples_time - add_keys_time) / (num_subnets * num_passes) << std::endl;
@@ -659,7 +660,7 @@ TEST_F(MonitoredDurationStoreTest, reportDueMultiThreading) {
 }
 
 TEST_F(MonitoredDurationStoreTest, reportDue6) {
-    reportDueTest(AF_INET);
+    reportDueTest(AF_INET6);
 }
 
 TEST_F(MonitoredDurationStoreTest, reportDue6MultiThreading) {

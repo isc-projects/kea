@@ -59,7 +59,7 @@ MonitoredDurationStore::addDurationSample(DurationKeyPtr key, const Duration& sa
         bool should_report = false;
         // Modify updates in place and only re-indexes if keys change.
         bool modified = index.modify(duration_iter,
-                               [sample, &should_report](MonitoredDurationPtr mond){
+                                     [sample, &should_report](MonitoredDurationPtr mond) {
             should_report = mond->addSample(sample);
         });
 
@@ -126,7 +126,7 @@ MonitoredDurationStore::getDuration(DurationKeyPtr key) {
     const auto& index = durations_.get<DurationKeyTag>();
     auto duration_iter = index.find(*key);
     return (duration_iter == index.end() ? MonitoredDurationPtr()
-            : MonitoredDurationPtr(new MonitoredDuration(**duration_iter)));
+                                         : MonitoredDurationPtr(new MonitoredDuration(**duration_iter)));
 }
 
 void
@@ -166,8 +166,8 @@ MonitoredDurationStore::getAll() {
     MultiThreadingLock lock(*mutex_);
     const auto& index = durations_.get<DurationKeyTag>();
     MonitoredDurationCollectionPtr collection(new MonitoredDurationCollection());
-    for (auto duration_iter = index.begin(); duration_iter != index.end(); ++duration_iter) {
-        collection->push_back(MonitoredDurationPtr(new MonitoredDuration(**duration_iter)));
+    for (auto const& mond : index) {
+        collection->push_back(MonitoredDurationPtr(new MonitoredDuration(*mond)));
     }
 
     return (collection);
@@ -186,7 +186,7 @@ MonitoredDurationStore::getReportsNext() {
     // We want to find the oldest interval that is less than interval_duration in the past.
     auto duration_iter = index.lower_bound(dhcp::PktEvent::now() - interval_duration_);
     return (duration_iter == index.end() ? MonitoredDurationPtr()
-            : MonitoredDurationPtr(new MonitoredDuration(**duration_iter)));
+                                         : MonitoredDurationPtr(new MonitoredDuration(**duration_iter)));
 }
 
 MonitoredDurationCollectionPtr
@@ -195,7 +195,7 @@ MonitoredDurationStore::getOverdueReports(const Timestamp& since /* = PktEvent::
     // We use a lower bound of MIN + 1us to avoid dormant durations
     static Timestamp lower_limit_time(PktEvent::MIN_TIME() + microseconds(1));
 
-    // We want to find anything since the start of time that who's start time
+    // We want to find anything since the start of time who's start time
     // is more than interval_duration_ in the past.
     const auto& index = durations_.get<IntervalStartTag>();
     auto lower_limit = index.lower_bound(lower_limit_time);

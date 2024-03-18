@@ -36,7 +36,7 @@ public:
 /// @brief Tag for index by primary key (DurationKey).
 struct AlarmPrimaryKeyTag { };
 
-/// @brief A multi index container holding pointers to Alarms.
+/// @brief A multi index container holding pointers to alarms.
 ///
 /// The alarms in the container may be accessed using different indexes:
 /// - using the index on DurationKey members, AlarmPrimaryKeyTag
@@ -64,10 +64,10 @@ typedef std::vector<AlarmPtr> AlarmCollection;
 /// @brief Type for a pointer to a collection of AlarmPtrs.
 typedef boost::shared_ptr<AlarmCollection> AlarmCollectionPtr;
 
-/// @brief Maintains an in-memory store of Alarms
+/// @brief Maintains an in-memory store of alarms
 ///
 /// Provides essential CRUD functions for managing a collection of
-/// Alarms.  Additionally there are finders that can return
+/// alarms.  Additionally there are finders that can return
 /// durations by DurationKey (others are TBD).
 /// All finders return copies of the durations found, rather than the
 /// stored duration itself.
@@ -102,22 +102,22 @@ public:
     AlarmPtr checkDurationSample(DurationKeyPtr key, const Duration& sample,
                                  const Duration& report_interval);
 
-    /// @brief Creates a new Alarm and adds it to the store
+    /// @brief Creates a new alarm and adds it to the store
     ///
-    /// @param key key value of the Alarm to create.
+    /// @param key key value of the alarm to create.
     /// @param low_water threshold below which the average duration must fall to clear the alarm
     /// @param high_water threshold above which the average duration must rise to trigger the alarm.
     /// @param enabled true sets state to CLEAR, otherwise DISABLED, defaults to true.
     ///
-    /// @return pointer to the newly created Alarm.
+    /// @return pointer to the newly created alarm.
     /// @throw DuplicateAlarm if a duration for the given key already exists in
     /// the store.
     AlarmPtr addAlarm(DurationKeyPtr key, const Duration& low_water,
                       const Duration& high_water, bool enabled = true);
 
-    /// @brief Adds an Alarm  to the store.
+    /// @brief Adds an alarm to the store.
     ///
-    /// @return pointer to a copy of the Alarm added.
+    /// @return pointer to a copy of the alarm added.
     AlarmPtr addAlarm(AlarmPtr alarm);
 
     /// @brief Fetches a duration from the store for a given key.
@@ -162,7 +162,7 @@ private:
     /// @brief Convenience method to verify a key is valid for an operation.
     ///
     /// @param label description of where the check is being made, appears in exception text.
-    /// @param key key to validate
+    /// @param key key to validate.
     ///
     /// @throw BadValue if the key is either empty or its family does not
     /// match the store.

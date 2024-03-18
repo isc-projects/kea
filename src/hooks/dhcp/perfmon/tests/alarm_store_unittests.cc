@@ -130,13 +130,14 @@ public:
         alarms = store.getAll();
         ASSERT_TRUE(alarms->empty());
     }
+
     /// @brief Verifies that duplicate alarms cannot be added to the store.
     ///
     /// @param family protocol family to test, AF_INET or AF_INET6
     void addAlarmDuplicateTest(uint16_t family) {
         AlarmStore store(family);
 
-        // Add a duration.
+        // Add an alarm.
         AlarmPtr alarm;
         ASSERT_NO_THROW_LOG(alarm = store.addAlarm(makeKey(family), milliseconds(10),
                                                    milliseconds(250)));
@@ -146,7 +147,7 @@ public:
         ASSERT_THROW(store.addAlarm(alarm), DuplicateAlarm);
     }
 
-    /// @brief Verifies that duration key must be valid to add a duration to the store.
+    /// @brief Verifies that duration key must be valid to add an alarm to the store.
     ///
     /// Tests both v4 and v6.
     void addAlarmInvalidTest() {
@@ -155,13 +156,13 @@ public:
 
         // Attempting to add with an empty key should throw.
         ASSERT_THROW_MSG(store->addAlarm(DurationKeyPtr(),
-                         milliseconds(10), milliseconds(250)),
+                                         milliseconds(10), milliseconds(250)),
                          BadValue,
                          "AlarmStore::addAlarm - key is empty");
 
-        // Attempting to a v6 key should fail.
+        // Attempting to add a v6 key should fail.
         ASSERT_THROW_MSG(store->addAlarm(makeKey(AF_INET6),
-                         milliseconds(10), milliseconds(250)),
+                                         milliseconds(10), milliseconds(250)),
                          BadValue,
                          "AlarmStore::addAlarm"
                          " - family mismatch, key is v6, store is v4");
@@ -171,7 +172,7 @@ public:
 
         // Attempting to add a v4 key should fail.
         ASSERT_THROW_MSG(store->addAlarm(makeKey(AF_INET),
-                         milliseconds(10), milliseconds(250)),
+                                         milliseconds(10), milliseconds(250)),
                          BadValue,
                          "AlarmStore::addAlarm"
                          " - family mismatch, key is v4, store is v6");
@@ -196,7 +197,7 @@ public:
         auto alarms = store.getAll();
         ASSERT_EQ(alarms->size(), 3);
 
-        // Fetch the second duration.
+        // Fetch the second alarm.
         AlarmPtr alarm;
         ASSERT_NO_THROW_LOG(alarm = store.getAlarm(keys[1]));
         ASSERT_TRUE(alarm);
@@ -218,11 +219,11 @@ public:
         ASSERT_EQ(alarms->size(), 2);
     }
 
-    /// @brief Verify an invalid duration key on delete is detected.
+    /// @brief Verify an invalid alarm key on delete is detected.
     ///
     /// Tests both v4 and v6.
     void deleteAlarmInvalidTest() {
-         // Create a v4 store.
+        // Create a v4 store.
         AlarmStorePtr store(new AlarmStore(AF_INET));
 
         // Attempting to delete an empty key should throw.
@@ -253,10 +254,10 @@ public:
     void updateAlarmTest(uint16_t family) {
         AlarmStore store(family);
 
-        // Add the duration to the store.
+        // Add the alarm to the store.
         AlarmPtr alarm;
         ASSERT_NO_THROW_LOG(alarm.reset(new Alarm(*makeKey(family), milliseconds(10),
-                                              milliseconds(250))));
+                                                  milliseconds(250))));
         ASSERT_NO_THROW_LOG(store.addAlarm(alarm));
 
         // Fetch it.
@@ -281,13 +282,13 @@ public:
         EXPECT_EQ(found->getHighWater(), milliseconds(500));
     }
 
-    /// @brief Verify an invalid duration key on update is detected.
+    /// @brief Verify an invalid alarm key on update is detected.
     ///
     /// Tests both v4 and v6.
     void updateAlarmInvalidTest() {
         AlarmPtr alarm;
 
-         // Create a v4 store.
+        // Create a v4 store.
         AlarmStorePtr store(new AlarmStore(AF_INET));
 
         // Attempting to update an empty key should throw.
@@ -297,7 +298,7 @@ public:
 
         // Create a v6 alarm.
         ASSERT_NO_THROW_LOG(alarm.reset(new Alarm(*makeKey(AF_INET6), milliseconds(10),
-                                                   milliseconds(250))));
+                                                  milliseconds(250))));
 
         // Attempting to update v6 alarm to a v4 store should fail.
         ASSERT_THROW_MSG(store->updateAlarm(alarm),
@@ -316,9 +317,9 @@ public:
 
         // Create a v4 alarm.
         ASSERT_NO_THROW_LOG(alarm.reset(new Alarm(*makeKey(AF_INET), milliseconds(10),
-                                                   milliseconds(250))));
+                                                  milliseconds(250))));
 
-        // Attempting to update v4 duration to a v6 store fail.
+        // Attempting to update v4 alarm to a v6 store fail.
         ASSERT_THROW_MSG(store->updateAlarm(alarm),
                          BadValue,
                          "AlarmStore::updateAlarm"
