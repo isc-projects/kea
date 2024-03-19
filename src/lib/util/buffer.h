@@ -295,20 +295,20 @@ typedef boost::shared_ptr<InputBuffer> InputBufferPtr;
 ///  // pass the buffer to a DNS message object to construct a wire-format
 ///  // DNS message.
 ///  struct sockaddr to;
-///  sendto(s, buffer.getDataAsVP(), buffer.getLength(), 0, &to, sizeof(to));
+///  sendto(s, buffer.getDataAsVoidPtr(), buffer.getLength(), 0, &to, sizeof(to));
 /// @endcode
 ///
-/// where the @c getData() method gives a reference to the internal
-/// memory region stored in the @c buffer object.  This is a
-/// suboptimal design in that it exposes an encapsulated "handle" of
-/// an object to its user.  Unfortunately, there is no easy way to
-/// avoid this without involving expensive data copy if we want to use
-/// this object with a legacy API such as a BSD socket interface.
-/// And, indeed, this is one major purpose for this object.
-/// Applications should use this method only under such a special
-/// circumstance.  It should also be noted that the memory region
-/// returned by @c getData() may be invalidated after a subsequent
-/// write operation.
+/// where the @c getData() (in fact @getDataAsVoidPtr()) method gives
+/// a reference to the internal memory region stored in the @c buffer
+/// object.  This is a suboptimal design in that it exposes an
+/// encapsulated "handle" of an object to its user.  Unfortunately,
+/// there is no easy way to avoid this without involving expensive
+/// data copy if we want to use this object with a legacy API such as
+/// a BSD socket interface.  And, indeed, this is one major purpose
+/// for this object.  Applications should use this method only under
+/// such a special circumstance.  It should also be noted that the
+/// memory region returned by @c getData() may be invalidated after a
+/// subsequent write operation.
 ///
 /// An @c OutputBuffer class object automatically extends its memory
 /// region when data is written beyond the end of the current buffer.
@@ -404,7 +404,7 @@ public:
     }
 
     /// @brief Return data as a pointer to void.
-    const void* getDataAsVP() const {
+    const void* getDataAsVoidPtr() const {
         return (static_cast<const void*>(getData()));
     }
 

@@ -241,7 +241,8 @@ SocketSessionForwarder::push(int sock, int family, int type, int protocol,
     impl_->buf_.writeUint16At(impl_->buf_.getLength() - sizeof(uint16_t), 0);
 
     const struct iovec iov[2] = {
-        { const_cast<void*>(impl_->buf_.getDataAsVP()), impl_->buf_.getLength() },
+        { const_cast<void*>(impl_->buf_.getDataAsVoidPtr()),
+          impl_->buf_.getLength() },
         { const_cast<void*>(data), data_len }
     };
     const int cc = writev(impl_->fd_, iov, 2);

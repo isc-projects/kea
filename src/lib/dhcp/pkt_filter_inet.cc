@@ -269,7 +269,7 @@ PktFilterInet::send(const Iface&, uint16_t sockfd, const Pkt4Ptr& pkt) {
     memset(&v, 0, sizeof(v));
     // iov_base field is of void * type. We use it for packet
     // transmission, so this buffer will not be modified.
-    v.iov_base = const_cast<void *>(pkt->getBuffer().getDataAsVP());
+    v.iov_base = const_cast<void *>(pkt->getBuffer().getDataAsVoidPtr());
     v.iov_len = pkt->getBuffer().getLength();
     m.msg_iov = &v;
     m.msg_iovlen = 1;

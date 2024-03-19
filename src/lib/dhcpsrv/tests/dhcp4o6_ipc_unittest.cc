@@ -336,7 +336,7 @@ Dhcp4o6IpcBaseTest::testReceiveError(const Pkt6Ptr& pkt) {
     buf.clear();
     ASSERT_NO_THROW(pkt->pack());
 
-    ASSERT_NE(-1, ::send(ipc_src.getSocketFd(), buf.getDataAsVP(),
+    ASSERT_NE(-1, ::send(ipc_src.getSocketFd(), buf.getDataAsVoidPtr(),
                          buf.getLength(), 0));
 
     // Call receive with a timeout. The data should appear on the socket
