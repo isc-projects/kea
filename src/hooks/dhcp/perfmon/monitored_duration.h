@@ -190,7 +190,6 @@ public:
 
     /// @brief Get a composite label of the member values with text message types.
     ///
-    /// @param family Protocol family of the key (AF_INET or AF_INET6)
     /// The format of the string:
     ///
     /// @code
@@ -259,6 +258,9 @@ protected:
     /// @brief Subnet ID of the subnet selected during query fulfillment.
     isc::dhcp::SubnetID subnet_id_;
 };
+
+std::ostream&
+operator<<(std::ostream& os, const DurationKey& key);
 
 /// @brief Defines a pointer to a DurationKey instance.
 typedef boost::shared_ptr<DurationKey> DurationKeyPtr;

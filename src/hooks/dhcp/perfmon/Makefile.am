@@ -21,6 +21,8 @@ libperfmon_la_SOURCES += monitored_duration.cc monitored_duration.h
 libperfmon_la_SOURCES += alarm.cc alarm.h
 libperfmon_la_SOURCES += monitored_duration_store.cc monitored_duration_store.h
 libperfmon_la_SOURCES += alarm_store.cc alarm_store.h
+libperfmon_la_SOURCES += perfmon_config.cc perfmon_config.h
+libperfmon_la_SOURCES += perfmon_mgr.cc perfmon_mgr.h
 libperfmon_la_SOURCES += version.cc
 
 libperfmon_la_CXXFLAGS = $(AM_CXXFLAGS)

@@ -198,6 +198,11 @@ DurationKey::operator<(const DurationKey& other) const {
             (subnet_id_ < other.subnet_id_));
 }
 
+std::ostream&
+operator<<(std::ostream& os, const DurationKey& key) {
+    os << key.getLabel();
+    return (os);
+}
 
 // MonitoredDuration methods
 
