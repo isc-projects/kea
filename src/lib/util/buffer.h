@@ -416,7 +416,7 @@ public:
     /// @brief Return the value of the buffer at the specified position.
     ///
     /// @c pos must specify the valid position of the buffer;
-    /// otherwise an exception class of @c InvalidBufferPosition will
+    /// otherwise an exception class of @c isc::OutOfRange will
     /// be thrown.
     ///
     /// @param pos The position in the buffer to be returned.
@@ -478,8 +478,8 @@ public:
     /// @brief Write an unsigned 8-bit integer into the buffer.
     ///
     /// The position must be lower than the size of the buffer,
-    /// otherwise an exception of class @c
-    /// isc::dns::InvalidBufferPosition will be thrown.
+    /// otherwise an exception of class @c isc::OutOfRange will
+    /// be thrown.
     ///
     /// @param data The 8-bit integer to be written into the buffer.
     /// @param pos The position in the buffer to write the data.
@@ -505,8 +505,8 @@ public:
     ///
     /// The buffer must have a sufficient room to store the given data
     /// at the given position, that is, <code>pos + 2 <
-    /// getLength()</code>; otherwise an exception of class @c
-    /// isc::dns::InvalidBufferPosition will be thrown.
+    /// getLength()</code>; otherwise an exception of class
+    /// @c isc::OutOfRange will be thrown.
     /// Note also that this method never extends the buffer.
     ///
     /// @param data The 16-bit integer to be written into the buffer.
