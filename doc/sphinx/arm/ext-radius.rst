@@ -173,11 +173,12 @@ flags:
    persistent storage for accounting session history.
 
  - ``thread-pool-size`` (default ``0``) indicates the number of threads that
-   should be used for sending asynchronous RADIUS requests for both access and
-   accounting services. A value of ``0`` instructs the RADIUS hook library to
-   use the same number of threads used for DHCP processing. This value is only
-   relevant if Kea core is configured as multi-threaded. Single-threaded Kea
-   core makes the RADIUS hook library also be single-threaded.
+   is used for sending RADIUS requests and processing RADIUS responses for both
+   access and accounting services before passing it to the core thread pool. A
+   value of ``0`` instructs the RADIUS hook library to use the same number of
+   threads used for core DHCP processing. This value is only relevant if Kea
+   core is configured as multi-threaded. Single-threaded Kea core results in
+   single-threaded RADIUS processing.
 
 -  ``timeout`` (default ``10``) - is the number of seconds during which a
    response is awaited.
@@ -227,17 +228,17 @@ At the service level, three sections can be configured:
 
     Attributes are supported only for the access service.
 
-- The ``peer-updates`` boolean flag controls whether lease updates coming from
-  an active High-Availability (HA) partner should result in an accounting
-  request. This may be desirable to remove duplicates if HA partners are
-  configured to send request to the same RADIUS server. The flag is enabled by
-  default and only supported by the accounting service. The lease
-  synchronization process at the startup of an HA node does not trigger a RADIUS
-  accounting request, regardless of the value of this flag.
+- The ``peer-updates`` boolean flag (default ``true``) controls whether lease
+  updates coming from an active High-Availability (HA) partner should result in
+  an accounting request. This may be desirable to remove duplicates if HA
+  partners are configured to send request to the same RADIUS server. The flag is
+  only supported by the accounting service. The lease synchronization process at
+  the startup of an HA node does not trigger a RADIUS accounting request,
+  regardless of the value of this flag.
 
-- The ``max-pending-requests`` positive integer value limits the number
-  of pending RADIUS requests, the value ``0`` means no limit. It is supported
-  only by the access service, its default is ``0`` (can change to e.g. 64?).
+- The ``max-pending-requests`` positive integer (default ``0``) limits the
+  number of pending RADIUS requests. The value ``0`` means no limit. It is
+  supported only by the access service. ``64`` can be a good value to set it to.
 
 For example, to specify a single access server available on localhost
 that uses ``"xyz123"`` as a secret, and tell Kea to send three additional
