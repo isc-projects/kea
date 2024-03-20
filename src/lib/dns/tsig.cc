@@ -17,7 +17,6 @@
 #include <dns/tsigerror.h>
 #include <dns/tsigkey.h>
 #include <util/buffer.h>
-#include <util/time_utilities.h>
 
 #include <cassert>
 #include <sys/time.h>

@@ -18,13 +18,13 @@
 #include <dns/rdata.h>
 #include <dns/rdataclass.h>
 #include <dns/rrtype.h>
+#include <dns/time_utils.h>
 #include <dns/tsigkey.h>
 #include <dns/tsigerror.h>
 #include <dns/txt_like.h>
 #include <util/buffer.h>
 #include <util/encode/encode.h>
 #include <util/buffer.h>
-#include <util/time_utilities.h>
 
 #include <cerrno>
 #include <cstring>
