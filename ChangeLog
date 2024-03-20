@@ -1,3 +1,7 @@
+2212.	[build]		tomek
+	The jinja dependency, used in building documentation, was updated.
+	(Gitla #3079)
+
 2211.	[bug]		razvan,tmark
 	Corrected an issue in kea-dhcp4 and kea-dhcp6 that
 	causes an infinite loop when database does not exist
