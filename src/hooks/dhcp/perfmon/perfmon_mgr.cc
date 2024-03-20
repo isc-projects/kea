@@ -27,7 +27,8 @@ PerfMonMgr::PerfMonMgr(uint16_t family_)
 
 void PerfMonMgr::configure(const ConstElementPtr & params) {
     if (!params) {
-        isc_throw(dhcp::DhcpConfigError, "params must not be null");
+        // User wants passive logging only.
+        setEnableMonitoring(false);
         return;
     }
 

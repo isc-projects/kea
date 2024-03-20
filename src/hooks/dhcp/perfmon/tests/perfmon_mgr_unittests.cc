@@ -58,7 +58,7 @@ public:
         // Verify initial values.
         ASSERT_NO_THROW_LOG(mgr.reset(new PerfMonMgr(family_)));
         ASSERT_TRUE(mgr);
-        EXPECT_TRUE(mgr->getEnableMonitoring());
+        EXPECT_FALSE(mgr->getEnableMonitoring());
         EXPECT_EQ(mgr->getIntervalDuration(), seconds(60));
         EXPECT_TRUE(mgr->getStatsMgrReporting());
         EXPECT_EQ(mgr->getAlarmReportInterval(), seconds(300));

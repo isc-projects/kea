@@ -44,15 +44,15 @@ public:
         // Verify initial values.
         ASSERT_NO_THROW_LOG(config.reset(new PerfMonConfig(family_)));
         ASSERT_TRUE(config);
-        EXPECT_TRUE(config->getEnableMonitoring());
+        EXPECT_FALSE(config->getEnableMonitoring());
         EXPECT_EQ(config->getIntervalWidthSecs(), 60);
         EXPECT_TRUE(config->getStatsMgrReporting());
         EXPECT_EQ(config->getAlarmReportSecs(), 300);
         EXPECT_TRUE(config->getAlarmStore());
 
         // Verify accessors.
-        EXPECT_NO_THROW_LOG(config->setEnableMonitoring(false));
-        EXPECT_FALSE(config->getEnableMonitoring());
+        EXPECT_NO_THROW_LOG(config->setEnableMonitoring(true));
+        EXPECT_TRUE(config->getEnableMonitoring());
 
         EXPECT_NO_THROW_LOG(config->setIntervalWidthSecs(4));
         EXPECT_EQ(config->getIntervalWidthSecs(), 4);
@@ -65,7 +65,7 @@ public:
 
         // Verify shallow copy construction.
         PerfMonConfigPtr config2(new PerfMonConfig(*config));
-        EXPECT_FALSE(config2->getEnableMonitoring());
+        EXPECT_TRUE(config2->getEnableMonitoring());
         EXPECT_EQ(config2->getIntervalWidthSecs(), 4);
         EXPECT_FALSE(config2->getStatsMgrReporting());
         EXPECT_EQ(config2->getAlarmReportSecs(), 120);
@@ -92,43 +92,43 @@ public:
                 // Empty map
                 __LINE__,
                 R"({ })",
-                true, 60, true, 300
+                false, 60, true, 300
             },
             {
                 // Only enable-monitoring",
                 __LINE__,
-                R"({ "enable-monitoring" : false })",
-                false, 60, true, 300
+                R"({ "enable-monitoring" : true })",
+                true, 60, true, 300
             },
             {
                 // Only interval-width-secs",
                 __LINE__,
                 R"({ "interval-width-secs" : 3 })",
-                true, 3, true, 300
+                false, 3, true, 300
             },
             {
                 // Only stats-mgr-reporting",
                 __LINE__,
                 R"({ "stats-mgr-reporting" : false })",
-                true, 60, false, 300
+                false, 60, false, 300
             },
             {
                 // Only alarm-report-secs",
                 __LINE__,
                 R"({ "alarm-report-secs" : 77 })",
-                true, 60, true, 77
+                false, 60, true, 77
             },
             {
                 // All parameters",
                 __LINE__,
                 R"(
                 {
-                    "enable-monitoring" : false,
+                    "enable-monitoring" : true,
                     "interval-width-secs" : 2,
                     "stats-mgr-reporting" : false,
                     "alarm-report-secs" : 120
                 })",
-                false, 2, false, 120
+                true, 2, false, 120
             },
         };
 

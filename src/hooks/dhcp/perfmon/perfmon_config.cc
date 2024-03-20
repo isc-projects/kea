@@ -264,7 +264,7 @@ PerfMonConfig::CONFIG_KEYWORDS =
 
 PerfMonConfig::PerfMonConfig(uint16_t family)
     : family_(family),
-      enable_monitoring_(true),
+      enable_monitoring_(false),
       interval_width_secs_(60),
       stats_mgr_reporting_(true),
       alarm_report_secs_(300) {
