@@ -33,6 +33,7 @@ uint16_t
 DurationKeyParser::getMessageNameType4(const std::string& name) {
     static std::map<std::string, uint16_t> name_type_map = {
         {"",                        DHCP_NOTYPE},
+        {"*",                       DHCP_NOTYPE},
         {"DHCPDISCOVER",            DHCPDISCOVER},
         {"DHCPOFFER",               DHCPOFFER},
         {"DHCPREQUEST",             DHCPREQUEST},
@@ -63,6 +64,7 @@ uint16_t
 DurationKeyParser::getMessageNameType6(const std::string& name) {
     static std::map<std::string, uint16_t> name_type_map = {
 	    {"",            	    DHCPV6_NOTYPE},
+	    {"*",            	    DHCPV6_NOTYPE},
 		{"SOLICIT",			    DHCPV6_SOLICIT},
 		{"ADVERTISE",			DHCPV6_ADVERTISE},
 		{"REQUEST",			    DHCPV6_REQUEST},

@@ -188,6 +188,15 @@ public:
         return (subnet_id_);
     }
 
+    /// @brief Get a label for a family-specific message type (e.g.
+    ///  "DHCPDISCOVER", "SOLICIT")
+    ///
+    /// @param family Protocol family of the key (AF_INET or AF_INET6)
+    /// @param msg_type numeric message type to translate
+    ///
+    /// @return Text label, for values of DHCP_NOTYPE or DHCPV6_NOTYPE: "*"
+    static std::string getMessageTypeLabel(uint16_t family, uint16_t msg_type);
+
     /// @brief Get a composite label of the member values with text message types.
     ///
     /// The format of the string:
@@ -201,7 +210,7 @@ public:
     ///
     ///     or
     ///
-    ///     "DHCPV6_SOLICIT-DHCPV6_ADVERTISE.socket_received.buffer_read.12"
+    ///     "SOLICIT-ADVERTISE.socket_received.buffer_read.12"
     ///
     /// @endcode
     ///

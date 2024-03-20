@@ -157,17 +157,21 @@ DurationKey::validateMessagePair(uint16_t family, uint8_t query_type, uint8_t re
 }
 
 std::string
-DurationKey::getLabel() const {
-    std::ostringstream oss;
-    if (family_ == AF_INET) {
-        oss << (query_type_ == DHCP_NOTYPE ? "NONE" : Pkt4::getName(query_type_)) << "-"
-            << (response_type_ == DHCP_NOTYPE ? "NONE" : Pkt4::getName(response_type_));
-    } else {
-        oss << (query_type_ == DHCPV6_NOTYPE ? "NONE" : Pkt6::getName(query_type_)) << "-"
-            << (response_type_ == DHCPV6_NOTYPE ? "NONE" : Pkt6::getName(response_type_));
+DurationKey::getMessageTypeLabel(uint16_t family, uint16_t msg_type) {
+    if (family == AF_INET) {
+        return (msg_type == DHCP_NOTYPE ? "*" : Pkt4::getName(msg_type));
     }
 
-    oss << "." << start_event_label_ << "-" << stop_event_label_
+    return (msg_type == DHCPV6_NOTYPE ? "*" : Pkt6::getName(msg_type));
+}
+
+std::string
+DurationKey::getLabel() const {
+    std::ostringstream oss;
+    oss << getMessageTypeLabel(family_, query_type_)
+       << "-"
+        << getMessageTypeLabel(family_, response_type_)
+        << "." << start_event_label_ << "-" << stop_event_label_
         << "." << subnet_id_;
 
     return (oss.str());

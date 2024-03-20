@@ -42,16 +42,42 @@ public:
     virtual ~PerfMonLibLoadTest() {
         unloadLibraries();
     }
+
+    /// @brief Creates a valid set configuration parameters valid for the library.
+    virtual isc::data::ElementPtr validConfigParams() {
+        std::string valid_config =
+            R"({
+                    "enable-monitoring" : true,
+                    "interval-width-secs" : 5,
+                    "stats-mgr-reporting"  : true,
+                    "alarm-report-secs" : 600,
+                    "alarms": [{
+                            "duration-key": {
+                                "query-type" : "*",
+                                "response-type" : "*",
+                                "start-event" : "socket-received",
+                                "stop-event" : "buffer-read",
+                                "subnet-id" : 70
+                                },
+                            "enable-alarm" : true,
+                            "high-water-ms" : 500,
+                            "low-water-ms" : 25
+                        }]
+                })";
+
+        // Convert JSON texts to Element map.
+        return (Element::fromJSON(valid_config));
+    }
 };
 
 // Simple V4 test that checks the library can be loaded and unloaded several times.
 TEST_F(PerfMonLibLoadTest, validLoad4) {
-    validDaemonTest("kea-dhcp4");
+    validDaemonTest("kea-dhcp4", AF_INET, valid_params_);
 }
 
 // Simple V6 test that checks the library can be loaded and unloaded several times.
 TEST_F(PerfMonLibLoadTest, validLoad6) {
-    validDaemonTest("kea-dhcp6", AF_INET6);
+    validDaemonTest("kea-dhcp6", AF_INET6, valid_params_);
 }
 
 // Simple test that checks the library cannot by loaded by invalid daemons.

@@ -165,6 +165,32 @@ TEST_F(DurationKeyParserTest, validScenarios4) {
             })",
             DHCPDISCOVER, DHCPOFFER, "start_here", "stop_there", SUBNET_ID_GLOBAL
         },
+        {
+            // Empty message types should map to DHCP_NOTYPE
+            __LINE__,
+            R"(
+            {
+                "query-type": "",
+                "response-type": "",
+                "start-event": "start_here",
+                "stop-event": "stop_there",
+                "subnet-id": 701
+            })",
+            DHCP_NOTYPE, DHCP_NOTYPE, "start_here", "stop_there", 701
+        },
+        {
+            // "*" message types should map to DHCP_NOTYPE
+            __LINE__,
+            R"(
+            {
+                "query-type": "*",
+                "response-type": "*",
+                "start-event": "start_here",
+                "stop-event": "stop_there",
+                "subnet-id": 701
+            })",
+            DHCP_NOTYPE, DHCP_NOTYPE, "start_here", "stop_there", 701
+        },
     };
 
     testValidScenarios(scenarios, AF_INET);
@@ -385,6 +411,32 @@ TEST_F(DurationKeyParserTest, parseValidScenarios6) {
                 "subnet-id": 0
             })",
             DHCPV6_SOLICIT, DHCPV6_ADVERTISE, "start_here", "stop_there", SUBNET_ID_GLOBAL
+        },
+        {
+            // Empty message types should map to DHCPV6_NOTYPE
+            __LINE__,
+            R"(
+            {
+                "query-type": "",
+                "response-type": "",
+                "start-event": "start_here",
+                "stop-event": "stop_there",
+                "subnet-id": 701
+            })",
+            DHCPV6_NOTYPE, DHCPV6_NOTYPE, "start_here", "stop_there", 701
+        },
+        {
+            // "*" message types should map to DHCPV6_NOTYPE
+            __LINE__,
+            R"(
+            {
+                "query-type": "*",
+                "response-type": "*",
+                "start-event": "start_here",
+                "stop-event": "stop_there",
+                "subnet-id": 701
+            })",
+            DHCPV6_NOTYPE, DHCPV6_NOTYPE, "start_here", "stop_there", 701
         },
     };
 

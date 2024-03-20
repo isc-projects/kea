@@ -37,7 +37,7 @@ namespace perfmon {
 ///                },
 ///                "enable-alarm" : true,
 ///                "high-water-ms" : 500,
-///                "low-water-ms" : 25,
+///                "low-water-ms" : 25
 ///            },
 ///            ..
 ///            }]

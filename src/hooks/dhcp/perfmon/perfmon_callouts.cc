@@ -11,11 +11,22 @@
 #include <config.h>
 
 #include <perfmon_log.h>
+#include <perfmon_mgr.h>
 #include <cc/command_interpreter.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <hooks/hooks.h>
 #include <process/daemon.h>
 
+namespace isc {
+namespace perfmon {
+
+/// @brief PerfMonMgr singleton
+PerfMonMgrPtr mgr;
+
+} // end of namespace perfmon
+}
+
+using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::hooks;
 using namespace isc::log;
@@ -88,24 +99,34 @@ int pkt6_send(CalloutHandle& handle) {
 ///
 /// @param handle library handle
 /// @return 0 when initialization is successful, 1 otherwise
-int load(LibraryHandle& /* handle */) {
-    // Make the hook library not loadable by d2 or ca.
-    uint16_t family = CfgMgr::instance().getFamily();
-    const std::string& proc_name = Daemon::getProcName();
-    if (family == AF_INET) {
-        if (proc_name != "kea-dhcp4") {
-            isc_throw(isc::Unexpected, "Bad process name: " << proc_name
-                      << ", expected kea-dhcp4");
-        }
-    } else {
-        if (proc_name != "kea-dhcp6") {
+int load(LibraryHandle& handle) {
+    try {
+        // Make the hook library only loadable for kea-dhcpX.
+        uint16_t family = CfgMgr::instance().getFamily();
+        const std::string& proc_name = Daemon::getProcName();
+        if (family == AF_INET) {
+            if (proc_name != "kea-dhcp4") {
+                isc_throw(isc::Unexpected, "Bad process name: " << proc_name
+                          << ", expected kea-dhcp4");
+            }
+        } else if (proc_name != "kea-dhcp6") {
             isc_throw(isc::Unexpected, "Bad process name: " << proc_name
                       << ", expected kea-dhcp6");
         }
-    }
 
-    /// @todo register commands
-    /// handle.registerCommandCallout("command-here", handler_here);
+        // Instantiate the manager singleton.
+        mgr.reset(new PerfMonMgr(family));
+
+        // Configure the manager using the hook library's parameters.
+        ConstElementPtr json = handle.getParameters();
+        mgr->configure(json);
+
+        /// @todo register commands
+        /// handle.registerCommandCallout("command-here", handler_here);
+    } catch (const std::exception& ex) {
+        LOG_ERROR(perfmon_logger, PERFMON_INIT_FAILED).arg(ex.what());
+        return (1);
+    }
 
     LOG_INFO(perfmon_logger, PERFMON_INIT_OK);
     return (0);

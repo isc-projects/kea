@@ -117,7 +117,8 @@ public:
         EXPECT_EQ(mgr->getAlarmStore()->getFamily(), family_);
         AlarmCollectionPtr alarms = mgr->getAlarmStore()->getAll();
         ASSERT_EQ(alarms->size(), 1);
-        DurationKeyPtr key(new DurationKey(family_, 0, 0, "process-started", "process-completed", 70));
+        DurationKeyPtr key(new DurationKey(family_, 0, 0, "process-started",
+                                           "process-completed", 70));
         AlarmPtr alarm = (*alarms)[0];
         ASSERT_TRUE(alarm);
         EXPECT_EQ(*alarm, *key) << "alarm:" << alarm->getLabel();
