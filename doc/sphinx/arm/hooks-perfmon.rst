@@ -146,7 +146,7 @@ An example of the anticipated configuration is shown below:
                     "low-water-ms" : 25
                 }]
             }
-        }],
+        }]
     }
 
 ..
