@@ -32,7 +32,6 @@ the server's configuration:
         ],
         ...
     }
-..
 
 It tracks the life cycle of client query packets as they are processed by Kea,
 beginning with when the query was received by the kernel to when the response
@@ -148,8 +147,6 @@ An example of the anticipated configuration is shown below:
             }
         }]
     }
-
-..
 
 Where:
 
