@@ -32,12 +32,12 @@ def main():
 
                 header = None
 
+                backslash_matches = backslash_pattern.search(line)
                 headers_matches = headers_pattern.search(line)
                 if headers_matches is None:
                     if not in_headers_block:
                         continue
 
-                    backslash_matches = backslash_pattern.search(line)
                     if backslash_matches is None:
                         header = line
                         in_headers_block = False
@@ -45,8 +45,9 @@ def main():
                         header = backslash_matches.group(1)
                 else:
                     in_headers_block = True
-                    if '\\' in headers_matches.group(2) and len(headers_matches.group(1)) != 0:
-                        header = headers_matches.group(1)
+                    candidate = headers_matches.group(1)
+                    if backslash_matches is None and len(candidate):
+                        header = candidate
 
                 if header is not None:
                     relative_path = makefile_am.parent / header.strip()
