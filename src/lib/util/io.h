@@ -23,7 +23,7 @@ namespace util {
 ///
 /// \return Value of the integer.
 template <typename uint_t>
-constexpr uint_t
+uint_t
 readUint(void const* const buffer, size_t const length) {
     constexpr size_t size(sizeof(uint_t));
     if (length < size) {
@@ -52,7 +52,7 @@ readUint(void const* const buffer, size_t const length) {
 ///
 /// \return pointer to the next byte after stored value
 template <typename uint_t>
-constexpr uint8_t*
+uint8_t*
 writeUint(uint_t const value, void* const buffer, size_t const length) {
     constexpr size_t size(sizeof(uint_t));
     if (length < size) {
@@ -72,37 +72,37 @@ writeUint(uint_t const value, void* const buffer, size_t const length) {
 }
 
 /// \brief uint16_t wrapper over readUint.
-constexpr inline uint16_t
+inline uint16_t
 readUint16(void const* const buffer, size_t const length) {
     return (readUint<uint16_t>(buffer, length));
 }
 
 /// \brief uint32_t wrapper over readUint.
-constexpr inline uint32_t
+inline uint32_t
 readUint32(void const* const buffer, size_t const length) {
     return (readUint<uint32_t>(buffer, length));
 }
 
 /// \brief uint16_t wrapper over readUint.
-constexpr inline uint64_t
+inline uint64_t
 readUint64(void const* const buffer, size_t const length) {
     return (readUint<uint64_t>(buffer, length));
 }
 
 /// \brief uint16_t wrapper over writeUint.
-constexpr inline uint8_t*
+inline uint8_t*
 writeUint16(uint16_t const value, void* const buffer, size_t const length) {
     return (writeUint(value, buffer, length));
 }
 
 /// \brief uint32_t wrapper over writeUint.
-constexpr inline uint8_t*
+inline uint8_t*
 writeUint32(uint32_t const value, void* const buffer, size_t const length) {
     return (writeUint(value, buffer, length));
 }
 
 /// \brief uint64_t wrapper over writeUint.
-constexpr inline uint8_t*
+inline uint8_t*
 writeUint64(uint64_t const value, void* const buffer, size_t const length) {
     return (writeUint(value, buffer, length));
 }
