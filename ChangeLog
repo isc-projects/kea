@@ -1,3 +1,9 @@
+2210.	[func]		piotrek
+	Added libkea-dhcp++, libkea-cfgclient, libkea-d2srv,
+	libkea-dhcpsrv, libkea-util and libkea-util-io headers that were
+	missing after Kea install. Now all needed headers are installed.
+	(Gitlab #3267)
+
 2209.	[func]		fdupont
 	Some hooks using multi-threading postpone their startup until
 	after the configuration has been completed.  If the hook
