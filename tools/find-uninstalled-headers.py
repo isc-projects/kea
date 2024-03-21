@@ -12,6 +12,11 @@ import re
 import sys
 
 
+EXCLUDE_LIST = [
+    'src/lib/dns/name_internal.h',
+]
+
+
 def main():
     makefile_ams = sorted(pathlib.Path('./src/lib').glob('**/Makefile.am'))
     headers = sorted(pathlib.Path('./src/lib').glob('**/*.h'))
@@ -59,13 +64,16 @@ def main():
 
     first = True
     for header in headers:
-        if not any(i in header.parts for i in ['tests', 'testutils', 'unittests']):
-            if first:
-                print('The following headers are not in the _HEADERS section of '
-                      'their respective Makefile.am file:')
-                first = False
-            print(f'- {header}')
-            failure = True
+        if str(header) in EXCLUDE_LIST:
+            continue
+        if any(i in header.parts for i in ['tests', 'testutils', 'unittests']):
+            continue
+        if first:
+            print('The following headers are not in the _HEADERS section of '
+                    'their respective Makefile.am file:')
+            first = False
+        print(f'- {header}')
+        failure = True
 
     if failure:
         sys.exit(1)
