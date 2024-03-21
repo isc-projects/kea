@@ -1,3 +1,9 @@
+2211.	[bug]		razvan,tmark
+	Corrected an issue in kea-dhcp4 and kea-dhcp6 that
+	causes an infinite loop when database does not exist
+	at startup introduced by #2692.
+	(Gitlab #3300)
+
 2210.	[func]		piotrek
 	Added libkea-dhcp++, libkea-cfgclient, libkea-d2srv,
 	libkea-dhcpsrv, libkea-util and libkea-util-io headers that were
