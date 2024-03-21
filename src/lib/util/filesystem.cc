@@ -42,7 +42,7 @@ getContent(string const& file_name) {
     }
     string content;
     file >> content;
-    return content;
+    return (content);
 }
 
 bool
@@ -148,7 +148,7 @@ Path::replaceExtension(string const& replacement) {
             extension_ = trimmed_replacement.substr(last_dot);
         }
     }
-    return *this;
+    return (*this);
 }
 
 Path&
@@ -161,7 +161,7 @@ Path::replaceParentPath(string const& replacement) {
     } else {
         parent_path_ = trimmed_replacement + '/';
     }
-    return *this;
+    return (*this);
 }
 
 }  // namespace file

@@ -73,7 +73,7 @@ struct Path {
     ///
     /// Counterpart for std::filesystem::path::stem.
     ///
-    /// \return the base name of the file without the extension.
+    /// \return the base name of current path without the extension.
     std::string stem() const;
 
     /// \brief Get the extension of the file.
@@ -83,9 +83,9 @@ struct Path {
     /// \return extension of current path.
     std::string extension() const;
 
-    /// \brief Get the extension of the file.
+    /// \brief Get the name of the file, extension included.
     ///
-    /// Counterpart for std::filesystem::path::extension.
+    /// Counterpart for std::filesystem::path::filename.
     ///
     /// \return name + extension of current path.
     std::string filename() const;

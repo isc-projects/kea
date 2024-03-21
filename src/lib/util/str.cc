@@ -31,21 +31,21 @@ namespace str {
 string
 trim(const string& input) {
     if (input.empty()) {
-        return string();
+        return (string());
     }
     static const char* blanks = " \t\n";
 
     // Search for first non-blank character in the string.
     size_t const first(input.find_first_not_of(blanks));
     if (first == string::npos) {
-        return string();
+        return (string());
     }
 
     // String not all blanks, so look for last character.
     size_t const last(input.find_last_not_of(blanks));
 
     // Extract the trimmed substring.
-    return input.substr(first, (last - first + 1));
+    return (input.substr(first, (last - first + 1)));
 }
 
 vector<string>
@@ -329,7 +329,7 @@ isPrintable(const vector<uint8_t>& content) {
 string
 dumpAsHex(const uint8_t* data, size_t length) {
     stringstream output;
-    for (unsigned int i = 0; i < length; i++) {
+    for (size_t i = 0; i < length; ++i) {
         if (i) {
             output << ":";
         }

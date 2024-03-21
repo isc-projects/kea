@@ -23,7 +23,7 @@ namespace util {
 ///
 /// \return Value of the integer.
 template <typename uint_t>
-uint_t
+constexpr uint_t
 readUint(void const* const buffer, size_t const length) {
     constexpr size_t size(sizeof(uint_t));
     if (length < size) {
@@ -33,10 +33,11 @@ readUint(void const* const buffer, size_t const length) {
     }
 
     uint8_t const* const byte_buffer(static_cast<uint8_t const*>(buffer));
-    uint_t result;
-    uint8_t* pointer_to_result(static_cast<uint8_t*>(static_cast<void*>(&result)));
+    uint_t result(0);
 
-    std::reverse_copy(byte_buffer, byte_buffer + size, pointer_to_result);
+    for (size_t i = 0; i < size; ++i) {
+        result |= (static_cast<uint_t>(byte_buffer[i])) << (8 * (size - (i + 1)));
+    }
 
     return (result);
 }
@@ -51,7 +52,7 @@ readUint(void const* const buffer, size_t const length) {
 ///
 /// \return pointer to the next byte after stored value
 template <typename uint_t>
-uint8_t*
+constexpr uint8_t*
 writeUint(uint_t const value, void* const buffer, size_t const length) {
     constexpr size_t size(sizeof(uint_t));
     if (length < size) {
@@ -60,48 +61,50 @@ writeUint(uint_t const value, void* const buffer, size_t const length) {
                                   << (length == 1 ? "" : "s") << " instead");
     }
 
-    uint8_t const* pointer_to_value(static_cast<uint8_t const*>(static_cast<void const*>(&value)));
     uint8_t* byte_buffer(static_cast<uint8_t*>(buffer));
 
-    std::reverse_copy(pointer_to_value, pointer_to_value + size, byte_buffer);
+    for (size_t i = 0; i < size; ++i) {
+        uint8_t const shift_by(8 * (size - (i + 1)));
+        byte_buffer[i] = uint8_t((value & (uint_t(0xff) << shift_by)) >> shift_by);
+    }
 
     return (byte_buffer + size);
 }
 
 /// \brief uint16_t wrapper over readUint.
-inline uint16_t
+constexpr inline uint16_t
 readUint16(void const* const buffer, size_t const length) {
-    return readUint<uint16_t>(buffer, length);
+    return (readUint<uint16_t>(buffer, length));
 }
 
 /// \brief uint32_t wrapper over readUint.
-inline uint32_t
+constexpr inline uint32_t
 readUint32(void const* const buffer, size_t const length) {
-    return readUint<uint32_t>(buffer, length);
+    return (readUint<uint32_t>(buffer, length));
 }
 
 /// \brief uint16_t wrapper over readUint.
-inline uint64_t
+constexpr inline uint64_t
 readUint64(void const* const buffer, size_t const length) {
-    return readUint<uint64_t>(buffer, length);
+    return (readUint<uint64_t>(buffer, length));
 }
 
 /// \brief uint16_t wrapper over writeUint.
-inline uint8_t*
+constexpr inline uint8_t*
 writeUint16(uint16_t const value, void* const buffer, size_t const length) {
-    return writeUint(value, buffer, length);
+    return (writeUint(value, buffer, length));
 }
 
 /// \brief uint32_t wrapper over writeUint.
-inline uint8_t*
+constexpr inline uint8_t*
 writeUint32(uint32_t const value, void* const buffer, size_t const length) {
-    return writeUint(value, buffer, length);
+    return (writeUint(value, buffer, length));
 }
 
 /// \brief uint64_t wrapper over writeUint.
-inline uint8_t*
+constexpr inline uint8_t*
 writeUint64(uint64_t const value, void* const buffer, size_t const length) {
-    return writeUint(value, buffer, length);
+    return (writeUint(value, buffer, length));
 }
 
 }  // namespace util
