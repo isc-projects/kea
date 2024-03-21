@@ -70,7 +70,7 @@ def main():
             continue
         if first:
             print('The following headers are not in the _HEADERS section of '
-                    'their respective Makefile.am file:')
+                  'their respective Makefile.am file:')
             first = False
         print(f'- {header}')
         failure = True
