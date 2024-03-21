@@ -918,7 +918,7 @@ ControlledDhcpv6Srv::processConfig(isc::data::ConstElementPtr config) {
 
     // Allow DB reconnect on startup. The database connection parameters specify
     // respective details.
-    DbConnectionInitWithRetry retry;
+    std::shared_ptr<DbConnectionInitWithRetry> dbr(new DbConnectionInitWithRetry());
 
     // Single stream instance used in all error clauses
     std::ostringstream err;
@@ -1111,6 +1111,8 @@ ControlledDhcpv6Srv::processConfig(isc::data::ConstElementPtr config) {
             << ex.what();
         return (isc::config::createAnswer(CONTROL_RESULT_ERROR, err.str()));
     }
+
+    dbr.reset();
 
     /// Let postponed hook initializations to run.
     try {
