@@ -1,19 +1,22 @@
 #!/usr/bin/env python3
 
 """
-This script checks that all source headers are installed by inspecting Makefile.am files.
+This script checks that all source headers are installed by inspecting
+Makefile.am files.
 
-Usage: ./find-uninstalled-headers.py
+Usage: ./tools/find-uninstalled-headers.py
 """
 
 import pathlib
 import re
+import sys
+
 
 def main():
     makefile_ams = sorted(pathlib.Path('./src/lib').glob('**/Makefile.am'))
     headers = sorted(pathlib.Path('./src/lib').glob('**/*.h'))
 
-    headers_pattern = re.compile(r'_HEADERS [\+]{0,1}= (.*\.h|)(.*)')
+    headers_pattern = re.compile(r'_HEADERS [+]?= (.*\.h|)(.*)')
     backslash_pattern = re.compile(r'(.*\.h) \\$')
 
     failure = False
@@ -57,13 +60,15 @@ def main():
     for header in headers:
         if not any(i in header.parts for i in ['tests', 'testutils', 'unittests']):
             if first:
-                print('The following headers are not in the _HEADERS section of their respective Makefile.am file:')
+                print('The following headers are not in the _HEADERS section of '
+                      'their respective Makefile.am file:')
                 first = False
             print(f'- {header}')
             failure = True
 
     if failure:
-        exit(1)
+        sys.exit(1)
+
 
 if __name__ == '__main__':
     main()
