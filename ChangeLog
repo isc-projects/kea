@@ -1,9 +1,14 @@
+2213.	[build]		razvan
+	The library version numbers have been bumped up for the Kea 2.5.7
+	development release.
+	(Gitlab #3304)
+
 2212.	[build]		tomek
 	The jinja dependency, used in building documentation, was
 	updated.
 	(Gitlab #3079)
 
-2211.	[bug]		razvan,tmark
+2211.	[bug]		razvan, tmark
 	Corrected an issue in kea-dhcp4 and kea-dhcp6 that
 	causes an infinite loop when database does not exist
 	at startup introduced by #2692.
