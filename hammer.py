@@ -43,12 +43,11 @@ import xml.etree.ElementTree as ET
 
 
 # SYSTEMS = {
-#     'os': [
-#         ( 'version', True if supported else False ),
+#     'os': {
+#         'version': True if supported else False,
 #         ...
-#     ],
-#     ...
-# }
+#     },
+
 SYSTEMS = {
     'fedora': {
         '27': False,
@@ -61,7 +60,7 @@ SYSTEMS = {
         '34': False,
         '35': False,
         '36': False,
-        '37': True,
+        '37': False,
         '38': True,
         '39': True,
     },
