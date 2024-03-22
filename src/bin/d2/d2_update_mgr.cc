@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -100,17 +100,26 @@ D2UpdateMgr::checkFinishedTransactions() {
 void D2UpdateMgr::pickNextJob() {
     // Start at the front of the queue, looking for the first entry for
     // which no transaction is in progress.  If we find an eligible entry
-    // remove it from the queue and  make a transaction for it.
+    // remove it from the queue and  make a transaction for it.  If the
+    // transaction creation fails try the next entry in the queue.
     // Requests and transactions are associated by DHCID.  If a request has
     // the same DHCID as a transaction, they are presumed to be for the same
     // "end user".
     size_t queue_count = getQueueCount();
-    for (size_t index = 0; index < queue_count; ++index) {
+    for (size_t index = 0; index < queue_count; ) {
         dhcp_ddns::NameChangeRequestPtr found_ncr = queue_mgr_->peekAt(index);
-        if (!hasTransaction(found_ncr->getDhcid())) {
+        if (hasTransaction(found_ncr->getDhcid())) {
+            // Leave it on the queue, move on to the next.
+            ++index;
+        } else {
+            // Dequeue it and try to make transaction for it.
             queue_mgr_->dequeueAt(index);
-            makeTransaction(found_ncr);
-            return;
+            if (makeTransaction(found_ncr)) {
+                return;
+            }
+
+            // One less in the queue.
+            --queue_count;
         }
     }
 
@@ -121,7 +130,7 @@ void D2UpdateMgr::pickNextJob() {
         .arg(getQueueCount()).arg(getTransactionCount());
 }
 
-void
+bool
 D2UpdateMgr::makeTransaction(dhcp_ddns::NameChangeRequestPtr& next_ncr) {
     // First lets ensure there is not a transaction in progress for this
     // DHCID. (pickNextJob should ensure this, as it is the only real caller
@@ -153,7 +162,7 @@ D2UpdateMgr::makeTransaction(dhcp_ddns::NameChangeRequestPtr& next_ncr) {
                 LOG_ERROR(dhcp_to_d2_logger, DHCP_DDNS_NO_FWD_MATCH_ERROR)
                           .arg(next_ncr->getRequestId())
                           .arg(next_ncr->toText());
-                return;
+                return (false);
             }
 
             ++direction_count;
@@ -179,7 +188,7 @@ D2UpdateMgr::makeTransaction(dhcp_ddns::NameChangeRequestPtr& next_ncr) {
                 LOG_ERROR(dhcp_to_d2_logger, DHCP_DDNS_NO_REV_MATCH_ERROR)
                           .arg(next_ncr->getRequestId())
                           .arg(next_ncr->toText());
-                return;
+                return (false);
             }
 
             ++direction_count;
@@ -193,7 +202,7 @@ D2UpdateMgr::makeTransaction(dhcp_ddns::NameChangeRequestPtr& next_ncr) {
                   DHCP_DDNS_REQUEST_DROPPED)
                   .arg(next_ncr->getRequestId())
                   .arg(next_ncr->toText());
-        return;
+        return (false);
     }
 
     // We matched to the required servers, so construct the transaction.
@@ -257,6 +266,7 @@ D2UpdateMgr::makeTransaction(dhcp_ddns::NameChangeRequestPtr& next_ncr) {
 
     // Start it.
     trans->startTransaction();
+    return (true);
 }
 
 TransactionList::iterator

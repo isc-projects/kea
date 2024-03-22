@@ -583,6 +583,60 @@ TEST_F(D2UpdateMgrTest, pickNextJob) {
     EXPECT_EQ(0, update_mgr_->getQueueCount());
 }
 
+/// @brief Tests D2UpdateManager's pickNextJob method.
+/// This test verifies that pickNextJob skips over requests
+/// for which makeTransation() fails.
+TEST_F(D2UpdateMgrTest, pickNextJobSkips) {
+    // Ensure we have at least 4 canned requests with which to work.
+    ASSERT_TRUE(canned_count_ >= 4);
+
+    // Enqueue a forward change NCR with an FQDN that has no forward match.
+    dhcp_ddns::NameChangeRequestPtr bogus_ncr;
+    bogus_ncr.reset(new dhcp_ddns::NameChangeRequest(*(canned_ncrs_[0])));
+    bogus_ncr->setForwardChange(true);
+    bogus_ncr->setReverseChange(false);
+    bogus_ncr->setFqdn("bogus.forward.domain.com");
+    ASSERT_NO_THROW(queue_mgr_->enqueue(bogus_ncr));
+
+    // Enqueue a reverse change NCR with an FQDN that has no reverse match.
+    bogus_ncr.reset(new dhcp_ddns::NameChangeRequest(*(canned_ncrs_[0])));
+    bogus_ncr->setForwardChange(false);
+    bogus_ncr->setReverseChange(true);
+    bogus_ncr->setIpAddress("77.77.77.77");
+    ASSERT_NO_THROW(queue_mgr_->enqueue(bogus_ncr));
+
+    // Put the valid transactions on the queue.
+    for (int i = 0; i < canned_count_; i++) {
+        ASSERT_NO_THROW(queue_mgr_->enqueue(canned_ncrs_[i]));
+    }
+
+    ASSERT_EQ(2 + canned_count_, update_mgr_->getQueueCount());
+    ASSERT_EQ(0, update_mgr_->getTransactionCount());
+
+    // Invoke pickNextJob once.
+    EXPECT_NO_THROW(update_mgr_->pickNextJob());
+    EXPECT_EQ(1, update_mgr_->getTransactionCount());
+    EXPECT_TRUE(update_mgr_->hasTransaction(canned_ncrs_[0]->getDhcid()));
+
+    // Verify that the queue has all but one of the canned requests still queued.
+    EXPECT_EQ(canned_count_ - 1, update_mgr_->getQueueCount());
+
+    // Empty the queue and transaction list.
+    queue_mgr_->clearQueue();
+    ASSERT_EQ(0, update_mgr_->getQueueCount());
+    update_mgr_->clearTransactionList();
+    EXPECT_EQ(0, update_mgr_->getTransactionCount());
+
+    // Add two no match requests.
+    ASSERT_NO_THROW(queue_mgr_->enqueue(bogus_ncr));
+    ASSERT_NO_THROW(queue_mgr_->enqueue(bogus_ncr));
+    ASSERT_EQ(2, update_mgr_->getQueueCount());
+
+    // Invoking pickNextJob() should empty the queue without adding transactions.
+    EXPECT_NO_THROW(update_mgr_->pickNextJob());
+    EXPECT_EQ(0, update_mgr_->getQueueCount());
+}
+
 /// @brief Tests D2UpdateManager's sweep method.
 /// Since sweep is primarily a wrapper around checkFinishedTransactions and
 /// pickNextJob, along with checks on maximum transaction limits, it mostly

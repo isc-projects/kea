@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -149,9 +149,11 @@ protected:
     ///
     /// @param ncr the NameChangeRequest for which to create a transaction.
     ///
+    /// @return True if a transaction was added, false otherwise.
+    ///
     /// @throw D2UpdateMgrError if a transaction for this DHCID already
     /// exists. Note this would be programmatic error.
-    void makeTransaction(isc::dhcp_ddns::NameChangeRequestPtr& ncr);
+    bool makeTransaction(isc::dhcp_ddns::NameChangeRequestPtr& ncr);
 
 public:
     /// @brief Gets the D2UpdateMgr's IOService.
