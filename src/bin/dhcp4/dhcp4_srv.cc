@@ -4833,17 +4833,18 @@ Dhcpv4Srv::getVersion(bool extended) {
     tmp << VERSION;
     if (extended) {
         tmp << endl << EXTENDED_VERSION << endl;
+        tmp << "premium: " << PREMIUM_EXTENDED_VERSION << endl;
         tmp << "linked with:" << endl;
-        tmp << Logger::getVersion() << endl;
-        tmp << CryptoLink::getVersion() << endl;
-        tmp << "database:" << endl;
+        tmp << "- " << Logger::getVersion() << endl;
+        tmp << "- " << CryptoLink::getVersion() << endl;
+        tmp << "backends:" << endl;
 #ifdef HAVE_MYSQL
-        tmp << MySqlLeaseMgr::getDBVersion() << endl;
+        tmp << "- " << MySqlLeaseMgr::getDBVersion() << endl;
 #endif
 #ifdef HAVE_PGSQL
-        tmp << PgSqlLeaseMgr::getDBVersion() << endl;
+        tmp << "- " << PgSqlLeaseMgr::getDBVersion() << endl;
 #endif
-        tmp << Memfile_LeaseMgr::getDBVersion(Memfile_LeaseMgr::V4);
+        tmp << "- " << Memfile_LeaseMgr::getDBVersion(Memfile_LeaseMgr::V4);
 
         // @todo: more details about database runtime
     }

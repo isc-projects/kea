@@ -147,6 +147,9 @@ AC_SUBST(PREMIUM_DIR)
 AC_SUBST(DISTCHECK_PREMIUM_CONFIGURE_FLAG)
 AX_PREMIUM
 
+# Export PREMIUM to kea_version.h.
+AC_SUBST(PREMIUM)
+
 # Include contrib configuration
 # (currently only a provision copied from premium support)
 CONTRIB_DIR=

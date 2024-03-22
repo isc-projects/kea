@@ -328,12 +328,12 @@ LFCController::getVersion(const bool extended) const{
         } else if (protocol_version_ == 6) {
             db_version = Memfile_LeaseMgr::getDBVersion(Memfile_LeaseMgr::V6);
         }
+
+        version_stream << std::endl << EXTENDED_VERSION;
         if (!db_version.empty()) {
-            db_version = "database: " + db_version;
+            db_version = "backend: " + db_version;
+            version_stream << std::endl << db_version;
         }
-        version_stream << std::endl
-                       << EXTENDED_VERSION << std::endl
-                       << db_version;
     }
 
     return (version_stream.str());
