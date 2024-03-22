@@ -60,8 +60,9 @@ else
         KEA_SRCID="tarball"
         AC_MSG_RESULT("tarball")
 fi
+
 # Export KEA_SRCID to config.h
-# This will be either "tarball" or "git abcd".
+# This will be either package version or "tarball" or "git abcd".
 # We do not want to put this in a config.h, because it messes up ccache
 # horribly. When building different branches, the commit-id is different
 # and since the config.h is included in most files *and* has a different
@@ -1863,7 +1864,7 @@ Package:
 END
 if test "$PREMIUM" != ""; then
 cat >> config.report << END
-  Premium hooks:     yes
+  Premium hooks:     ${PREMIUM}
   Included Hooks:   ${INCLUDED_HOOKS}
 END
 else
