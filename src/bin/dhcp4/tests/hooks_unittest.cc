@@ -4052,7 +4052,7 @@ TEST_F(LoadUnloadDhcpv4SrvTest, startServiceFail) {
     // section which loads the callout library #4, which implements
     // dhcp4_srv_configured callout and a failing start service.
     string config_str =
-        "{"
+        "{ \"Dhcp4\": {"
         "    \"interfaces-config\": {"
         "        \"interfaces\": [ ]"
         "    },"
@@ -4069,13 +4069,13 @@ TEST_F(LoadUnloadDhcpv4SrvTest, startServiceFail) {
         "            \"library\": \"" + std::string(CALLOUT_LIBRARY_4) + "\""
         "        }"
         "    ]"
-        "}";
+        "} }";
 
     ConstElementPtr config = Element::fromJSON(config_str);
 
     // Configure the server.
     ConstElementPtr answer;
-    ASSERT_NO_THROW(answer = srv->processConfig(config));
+    ASSERT_NO_THROW(answer = srv->processCommand("config-set", config));
 
     // Make sure there was an error with expected message.
     int status_code;

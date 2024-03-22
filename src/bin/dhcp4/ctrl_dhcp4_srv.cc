@@ -450,6 +450,16 @@ ControlledDhcpv4Srv::commandConfigSetHandler(const string&,
         LOG_FATAL(dhcp4_logger, DHCP4_CONFIG_UNRECOVERABLE_ERROR);
     }
 
+    /// Let postponed hook initializations to run.
+    try {
+        getIOService()->poll();
+    } catch (const std::exception& ex) {
+        std::ostringstream err;
+        err << "Error initializing hooks: "
+            << ex.what();
+        return (isc::config::createAnswer(CONTROL_RESULT_ERROR, err.str()));
+    }
+
     return (result);
 }
 
@@ -913,7 +923,7 @@ ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
 
     // Allow DB reconnect on startup. The database connection parameters specify
     // respective details.
-    std::shared_ptr<DbConnectionInitWithRetry> dbr(new DbConnectionInitWithRetry());
+    DbConnectionInitWithRetry retry;
 
     // Single stream instance used in all error clauses
     std::ostringstream err;
@@ -1088,17 +1098,6 @@ ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
         CfgMultiThreading::apply(CfgMgr::instance().getStagingCfg()->getDHCPMultiThreading());
     } catch (const std::exception& ex) {
         err << "Error applying multi threading settings: "
-            << ex.what();
-        return (isc::config::createAnswer(CONTROL_RESULT_ERROR, err.str()));
-    }
-
-    dbr.reset();
-
-    /// Let postponed hook initializations to run.
-    try {
-        ControlledDhcpv4Srv::getInstance()->getIOService()->poll();
-    } catch (const std::exception& ex) {
-        err << "Error initializing hooks: "
             << ex.what();
         return (isc::config::createAnswer(CONTROL_RESULT_ERROR, err.str()));
     }
