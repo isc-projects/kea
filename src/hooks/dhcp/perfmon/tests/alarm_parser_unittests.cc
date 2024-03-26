@@ -183,6 +183,26 @@ public:
                 "'high-water-ms' parameter is not an integer"
             },
             {
+                // Invalid zero value for high-water-ms
+                __LINE__,
+                R"(
+                    "enable-alarm": true,
+                    "high-water-ms": 0,
+                    "low-water-ms": 25
+                )",
+                "high-water-ms: '0', must be greater than 0"
+            },
+            {
+                // Invalid negative value for high-water-ms
+                __LINE__,
+                R"(
+                    "enable-alarm": true,
+                    "high-water-ms": -1,
+                    "low-water-ms": 25
+                )",
+                "high-water-ms: '-1', must be greater than 0"
+            },
+            {
                 // Missing low-water-ms
                 __LINE__,
                 R"(
@@ -200,6 +220,26 @@ public:
                     "low-water-ms": "bogus"
                 )",
                 "'low-water-ms' parameter is not an integer"
+            },
+            {
+                // Invalid zero value for low-water-ms
+                __LINE__,
+                R"(
+                    "enable-alarm": true,
+                    "high-water-ms": 500,
+                    "low-water-ms": 0
+                )",
+                "low-water-ms: '0', must be greater than 0"
+            },
+            {
+                // Invalid negative value for low-water-ms
+                __LINE__,
+                R"(
+                    "enable-alarm": true,
+                    "high-water-ms": 500,
+                    "low-water-ms": -1
+                )",
+                "low-water-ms: '-1', must be greater than 0"
             },
             {
                 // Invalid threshold combination

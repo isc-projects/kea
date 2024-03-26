@@ -194,6 +194,18 @@ public:
                 "'enable-monitoring' parameter is not a boolean"
             },
             {
+                // Invalid type for interval-width-secs
+                __LINE__,
+                R"(
+                {
+                    "enable-monitoring" : false,
+                    "interval-width-secs" : "bogus",
+                    "stats-mgr-reporting" : false,
+                    "alarm-report-secs" : 90
+                })",
+                "'interval-width-secs' parameter is not an integer"
+            },
+            {
                 // Value of interval-width-secs is zero
                 __LINE__,
                 R"(
@@ -228,6 +240,18 @@ public:
                     "alarm-report-secs": 90
                 })",
                 "'stats-mgr-reporting' parameter is not a boolean"
+            },
+            {
+                // Invalid type for alarm-report-secs
+                __LINE__,
+                R"(
+                {
+                    "enable-monitoring" : false,
+                    "interval-width-secs" : 5,
+                    "stats-mgr-reporting" : false,
+                    "alarm-report-secs" : "bogus"
+                })",
+                "'alarm-report-secs' parameter is not an integer"
             },
             {
                 // Value of alarm-report-secs is zero

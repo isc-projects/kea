@@ -133,13 +133,11 @@ public:
         ASSERT_EQ(durations->size(), 0);
     }
 
-    /// @brief Exercises PerfMonConfig parameter parsing with valid configuration
-    /// permutations.
-    /// @todo add alarms
+    /// @brief Verifies that PerfMonConfig handles a configuration error properly.
     void testInvalidConfig() {
-        std::string valid_config =
+        std::string invalid_config =
             R"({
-                    "enable-monitoring": false,
+                    "enable-monitoring": true,
                     "interval-width-secs": 5,
                     "stats-mgr-reporting": false,
                     "alarm-report-secs": 600,
@@ -148,15 +146,17 @@ public:
 
         // Convert JSON texts to Element map.
         ConstElementPtr json_elements;
-        ASSERT_NO_THROW_LOG(json_elements = Element::fromJSON(valid_config));
+        ASSERT_NO_THROW_LOG(json_elements = Element::fromJSON(invalid_config));
 
         PerfMonMgrPtr mgr(new PerfMonMgr(family_));
-        ASSERT_NO_THROW_LOG(mgr->configure(json_elements));
+        ASSERT_THROW_MSG(mgr->configure(json_elements), DhcpConfigError,
+                         "PerfMonMgr::configure failed - "
+                         "'alarms' parameter is not a list");
 
         EXPECT_FALSE(mgr->getEnableMonitoring());
-        EXPECT_EQ(mgr->getIntervalDuration(), seconds(5));
-        EXPECT_FALSE(mgr->getStatsMgrReporting());
-        EXPECT_EQ(mgr->getAlarmReportInterval(), seconds(600));
+        EXPECT_EQ(mgr->getIntervalDuration(), seconds(60));
+        EXPECT_TRUE(mgr->getStatsMgrReporting());
+        EXPECT_EQ(mgr->getAlarmReportInterval(), seconds(300));
 
         // Alarm store should exist but be empty.
         EXPECT_TRUE(mgr->getAlarmStore());
@@ -211,6 +211,14 @@ TEST_F(PerfMonMgrTest4, validConfig) {
 
 TEST_F(PerfMonMgrTest6, validConfig) {
     testValidConfig();
+}
+
+TEST_F(PerfMonMgrTest4, invalidConfig) {
+    testInvalidConfig();
+}
+
+TEST_F(PerfMonMgrTest6, invalidConfig) {
+    testInvalidConfig();
 }
 
 } // end of anonymous namespace

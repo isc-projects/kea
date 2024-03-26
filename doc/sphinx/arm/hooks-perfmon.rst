@@ -47,7 +47,7 @@ shown below:
 #. process_completed - Server has constructed the response and is ready to send it
 
 This list is likely to expand over time. It will also be possible for hook developers
-to add their own events. This will be detailed in a future release in t.
+to add their own events. This will be detailed in a future release.
 
 Passive Event Logging
 ~~~~~~~~~~~~~~~~~~~~~
@@ -90,8 +90,10 @@ uniquely identified by a "duration key" which consists of the following values:
 * stop event label - Event that defines the end of the task (e.g. buffer_read, process_completed)
 * subnet id - subnet selected during message processing (or 0 for global durations)
 
-As client queries are responded to their event stacks are used add to the monitored
-durations. When the sampling interval has been reached for a given duration, it is reported.
+Once the server has finished constructing a response to a query, the query's event stack
+is processed into a series of updates to monitored durations.  If upon updating, a
+duration's sample interval is found to have been completed, it is sent to reporting
+and a new sample  interval is begun.
 
 .. Note:
     Monitoring is not yet functional.
@@ -112,7 +114,7 @@ below the low-water mark the alarm is "cleared" and an INFO level log will be em
 API Commands
 ~~~~~~~~~~~~
 
-    Commands to enable or disable monitoring, clear or alter alarms, and fetch duration datax
+    Commands to enable or disable monitoring, clear or alter alarms, and fetch duration data
     are anticipated but not yet supported.
 
 Configuration
