@@ -198,10 +198,10 @@ public:
                 __LINE__,
                 R"(
                 {
-                    "enable-monitoring" : false,
-                    "interval-width-secs" : "bogus",
-                    "stats-mgr-reporting" : false,
-                    "alarm-report-secs" : 90
+                    "enable-monitoring": false,
+                    "interval-width-secs": "bogus",
+                    "stats-mgr-reporting": false,
+                    "alarm-report-secs": 90
                 })",
                 "'interval-width-secs' parameter is not an integer"
             },
@@ -246,10 +246,10 @@ public:
                 __LINE__,
                 R"(
                 {
-                    "enable-monitoring" : false,
-                    "interval-width-secs" : 5,
-                    "stats-mgr-reporting" : false,
-                    "alarm-report-secs" : "bogus"
+                    "enable-monitoring": false,
+                    "interval-width-secs": 5,
+                    "stats-mgr-reporting": false,
+                    "alarm-report-secs": "bogus"
                 })",
                 "'alarm-report-secs' parameter is not an integer"
             },
