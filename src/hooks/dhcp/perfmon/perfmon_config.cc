@@ -22,11 +22,11 @@ namespace perfmon {
 const data::SimpleKeywords
 DurationKeyParser::CONFIG_KEYWORDS =
 {
-    { "query-type",        Element::string },
-    { "response-type",     Element::string },
-    { "start-event",       Element::string },
-    { "stop-event",        Element::string },
-    { "subnet-id",         Element::integer }
+    {"query-type",        Element::string},
+    {"response-type",     Element::string},
+    {"start-event",       Element::string},
+    {"stop-event",        Element::string},
+    {"subnet-id",         Element::integer}
 };
 
 uint16_t
@@ -63,56 +63,58 @@ DurationKeyParser::getMessageNameType4(const std::string& name) {
 uint16_t
 DurationKeyParser::getMessageNameType6(const std::string& name) {
     static std::map<std::string, uint16_t> name_type_map = {
-	    {"",            	    DHCPV6_NOTYPE},
-	    {"*",            	    DHCPV6_NOTYPE},
-		{"SOLICIT",			    DHCPV6_SOLICIT},
-		{"ADVERTISE",			DHCPV6_ADVERTISE},
-		{"REQUEST",			    DHCPV6_REQUEST},
-		{"CONFIRM",			    DHCPV6_CONFIRM},
-		{"RENEW",			    DHCPV6_RENEW},
-		{"REBIND",			    DHCPV6_REBIND},
-		{"REPLY",			    DHCPV6_REPLY},
-	    {"RELEASE",			    DHCPV6_RELEASE},
-		{"DECLINE",			    DHCPV6_DECLINE},
-		{"RECONFIGURE",			DHCPV6_RECONFIGURE},
-		{"INFORMATION_REQUEST", DHCPV6_INFORMATION_REQUEST},
-		{"RELAY_FORW",			DHCPV6_RELAY_FORW},
-		{"RELAY_REPL",			DHCPV6_RELAY_REPL},
-		{"LEASEQUERY",			DHCPV6_LEASEQUERY},
-		{"LEASEQUERY_REPLY",	DHCPV6_LEASEQUERY_REPLY},
-		{"LEASEQUERY_DONE",		DHCPV6_LEASEQUERY_DONE},
-		{"LEASEQUERY_DATA",		DHCPV6_LEASEQUERY_DATA},
-		{"RECONFIGURE_REQUEST",	DHCPV6_RECONFIGURE_REQUEST},
-		{"RECONFIGURE_REPLY",	DHCPV6_RECONFIGURE_REPLY},
-		{"DHCPV4_QUERY",		DHCPV6_DHCPV4_QUERY},
-		{"DHCPV4_RESPONSE",		DHCPV6_DHCPV4_RESPONSE},
-		{"ACTIVELEASEQUERY",	DHCPV6_ACTIVELEASEQUERY},
-		{"STARTTLS",			DHCPV6_STARTTLS},
-		{"BNDUPD",			    DHCPV6_BNDUPD},
-		{"BNDREPLY",			DHCPV6_BNDREPLY},
-		{"POOLREQ",			    DHCPV6_POOLREQ},
-		{"POOLRESP",			DHCPV6_POOLRESP},
-		{"UPDREQ",			    DHCPV6_UPDREQ},
-		{"UPDREQALL",			DHCPV6_UPDREQALL},
-		{"UPDDONE",			    DHCPV6_UPDDONE},
-		{"CONNECT",			    DHCPV6_CONNECT},
-		{"CONNECTREPLY",		DHCPV6_CONNECTREPLY},
-		{"DISCONNECT",			DHCPV6_DISCONNECT},
-		{"STATE",			    DHCPV6_STATE},
-		{"CONTACT",		    	DHCPV6_CONTACT}
+        {"",                        DHCPV6_NOTYPE},
+        {"*",                       DHCPV6_NOTYPE},
+        {"SOLICIT",                 DHCPV6_SOLICIT},
+        {"ADVERTISE",               DHCPV6_ADVERTISE},
+        {"REQUEST",                 DHCPV6_REQUEST},
+        {"CONFIRM",                 DHCPV6_CONFIRM},
+        {"RENEW",                   DHCPV6_RENEW},
+        {"REBIND",                  DHCPV6_REBIND},
+        {"REPLY",                   DHCPV6_REPLY},
+        {"RELEASE",                 DHCPV6_RELEASE},
+        {"DECLINE",                 DHCPV6_DECLINE},
+        {"RECONFIGURE",             DHCPV6_RECONFIGURE},
+        {"INFORMATION_REQUEST",     DHCPV6_INFORMATION_REQUEST},
+        {"RELAY_FORW",              DHCPV6_RELAY_FORW},
+        {"RELAY_REPL",              DHCPV6_RELAY_REPL},
+        {"LEASEQUERY",              DHCPV6_LEASEQUERY},
+        {"LEASEQUERY_REPLY",        DHCPV6_LEASEQUERY_REPLY},
+        {"LEASEQUERY_DONE",         DHCPV6_LEASEQUERY_DONE},
+        {"LEASEQUERY_DATA",         DHCPV6_LEASEQUERY_DATA},
+        {"RECONFIGURE_REQUEST",     DHCPV6_RECONFIGURE_REQUEST},
+        {"RECONFIGURE_REPLY",       DHCPV6_RECONFIGURE_REPLY},
+        {"DHCPV4_QUERY",            DHCPV6_DHCPV4_QUERY},
+        {"DHCPV4_RESPONSE",         DHCPV6_DHCPV4_RESPONSE},
+        {"ACTIVELEASEQUERY",        DHCPV6_ACTIVELEASEQUERY},
+        {"STARTTLS",                DHCPV6_STARTTLS},
+        {"BNDUPD",                  DHCPV6_BNDUPD},
+        {"BNDREPLY",                DHCPV6_BNDREPLY},
+        {"POOLREQ",                 DHCPV6_POOLREQ},
+        {"POOLRESP",                DHCPV6_POOLRESP},
+        {"UPDREQ",                  DHCPV6_UPDREQ},
+        {"UPDREQALL",               DHCPV6_UPDREQALL},
+        {"UPDDONE",                 DHCPV6_UPDDONE},
+        {"CONNECT",                 DHCPV6_CONNECT},
+        {"CONNECTREPLY",            DHCPV6_CONNECTREPLY},
+        {"DISCONNECT",              DHCPV6_DISCONNECT},
+        {"STATE",                   DHCPV6_STATE},
+        {"CONTACT",                 DHCPV6_CONTACT}
     };
 
     try {
         const auto& found = name_type_map.at(name);
-        return(found);
+        return (found);
     } catch (const std::out_of_range& ex) {
         isc_throw(BadValue, "'" << name << "' is not a valid DHCPV6 message type");
     }
 }
 
 uint16_t
-DurationKeyParser::getMessageType(data::ConstElementPtr config, uint16_t family,
-                               const std::string param_name, bool required /*= true */) {
+DurationKeyParser::getMessageType(data::ConstElementPtr config,
+                                  uint16_t family,
+                                  const std::string& param_name,
+                                  bool required /*= true */) {
     // Parse members.
     uint16_t msg_type = 0;
     ConstElementPtr elem = config->get(param_name);
@@ -255,11 +257,11 @@ AlarmParser::parse(data::ConstElementPtr config, uint16_t family) {
 const data::SimpleKeywords
 PerfMonConfig::CONFIG_KEYWORDS =
 {
-    { "enable-monitoring",      Element::boolean },
-    { "interval-width-secs",    Element::integer },
-    { "stats-mgr-reporting",    Element::boolean },
-    { "alarm-report-secs",      Element::integer},
-    { "alarms",                 Element::list}
+    {"enable-monitoring",      Element::boolean},
+    {"interval-width-secs",    Element::integer},
+    {"stats-mgr-reporting",    Element::boolean},
+    {"alarm-report-secs",      Element::integer},
+    {"alarms",                 Element::list}
 };
 
 PerfMonConfig::PerfMonConfig(uint16_t family)

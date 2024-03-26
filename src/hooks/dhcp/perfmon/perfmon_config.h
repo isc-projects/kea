@@ -22,22 +22,22 @@ namespace perfmon {
 ///    {
 ///        "library": "lib/kea/hooks/libdhcp_perf_mon.so",
 ///        "parameters": {
-///            "enable-monitoring" : true,
-///            "interval-width-secs" : 5,
-///            "stats-mgr-reporting" : true,
-///            "alarm-report-secs" : 600,
+///            "enable-monitoring": true,
+///            "interval-width-secs": 5,
+///            "stats-mgr-reporting": true,
+///            "alarm-report-secs": 600,
 ///            "alarms": [
 ///            {
 ///                "duration-key": {
-///                    "query-type" : "DHCPDISCOVER",
-///                    "response-type" : "DHCPOFFER",
-///                    "start-event" : "process-started",
-///                    "stop-event" : "process-completed",
-///                    "subnet-id" : 0
+///                    "query-type": "DHCPDISCOVER",
+///                    "response-type": "DHCPOFFER",
+///                    "start-event": "process-started",
+///                    "stop-event": "process-completed",
+///                    "subnet-id": 0
 ///                },
-///                "enable-alarm" : true,
-///                "high-water-ms" : 500,
-///                "low-water-ms" : 25
+///                "enable-alarm": true,
+///                "high-water-ms": 500,
+///                "low-water-ms": 25
 ///            },
 ///            ..
 ///            }]
@@ -45,7 +45,7 @@ namespace perfmon {
 ///    }
 /// @endcode
 
-/// @brief Parses configuration parameters for a single DurationKey
+/// @brief Parses configuration parameters for a single DurationKey.
 ///
 /// DurationKey is used to identify both MonitoredDurations and
 /// Alarms, thus they could be use to define either in configuration
@@ -57,38 +57,39 @@ public:
     /// @brief List of valid parameters and expected types.
     static const data::SimpleKeywords CONFIG_KEYWORDS;
 
-    /// @brief Constructor
+    /// @brief Constructor.
     explicit DurationKeyParser() = default;
 
-    /// @brief Destructor
-     ~DurationKeyParser() = default;
+    /// @brief Destructor.
+    ~DurationKeyParser() = default;
 
-    /// @brief Convert a configuration parameter to family-specific message type
+    /// @brief Convert a configuration parameter to family-specific message type.
     ///
     /// @param config element map containing the duration key parameters.
-    /// @param family protocol family AF_INET or AF_INET6
-    /// @param param_name configuration parameter name
+    /// @param family protocol family AF_INET or AF_INET6.
+    /// @param param_name configuration parameter name.
     /// @param required if true then function will throw if the parameter does
     /// not exist in the configuration. Defaults to true.
     ///
     /// @return numeric message type, returns DHCP_NOTYPE if name is empty.
     /// @throw DhcpConfigError if parameter type or value is not valid, or when
-    /// requrred is true and the parameter is not in the map.
+    /// required is true and the parameter is not in the map.
     static uint16_t getMessageType(data::ConstElementPtr config,
-                                   uint16_t family, const std::string param_name,
+                                   uint16_t family,
+                                   const std::string& param_name,
                                    bool required = true);
 
-    /// @brief Convert string message name to DHCP message type
+    /// @brief Convert string message name to DHCP message type.
     ///
-    /// @param name upper-case message name (e.g "DHCPDISCOVER", "DHCPOFFER")
+    /// @param name upper-case message name (e.g "DHCPDISCOVER", "DHCPOFFER").
     ///
     /// @return numeric message type, returns DHCP_NOTYPE if name is empty.
     /// @throw BadValue if the message name is unknown.
     static uint16_t getMessageNameType4(const std::string& name);
 
-    /// @brief Convert string message name to DHCP6 message type
+    /// @brief Convert string message name to DHCP6 message type.
     ///
-    /// @param name upper-case message name (e.g "DHCPV6_SOLICIT", "DHCV6_REPLY")
+    /// @param name upper-case message name (e.g "DHCPV6_SOLICIT", "DHCV6_REPLY").
     ///
     /// @return numeric message type, returns DHCPV6_NOTYPE if name is empty.
     /// @throw BadValue if the message name is unknown.
@@ -97,7 +98,7 @@ public:
     /// @brief Convert a map of Elements into a DurationKey.
     ///
     /// @param config element map containing the duration key parameters.
-    /// @param family protocol family AF_INET or AF_INET6
+    /// @param family protocol family AF_INET or AF_INET6.
     static DurationKeyPtr parse(data::ConstElementPtr config, uint16_t family);
 
     /// @brief Convert a DurationKey into a map of Elements.
@@ -108,22 +109,22 @@ public:
     static data::ElementPtr toElement(DurationKeyPtr key);
 };
 
-/// @brief Parses configuration parameters for a single Alarm
+/// @brief Parses configuration parameters for a single Alarm.
 class AlarmParser {
 public:
     /// @brief List of valid parameters and expected types.
     static const data::SimpleKeywords CONFIG_KEYWORDS;
 
-    /// @brief Constructor
+    /// @brief Constructor.
     explicit AlarmParser();
 
-    /// @brief Destructor
+    /// @brief Destructor.
     ~AlarmParser() = default;
 
     /// @brief
     ///
     /// @param config element map containing the alarm parameters.
-    /// @param family protocol family AF_INET or AF_INET6
+    /// @param family protocol family AF_INET or AF_INET6.
     static AlarmPtr parse(data::ConstElementPtr config, uint16_t family);
 };
 
@@ -137,15 +138,15 @@ public:
     /// @brief List of valid parameter defaults.
     static const data::SimpleDefaults SIMPLE_DEFAULTS;
 
-    /// @brief Constructor
+    /// @brief Constructor.
     explicit PerfMonConfig(uint16_t family);
 
-    /// @brief Destructor
+    /// @brief Destructor.
     virtual ~PerfMonConfig() = default;
 
-    /// @brief Extracts member values from an Element::map
+    /// @brief Extracts member values from an Element::map.
     ///
-    /// @param config map of configuration parameters
+    /// @param config map of configuration parameters.
     ///
     /// @throw DhcpConfigError if invalid values are detected.
     void parse(data::ConstElementPtr config);
@@ -153,80 +154,80 @@ public:
     /// @brief Re-creates the AlarmStore and populates it by parsing a
     /// list of alarm elements.
     ///
-    /// @param config list of alarm configuration elements
+    /// @param config list of alarm configuration elements.
     ///
     /// @throw DhcpConfigError if a parsing error occurs or
     /// there are duplicate alarm keys.
     void parseAlarms(data::ConstElementPtr config);
 
-    /// @brief Fetches the value of enable-monitoring
+    /// @brief Fetches the value of enable-monitoring.
     ///
-    /// @return boolean value of enable-monitoring
+    /// @return boolean value of enable-monitoring.
     bool getEnableMonitoring() const {
         return (enable_monitoring_);
-    };
+    }
 
-    /// @brief Sets the value of enable-monitoring
+    /// @brief Sets the value of enable-monitoring.
     ///
-    /// @param value new value for enable-monitoring
+    /// @param value new value for enable-monitoring.
     void setEnableMonitoring(bool value) {
         enable_monitoring_ = value;
     }
 
-    /// @brief Fetches the value of interval-width-secs
+    /// @brief Fetches the value of interval-width-secs.
     ///
-    /// @return integer value of interval-width-secs
+    /// @return integer value of interval-width-secs.
     uint32_t getIntervalWidthSecs() const {
         return (interval_width_secs_);
     }
 
-    /// @brief Sets the value of interval-width-secs
+    /// @brief Sets the value of interval-width-secs.
     ///
-    /// @param value new value for interval-width-secs
+    /// @param value new value for interval-width-secs.
     void setIntervalWidthSecs(uint32_t value) {
         interval_width_secs_ = value;
     }
 
-    /// @brief Fetches the value of stats-mgr-reporting
+    /// @brief Fetches the value of stats-mgr-reporting.
     ///
-    /// @return boolean value of stats-mgr-reporting
+    /// @return boolean value of stats-mgr-reporting.
     bool getStatsMgrReporting() const {
         return (stats_mgr_reporting_);
     };
 
-    /// @brief Sets the value of stats-mgr-reporting
+    /// @brief Sets the value of stats-mgr-reporting.
     ///
-    /// @param value new value for stats-mgr-reporting
+    /// @param value new value for stats-mgr-reporting.
     void setStatsMgrReporting(bool value) {
         stats_mgr_reporting_ = value;
     }
 
-    /// @brief Fetches the value of alarm-report-secs
+    /// @brief Fetches the value of alarm-report-secs.
     ///
-    /// @return integer value of alarm-report-secs
+    /// @return integer value of alarm-report-secs.
     uint32_t getAlarmReportSecs() const {
         return (alarm_report_secs_);
     }
 
-    /// @brief Sets the value of alarm-report-secs
+    /// @brief Sets the value of alarm-report-secs.
     ///
-    /// @param value new value for alarm-report-secs
+    /// @param value new value for alarm-report-secs.
     void setAlarmReportSecs(uint32_t value) {
         alarm_report_secs_ = value;
     }
 
-    /// @brief Get protocol family
+    /// @brief Get protocol family.
     ///
-    /// @return uint16_t containing the family (AF_INET or AF_INET6)
+    /// @return uint16_t containing the family (AF_INET or AF_INET6).
     uint16_t getFamily() {
         return (family_);
     }
 
-    /// @brief Get the alarm store
+    /// @brief Get the alarm store.
     ///
-    /// @return pointer to the alarm store
+    /// @return pointer to the alarm store.
     AlarmStorePtr getAlarmStore() {
-        return alarm_store_;
+        return (alarm_store_);
     }
 
 protected:
@@ -247,7 +248,7 @@ protected:
     /// Defaults to true.
     bool stats_mgr_reporting_;
 
-    /// @brief Nubmer of seconds between reports of a raised alarm.
+    /// @brief Number of seconds between reports of a raised alarm.
     /// Defaults to 300.  A value of zero disables alarms.
     uint32_t alarm_report_secs_;
 

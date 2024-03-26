@@ -189,7 +189,7 @@ public:
     }
 
     /// @brief Get a label for a family-specific message type (e.g.
-    ///  "DHCPDISCOVER", "SOLICIT")
+    /// "DHCPDISCOVER", "SOLICIT")
     ///
     /// @param family Protocol family of the key (AF_INET or AF_INET6)
     /// @param msg_type numeric message type to translate

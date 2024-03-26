@@ -82,21 +82,21 @@ public:
     void testValidConfig() {
         std::string valid_config =
             R"({
-                    "enable-monitoring" : false,
-                    "interval-width-secs" : 5,
-                    "stats-mgr-reporting"  : false,
-                    "alarm-report-secs" : 600,
+                    "enable-monitoring": false,
+                    "interval-width-secs": 5,
+                    "stats-mgr-reporting": false,
+                    "alarm-report-secs": 600,
                     "alarms": [{
                             "duration-key": {
-                                "query-type" : "",
-                                "response-type" : "",
-                                "start-event" : "process-started",
-                                "stop-event" : "process-completed",
-                                "subnet-id" : 70
+                                "query-type": "",
+                                "response-type": "",
+                                "start-event": "process-started",
+                                "stop-event": "process-completed",
+                                "subnet-id": 70
                                 },
-                            "enable-alarm" : true,
-                            "high-water-ms" : 500,
-                            "low-water-ms" : 25
+                            "enable-alarm": true,
+                            "high-water-ms": 500,
+                            "low-water-ms": 25
                         }]
                 })";
 
@@ -139,10 +139,10 @@ public:
     void testInvalidConfig() {
         std::string valid_config =
             R"({
-                    "enable-monitoring" : false,
-                    "interval-width-secs" : 5,
-                    "stats-mgr-reporting"  : false,
-                    "alarm-report-secs" : 600,
+                    "enable-monitoring": false,
+                    "interval-width-secs": 5,
+                    "stats-mgr-reporting": false,
+                    "alarm-report-secs": 600,
                     "alarms": "bogus"
                 })";
 
@@ -175,7 +175,7 @@ public:
     uint16_t family_;
 };
 
-/// @brief Test fixture for testing PerfMonConfig for DHCP(v4).
+/// @brief Test fixture for testing PerfMonConfig for DHCPV4.
 class PerfMonMgrTest4: public PerfMonMgrTest {
 public:
     /// @brief Constructor.

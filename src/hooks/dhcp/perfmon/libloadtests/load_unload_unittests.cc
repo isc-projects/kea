@@ -47,21 +47,21 @@ public:
     virtual isc::data::ElementPtr validConfigParams() {
         std::string valid_config =
             R"({
-                    "enable-monitoring" : true,
-                    "interval-width-secs" : 5,
-                    "stats-mgr-reporting"  : true,
-                    "alarm-report-secs" : 600,
+                    "enable-monitoring": true,
+                    "interval-width-secs": 5,
+                    "stats-mgr-reporting": true,
+                    "alarm-report-secs": 600,
                     "alarms": [{
                             "duration-key": {
-                                "query-type" : "*",
-                                "response-type" : "*",
-                                "start-event" : "socket-received",
-                                "stop-event" : "buffer-read",
-                                "subnet-id" : 70
+                                "query-type": "*",
+                                "response-type": "*",
+                                "start-event": "socket-received",
+                                "stop-event": "buffer-read",
+                                "subnet-id": 70
                                 },
-                            "enable-alarm" : true,
-                            "high-water-ms" : 500,
-                            "low-water-ms" : 25
+                            "enable-alarm": true,
+                            "high-water-ms": 500,
+                            "low-water-ms": 25
                         }]
                 })";
 

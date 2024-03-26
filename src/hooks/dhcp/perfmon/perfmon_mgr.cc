@@ -25,7 +25,7 @@ PerfMonMgr::PerfMonMgr(uint16_t family_)
     duration_store_.reset(new MonitoredDurationStore(family_, interval_duration_));
 }
 
-void PerfMonMgr::configure(const ConstElementPtr & params) {
+void PerfMonMgr::configure(const ConstElementPtr& params) {
     if (!params) {
         // User wants passive logging only.
         setEnableMonitoring(false);

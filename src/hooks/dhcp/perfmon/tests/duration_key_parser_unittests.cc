@@ -23,13 +23,13 @@ using namespace isc::perfmon;
 namespace {
 
 // These tests excerise DurationKeyParser which parses a map of
-// paramters as shown below:
+// parameters as shown below:
 //  "duration-key": {
-//      "query-type" : "DHCPDISCOVER",
-//      "response-type" : "DHCPOFFER",
-//      "start-event" : "process-started",
-//      "stop-event" : "process-completed",
-//      "subnet-id" : 70
+//      "query-type": "DHCPDISCOVER",
+//      "response-type": "DHCPOFFER",
+//      "start-event": "process-started",
+//      "stop-event": "process-completed",
+//      "subnet-id": 70
 // }
 
 /// @brief Describes a valid test scenario.
@@ -51,7 +51,7 @@ struct InvalidScenario {
 };
 
 /// @brief Test fixture for testing DurationKeyParser.
-class DurationKeyParserTest: public ::testing::Test {
+class DurationKeyParserTest : public ::testing::Test {
 public:
     /// @brief Constructor.
     DurationKeyParserTest() = default;
@@ -61,8 +61,8 @@ public:
 
     /// @brief Runs a list of valid configurations through parsing.
     ///
-    /// @param list of valid scenarios to run
-    /// @param family protocol family to use when parsing
+    /// @param list of valid scenarios to run.
+    /// @param family protocol family to use when parsing.
     void testValidScenarios(std::list<ValidScenario>& scenarios, uint16_t family) {
         // Iterate over the scenarios.
         for (auto const& scenario : scenarios) {
@@ -90,8 +90,8 @@ public:
 
     /// @brief Runs a list of invalid configurations through parsing.
     ///
-    /// @param list of valid scenarios to run
-    /// @param family protocol family to use when parsing
+    /// @param list of valid scenarios to run.
+    /// @param family protocol family to use when parsing.
     void testInvalidScenarios(std::list<InvalidScenario>& scenarios, uint16_t family) {
         // Iterate over the scenarios.
         for (auto const& scenario : scenarios) {
@@ -357,7 +357,7 @@ TEST_F(DurationKeyParserTest, invalidScenarios4) {
     testInvalidScenarios(scenarios,  AF_INET);
 }
 
-TEST_F(DurationKeyParserTest, parseValidScenarios6) {
+TEST_F(DurationKeyParserTest, validScenarios6) {
     // List of test scenarios to run.
     std::list<ValidScenario> scenarios = {
         {

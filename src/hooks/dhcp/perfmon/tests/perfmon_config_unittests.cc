@@ -83,7 +83,7 @@ public:
             bool exp_enable_monitoring_;        // Expected value for enable-monitoring
             uint32_t exp_interval_width_secs_;  // Expected value for interval-width-secs
             bool exp_stats_mgr_reporting_;      // Expected value for stats-mgr-reporting
-            uint32_t exp_alarm_report_secs_;     // Expected value for alarm-report-secs
+            uint32_t exp_alarm_report_secs_;    // Expected value for alarm-report-secs
         };
 
         // List of test scenarios to run.
@@ -97,25 +97,25 @@ public:
             {
                 // Only enable-monitoring",
                 __LINE__,
-                R"({ "enable-monitoring" : true })",
+                R"({ "enable-monitoring": true })",
                 true, 60, true, 300
             },
             {
                 // Only interval-width-secs",
                 __LINE__,
-                R"({ "interval-width-secs" : 3 })",
+                R"({ "interval-width-secs": 3 })",
                 false, 3, true, 300
             },
             {
                 // Only stats-mgr-reporting",
                 __LINE__,
-                R"({ "stats-mgr-reporting" : false })",
+                R"({ "stats-mgr-reporting": false })",
                 false, 60, false, 300
             },
             {
                 // Only alarm-report-secs",
                 __LINE__,
-                R"({ "alarm-report-secs" : 77 })",
+                R"({ "alarm-report-secs": 77 })",
                 false, 60, true, 77
             },
             {
@@ -123,10 +123,10 @@ public:
                 __LINE__,
                 R"(
                 {
-                    "enable-monitoring" : true,
-                    "interval-width-secs" : 2,
-                    "stats-mgr-reporting" : false,
-                    "alarm-report-secs" : 120
+                    "enable-monitoring": true,
+                    "interval-width-secs": 2,
+                    "stats-mgr-reporting": false,
+                    "alarm-report-secs": 120
                 })",
                 true, 2, false, 120
             },
@@ -154,156 +154,156 @@ public:
         }
     }
 
-	/// @brief Exercises PerfMonConfig parameter parsing with invalid configuration
-	/// permutations.  Duplicate alarms are tested elsewhere.
-	void testInvalidScenarios() {
-	    // Describes a test scenario.
-	    struct Scenario {
-	        int line_;              // Scenario line number
-	        string json_;           // JSON configuration to parse
-	        string exp_message_;    // Expected exception message
-	    };
+    /// @brief Exercises PerfMonConfig parameter parsing with invalid configuration
+    /// permutations.  Duplicate alarms are tested elsewhere.
+    void testInvalidScenarios() {
+        // Describes a test scenario.
+        struct Scenario {
+            int line_;              // Scenario line number
+            string json_;           // JSON configuration to parse
+            string exp_message_;    // Expected exception message
+        };
 
-	    // List of test scenarios to run.  Most scenario supply
-	    // all valid parameters except one in error.  This allows
-	    // us to verify that no values are changed if any are in error.
-	    list<Scenario> scenarios = {
-	        {
-	            // Unknown parameter
-	            __LINE__,
-	            R"(
-	            {
-	                "enable-monitoring" : false,
-	                "interval-width-secs" : 3,
-	                "stats-mgr-reporting" : false,
-	                "alarm-report-secs" : 90,
-	                "bogus" : false
-	            })",
-	            "spurious 'bogus' parameter"
-	        },
-	        {
-	            // Invalid type for enable-monitoring
-	            __LINE__,
-	            R"(
-	            {
-	                "enable-monitoring" : "not bool",
-	                "interval-width-secs" : 3,
-	                "stats-mgr-reporting" : false,
-	                "alarm-report-secs" : 90
-	            })",
-	            "'enable-monitoring' parameter is not a boolean"
-	        },
-	        {
-	            // Value of interval-width-secs is zero
-	            __LINE__,
-	            R"(
-	            {
-	                "enable-monitoring" : false,
-	                "interval-width-secs" : 0,
-	                "stats-mgr-reporting" : false,
-	                "alarm-report-secs" : 90
-	            })",
-	            "invalid interval-width-secs: '0', must be greater than 0"
-	        },
-	        {
-	            // Value of interval-width-secs less than zero
-	            __LINE__,
-	            R"(
-	            {
-	                "enable-monitoring" : false,
-	                "interval-width-secs" : -2,
-	                "stats-mgr-reporting" : false,
-	                "alarm-report-secs" : 90
-	            })",
-	            "invalid interval-width-secs: '-2', must be greater than 0"
-	        },
-	        {
-	            // Non-boolean type for stats-mgr-reporting
-	            __LINE__,
-	            R"(
-	            {
-	                "enable-monitoring" : false,
-	                "interval-width-secs" : 1,
-	                "stats-mgr-reporting" : "not bool",
-	                "alarm-report-secs" : 90
-	            })",
-	            "'stats-mgr-reporting' parameter is not a boolean"
-	        },
-	        {
-	            // Value of alarm-report-secs is zero
-	            __LINE__,
-	            R"(
-	            {
-	                "enable-monitoring" : false,
-	                "interval-width-secs" : 1,
-	                "stats-mgr-reporting" : false,
-	                "alarm-report-secs" : -3
-	            })",
-	            "invalid alarm-report-secs: '-3', cannot be less than 0"
-	        },
-	        {
-	            // Value of alarm-report-secs less than zero
-	            __LINE__,
-	            R"(
-	            {
-	                "enable-monitoring" : false,
-	                "interval-width-secs" : 1,
-	                "stats-mgr-reporting" : false,
-	                "alarm-report-secs" : -3
-	            })",
-	            "invalid alarm-report-secs: '-3', cannot be less than 0"
-	        },
-	        {
-	            // Value for alarms is not a list.
-	            __LINE__,
-	            R"(
-	            {
-	                "enable-monitoring" : false,
-	                "interval-width-secs" : 60,
-	                "stats-mgr-reporting" : false,
-	                "alarm-report-secs" : 90,
-	                "alarms": {}
-	            })",
-	            "'alarms' parameter is not a list"
-	        },
-	        {
-	            // Alarms list contains an invalid entry
-	            __LINE__,
-	            R"(
-	            {
-	                "enable-monitoring" : false,
-	                "interval-width-secs" : 60,
-	                "stats-mgr-reporting" : false,
-	                "alarm-report-secs" : 90,
-	                "alarms": [{ "bogus": "alarm" }]
-	            })",
-	            "cannot add Alarm to store: spurious 'bogus' parameter"
-	        }
-	    };
+        // List of test scenarios to run.  Most scenario supply
+        // all valid parameters except one in error.  This allows
+        // us to verify that no values are changed if any are in error.
+        list<Scenario> scenarios = {
+            {
+                // Unknown parameter
+                __LINE__,
+                R"(
+                {
+                    "enable-monitoring": false,
+                    "interval-width-secs": 3,
+                    "stats-mgr-reporting": false,
+                    "alarm-report-secs": 90,
+                    "bogus": false
+                })",
+                "spurious 'bogus' parameter"
+            },
+            {
+                // Invalid type for enable-monitoring
+                __LINE__,
+                R"(
+                {
+                    "enable-monitoring": "not bool",
+                    "interval-width-secs": 3,
+                    "stats-mgr-reporting": false,
+                    "alarm-report-secs": 90
+                })",
+                "'enable-monitoring' parameter is not a boolean"
+            },
+            {
+                // Value of interval-width-secs is zero
+                __LINE__,
+                R"(
+                {
+                    "enable-monitoring": false,
+                    "interval-width-secs": 0,
+                    "stats-mgr-reporting": false,
+                    "alarm-report-secs": 90
+                })",
+                "invalid interval-width-secs: '0', must be greater than 0"
+            },
+            {
+                // Value of interval-width-secs less than zero
+                __LINE__,
+                R"(
+                {
+                    "enable-monitoring": false,
+                    "interval-width-secs": -2,
+                    "stats-mgr-reporting": false,
+                    "alarm-report-secs": 90
+                })",
+                "invalid interval-width-secs: '-2', must be greater than 0"
+            },
+            {
+                // Non-boolean type for stats-mgr-reporting
+                __LINE__,
+                R"(
+                {
+                    "enable-monitoring": false,
+                    "interval-width-secs": 1,
+                    "stats-mgr-reporting": "not bool",
+                    "alarm-report-secs": 90
+                })",
+                "'stats-mgr-reporting' parameter is not a boolean"
+            },
+            {
+                // Value of alarm-report-secs is zero
+                __LINE__,
+                R"(
+                {
+                    "enable-monitoring": false,
+                    "interval-width-secs": 1,
+                    "stats-mgr-reporting": false,
+                    "alarm-report-secs": -3
+                })",
+                "invalid alarm-report-secs: '-3', cannot be less than 0"
+            },
+            {
+                // Value of alarm-report-secs less than zero
+                __LINE__,
+                R"(
+                {
+                    "enable-monitoring": false,
+                    "interval-width-secs": 1,
+                    "stats-mgr-reporting": false,
+                    "alarm-report-secs": -3
+                })",
+                "invalid alarm-report-secs: '-3', cannot be less than 0"
+            },
+            {
+                // Value for alarms is not a list.
+                __LINE__,
+                R"(
+                {
+                    "enable-monitoring": false,
+                    "interval-width-secs": 60,
+                    "stats-mgr-reporting": false,
+                    "alarm-report-secs": 90,
+                    "alarms": {}
+                })",
+                "'alarms' parameter is not a list"
+            },
+            {
+                // Alarms list contains an invalid entry
+                __LINE__,
+                R"(
+                {
+                    "enable-monitoring": false,
+                    "interval-width-secs": 60,
+                    "stats-mgr-reporting": false,
+                    "alarm-report-secs": 90,
+                    "alarms": [{ "bogus": "alarm" }]
+                })",
+                "cannot add Alarm to store: spurious 'bogus' parameter"
+            }
+        };
 
-	    // Iterate over the scenarios.
-	    PerfMonConfig default_config(family_);
-	    for (auto const& scenario : scenarios) {
-	        stringstream oss;
-	        oss << "scenario at line: " << scenario.line_;
-	        SCOPED_TRACE(oss.str());
+        // Iterate over the scenarios.
+        PerfMonConfig default_config(family_);
+        for (auto const& scenario : scenarios) {
+            stringstream oss;
+            oss << "scenario at line: " << scenario.line_;
+            SCOPED_TRACE(oss.str());
 
-	        // Convert JSON text to a map of parameters.
-	        ConstElementPtr json_elements;
-	        ASSERT_NO_THROW_LOG(json_elements = Element::fromJSON(scenario.json_));
+            // Convert JSON text to a map of parameters.
+            ConstElementPtr json_elements;
+            ASSERT_NO_THROW_LOG(json_elements = Element::fromJSON(scenario.json_));
 
-	        // Parsing parameters should throw.
-	        PerfMonConfig config(family_);
-	        ASSERT_THROW_MSG(config.parse(json_elements), DhcpConfigError,
-	                         scenario.exp_message_);
+            // Parsing parameters should throw.
+            PerfMonConfig config(family_);
+            ASSERT_THROW_MSG(config.parse(json_elements), DhcpConfigError,
+                             scenario.exp_message_);
 
-	        // Original values should be intact.
-	        EXPECT_EQ(default_config.getEnableMonitoring(), config.getEnableMonitoring());
-	        EXPECT_EQ(default_config.getIntervalWidthSecs(), config.getIntervalWidthSecs());
-	        EXPECT_EQ(default_config.getStatsMgrReporting(), config.getStatsMgrReporting());
-	        EXPECT_EQ(default_config.getAlarmReportSecs(), config.getAlarmReportSecs());
-	    }
-	}
+            // Original values should be intact.
+            EXPECT_EQ(default_config.getEnableMonitoring(), config.getEnableMonitoring());
+            EXPECT_EQ(default_config.getIntervalWidthSecs(), config.getIntervalWidthSecs());
+            EXPECT_EQ(default_config.getStatsMgrReporting(), config.getStatsMgrReporting());
+            EXPECT_EQ(default_config.getAlarmReportSecs(), config.getAlarmReportSecs());
+        }
+    }
 
     /// @brief Creates a valid configuration with a list of alarms.
     ///
@@ -311,29 +311,29 @@ public:
     /// in the list.
     ///
     /// @return JSON text for the configuration.
-	std::string makeConfigWithAlarms(std::vector<DurationKeyPtr> keys) {
+    std::string makeConfigWithAlarms(std::vector<DurationKeyPtr> keys) {
         // Create valid configuration test which includes an arbitrary number of
         // family-specific alarms from a set of DurationKeys.
         stringstream joss;
-	    joss << R"(
-	            {
-	                "enable-monitoring" : false,
-	                "interval-width-secs" : 60,
-	                "stats-mgr-reporting" : false,
-	                "alarm-report-secs" : 90,
-	                "alarms": [
+        joss << R"(
+                {
+                    "enable-monitoring": false,
+                    "interval-width-secs": 60,
+                    "stats-mgr-reporting": false,
+                    "alarm-report-secs": 90,
+                    "alarms": [
                 )";
 
-        std::string comma="";
+        std::string comma = "";
         for (auto const& key : keys) {
             joss << comma << "\t{";
-	        joss << R"("duration-key": )";
+            joss << R"("duration-key": )";
             auto key_elems = DurationKeyParser::toElement(key);
             key_elems->toJSON(joss);
             joss << R"(,
-	                "high-water-ms": 500,
-	                "low-water-ms": 25
-	                }
+                    "high-water-ms": 500,
+                    "low-water-ms": 25
+                    }
                 )";
 
             comma = ",";
@@ -344,18 +344,18 @@ public:
     }
 
     /// @brief Verifies a valid configuration that includes a list of Alarms.
-	void testValidAlarmsList() {
+    void testValidAlarmsList() {
         // Create valid configuration test which includes an arbitrary number of
         // family-specific alarms from a pre-defined set of unique DurationKeys.
         std::string json_text = makeConfigWithAlarms(keys_);
 
         // Convert JSON text to a map of parameters.
-	    ConstElementPtr json_elements;
-	    ASSERT_NO_THROW_LOG(json_elements = Element::fromJSON(json_text));
+        ConstElementPtr json_elements;
+        ASSERT_NO_THROW_LOG(json_elements = Element::fromJSON(json_text));
 
-	    // Parsing parameters should throw.
-	    PerfMonConfig config(family_);
-	    ASSERT_NO_THROW_LOG(config.parse(json_elements));
+        // Parsing parameters should throw.
+        PerfMonConfig config(family_);
+        ASSERT_NO_THROW_LOG(config.parse(json_elements));
 
         // Get all should retrieve the alarms in ascending order.
         AlarmCollectionPtr alarms = config.getAlarmStore()->getAll();
@@ -363,13 +363,13 @@ public:
 
         int idx = 0;
         for (auto const& d : *alarms) {
-            EXPECT_EQ(*d, *keys_[idx]) << "failed on pass :" << idx;
+            EXPECT_EQ(*d, *keys_[idx]) << "failed on pass: " << idx;
             ++idx;
         }
-	}
+    }
 
     /// @brief Verifies a valid configuration with a list duplicate Alarms.
-	void testDuplicateAlarms() {
+    void testDuplicateAlarms() {
         std::vector<DurationKeyPtr> duplicate_keys;
         duplicate_keys.push_back(keys_[0]);
         duplicate_keys.push_back(keys_[0]);
@@ -379,32 +379,32 @@ public:
         std::string json_text = makeConfigWithAlarms(duplicate_keys);
 
         // Convert JSON text to a map of parameters.
-	    ConstElementPtr json_elements;
-	    ASSERT_NO_THROW_LOG(json_elements = Element::fromJSON(json_text));
+        ConstElementPtr json_elements;
+        ASSERT_NO_THROW_LOG(json_elements = Element::fromJSON(json_text));
 
-	    // Parsing parameters should throw.
-	    PerfMonConfig config(family_);
+        // Parsing parameters should throw.
+        PerfMonConfig config(family_);
         if (family_ == AF_INET) {
-	        ASSERT_THROW_MSG(config.parse(json_elements), DhcpConfigError,
+            ASSERT_THROW_MSG(config.parse(json_elements), DhcpConfigError,
                              "cannot add Alarm to store: AlarmStore::addAlarm:"
                              " alarm already exists for:"
                              " DHCPDISCOVER-DHCPOFFER.socket_received-buffer_read.0");
         } else {
-	        ASSERT_THROW_MSG(config.parse(json_elements), DhcpConfigError,
+            ASSERT_THROW_MSG(config.parse(json_elements), DhcpConfigError,
                              "cannot add Alarm to store: AlarmStore::addAlarm:"
                              " alarm already exists for:"
                              " SOLICIT-REPLY.socket_received-buffer_read.0");
         }
-	}
+    }
 
-    /// @brief Protocol family AF_INET or AF_INET6
+    /// @brief Protocol family AF_INET or AF_INET6.
     uint16_t family_;
 
     /// @brief Collection of valid family-specific keys.
     std::vector<DurationKeyPtr> keys_;
 };
 
-/// @brief Test fixture for testing PerfMonConfig for DHCP(v4).
+/// @brief Test fixture for testing PerfMonConfig for DHCPV4.
 class PerfMonConfigTest4: public PerfMonConfigTest {
 public:
     /// @brief Constructor.
@@ -469,11 +469,11 @@ TEST_F(PerfMonConfigTest6, validAlarmsList) {
 }
 
 TEST_F(PerfMonConfigTest4, duplicateAlarms) {
-	testDuplicateAlarms();
+    testDuplicateAlarms();
 }
 
 TEST_F(PerfMonConfigTest6, duplicateAlarms) {
-	testDuplicateAlarms();
+    testDuplicateAlarms();
 }
 
 } // end of anonymous namespace

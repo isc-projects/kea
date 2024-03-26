@@ -25,12 +25,12 @@ namespace perfmon {
 /// PerfMonConfig.
 class PerfMonMgr : public PerfMonConfig {
 public:
-    /// @brief Constructor
+    /// @brief Constructor.
     ///
     /// @param family Protocol family AF_INET or AF_INET6.
     explicit PerfMonMgr(uint16_t family);
 
-    /// @brief Destructor
+    /// @brief Destructor.
     virtual ~PerfMonMgr() = default;
 
     /// @brief Parses the hook library 'parameters' element.
@@ -38,18 +38,18 @@ public:
     /// @param params map of configuration parameters to parse.
     void configure(const isc::data::ConstElementPtr& params);
 
-    /// @brief Processes the event stack of a query packet
+    /// @brief Processes the event stack of a query packet.
     ///
     /// @todo DETAILS TO FOLLOW
     ///
-    /// @param query query packet whose stack is to be processed
-    /// @param response response packet generated for the query
-    /// @param subnet_id id of the selected subnet
+    /// @param query query packet whose stack is to be processed.
+    /// @param response response packet generated for the query.
+    /// @param subnet_id id of the selected subnet.
     void processPktEventStack(isc::dhcp::PktPtr query,
                               isc::dhcp::PktPtr response,
                               const isc::dhcp::SubnetID& subnet_id);
 
-    /// @brief Adds a duration sample to a MonitoredDuration
+    /// @brief Adds a duration sample to a MonitoredDuration.
     ///
     /// The MonitoredDuration identified by the given key is fetched from
     /// the store and updated with the sample. If the update returns the
@@ -58,28 +58,28 @@ public:
     /// If the check returns the alarm, then the alarm has undergone a
     /// reportable event and is passed to reporting.
     ///
-    /// @param key identifies the duration to update
+    /// @param key identifies the duration to update.
     /// @param sample amount of time that elapsed between the two events
-    /// identified in the key
+    /// identified in the key.
     void addDurationSample(DurationKeyPtr key, const Duration& sample);
 
-    /// @brief Emits an entry to StatsMgr for a given duration
+    /// @brief Emits an entry to StatsMgr for a given duration.
     ///
     /// Calculates the average duration for the reportable interval and
     /// reports the value to StatsMgr if stat-mgr-reporting is true.
     ///
-    /// @param duration duration to report
+    /// @param duration duration to report.
     ///
     /// @return Always returns the average duration for reportable interval.
     Duration reportToStatsMgr(MonitoredDurationPtr duration);
 
-    /// @brief Emits a report for a given alarm
+    /// @brief Emits a report for a given alarm.
     ///
     /// Emits a WARN log if the alarm state is TRIGGERED or an
     /// INFO log if it is CLEARED. This may expand in the future to
-    /// accomodate additional reporting mechanisms.
+    /// accommodate additional reporting mechanisms.
     ///
-    /// @param alarm Alarm to report
+    /// @param alarm Alarm to report.
     /// @param average Duration average which caused the state transition.
     void reportAlarm(AlarmPtr alarm, const Duration& average);
 
@@ -102,7 +102,7 @@ public:
     ///
     /// @return interval-width-secs as a Duration.
     Duration getIntervalDuration() {
-        return  (interval_duration_);
+        return (interval_duration_);
     }
 
     /// @brief Get the alarm report interval.
@@ -112,9 +112,9 @@ public:
         return (alarm_report_interval_);
     }
 
-    /// @brief Get the duration  store
+    /// @brief Get the duration store.
     ///
-    /// @return pointer to the duration store
+    /// @return pointer to the duration store.
     MonitoredDurationStorePtr getDurationStore() {
         return (duration_store_);
     }
@@ -136,9 +136,9 @@ private:
     /// timer but nothing more until traffic resumes.
     ///
     /// @brief Tracks whether or not the server is processing DHCP packets.
-    ///dhcp::NetworkStatePtr network_state_;
+    // dhcp::NetworkStatePtr network_state_;
 
-    /// @brief IOService instance used to the timer.
+    /// @brief IOService instance used by the timer.
     asiolink::IOServicePtr io_service_;
 
     /// @brief Timer which tracks the next duration due to report.

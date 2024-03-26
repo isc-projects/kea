@@ -127,22 +127,22 @@ An example of the anticipated configuration is shown below:
         {
             "library": "lib/kea/hooks/libdhcp_perfmon.so",
             "parameters": {
-                "enable-monitoring" : true,
-                "interval-width-secs" : 5,
-                "stats-mgr-reporting" : true,
-                "alarm-report-secs" : 600,
+                "enable-monitoring": true,
+                "interval-width-secs": 5,
+                "stats-mgr-reporting": true,
+                "alarm-report-secs": 600,
                 "alarms": [
                 {
                     "duration-key": {
-                        "query-type" : "DHCPDISCOVER",
-                        "response-type" : "DHCPOFFER",
-                        "start-event" : "process-started",
-                        "stop-event" : "process-completed",
-                        "subnet-id" : 0
+                        "query-type": "DHCPDISCOVER",
+                        "response-type": "DHCPOFFER",
+                        "start-event": "process-started",
+                        "stop-event": "process-completed",
+                        "subnet-id": 0
                     },
-                    "enable-alarm" : true,
-                    "high-water-ms" : 500,
-                    "low-water-ms" : 25
+                    "enable-alarm": true,
+                    "high-water-ms": 500,
+                    "low-water-ms": 25
                 }]
             }
         }]

@@ -24,19 +24,19 @@ using namespace boost::posix_time;
 namespace {
 
 // These tests excerise AlarmParser which, with the help of DurationKeyParser
-// (tested rigourously elsewhere), parses a map of paramters as shown below:
+// (tested rigorously elsewhere), parses a map of parameters as shown below:
 //
 // {
 //      "duration-key": {
-//          "query-type" : "DHCPDISCOVER",
-//          "response-type" : "DHCPOFFER",
-//          "start-event" : "process-started",
-//          "stop-event" : "process-completed",
-//          "subnet-id" : 70
+//          "query-type": "DHCPDISCOVER",
+//          "response-type": "DHCPOFFER",
+//          "start-event": "process-started",
+//          "stop-event": "process-completed",
+//          "subnet-id": 70
 //       },
-//       "enable-alarm" : true,
-//       "high-water-ms" : 500,
-//       "low-water-ms" : 25,
+//       "enable-alarm": true,
+//       "high-water-ms": 500,
+//       "low-water-ms": 25,
 // }
 
 /// @brief Describes a valid test scenario.
@@ -55,8 +55,8 @@ struct InvalidScenario {
     std::string exp_message_;       // Expected error text
 };
 
-/// @brief Base class test fixture for testing  AlarmParser.
-class AlarmParserTest: public ::testing::Test {
+/// @brief Base class test fixture for testing AlarmParser.
+class AlarmParserTest : public ::testing::Test {
 public:
     /// @brief Constructor.
     explicit AlarmParserTest(uint16_t family) : family_(family) {
@@ -80,9 +80,9 @@ public:
                 // All parameters
                 __LINE__,
                 R"(
-                    "enable-alarm" : true,
-                    "high-water-ms" : 500,
-                    "low-water-ms" : 25
+                    "enable-alarm": true,
+                    "high-water-ms": 500,
+                    "low-water-ms": 25
                 )",
                 Alarm::CLEAR, 500, 25
             },
@@ -90,18 +90,18 @@ public:
                 // No enable-alarm, should default to CLEAR state.
                 __LINE__,
                 R"(
-                    "high-water-ms" : 500,
-                    "low-water-ms" : 25
+                    "high-water-ms": 500,
+                    "low-water-ms": 25
                 )",
                 Alarm::CLEAR, 500, 25
             },
             {
-                // State should be DISALBED when enable-alarm is false
+                // State should be DISABLED when enable-alarm is false
                 __LINE__,
                 R"(
-                    "enable-alarm" : false,
-                    "high-water-ms" : 500,
-                    "low-water-ms" : 25
+                    "enable-alarm": false,
+                    "high-water-ms": 500,
+                    "low-water-ms": 25
                 )",
                 Alarm::DISABLED, 500, 25
             }
@@ -145,9 +145,9 @@ public:
                 // Spurious parameter
                 __LINE__,
                 R"(
-                    "enable-alarm" : true,
-                    "high-water-ms" : 500,
-                    "low-water-ms" : 25,
+                    "enable-alarm": true,
+                    "high-water-ms": 500,
+                    "low-water-ms": 25,
                     "bogus": true
                 )",
                 "spurious 'bogus' parameter"
@@ -156,9 +156,9 @@ public:
                 // Invalid type enable-alarm
                 __LINE__,
                 R"(
-                    "enable-alarm" : "bogus",
-                    "high-water-ms" : 500,
-                    "low-water-ms" : 25,
+                    "enable-alarm": "bogus",
+                    "high-water-ms": 500,
+                    "low-water-ms": 25,
                     "bogus": true
                 )",
                 "'enable-alarm' parameter is not a boolean"
@@ -167,8 +167,8 @@ public:
                 // Missing high-water-ms
                 __LINE__,
                 R"(
-                    "enable-alarm" : true,
-                    "low-water-ms" : 25
+                    "enable-alarm": true,
+                    "low-water-ms": 25
                 )",
                 "'high-water-ms' parameter is required"
             },
@@ -176,9 +176,9 @@ public:
                 // Invalid type for high-water-ms
                 __LINE__,
                 R"(
-                    "enable-alarm" : true,
-                    "high-water-ms" : "bogus",
-                    "low-water-ms" : 25
+                    "enable-alarm": true,
+                    "high-water-ms": "bogus",
+                    "low-water-ms": 25
                 )",
                 "'high-water-ms' parameter is not an integer"
             },
@@ -186,8 +186,8 @@ public:
                 // Missing low-water-ms
                 __LINE__,
                 R"(
-                    "enable-alarm" : true,
-                    "high-water-ms" : 500
+                    "enable-alarm": true,
+                    "high-water-ms": 500
                 )",
                 "'low-water-ms' parameter is required"
             },
@@ -195,9 +195,9 @@ public:
                 // Invalid type for low-water-ms
                 __LINE__,
                 R"(
-                    "enable-alarm" : true,
-                    "high-water-ms" : 500,
-                    "low-water-ms" : "bogus"
+                    "enable-alarm": true,
+                    "high-water-ms": 500,
+                    "low-water-ms": "bogus"
                 )",
                 "'low-water-ms' parameter is not an integer"
             },
@@ -205,9 +205,9 @@ public:
                 // Invalid threshold combination
                 __LINE__,
                 R"(
-                    "enable-alarm" : true,
-                    "high-water-ms" : 25,
-                    "low-water-ms" : 500
+                    "enable-alarm": true,
+                    "high-water-ms": 25,
+                    "low-water-ms": 500
                 )",
                 "'low-water-ms': 500, must be less than 'high-water-ms': 25"
             },
@@ -218,7 +218,7 @@ public:
 
     /// @brief Runs a list of invalid configurations through AlarmParser::parse().
     ///
-    /// @param list of valid scenarios to run
+    /// @param list of valid scenarios to run.
     /// @param add_key When true, scenario json will be prepended with valid, family-specific
     /// duration-key element prior to parsing.
     void testInvalidScenarios(std::list<InvalidScenario>& scenarios,
@@ -249,13 +249,13 @@ public:
     DurationKeyPtr expected_key_;
 };
 
-/// @brief Test fixture for testing AlarmParser for DHCP(v4).
+/// @brief Test fixture for testing AlarmParser for DHCPV4.
 class AlarmParserTest4: public AlarmParserTest {
 public:
     /// @brief Constructor.
     explicit AlarmParserTest4() : AlarmParserTest(AF_INET) {
         expected_key_.reset(new DurationKey(family_, DHCPDISCOVER, DHCPOFFER,
-                                           "start_here", "stop_there", 33));
+                                            "start_here", "stop_there", 33));
     }
 
     /// @brief Destructor.
@@ -319,7 +319,7 @@ public:
     }
 };
 
-TEST_F(AlarmParserTest4, validScenarios4) {
+TEST_F(AlarmParserTest4, validScenarios) {
     testValidScenarios();
 }
 
@@ -335,9 +335,9 @@ TEST_F(AlarmParserTest4, invalidDurationKey) {
             // Missing duration-key element
             __LINE__,
             R"({
-                "enable-alarm" : true,
-                "high-water-ms" : 500,
-                "low-water-ms" : 25
+                "enable-alarm": true,
+                "high-water-ms": 500,
+                "low-water-ms": 25
             })",
             "'duration-key' parameter is required"
         },
@@ -346,9 +346,9 @@ TEST_F(AlarmParserTest4, invalidDurationKey) {
             __LINE__,
             R"({
                 "duration-key": "not-a-map",
-                "enable-alarm" : true,
-                "high-water-ms" : 500,
-                "low-water-ms" : 25
+                "enable-alarm": true,
+                "high-water-ms": 500,
+                "low-water-ms": 25
             })",
             "'duration-key' parameter is not a map"
         },
@@ -359,12 +359,12 @@ TEST_F(AlarmParserTest4, invalidDurationKey) {
                 "duration-key": {
                     "query-type": "REQUEST",
                     "response-type": "REPLY",
-                    "start-event" : "start-here",
-                    "stop-event" : "stop-here"
+                    "start-event": "start-here",
+                    "stop-event": "stop-here"
                 },
-                "enable-alarm" : true,
-                "high-water-ms" : 500,
-                "low-water-ms" : 25
+                "enable-alarm": true,
+                "high-water-ms": 500,
+                "low-water-ms": 25
             })",
             "'query-type' parameter is invalid, 'REQUEST' is not a valid DHCP message type"
         },
@@ -389,9 +389,9 @@ TEST_F(AlarmParserTest6, invalidDurationKey) {
             // Missing duration-key element
             __LINE__,
             R"({
-                "enable-alarm" : true,
-                "high-water-ms" : 500,
-                "low-water-ms" : 25
+                "enable-alarm": true,
+                "high-water-ms": 500,
+                "low-water-ms": 25
             })",
             "'duration-key' parameter is required"
         },
@@ -400,9 +400,9 @@ TEST_F(AlarmParserTest6, invalidDurationKey) {
             __LINE__,
             R"({
                     "duration-key": "not-a-map",
-                    "enable-alarm" : true,
-                    "high-water-ms" : 500,
-                    "low-water-ms" : 25
+                    "enable-alarm": true,
+                    "high-water-ms": 500,
+                    "low-water-ms": 25
             })",
             "'duration-key' parameter is not a map"
         },
@@ -413,12 +413,12 @@ TEST_F(AlarmParserTest6, invalidDurationKey) {
                 "duration-key": {
                     "query-type": "DHCPDISCOVER",
                     "response-type": "DHCPOFFER",
-                    "start-event" : "start-here",
-                    "stop-event" : "stop-here"
+                    "start-event": "start-here",
+                    "stop-event": "stop-here"
                 },
-                "enable-alarm" : true,
-                "high-water-ms" : 500,
-                "low-water-ms" : 25
+                "enable-alarm": true,
+                "high-water-ms": 500,
+                "low-water-ms": 25
             })",
             "'query-type' parameter is invalid, 'DHCPDISCOVER' is not a valid DHCPV6 message type"
         },

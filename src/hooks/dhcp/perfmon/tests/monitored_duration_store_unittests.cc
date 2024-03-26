@@ -110,7 +110,7 @@ public:
 
         int idx = monds.size() - 1;
         for (auto const& d : *durations) {
-            EXPECT_EQ(*d, *monds[idx]) << "failed on pass :" << idx;
+            EXPECT_EQ(*d, *monds[idx]) << "failed on pass: " << idx;
             --idx;
         }
 

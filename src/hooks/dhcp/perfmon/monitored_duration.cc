@@ -169,7 +169,7 @@ std::string
 DurationKey::getLabel() const {
     std::ostringstream oss;
     oss << getMessageTypeLabel(family_, query_type_)
-       << "-"
+        << "-"
         << getMessageTypeLabel(family_, response_type_)
         << "." << start_event_label_ << "-" << stop_event_label_
         << "." << subnet_id_;
