@@ -1,4 +1,4 @@
-/* Copyright (C) 2017-2023 Internet Systems Consortium, Inc. ("ISC")
+/* Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
 
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -75,6 +75,7 @@ using namespace std;
   ALGORITHM "algorithm"
   DIGEST_BITS "digest-bits"
   SECRET "secret"
+  SECRET_FILE "secret-file"
 
   CONTROL_SOCKET "control-socket"
   SOCKET_TYPE "socket-type"
@@ -669,6 +670,7 @@ tsig_key_param: tsig_key_name
               | tsig_key_algorithm
               | tsig_key_digest_bits
               | tsig_key_secret
+              | tsig_key_secret_file
               | user_context
               | comment
               | unknown_map_entry
@@ -710,6 +712,7 @@ tsig_key_digest_bits: DIGEST_BITS COLON INTEGER {
 
 tsig_key_secret: SECRET {
     ctx.unique("secret", ctx.loc2pos(@1));
+    ctx.unique("secret-file", ctx.loc2pos(@1));
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     if ($4 == "") {
@@ -717,6 +720,19 @@ tsig_key_secret: SECRET {
     }
     ElementPtr elem(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("secret", elem);
+    ctx.leave();
+};
+
+tsig_key_secret_file: SECRET_FILE {
+    ctx.unique("secret", ctx.loc2pos(@1));
+    ctx.unique("secret-file", ctx.loc2pos(@1));
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    if ($4 == "") {
+        error(@3, "TSIG key secret file name cannot be blank");
+    }
+    ElementPtr elem(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("secret-file", elem);
     ctx.leave();
 };
 

@@ -1,4 +1,4 @@
-/* Copyright (C) 2017-2023 Internet Systems Consortium, Inc. ("ISC")
+/* Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
 
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -395,6 +395,16 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
         return isc::d2::D2Parser::make_SECRET(driver.loc_);
     default:
         return isc::d2::D2Parser::make_STRING("secret", driver.loc_);
+    }
+}
+
+\"secret-file\" {
+    switch(driver.ctx_) {
+    case isc::d2::D2ParserContext::TSIG_KEY:
+    case isc::d2::D2ParserContext::TSIG_KEYS:
+        return isc::d2::D2Parser::make_SECRET_FILE(driver.loc_);
+    default:
+        return isc::d2::D2Parser::make_STRING("secret-file", driver.loc_);
     }
 }
 
