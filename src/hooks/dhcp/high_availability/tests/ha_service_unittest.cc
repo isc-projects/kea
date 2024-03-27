@@ -6912,6 +6912,53 @@ TEST_F(HAServiceStateMachineTest, terminateNoTransitionOnRestart) {
         << "' state";
 }
 
+// This test checks that the server transitions back to the terminated state
+// from the waiting state when the partner sits in the terminated state.
+TEST_F(HAServiceStateMachineTest, terminateWhenPartnerRemainsTerminated) {
+    auto config_storage = createValidConfiguration();
+    partner_->startup();
+    startService(config_storage);
+    NakedCommunicationState4Ptr state(new NakedCommunicationState4(io_service_,
+                                                                   config_storage));
+    service_->communication_state_ = state;
+
+    // Set partner's time to the current time. This guarantees that the clock
+    // skew is below 60s and there is no reason for the server to transition
+    // to the terminated state.
+    partner_->setDateTime(HttpDateTime().rfc1123Format());
+    // The partner is in the terminated state to simulate sequential restart
+    // of the two servers from the terminated state.
+    partner_->transition("terminated");
+    // This server is in the waiting state which simulates the restart case.
+    service_->transition(HA_WAITING_ST, HAService::NOP_EVT);
+    // Run the heartbeat.
+    waitForEvent(HAService::HA_HEARTBEAT_COMPLETE_EVT);
+    // The server should remain in the waiting state because the clock skew
+    // is low.
+    EXPECT_EQ(HA_WAITING_ST, service_->getCurrState())
+        << "expected that the server remains in 'waiting' state"
+        << "', but transitioned to the '"
+        << service_->getStateLabel(service_->getCurrState())
+        << "' state";
+
+    // Move the partner state time to long ago. It should cause our server to
+    // assume that the administrator neglected to restart the terminated partner
+    // and transition to the terminated state to continue serving the DHCP
+    // clients.
+    boost::posix_time::ptime long_ago = HttpDateTime().fromRfc1123("Sun, 06 Nov 1994 08:49:37 GMT").getPtime();
+    state->partner_state_time_ = long_ago;
+
+    // Run the heartbeat.
+    waitForEvent(HAService::HA_HEARTBEAT_COMPLETE_EVT);
+
+    // The server should have transitioned to the terminated state.
+    EXPECT_EQ(HA_TERMINATED_ST, service_->getCurrState())
+        << "expected that the server transitions to the 'terminated' state"
+        << "', but transitioned to the '"
+        << service_->getStateLabel(service_->getCurrState())
+        << "' state";
+}
+
 // This test checks all combinations of server and partner states and the
 // resulting state to which the server transitions. This server is secondary.
 // There is another test which validates state transitions from the

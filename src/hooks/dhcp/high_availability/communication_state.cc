@@ -58,8 +58,8 @@ CommunicationState::CommunicationState(const IOServicePtr& io_service,
                                        const HAConfigPtr& config)
     : io_service_(io_service), config_(config), timer_(), interval_(0),
       poke_time_(boost::posix_time::microsec_clock::universal_time()),
-      heartbeat_impl_(0), partner_state_(-1), partner_scopes_(),
-      clock_skew_(0, 0, 0, 0), last_clock_skew_warn_(),
+      heartbeat_impl_(0), partner_state_(-1), partner_state_time_(),
+      partner_scopes_(), clock_skew_(0, 0, 0, 0), last_clock_skew_warn_(),
       my_time_at_skew_(), partner_time_at_skew_(),
       analyzed_messages_count_(0), unsent_update_count_(0),
       partner_unsent_update_count_{0, 0}, mutex_(new mutex()) {
@@ -114,11 +114,31 @@ CommunicationState::setPartnerUnavailable() {
 void
 CommunicationState::setPartnerStateInternal(const std::string& state) {
     try {
-        partner_state_ = stringToState(state);
+        auto new_partner_state = stringToState(state);
+        if (new_partner_state != partner_state_) {
+            setCurrentPartnerStateTimeInternal();
+        }
+        partner_state_ = new_partner_state;
     } catch (...) {
         isc_throw(BadValue, "unsupported HA partner state returned "
                   << state);
     }
+}
+
+time_duration
+CommunicationState::getDurationSincePartnerStateTime() const {
+    ptime now = boost::posix_time::microsec_clock::universal_time();
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lk(*mutex_);
+        return (now - partner_state_time_);
+    } else {
+        return (now - partner_state_time_);
+    }
+}
+
+void
+CommunicationState::setCurrentPartnerStateTimeInternal() {
+    partner_state_time_ = boost::posix_time::microsec_clock::universal_time();
 }
 
 std::set<std::string>

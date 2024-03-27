@@ -123,6 +123,7 @@ extern const isc::log::MessageID HA_SYNC_HANDLER_FAILED = "HA_SYNC_HANDLER_FAILE
 extern const isc::log::MessageID HA_SYNC_START = "HA_SYNC_START";
 extern const isc::log::MessageID HA_SYNC_SUCCESSFUL = "HA_SYNC_SUCCESSFUL";
 extern const isc::log::MessageID HA_TERMINATED = "HA_TERMINATED";
+extern const isc::log::MessageID HA_TERMINATED_PARTNER_DID_NOT_RESTART = "HA_TERMINATED_PARTNER_DID_NOT_RESTART";
 extern const isc::log::MessageID HA_TERMINATED_RESTART_PARTNER = "HA_TERMINATED_RESTART_PARTNER";
 
 } // namespace ha
@@ -247,6 +248,7 @@ const char* values[] = {
     "HA_SYNC_START", "%1: starting lease database synchronization with %2",
     "HA_SYNC_SUCCESSFUL", "%1: lease database synchronization with %2 completed successfully in %3",
     "HA_TERMINATED", "HA %1: service terminated due to an unrecoverable condition. Check previous error message(s), address the problem and restart!",
+    "HA_TERMINATED_PARTNER_DID_NOT_RESTART", "%1: service is terminating because the terminated partner was not restarted within %2 minutes",
     "HA_TERMINATED_RESTART_PARTNER", "%1: waiting for the partner in the TERMINATED state to be restarted",
     NULL
 };

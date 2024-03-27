@@ -80,6 +80,10 @@ public:
     /// Control result returned in response to ha-maintenance-notify.
     static const int HA_CONTROL_RESULT_MAINTENANCE_NOT_ALLOWED = 1001;
 
+    /// A delay in minutes to transition from the waiting to terminated state
+    /// when the partner remains in terminated state.
+    static const int HA_WAITING_TO_TERMINATED_ST_DELAY_MINUTES = 10;
+
 protected:
 
     /// @brief Callback invoked when request was sent and a response received

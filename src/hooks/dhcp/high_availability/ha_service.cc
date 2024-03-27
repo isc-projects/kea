@@ -70,6 +70,7 @@ const int HAService::HA_MAINTENANCE_START_EVT;
 const int HAService::HA_MAINTENANCE_CANCEL_EVT;
 const int HAService::HA_CONTROL_RESULT_MAINTENANCE_NOT_ALLOWED;
 const int HAService::HA_SYNCED_PARTNER_UNAVAILABLE_EVT;
+const int HAService::HA_WAITING_TO_TERMINATED_ST_DELAY_MINUTES;
 
 HAService::HAService(const unsigned int id, const IOServicePtr& io_service,
                      const NetworkStatePtr& network_state, const HAConfigPtr& config,
@@ -884,7 +885,17 @@ HAService::waitingStateHandler() {
         postNextEvent(NOP_EVT);
         break;
 
-    case HA_TERMINATED_ST:
+    case HA_TERMINATED_ST: {
+        auto partner_in_terminated = communication_state_->getDurationSincePartnerStateTime();
+        if (!partner_in_terminated.is_not_a_date_time() &&
+            partner_in_terminated.minutes() >= HA_WAITING_TO_TERMINATED_ST_DELAY_MINUTES) {
+            LOG_WARN(ha_logger, HA_TERMINATED_PARTNER_DID_NOT_RESTART)
+                .arg(config_->getThisServerName())
+                .arg(HA_WAITING_TO_TERMINATED_ST_DELAY_MINUTES);
+            verboseTransition(HA_TERMINATED_ST);
+            break;
+        }
+
         // We have checked above whether the clock skew is exceeding the threshold
         // and we should terminate. If we're here, it means that the clock skew
         // is acceptable. The partner may be still in the terminated state because
@@ -895,7 +906,7 @@ HAService::waitingStateHandler() {
             .arg(config_->getThisServerName());
         postNextEvent(NOP_EVT);
         break;
-
+    }
     case HA_WAITING_ST:
         // If both servers are waiting, the primary server 'wins' and is
         // transitioned to the next state first.

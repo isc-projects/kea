@@ -65,6 +65,14 @@ public:
     /// tested in a different test case.
     void partnerStateUnavailableTest();
 
+    /// @brief Verifies that the duration since the partner time is updated
+    /// correctly when the partner has certain state.
+    void partnerStateTimeExplicitStateTest();
+
+    /// @brief Verifies that the duration since the partner time is updated
+    /// correctly when the partner is unavailable.
+    void partnerStateTimeUnavailableTest();
+
     /// @brief Verifies that the partner's scopes are set and retrieved correctly.
     void partnerScopesTest();
 
@@ -206,6 +214,64 @@ CommunicationStateTest::partnerStateTest() {
 
     // An attempt to set unsupported value should result in exception.
     EXPECT_THROW(state_.setPartnerState("unsupported"), BadValue);
+}
+
+// Verifies that the duration since the partner time is updated
+// correctly when the partner has certain state.
+void
+CommunicationStateTest::partnerStateTimeExplicitStateTest() {
+    // Initially the partner state time is not set.
+    time_duration duration_since_partner_time = state_.getDurationSincePartnerStateTime();
+    EXPECT_TRUE(duration_since_partner_time.is_not_a_date_time());
+
+    // Set new partner state. The state time should be set close
+    // to the current time.
+    state_.setPartnerState("waiting");
+
+    // Sleep for a short period of time to ensure that the returned
+    // duration is non-zero.
+    usleep(10);
+
+    // The duration must be set.
+    time_duration duration_since_waiting = state_.getDurationSincePartnerStateTime();
+    ASSERT_FALSE(duration_since_waiting.is_not_a_date_time());
+
+    // Check that the partner time is within 10 seconds range from
+    // the current time. 10 seconds difference may sound too high but
+    // this test is not about the precision. It is more important that
+    // it is stable. In the HA state machine the duration of 10 seconds
+    // is relatively low anyway.
+    EXPECT_GT(duration_since_waiting.fractional_seconds(), 0);
+    EXPECT_LT(duration_since_waiting.seconds(), 10);
+}
+
+// Verifies that the duration since the partner time is updated
+// correctly when the partner is unavailable.
+void
+CommunicationStateTest::partnerStateTimeUnavailableTest() {
+    // Initially the partner state time is not set.
+    time_duration duration_since_partner_time = state_.getDurationSincePartnerStateTime();
+    EXPECT_TRUE(duration_since_partner_time.is_not_a_date_time());
+
+    // Set new partner state. The state time should be set close
+    // to the current time.
+    state_.setPartnerUnavailable();
+
+    // Sleep for a short period of time to ensure that the returned
+    // duration is non-zero.
+    usleep(10);
+
+    // The duration must be set.
+    time_duration duration_since_unavail = state_.getDurationSincePartnerStateTime();
+    ASSERT_FALSE(duration_since_unavail.is_not_a_date_time());
+
+    // Check that the partner time is within 10 seconds range from
+    // the current time. 10 seconds difference may sound too high but
+    // this test is not about the precision. It is more important that
+    // it is stable. In the HA state machine the duration of 10 seconds
+    // is relatively low anyway.
+    EXPECT_GT(duration_since_unavail.fractional_seconds(), 0);
+    EXPECT_LT(duration_since_unavail.seconds(), 10);
 }
 
 // Verifies that the partner state is set to unavailable.
@@ -985,6 +1051,24 @@ TEST_F(CommunicationStateTest, partnerStateUnavailableTest) {
 TEST_F(CommunicationStateTest, partnerStateUnavailableTestMultiThreading) {
     MultiThreadingMgr::instance().setMode(true);
     partnerStateUnavailableTest();
+}
+
+TEST_F(CommunicationStateTest, partnerStateTimeExplicitStateTest) {
+    partnerStateTimeExplicitStateTest();
+}
+
+TEST_F(CommunicationStateTest, partnerStateTimeExplcitStateTestMultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    partnerStateTimeExplicitStateTest();
+}
+
+TEST_F(CommunicationStateTest, partnerStateTimeUnavailableTest) {
+    partnerStateTimeUnavailableTest();
+}
+
+TEST_F(CommunicationStateTest, partnerStateTimeUnavailableTestMultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    partnerStateTimeUnavailableTest();
 }
 
 TEST_F(CommunicationStateTest, partnerScopesTest) {

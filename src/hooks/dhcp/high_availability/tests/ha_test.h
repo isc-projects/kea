@@ -61,6 +61,7 @@ public:
     using StateType::partner_time_at_skew_;
     using StateType::unsent_update_count_;
     using StateType::getRejectedLeaseUpdatesCountFromContainer;
+    using StateType::partner_state_time_;
 };
 
 /// @brief Type of the NakedCommunicationState for DHCPv4.

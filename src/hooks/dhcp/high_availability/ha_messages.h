@@ -124,6 +124,7 @@ extern const isc::log::MessageID HA_SYNC_HANDLER_FAILED;
 extern const isc::log::MessageID HA_SYNC_START;
 extern const isc::log::MessageID HA_SYNC_SUCCESSFUL;
 extern const isc::log::MessageID HA_TERMINATED;
+extern const isc::log::MessageID HA_TERMINATED_PARTNER_DID_NOT_RESTART;
 extern const isc::log::MessageID HA_TERMINATED_RESTART_PARTNER;
 
 } // namespace ha

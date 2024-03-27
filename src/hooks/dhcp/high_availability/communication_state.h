@@ -123,6 +123,22 @@ private:
     void setPartnerStateInternal(const std::string& state);
 
 public:
+
+    /// @brief Returns the duration since the partner was first seen in the
+    /// current state.
+    ///
+    /// @return A duration since the partner has been in the current state.
+    boost::posix_time::time_duration getDurationSincePartnerStateTime() const;
+
+private:
+
+    /// @brief Sets partner's state time to current time.
+    ///
+    /// It marks the time when the partner was first seen in the current state.
+    void setCurrentPartnerStateTimeInternal();
+
+public:
+
     /// @brief Returns scopes served by the partner server.
     ///
     /// @return A set of scopes served by the partner.
@@ -705,6 +721,9 @@ protected:
     ///
     /// Negative value means that the partner's state is unknown.
     int partner_state_;
+
+    /// Holds a time when partner was first seen in the current state.
+    boost::posix_time::ptime partner_state_time_;
 
     /// @brief Last known set of scopes served by the partner server.
     std::set<std::string> partner_scopes_;
