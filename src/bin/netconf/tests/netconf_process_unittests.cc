@@ -81,6 +81,7 @@ TEST_F(NetconfProcessTest, shutdown) {
     EXPECT_TRUE(elapsed.total_milliseconds() >= 100 &&
                 elapsed.total_milliseconds() <= 400);
     timer.cancel();
+    getIOService()->stop();
     getIOService()->restart();
     try {
         getIOService()->poll();

@@ -147,6 +147,7 @@ void
 TimerMgrTest::TearDown() {
     // Remove all timers.
     timer_mgr_->unregisterTimers();
+    io_service_->stop();
     io_service_->restart();
     try {
         io_service_->poll();
@@ -175,6 +176,7 @@ TimerMgrTest::doWait(const long timeout, const bool /*call_receive*/) {
         io_service_->stop();
     }, timeout, IntervalTimer::ONE_SHOT);
     io_service_->run();
+    io_service_->stop();
     io_service_->restart();
 }
 

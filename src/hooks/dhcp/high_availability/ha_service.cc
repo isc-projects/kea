@@ -2450,6 +2450,7 @@ HAService::synchronize(std::string& status_message, const std::string& server_na
 
     client.stop();
 
+    io_service->stop();
     io_service->restart();
     try {
         io_service->poll();
@@ -2596,6 +2597,7 @@ HAService::sendLeaseUpdatesFromBacklog() {
 
     client.stop();
 
+    io_service->stop();
     io_service->restart();
     try {
         io_service->poll();
@@ -2683,6 +2685,7 @@ HAService::sendHAReset() {
 
     client.stop();
 
+    io_service->stop();
     io_service->restart();
     try {
         io_service->poll();
@@ -2850,6 +2853,7 @@ HAService::processMaintenanceStart() {
 
     client.stop();
 
+    io_service->stop();
     io_service->restart();
     try {
         io_service->poll();
@@ -2972,6 +2976,7 @@ HAService::processMaintenanceCancel() {
 
     client.stop();
 
+    io_service->stop();
     io_service->restart();
     try {
         io_service->poll();

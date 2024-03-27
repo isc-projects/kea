@@ -221,6 +221,7 @@ public:
     virtual ~TCPAcceptorTest() {
         running_ = false;
         test_timer_.cancel();
+        io_service_->stop();
         io_service_->restart();
         try {
             io_service_->poll();

@@ -158,6 +158,7 @@ public:
             thread_.reset();
         }
         removeUnixSocketFile();
+        io_service_->stop();
         io_service_->restart();
         try {
             io_service_->poll();
@@ -529,6 +530,7 @@ public:
         if (listener_) {
             listener_->stop();
         }
+        io_service_->stop();
         io_service_->restart();
         try {
             io_service_->poll();

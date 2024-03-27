@@ -314,6 +314,7 @@ D2ClientMgr::stopSender() {
     }
 
     if (private_io_service_) {
+        private_io_service_->stop();
         private_io_service_->restart();
         try {
             private_io_service_->poll();

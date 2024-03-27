@@ -248,6 +248,7 @@ public:
 
         // We have some cancelled operations for which we need to invoke the
         // handlers with the operation_aborted error code.
+        getIOService()->stop();
         getIOService()->restart();
         getIOService()->poll();
 
@@ -413,6 +414,7 @@ TEST_F(CtrlAgentCommandMgrTest, forwardListCommands) {
 
     // We have some cancelled operations for which we need to invoke the
     // handlers with the operation_aborted error code.
+    getIOService()->stop();
     getIOService()->restart();
     getIOService()->poll();
 

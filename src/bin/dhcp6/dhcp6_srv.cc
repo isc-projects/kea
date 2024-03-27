@@ -302,6 +302,7 @@ Dhcpv6Srv::~Dhcpv6Srv() {
         }
         LOG_ERROR(dhcp6_logger, DHCP6_SRV_UNLOAD_LIBRARIES_ERROR).arg(msg);
     }
+    io_service_->stop();
     io_service_->restart();
     try {
         io_service_->poll();

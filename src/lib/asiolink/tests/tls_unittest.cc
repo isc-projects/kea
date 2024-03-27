@@ -422,6 +422,7 @@ public:
 
     /// @brief Destructor.
     virtual ~TLSTest() {
+        io_service_->stop();
         io_service_->restart();
         try {
             io_service_->poll();

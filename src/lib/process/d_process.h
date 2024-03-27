@@ -146,6 +146,7 @@ public:
 
     /// @brief Destructor
     virtual ~DProcessBase() {
+        io_service_->stop();
         io_service_->restart();
         try {
             io_service_->poll();

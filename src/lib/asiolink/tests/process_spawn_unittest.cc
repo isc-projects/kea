@@ -68,6 +68,7 @@ public:
         io_signal_set_->remove(SIGCHLD);
         io_signal_set_.reset();
         // Make sure the cancel handler for the IOSignalSet is called.
+        io_service_->stop();
         io_service_->restart();
         try {
             io_service_->poll();

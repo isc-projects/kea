@@ -659,6 +659,7 @@ public:
             client->close();
         }
         test_timer_.cancel();
+        io_service_->stop();
         io_service_->restart();
         try {
             io_service_->poll();
@@ -696,6 +697,7 @@ public:
     /// @param timeout Optional value specifying for how long the io service
     /// should be ran.
     void runIOService(long timeout = 0) {
+        io_service_->stop();
         io_service_->restart();
 
         if (timeout > 0) {
@@ -704,6 +706,7 @@ public:
                                         timeout, IntervalTimer::ONE_SHOT);
         }
         io_service_->run();
+        io_service_->stop();
         io_service_->restart();
         io_service_->poll();
     }

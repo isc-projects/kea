@@ -231,6 +231,7 @@ NameChangeSender::stopSending() {
 
     if (io_service_) {
         try {
+            io_service_->stop();
             io_service_->restart();
             io_service_->poll();
         } catch (const std::exception& ex) {

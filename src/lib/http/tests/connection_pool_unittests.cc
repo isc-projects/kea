@@ -114,6 +114,7 @@ public:
 
     /// @brief Destructor.
     ~HttpConnectionPoolTest() {
+        io_service_->stop();
         io_service_->restart();
         try {
             io_service_->poll();

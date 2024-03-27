@@ -625,6 +625,7 @@ public:
         listener_->stop();
         listener2_->stop();
         listener3_->stop();
+        io_service_->stop();
         io_service_->restart();
         try {
             io_service_->poll();
@@ -1512,6 +1513,7 @@ public:
         // Change the partner's response to success.
         factory2_->getResponseCreator()->setControlResult(CONTROL_RESULT_SUCCESS);
 
+        io_service_->stop();
         io_service_->restart();
         try {
             io_service_->poll();
@@ -5608,6 +5610,7 @@ public:
     }
 
     ~HAServiceStateMachineTest() {
+        io_service_->stop();
         io_service_->restart();
         try {
             io_service_->poll();

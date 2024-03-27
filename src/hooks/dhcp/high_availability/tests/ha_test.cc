@@ -59,6 +59,7 @@ HATest::~HATest() {
     if (timer_) {
         timer_->cancel();
     }
+    io_service_->stop();
     io_service_->restart();
     try {
         io_service_->poll();
@@ -79,6 +80,7 @@ HATest::startHAService() {
 
 void
 HATest::runIOService(long ms) {
+    io_service_->stop();
     io_service_->restart();
     timer_.reset(new IntervalTimer(io_service_));
     timer_->setup(std::bind(&IOService::stop, io_service_), ms,
@@ -91,6 +93,7 @@ HATest::runIOService(long ms) {
 
 void
 HATest::runIOService(long ms, std::function<bool()> stop_condition) {
+    io_service_->stop();
     io_service_->restart();
     timer_.reset(new IntervalTimer(io_service_));
     bool timeout = false;
@@ -106,6 +109,7 @@ HATest::runIOService(long ms, std::function<bool()> stop_condition) {
 
 boost::shared_ptr<std::thread>
 HATest::runIOServiceInThread() {
+    io_service_->stop();
     io_service_->restart();
 
     bool running = false;

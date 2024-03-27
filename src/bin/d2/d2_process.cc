@@ -440,6 +440,7 @@ D2Process::reconfigureQueueMgr() {
 
 D2Process::~D2Process() {
     queue_mgr_->stopListening();
+    getIOService()->stop();
     getIOService()->restart();
     try {
         getIOService()->poll();

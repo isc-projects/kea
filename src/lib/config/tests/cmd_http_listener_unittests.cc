@@ -81,6 +81,7 @@ public:
         }
 
         test_timer_.cancel();
+        io_service_->stop();
         io_service_->restart();
         try {
             io_service_->poll();
@@ -198,7 +199,7 @@ public:
         // Loop until the clients are done, an error occurs, or the time runs out.
         size_t num_done = 0;
         while (num_done != request_limit) {
-            // Always call restart() before we call run();
+            io_service_->stop();
             io_service_->restart();
 
             // Run until a client stops the service.

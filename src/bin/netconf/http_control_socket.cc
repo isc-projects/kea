@@ -102,6 +102,7 @@ HttpControlSocket::sendCommand(ConstElementPtr command) {
     io_service->run();
 
     client.stop();
+    io_service->stop();
     io_service->restart();
     try {
         io_service->poll();

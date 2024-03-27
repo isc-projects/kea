@@ -127,6 +127,7 @@ public:
     virtual ~DNSClientTest() {
         test_timer_.cancel();
         dns_client_->stop();
+        service_->stop();
         service_->restart();
         try {
             service_->poll();
@@ -450,6 +451,7 @@ public:
         // Since the callback, operator(), calls stop() on the io_service,
         // we must reset it in order for subsequent calls to run() or
         // runOne() to work.
+        service_->stop();
         service_->restart();
         try {
             service_->poll();
@@ -506,6 +508,7 @@ public:
         // Since the callback, operator(), calls stop() on the io_service,
         // we must reset it in order for subsequent calls to run() or
         // runOne() to work.
+        service_->stop();
         service_->restart();
         try {
             service_->poll();

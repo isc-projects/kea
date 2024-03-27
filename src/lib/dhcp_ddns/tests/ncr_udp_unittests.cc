@@ -202,6 +202,7 @@ public:
 
     virtual ~NameChangeUDPListenerTest() {
         test_timer_.cancel();
+        io_service_->stop();
         io_service_->restart();
         try {
             io_service_->poll();
@@ -1037,6 +1038,7 @@ public:
 
     ~NameChangeUDPTest() {
         test_timer_.cancel();
+        io_service_->stop();
         io_service_->restart();
         try {
             io_service_->poll();

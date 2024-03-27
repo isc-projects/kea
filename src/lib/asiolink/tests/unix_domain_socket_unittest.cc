@@ -48,6 +48,7 @@ public:
     virtual ~UnixDomainSocketTest() {
         removeUnixSocketFile();
         test_socket_.reset();
+        io_service_->stop();
         io_service_->restart();
         try {
             io_service_->poll();

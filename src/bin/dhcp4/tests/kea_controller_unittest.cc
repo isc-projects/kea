@@ -242,6 +242,7 @@ public:
         while (!stopped && (!cond || !cond())) {
             io_service->runOne();
         }
+        io_service->stop();
         io_service->restart();
     }
 

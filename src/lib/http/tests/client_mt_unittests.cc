@@ -218,6 +218,7 @@ public:
         }
 
         test_timer_.cancel();
+        io_service_->stop();
         io_service_->restart();
         try {
             io_service_->poll();
@@ -243,7 +244,7 @@ public:
     /// have been carried out or the test fails.
     void runIOService(size_t request_limit) {
         while (getRRCount() < request_limit) {
-            // Always call reset() before we call run();
+            io_service_->stop();
             io_service_->restart();
 
             // Run until a client stops the service.

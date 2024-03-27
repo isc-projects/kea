@@ -310,6 +310,7 @@ public:
     /// timers.
     virtual ~CfgExpirationTimersTest() {
         cleanupTimerMgr();
+        io_service_->stop();
         io_service_->restart();
         try {
             io_service_->poll();
@@ -333,6 +334,7 @@ public:
         }, timeout_ms, IntervalTimer::ONE_SHOT);
 
         io_service_->run();
+        io_service_->stop();
         io_service_->restart();
     }
 

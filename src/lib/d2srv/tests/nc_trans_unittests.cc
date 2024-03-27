@@ -279,6 +279,7 @@ public:
 
     virtual ~NameChangeTransactionTest() {
         timer_->cancel();
+        io_service_->stop();
         io_service_->restart();
         try {
             io_service_->poll();

@@ -122,6 +122,7 @@ CfgIfaceTest::doWait(const long timeout) {
         io_service_->stop();
     }, timeout, asiolink::IntervalTimer::ONE_SHOT);
     io_service_->run();
+    io_service_->stop();
     io_service_->restart();
 }
 

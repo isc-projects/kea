@@ -250,6 +250,7 @@ public:
         sender_->stopSending();
         queue_mgr_->stopListening();
         test_timer_.cancel();
+        io_service_->stop();
         io_service_->restart();
         try {
             io_service_->poll();

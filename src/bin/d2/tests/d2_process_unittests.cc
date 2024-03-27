@@ -585,6 +585,7 @@ TEST_F(D2ProcessTest, normalShutdown) {
                 elapsed.total_milliseconds() <= 2200);
 
     timer.cancel();
+    getIOService()->stop();
     getIOService()->restart();
     try {
         getIOService()->poll();
@@ -616,6 +617,7 @@ TEST_F(D2ProcessTest, fatalErrorShutdown) {
                 elapsed.total_milliseconds() <= 2200);
 
     timer.cancel();
+    getIOService()->stop();
     getIOService()->restart();
     try {
         getIOService()->poll();

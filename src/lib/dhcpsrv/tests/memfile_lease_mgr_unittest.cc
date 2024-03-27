@@ -165,6 +165,7 @@ public:
         // Disable multi-threading.
         MultiThreadingMgr::instance().setMode(false);
 
+        getIOService()->stop();
         getIOService()->restart();
         try {
             getIOService()->poll();
@@ -254,6 +255,7 @@ public:
         }, ms, IntervalTimer::ONE_SHOT);
 
         io_service_->run();
+        io_service_->stop();
         io_service_->restart();
     }
 
@@ -281,6 +283,7 @@ public:
         }, 1, IntervalTimer::REPEATING);
 
         io_service_->run();
+        io_service_->stop();
         io_service_->restart();
         return (!elapsed);
     }
