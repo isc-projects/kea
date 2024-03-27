@@ -408,6 +408,10 @@ Every entry in the list has three parameters:
    key. This value is case-sensitive and must exactly match the value
    specified on the DNS server(s). It is a base64-encoded text value.
 
+- ``secret-file`` - since Kea 2.5.8 a more secure alternative is supported:
+  specify a file name where the secret can be found, i.e. the base64-encoded
+  secret is the content of the file.
+
 As an example, suppose that a domain D2 will be updating is maintained
 by a BIND 9 DNS server, which requires dynamic updates to be secured
 with TSIG. Suppose further that the entry for the TSIG key in BIND 9's

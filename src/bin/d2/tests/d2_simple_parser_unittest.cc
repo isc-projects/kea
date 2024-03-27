@@ -91,7 +91,7 @@ bool checkKey(TSIGKeyInfoPtr key, const std::string& name,
         (key->getName() == name) &&
         (key->getAlgorithm() == algorithm)  &&
         (key->getDigestbits() == digestbits) &&
-        (key->getSecret() ==  secret)  &&
+        (key->getSecret() == secret)  &&
         (key->getTSIGKey())));
 }
 
@@ -508,7 +508,7 @@ public:
     void addKey(const std::string& name, const std::string& algorithm,
                 const std::string& secret) {
         TSIGKeyInfoPtr key_info(new TSIGKeyInfo(name, algorithm, secret));
-        (*keys_)[name]=key_info;
+        (*keys_)[name] = key_info;
     }
 
     /// @brief Adds DDNS Domain values to the given DDNS Domain element

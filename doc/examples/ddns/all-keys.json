@@ -138,6 +138,14 @@
 
             // Secret of the TSIG key (required) in base-64.
             "secret": "LSWXnfkKZjdPJI5QxlpnfQ=="
+        },
+        {
+            "name": "d2.sha1.key",
+            "algorithm": "HMAC-SHA1",
+
+            // An alternative to secret: specify a file where the secret
+            // can be found. i.e. the secret is the content of the file.
+            "secret-file": "/tmp/d2-sha1-secret"
         }
     ],
 

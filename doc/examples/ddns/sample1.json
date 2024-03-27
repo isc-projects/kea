@@ -135,6 +135,11 @@
             "secret": "hRrp29wzUv3uzSNRLlY68w=="
         },
         {
+            "name": "d2.sha256.key",
+            "algorithm": "HMAC-SHA256",
+            "secret-file": "/tmp/d2-sha256-secret"
+        },
+        {
             "name": "d2.sha512.key",
             "algorithm": "HMAC-SHA512",
             "digest-bits": 256,

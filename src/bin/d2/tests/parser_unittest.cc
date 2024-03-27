@@ -298,7 +298,7 @@ TEST(ParserTest, file) {
     configs.push_back("sample1.json");
     configs.push_back("template.json");
 
-    for (int i = 0; i<configs.size(); i++) {
+    for (size_t i = 0; i < configs.size(); ++i) {
         testFile(string(CFG_EXAMPLES) + "/" + configs[i]);
     }
 }
