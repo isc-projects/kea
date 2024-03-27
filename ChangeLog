@@ -1,3 +1,12 @@
+2218.	[func]		marcin
+	Addressed an inconsistent state of the High Availability
+	service in case one of the terminated services is restarted
+	and another one is not. The restarted service waits 10
+	minutes for the partner restart. If the partner is not
+	restarted the service transitions to the terminated state
+	to continue responding to the DHCP traffic.
+	(Gitlab #3250)
+
 2217.	[func]		fdupont
 	Extended the lenient-option-parsing compatibility
 	flag to ignore DHCPv4 fqdn (81) and DHCPv6 client-fqdn
