@@ -30,20 +30,6 @@ public:
     /// @brief Destructor.
     ~RunScriptImpl() = default;
 
-    /// @brief Sets IO service to be used by the @ref ProcessSpawn instance.
-    ///
-    /// @param io_service The IOService object, used for all ASIO operations.
-    static void setIOService(const isc::asiolink::IOServicePtr& io_service) {
-        io_service_ = io_service;
-    }
-
-    /// @brief Gets IO service to be used by the @ref ProcessSpawn instance.
-    ///
-    /// @return The IOService object, used for all ASIO operations.
-    static isc::asiolink::IOServicePtr getIOService() {
-        return (io_service_);
-    }
-
     /// @brief Extract boolean data and append to environment.
     ///
     /// @param value The value to be exported to target script environment.
@@ -256,7 +242,53 @@ public:
     /// @brief This function parses and applies configuration parameters.
     void configure(isc::hooks::LibraryHandle& handle);
 
+    /// @brief Get the hook I/O service.
+    ///
+    /// @return the hook I/O service.
+    isc::asiolink::IOServicePtr& getIOContext() {
+        return (io_context_);
+    }
+
+    /// @brief Set the hook I/O service.
+    ///
+    /// @param io_service the hook I/O service.
+    void setIOContext(isc::asiolink::IOServicePtr io_service) {
+        io_context_ = io_service;
+    }
+
+    /// @brief Get the hook I/O service.
+    ///
+    /// @return the hook I/O service.
+    static isc::asiolink::IOServicePtr& getIOService() {
+        return (io_service_);
+    }
+
+    /// @brief Set the hook I/O service.
+    ///
+    /// @param io_service the hook I/O service.
+    static void setIOService(isc::asiolink::IOServicePtr io_service) {
+        io_service_ = io_service;
+    }
+
+    /// @brief Get the main I/O service.
+    ///
+    /// @return the main I/O service.
+    static isc::asiolink::IOServicePtr& getMainIOService() {
+        return (main_io_service_);
+    }
+
+    /// @brief Set the main I/O service.
+    ///
+    /// @param io_service the main I/O service.
+    static void setMainIOService(isc::asiolink::IOServicePtr io_service) {
+        main_io_service_ = io_service;
+    }
+
 private:
+
+    /// @brief The IOService object, used for all ASIO operations.
+    isc::asiolink::IOServicePtr io_context_;
+
     /// @brief Script name.
     std::string name_;
 
@@ -267,8 +299,11 @@ private:
     /// started.
     bool sync_;
 
-    /// @brief The IOService object, used for all ASIO operations.
+    /// @brief The hook I/O service.
     static isc::asiolink::IOServicePtr io_service_;
+
+    /// @brief The main I/O service.
+    static isc::asiolink::IOServicePtr main_io_service_;
 };
 
 /// @brief The type of shared pointers to Run Script implementations.

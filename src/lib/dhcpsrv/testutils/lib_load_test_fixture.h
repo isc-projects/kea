@@ -9,7 +9,9 @@
 
 #include <cc/data.h>
 #include <dhcpsrv/cfgmgr.h>
+#include <hooks/hooks_manager.h>
 #include <process/daemon.h>
+
 #include <testutils/gtest_utils.h>
 
 namespace isc {

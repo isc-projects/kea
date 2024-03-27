@@ -10,6 +10,7 @@
 #include <boost/version.hpp>
 #include <boost/shared_ptr.hpp>
 #include <functional>
+#include <list>
 
 namespace boost {
 namespace asio {
@@ -26,84 +27,89 @@ namespace isc {
 namespace asiolink {
 
 class IOServiceImpl;
+class IOService;
 
-/// \brief The \c IOService class is a wrapper for the ASIO \c io_service
+/// @brief Defines a smart pointer to an IOService instance.
+typedef boost::shared_ptr<IOService> IOServicePtr;
+
+/// @brief The @ref IOService class is a wrapper for the ASIO @ref io_service
 /// class.
-///
 class IOService {
+    /// @brief Constructors and Destructor.
     ///
-    /// \name Constructors and Destructor
-    ///
-    /// Note: The copy constructor and the assignment operator are
+    /// @note The copy constructor and the assignment operator are
     /// intentionally defined as private, making this class non-copyable.
     //@{
 private:
     IOService(const IOService& source);
     IOService& operator=(const IOService& source);
 public:
-    /// \brief The constructor
+    /// @brief The constructor.
     IOService();
-    /// \brief The destructor.
+
+    /// @brief The destructor.
     ~IOService();
     //@}
 
-    /// \brief Start the underlying event loop.
+    /// @brief Start the underlying event loop.
     ///
     /// This method does not return control to the caller until
-    /// the \c stop() method is called via some handler.
+    /// the @ref stop() method is called via some handler.
     void run();
 
-    /// \brief Run the underlying event loop for a single event.
+    /// @brief Run the underlying event loop for a single event.
     ///
     /// This method return control to the caller as soon as the
     /// first handler has completed.  (If no handlers are ready when
     /// it is run, it will block until one is.)
     ///
-    /// \return The number of handlers that were executed.
+    /// @return The number of handlers that were executed.
     size_t runOne();
 
-    /// \brief Run the underlying event loop for a ready events.
+    /// @brief Run the underlying event loop for a ready events.
     ///
     /// This method executes handlers for all ready events and returns.
     /// It will return immediately if there are no ready events.
     ///
-    /// \return The number of handlers that were executed.
+    /// @return The number of handlers that were executed.
     size_t poll();
 
-    /// \brief Run the underlying event loop for a ready events.
+    /// @brief Run the underlying event loop for a ready events.
     ///
     /// This method executes handlers for all ready events and returns.
     /// It will return immediately if there are no ready events.
     ///
-    /// \return The number of handlers that were executed.
+    /// @return The number of handlers that were executed.
     size_t pollOne();
 
-    /// \brief Stop the underlying event loop.
+    /// @brief Stop the underlying event loop.
     ///
-    /// This will return the control to the caller of the \c run() method.
+    /// This will return the control to the caller of the @ref run() method.
     void stop();
 
-    /// \brief Indicates if the IOService has been stopped.
+    /// @brief Indicates if the IOService has been stopped.
     ///
-    /// \return true if the IOService has been stopped, false otherwise.
+    /// @return true if the IOService has been stopped, false otherwise.
     bool stopped() const;
 
-    /// \brief Restarts the IOService in preparation for a subsequent \c run() invocation.
+    /// @brief Restarts the IOService in preparation for a subsequent @ref run() invocation.
     void restart();
 
-    /// \brief Removes IO service work object to let it finish running
+    /// @brief Removes IO service work object to let it finish running
     /// when all handlers have been invoked.
     void stopWork();
 
-    /// \brief Return the native \c io_service object used in this wrapper.
+    /// @brief Return the native @ref io_service object used in this wrapper.
     ///
     /// This is a short term work around to support other Kea modules
-    /// that share the same \c io_service with the authoritative server.
+    /// that share the same @ref io_service with the authoritative server.
     /// It will eventually be removed once the wrapper interface is
     /// generalized.
+    ///
+    /// @return The internal io_service object.
     boost::asio::io_service& getInternalIOService();
 
-    /// \brief Post a callback to the end of the queue.
+    /// @brief Post a callback to the end of the queue.
     ///
     /// Requests the callback be called sometime later. It is not guaranteed
     /// by the underlying asio, but it can reasonably be expected the callback
@@ -114,12 +120,39 @@ public:
     /// by small bits that are called from time to time).
     void post(const std::function<void ()>& callback);
 
-private:
-    boost::shared_ptr<IOServiceImpl> io_impl_;
-};
+    /// @brief Register external IOService.
+    ///
+    /// @param io_service The external IOService to be registered.
+    void registerExternalIOService(IOServicePtr io_service);
 
-/// @brief Defines a smart pointer to an IOService instance.
-typedef boost::shared_ptr<IOService> IOServicePtr;
+    /// @brief Unregister external IOService.
+    ///
+    /// @param io_service The external IOService to be unregistered.
+    void unregisterExternalIOService(IOServicePtr io_service);
+
+    /// @brief Clear the list of external IOService objects.
+    void clearExternalIOServices() {
+        external_io_services_.clear();
+    }
+
+    /// @brief The count of external IOService objects.
+    ///
+    // @return The count of external IOService objects.
+    size_t externalIOServiceCount() {
+        return (external_io_services_.size());
+    }
+
+    /// @brief Poll external IOService objects.
+    void pollExternalIOServices();
+
+private:
+
+    /// @brief The implementation.
+    boost::shared_ptr<IOServiceImpl> io_impl_;
+
+    /// @brief The list of external IOService objects.
+    std::list<IOServicePtr> external_io_services_;
+};
 
 }  // namespace asiolink
 }  // namespace isc

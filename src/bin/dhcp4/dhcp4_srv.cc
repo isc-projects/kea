@@ -706,6 +706,7 @@ Dhcpv4Srv::~Dhcpv4Srv() {
         }
         LOG_ERROR(dhcp4_logger, DHCP4_SRV_UNLOAD_LIBRARIES_ERROR).arg(msg);
     }
+    getIOService()->clearExternalIOServices();
     io_service_->stop();
     io_service_->restart();
     try {
@@ -1132,6 +1133,7 @@ Dhcpv4Srv::run() {
 #endif // ENABLE_AFL
         try {
             runOne();
+            getIOService()->pollExternalIOServices();
             getIOService()->poll();
         } catch (const std::exception& e) {
             // General catch-all exception that are not caught by more specific

@@ -45,13 +45,11 @@ public:
     /// The caller must ensure that the HA configuration is valid before
     /// calling this function.
     ///
-    /// @param io_service IO service object provided by the DHCP server.
     /// @param network_state pointer to the object holding a state of the
     /// DHCP service (enabled/disabled).
     /// @param server_type DHCP server type for which the HA service should
     /// be created.
-    void startServices(const asiolink::IOServicePtr& io_service,
-                       const dhcp::NetworkStatePtr& network_state,
+    void startServices(const dhcp::NetworkStatePtr& network_state,
                        const HAServerType& server_type);
 
     /// @brief Destructor.
@@ -223,7 +221,41 @@ public:
     HAServicePtr getHAServiceByServerName(const std::string& command_name,
                                           data::ConstElementPtr args) const;
 
+    /// @brief Get the hook I/O service.
+    ///
+    /// @return the hook I/O service.
+    isc::asiolink::IOServicePtr& getIOService() {
+        return (io_service_);
+    }
+
+    /// @brief Set the hook I/O service.
+    ///
+    /// @param io_service the hook I/O service.
+    void setIOService(isc::asiolink::IOServicePtr io_service) {
+        io_service_ = io_service;
+    }
+
+    /// @brief Get the main I/O service.
+    ///
+    /// @return the main I/O service.
+    isc::asiolink::IOServicePtr& getMainIOService() {
+        return (main_io_service_);
+    }
+
+    /// @brief Set the main I/O service.
+    ///
+    /// @param io_service the main I/O service.
+    void setMainIOService(isc::asiolink::IOServicePtr io_service) {
+        main_io_service_ = io_service;
+    }
+
 protected:
+
+    /// @brief The hook I/O service.
+    isc::asiolink::IOServicePtr io_service_;
+
+    /// @brief The main I/O service.
+    isc::asiolink::IOServicePtr main_io_service_;
 
     /// @brief Holds parsed configuration.
     HAConfigMapperPtr config_;

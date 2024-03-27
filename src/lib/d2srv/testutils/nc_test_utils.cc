@@ -540,7 +540,7 @@ checkAddFwdAddressRequest(NameChangeTransaction& tran) {
     dns::RRsetPtr rrset;
     checkRRCount(request, D2UpdateMessage::SECTION_PREREQUISITE, 1);
     ASSERT_TRUE(rrset = getRRFromSection(request, D2UpdateMessage::
-                                                  SECTION_PREREQUISITE, 0));
+                                         SECTION_PREREQUISITE, 0));
     checkRR(rrset, exp_fqdn, dns::RRClass::NONE(), dns::RRType::ANY(), 0, ncr);
 
     // Verify the UPDATE SECTION
@@ -552,12 +552,12 @@ checkAddFwdAddressRequest(NameChangeTransaction& tran) {
 
     // First, Verify the FQDN/IP add RR.
     ASSERT_TRUE(rrset = getRRFromSection(request, D2UpdateMessage::
-                                                  SECTION_UPDATE, 0));
+                                         SECTION_UPDATE, 0));
     checkRR(rrset, exp_fqdn, dns::RRClass::IN(), exp_ip_rr_type, ttl, ncr);
 
     // Now, verify the DHCID add RR.
     ASSERT_TRUE(rrset = getRRFromSection(request, D2UpdateMessage::
-                                                  SECTION_UPDATE, 1));
+                                         SECTION_UPDATE, 1));
     checkRR(rrset, exp_fqdn, dns::RRClass::IN(), dns::RRType::DHCID(),
             ttl, ncr);
 
@@ -595,12 +595,12 @@ checkReplaceFwdAddressRequest(NameChangeTransaction& tran) {
 
     // Verify the FQDN test RR.
     ASSERT_TRUE(rrset = getRRFromSection(request, D2UpdateMessage::
-                                                  SECTION_PREREQUISITE, 0));
+                                         SECTION_PREREQUISITE, 0));
     checkRR(rrset, exp_fqdn, dns::RRClass::ANY(), dns::RRType::ANY(), 0, ncr);
 
     // Verify the DHCID test RR.
     ASSERT_TRUE(rrset = getRRFromSection(request, D2UpdateMessage::
-                                                  SECTION_PREREQUISITE, 1));
+                                         SECTION_PREREQUISITE, 1));
     checkRR(rrset, exp_fqdn, dns::RRClass::IN(), dns::RRType::DHCID(), 0, ncr);
 
     // Verify the UPDATE SECTION
@@ -613,12 +613,12 @@ checkReplaceFwdAddressRequest(NameChangeTransaction& tran) {
 
     // Verify the FQDN delete RR.
     ASSERT_TRUE(rrset = getRRFromSection(request, D2UpdateMessage::
-                                                  SECTION_UPDATE, 0));
+                                         SECTION_UPDATE, 0));
     checkRR(rrset, exp_fqdn, dns::RRClass::ANY(), exp_ip_rr_type, 0, ncr);
 
     // Verify the FQDN/IP add RR.
     ASSERT_TRUE(rrset = getRRFromSection(request, D2UpdateMessage::
-                                                  SECTION_UPDATE, 1));
+                                         SECTION_UPDATE, 1));
     checkRR(rrset, exp_fqdn, dns::RRClass::IN(), exp_ip_rr_type, ttl, ncr);
 
     // Verify there are no RRs in the ADDITIONAL Section.
@@ -663,25 +663,25 @@ checkReplaceRevPtrsRequest(NameChangeTransaction& tran) {
 
     // Verify the PTR delete RR.
     ASSERT_TRUE(rrset = getRRFromSection(request, D2UpdateMessage::
-                                                  SECTION_UPDATE, 0));
+                                         SECTION_UPDATE, 0));
     checkRR(rrset, exp_rev_addr, dns::RRClass::ANY(), dns::RRType::PTR(),
             0, ncr);
 
     // Verify the DHCID delete RR.
     ASSERT_TRUE(rrset = getRRFromSection(request, D2UpdateMessage::
-                                                  SECTION_UPDATE, 1));
+                                         SECTION_UPDATE, 1));
     checkRR(rrset, exp_rev_addr, dns::RRClass::ANY(), dns::RRType::DHCID(),
             0, ncr);
 
     // Verify the PTR add RR.
     ASSERT_TRUE(rrset = getRRFromSection(request, D2UpdateMessage::
-                                                  SECTION_UPDATE, 2));
+                                         SECTION_UPDATE, 2));
     checkRR(rrset, exp_rev_addr, dns::RRClass::IN(), dns::RRType::PTR(),
             ttl, ncr);
 
     // Verify the DHCID add RR.
     ASSERT_TRUE(rrset = getRRFromSection(request, D2UpdateMessage::
-                                                  SECTION_UPDATE, 3));
+                                         SECTION_UPDATE, 3));
     checkRR(rrset, exp_rev_addr, dns::RRClass::IN(), dns::RRType::DHCID(),
             ttl, ncr);
 
@@ -714,7 +714,7 @@ checkRemoveFwdAddressRequest(NameChangeTransaction& tran) {
     // Verify the DHCID matching assertion RR.
     dns::RRsetPtr rrset;
     ASSERT_TRUE(rrset = getRRFromSection(request, D2UpdateMessage::
-                                                  SECTION_PREREQUISITE, 0));
+                                         SECTION_PREREQUISITE, 0));
     checkRR(rrset, exp_fqdn, dns::RRClass::IN(), dns::RRType::DHCID(),
             0, ncr);
 
@@ -724,7 +724,7 @@ checkRemoveFwdAddressRequest(NameChangeTransaction& tran) {
     // Verify the FQDN/IP delete RR.
     const dns::RRType& exp_ip_rr_type = tran.getAddressRRType();
     ASSERT_TRUE(rrset = getRRFromSection(request, D2UpdateMessage::
-                                                  SECTION_UPDATE, 0));
+                                         SECTION_UPDATE, 0));
     checkRR(rrset, exp_fqdn, dns::RRClass::NONE(), exp_ip_rr_type,
             0, ncr);
 
@@ -754,19 +754,19 @@ checkRemoveFwdRRsRequest(NameChangeTransaction& tran) {
     // Verify the DHCID matches assertion.
     dns::RRsetPtr rrset;
     ASSERT_TRUE(rrset = getRRFromSection(request, D2UpdateMessage::
-                                                  SECTION_PREREQUISITE, 0));
+                                         SECTION_PREREQUISITE, 0));
     checkRR(rrset, exp_fqdn, dns::RRClass::IN(), dns::RRType::DHCID(),
             0, ncr);
 
     // Verify the NO A RRs assertion.
     ASSERT_TRUE(rrset = getRRFromSection(request, D2UpdateMessage::
-                                                  SECTION_PREREQUISITE, 1));
+                                         SECTION_PREREQUISITE, 1));
     checkRR(rrset, exp_fqdn, dns::RRClass::NONE(), dns::RRType::A(),
             0, ncr, NO_RDATA);
 
     // Verify the NO AAAA RRs assertion.
     ASSERT_TRUE(rrset = getRRFromSection(request, D2UpdateMessage::
-                                                  SECTION_PREREQUISITE, 2));
+                                         SECTION_PREREQUISITE, 2));
     checkRR(rrset, exp_fqdn, dns::RRClass::NONE(), dns::RRType::AAAA(),
             0, ncr, NO_RDATA);
 
@@ -775,7 +775,7 @@ checkRemoveFwdRRsRequest(NameChangeTransaction& tran) {
 
     // Verify the delete all for the FQDN RR.
     ASSERT_TRUE(rrset = getRRFromSection(request, D2UpdateMessage::
-                                                  SECTION_UPDATE, 0));
+                                         SECTION_UPDATE, 0));
     checkRR(rrset, exp_fqdn, dns::RRClass::ANY(), dns::RRType::ANY(),
             0, ncr);
 
@@ -805,7 +805,7 @@ checkRemoveRevPtrsRequest(NameChangeTransaction& tran) {
     // Verify the FQDN-PTRNAME assertion RR.
     dns::RRsetPtr rrset;
     ASSERT_TRUE(rrset = getRRFromSection(request, D2UpdateMessage::
-                                                  SECTION_PREREQUISITE, 0));
+                                         SECTION_PREREQUISITE, 0));
     checkRR(rrset, exp_rev_addr, dns::RRClass::IN(), dns::RRType::PTR(),
             0, ncr);
 
@@ -814,7 +814,7 @@ checkRemoveRevPtrsRequest(NameChangeTransaction& tran) {
 
     // Verify the delete all for the FQDN RR.
     ASSERT_TRUE(rrset = getRRFromSection(request, D2UpdateMessage::
-                                                  SECTION_UPDATE, 0));
+                                         SECTION_UPDATE, 0));
     checkRR(rrset, exp_rev_addr, dns::RRClass::ANY(), dns::RRType::ANY(),
             0, ncr);
 
@@ -876,23 +876,23 @@ checkSimpleReplaceFwdAddressRequest(NameChangeTransaction& tran) {
 
     // Verify the FQDN delete RR.
     ASSERT_TRUE(rrset = getRRFromSection(request, D2UpdateMessage::
-                                                  SECTION_UPDATE, 0));
+                                         SECTION_UPDATE, 0));
     checkRR(rrset, exp_fqdn, dns::RRClass::ANY(), exp_ip_rr_type, 0, ncr);
 
     // Verify the DHCID delete RR.
     ASSERT_TRUE(rrset = getRRFromSection(request, D2UpdateMessage::
-                                                  SECTION_UPDATE, 1));
+                                         SECTION_UPDATE, 1));
     checkRR(rrset, exp_fqdn, dns::RRClass::ANY(), dns::RRType::DHCID(),
             0, ncr);
 
     // Verify the FQDN/IP add RR.
     ASSERT_TRUE(rrset = getRRFromSection(request, D2UpdateMessage::
-                                                  SECTION_UPDATE, 2));
+                                         SECTION_UPDATE, 2));
     checkRR(rrset, exp_fqdn, dns::RRClass::IN(), exp_ip_rr_type, ttl, ncr);
 
     // Now, verify the DHCID add RR.
     ASSERT_TRUE(rrset = getRRFromSection(request, D2UpdateMessage::
-                                                  SECTION_UPDATE, 3));
+                                         SECTION_UPDATE, 3));
     checkRR(rrset, exp_fqdn, dns::RRClass::IN(), dns::RRType::DHCID(),
             ttl, ncr);
 
@@ -929,12 +929,12 @@ checkSimpleRemoveFwdRRsRequest(NameChangeTransaction& tran) {
     // Verify the FQDN delete RR.
     dns::RRsetPtr rrset;
     ASSERT_TRUE(rrset = getRRFromSection(request, D2UpdateMessage::
-                                                  SECTION_UPDATE, 0));
+                                         SECTION_UPDATE, 0));
     checkRR(rrset, exp_fqdn, dns::RRClass::ANY(), exp_ip_rr_type, 0, ncr);
 
     // Verify the DHCID delete RR.
     ASSERT_TRUE(rrset = getRRFromSection(request, D2UpdateMessage::
-                                                  SECTION_UPDATE, 1));
+                                         SECTION_UPDATE, 1));
     checkRR(rrset, exp_fqdn, dns::RRClass::ANY(), dns::RRType::DHCID(),
             0, ncr);
 
@@ -970,12 +970,12 @@ checkSimpleRemoveRevPtrsRequest(NameChangeTransaction& tran) {
     // Verify the FQDN delete RR.
     dns::RRsetPtr rrset;
     ASSERT_TRUE(rrset = getRRFromSection(request, D2UpdateMessage::
-                                                  SECTION_UPDATE, 0));
+                                         SECTION_UPDATE, 0));
     checkRR(rrset, exp_rev_addr, dns::RRClass::ANY(), dns::RRType::PTR(), 0, ncr);
 
     // Verify the DHCID delete RR.
     ASSERT_TRUE(rrset = getRRFromSection(request, D2UpdateMessage::
-                                                  SECTION_UPDATE, 1));
+                                         SECTION_UPDATE, 1));
     checkRR(rrset, exp_rev_addr, dns::RRClass::ANY(), dns::RRType::DHCID(), 0, ncr);
 
     // Verify that it will render toWire without throwing.
@@ -1021,7 +1021,7 @@ checkExistsReplaceFwdAddressRequest(NameChangeTransaction& tran) {
 
     // Verify the DHCID test RR.
     ASSERT_TRUE(rrset = getRRFromSection(request, D2UpdateMessage::
-                                                  SECTION_PREREQUISITE, 0));
+                                         SECTION_PREREQUISITE, 0));
     checkRR(rrset, exp_fqdn, dns::RRClass::ANY(), dns::RRType::DHCID(), 0, ncr);
 
     // Verify the UPDATE SECTION
@@ -1037,22 +1037,22 @@ checkExistsReplaceFwdAddressRequest(NameChangeTransaction& tran) {
 
     // Verify the FQDN delete RR.
     ASSERT_TRUE(rrset = getRRFromSection(request, D2UpdateMessage::
-                                                  SECTION_UPDATE, 0));
+                                         SECTION_UPDATE, 0));
     checkRR(rrset, exp_fqdn, dns::RRClass::ANY(), exp_ip_rr_type, 0, ncr);
 
     // Verify the DHCID delete RR.
     ASSERT_TRUE(rrset = getRRFromSection(request, D2UpdateMessage::
-                                                  SECTION_UPDATE, 1));
+                                         SECTION_UPDATE, 1));
     checkRR(rrset, exp_fqdn, dns::RRClass::ANY(), dns::RRType::DHCID(), 0, ncr);
 
     // Verify the FQDN/IP add RR.
     ASSERT_TRUE(rrset = getRRFromSection(request, D2UpdateMessage::
-                                                  SECTION_UPDATE, 2));
+                                         SECTION_UPDATE, 2));
     checkRR(rrset, exp_fqdn, dns::RRClass::IN(), exp_ip_rr_type, ttl, ncr);
 
     // Verify the DHCID add RR.
     ASSERT_TRUE(rrset = getRRFromSection(request, D2UpdateMessage::
-                                                  SECTION_UPDATE, 3));
+                                         SECTION_UPDATE, 3));
     checkRR(rrset, exp_fqdn, dns::RRClass::IN(), dns::RRType::DHCID(),
             ttl, ncr);
 
@@ -1088,7 +1088,7 @@ checkExistsRemoveFwdAddressRequest(NameChangeTransaction& tran) {
     // Verify the DHCID exists assertion RR.
     dns::RRsetPtr rrset;
     ASSERT_TRUE(rrset = getRRFromSection(request, D2UpdateMessage::
-                                                  SECTION_PREREQUISITE, 0));
+                                         SECTION_PREREQUISITE, 0));
     checkRR(rrset, exp_fqdn, dns::RRClass::ANY(), dns::RRType::DHCID(),
             0, ncr);
 
@@ -1098,7 +1098,7 @@ checkExistsRemoveFwdAddressRequest(NameChangeTransaction& tran) {
     // Verify the FQDN/IP delete RR.
     const dns::RRType& exp_ip_rr_type = tran.getAddressRRType();
     ASSERT_TRUE(rrset = getRRFromSection(request, D2UpdateMessage::
-                                                  SECTION_UPDATE, 0));
+                                         SECTION_UPDATE, 0));
     checkRR(rrset, exp_fqdn, dns::RRClass::NONE(), exp_ip_rr_type,
             0, ncr);
 
@@ -1131,13 +1131,13 @@ checkExistsRemoveFwdRRsRequest(NameChangeTransaction& tran) {
     // Verify the NO A RRs assertion.
     dns::RRsetPtr rrset;
     ASSERT_TRUE(rrset = getRRFromSection(request, D2UpdateMessage::
-                                                  SECTION_PREREQUISITE, 0));
+                                         SECTION_PREREQUISITE, 0));
     checkRR(rrset, exp_fqdn, dns::RRClass::NONE(), dns::RRType::A(),
             0, ncr, NO_RDATA);
 
     // Verify the NO AAAA RRs assertion.
     ASSERT_TRUE(rrset = getRRFromSection(request, D2UpdateMessage::
-                                                  SECTION_PREREQUISITE, 1));
+                                         SECTION_PREREQUISITE, 1));
     checkRR(rrset, exp_fqdn, dns::RRClass::NONE(), dns::RRType::AAAA(),
             0, ncr, NO_RDATA);
 
@@ -1146,7 +1146,7 @@ checkExistsRemoveFwdRRsRequest(NameChangeTransaction& tran) {
 
     // Verify the DHCID delete RR.
     ASSERT_TRUE(rrset = getRRFromSection(request, D2UpdateMessage::
-                                                  SECTION_UPDATE, 0));
+                                         SECTION_UPDATE, 0));
     checkRR(rrset, exp_fqdn, dns::RRClass::ANY(), dns::RRType::DHCID(),
             0, ncr);
 
@@ -1190,12 +1190,12 @@ checkSimpleReplaceFwdAddressWithoutDHCIDRequest(NameChangeTransaction& tran) {
 
     // Verify the FQDN delete RR.
     ASSERT_TRUE(rrset = getRRFromSection(request, D2UpdateMessage::
-                                                  SECTION_UPDATE, 0));
+                                         SECTION_UPDATE, 0));
     checkRR(rrset, exp_fqdn, dns::RRClass::ANY(), exp_ip_rr_type, 0, ncr);
 
     // Verify the FQDN/IP add RR.
     ASSERT_TRUE(rrset = getRRFromSection(request, D2UpdateMessage::
-                                                  SECTION_UPDATE, 1));
+                                         SECTION_UPDATE, 1));
     checkRR(rrset, exp_fqdn, dns::RRClass::IN(), exp_ip_rr_type, ttl, ncr);
 
     // Verify there are no RRs in the ADDITIONAL Section.
@@ -1234,7 +1234,7 @@ checkSimpleRemoveFwdRRsWithoutDHCIDRequest(NameChangeTransaction& tran) {
     // Verify the FQDN delete RR.
     dns::RRsetPtr rrset;
     ASSERT_TRUE(rrset = getRRFromSection(request, D2UpdateMessage::
-                                                  SECTION_UPDATE, 0));
+                                         SECTION_UPDATE, 0));
     checkRR(rrset, exp_fqdn, dns::RRClass::ANY(), exp_ip_rr_type, 0, ncr);
 
     // Verify that it will render toWire without throwing.
@@ -1275,13 +1275,13 @@ checkSimpleReplaceRevPtrsWithoutDHCIDRequest(NameChangeTransaction& tran) {
 
     // Verify the PTR delete RR.
     ASSERT_TRUE(rrset = getRRFromSection(request, D2UpdateMessage::
-                                                  SECTION_UPDATE, 0));
+                                         SECTION_UPDATE, 0));
     checkRR(rrset, exp_rev_addr, dns::RRClass::ANY(), dns::RRType::PTR(),
             0, ncr);
 
     // Verify the PTR add RR.
     ASSERT_TRUE(rrset = getRRFromSection(request, D2UpdateMessage::
-                                                  SECTION_UPDATE, 1));
+                                         SECTION_UPDATE, 1));
     checkRR(rrset, exp_rev_addr, dns::RRClass::IN(), dns::RRType::PTR(),
             ttl, ncr);
 
@@ -1320,7 +1320,7 @@ checkSimpleRemoveRevPtrsWithoutDHCIDRequest(NameChangeTransaction& tran) {
     // Verify the FQDN delete RR.
     dns::RRsetPtr rrset;
     ASSERT_TRUE(rrset = getRRFromSection(request, D2UpdateMessage::
-                                                  SECTION_UPDATE, 0));
+                                         SECTION_UPDATE, 0));
     checkRR(rrset, exp_rev_addr, dns::RRClass::ANY(), dns::RRType::PTR(), 0, ncr);
 
     // Verify that it will render toWire without throwing.

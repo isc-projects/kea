@@ -129,6 +129,7 @@ D2Process::run() {
 
 size_t
 D2Process::runIO() {
+    getIOService()->pollExternalIOServices();
     // We want to block until at least one handler is called.  We'll use
     // boost::asio::io_service directly for two reasons. First off
     // asiolink::IOService::runOne is a void and boost::asio::io_service::stopped
@@ -148,7 +149,6 @@ D2Process::runIO() {
         // service is stopped it will return immediately with a cnt of zero.
         cnt = getIOService()->runOne();
     }
-
     return (cnt);
 }
 
@@ -299,6 +299,16 @@ D2Process::configure(isc::data::ConstElementPtr config_set, bool check_only) {
             answer = isc::config::createAnswer(CONTROL_RESULT_ERROR, error);
             return (answer);
         }
+    }
+
+    /// Let postponed hook initializations to run.
+    try {
+        getIOService()->pollExternalIOServices();
+    } catch (const std::exception& ex) {
+        std::ostringstream err;
+        err << "Error initializing hooks: "
+            << ex.what();
+        return (isc::config::createAnswer(CONTROL_RESULT_ERROR, err.str()));
     }
 
     // If we are here, configuration was valid, at least it parsed correctly

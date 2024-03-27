@@ -244,6 +244,7 @@ ControlledDhcpv6Srv::commandLibReloadHandler(const string&, ConstElementPtr) {
         HookLibsCollection loaded = HooksManager::getLibraryInfo();
         HooksManager::prepareUnloadLibraries();
         static_cast<void>(HooksManager::unloadLibraries());
+        getIOService()->clearExternalIOServices();
         bool multi_threading_enabled = true;
         uint32_t thread_count = 0;
         uint32_t queue_size = 0;
@@ -454,7 +455,7 @@ ControlledDhcpv6Srv::commandConfigSetHandler(const string&,
 
     /// Let postponed hook initializations to run.
     try {
-        getIOService()->poll();
+        getIOService()->pollExternalIOServices();
     } catch (const std::exception& ex) {
         std::ostringstream err;
         err << "Error initializing hooks: "

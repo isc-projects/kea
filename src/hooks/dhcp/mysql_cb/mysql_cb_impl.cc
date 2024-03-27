@@ -29,7 +29,8 @@ using namespace isc::util;
 namespace isc {
 namespace dhcp {
 
-isc::asiolink::IOServicePtr MySqlConfigBackendImpl::io_service_ = isc::asiolink::IOServicePtr();
+isc::asiolink::IOServicePtr MySqlConfigBackendImpl::io_service_;
+isc::asiolink::IOServicePtr MySqlConfigBackendImpl::main_io_service_;
 
 MySqlConfigBackendImpl::
 ScopedAuditRevision::ScopedAuditRevision(MySqlConfigBackendImpl* impl,
@@ -84,6 +85,11 @@ MySqlConfigBackendImpl(const std::string& space,
                 .arg(cipher);
         }
     }
+}
+
+MySqlConfigBackendImpl::~MySqlConfigBackendImpl() {
+    /// nothing to do there. The conn_ connection will be deleted and its dtor
+    /// will take care of releasing the compiled statements and similar.
 }
 
 MySqlBindingPtr

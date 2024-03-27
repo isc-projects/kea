@@ -378,7 +378,7 @@ public:
     /// @return the number of default items added to the tree
     size_t setDefaults(data::ElementPtr config) {
         return (SimpleParser::setListDefaults(config, D2SimpleParser::
-                                                      TSIG_KEY_DEFAULTS));
+                                              TSIG_KEY_DEFAULTS));
     }
 
     /// @brief Attempts to parse the given element into a list of TSIGKeyInfos
@@ -422,7 +422,7 @@ public:
     /// @return the number of default items added to the tree
     virtual size_t setDefaults(data::ElementPtr config) {
         return (SimpleParser::setDefaults(config, D2SimpleParser::
-                                                  DNS_SERVER_DEFAULTS));
+                                          DNS_SERVER_DEFAULTS));
     }
 
     /// @brief Attempts to parse the given element into a DnsServerInfo
@@ -468,7 +468,7 @@ public:
     /// @return the number of default items added to the tree
     virtual size_t setDefaults(data::ElementPtr config) {
         return (SimpleParser::setListDefaults(config, D2SimpleParser::
-                                                      DNS_SERVER_DEFAULTS));
+                                              DNS_SERVER_DEFAULTS));
     }
 
     /// @brief Attempts to parse the given element into a list of DnsServerInfos
@@ -579,9 +579,8 @@ public:
         // We don't use SimpleParser::setListDefaults() as this does
         // not handle sub-lists or sub-maps
         for (auto const& domain : config->listValue()) {
-            cnt += D2SimpleParser::
-                   setDdnsDomainDefaults(domain, D2SimpleParser::
-                                                 DDNS_DOMAIN_DEFAULTS);
+            cnt += D2SimpleParser::setDdnsDomainDefaults(domain, D2SimpleParser::
+                                                         DDNS_DOMAIN_DEFAULTS);
         }
 
         return (cnt);

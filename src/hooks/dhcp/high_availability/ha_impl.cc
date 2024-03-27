@@ -31,7 +31,7 @@ namespace isc {
 namespace ha {
 
 HAImpl::HAImpl()
-    : config_(), services_(new HAServiceMapper()) {
+    : io_service_(new IOService()), config_(), services_(new HAServiceMapper()) {
 }
 
 void
@@ -40,13 +40,12 @@ HAImpl::configure(const ConstElementPtr& input_config) {
 }
 
 void
-HAImpl::startServices(const IOServicePtr& io_service,
-                      const NetworkStatePtr& network_state,
+HAImpl::startServices(const NetworkStatePtr& network_state,
                       const HAServerType& server_type) {
     auto configs = config_->getAll();
     for (auto id = 0; id < configs.size(); ++id) {
         // Create the HA service and crank up the state machine.
-        auto service = boost::make_shared<HAService>(id, io_service, network_state,
+        auto service = boost::make_shared<HAService>(id, io_service_, network_state,
                                                      configs[id], server_type);
         for (auto const& peer_config : configs[id]->getAllServersConfig()) {
             services_->map(peer_config.first, service);
@@ -54,7 +53,7 @@ HAImpl::startServices(const IOServicePtr& io_service,
     }
     // Schedule a start of the services. This ensures we begin after
     // the dust has settled and Kea MT mode has been firmly established.
-    io_service->post([&]() {
+    io_service_->post([&]() {
         for (auto const& service : services_->getAll()) {
             service->startClientAndListener();
         }

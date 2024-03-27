@@ -579,7 +579,7 @@ TEST_F(NameChangeTransactionTest, responseString) {
     EXPECT_EQ("IO_STOPPED", name_change_->responseString());
 
     ASSERT_NO_THROW(name_change_->setDnsUpdateStatus(DNSClient::
-                                                    INVALID_RESPONSE));
+                                                     INVALID_RESPONSE));
     EXPECT_EQ("INVALID_RESPONSE", name_change_->responseString());
 
     ASSERT_NO_THROW(name_change_->setDnsUpdateStatus(DNSClient::OTHER));

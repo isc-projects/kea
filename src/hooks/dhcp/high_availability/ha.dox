@@ -142,6 +142,9 @@ have been introduced. These hook points are used by the DHCPv4 and the
 DHCPv6 servers respectively, to pass the instance of the IOService
 (via "io_context" argument) to the hooks libraries which require to
 schedule asynchronous tasks.
+The hook's IOService object must be registered on the server's main IOService by
+calling registerExternalIOService and must unregister it on "unload" hook point
+by calling unregisterExternalIOService.
 
 It is also worth to note that the blocking reception of the DHCP packets
 may cause up to 1 second delays in the asynchronous operations. This is

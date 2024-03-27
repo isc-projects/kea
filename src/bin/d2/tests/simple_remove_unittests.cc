@@ -717,7 +717,7 @@ TEST_F(SimpleRemoveTransactionTest, selectingRevServerHandler) {
         // Post a server IO error event.  This simulates an IO error occurring
         // and a need to select the new server.
         ASSERT_NO_THROW(name_remove->postNextEvent(NameChangeTransaction::
-                                                SERVER_IO_ERROR_EVT));
+                                                   SERVER_IO_ERROR_EVT));
     }
 
     // We should have exhausted the list of servers. Processing another

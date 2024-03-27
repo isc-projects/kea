@@ -115,7 +115,7 @@ public:
                                     const db::DbCallback db_reconnect_callback);
 
     /// @brief Destructor.
-    virtual ~MySqlConfigBackendImpl() {};
+    virtual ~MySqlConfigBackendImpl();
 
     /// @brief Creates MySQL binding from an @c Optional of integer type.
     ///
@@ -836,16 +836,32 @@ public:
         return (parameters_);
     }
 
-    /// @brief Sets IO service to be used by the MySQL config backend.
+    /// @brief Get the hook I/O service.
     ///
-    /// @param IOService object, used for all ASIO operations.
-    static void setIOService(const isc::asiolink::IOServicePtr& io_service) {
+    /// @return the hook I/O service.
+    static isc::asiolink::IOServicePtr& getIOService() {
+        return (io_service_);
+    }
+
+    /// @brief Set the hook I/O service.
+    ///
+    /// @param io_service the hook I/O service.
+    static void setIOService(isc::asiolink::IOServicePtr io_service) {
         io_service_ = io_service;
     }
 
-    /// @brief Returns pointer to the IO service.
-    static isc::asiolink::IOServicePtr& getIOService() {
-        return (io_service_);
+    /// @brief Get the main I/O service.
+    ///
+    /// @return the main I/O service.
+    static isc::asiolink::IOServicePtr& getMainIOService() {
+        return (main_io_service_);
+    }
+
+    /// @brief Set the main I/O service.
+    ///
+    /// @param io_service the main I/O service.
+    static void setMainIOService(isc::asiolink::IOServicePtr io_service) {
+        main_io_service_ = io_service;
     }
 
     /// @brief Represents connection to the MySQL database.
@@ -864,8 +880,11 @@ private:
     /// @brief Connection parameters
     isc::db::DatabaseConnection::ParameterMap parameters_;
 
-    /// @brief The IOService object, used for all ASIO operations.
+    /// @brief The hook I/O service.
     static isc::asiolink::IOServicePtr io_service_;
+
+    /// @brief The main I/O service.
+    static isc::asiolink::IOServicePtr main_io_service_;
 };
 
 } // end of namespace isc::dhcp

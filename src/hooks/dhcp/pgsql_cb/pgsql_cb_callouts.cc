@@ -22,6 +22,7 @@
 #include <sstream>
 #include <string>
 
+using namespace isc::asiolink;
 using namespace isc::cb;
 using namespace isc::dhcp;
 using namespace isc::hooks;
@@ -67,15 +68,15 @@ int load(LibraryHandle& /* handle */) {
 /// @param handle callout handle passed to the callout.
 /// @return 0 on success, 1 otherwise.
 int dhcp4_srv_configured(CalloutHandle& handle) {
-    isc::asiolink::IOServicePtr io_service;
-    handle.getArgument("io_context", io_service);
-    if (!io_service) {
+    handle.getArgument("io_context", isc::dhcp::PgSqlConfigBackendImpl::getMainIOService());
+    if (!isc::dhcp::PgSqlConfigBackendImpl::getMainIOService()) {
         const string error("Error: io_context is null");
         handle.setArgument("error", error);
         handle.setStatus(isc::hooks::CalloutHandle::NEXT_STEP_DROP);
         return (1);
     }
-    isc::dhcp::PgSqlConfigBackendImpl::setIOService(io_service);
+    isc::dhcp::PgSqlConfigBackendImpl::getIOService().reset(new IOService());
+    isc::dhcp::PgSqlConfigBackendImpl::getMainIOService()->registerExternalIOService(isc::dhcp::PgSqlConfigBackendImpl::getIOService());
     return (0);
 }
 
@@ -86,15 +87,15 @@ int dhcp4_srv_configured(CalloutHandle& handle) {
 /// @param handle callout handle passed to the callout.
 /// @return 0 on success, 1 otherwise.
 int dhcp6_srv_configured(CalloutHandle& handle) {
-    isc::asiolink::IOServicePtr io_service;
-    handle.getArgument("io_context", io_service);
-    if (!io_service) {
+    handle.getArgument("io_context", isc::dhcp::PgSqlConfigBackendImpl::getMainIOService());
+    if (!isc::dhcp::PgSqlConfigBackendImpl::getMainIOService()) {
         const string error("Error: io_context is null");
         handle.setArgument("error", error);
         handle.setStatus(isc::hooks::CalloutHandle::NEXT_STEP_DROP);
         return (1);
     }
-    isc::dhcp::PgSqlConfigBackendImpl::setIOService(io_service);
+    isc::dhcp::PgSqlConfigBackendImpl::getIOService().reset(new IOService());
+    isc::dhcp::PgSqlConfigBackendImpl::getMainIOService()->registerExternalIOService(isc::dhcp::PgSqlConfigBackendImpl::getIOService());
     return (0);
 }
 
@@ -106,6 +107,17 @@ int unload() {
     // Unregister the factories and remove PostgreSQL backends
     isc::dhcp::PgSqlConfigBackendDHCPv4::unregisterBackendType();
     isc::dhcp::PgSqlConfigBackendDHCPv6::unregisterBackendType();
+    if (isc::dhcp::PgSqlConfigBackendImpl::getMainIOService()) {
+        isc::dhcp::PgSqlConfigBackendImpl::getMainIOService()->unregisterExternalIOService(isc::dhcp::PgSqlConfigBackendImpl::getIOService());
+    }
+    if (isc::dhcp::PgSqlConfigBackendImpl::getIOService()) {
+        isc::dhcp::PgSqlConfigBackendImpl::getIOService()->stop();
+        isc::dhcp::PgSqlConfigBackendImpl::getIOService()->restart();
+        try {
+            isc::dhcp::PgSqlConfigBackendImpl::getIOService()->poll();
+        } catch (...) {
+        }
+    }
     return (0);
 }
 

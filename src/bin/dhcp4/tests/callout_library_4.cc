@@ -31,6 +31,9 @@ void start_service(void) {
     isc_throw(isc::Unexpected, "start service failed");
 };
 
+IOServicePtr io_service;
+IOServicePtr main_io_service;
+
 } // end anonymous
 
 // Functions accessed by the hooks framework use C linkage to avoid the name
@@ -40,6 +43,7 @@ extern "C" {
 
 int
 do_load_impl(LibraryHandle& handle) {
+    io_service.reset(new IOService());
     // Determine if this callout is configured to fail.
     isc::dhcp::SrvConfigPtr config;
     isc::data::ConstElementPtr const& parameters(handle.getParameters());
@@ -51,9 +55,17 @@ do_load_impl(LibraryHandle& handle) {
     return (0);
 }
 
+int
+do_unload_impl() {
+    if (main_io_service) {
+        main_io_service->unregisterExternalIOService(io_service);
+    }
+    return (0);
+}
+
 int (*do_load)(LibraryHandle& handle) = do_load_impl;
 
-int (*do_unload)();
+int (*do_unload)() = do_unload_impl;
 
 /// @brief Callout which appends library number and provided arguments to
 /// the marker file for dhcp4_srv_configured callout.
@@ -79,13 +91,13 @@ dhcp4_srv_configured(CalloutHandle& handle) {
 
     // Get the IO context to post start_service on it.
     std::string error("");
-    IOServicePtr io_context;
     try {
-        handle.getArgument("io_context", io_context);
-        if (!io_context) {
+        handle.getArgument("io_context", main_io_service);
+        if (!main_io_service) {
             error = "null io_context";
         }
-        io_context->post(start_service);
+        main_io_service->registerExternalIOService(io_service);
+        io_service->post(start_service);
     } catch (const std::exception& ex) {
         error = "no io_context in arguments";
     }

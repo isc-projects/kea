@@ -12,11 +12,8 @@
 
 #include <config.h>
 
-#include <cc/data.h>
-#include <dhcpsrv/cfgmgr.h>
-#include <hooks/hooks_manager.h>
-#include <process/daemon.h>
-#include <testutils/lib_load_test_fixture.h>
+#include <dhcpsrv/testutils/lib_load_test_fixture.h>
+#include <testutils/gtest_utils.h>
 
 #include <gtest/gtest.h>
 #include <errno.h>

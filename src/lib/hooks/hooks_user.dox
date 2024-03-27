@@ -1620,7 +1620,7 @@ cb4_updated and cb6_updated have no thread safety requirements.
 
 Other hook library entry points are called by the main thread:
  - io service (io context is recent boost versions) is polled by the main
-  thread
+   thread
  - external socket callbacks are executed by the main thread
  - commands including command_process
 

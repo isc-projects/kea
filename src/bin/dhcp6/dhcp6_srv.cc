@@ -302,6 +302,7 @@ Dhcpv6Srv::~Dhcpv6Srv() {
         }
         LOG_ERROR(dhcp6_logger, DHCP6_SRV_UNLOAD_LIBRARIES_ERROR).arg(msg);
     }
+    getIOService()->clearExternalIOServices();
     io_service_->stop();
     io_service_->restart();
     try {
@@ -613,6 +614,7 @@ Dhcpv6Srv::run() {
 #endif // ENABLE_AFL
         try {
             runOne();
+            getIOService()->pollExternalIOServices();
             getIOService()->poll();
         } catch (const std::exception& e) {
             // General catch-all standard exceptions that are not caught by more

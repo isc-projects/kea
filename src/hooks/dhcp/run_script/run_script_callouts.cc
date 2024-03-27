@@ -80,7 +80,18 @@ int load(LibraryHandle& handle) {
 ///
 /// @return always 0.
 int unload() {
+    if (RunScriptImpl::getMainIOService()) {
+        RunScriptImpl::getMainIOService()->unregisterExternalIOService(impl->getIOContext());
+    }
     impl.reset();
+    if (RunScriptImpl::getIOService()) {
+        RunScriptImpl::getIOService()->stop();
+        RunScriptImpl::getIOService()->restart();
+        try {
+            RunScriptImpl::getIOService()->poll();
+        } catch (...) {
+        }
+    }
     RunScriptImpl::setIOService(IOServicePtr());
     LOG_INFO(run_script_logger, RUN_SCRIPT_UNLOAD);
     return (0);
@@ -91,16 +102,16 @@ int unload() {
 /// @param handle callout handle.
 int dhcp4_srv_configured(CalloutHandle& handle) {
     try {
-        isc::asiolink::IOServicePtr io_service;
-        handle.getArgument("io_context", io_service);
-        if (!io_service) {
+        handle.getArgument("io_context", RunScriptImpl::getMainIOService());
+        if (!RunScriptImpl::getMainIOService()) {
             // Should not happen!
             handle.setStatus(isc::hooks::CalloutHandle::NEXT_STEP_DROP);
             const string error("Error: io_context is null");
             handle.setArgument("error", error);
             return (1);
         }
-        RunScriptImpl::setIOService(io_service);
+        RunScriptImpl::setIOService(impl->getIOContext());
+        RunScriptImpl::getMainIOService()->registerExternalIOService(impl->getIOContext());
 
     } catch (const exception& ex) {
         LOG_ERROR(run_script_logger, RUN_SCRIPT_LOAD_ERROR)
@@ -116,16 +127,16 @@ int dhcp4_srv_configured(CalloutHandle& handle) {
 /// @param handle callout handle.
 int dhcp6_srv_configured(CalloutHandle& handle) {
     try {
-        isc::asiolink::IOServicePtr io_service;
-        handle.getArgument("io_context", io_service);
-        if (!io_service) {
+        handle.getArgument("io_context", RunScriptImpl::getMainIOService());
+        if (!RunScriptImpl::getMainIOService()) {
             // Should not happen!
             handle.setStatus(isc::hooks::CalloutHandle::NEXT_STEP_DROP);
             const string error("Error: io_context is null");
             handle.setArgument("error", error);
             return (1);
         }
-        RunScriptImpl::setIOService(io_service);
+        RunScriptImpl::setIOService(impl->getIOContext());
+        RunScriptImpl::getMainIOService()->registerExternalIOService(impl->getIOContext());
 
     } catch (const exception& ex) {
         LOG_ERROR(run_script_logger, RUN_SCRIPT_LOAD_ERROR)

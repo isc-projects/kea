@@ -89,6 +89,7 @@ CtrlAgentProcess::run() {
 
 size_t
 CtrlAgentProcess::runIO() {
+    getIOService()->pollExternalIOServices();
     size_t cnt = getIOService()->poll();
     if (!cnt) {
         cnt = getIOService()->runOne();
@@ -192,6 +193,17 @@ CtrlAgentProcess::configure(isc::data::ConstElementPtr config_set,
 
     int rcode = 0;
     config::parseAnswer(rcode, answer);
+
+    /// Let postponed hook initializations to run.
+    try {
+        getIOService()->pollExternalIOServices();
+    } catch (const std::exception& ex) {
+        std::ostringstream err;
+        err << "Error initializing hooks: "
+            << ex.what();
+        return (isc::config::createAnswer(CONTROL_RESULT_ERROR, err.str()));
+    }
+
     return (answer);
 }
 
