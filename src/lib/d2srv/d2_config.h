@@ -285,7 +285,7 @@ public:
     /// -# "HMAC-SHA384"
     /// -# "HMAC-SHA512"
     ///
-    /// @param secret  The base-64 encoded secret component for this key.
+    /// @param secret The base-64 encoded secret component for this key.
     /// (A suitable string for use here could be obtained by running the
     /// BIND 9 dnssec-keygen program; the contents of resulting key file
     /// will look similar to:
@@ -299,13 +299,15 @@ public:
     ///   Activate: 20140515143700
     /// @endcode
     /// where the value the "Key:" entry is the secret component of the key.)
+    /// @param secret_file The file name where the secret can be found.
     /// @param digestbits the minimum truncated length in bits
     ///
     /// @throw D2CfgError if values supplied are invalid:
     /// name cannot be blank, algorithm must be a supported value,
     /// secret must be a non-blank, base64 encoded string.
     TSIGKeyInfo(const std::string& name, const std::string& algorithm,
-                const std::string& secret, uint32_t digestbits = 0);
+                const std::string& secret, std::string secret_file = "",
+                uint32_t digestbits = 0);
 
     /// @brief Destructor
     virtual ~TSIGKeyInfo();
@@ -336,6 +338,13 @@ public:
     /// @return returns the secret as a std::string.
     const std::string getSecret() const {
         return (secret_);
+    }
+
+    /// @brief Getter which returns the secret file name.
+    ///
+    /// @return returns the secret file name.
+    const std::string getSecretFile() const {
+        return (secret_file_);
     }
 
     /// @brief Getter which returns the TSIG key used to sign and verify
@@ -389,6 +398,9 @@ private:
 
     /// @brief The base64 encoded string secret value component of this key.
     std::string secret_;
+
+    /// @brief The secret file name (usually empty).
+    std::string secret_file_;
 
     /// @brief The minimum truncated length in bits
     /// (0 means no truncation is allowed and is the default)

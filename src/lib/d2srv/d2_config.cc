@@ -6,11 +6,12 @@
 
 #include <config.h>
 
+#include <asiolink/io_error.h>
 #include <d2srv/d2_log.h>
 #include <d2srv/d2_cfg_mgr.h>
 #include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <exceptions/exceptions.h>
-#include <asiolink/io_error.h>
+#include <util/filesystem.h>
 
 #include <boost/scoped_ptr.hpp>
 #include <boost/algorithm/string/predicate.hpp>
@@ -18,8 +19,8 @@
 #include <sstream>
 #include <string>
 
-using namespace isc::process;
 using namespace isc::data;
+using namespace isc::process;
 
 namespace isc {
 namespace d2 {
@@ -127,9 +128,10 @@ const char* TSIGKeyInfo::HMAC_SHA384_STR = "HMAC-SHA384";
 const char* TSIGKeyInfo::HMAC_SHA512_STR = "HMAC-SHA512";
 
 TSIGKeyInfo::TSIGKeyInfo(const std::string& name, const std::string& algorithm,
-                         const std::string& secret, uint32_t digestbits)
-    :name_(name), algorithm_(algorithm), secret_(secret),
-     digestbits_(digestbits), tsig_key_() {
+                         const std::string& secret, std::string secret_file,
+                         uint32_t digestbits)
+    : name_(name), algorithm_(algorithm), secret_(secret),
+      secret_file_(secret_file), digestbits_(digestbits), tsig_key_() {
     remakeKey();
 }
 
@@ -184,8 +186,12 @@ TSIGKeyInfo::toElement() const {
     result->set("name", Element::create(name_));
     // Set algorithm
     result->set("algorithm", Element::create(algorithm_));
-    // Set secret
-    result->set("secret", Element::create(secret_));
+    // Set secret[-file]
+    if (!secret_file_.empty()) {
+        result->set("secret-file", Element::create(secret_file_));
+    } else {
+        result->set("secret", Element::create(secret_));
+    }
     // Set digest-bits
     result->set("digest-bits",
                 Element::create(static_cast<int64_t>(digestbits_)));
@@ -400,7 +406,24 @@ TSIGKeyInfoParser::parse(ConstElementPtr key_config) {
     std::string name = getString(key_config, "name");
     std::string algorithm = getString(key_config, "algorithm");
     uint32_t digestbits = getInteger(key_config, "digest-bits");
-    std::string secret = getString(key_config, "secret");
+    std::string secret_file;
+    std::string secret;
+    if (key_config->contains("secret-file")) {
+        secret_file = getString(key_config, "secret-file");
+        try {
+            secret = util::file::getContent(secret_file);
+            if (secret.empty()) {
+                isc_throw(BadValue, "Expected '" << secret_file
+                          << "' to not be empty");
+            }
+        } catch (const std::exception& ex) {
+            isc_throw(D2CfgError, "tsig-key : " << ex.what()
+                      << " (" << getPosition("secret-file", key_config)
+                      << ")");
+        }
+    } else {
+        secret = getString(key_config, "secret");
+    }
     ConstElementPtr user_context = key_config->get("user-context");
 
     // Algorithm must be valid.
@@ -434,7 +457,8 @@ TSIGKeyInfoParser::parse(ConstElementPtr key_config) {
     // with an invalid secret content.
     TSIGKeyInfoPtr key_info;
     try {
-        key_info.reset(new TSIGKeyInfo(name, algorithm, secret, digestbits));
+        key_info.reset(new TSIGKeyInfo(name, algorithm, secret,
+                                       secret_file, digestbits));
     } catch (const std::exception& ex) {
         isc_throw(D2CfgError, ex.what() << " ("
                   << key_config->getPosition() << ")");
