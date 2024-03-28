@@ -4,6 +4,8 @@
 #include <log/message_types.h>
 #include <log/message_initializer.h>
 
+extern const isc::log::MessageID PERFMON_ALARM_CLEARED = "PERFMON_ALARM_CLEARED";
+extern const isc::log::MessageID PERFMON_ALARM_TRIGGERED = "PERFMON_ALARM_TRIGGERED";
 extern const isc::log::MessageID PERFMON_DEINIT_FAILED = "PERFMON_DEINIT_FAILED";
 extern const isc::log::MessageID PERFMON_DEINIT_OK = "PERFMON_DEINIT_OK";
 extern const isc::log::MessageID PERFMON_DHCP4_PKT_EVENTS = "PERFMON_DHCP4_PKT_EVENTS";
@@ -16,6 +18,8 @@ extern const isc::log::MessageID PERFMON_INIT_OK = "PERFMON_INIT_OK";
 namespace {
 
 const char* values[] = {
+    "PERFMON_ALARM_CLEARED", "Alarm for %1 has been cleared, reported average duration %2 is now beloe low-water-ms: %3",
+    "PERFMON_ALARM_TRIGGERED", "Alarm for %1 has been triggered since %2, reported average duration %3 exceeds high-water-ms: %4",
     "PERFMON_DEINIT_FAILED", "unloading PerfMon hooks library failed: %1",
     "PERFMON_DEINIT_OK", "unloading PerfMon hooks library successful",
     "PERFMON_DHCP4_PKT_EVENTS", "query: %1 events=[%2]",

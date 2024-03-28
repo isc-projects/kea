@@ -95,7 +95,10 @@ TEST(DurationKey, basics) {
     EXPECT_EQ(key->getStartEventLabel(), "process_started");
     EXPECT_EQ(key->getStopEventLabel(), "process_completed");
     EXPECT_EQ(key->getSubnetId(), SUBNET_ID_GLOBAL);
-    EXPECT_EQ("DHCPDISCOVER-DHCPOFFER.process_started-process_completed.0", key->getLabel());
+    EXPECT_EQ("DHCPDISCOVER-DHCPOFFER.process_started-process_completed.0",
+              key->getLabel());
+    EXPECT_EQ("perfmon.DHCPDISCOVER-DHCPOFFER.process_started-process_completed.average-ms",
+              key->getStatName("average-ms"));
 
     // Create valid v6 key, verify contents and label.
     ASSERT_NO_THROW_LOG(key.reset(new DurationKey(AF_INET6, DHCPV6_SOLICIT, DHCPV6_ADVERTISE,
@@ -107,7 +110,10 @@ TEST(DurationKey, basics) {
     EXPECT_EQ(key->getStartEventLabel(), "mt_queued");
     EXPECT_EQ(key->getStopEventLabel(), "process_started");
     EXPECT_EQ(key->getSubnetId(), 77);
-    EXPECT_EQ("SOLICIT-ADVERTISE.mt_queued-process_started.77", key->getLabel());
+    EXPECT_EQ("SOLICIT-ADVERTISE.mt_queued-process_started.77",
+              key->getLabel());
+    EXPECT_EQ("subnet-id[77].perfmon.SOLICIT-ADVERTISE.mt_queued-process_started.average-ms",
+              key->getStatName("average-ms"));
 
     // Make sure constructor catches an insane message pairing.
     ASSERT_THROW_MSG(key.reset(new DurationKey(AF_INET6, DHCPV6_ADVERTISE, DHCPV6_SOLICIT,

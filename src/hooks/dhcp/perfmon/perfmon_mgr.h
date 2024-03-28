@@ -38,6 +38,10 @@ public:
     /// @param params map of configuration parameters to parse.
     void configure(const isc::data::ConstElementPtr& params);
 
+    /// @brief Sets convenience values and (re)creates the duration store.
+    /// Called by the constructor and also by configure().
+    virtual void init();
+
     /// @brief Processes the event stack of a query packet.
     ///
     /// @todo DETAILS TO FOLLOW
@@ -119,7 +123,7 @@ public:
         return (duration_store_);
     }
 
-private:
+protected:
     /// @brief Length of time a MonitoredDuration accumulates samples until reporting.
     Duration interval_duration_;
 

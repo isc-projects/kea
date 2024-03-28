@@ -188,6 +188,13 @@ public:
         return (subnet_id_);
     }
 
+    /// @brief Set the subnet id.
+    ///
+    /// @param subnet_id new value for subnet id.x
+    void setSubnetId(dhcp::SubnetID subnet_id) {
+        subnet_id_ = subnet_id;
+    }
+
     /// @brief Get a label for a family-specific message type (e.g.
     /// "DHCPDISCOVER", "SOLICIT")
     ///
@@ -216,6 +223,26 @@ public:
     ///
     /// @return the composite label.
     std::string getLabel() const;
+
+    /// @brief Get the StatsMgr formatted compatible name
+    ///
+    /// @param value_name  name of the specific value (e.g. "average-ms", "min-duration-ms")
+    /// The format of the string:
+    ///
+    /// @code
+    ///
+    ///     {subnet-id[x]}.perfmon.<query type>-<response type>.<start event>-<end event>.<value-name>
+    ///
+    /// Example:
+    ///
+    ///  perfmon.discover-offer.socket_received-buffer_read.average-ms
+    ///
+    ///  subnet[9].perfmon.discover-offer.socket_received-buffer_read.average-ms
+    ///
+    /// @endcode
+    ///
+    /// @return the statistic name.
+    std::string getStatName(const std::string& value_name) const;
 
     /// @brief Validates that a query and response message type pair is sane.
     ///

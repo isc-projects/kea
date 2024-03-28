@@ -43,6 +43,7 @@ perfmon_unittests_LDFLAGS  = $(AM_LDFLAGS) $(CRYPTO_LDFLAGS) $(GTEST_LDFLAGS)
 perfmon_unittests_CXXFLAGS = $(AM_CXXFLAGS)
 
 perfmon_unittests_LDADD  = $(top_builddir)/src/hooks/dhcp/perfmon/libperfmon.la
+perfmon_unittests_LDADD += $(top_builddir)/src/lib/testutils/libkea-testutils.la
 perfmon_unittests_LDADD += $(top_builddir)/src/lib/process/libkea-process.la
 perfmon_unittests_LDADD += $(top_builddir)/src/lib/stats/libkea-stats.la
 perfmon_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la

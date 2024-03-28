@@ -8,6 +8,8 @@
 #include <config.h>
 #include <perfmon_mgr.h>
 #include <dhcp/dhcp6.h>
+#include <stats/stats_mgr.h>
+#include <testutils/log_utils.h>
 #include <testutils/gtest_utils.h>
 #include <testutils/multi_threading_utils.h>
 
@@ -19,7 +21,9 @@ using namespace isc;
 using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::perfmon;
+using namespace isc::stats;
 using namespace isc::test;
+using namespace isc::dhcp::test;
 using namespace boost::posix_time;
 
 namespace {
@@ -37,42 +41,168 @@ TEST(PerfMonMgr, constructor) {
     EXPECT_EQ(mgr->getFamily(), AF_INET6);
 }
 
+/// @brief Derivation of PerfMonMgr that uses milliseconds for intervals.
+class TestablePerfMonMgr : public PerfMonMgr {
+public:
+    /// @brief Constructor.
+    ///
+    /// @param family Protocol family AF_INET or AF_INET6.
+    explicit TestablePerfMonMgr(uint16_t family)
+        : PerfMonMgr(family) {
+    }
+
+    /// @brief Destructor.
+    virtual ~TestablePerfMonMgr() = default;
+
+    /// @brief Override base class so we can use milliseconds.
+    virtual void init() {
+        // Set convenience values.
+        interval_duration_ = milliseconds(interval_width_secs_);
+        alarm_report_interval_ = milliseconds(alarm_report_secs_);
+
+        // Re-create the duration store.
+        duration_store_.reset(new MonitoredDurationStore(family_, interval_duration_));
+    }
+};
+
 /// @brief Test fixture for testing PerfMonMgr
-class PerfMonMgrTest : public ::testing::Test {
+class PerfMonMgrTest : public LogContentTest {
 public:
     /// @brief Constructor.
     explicit PerfMonMgrTest(uint16_t family) : family_(family) {
+        StatsMgr::instance();
+        StatsMgr::instance().removeAll();
+        StatsMgr::instance().setMaxSampleCountAll(1);
     }
 
     /// @brief Destructor.
     virtual ~PerfMonMgrTest() = default;
 
+    /// @brief Re-creates and then configures the PerfMonMgr instance with a
+    /// given configuration.
+    ///
+    /// @param config JSON configuration text
+    void createMgr(const std::string& config) {
+        mgr_.reset(new TestablePerfMonMgr(family_));
+        ConstElementPtr json_elements;
+        json_elements = Element::fromJSON(config);
+        mgr_->configure(json_elements);
+    }
+
+    /// @brief Compares an Alarm to the version stored in the Alarm store.
+    ///
+    /// @param line_no source line of the invocation.
+    /// @param before[in/out] pointer to the "before" alarm. It is updated
+    /// to the stored Alarm prior to return.
+    /// @param exp_state expected Alarm::STATE of the stored Alarm.
+    /// @param should_report true if the stored alarm's high_water_last_report
+    /// should be more recent than that of the before alarm.
+    void beforeAndAfterAlarm(int line_no, AlarmPtr& before, Alarm::State exp_state,
+                             bool should_report) {
+        std::ostringstream oss;
+        oss << "beforeAndAfterAlarm at line " << line_no << " failed";
+        SCOPED_TRACE(oss.str());
+
+        // Retrieve the Alarm from the store.
+        AlarmPtr after;
+        ASSERT_NO_THROW_LOG(after = mgr_->getAlarmStore()->getAlarm(before));
+        ASSERT_TRUE(after);
+        ASSERT_EQ(exp_state, after->getState());
+
+        if (exp_state == before->getState()) {
+            // State should not have changed.
+            ASSERT_EQ(before->getStosTime(), after->getStosTime());
+            switch(exp_state) {
+            case Alarm::CLEAR:
+                ASSERT_EQ(after->getLastHighWaterReport(), PktEvent::EMPTY_TIME());
+                break;
+            case Alarm::TRIGGERED:
+                if (should_report) {
+                    ASSERT_LT(before->getLastHighWaterReport(), after->getLastHighWaterReport());
+                } else {
+                    ASSERT_EQ(before->getLastHighWaterReport(), after->getLastHighWaterReport());
+                }
+                break;
+            case Alarm::DISABLED:
+                // No use case for this (yet).
+                break;
+            }
+
+        } else {
+            // State should have changed.
+            ASSERT_LT(before->getStosTime(), after->getStosTime());
+            switch(exp_state) {
+            case Alarm::CLEAR:
+                ASSERT_EQ(after->getLastHighWaterReport(), PktEvent::EMPTY_TIME());
+                break;
+            case Alarm::TRIGGERED:
+                if (should_report) {
+                    ASSERT_EQ(before->getLastHighWaterReport(), PktEvent::EMPTY_TIME());
+                    ASSERT_LE(after->getStosTime(), after->getLastHighWaterReport());
+                } else {
+                    ASSERT_EQ(before->getLastHighWaterReport(), after->getLastHighWaterReport());
+                }
+                break;
+            case Alarm::DISABLED:
+                // No use case for this (yet).
+                break;
+            }
+
+        }
+
+        before = after;
+    }
+
+    /// @brief Check the content of a stored MonitoredDuration.
+    ///
+    /// @param line_no source line of the invocation
+    /// @param key DurationKey of the target duration
+    /// @param exp_current_total_ms expected value of the current interval's total_duration_
+    /// @param exp_previous true if the duration should have previous interval, defaults to false
+    /// @param exp_previous_total_ms expected value of the previous interval's total_duration_
+    void checkDuration(int line_no, DurationKeyPtr key, uint64_t exp_current_total_ms,
+                       bool exp_previous = false, uint64_t exp_previous_total_ms = 0) {
+        std::ostringstream oss;
+        oss << "checkDuration at line " << line_no << " failed";
+        SCOPED_TRACE(oss.str());
+        MonitoredDurationPtr mond;
+        ASSERT_NO_THROW(mond = mgr_->getDurationStore()->getDuration(key));
+        ASSERT_TRUE(mond);
+        if (!exp_previous) {
+            ASSERT_FALSE(mond->getPreviousInterval());
+        } else {
+            ASSERT_TRUE(mond->getPreviousInterval());
+            EXPECT_EQ(milliseconds(exp_previous_total_ms), mond->getPreviousInterval()->getTotalDuration());
+        }
+
+        ASSERT_TRUE(mond->getCurrentInterval());
+        EXPECT_EQ(milliseconds(exp_current_total_ms), mond->getCurrentInterval()->getTotalDuration());
+    }
+
     /// @brief Verifies PerfMonConfig constructors and accessors.
     void testBasics() {
-        PerfMonMgrPtr mgr;
-
         // Verify that an invalid family is caught.
-        ASSERT_THROW_MSG(mgr.reset(new PerfMonMgr(777)), BadValue,
+        ASSERT_THROW_MSG(mgr_.reset(new PerfMonMgr(777)), BadValue,
                          "PerfmonConfig: family must be AF_INET or AF_INET6");
 
         // Verify initial values.
-        ASSERT_NO_THROW_LOG(mgr.reset(new PerfMonMgr(family_)));
-        ASSERT_TRUE(mgr);
-        EXPECT_FALSE(mgr->getEnableMonitoring());
-        EXPECT_EQ(mgr->getIntervalDuration(), seconds(60));
-        EXPECT_TRUE(mgr->getStatsMgrReporting());
-        EXPECT_EQ(mgr->getAlarmReportInterval(), seconds(300));
+        ASSERT_NO_THROW_LOG(mgr_.reset(new PerfMonMgr(family_)));
+        ASSERT_TRUE(mgr_);
+        EXPECT_FALSE(mgr_->getEnableMonitoring());
+        EXPECT_EQ(mgr_->getIntervalDuration(), seconds(60));
+        EXPECT_TRUE(mgr_->getStatsMgrReporting());
+        EXPECT_EQ(mgr_->getAlarmReportInterval(), seconds(300));
 
         // Alarm store should exist but be empty.
-        EXPECT_TRUE(mgr->getAlarmStore());
-        EXPECT_EQ(mgr->getAlarmStore()->getFamily(), family_);
-        AlarmCollectionPtr alarms = mgr->getAlarmStore()->getAll();
+        EXPECT_TRUE(mgr_->getAlarmStore());
+        EXPECT_EQ(mgr_->getAlarmStore()->getFamily(), family_);
+        AlarmCollectionPtr alarms = mgr_->getAlarmStore()->getAll();
         ASSERT_EQ(alarms->size(), 0);
 
         // Duration store should exist but be empty.
-        EXPECT_TRUE(mgr->getDurationStore());
-        EXPECT_EQ(mgr->getDurationStore()->getFamily(), family_);
-        MonitoredDurationCollectionPtr durations = mgr->getDurationStore()->getAll();
+        EXPECT_TRUE(mgr_->getDurationStore());
+        EXPECT_EQ(mgr_->getDurationStore()->getFamily(), family_);
+        MonitoredDurationCollectionPtr durations = mgr_->getDurationStore()->getAll();
         ASSERT_EQ(durations->size(), 0);
     }
 
@@ -100,22 +230,17 @@ public:
                         }]
                 })";
 
-        // Convert JSON texts to Element map.
-        ConstElementPtr json_elements;
-        ASSERT_NO_THROW_LOG(json_elements = Element::fromJSON(valid_config));
+        ASSERT_NO_THROW_LOG(createMgr(valid_config));
 
-        PerfMonMgrPtr mgr(new PerfMonMgr(family_));
-        ASSERT_NO_THROW_LOG(mgr->configure(json_elements));
-
-        EXPECT_FALSE(mgr->getEnableMonitoring());
-        EXPECT_EQ(mgr->getIntervalDuration(), seconds(5));
-        EXPECT_FALSE(mgr->getStatsMgrReporting());
-        EXPECT_EQ(mgr->getAlarmReportInterval(), seconds(600));
+        EXPECT_FALSE(mgr_->getEnableMonitoring());
+        EXPECT_EQ(mgr_->getIntervalDuration(), seconds(5));
+        EXPECT_FALSE(mgr_->getStatsMgrReporting());
+        EXPECT_EQ(mgr_->getAlarmReportInterval(), seconds(600));
 
         // AlarmStore should have one alarm.
-        EXPECT_TRUE(mgr->getAlarmStore());
-        EXPECT_EQ(mgr->getAlarmStore()->getFamily(), family_);
-        AlarmCollectionPtr alarms = mgr->getAlarmStore()->getAll();
+        EXPECT_TRUE(mgr_->getAlarmStore());
+        EXPECT_EQ(mgr_->getAlarmStore()->getFamily(), family_);
+        AlarmCollectionPtr alarms = mgr_->getAlarmStore()->getAll();
         ASSERT_EQ(alarms->size(), 1);
         DurationKeyPtr key(new DurationKey(family_, 0, 0, "process-started",
                                            "process-completed", 70));
@@ -127,9 +252,9 @@ public:
         EXPECT_EQ(alarm->getLowWater(), milliseconds(25));
 
         // Duration store should exist but be empty.
-        EXPECT_TRUE(mgr->getDurationStore());
-        EXPECT_EQ(mgr->getDurationStore()->getFamily(), family_);
-        MonitoredDurationCollectionPtr durations = mgr->getDurationStore()->getAll();
+        EXPECT_TRUE(mgr_->getDurationStore());
+        EXPECT_EQ(mgr_->getDurationStore()->getFamily(), family_);
+        MonitoredDurationCollectionPtr durations = mgr_->getDurationStore()->getAll();
         ASSERT_EQ(durations->size(), 0);
     }
 
@@ -144,35 +269,211 @@ public:
                     "alarms": "bogus"
                 })";
 
-        // Convert JSON texts to Element map.
-        ConstElementPtr json_elements;
-        ASSERT_NO_THROW_LOG(json_elements = Element::fromJSON(invalid_config));
-
-        PerfMonMgrPtr mgr(new PerfMonMgr(family_));
-        ASSERT_THROW_MSG(mgr->configure(json_elements), DhcpConfigError,
+        ASSERT_THROW_MSG(createMgr(invalid_config), DhcpConfigError,
                          "PerfMonMgr::configure failed - "
                          "'alarms' parameter is not a list");
 
-        EXPECT_FALSE(mgr->getEnableMonitoring());
-        EXPECT_EQ(mgr->getIntervalDuration(), seconds(60));
-        EXPECT_TRUE(mgr->getStatsMgrReporting());
-        EXPECT_EQ(mgr->getAlarmReportInterval(), seconds(300));
+        EXPECT_FALSE(mgr_->getEnableMonitoring());
+        EXPECT_EQ(mgr_->getIntervalDuration(), seconds(60));
+        EXPECT_TRUE(mgr_->getStatsMgrReporting());
+        EXPECT_EQ(mgr_->getAlarmReportInterval(), seconds(300));
 
         // Alarm store should exist but be empty.
-        EXPECT_TRUE(mgr->getAlarmStore());
-        EXPECT_EQ(mgr->getAlarmStore()->getFamily(), family_);
-        AlarmCollectionPtr alarms = mgr->getAlarmStore()->getAll();
+        EXPECT_TRUE(mgr_->getAlarmStore());
+        EXPECT_EQ(mgr_->getAlarmStore()->getFamily(), family_);
+        AlarmCollectionPtr alarms = mgr_->getAlarmStore()->getAll();
         ASSERT_EQ(alarms->size(), 0);
 
         // Duration store should exist but be empty.
-        EXPECT_TRUE(mgr->getDurationStore());
-        EXPECT_EQ(mgr->getDurationStore()->getFamily(), family_);
-        MonitoredDurationCollectionPtr durations = mgr->getDurationStore()->getAll();
+        EXPECT_TRUE(mgr_->getDurationStore());
+        EXPECT_EQ(mgr_->getDurationStore()->getFamily(), family_);
+        MonitoredDurationCollectionPtr durations = mgr_->getDurationStore()->getAll();
         ASSERT_EQ(durations->size(), 0);
+    }
+
+    /// @brief Exercises  PerfMonMgr::reportToStatsMgr().
+    void testReportToStatsMgr() {
+        // Minimal valid configuration.
+        std::string valid_config =
+            R"({
+                    "enable-monitoring": true,
+                    "interval-width-secs": 5,
+                    "stats-mgr-reporting": true
+                })";
+
+        ASSERT_NO_THROW_LOG(createMgr(valid_config));
+
+        MonitoredDurationPtr mond;
+        ASSERT_THROW_MSG(mgr_->reportToStatsMgr(mond), BadValue,
+                        "reportToStatsMgr - duration is empty");
+
+        ASSERT_NO_THROW_LOG(
+            mond.reset(new MonitoredDuration(family_, 0, 0,
+                                             "process-started", "process-completed",
+                                             70,  seconds(60))));
+
+        ASSERT_THROW_MSG(mgr_->reportToStatsMgr(mond), BadValue,
+                        "reportToStatsMgr - duration previous interval is empty");
+
+        mond->addSample(milliseconds(100));
+        mond->addSample(milliseconds(250));
+        mond->expireCurrentInterval();
+
+        Duration average;
+        ASSERT_NO_THROW_LOG(average = mgr_->reportToStatsMgr(mond));
+        EXPECT_EQ(milliseconds(175), average);
+
+        auto obs = StatsMgr::instance().getObservation(mond->getStatName("average-ms"));
+        ASSERT_TRUE(obs);
+        EXPECT_EQ(175, obs->getInteger().first);
+
+        StatsMgr::instance().removeAll();
+        mgr_->setStatsMgrReporting(false);
+
+        ASSERT_NO_THROW_LOG(average = mgr_->reportToStatsMgr(mond));
+        EXPECT_EQ(milliseconds(175), average);
+        obs = StatsMgr::instance().getObservation(mond->getStatName("average-ms"));
+        ASSERT_FALSE(obs);
+    }
+
+    /// @brief Exercises PerfMonMgr::addDurationSample().
+    void testAddDurationSample() {
+        // Minimal valid configuration.
+        std::string valid_config =
+            R"({
+                    "enable-monitoring": true,
+                    "interval-width-secs": 100,
+                    "stats-mgr-reporting": true,
+                    "alarm-report-secs": 200,
+                    "alarms": [{
+                            "duration-key": {
+                                "query-type": "*",
+                                "response-type": "*",
+                                "start-event": "process-started",
+                                "stop-event": "process-completed",
+                                "subnet-id": 70
+                                },
+                            "enable-alarm": true,
+                            "high-water-ms": 50,
+                            "low-water-ms": 25
+                        }]
+                })";
+
+        ASSERT_NO_THROW_LOG(createMgr(valid_config));
+
+        // Make a duration key to match the alarm.
+        DurationKeyPtr key;
+        ASSERT_NO_THROW_LOG(
+            key.reset(new DurationKey(family_, 0, 0, "process-started",
+                                      "process-completed", 70)));
+
+        // Verify the alarm exists but is CLEAR since the duration has not yet reported.
+        AlarmPtr before_alarm;
+        ASSERT_NO_THROW_LOG(before_alarm = mgr_->getAlarmStore()->getAlarm(key));
+        ASSERT_TRUE(before_alarm);
+        EXPECT_EQ(Alarm::CLEAR, before_alarm->getState());
+
+        // 1.  Add two samples to the duratson inside the current interval
+        // This should create the duration in the store.  Note both samples above
+        // high-water-ms.
+        ASSERT_NO_THROW_LOG(mgr_->addDurationSample(key, milliseconds(75)));
+        ASSERT_NO_THROW_LOG(mgr_->addDurationSample(key, milliseconds(85)));
+
+        // Duration should exist in the store with a current total of 160 ms.
+        // It should not yet have a previous interval.
+        checkDuration(__LINE__, key, 160, false);
+
+        // Verify the alarm should still be CLEAR since we have not yet completed the interval.
+        AlarmPtr after_alarm;
+        beforeAndAfterAlarm(__LINE__, before_alarm, after_alarm, Alarm::CLEAR, false);
+
+        // No stats should have been reported.
+        EXPECT_EQ(0, StatsMgr::instance().count());
+
+        // Sleep 100ms second to make sure the current interval duration elapses.
+        usleep(100 * 1000);
+
+        // 2. Add a new sample after the current interval duration elapses.
+        // This should cause the duration to be reported and the alarm to trigger.
+        ASSERT_NO_THROW_LOG(mgr_->addDurationSample(key, milliseconds(95)));
+
+        // Duration should have a current total of 95 ms, and a previous total of 160.
+        checkDuration(__LINE__, key, 95, true, 160);
+
+        //  Should have one stat reported with a average value of 80.
+        EXPECT_EQ(1, StatsMgr::instance().count());
+        auto obs = StatsMgr::instance().getObservation(key->getStatName("average-ms"));
+        ASSERT_TRUE(obs);
+        EXPECT_EQ(80, obs->getInteger().first);
+
+        // The alarm should have triggered and reported.
+        beforeAndAfterAlarm(__LINE__, before_alarm, after_alarm, Alarm::TRIGGERED, true);
+        addString("reported average duration 00:00:00.080000 exceeds high-water-ms: 50");
+
+        // Sleep 100ms second to make sure the current interval duration elapses.
+        usleep(100 * 1000);
+
+        // 3. Add another above high water sample.
+        ASSERT_NO_THROW_LOG(mgr_->addDurationSample(key, milliseconds(100)));
+
+        // Duration should have a current total of 100 ms, and a previous total of 95.
+        checkDuration(__LINE__, key, 100, true, 95);
+
+        // The Alarm should still be TRIGGERED since the newly completed interval is
+        // above high water.  The alarm should not report because the reporting
+        // interval has not elapsed.
+        beforeAndAfterAlarm(__LINE__, before_alarm, after_alarm, Alarm::TRIGGERED, false);
+
+        // Sleep 100ms second to make sure the current interval duration elapses.
+        usleep(100 * 1000);
+
+        // 4. Add a below low water duration. This should close the current interval.
+        ASSERT_NO_THROW_LOG(mgr_->addDurationSample(key, milliseconds(10)));
+
+        // Duration should have a current total of 10ms, and a previous total of 100.
+        checkDuration(__LINE__, key, 10, true, 100);
+
+        // The Alarm should still be TRIGGERED since the newly completed interval is
+        // above high water.  The alarm should report again because the reporting
+        // interval has elapsed.
+        beforeAndAfterAlarm(__LINE__, before_alarm, after_alarm, Alarm::TRIGGERED, true);
+        addString("reported average duration 00:00:00.100000 exceeds high-water-ms: 50");
+
+        //  Should have one stat reported with a value of 100.
+        EXPECT_EQ(1, StatsMgr::instance().count());
+        obs = StatsMgr::instance().getObservation(key->getStatName("average-ms"));
+        ASSERT_TRUE(obs);
+        EXPECT_EQ(100, obs->getInteger().first);
+
+        // Sleep 100ms second to make sure the current interval duration elapses.
+        usleep(100 * 1000);
+
+        // 5. Add another below low water duration.  This should close the current interval.
+        ASSERT_NO_THROW_LOG(mgr_->addDurationSample(key, milliseconds(15)));
+
+        // Duration should have a current total of 15 ms, and a previous total of 10.
+        checkDuration(__LINE__, key, 15, true, 10);
+
+        // The Alarm should now be CLEAR since the newly completed interval is
+        // below high water. The alarm should low-water report.
+        beforeAndAfterAlarm(__LINE__, before_alarm, after_alarm, Alarm::CLEAR, false);
+        addString("reported average duration 00:00:00.010000 is now beloe low-water-ms: 25");
+
+        //  Should have one stat reported with a value of 10.
+        EXPECT_EQ(1, StatsMgr::instance().count());
+        obs = StatsMgr::instance().getObservation(key->getStatName("average-ms"));
+        ASSERT_TRUE(obs);
+        EXPECT_EQ(10, obs->getInteger().first);
+
+        // Lastly, verify the log entries.
+        EXPECT_TRUE(checkFile());
     }
 
     /// @brief Protocol family AF_INET or AF_INET6
     uint16_t family_;
+
+    /// @brief PerfMonMgr instance used in test functions.
+    PerfMonMgrPtr mgr_;
 };
 
 /// @brief Test fixture for testing PerfMonConfig for DHCPV4.
@@ -219,6 +520,22 @@ TEST_F(PerfMonMgrTest4, invalidConfig) {
 
 TEST_F(PerfMonMgrTest6, invalidConfig) {
     testInvalidConfig();
+}
+
+TEST_F(PerfMonMgrTest4, testReportToStatsMgr) {
+    testReportToStatsMgr();
+}
+
+TEST_F(PerfMonMgrTest6, testReportToStatsMgr) {
+    testReportToStatsMgr();
+}
+
+TEST_F(PerfMonMgrTest4, testAddDurationSample) {
+    testAddDurationSample();
+}
+
+TEST_F(PerfMonMgrTest6, testAddDurationSample) {
+    testAddDurationSample();
 }
 
 } // end of anonymous namespace
