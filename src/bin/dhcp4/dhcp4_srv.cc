@@ -377,13 +377,6 @@ Dhcpv4Exchange::copyDefaultOptions() {
         resp_->addOption(client_id);
     }
 
-    // If this packet is relayed, we want to copy Relay Agent Info option
-    // when it is not empty.
-    OptionPtr rai = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
-    if (rai && (rai->len() > Option::OPTION4_HDR_LEN)) {
-        resp_->addOption(rai);
-    }
-
     // RFC 3011 states about the Subnet Selection Option
 
     // "Servers configured to support this option MUST return an
@@ -396,6 +389,21 @@ Dhcpv4Exchange::copyDefaultOptions() {
     if (subnet_sel) {
         resp_->addOption(subnet_sel);
     }
+
+    // If this packet is relayed, we want to copy Relay Agent Info option
+    // when it is not empty.
+    OptionPtr rai = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
+    if (!rai || (rai->len() <= Option::OPTION4_HDR_LEN)) {
+        return;
+    }
+    // Do not copy recovered stashed RAI.
+    ConstElementPtr sao = CfgMgr::instance().getCurrentCfg()->
+        getConfiguredGlobal(CfgGlobals::STASH_AGENT_OPTIONS);
+    if (sao && (sao->getType() == data::Element::boolean) &&
+        sao->boolValue() && query_->inClass("STASH_AGENT_OPTIONS")) {
+        return;
+    }
+    resp_->addOption(rai);
 }
 
 void

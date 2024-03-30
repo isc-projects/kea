@@ -363,7 +363,7 @@ TEST_F(Dhcpv4SrvTest, adjustIfaceDataUseRouting) {
     cfg_iface->use(AF_INET, "eth0");
     cfg_iface->use(AF_INET, "eth1");
     cfg_iface->setOutboundIface(CfgIface::USE_ROUTING);
-    CfgMgr::instance().commit();;
+    CfgMgr::instance().commit();
 
     // Create the instance of the incoming packet.
     boost::shared_ptr<Pkt4> req(new Pkt4(DHCPDISCOVER, 1234));
@@ -915,6 +915,52 @@ TEST_F(Dhcpv4SrvTest, initResponse) {
     IOAddress subnet_addr("0.0.0.0");
     ASSERT_NO_THROW(subnet_addr = resp_custom->readAddress());
     EXPECT_EQ(IOAddress("192.0.2.3"), subnet_addr);
+}
+
+// This test verifies that recovered stashed agent options are not copied
+// into responses.
+TEST_F(Dhcpv4SrvTest, stashAgentOption) {
+    // Get a DISCOVER with a RAI.
+    Pkt4Ptr query = PktCaptures::captureRelayedDiscover();
+    ASSERT_NO_THROW(query->unpack());
+
+    // Get Relay Agent Info from query...
+    OptionPtr rai_query = query->getOption(DHO_DHCP_AGENT_OPTIONS);
+    ASSERT_TRUE(rai_query);
+
+    // Create exchange and get Response.
+    Dhcpv4Exchange ex = createExchange(query);
+    Pkt4Ptr response = ex.getResponse();
+    ASSERT_TRUE(response);
+
+    // Get Relay Agent Info from response...
+    OptionPtr rai_response = response->getOption(DHO_DHCP_AGENT_OPTIONS);
+    ASSERT_TRUE(rai_response);
+    EXPECT_TRUE(rai_response->equals(rai_query));
+
+    // Set the stash-agent-options.
+    CfgMgr::instance().clear();
+    CfgMgr::instance().getStagingCfg()->
+        addConfiguredGlobal("stash-agent-options", Element::create(true));
+    CfgMgr::instance().commit();
+
+    // Create exchange and get Response.
+    ex = createExchange(query);
+    response = ex.getResponse();
+    ASSERT_TRUE(response);
+    rai_response = response->getOption(DHO_DHCP_AGENT_OPTIONS);
+    ASSERT_TRUE(rai_response);
+    EXPECT_TRUE(rai_response->equals(rai_query));
+
+    // Put the query in the STASH_AGENT_OPTIONS class.
+    query->addClass("STASH_AGENT_OPTIONS");
+
+    // Retry: this time the RAI is not copied.
+    ex = createExchange(query);
+    response = ex.getResponse();
+    ASSERT_TRUE(response);
+    rai_response = response->getOption(DHO_DHCP_AGENT_OPTIONS);
+    EXPECT_FALSE(rai_response);
 }
 
 // This test verifies that the server identifier option is appended to
