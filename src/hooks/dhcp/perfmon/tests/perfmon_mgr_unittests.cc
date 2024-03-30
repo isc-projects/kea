@@ -213,9 +213,9 @@ public:
         std::string valid_config =
             R"({
                     "enable-monitoring": false,
-                    "interval-width-secs": 5,
+                    "interval-width-secs": 5000,
                     "stats-mgr-reporting": false,
-                    "alarm-report-secs": 600,
+                    "alarm-report-secs": 600000,
                     "alarms": [{
                             "duration-key": {
                                 "query-type": "",
@@ -385,7 +385,7 @@ public:
 
         // Verify the alarm should still be CLEAR since we have not yet completed the interval.
         AlarmPtr after_alarm;
-        beforeAndAfterAlarm(__LINE__, before_alarm, after_alarm, Alarm::CLEAR, false);
+        beforeAndAfterAlarm(__LINE__, before_alarm, Alarm::CLEAR, false);
 
         // No stats should have been reported.
         EXPECT_EQ(0, StatsMgr::instance().count());
@@ -407,7 +407,7 @@ public:
         EXPECT_EQ(80, obs->getInteger().first);
 
         // The alarm should have triggered and reported.
-        beforeAndAfterAlarm(__LINE__, before_alarm, after_alarm, Alarm::TRIGGERED, true);
+        beforeAndAfterAlarm(__LINE__, before_alarm, Alarm::TRIGGERED, true);
         addString("reported average duration 00:00:00.080000 exceeds high-water-ms: 50");
 
         // Sleep 100ms second to make sure the current interval duration elapses.
@@ -422,7 +422,7 @@ public:
         // The Alarm should still be TRIGGERED since the newly completed interval is
         // above high water.  The alarm should not report because the reporting
         // interval has not elapsed.
-        beforeAndAfterAlarm(__LINE__, before_alarm, after_alarm, Alarm::TRIGGERED, false);
+        beforeAndAfterAlarm(__LINE__, before_alarm, Alarm::TRIGGERED, false);
 
         // Sleep 100ms second to make sure the current interval duration elapses.
         usleep(100 * 1000);
@@ -436,7 +436,7 @@ public:
         // The Alarm should still be TRIGGERED since the newly completed interval is
         // above high water.  The alarm should report again because the reporting
         // interval has elapsed.
-        beforeAndAfterAlarm(__LINE__, before_alarm, after_alarm, Alarm::TRIGGERED, true);
+        beforeAndAfterAlarm(__LINE__, before_alarm, Alarm::TRIGGERED, true);
         addString("reported average duration 00:00:00.100000 exceeds high-water-ms: 50");
 
         //  Should have one stat reported with a value of 100.
@@ -456,7 +456,7 @@ public:
 
         // The Alarm should now be CLEAR since the newly completed interval is
         // below high water. The alarm should low-water report.
-        beforeAndAfterAlarm(__LINE__, before_alarm, after_alarm, Alarm::CLEAR, false);
+        beforeAndAfterAlarm(__LINE__, before_alarm, Alarm::CLEAR, false);
         addString("reported average duration 00:00:00.010000 is now beloe low-water-ms: 25");
 
         //  Should have one stat reported with a value of 10.
@@ -467,6 +467,11 @@ public:
 
         // Lastly, verify the log entries.
         EXPECT_TRUE(checkFile());
+    }
+
+    /// @brief Exercises PerfMonMgr::procssPacketEventStack().
+    void testProcesPacketEventStack() {
+       /*  YOU ARE HERE */
     }
 
     /// @brief Protocol family AF_INET or AF_INET6
