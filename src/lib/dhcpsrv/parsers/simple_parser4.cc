@@ -101,6 +101,7 @@ const SimpleKeywords SimpleParser4::GLOBAL4_PARAMETERS = {
     { "offer-lifetime",                   Element::integer },
     { "ddns-ttl-percent",                 Element::real },
     { "ddns-conflict-resolution-mode",    Element::string },
+    { "stash-agent-options",              Element::boolean },
 };
 
 /// @brief This table defines default global values for DHCPv4
@@ -143,6 +144,7 @@ const SimpleDefaults SimpleParser4::GLOBAL4_DEFAULTS = {
     { "parked-packet-limit",              Element::integer, "256" },
     { "allocator",                        Element::string,  "iterative" },
     { "ddns-conflict-resolution-mode",    Element::string,  "check-with-dhcid" },
+    { "stash-agent-options",              Element::boolean, "false" },
 };
 
 /// @brief This table defines all option definition parameters.

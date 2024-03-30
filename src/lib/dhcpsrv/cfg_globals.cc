@@ -68,6 +68,7 @@ CfgGlobals::nameToIndex = {
     { "server-hostname", SERVER_HOSTNAME },
     { "boot-file-name", BOOT_FILE_NAME },
     { "offer-lifetime", OFFER_LIFETIME },
+    { "stash-agent-options", STASH_AGENT_OPTIONS },
 
     // DHCPv6 specific parameters.
     { "data-directory", DATA_DIRECTORY },

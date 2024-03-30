@@ -666,7 +666,8 @@ processDhcp4Config(isc::data::ConstElementPtr config_set) {
                  (config_pair.first == "reservations-lookup-first") ||
                  (config_pair.first == "parked-packet-limit") ||
                  (config_pair.first == "allocator") ||
-                 (config_pair.first == "offer-lifetime") ) {
+                 (config_pair.first == "offer-lifetime") ||
+                 (config_pair.first == "stash-agent-options") ) {
                 CfgMgr::instance().getStagingCfg()->addConfiguredGlobal(config_pair.first,
                                                                         config_pair.second);
                 continue;

@@ -84,6 +84,7 @@ using namespace std;
   SERVER_HOSTNAME "server-hostname"
   BOOT_FILE_NAME "boot-file-name"
   OFFER_LFT "offer-lifetime"
+  STASH_AGENT_OPTIONS "stash-agent-options"
 
   LEASE_DATABASE "lease-database"
   HOSTS_DATABASE "hosts-database"
@@ -571,6 +572,7 @@ global_param: valid_lifetime
             | parked_packet_limit
             | allocator
             | offer_lifetime
+            | stash_agent_options
             | unknown_map_entry
             ;
 
@@ -851,6 +853,12 @@ offer_lifetime: OFFER_LFT COLON INTEGER {
     ctx.unique("offer-lifetime", ctx.loc2pos(@1));
     ElementPtr offer_lifetime(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("offer-lifetime", offer_lifetime);
+};
+
+stash_agent_options: STASH_AGENT_OPTIONS COLON BOOLEAN {
+    ctx.unique("stash-agent-options", ctx.loc2pos(@1));
+    ElementPtr stash(new BoolElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("stash-agent-options", stash);
 };
 
 interfaces_config: INTERFACES_CONFIG {

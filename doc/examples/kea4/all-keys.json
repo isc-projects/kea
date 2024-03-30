@@ -1141,6 +1141,10 @@
         // Global server hostname set in the 'sname' field.
         "server-hostname": "",
 
+        // Stash agent options (aka RAI) to make direct queries to come
+        // through a relay.
+        "stash-agent-options": false,
+
         // List of IPv4 subnets which don't belong to any shared network.
         "subnet4": [],
 

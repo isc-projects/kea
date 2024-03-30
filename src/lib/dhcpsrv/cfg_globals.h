@@ -91,6 +91,7 @@ public:
         SERVER_HOSTNAME,
         BOOT_FILE_NAME,
         OFFER_LIFETIME,
+        STASH_AGENT_OPTIONS,
 
         // DHCPv6 specific parameters.
         DATA_DIRECTORY,

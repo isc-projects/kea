@@ -2203,6 +2203,15 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     }
 }
 
+\"stash-agent-options\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::DHCP4:
+        return isc::dhcp::Dhcp4Parser::make_STASH_AGENT_OPTIONS(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("stash-agent-options", driver.loc_);
+    }
+}
+
 {JSONString} {
     /* A string has been matched. It contains the actual string and single quotes.
        We need to get those quotes out of the way and just use its content, e.g.
