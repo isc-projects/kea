@@ -3912,6 +3912,67 @@ TEST_F(AllocEngine4Test, updateExtendedInfo4) {
     }
 }
 
+// Verifies that recovered stashed RAI is not saved in extended info.
+TEST_F(AllocEngine4Test, stashAgentOptions) {
+    // Create the allocation engine, context and lease.
+    NakedAllocEngine engine(0);
+
+    AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_,
+                                    IOAddress::IPV4_ZERO_ADDRESS(),
+                                    false, false, "", true);
+    ctx.subnet_->setStoreExtendedInfo(true);
+    ctx.query_.reset(new Pkt4(DHCPREQUEST, 1234));
+    Lease4Ptr lease = engine.allocateLease4(ctx);
+    ASSERT_TRUE(lease);
+    EXPECT_EQ("192.0.2.100", lease->addr_.toText());
+
+    // Verify that the lease begins with no user context.
+    ConstElementPtr user_context = lease->getContext();
+    ASSERT_FALSE(user_context);
+
+    // Add a RAI in the query.
+    std::string rai_str = "0104aabbccdd";
+    std::vector<uint8_t> rai_data;
+    ASSERT_NO_THROW(util::str::decodeFormattedHexString(rai_str, rai_data));
+    OptionDefinitionPtr rai_def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE,
+                                                        DHO_DHCP_AGENT_OPTIONS);
+    ASSERT_TRUE(rai_def);
+    OptionCustomPtr rai;
+    ASSERT_NO_THROW(rai.reset(new OptionCustom(*rai_def, Option::V4, rai_data)));
+    ctx.query_->addOption(rai);
+
+    // Verifies that the RAI is saved into lease extended info.
+    bool ret = false;
+    ASSERT_NO_THROW_LOG(ret = engine.callUpdateLease4ExtendedInfo(lease, ctx));
+    EXPECT_TRUE(ret);
+    user_context = lease->getContext();
+    EXPECT_TRUE(user_context);
+    lease->setContext(ElementPtr());
+
+    // Set stash-agent-options to true.
+    CfgMgr::instance().getStagingCfg()->
+        addConfiguredGlobal("stash-agent-options", Element::create(true));
+    CfgMgr::instance().commit();
+
+    // Verifies that the RAI is saved into lease extended info.
+    ret = false;
+    ASSERT_NO_THROW_LOG(ret = engine.callUpdateLease4ExtendedInfo(lease, ctx));
+    EXPECT_TRUE(ret);
+    user_context = lease->getContext();
+    EXPECT_TRUE(user_context);
+    lease->setContext(ElementPtr());
+
+    // Put the query in the STASH_AGENT_OPTIONS class.
+    ctx.query_->addClass("STASH_AGENT_OPTIONS");
+
+    // Verifies that the RAI is not saved into lease extended info.
+    ret = false;
+    ASSERT_NO_THROW_LOG(ret = engine.callUpdateLease4ExtendedInfo(lease, ctx));
+    EXPECT_FALSE(ret);
+    user_context = lease->getContext();
+    EXPECT_FALSE(user_context);
+}
+
 // Verifies that the extended data (e.g. RAI option for now) is
 // added to a V4 lease when leases are created and/or renewed,
 // when store-extended-info is true.

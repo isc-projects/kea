@@ -4972,6 +4972,14 @@ AllocEngine::updateLease4ExtendedInfo(const Lease4Ptr& lease,
         return (changed);
     }
 
+    // Check if the RAI was recovered from stashed agent options.
+    ConstElementPtr sao = CfgMgr::instance().getCurrentCfg()->
+        getConfiguredGlobal(CfgGlobals::STASH_AGENT_OPTIONS);
+    if (sao && (sao->getType() == data::Element::boolean) &&
+        sao->boolValue() && ctx.query_->inClass("STASH_AGENT_OPTIONS")) {
+        return (changed);
+    }
+
     // Create a StringElement with the hex string for relay-agent-info.
     ElementPtr relay_agent(new StringElement(rai->toHexString()));
 
