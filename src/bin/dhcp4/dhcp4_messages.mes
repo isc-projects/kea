@@ -895,6 +895,12 @@ the client and the transaction identification information.
 This error message indicates that the reclaim expired leases operation failed
 and provides the cause of failure.
 
+% DHCP4_RECOVERED_STASHED_RELAY_AGENT_INFO recovered for query %1 relay agent option from lease %2: %3
+This debug message indicates that agent options were stashed in the lease for
+the client address of the request and were recovered. The first argument
+includes the request information, the second the client address and the last
+argument the content of the dhcp-agent-options option.
+
 % DHCP4_RELEASE %1: address %2 was released properly.
 This informational message indicates that an address was released properly. It
 is a normal operation during client shutdown. The first argument includes

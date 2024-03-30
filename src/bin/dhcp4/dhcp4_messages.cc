@@ -153,6 +153,7 @@ extern const isc::log::MessageID DHCP4_POST_ALLOCATION_NAME_UPDATE_FAIL = "DHCP4
 extern const isc::log::MessageID DHCP4_QUERY_DATA = "DHCP4_QUERY_DATA";
 extern const isc::log::MessageID DHCP4_QUERY_LABEL = "DHCP4_QUERY_LABEL";
 extern const isc::log::MessageID DHCP4_RECLAIM_EXPIRED_LEASES_FAIL = "DHCP4_RECLAIM_EXPIRED_LEASES_FAIL";
+extern const isc::log::MessageID DHCP4_RECOVERED_STASHED_RELAY_AGENT_INFO = "DHCP4_RECOVERED_STASHED_RELAY_AGENT_INFO";
 extern const isc::log::MessageID DHCP4_RELEASE = "DHCP4_RELEASE";
 extern const isc::log::MessageID DHCP4_RELEASE_DELETED = "DHCP4_RELEASE_DELETED";
 extern const isc::log::MessageID DHCP4_RELEASE_EXCEPTION = "DHCP4_RELEASE_EXCEPTION";
@@ -341,6 +342,7 @@ const char* values[] = {
     "DHCP4_QUERY_DATA", "%1, packet details: %2",
     "DHCP4_QUERY_LABEL", "received query: %1",
     "DHCP4_RECLAIM_EXPIRED_LEASES_FAIL", "failed to reclaim expired leases: %1",
+    "DHCP4_RECOVERED_STASHED_RELAY_AGENT_INFO", "recovered for query %1 relay agent option from lease %2: %3",
     "DHCP4_RELEASE", "%1: address %2 was released properly.",
     "DHCP4_RELEASE_DELETED", "%1: address %2 was deleted on release.",
     "DHCP4_RELEASE_EXCEPTION", "%1: while trying to release address %2 an exception occurred: %3",

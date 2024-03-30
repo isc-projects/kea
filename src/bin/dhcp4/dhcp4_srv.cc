@@ -50,6 +50,7 @@
 #include <hooks/hooks_log.h>
 #include <hooks/hooks_manager.h>
 #include <stats/stats_mgr.h>
+#include <util/encode/encode.h>
 #include <util/str.h>
 #include <log/logger.h>
 #include <cryptolink/cryptolink.h>
@@ -399,7 +400,7 @@ Dhcpv4Exchange::copyDefaultOptions() {
     // Do not copy recovered stashed RAI.
     ConstElementPtr sao = CfgMgr::instance().getCurrentCfg()->
         getConfiguredGlobal(CfgGlobals::STASH_AGENT_OPTIONS);
-    if (sao && (sao->getType() == data::Element::boolean) &&
+    if (sao && (sao->getType() == Element::boolean) &&
         sao->boolValue() && query_->inClass("STASH_AGENT_OPTIONS")) {
         return;
     }
@@ -1368,6 +1369,13 @@ Dhcpv4Srv::processPacket(Pkt4Ptr query, bool allow_answer_park) {
 
     // Update statistics accordingly for received packet.
     processStatsReceived(query);
+
+    // Recover stashed RAI from client address lease.
+    try {
+        recoverStashedAgentOption(query);
+    } catch (const std::exception&) {
+        // Ignore exceptions.
+    }
 
     // Assign this packet to one or more classes if needed. We need to do
     // this before calling accept(), because getSubnet4() may need client
@@ -4318,6 +4326,101 @@ Dhcpv4Srv::processInform(Pkt4Ptr& inform, AllocEngine::ClientContext4Ptr& contex
     appendServerID(ex);
 
     return (ex.getResponse());
+}
+
+void
+Dhcpv4Srv::recoverStashedAgentOption(const Pkt4Ptr& query) {
+    if (query->getCiaddr().isV4Zero() || !query->getGiaddr().isV4Zero()) {
+        return;
+    }
+    ConstElementPtr sao = CfgMgr::instance().getCurrentCfg()->
+        getConfiguredGlobal(CfgGlobals::STASH_AGENT_OPTIONS);
+    if (!sao || (sao->getType() != Element::boolean) || !sao->boolValue()) {
+        return;
+    }
+    if (query->getType() != DHCPREQUEST) {
+        return;
+    }
+    OptionPtr rai_opt = query->getOption(DHO_DHCP_AGENT_OPTIONS);
+    if (rai_opt && (rai_opt->len() > Option::OPTION4_HDR_LEN)) {
+        return;
+    }
+    // Should not happen but makes sense to check and gives a trivial way
+    // to disable the feature from previous callout points.
+    if (query->inClass("STASH_AGENT_OPTIONS")) {
+        return;
+    }
+    Lease4Ptr lease = LeaseMgrFactory::instance().getLease4(query->getCiaddr());
+    if (!lease || lease->expired()) {
+        return;
+    }
+    ConstElementPtr user_context = lease->getContext();
+    if (!user_context || (user_context->getType() != Element::map)) {
+        return;
+    }
+    ConstElementPtr isc = user_context->get("ISC");
+    if (!isc || (isc->getType() != Element::map)) {
+        return;
+    }
+    ConstElementPtr extended_info = isc->get("relay-agent-info");
+    if (!extended_info || (extended_info->getType() != Element::map)) {
+        return;
+    }
+    ConstElementPtr relay_agent_info = extended_info->get("relay-agent-info");
+    if (!relay_agent_info) {
+        return;
+    }
+    // Compatibility with the old layout.
+    if (relay_agent_info->getType() == Element::map) {
+        relay_agent_info = relay_agent_info->get("sub-options");
+        if (!relay_agent_info) {
+            return;
+        }
+    }
+    if (relay_agent_info->getType() != Element::string) {
+        return;
+    }
+    // Check ownership before going further.
+    ClientIdPtr client_id;
+    OptionPtr opt_clientid = query->getOption(DHO_DHCP_CLIENT_IDENTIFIER);
+    if (opt_clientid) {
+        client_id.reset(new ClientId(opt_clientid->getData()));
+    }
+    if (!lease->belongsToClient(query->getHWAddr(), client_id)) {
+        return;
+    }
+    // Extract the RAI.
+    string rai_hex = relay_agent_info->stringValue();
+    vector<uint8_t> rai_data;
+    str::decodeFormattedHexString(rai_hex, rai_data);
+    if (rai_data.size() <= Option::OPTION4_HDR_LEN) {
+        // RAI is empty.
+        return;
+    }
+    static OptionDefinitionPtr rai_def;
+    if (!rai_def) {
+        rai_def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE,
+                                        DHO_DHCP_AGENT_OPTIONS);
+    }
+    if (!rai_def) {
+        // Should not happen.
+        return;
+    }
+    OptionCustomPtr rai(new OptionCustom(*rai_def, Option::V4, rai_data));
+    if (!rai) {
+        return;
+    }
+    // Remove an existing empty RAI.
+    if (rai_opt) {
+        query->delOption(DHO_DHCP_AGENT_OPTIONS);
+    }
+    query->addOption(rai);
+    query->addClass("STASH_AGENT_OPTIONS");
+    LOG_DEBUG(packet4_logger, DBG_DHCP4_DETAIL_DATA,
+              DHCP4_RECOVERED_STASHED_RELAY_AGENT_INFO)
+      .arg(query->getLabel())
+      .arg(query->getCiaddr())
+      .arg(rai->toText());
 }
 
 bool

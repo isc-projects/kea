@@ -99,12 +99,12 @@ public:
 
     /// @brief Returns the pointer to the server's response.
     ///
-    /// The returned pointer is NULL if the query type is DHCPRELEASE or DHCPDECLINE.
+    /// The returned pointer is null if the query type is DHCPRELEASE or DHCPDECLINE.
     Pkt4Ptr getResponse() const {
         return (resp_);
     }
 
-    /// @brief Removes the response message by resetting the pointer to NULL.
+    /// @brief Removes the response message by resetting the pointer to null.
     void deleteResponse() {
         resp_.reset();
     }
@@ -202,7 +202,7 @@ private:
     /// @warning This message is called internally by @c initResponse and
     /// thus it doesn't check if the resp_ value has been initialized. The
     /// calling method is responsible for making sure that @c resp_ is
-    /// not NULL.
+    /// not null.
     void copyDefaultFields();
 
     /// @brief Copies default options from client's to server's message
@@ -213,7 +213,7 @@ private:
     /// @warning This message is called internally by @c initResponse and
     /// thus it doesn't check if the resp_ value has been initialized. The
     /// calling method is responsible for making sure that @c resp_ is
-    /// not NULL.
+    /// not null.
     void copyDefaultOptions();
 
     /// @brief Pointer to the allocation engine used by the server.
@@ -639,7 +639,7 @@ protected:
     /// @param discover DISCOVER message received from client
     /// @param context pointer to the client context
     ///
-    /// @return OFFER message or NULL
+    /// @return OFFER message or null
     Pkt4Ptr processDiscover(Pkt4Ptr& discover, AllocEngine::ClientContext4Ptr& context);
 
     /// @brief Processes incoming REQUEST and returns REPLY response.
@@ -649,7 +649,7 @@ protected:
     /// is valid, not expired, not reserved, not used by other client and
     /// that requesting client is allowed to use it.
     ///
-    /// Returns ACK message, NAK message, or NULL
+    /// Returns ACK message, NAK message, or null
     ///
     /// @param request a message received from client
     /// @param context pointer to the client context where allocated and
@@ -976,7 +976,7 @@ protected:
     /// @param lease A pointer to the new lease which has been acquired.
     /// @param old_lease A pointer to the instance of the old lease which has
     /// @param ddns_params DDNS configuration parameters
-    /// been replaced by the new lease passed in the first argument. The NULL
+    /// been replaced by the new lease passed in the first argument. The null
     /// value indicates that the new lease has been allocated, rather than
     /// lease being renewed.
     void createNameChangeRequests(const Lease4Ptr& lease,
@@ -1091,7 +1091,7 @@ protected:
     /// @param drop if it is true the packet will be dropped
     /// @param sanity_only if it is true the callout won't be called
     /// @param allow_answer_park Indicates if parking a packet is allowed
-    /// @return selected subnet (or NULL if no suitable subnet was found)
+    /// @return selected subnet (or null if no suitable subnet was found)
     isc::dhcp::Subnet4Ptr selectSubnet(const Pkt4Ptr& query,
                                        bool& drop,
                                        bool sanity_only = false,
@@ -1108,7 +1108,7 @@ protected:
     /// @param drop if it is true the packet will be dropped
     /// @param sanity_only if it is true the callout won't be called
     /// @param allow_answer_park Indicates if parking a packet is allowed
-    /// @return selected subnet (or NULL if no suitable subnet was found)
+    /// @return selected subnet (or null if no suitable subnet was found)
     isc::dhcp::Subnet4Ptr selectSubnet4o6(const Pkt4Ptr& query,
                                           bool& drop,
                                           bool sanity_only = false,
@@ -1137,6 +1137,25 @@ protected:
     ///
     /// @param pkt packet to be classified
     void classifyPacket(const Pkt4Ptr& pkt);
+
+    /// @brief Recover stashed agent options from client address lease.
+    ///
+    /// This method checks:
+    ///  - client address is not 0.0.0.0.
+    ///  - relay address is 0.0.0.0.
+    ///  - stash-agent-options is true (vs false, the default).
+    ///  - the query is a DHCPREQUEST.
+    ///  - there is no RAI or an empty RAI in the query.
+    ///  - the query is not member of the STASH_AGENT_OPTIONS client class.
+    ///  - there is a lease for the client address.
+    ///  - the lease is not expired.
+    ///  - the lease has a RAI in its extended info in its user context.
+    ///  - the lease belongs to the client.
+    ///  - a not empty RAI can be recovered from the lease.
+    /// when all checks pass:
+    ///  - add the recovered RAI to the query.
+    ///  - put the query in the STASH_AGENT_OPTIONS client class.
+    void recoverStashedAgentOption(const Pkt4Ptr& query);
 
 protected:
 
