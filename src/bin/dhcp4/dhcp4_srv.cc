@@ -4362,11 +4362,7 @@ Dhcpv4Srv::recoverStashedAgentOption(const Pkt4Ptr& query) {
     if (!isc || (isc->getType() != Element::map)) {
         return;
     }
-    ConstElementPtr extended_info = isc->get("relay-agent-info");
-    if (!extended_info || (extended_info->getType() != Element::map)) {
-        return;
-    }
-    ConstElementPtr relay_agent_info = extended_info->get("relay-agent-info");
+    ConstElementPtr relay_agent_info = isc->get("relay-agent-info");
     if (!relay_agent_info) {
         return;
     }
@@ -4391,12 +4387,11 @@ Dhcpv4Srv::recoverStashedAgentOption(const Pkt4Ptr& query) {
     }
     // Extract the RAI.
     string rai_hex = relay_agent_info->stringValue();
-    vector<uint8_t> rai_data;
-    str::decodeFormattedHexString(rai_hex, rai_data);
-    if (rai_data.size() <= Option::OPTION4_HDR_LEN) {
-        // RAI is empty.
+    if (rai_hex.empty()) {
         return;
     }
+    vector<uint8_t> rai_data;
+    str::decodeFormattedHexString(rai_hex, rai_data);
     static OptionDefinitionPtr rai_def;
     if (!rai_def) {
         rai_def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE,
@@ -4407,7 +4402,8 @@ Dhcpv4Srv::recoverStashedAgentOption(const Pkt4Ptr& query) {
         return;
     }
     OptionCustomPtr rai(new OptionCustom(*rai_def, Option::V4, rai_data));
-    if (!rai) {
+    // unpackOptions is a bit too flexible so check if it got something...
+    if (!rai || rai->getOptions().empty()) {
         return;
     }
     // Remove an existing empty RAI.

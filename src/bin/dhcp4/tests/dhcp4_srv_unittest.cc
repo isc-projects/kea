@@ -5250,6 +5250,448 @@ TEST_F(Dhcpv4SrvTest, fixedFieldsInClassOrder) {
     }
 }
 
+/// @brief Test fixture for recoverStashedAgentOption.
+class StashAgentOptionTest : public Dhcpv4SrvTest {
+public:
+    /// @brief Constructor.
+    StashAgentOptionTest() : addr_("192.0.1.2") {
+        query_.reset(new Pkt4(DHCPREQUEST, 1234));
+        query_->addOption(generateClientId());
+        hwaddr_ = generateHWAddr();
+        query_->setHWAddr(hwaddr_);
+        query_->setCiaddr(addr_);
+
+        if (!rai_def_) {
+            isc_throw(Unexpected, "RAI definition can't be found");
+        }
+        rai_.reset(new OptionCustom(*rai_def_, Option::V4));
+        rai_sub_.reset(new Option(Option::V4, RAI_OPTION_LINK_SELECTION,
+                                  addr_.toBytes()));
+        rai_->addOption(rai_sub_);
+
+        lease_.reset(new Lease4(addr_, hwaddr_, client_id_, 100, time(0), 1));
+        user_context_ = Element::createMap();
+        lease_->setContext(user_context_);
+        isc_ = Element::createMap();
+        user_context_->set("ISC", isc_);
+        relay_agent_info_ = Element::createMap();
+        isc_->set("relay-agent-info", relay_agent_info_);
+        sub_options_ = Element::create(rai_->toHexString());
+        relay_agent_info_->set("sub-options", sub_options_);
+
+        LeaseMgrFactory::destroy();
+        LeaseMgrFactory::create("type=memfile persist=false universe=4");
+
+        CfgMgr::instance().clear();
+        CfgMgr::instance().getStagingCfg()->
+            addConfiguredGlobal("stash-agent-options", Element::create(true));
+    }
+
+    /// @brief Destructor.
+    virtual ~StashAgentOptionTest() {
+        CfgMgr::instance().clear();
+        LeaseMgrFactory::destroy();
+    }
+
+    /// RAI definition.
+    static OptionDefinitionPtr rai_def_;
+
+    /// Client address.
+    IOAddress addr_;
+
+    /// Query.
+    Pkt4Ptr query_;
+
+    /// Hardware address.
+    HWAddrPtr hwaddr_;
+
+    /// RAI option.
+    OptionPtr rai_;
+
+    /// RAI suboption.
+    OptionPtr rai_sub_;
+
+    /// Lease.
+    Lease4Ptr lease_;
+
+    /// Lease user context.
+    ElementPtr user_context_;
+
+    /// ISC map.
+    ElementPtr isc_;
+
+    /// Relay agent info (map or string).
+    ElementPtr relay_agent_info_;
+
+    /// Sub-options i.e. RAI content (hexstring).
+    ElementPtr sub_options_;
+};
+
+OptionDefinitionPtr
+StashAgentOptionTest::rai_def_ = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE,
+                                                       DHO_DHCP_AGENT_OPTIONS);
+
+// Verify that RAI has a definition and can be built.
+TEST(StashAgentOptionTestTest, checkRAI) {
+    ASSERT_TRUE(StashAgentOptionTest::rai_def_);
+}
+
+// Verify the basic positive case.
+TEST_F(StashAgentOptionTest, basic) {
+    CfgMgr::instance().commit();
+    EXPECT_NO_THROW(LeaseMgrFactory::instance().addLease(lease_));
+
+    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    OptionPtr rai_query = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
+    ASSERT_TRUE(rai_query);
+    EXPECT_EQ(rai_query->toHexString(true), rai_->toHexString(true));
+    EXPECT_TRUE(query_->inClass("STASH_AGENT_OPTIONS"));
+}
+
+// Verify that the client id has priority i.e. when the client id
+// is present the hardware address is ignored.
+TEST_F(StashAgentOptionTest, clientId) {
+    // Change the hardware address.
+    auto hwaddr2 = generateHWAddr(8);
+    ASSERT_NE(hwaddr_, hwaddr2);
+    query_->setHWAddr(hwaddr2);
+
+    CfgMgr::instance().commit();
+    EXPECT_NO_THROW(LeaseMgrFactory::instance().addLease(lease_));
+
+    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    OptionPtr rai_query = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
+    ASSERT_TRUE(rai_query);
+    EXPECT_EQ(rai_query->toHexString(true), rai_->toHexString(true));
+    EXPECT_TRUE(query_->inClass("STASH_AGENT_OPTIONS"));
+}
+
+// Verify that the hardware address is used when there is no client id.
+TEST_F(StashAgentOptionTest, hardwareAddress) {
+    // No longer use the client id.
+    query_->delOption(DHO_DHCP_CLIENT_IDENTIFIER);
+    lease_.reset(new Lease4(addr_, hwaddr_, ClientIdPtr(), 100, time(0), 1));
+    lease_->setContext(user_context_);
+
+    CfgMgr::instance().commit();
+    EXPECT_NO_THROW(LeaseMgrFactory::instance().addLease(lease_));
+
+    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    OptionPtr rai_query = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
+    ASSERT_TRUE(rai_query);
+    EXPECT_EQ(rai_query->toHexString(true), rai_->toHexString(true));
+    EXPECT_TRUE(query_->inClass("STASH_AGENT_OPTIONS"));
+}
+
+// Verify that old extended info format is supported.
+TEST_F(StashAgentOptionTest, oldExtendedInfo) {
+    // Use the old extended info format.
+    isc_->set("relay-agent-info", sub_options_);
+
+    CfgMgr::instance().commit();
+    EXPECT_NO_THROW(LeaseMgrFactory::instance().addLease(lease_));
+
+    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    OptionPtr rai_query = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
+    ASSERT_TRUE(rai_query);
+    EXPECT_EQ(rai_query->toHexString(true), rai_->toHexString(true));
+    EXPECT_TRUE(query_->inClass("STASH_AGENT_OPTIONS"));
+}
+
+// Verify that empty RAI is supported.
+TEST_F(StashAgentOptionTest, emptyRelayAgentInfo) {
+    // Add an empty RAI.
+    OptionPtr empty_rai(new OptionCustom(*StashAgentOptionTest::rai_def_,
+                                         Option::V4));
+    query_->addOption(empty_rai);
+
+    CfgMgr::instance().commit();
+    EXPECT_NO_THROW(LeaseMgrFactory::instance().addLease(lease_));
+
+    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    OptionPtr rai_query = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
+    ASSERT_TRUE(rai_query);
+    EXPECT_FALSE(rai_query->getOptions().empty());
+    EXPECT_EQ(rai_query->toHexString(true), rai_->toHexString(true));
+    EXPECT_TRUE(query_->inClass("STASH_AGENT_OPTIONS"));
+}
+
+// Verify that the client address must be not zero.
+TEST_F(StashAgentOptionTest, clientAddress) {
+    // Set the client address to 0.0.0.0.
+    query_->setCiaddr(IOAddress::IPV4_ZERO_ADDRESS());
+
+    CfgMgr::instance().commit();
+    EXPECT_NO_THROW(LeaseMgrFactory::instance().addLease(lease_));
+
+    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    OptionPtr rai_query = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
+    EXPECT_FALSE(rai_query);
+    EXPECT_FALSE(query_->inClass("STASH_AGENT_OPTIONS"));
+}
+
+// Verify that the gateway address must be zero.
+TEST_F(StashAgentOptionTest, gatewayAddress) {
+    // Set the gateway address to not zero.
+    query_->setGiaddr(IOAddress("192.0.2.1"));
+
+    CfgMgr::instance().commit();
+    EXPECT_NO_THROW(LeaseMgrFactory::instance().addLease(lease_));
+
+    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    OptionPtr rai_query = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
+    EXPECT_FALSE(rai_query);
+    EXPECT_FALSE(query_->inClass("STASH_AGENT_OPTIONS"));
+
+    // Even broadcast is not accepted.
+    query_->setGiaddr(IOAddress::IPV4_BCAST_ADDRESS());
+    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    rai_query = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
+    EXPECT_FALSE(rai_query);
+    EXPECT_FALSE(query_->inClass("STASH_AGENT_OPTIONS"));
+}
+
+// Verify that the stash-agent-options is required.
+TEST_F(StashAgentOptionTest, stashAgentOption) {
+    // Not commit the config.
+
+    EXPECT_NO_THROW(LeaseMgrFactory::instance().addLease(lease_));
+
+    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    OptionPtr rai_query = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
+    EXPECT_FALSE(rai_query);
+    EXPECT_FALSE(query_->inClass("STASH_AGENT_OPTIONS"));
+}
+
+// Verify that the message type must be DHCPREQUEST.
+TEST_F(StashAgentOptionTest, request) {
+    // Build a DISCOVER query.
+    query_.reset(new Pkt4(DHCPDISCOVER, 1234));
+    query_->addOption(generateClientId());
+    hwaddr_ = generateHWAddr();
+    query_->setHWAddr(hwaddr_);
+    query_->setCiaddr(addr_);
+
+    CfgMgr::instance().commit();
+    EXPECT_NO_THROW(LeaseMgrFactory::instance().addLease(lease_));
+
+    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    OptionPtr rai_query = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
+    EXPECT_FALSE(rai_query);
+    EXPECT_FALSE(query_->inClass("STASH_AGENT_OPTIONS"));
+}
+
+// Verify that if there is a not empty RAI it will fail.
+TEST_F(StashAgentOptionTest, notEmptyRelayAgentInfo) {
+    // Add a not empty RAI.
+    query_->addOption(rai_);
+
+    CfgMgr::instance().commit();
+    EXPECT_NO_THROW(LeaseMgrFactory::instance().addLease(lease_));
+
+    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    EXPECT_FALSE(query_->inClass("STASH_AGENT_OPTIONS"));
+}
+
+// Verify that if the query is already in STASH_AGENT_OPTIONS it will fail.
+TEST_F(StashAgentOptionTest, inClass) {
+    // Add the STASH_AGENT_OPTIONS class.
+    query_->addClass("STASH_AGENT_OPTIONS");
+
+    CfgMgr::instance().commit();
+    EXPECT_NO_THROW(LeaseMgrFactory::instance().addLease(lease_));
+
+    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    OptionPtr rai_query = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
+    EXPECT_FALSE(rai_query);
+    EXPECT_TRUE(query_->inClass("STASH_AGENT_OPTIONS"));
+}
+
+// Verify that the lease is required.
+TEST_F(StashAgentOptionTest, lease) {
+    CfgMgr::instance().commit();
+    // Not add the lease.
+
+    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    OptionPtr rai_query = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
+    EXPECT_FALSE(rai_query);
+    EXPECT_FALSE(query_->inClass("STASH_AGENT_OPTIONS"));
+}
+
+// Verify that if the lease is expired it will fail.
+TEST_F(StashAgentOptionTest, expired) {
+    // Expired the lease.
+    lease_.reset(new Lease4(addr_, hwaddr_, client_id_, 100,
+                            time(0) - 1000, 1));
+    lease_->setContext(user_context_);
+
+    CfgMgr::instance().commit();
+    EXPECT_NO_THROW(LeaseMgrFactory::instance().addLease(lease_));
+
+    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    OptionPtr rai_query = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
+    EXPECT_FALSE(rai_query);
+    EXPECT_FALSE(query_->inClass("STASH_AGENT_OPTIONS"));
+}
+
+// Verify that the lease user context is required.
+TEST_F(StashAgentOptionTest, userContext) {
+    // Remove lease user context.
+    lease_->setContext(ElementPtr());
+
+    CfgMgr::instance().commit();
+    EXPECT_NO_THROW(LeaseMgrFactory::instance().addLease(lease_));
+
+    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    OptionPtr rai_query = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
+    EXPECT_FALSE(rai_query);
+    EXPECT_FALSE(query_->inClass("STASH_AGENT_OPTIONS"));
+}
+
+// Verify that the lease user context must be a map.
+// getLeaseClientClasses throws BadValue on addLease.
+
+// Verify that the ISC entry in the lease user context is required.
+TEST_F(StashAgentOptionTest, iscEntry) {
+    // Remove the isc entry.
+    user_context_ = Element::createMap();
+    user_context_->set("foo", Element::create("bar"));
+    lease_->setContext(user_context_);
+
+    CfgMgr::instance().commit();
+    EXPECT_NO_THROW(LeaseMgrFactory::instance().addLease(lease_));
+
+    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    OptionPtr rai_query = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
+    EXPECT_FALSE(rai_query);
+    EXPECT_FALSE(query_->inClass("STASH_AGENT_OPTIONS"));
+}
+
+// Verify that the ISC entry in the lease user context must be a map.
+// getLeaseClientClasses throws BadValue on addLease.}
+
+// Verify that the relay-agent-info entry is required.
+TEST_F(StashAgentOptionTest, relayAgentInfoEntry) {
+    // Remove the relay-agent-info entry.
+    isc_ = Element::createMap();
+    isc_->set("foo", Element::create("bar"));
+    user_context_->set("ISC", isc_);
+
+    CfgMgr::instance().commit();
+    EXPECT_NO_THROW(LeaseMgrFactory::instance().addLease(lease_));
+
+    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    OptionPtr rai_query = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
+    EXPECT_FALSE(rai_query);
+    EXPECT_FALSE(query_->inClass("STASH_AGENT_OPTIONS"));
+}
+
+// Verify the relay-agent-info entry must be a map or a string.
+TEST_F(StashAgentOptionTest, badRelayAgentInfoEntry) {
+    // Set the relay-agent-info entry to a boolean.
+    relay_agent_info_ = Element::create(true);
+    isc_->set("relay-agent-info", relay_agent_info_);
+
+    CfgMgr::instance().commit();
+    EXPECT_NO_THROW(LeaseMgrFactory::instance().addLease(lease_));
+
+    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    OptionPtr rai_query = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
+    EXPECT_FALSE(rai_query);
+    EXPECT_FALSE(query_->inClass("STASH_AGENT_OPTIONS"));
+}
+
+// Verify the sub-options entry is required in new extended info format.
+TEST_F(StashAgentOptionTest, subOptionsEntry) {
+    // Remove the sub-options entry.
+    relay_agent_info_ = Element::createMap();
+    relay_agent_info_->set("foo", Element::create("bar"));
+    isc_->set("relay-agent-info", relay_agent_info_);
+
+    CfgMgr::instance().commit();
+    EXPECT_NO_THROW(LeaseMgrFactory::instance().addLease(lease_));
+
+    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    OptionPtr rai_query = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
+    EXPECT_FALSE(rai_query);
+    EXPECT_FALSE(query_->inClass("STASH_AGENT_OPTIONS"));
+}
+
+// Verify the sub-options entry must be a string.
+TEST_F(StashAgentOptionTest, badSubOptionsEntry) {
+    // Set the sub-options entry to a boolean.
+    sub_options_ = Element::create(true);
+    relay_agent_info_->set("sub-options", sub_options_);
+
+    CfgMgr::instance().commit();
+    EXPECT_NO_THROW(LeaseMgrFactory::instance().addLease(lease_));
+
+    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    OptionPtr rai_query = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
+    EXPECT_FALSE(rai_query);
+    EXPECT_FALSE(query_->inClass("STASH_AGENT_OPTIONS"));
+}
+
+// Verify the sub-options entry must be not empty.
+TEST_F(StashAgentOptionTest, emptySubOptionsEntry) {
+    // Set the sub-options entry to empty.
+    sub_options_ = Element::create("");
+    relay_agent_info_->set("sub-options", sub_options_);
+
+    CfgMgr::instance().commit();
+    EXPECT_NO_THROW(LeaseMgrFactory::instance().addLease(lease_));
+
+    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    OptionPtr rai_query = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
+    EXPECT_FALSE(rai_query);
+    EXPECT_FALSE(query_->inClass("STASH_AGENT_OPTIONS"));
+}
+
+// Verify the sub-options entry must be a valid hexstring.
+TEST_F(StashAgentOptionTest, hexString) {
+    // Set the sub-options entry to invalid hexstring.
+    sub_options_ = Element::create("foobar");
+    relay_agent_info_->set("sub-options", sub_options_);
+
+    CfgMgr::instance().commit();
+    EXPECT_NO_THROW(LeaseMgrFactory::instance().addLease(lease_));
+
+    EXPECT_THROW(srv_.recoverStashedAgentOption(query_), BadValue);
+    EXPECT_FALSE(query_->inClass("STASH_AGENT_OPTIONS"));
+}
+
+// Verify the sub-options entry must be a valid RAI content.
+TEST_F(StashAgentOptionTest, badRelayAgentInfo) {
+    // Set the sub-options entry to truncated RAI content.
+    string content = sub_options_->stringValue();
+    ASSERT_LT(2, content.size());
+    content.resize(content.size() - 2);
+    sub_options_ = Element::create(content);
+    relay_agent_info_->set("sub-options", sub_options_);
+
+    CfgMgr::instance().commit();
+    EXPECT_NO_THROW(LeaseMgrFactory::instance().addLease(lease_));
+
+    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    OptionPtr rai_query = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
+    EXPECT_FALSE(rai_query);
+    EXPECT_FALSE(query_->inClass("STASH_AGENT_OPTIONS"));
+
+    // Set the sub-options entry to invalid RAI content.
+    content = rai_->toHexString();
+    // length is in the second octet so patch the third hexdigit.
+    ASSERT_LE(5, content.size());
+    ASSERT_EQ('4', content[5]);
+    content[5] = '3';
+    sub_options_ = Element::create(content);
+    relay_agent_info_->set("sub-options", sub_options_);
+
+    EXPECT_THROW(srv_.recoverStashedAgentOption(query_), InvalidOptionValue);
+    EXPECT_FALSE(query_->inClass("STASH_AGENT_OPTIONS"));
+}
+
+/// @todo: lease ownership
+
 /// @todo: Implement proper tests for MySQL lease/host database,
 ///        see ticket #4214.
 

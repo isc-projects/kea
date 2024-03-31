@@ -316,6 +316,7 @@ public:
     using Dhcpv4Srv::srvidToString;
     using Dhcpv4Srv::classifyPacket;
     using Dhcpv4Srv::deferredUnpack;
+    using Dhcpv4Srv::recoverStashedAgentOption;
     using Dhcpv4Srv::accept;
     using Dhcpv4Srv::acceptMessageType;
     using Dhcpv4Srv::selectSubnet;
