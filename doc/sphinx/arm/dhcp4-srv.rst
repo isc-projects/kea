@@ -4421,7 +4421,8 @@ Storing Extended Lease Information
 ----------------------------------
 
 To support such features as DHCP Leasequery
-(`RFC 4388 <https://tools.ietf.org/html/rfc4388>`__),
+(`RFC 4388 <https://tools.ietf.org/html/rfc4388>`__) and
+stash agent options (:ref:`stash-agent-options`)
 additional information must be stored with each lease. Because the amount
 of information for each lease has ramifications in terms of
 performance and system resource consumption, storage of this additional
@@ -4498,6 +4499,39 @@ and supports these levels:
    backend. The sanity check applies to the lease database in memory,
    not to the lease file, i.e. inconsistent leases stay in the lease
    file.
+
+.. _stash-agent-options:
+
+Stash Agent Options
+-------------------
+
+Introduced in version 2.5.8 the ``stash-agent-options`` global parameter
+when set to ``true`` (its default is ``false``) allows to solve a common
+problem with host reservations using an identifier based on the content
+of the dhcp-agent-options option inserted relays. When a client tries
+to renew its reserved address the request is sent directly to the server
+so no through the relay: the server is not able to recognize the client
+as the host identifier can't be found in a direct request.
+
+Set in flex-id (:ref:`hooks-flex-id`) the ``replace-client-id`` to ``true``
+allows to use the same identifier for leases and host reservations.
+This solves some problems but not this one. In fact this configuration
+is incompatible with ``stash-agent-options``.
+
+When ``stash-agent-options`` is true for direct renewal requests the
+lease for the client address is fetched: if it exists, is not yet expired,
+belongs to the client and has additional information with the
+dhcp-agent-options option content. When all these conditions are met the
+server behaves as the option was included.
+
+.. note::
+
+   Here belongs to the client is implemented the same way as for Releases.
+   This guarantees the security of the feature but does not allow the use
+   the same identity for both leases and host reservations based on the
+   content of the dhcp-agent-options option, i.e. if the client changes
+   its identity (client id and/or hardware address) and there is an existing
+   not expired lease for the reserved address the lease will conflict.
 
 .. _dhcp4-multi-threading-settings:
 
