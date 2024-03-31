@@ -167,6 +167,20 @@ namespace {
 /// - Configuration 20:
 ///   - No subnets.
 ///   - Global authoritative flag is true.
+///
+/// - Configuration 21:
+///   - Use for testing stash agent options (flag true).
+///   - 1 subnet with storing extended info enabled
+///
+/// - Configuration 22:
+///   - Use for testing stash agent options (flag true).
+///   - 1 subnet with storing extended info enabled
+///   - 1 reservation using the circuit-id
+///
+/// - Configuration 23:
+///   - Use for testing stash agent options (flag false).
+///   - 1 subnet with storing extended info enabled
+///   - 1 reservation using the circuit-id
 const char* DORA_CONFIGS[] = {
     // Configuration 0
     "{ \"interfaces-config\": {"
@@ -649,6 +663,54 @@ const char* DORA_CONFIGS[] = {
         "\"authoritative\": true,"
         "\"subnet4\": []"
     "}",
+
+    // Configuration 21
+    "{ \"interfaces-config\": {"
+        "      \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"valid-lifetime\": 600,"
+        "\"stash-agent-options\": true,"
+        "\"subnet4\": [ {"
+        "    \"subnet\": \"10.0.0.0/24\", "
+        "    \"id\": 1, "
+        "    \"store-extended-info\": true,"
+        "    \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ]"
+        "} ]"
+    "}",
+
+    // Configuration 22
+    "{ \"interfaces-config\": {"
+        "      \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"valid-lifetime\": 600,"
+        "\"stash-agent-options\": true,"
+        "\"host-reservation-identifiers\": [ \"circuit-id\" ],"
+        "\"subnet4\": [ {"
+        "    \"subnet\": \"10.0.0.0/24\", "
+        "    \"id\": 1, "
+        "    \"store-extended-info\": true,"
+        "    \"reservations\": [ {"
+        "        \"circuit-id\": \"'charter950'\","
+        "        \"ip-address\": \"10.0.0.9\" } ]"
+        "} ]"
+    "}",
+
+    // Configuration 23
+    "{ \"interfaces-config\": {"
+        "      \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"valid-lifetime\": 600,"
+        "\"stash-agent-options\": false,"
+        "\"host-reservation-identifiers\": [ \"circuit-id\" ],"
+        "\"subnet4\": [ {"
+        "    \"subnet\": \"10.0.0.0/24\", "
+        "    \"id\": 1, "
+        "    \"store-extended-info\": true,"
+        "    \"reservations\": [ {"
+        "        \"circuit-id\": \"'charter950'\","
+        "        \"ip-address\": \"10.0.0.9\" } ]"
+        "} ]"
+    "}",
 };
 
 /// @brief Test fixture class for testing 4-way (DORA) exchanges.
@@ -910,6 +972,22 @@ public:
 
     /// @brief Checks that features related to lease caching (such as lease reuse statistics) work.
     void leaseCaching();
+
+    /// @brief Checks that stash-agent-options enables direct renewall
+    /// of addresses from pool allocation for a relayed client.
+    ///
+    /// @note: no negative counterpart as the stash-agent-options is not
+    /// required for this scenario.
+    void stashAgentOptions();
+
+    /// @brief Checks that stash-agent-options enables direct renewall
+    /// of addresses from host reservation using the relay-agent-info option.
+    void stashAgentOptionsReservation();
+
+    /// @brief Checks that stash-agent-options is required for direct
+    /// renewall of addresses from host reservation using the
+    /// relay-agent-info option.
+    void noStashAgentOptionsReservation();
 
     /// @brief Checks the value of a statistic.
     ///
@@ -3083,6 +3161,145 @@ TEST_F(DORATest, leaseCaching) {
 TEST_F(DORATest, leaseCachingMultiThreading) {
     Dhcpv4SrvMTTestGuard guard(*this, true);
     leaseCaching();
+}
+
+void
+DORATest::stashAgentOptions() {
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+    // Use relay agent to make sure that the desired subnet is
+    // selected for our client.
+    client.useRelay(true, IOAddress("10.0.0.20"), IOAddress("10.0.0.21"));
+    // Specify client identifier.
+    client.includeClientId("01:11:22:33:44:55:66");
+    // Set the circuit id.
+    client.setCircuitId("charter950");
+
+    // Configure DHCP server.
+    configure(DORA_CONFIGS[21], *client.getServer());
+    // Perform 4-way exchange and should obtain an address from pool.
+    ASSERT_NO_THROW_LOG(client.doDORA());
+    // Make sure that the server responded.
+    ASSERT_TRUE(client.getContext().response_);
+    Pkt4Ptr resp = client.getContext().response_;
+    // Make sure that the server has responded with DHCPACK.
+    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+    // Make sure that the client has got the lease for the first address
+    // of the pool.
+    ASSERT_EQ("10.0.0.10", client.config_.lease_.addr_.toText());
+
+    // Renew.
+    client.setState(Dhcp4Client::RENEWING);
+    // Set the unicast destination address to indicate that it is a renewal.
+    client.setDestAddress(IOAddress("10.0.0.1"));
+    // Disable relay.
+    client.useRelay(false);
+    ASSERT_NO_THROW_LOG(client.doRequest());
+    ASSERT_TRUE(client.getContext().response_);
+    resp = client.getContext().response_;
+    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+    ASSERT_EQ("10.0.0.10", client.config_.lease_.addr_.toText());
+}
+
+TEST_F(DORATest, stashAgentOptions) {
+    Dhcpv4SrvMTTestGuard guard(*this, false);
+    stashAgentOptions();
+}
+
+TEST_F(DORATest, stashAgentOptionsMultiThreading) {
+    Dhcpv4SrvMTTestGuard guard(*this, true);
+    stashAgentOptions();
+}
+
+void
+DORATest::stashAgentOptionsReservation() {
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+    // Use relay agent to make sure that the desired subnet is
+    // selected for our client.
+    client.useRelay(true, IOAddress("10.0.0.20"), IOAddress("10.0.0.21"));
+    // Specify client identifier.
+    client.includeClientId("01:11:22:33:44:55:66");
+    // Set the circuit id.
+    client.setCircuitId("charter950");
+
+    // Configure DHCP server.
+    configure(DORA_CONFIGS[22], *client.getServer());
+    // Perform 4-way exchange and should obtain the reserved address.
+    ASSERT_NO_THROW_LOG(client.doDORA());
+    // Make sure that the server responded.
+    ASSERT_TRUE(client.getContext().response_);
+    Pkt4Ptr resp = client.getContext().response_;
+    // Make sure that the server has responded with DHCPACK.
+    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+    // Make sure that the client has got the lease for the reserved address.
+    ASSERT_EQ("10.0.0.9", client.config_.lease_.addr_.toText());
+
+    // Renew.
+    client.setState(Dhcp4Client::RENEWING);
+    // Set the unicast destination address to indicate that it is a renewal.
+    client.setDestAddress(IOAddress("10.0.0.1"));
+    // Disable relay.
+    client.useRelay(false);
+    ASSERT_NO_THROW_LOG(client.doRequest());
+    ASSERT_TRUE(client.getContext().response_);
+    resp = client.getContext().response_;
+    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+    ASSERT_EQ("10.0.0.9", client.config_.lease_.addr_.toText());
+}
+
+TEST_F(DORATest, stashAgentOptionsReservation) {
+    Dhcpv4SrvMTTestGuard guard(*this, false);
+    stashAgentOptionsReservation();
+}
+
+TEST_F(DORATest, stashAgentOptionsReservationMultiThreading) {
+    Dhcpv4SrvMTTestGuard guard(*this, true);
+    stashAgentOptionsReservation();
+}
+
+void
+DORATest::noStashAgentOptionsReservation() {
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+    // Use relay agent to make sure that the desired subnet is
+    // selected for our client.
+    client.useRelay(true, IOAddress("10.0.0.20"), IOAddress("10.0.0.21"));
+    // Specify client identifier.
+    client.includeClientId("01:11:22:33:44:55:66");
+    // Set the circuit id.
+    client.setCircuitId("charter950");
+
+    // Configure DHCP server.
+    configure(DORA_CONFIGS[23], *client.getServer());
+    // Perform 4-way exchange and should obtain the reserved address.
+    ASSERT_NO_THROW_LOG(client.doDORA());
+    // Make sure that the server responded.
+    ASSERT_TRUE(client.getContext().response_);
+    Pkt4Ptr resp = client.getContext().response_;
+    // Make sure that the server has responded with DHCPACK.
+    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+    // Make sure that the client has got the lease for the reserved address.
+    ASSERT_EQ("10.0.0.9", client.config_.lease_.addr_.toText());
+
+    // Renew.
+    client.setState(Dhcp4Client::RENEWING);
+    // Set the unicast destination address to indicate that it is a renewal.
+    client.setDestAddress(IOAddress("10.0.0.1"));
+    // Disable relay.
+    client.useRelay(false);
+    ASSERT_NO_THROW_LOG(client.doRequest());
+    ASSERT_TRUE(client.getContext().response_);
+    resp = client.getContext().response_;
+    // The client is not recognized so a NAK is returned.
+    ASSERT_EQ(DHCPNAK, static_cast<int>(resp->getType()));
+}
+
+TEST_F(DORATest, noStashAgentOptionsReservation) {
+    Dhcpv4SrvMTTestGuard guard(*this, false);
+    noStashAgentOptionsReservation();
+}
+
+TEST_F(DORATest, noStashAgentOptionsReservationMultiThreading) {
+    Dhcpv4SrvMTTestGuard guard(*this, true);
+    noStashAgentOptionsReservation();
 }
 
 /// @brief Checks the value of a statistic.

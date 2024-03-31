@@ -5586,7 +5586,7 @@ TEST_F(StashAgentOptionTest, relayAgentInfoEntry) {
     EXPECT_FALSE(query_->inClass("STASH_AGENT_OPTIONS"));
 }
 
-// Verify the relay-agent-info entry must be a map or a string.
+// Verify that the relay-agent-info entry must be a map or a string.
 TEST_F(StashAgentOptionTest, badRelayAgentInfoEntry) {
     // Set the relay-agent-info entry to a boolean.
     relay_agent_info_ = Element::create(true);
@@ -5601,7 +5601,7 @@ TEST_F(StashAgentOptionTest, badRelayAgentInfoEntry) {
     EXPECT_FALSE(query_->inClass("STASH_AGENT_OPTIONS"));
 }
 
-// Verify the sub-options entry is required in new extended info format.
+// Verify that the sub-options entry is required in new extended info format.
 TEST_F(StashAgentOptionTest, subOptionsEntry) {
     // Remove the sub-options entry.
     relay_agent_info_ = Element::createMap();
@@ -5617,7 +5617,7 @@ TEST_F(StashAgentOptionTest, subOptionsEntry) {
     EXPECT_FALSE(query_->inClass("STASH_AGENT_OPTIONS"));
 }
 
-// Verify the sub-options entry must be a string.
+// Verify that the sub-options entry must be a string.
 TEST_F(StashAgentOptionTest, badSubOptionsEntry) {
     // Set the sub-options entry to a boolean.
     sub_options_ = Element::create(true);
@@ -5632,7 +5632,7 @@ TEST_F(StashAgentOptionTest, badSubOptionsEntry) {
     EXPECT_FALSE(query_->inClass("STASH_AGENT_OPTIONS"));
 }
 
-// Verify the sub-options entry must be not empty.
+// Verify that the sub-options entry must be not empty.
 TEST_F(StashAgentOptionTest, emptySubOptionsEntry) {
     // Set the sub-options entry to empty.
     sub_options_ = Element::create("");
@@ -5647,7 +5647,7 @@ TEST_F(StashAgentOptionTest, emptySubOptionsEntry) {
     EXPECT_FALSE(query_->inClass("STASH_AGENT_OPTIONS"));
 }
 
-// Verify the sub-options entry must be a valid hexstring.
+// Verify that the sub-options entry must be a valid hexstring.
 TEST_F(StashAgentOptionTest, hexString) {
     // Set the sub-options entry to invalid hexstring.
     sub_options_ = Element::create("foobar");
@@ -5660,7 +5660,7 @@ TEST_F(StashAgentOptionTest, hexString) {
     EXPECT_FALSE(query_->inClass("STASH_AGENT_OPTIONS"));
 }
 
-// Verify the sub-options entry must be a valid RAI content.
+// Verify that the sub-options entry must be a valid RAI content.
 TEST_F(StashAgentOptionTest, badRelayAgentInfo) {
     // Set the sub-options entry to truncated RAI content.
     string content = sub_options_->stringValue();
@@ -5687,6 +5687,42 @@ TEST_F(StashAgentOptionTest, badRelayAgentInfo) {
     relay_agent_info_->set("sub-options", sub_options_);
 
     EXPECT_THROW(srv_.recoverStashedAgentOption(query_), InvalidOptionValue);
+    EXPECT_FALSE(query_->inClass("STASH_AGENT_OPTIONS"));
+}
+
+// Verify that the client id when set must match.
+TEST_F(StashAgentOptionTest, badClientId) {
+    // Use another the client id.
+    query_->delOption(DHO_DHCP_CLIENT_IDENTIFIER);
+    query_->addOption(generateClientId(8));
+
+    CfgMgr::instance().commit();
+    EXPECT_NO_THROW(LeaseMgrFactory::instance().addLease(lease_));
+
+    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    OptionPtr rai_query = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
+    EXPECT_FALSE(rai_query);
+    EXPECT_FALSE(query_->inClass("STASH_AGENT_OPTIONS"));
+}
+
+// Verify that when the client id is not used the hardware address must match.
+TEST_F(StashAgentOptionTest, badHwareAddress) {
+    // No longer use the client id.
+    query_->delOption(DHO_DHCP_CLIENT_IDENTIFIER);
+    lease_.reset(new Lease4(addr_, hwaddr_, ClientIdPtr(), 100, time(0), 1));
+    lease_->setContext(user_context_);
+
+    // Change the hardware address.
+    auto hwaddr2 = generateHWAddr(8);
+    ASSERT_NE(hwaddr_, hwaddr2);
+    query_->setHWAddr(hwaddr2);
+
+    CfgMgr::instance().commit();
+    EXPECT_NO_THROW(LeaseMgrFactory::instance().addLease(lease_));
+
+    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    OptionPtr rai_query = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
+    EXPECT_FALSE(rai_query);
     EXPECT_FALSE(query_->inClass("STASH_AGENT_OPTIONS"));
 }
 
