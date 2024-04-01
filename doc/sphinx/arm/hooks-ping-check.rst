@@ -50,15 +50,15 @@ offering a lease to client if all of the following conditions are true:
 5. Any of the following are true:
 
     a. This is the first offer of this lease to this client. This check
-    can only be done if `offer-lifetime` is greater than zero (i.e. temporary
-    allocation on DHCPDISCOVER is enabled). If `offer-lifetime` is zero
+    can only be done if ``offer-lifetime`` is greater than zero (i.e. temporary
+    allocation on DHCPDISCOVER is enabled). If ``offer-lifetime`` is zero
     ping checks are done for every DHCPOFFER as the server has no way to
     know it has made prior offers.
 
     b. The lease is being offered to a client other than its previous owner.
 
     c. The lease is being offered to its previous owner and more than a
-    configurable number of seconds, `ping-cltt-secs`, have elapsed since
+    configurable number of seconds, ``ping-cltt-secs``, have elapsed since
     CLTT of the original lease.
 
 When the ping check library is loaded, in response to a DHCPDISCOVER the
@@ -68,7 +68,8 @@ When the ping check library is loaded, in response to a DHCPDISCOVER the
 construct a DHCPOFFER.
 
 2. Park the DHCPOFFER and request a ping-check from the ping-check hook
-library via its `lease4_offer` callout.
+library via its ``lease4_offer`` callout. Refer to :ref:`parked-packet-limit` for
+a basic introduction to packet parking.
 
 3. The callout will test conditions described above. If they are not
 satisfied it will return without conducting a check, and the server
@@ -114,17 +115,17 @@ Configuration
 The ping-check hook library currently supports the following configuration parameters
 that may be set at the global and subnet levels. Subnet values override global values.
 
-- `enable-ping-check` - Enables or disables ping checking at a given scope.
+- ``enable-ping-check`` - Enables or disables ping checking at a given scope.
 
-- `min-ping-requests` - The minimum number of ECHO REQUESTs sent without receiving a reply needed to declare an address available. The default is 1, it must be greater than zero.
+- ``min-ping-requests`` - The minimum number of ECHO REQUESTs sent without receiving a reply needed to declare an address available. The default is 1, it must be greater than zero.
 
-- `reply-timeout` - The maximum amount of time to wait for a reply to a single ECHO REQUEST. Specified in milliseconds, it must be greater than zero, it defaults to 100.
+- ``reply-timeout`` - The maximum amount of time to wait for a reply to a single ECHO REQUEST. Specified in milliseconds, it must be greater than zero, it defaults to 100.
 
-- `ping-cltt-secs` - The number of seconds that must elapse after the lease's CLTT before a ping check will be conducted when the client is the lease's previous owner. The default value is sixty seconds.
+- ``ping-cltt-secs`` - The number of seconds that must elapse after the lease's CLTT before a ping check will be conducted when the client is the lease's previous owner. The default value is sixty seconds.
 
 The following parameter is only supported at the global level:
 
-- `ping-channel-threads` - In multi-threaded mode, this is the number of threads in the channel's thread pool. The default is 0 which instructs the library to use the same number of threads as Kea core.  The value is ignored if given when Kea is in single-threaded mode.
+- ``ping-channel-threads`` - In multi-threaded mode, this is the number of threads in the channel's thread pool. The default is 0 which instructs the library to use the same number of threads as Kea core.  The value is ignored if given when Kea is in single-threaded mode.
 
 The following configuration excerpt illustrates global level configuration:
 

@@ -364,6 +364,78 @@ The Limits hook uses user-context in classes and subnets to set parameters. For 
       }
     }
 
+.. _parked-packet-limit:
+
+Parked-Packet Limit
+~~~~~~~~~~~~~~~~~~~
+
+Kea servers contain a mechanism by which the response to a client packet may
+be held, pending completion of hook library work. We refer to this as parking
+the packet. When work is ready to continue, the server will unpark the response
+and continue processing.
+
+There is a global parameter, ``parked-packet-limit``, that may be used to limit
+the number of responses that may be parked at any given time. This acts as a
+form of congestion handling and protects the server from being swamped when the
+volume of client queries is outpacing the server's ability to respond. Once the
+limit is reached, the server emits a log and drops any new responses until
+parking spaces are available.
+
+In general, smaller values for the parking lot limit are likely to cause more
+drops but with shorter response times. Larger values are likely to result in
+fewer drops but with longer response times. Currently, the default value for
+``parked-packet-limit`` is 256.
+
+.. warning::
+
+   Using too small a value may result in an unnecessarily high drop rate, while
+   using too large a value may lead to response times that are simply too long
+   to be useful. A value of 0, while allowed, disables the limit altogether, but
+   this is highly discouraged as it may lead to Kea servers becoming
+   unresponsive to clients. Choosing the best value is very site-specific; we
+   recommend users initially leave it at the default value of 256 and observe
+   how the system behaves over time with varying load conditions.
+
+Here is an example of the global parameter used with ischooklib:`libdhcp_ha.so`.
+It lowers the number of concurrently parked packets to 128.
+
+.. code-block:: json
+
+    {
+      "Dhcp6": {
+        // Limit the number of concurrently parked packets to 128.
+        "parked-packet-limit": 128
+        "hooks-libraries": [
+          {
+            "library": "/usr/lib/kea/hooks/libdhcp_lease_cmds.so"
+          },
+          {
+            "library": "/usr/lib/kea/hooks/libdhcp_ha.so",
+            "parameters": {
+              "high-availability": [
+                {
+                  "mode": "hot-standby",
+                  "peers": [
+                    {
+                      "name": "server1",
+                      "role": "primary",
+                      "url": "http://127.0.0.1:8080/"
+                    },
+                    {
+                      "name": "server2",
+                      "role": "standby",
+                      "url": "http://127.0.0.1:8088/"
+                    }
+                  ],
+                  "this-server-name": "server1"
+                }
+              ]
+            }
+          }
+        ],
+      }
+    }
+
 Available Hook Libraries
 ========================
 

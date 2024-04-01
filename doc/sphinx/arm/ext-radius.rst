@@ -473,6 +473,20 @@ Somewhat tangential to lease allocation, and not shown in the diagrams above,
 is the ``command_processed`` callout, which sends Accounting-Request messages
 when a lease command is received.
 
+.. _radius-parked-packet-limit:
+
+Parked-Packet Limit
+~~~~~~~~~~~~~~~~~~~
+
+Refer to :ref:`parked-packet-limit` for a basic introduction to packet parking.
+
+The RADIUS hook library makes use of this mechanism. To allow for asynchronous
+communication between Kea and the RADIUS server and concurrent processing of
+DHCP packets by the Kea server, the DHCP request is parked, before the access
+request is sent on the subnet select callout. When the access response becomes
+available to the Kea DHCP server, the request is unparked, and the server
+continues processing on it.
+
 .. _radius-differences:
 
 Differences Between RADIUS Hook Libraries Prior To 2.4.0 and As Of 2.6.0

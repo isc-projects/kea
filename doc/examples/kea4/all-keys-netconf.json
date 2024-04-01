@@ -572,7 +572,7 @@
         // This value limits the number of packets that can be held pending
         // the updates. In times of heavy client traffic, this value can keep
         // kea-dhcp4 from building an insurmountable backlog of updates.
-        "parked-packet-limit": 128,
+        "parked-packet-limit": 256,
 
         // List of global DHCP options that the Kea DHCPv4 server assigns to
         // clients.
