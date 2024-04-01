@@ -68,7 +68,7 @@ PerfMonMgr::processPktEventStack(isc::dhcp::PktPtr query,
                                  isc::dhcp::PktPtr response,
                                  const isc::dhcp::SubnetID& subnet_id) {
     if (!query) {
-        isc_throw(Unexpected, "processPktEventStack - query is empty!");
+        isc_throw(Unexpected, "PerfMonMgr::processPktEventStack - query is empty!");
     }
     uint16_t query_type = query->getType();
 
@@ -87,9 +87,11 @@ PerfMonMgr::processPktEventStack(isc::dhcp::PktPtr query,
 
     auto events = query->getPktEvents();
     if (events.size() < 2) {
-        isc_throw(Unexpected, "processPtkEventStack - incomplete stack, size: "
+        isc_throw(Unexpected, "PerfMonMgr::processPtkEventStack - incomplete stack, size: "
                               << events.size());
     }
+
+    // no subnet id?
 
     boost::posix_time::ptime start_time;
     boost::posix_time::ptime prev_time;

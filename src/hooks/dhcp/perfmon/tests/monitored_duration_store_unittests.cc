@@ -531,6 +531,41 @@ public:
                   << "time per sample: "
                   << (add_samples_time - add_keys_time) / (num_subnets * num_passes) << std::endl;
     }
+
+    /// @brief Verifies that composite key index compares correctly with adjacent events.
+    ///
+    /// @param family protocol family to test, AF_INET or AF_INET6
+    void adjacentEventTest(uint16_t family) {
+        Duration interval_duration(milliseconds(10));
+        MonitoredDurationStore store(family, interval_duration);
+
+        // Create two keys where the stop event for the first key is the start
+        // event for the second key.
+        DurationKeyPtr key1(new DurationKey(family, 0, 0, "socket_received", "buffer_read", 1));
+        DurationKeyPtr key2(new DurationKey(family, 0, 0, "buffer_read", "process_started", 1));
+
+        // Make multiple calls to addDurationSample() for each key, starting with key1.
+        for (int i = 0; i < 4; ++i) {
+            MonitoredDurationPtr mond;
+            ASSERT_NO_THROW_LOG(mond = store.addDurationSample(key1, milliseconds(1)));
+            ASSERT_NO_THROW_LOG(mond = store.addDurationSample(key2, milliseconds(2)));
+        }
+
+        // Get all should retrieve all four in ascending order.
+        MonitoredDurationCollectionPtr durations = store.getAll();
+        ASSERT_EQ(durations->size(), 2);
+
+        auto mond = (*durations)[0];
+        ASSERT_EQ(*key2, *mond);
+        ASSERT_TRUE(mond->getCurrentInterval());
+        EXPECT_EQ(milliseconds(8), mond->getCurrentInterval()->getTotalDuration());
+
+        mond = (*durations)[1];
+        ASSERT_EQ(*key1, *mond);
+        ASSERT_TRUE(mond->getCurrentInterval());
+        EXPECT_EQ(milliseconds(4), mond->getCurrentInterval()->getTotalDuration());
+    }
+
 };
 
 TEST_F(MonitoredDurationStoreTest, addDuration) {
@@ -668,4 +703,17 @@ TEST_F(MonitoredDurationStoreTest, reportDue6MultiThreading) {
     reportDueTest(AF_INET6);
 }
 
+TEST_F(MonitoredDurationStoreTest, adjacentEvent) {
+    adjacentEventTest(AF_INET);
+}
+
+TEST_F(MonitoredDurationStoreTest, adjacentEvent6) {
+    adjacentEventTest(AF_INET6);
+}
+
+TEST_F(MonitoredDurationStoreTest, speed) {
+    speedCheck(AF_INET);
+}
+
 } // end of anonymous namespace
+

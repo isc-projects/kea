@@ -53,10 +53,27 @@ typedef boost::multi_index_container<
     MonitoredDurationPtr,
     boost::multi_index::indexed_by<
         // Specification of the first index starts here.
-        // This index sorts using DurationKey::operators
+        // This index sorts using composite key
         boost::multi_index::ordered_unique<
             boost::multi_index::tag<DurationKeyTag>,
-            boost::multi_index::identity<DurationKey>
+            boost::multi_index::composite_key<
+                MonitoredDuration,
+                // The query packet type
+                boost::multi_index::const_mem_fun<DurationKey, uint8_t,
+                                                  &DurationKey::getQueryType>,
+                // The response packet type
+                boost::multi_index::const_mem_fun<DurationKey, uint8_t,
+                                                  &DurationKey::getResponseType>,
+                // The start event label
+                boost::multi_index::const_mem_fun<DurationKey, std::string,
+                                                  &DurationKey::getStartEventLabel>,
+                // The end event label
+                boost::multi_index::const_mem_fun<DurationKey, std::string,
+                                                  &DurationKey::getStopEventLabel>,
+                // The subnet id
+                boost::multi_index::const_mem_fun<DurationKey, dhcp::SubnetID,
+                                                  &DurationKey::getSubnetId>
+            >
         >,
 
         // Specification of the second index starts here.

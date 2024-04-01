@@ -8,6 +8,8 @@
 #include <config.h>
 #include <perfmon_mgr.h>
 #include <dhcp/dhcp6.h>
+#include <dhcp/pkt4.h>
+#include <dhcp/pkt6.h>
 #include <stats/stats_mgr.h>
 #include <testutils/log_utils.h>
 #include <testutils/gtest_utils.h>
@@ -469,9 +471,138 @@ public:
         EXPECT_TRUE(checkFile());
     }
 
-    /// @brief Exercises PerfMonMgr::procssPacketEventStack().
-    void testProcesPacketEventStack() {
-       /*  YOU ARE HERE */
+    /// @brief Exercises error handling in PerfMonMgr::procssPktEventStack().
+    void testInvalidProcessPktEventStack() {
+        // Minimal valid config.
+        std::string valid_config =
+            R"({ "enable-monitoring": true })";
+
+        ASSERT_NO_THROW_LOG(createMgr(valid_config));
+        PktPtr query;
+        PktPtr response;
+        SubnetID subnet_id = SUBNET_ID_GLOBAL;
+        // No query
+        ASSERT_THROW_MSG(mgr_->processPktEventStack(query, response, subnet_id), Unexpected,
+                         "PerfMonMgr::processPktEventStack - query is empty!");
+
+        // Invalid message pair
+        query = makeFamilyQuery();
+        response = makeFamilyResponse();
+
+        std::ostringstream oss;
+        oss << "Query type not supported by monitoring: "
+            << (family_ == AF_INET ? Pkt4::getName(response->getType())
+                                   : Pkt6::getName(response->getType()));
+
+        ASSERT_THROW_MSG(mgr_->processPktEventStack(response, query, subnet_id), BadValue,
+                         oss.str());
+
+        // Packet stack size less than 2.
+        query->addPktEvent("just one");
+        ASSERT_THROW_MSG(mgr_->processPktEventStack(query, response, subnet_id), Unexpected,
+                         "PerfMonMgr::processPtkEventStack - incomplete stack, size: 1");
+    }
+
+    /// @brief Exercises PerfMonMgr::procssPktEventStack().
+    void testProcessPktEventStack() {
+        // Minimal valid configuration.
+        std::string valid_config =
+            R"({ "enable-monitoring": true })";
+
+        ASSERT_NO_THROW_LOG(createMgr(valid_config));
+
+        // Create family-specific packets.
+        PktPtr query = makeFamilyQuery();
+        PktPtr response = makeFamilyResponse();
+
+        // Populate the query's packet event stack with some events.
+        auto event_time = PktEvent::now();
+        query->addPktEvent("socket_received", event_time);
+        event_time += milliseconds(5);
+
+        query->addPktEvent("buffer_read", event_time);
+        event_time += milliseconds(4);
+
+        query->addPktEvent("process_started", event_time);
+        event_time += milliseconds(3);
+
+        query->addPktEvent("process_completed", event_time);
+
+        // Now process the packets on two different subnets.
+        ASSERT_NO_THROW_LOG(mgr_->processPktEventStack(query, response, 22));
+        ASSERT_NO_THROW_LOG(mgr_->processPktEventStack(query, response, 33));
+
+        // Fetch all the durations in primary key order.
+        MonitoredDurationCollectionPtr durations = mgr_->getDurationStore()->getAll();
+        ASSERT_EQ(durations->size(), 12);
+
+        // Contains the expected values for single duration.
+        struct ExpectedDuration {
+            std::string start_event_;
+            std::string stop_event_;
+            dhcp::SubnetID subnet_id_;
+            uint64_t occurrences_;
+            uint64_t total_duration_;
+        };
+
+        // Specifies the expected durations in the order they should be returned.
+        std::list<ExpectedDuration> exp_data_rows {
+            { "buffer_read", "process_started", 0,  2, 8 },
+            { "buffer_read", "process_started", 22, 1, 4 },
+            { "buffer_read", "process_started", 33, 1, 4 },
+
+            { "composite", "total_response", 0,  2, 24 },
+            { "composite", "total_response", 22, 1, 12 },
+            { "composite", "total_response", 33, 1, 12 },
+
+            { "process_started", "process_completed", 0,  2, 6 },
+            { "process_started", "process_completed", 22, 1, 3 },
+            { "process_started", "process_completed", 33, 1, 3 },
+
+            { "socket_received", "buffer_read", 0,  2, 10 },
+            { "socket_received", "buffer_read", 22, 1,  5 },
+            { "socket_received", "buffer_read", 33, 1,  5 }
+        };
+
+        // Verify the returne collection is as expected.
+        DurationKeyPtr exp_key;
+        auto exp_row = exp_data_rows.begin();
+        for (auto const& d : *durations) {
+            EXPECT_EQ(query->getType(), d->getQueryType());
+            EXPECT_EQ(response->getType(), d->getResponseType());
+            EXPECT_EQ((*exp_row).start_event_, d->getStartEventLabel());
+            EXPECT_EQ((*exp_row).stop_event_, d->getStopEventLabel());
+            EXPECT_EQ((*exp_row).subnet_id_, d->getSubnetId());
+            ASSERT_TRUE(d->getCurrentInterval());
+            EXPECT_EQ((*exp_row).occurrences_, d->getCurrentInterval()->getOccurrences());
+            EXPECT_EQ(milliseconds((*exp_row).total_duration_),
+                      d->getCurrentInterval()->getTotalDuration());
+            ++exp_row;
+        }
+    }
+
+    /// @brief Make a valid family-specific query.
+    ///
+    /// @return if family is AF_INET return a pointer to a DHCPDISCOVER
+    /// otherwise a pointer to a DHCPV6_SOLICIT.
+    PktPtr makeFamilyQuery() {
+        if (family_ == AF_INET) {
+            return (PktPtr(new Pkt4(DHCPDISCOVER, 7788)));
+        }
+
+        return (PktPtr(new Pkt6(DHCPV6_SOLICIT, 7788)));
+    }
+
+    /// @brief Make a valid family-specific response.
+    ///
+    /// @return if family is AF_INET return a pointer to a DHCPOFFER
+    /// otherwise a pointer to a DHCPV6_ADVERTISE.
+    PktPtr makeFamilyResponse() {
+        if (family_ == AF_INET) {
+            return (PktPtr(new Pkt4(DHCPOFFER, 7788)));
+        }
+
+        return (PktPtr(new Pkt6(DHCPV6_ADVERTISE, 7788)));
     }
 
     /// @brief Protocol family AF_INET or AF_INET6
@@ -527,20 +658,36 @@ TEST_F(PerfMonMgrTest6, invalidConfig) {
     testInvalidConfig();
 }
 
-TEST_F(PerfMonMgrTest4, testReportToStatsMgr) {
+TEST_F(PerfMonMgrTest4, reportToStatsMgr) {
     testReportToStatsMgr();
 }
 
-TEST_F(PerfMonMgrTest6, testReportToStatsMgr) {
+TEST_F(PerfMonMgrTest6, reportToStatsMgr) {
     testReportToStatsMgr();
 }
 
-TEST_F(PerfMonMgrTest4, testAddDurationSample) {
+TEST_F(PerfMonMgrTest4, addDurationSample) {
     testAddDurationSample();
 }
 
-TEST_F(PerfMonMgrTest6, testAddDurationSample) {
+TEST_F(PerfMonMgrTest6, addDurationSample) {
     testAddDurationSample();
+}
+
+TEST_F(PerfMonMgrTest4, invalidProcessPktEventStack) {
+    testInvalidProcessPktEventStack();
+}
+
+TEST_F(PerfMonMgrTest6, invalidProcessPktEventStack) {
+    testInvalidProcessPktEventStack();
+}
+
+TEST_F(PerfMonMgrTest4, processPktEventStack) {
+    testProcessPktEventStack();
+}
+
+TEST_F(PerfMonMgrTest6, processPktEventStack) {
+    testProcessPktEventStack();
 }
 
 } // end of anonymous namespace

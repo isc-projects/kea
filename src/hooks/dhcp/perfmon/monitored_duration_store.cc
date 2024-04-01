@@ -52,11 +52,18 @@ MonitoredDurationPtr
 MonitoredDurationStore::addDurationSample(DurationKeyPtr key, const Duration& sample) {
     validateKey("addDurationSample", key);
 
+
     MultiThreadingLock lock(*mutex_);
     auto& index = durations_.get<DurationKeyTag>();
-    auto duration_iter = index.find(*key);
+    auto duration_iter = index.find(boost::make_tuple(key->getQueryType(),
+                                                      key->getResponseType(),
+                                                      key->getStartEventLabel(),
+                                                      key->getStopEventLabel(),
+                                                      key->getSubnetId()));
+
     if (duration_iter != index.end()) {
         bool should_report = false;
+
         // Modify updates in place and only re-indexes if keys change.
         bool modified = index.modify(duration_iter,
                                      [sample, &should_report](MonitoredDurationPtr mond) {
@@ -83,7 +90,7 @@ MonitoredDurationStore::addDurationSample(DurationKeyPtr key, const Duration& sa
         // Shouldn't be possible.
         isc_throw(DuplicateDurationKey,
                   "MonitoredDurationStore::addDurationSample: duration already exists for: "
-                  << key->getLabel());
+                  << mond->getLabel());
     }
 
     // Nothing to report.
@@ -124,7 +131,12 @@ MonitoredDurationStore::getDuration(DurationKeyPtr key) {
 
     MultiThreadingLock lock(*mutex_);
     const auto& index = durations_.get<DurationKeyTag>();
-    auto duration_iter = index.find(*key);
+    auto duration_iter = index.find(boost::make_tuple(key->getQueryType(),
+                                                      key->getResponseType(),
+                                                      key->getStartEventLabel(),
+                                                      key->getStopEventLabel(),
+                                                      key->getSubnetId()));
+
     return (duration_iter == index.end() ? MonitoredDurationPtr()
                                          : MonitoredDurationPtr(new MonitoredDuration(**duration_iter)));
 }
@@ -135,7 +147,12 @@ MonitoredDurationStore::updateDuration(MonitoredDurationPtr& duration) {
 
     MultiThreadingLock lock(*mutex_);
     auto& index = durations_.get<DurationKeyTag>();
-    auto duration_iter = index.find(*duration);
+    auto duration_iter = index.find(boost::make_tuple(duration->getQueryType(),
+                                                      duration->getResponseType(),
+                                                      duration->getStartEventLabel(),
+                                                      duration->getStopEventLabel(),
+                                                      duration->getSubnetId()));
+
     if (duration_iter == index.end()) {
         isc_throw(InvalidOperation, "MonitoredDurationStore::updateDuration duration not found: "
                   << duration->getLabel());
@@ -151,7 +168,12 @@ MonitoredDurationStore::deleteDuration(DurationKeyPtr key) {
 
     MultiThreadingLock lock(*mutex_);
     auto& index = durations_.get<DurationKeyTag>();
-    auto duration_iter = index.find(*key);
+    auto duration_iter = index.find(boost::make_tuple(key->getQueryType(),
+                                                      key->getResponseType(),
+                                                      key->getStartEventLabel(),
+                                                      key->getStopEventLabel(),
+                                                      key->getSubnetId()));
+
     if (duration_iter == index.end()) {
         // Not there, just return.
         return;
