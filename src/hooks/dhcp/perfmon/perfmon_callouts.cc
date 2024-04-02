@@ -67,9 +67,28 @@ int pkt4_send(CalloutHandle& handle) {
 
     Pkt4Ptr query;
     handle.getArgument("query4", query);
+
+    Pkt4Ptr response;
+    handle.getArgument("response4", response);
+
+    Subnet4Ptr subnet;
+    handle.getArgument("subnet4", subnet);
+
+    if (!query) {
+        /// @todo this needs to be logged
+        return (0);
+    }
+
     LOG_DEBUG(perfmon_logger, DBGLVL_TRACE_DETAIL, PERFMON_DHCP4_PKT_EVENTS)
               .arg(query->getLabel())
               .arg(query->dumpPktEvents());
+    try {
+        mgr->processPktEventStack(query, response, subnet->getID());
+    } catch (const std::exception& ex) {
+        LOG_DEBUG(perfmon_logger, DBGLVL_TRACE_DETAIL, PERFMON_DHCP4_PKT_PROCESS_ERROR)
+                  .arg(query->getLabel())
+                  .arg(ex.what());
+    }
 
     return (0);
 }
@@ -88,9 +107,29 @@ int pkt6_send(CalloutHandle& handle) {
 
     Pkt6Ptr query;
     handle.getArgument("query6", query);
+
+    Pkt6Ptr response;
+    handle.getArgument("response6", response);
+
+    Subnet6Ptr subnet;
+    handle.getArgument("subnet6", subnet);
+
+    if (!query) {
+        /// @todo this needs to be logged
+        return (0);
+    }
+
     LOG_DEBUG(perfmon_logger, DBGLVL_TRACE_DETAIL, PERFMON_DHCP6_PKT_EVENTS)
               .arg(query->getLabel())
               .arg(query->dumpPktEvents());
+
+    try {
+        mgr->processPktEventStack(query, response, subnet->getID());
+    } catch (const std::exception& ex) {
+        LOG_DEBUG(perfmon_logger, DBGLVL_TRACE_DETAIL, PERFMON_DHCP6_PKT_PROCESS_ERROR)
+                  .arg(query->getLabel())
+                  .arg(ex.what());
+    }
 
     return (0);
 }

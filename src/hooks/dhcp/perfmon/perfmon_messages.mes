@@ -56,3 +56,17 @@ triggered and this message will be repeated every alarm-report-secs.
 Arguments detail the alarm's key, the time the alarm was first
 triggered, the most recent reported average, and the high-watr-ms
 value.
+
+% PERFMON_DHCP4_PKT_PROCESS_ERROR Packet event stack was not processed for query %1, reason %2
+This debug message is emitted when the a query's event stack could not
+be processed. This is most likely a programmatic error and should be
+reported.  The arguments identify the query and the reason it could
+not be processed.  These errors should not affect server's normal
+operations.
+
+% PERFMON_DHCP6_PKT_PROCESS_ERROR Packet event stack was not processed for query %1, reason %2
+This debug message is emitted when the a query's event stack could not
+be processed. This is most likely a programmatic error and should be
+reported.  The arguments identify the query and the reason it could
+not be processed.  These errors should not affect server's normal
+operations.

@@ -43,6 +43,27 @@ public:
         unloadLibraries();
     }
 
+    /// @brief Registers hooks in the hook manager.
+    /// Normally this is done by the server core code.
+    void registerHooks() {
+        if (isc::dhcp::CfgMgr::instance().getFamily() == AF_INET) {
+            hook_index_dhcpx_srv_configured_ = HooksManager::registerHook("dhcp4_srv_configured");
+            hook_index_pktx_send_ =  HooksManager::registerHook("pkt4_send");
+        } else {
+            hook_index_dhcpx_srv_configured_ = HooksManager::registerHook("dhcp6_srv_configured");
+            hook_index_pktx_send_ =  HooksManager::registerHook("pkt6_send");
+        }
+    }
+
+    /// @brief  Checks that expected callouts are present.
+    void calloutsPresent() {
+        bool result;
+        ASSERT_NO_THROW_LOG(result = HooksManager::calloutsPresent(hook_index_dhcpx_srv_configured_));
+        EXPECT_TRUE(result);
+        ASSERT_NO_THROW_LOG(result = HooksManager::calloutsPresent(hook_index_pktx_send_));
+        EXPECT_TRUE(result);
+    }
+
     /// @brief Creates a valid set configuration parameters valid for the library.
     virtual isc::data::ElementPtr validConfigParams() {
         std::string valid_config =
@@ -68,6 +89,10 @@ public:
         // Convert JSON texts to Element map.
         return (Element::fromJSON(valid_config));
     }
+
+    /// @brief Hook index values.
+    int hook_index_pktx_send_;
+    int hook_index_dhcpx_srv_configured_;
 };
 
 // Simple V4 test that checks the library can be loaded and unloaded several times.
@@ -85,6 +110,42 @@ TEST_F(PerfMonLibLoadTest, invalidDaemonLoad) {
     invalidDaemonTest("kea-ctrl-agent");
     invalidDaemonTest("kea-dhcp-ddns");
     invalidDaemonTest("bogus");
+}
+
+// Verifies that callout functions exist after loading the library.
+TEST_F(PerfMonLibLoadTest, verifyCallouts4) {
+    // Set family and daemon's proc name and register hook points.
+    isc::dhcp::CfgMgr::instance().setFamily(AF_INET);
+    isc::process::Daemon::setProcName("kea-dhcp4");
+    registerHooks();
+
+    // Add library to config and load it.
+    ASSERT_NO_THROW_LOG(addLibrary(lib_so_name_, valid_params_));
+    ASSERT_NO_THROW_LOG(loadLibraries());
+
+    // Verify that expected callouts are present.
+    calloutsPresent();
+
+    // Unload the library.
+    ASSERT_NO_THROW_LOG(unloadLibraries());
+}
+
+// Verifies that callout functions exist after loading the library.
+TEST_F(PerfMonLibLoadTest, verifyCallouts6) {
+    // Set family and daemon's proc name and register hook points.
+    isc::dhcp::CfgMgr::instance().setFamily(AF_INET6);
+    isc::process::Daemon::setProcName("kea-dhcp6");
+    registerHooks();
+
+    // Add library to config and load it.
+    ASSERT_NO_THROW_LOG(addLibrary(lib_so_name_, valid_params_));
+    ASSERT_NO_THROW_LOG(loadLibraries());
+
+    // Verify that expected callouts are present.
+    calloutsPresent();
+
+    // Unload the library.
+    ASSERT_NO_THROW_LOG(unloadLibraries());
 }
 
 } // end of anonymous namespace
