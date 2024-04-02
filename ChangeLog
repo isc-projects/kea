@@ -1,3 +1,9 @@
+2215.	[bug]		tmark
+	Corrected an issue that can cause kea-dhcp-ddns to
+	stop processing queued requests. Thanks to Shawn
+	Routhier from Infoblox for reporting the issue.
+	(Gitlab #3295)
+
 2214.	[func]		tmark
 	PerfMon hook library can now parse its configuration
 	and the ARM has been updated with more detailed
