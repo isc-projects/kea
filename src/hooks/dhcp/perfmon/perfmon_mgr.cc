@@ -20,6 +20,7 @@ namespace perfmon {
 
 using namespace isc::data;
 using namespace isc::dhcp;
+using namespace isc::log;
 using namespace isc::stats;
 using namespace isc::util;
 using namespace boost::posix_time;
@@ -91,7 +92,15 @@ PerfMonMgr::processPktEventStack(isc::dhcp::PktPtr query,
                               << events.size());
     }
 
-    // no subnet id?
+    LOG_DEBUG(perfmon_logger, DBGLVL_TRACE_DETAIL,
+              (family_ == AF_INET ? PERFMON_DHCP4_PKT_EVENTS : PERFMON_DHCP6_PKT_EVENTS))
+              .arg(query->getLabel())
+              .arg(query->dumpPktEvents());
+
+    // If monitoring is disabled, then punt.
+    if (!enable_monitoring_) {
+        return;
+    }
 
     boost::posix_time::ptime start_time;
     boost::posix_time::ptime prev_time;

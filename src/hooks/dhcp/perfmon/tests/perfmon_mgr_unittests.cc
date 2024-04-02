@@ -507,7 +507,7 @@ public:
     void testProcessPktEventStack() {
         // Minimal valid configuration.
         std::string valid_config =
-            R"({ "enable-monitoring": true })";
+            R"({ "enable-monitoring": false })";
 
         ASSERT_NO_THROW_LOG(createMgr(valid_config));
 
@@ -529,11 +529,21 @@ public:
         query->addPktEvent("process_completed", event_time);
 
         // Now process the packets on two different subnets.
+        // With monitoring disabled no duration data should be stored.
         ASSERT_NO_THROW_LOG(mgr_->processPktEventStack(query, response, 22));
         ASSERT_NO_THROW_LOG(mgr_->processPktEventStack(query, response, 33));
 
         // Fetch all the durations in primary key order.
         MonitoredDurationCollectionPtr durations = mgr_->getDurationStore()->getAll();
+        ASSERT_EQ(durations->size(), 0);
+
+        // Enabled monitoring and process the queries again.
+        mgr_->setEnableMonitoring(true);
+        ASSERT_NO_THROW_LOG(mgr_->processPktEventStack(query, response, 22));
+        ASSERT_NO_THROW_LOG(mgr_->processPktEventStack(query, response, 33));
+
+        // Fetch all the durations in primary key order.
+        durations = mgr_->getDurationStore()->getAll();
         ASSERT_EQ(durations->size(), 12);
 
         // Contains the expected values for single duration.
