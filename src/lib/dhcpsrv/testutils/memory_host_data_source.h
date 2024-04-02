@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,6 +9,7 @@
 
 #include <dhcpsrv/host_data_source_factory.h>
 #include <boost/shared_ptr.hpp>
+#include <mutex>
 #include <string>
 #include <vector>
 
@@ -333,6 +334,9 @@ protected:
 
     /// @brief Next host id
     uint64_t next_host_id_;
+
+    /// @brief Mutex to protect the store.
+    std::mutex mutable mutex_;
 };
 
 /// Pointer to the Mem host data source.
