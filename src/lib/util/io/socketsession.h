@@ -489,7 +489,3 @@ private:
 }
 
 #endif  // SOCKETSESSION_H
-
-// Local Variables:
-// mode: c++
-// End:

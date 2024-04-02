@@ -59,7 +59,7 @@ public:
     }
 };
 
-} // namespace asiolink
-} // namespace isc
+}  // namespace asiolink
+}  // namespace isc
 
 #endif // DUMMY_IO_CB_H

@@ -161,6 +161,6 @@ send_fd(const int sock, const int fd) {
     return (ret >= 0 ? 0 : FD_SYSTEM_ERROR);
 }
 
-} // End for namespace io
-} // End for namespace util
-} // End for namespace isc
+} // namespace io
+} // namespace util
+} // namespace isc

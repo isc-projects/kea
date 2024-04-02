@@ -20,7 +20,6 @@
 #include <dns/opcode.h>
 #include <cryptolink/crypto_rng.h>
 #include <dns/rcode.h>
-#include <util/buffer.h>
 #include <util/io.h>
 
 #include <boost/scoped_ptr.hpp>
@@ -32,23 +31,24 @@
 #include <stdint.h>
 #include <sys/socket.h>
 
-using namespace boost::asio;
 using namespace isc::asiolink;
 using namespace isc::dns;
-using namespace isc::util;
 using namespace isc::log;
+using namespace isc::util;
+
+using namespace boost::asio;
 using namespace std;
 
 namespace isc {
 namespace asiodns {
 
-// Log debug verbosity
+// Log debug verbosity.
 
 const int DBG_IMPORTANT = DBGLVL_TRACE_BASIC;
 const int DBG_COMMON = DBGLVL_TRACE_DETAIL;
 const int DBG_ALL = DBGLVL_TRACE_DETAIL + 20;
 
-/// \brief IOFetch Data
+/// @brief IOFetch Data
 ///
 /// The data for IOFetch is held in a separate struct pointed to by a shared_ptr
 /// object.  This is because the IOFetch object will be copied often (it is used
@@ -56,111 +56,94 @@ const int DBG_ALL = DBGLVL_TRACE_DETAIL + 20;
 /// want keep the same data).  Organising the data in this way keeps copying to
 /// a minimum.
 struct IOFetchData : boost::noncopyable {
-    IOServicePtr                  io_service_;       ///< The IO service
+    IOServicePtr                  io_service_;       // The IO service
     // The first two members are shared pointers to a base class because what is
     // actually instantiated depends on whether the fetch is over UDP or TCP,
     // which is not known until construction of the IOFetch.  Use of a shared
     // pointer here is merely to ensure deletion when the data object is deleted.
-    boost::scoped_ptr<IOAsioSocket<IOFetch>> socket; ///< Socket to use for I/O
-    boost::scoped_ptr<IOEndpoint> remote_snd;        ///< Where the fetch is sent
-    boost::scoped_ptr<IOEndpoint> remote_rcv;        ///< Where the response came from
-    OutputBufferPtr               msgbuf;            ///< Wire buffer for question
-    OutputBufferPtr               received;          ///< Received data put here
-    IOFetch::Callback*            callback;          ///< Called on I/O Completion
-    boost::asio::deadline_timer   timer;             ///< Timer to measure timeouts
-    IOFetch::Protocol             protocol;          ///< Protocol being used
-    size_t                        cumulative;        ///< Cumulative received amount
-    size_t                        expected;          ///< Expected amount of data
-    size_t                        offset;            ///< Offset to receive data
-    bool                          stopped;           ///< Have we stopped running?
-    int                           timeout;           ///< Timeout in ms
-    bool                          packet;            ///< true if packet was supplied
+    boost::scoped_ptr<IOAsioSocket<IOFetch>> socket; // Socket to use for I/O
+    boost::scoped_ptr<IOEndpoint> remote_snd;        // Where the fetch is sent
+    boost::scoped_ptr<IOEndpoint> remote_rcv;        // Where the response came from
+    OutputBufferPtr               msgbuf;            // Wire buffer for question
+    OutputBufferPtr               received;          // Received data put here
+    IOFetch::Callback*            callback;          // Called on I/O Completion
+    boost::asio::deadline_timer   timer;             // Timer to measure timeouts
+    IOFetch::Protocol             protocol;          // Protocol being used
+    size_t                        cumulative;        // Cumulative received amount
+    size_t                        expected;          // Expected amount of data
+    size_t                        offset;            // Offset to receive data
+    bool                          stopped;           // Have we stopped running?
+    int                           timeout;           // Timeout in ms
+    bool                          packet;            // true if packet was supplied
 
     // In case we need to log an error, the origin of the last asynchronous
     // I/O is recorded.  To save time and simplify the code, this is recorded
     // as the ID of the error message that would be generated if the I/O failed.
     // This means that we must make sure that all possible "origins" take the
     // same arguments in their message in the same order.
-    isc::log::MessageID         origin;     ///< Origin of last asynchronous I/O
+    isc::log::MessageID         origin;              // Origin of last asynchronous I/O
     uint8_t                     staging[IOFetch::STAGING_LENGTH];
-                                            ///< Temporary array for received data
-    isc::dns::qid_t             qid;        ///< The QID set in the query
+                                                     // Temporary array for received data
+    isc::dns::qid_t             qid;                 // The QID set in the query
 
-    /// \brief Constructor
+    /// @brief Constructor.
     ///
-    /// Just fills in the data members of the IOFetchData structure
+    /// Just fills in the data members of the IOFetchData structure.
     ///
-    /// \param proto Either IOFetch::TCP or IOFetch::UDP.
-    /// \param service I/O Service object to handle the asynchronous
+    /// @param proto Either IOFetch::TCP or IOFetch::UDP.
+    /// @param service I/O Service object to handle the asynchronous
     ///        operations.
-    /// \param address IP address of upstream server
-    /// \param port Port to use for the query
-    /// \param buff Output buffer into which the response (in wire format)
+    /// @param address IP address of upstream server.
+    /// @param port Port to use for the query.
+    /// @param buff Output buffer into which the response (in wire format)
     ///        is written (if a response is received).
-    /// \param cb Callback object containing the callback to be called
+    /// @param cb Callback object containing the callback to be called
     ///        when we terminate.  The caller is responsible for managing this
     ///        object and deleting it if necessary.
-    /// \param wait Timeout for the fetch (in ms).
+    /// @param wait Timeout for the fetch (in ms).
     ///
-    /// TODO: May need to alter constructor (see comment 4 in Trac ticket #554)
+    /// TODO: May need to alter constructor (see comment 4 in Trac ticket #554).
     IOFetchData(IOFetch::Protocol proto, const IOServicePtr& service,
-        const IOAddress& address, uint16_t port, OutputBufferPtr& buff,
-        IOFetch::Callback* cb, int wait) : io_service_(service),
-        socket((proto == IOFetch::UDP) ?
-            static_cast<IOAsioSocket<IOFetch>*>(
-                new UDPSocket<IOFetch>(io_service_)) :
-            static_cast<IOAsioSocket<IOFetch>*>(
-                new TCPSocket<IOFetch>(io_service_))
-            ),
+                const IOAddress& address, uint16_t port, OutputBufferPtr& buff,
+                IOFetch::Callback* cb, int wait) :
+        io_service_(service), socket((proto == IOFetch::UDP) ?
+            static_cast<IOAsioSocket<IOFetch>*>(new UDPSocket<IOFetch>(io_service_)) :
+            static_cast<IOAsioSocket<IOFetch>*>(new TCPSocket<IOFetch>(io_service_))),
         remote_snd((proto == IOFetch::UDP) ?
             static_cast<IOEndpoint*>(new UDPEndpoint(address, port)) :
-            static_cast<IOEndpoint*>(new TCPEndpoint(address, port))
-            ),
+            static_cast<IOEndpoint*>(new TCPEndpoint(address, port))),
         remote_rcv((proto == IOFetch::UDP) ?
             static_cast<IOEndpoint*>(new UDPEndpoint(address, port)) :
-            static_cast<IOEndpoint*>(new TCPEndpoint(address, port))
-            ),
-        msgbuf(new OutputBuffer(512)),
-        received(buff),
-        callback(cb),
-        timer(io_service_->getInternalIOService()),
-        protocol(proto),
-        cumulative(0),
-        expected(0),
-        offset(0),
-        stopped(false),
-        timeout(wait),
-        packet(false),
-        origin(ASIODNS_UNKNOWN_ORIGIN),
-        staging(),
-        qid(cryptolink::generateQid()) {
+            static_cast<IOEndpoint*>(new TCPEndpoint(address, port))),
+        msgbuf(new OutputBuffer(512)), received(buff), callback(cb),
+        timer(io_service_->getInternalIOService()), protocol(proto), cumulative(0),
+        expected(0), offset(0), stopped(false), timeout(wait), packet(false),
+        origin(ASIODNS_UNKNOWN_ORIGIN), staging(), qid(cryptolink::generateQid()) {
     }
 
-    /// \brief Destructor
+    /// @brief Destructor
     ~IOFetchData() {
         timer.cancel();
     }
 
-    // Checks if the response we received was ok;
-    // - data contains the buffer we read, as well as the address
-    // we sent to and the address we received from.
-    // length is provided by the operator() in IOFetch.
-    // Addresses must match, number of octets read must be at least
-    // 2, and the first two octets must match the qid of the message
-    // we sent.
+    /// @brief Checks if the response we received was ok.
+    ///
+    /// The data member contains the buffer we read, as well as the address we
+    /// sent to and the address we received from, length is provided by the
+    /// operator() in IOFetch.
+    /// The addresses must match, number of octets read must be at least two,
+    /// and they must match the qid of the message we sent.
     bool responseOK() {
         return (*remote_snd == *remote_rcv && cumulative >= 2 &&
                 readUint16(received->getData(), received->getLength()) == qid);
     }
 };
 
-/// IOFetch Constructor - just initialize the private data
-
 IOFetch::IOFetch(Protocol protocol, const IOServicePtr& service,
     const isc::dns::Question& question, const IOAddress& address,
     uint16_t port, OutputBufferPtr& buff, Callback* cb, int wait, bool edns) {
-    MessagePtr query_msg(new Message(Message::RENDER));
-    initIOFetch(query_msg, protocol, service, question, address, port, buff,
+    MessagePtr query(new Message(Message::RENDER));
+    initIOFetch(query, protocol, service, question, address, port, buff,
                 cb, wait, edns);
 }
 
@@ -174,56 +157,45 @@ IOFetch::IOFetch(Protocol protocol, const IOServicePtr& service,
 }
 
 IOFetch::IOFetch(Protocol protocol, const IOServicePtr& service,
-    ConstMessagePtr query_message, const IOAddress& address, uint16_t port,
-    OutputBufferPtr& buff, Callback* cb, int wait) {
-    MessagePtr msg(new Message(Message::RENDER));
+                 ConstMessagePtr query_message, const IOAddress& address,
+                 uint16_t port, OutputBufferPtr& buff, Callback* cb, int wait) {
+    MessagePtr question(new Message(Message::RENDER));
+    question->setHeaderFlag(Message::HEADERFLAG_RD,
+                            query_message->getHeaderFlag(Message::HEADERFLAG_RD));
+    question->setHeaderFlag(Message::HEADERFLAG_CD,
+                            query_message->getHeaderFlag(Message::HEADERFLAG_CD));
 
-    msg->setHeaderFlag(Message::HEADERFLAG_RD,
-                       query_message->getHeaderFlag(Message::HEADERFLAG_RD));
-    msg->setHeaderFlag(Message::HEADERFLAG_CD,
-                       query_message->getHeaderFlag(Message::HEADERFLAG_CD));
-
-    initIOFetch(msg, protocol, service,
-                **(query_message->beginQuestion()),
-                address, port, buff, cb, wait);
+    initIOFetch(question, protocol, service, **(query_message->beginQuestion()), address,
+                port, buff, cb, wait);
 }
 
 void
-IOFetch::initIOFetch(MessagePtr& query_msg, Protocol protocol,
-                     const IOServicePtr& service,
-                     const isc::dns::Question& question,
-                     const IOAddress& address, uint16_t port,
+IOFetch::initIOFetch(MessagePtr& query, Protocol protocol, const IOServicePtr& service,
+                     const isc::dns::Question& question, const IOAddress& address, uint16_t port,
                      OutputBufferPtr& buff, Callback* cb, int wait, bool edns) {
-    data_ = boost::shared_ptr<IOFetchData>(new IOFetchData(
-        protocol, service, address, port, buff, cb, wait));
-
-    query_msg->setQid(data_->qid);
-    query_msg->setOpcode(Opcode::QUERY());
-    query_msg->setRcode(Rcode::NOERROR());
-    query_msg->setHeaderFlag(Message::HEADERFLAG_RD);
-    query_msg->addQuestion(question);
+    data_ = boost::shared_ptr<IOFetchData>(new IOFetchData(protocol, service, address, port, buff, cb, wait));
+    query->setQid(data_->qid);
+    query->setOpcode(Opcode::QUERY());
+    query->setRcode(Rcode::NOERROR());
+    query->setHeaderFlag(Message::HEADERFLAG_RD);
+    query->addQuestion(question);
 
     if (edns) {
         EDNSPtr edns_query(new EDNS());
         edns_query->setUDPSize(Message::DEFAULT_MAX_EDNS0_UDPSIZE);
-        query_msg->setEDNS(edns_query);
+        query->setEDNS(edns_query);
     }
 
-    MessageRenderer renderer;
-    renderer.setBuffer(data_->msgbuf.get());
-    query_msg->toWire(renderer);
-    renderer.setBuffer(NULL);
+    MessageRenderer r;
+    r.setBuffer(data_->msgbuf.get());
+    query->toWire(r);
+    r.setBuffer(NULL);
 }
-
-// Return protocol in use.
 
 IOFetch::Protocol
 IOFetch::getProtocol() const {
     return (data_->protocol);
 }
-
-/// The function operator is implemented with the "stackless coroutine"
-/// pattern; see boost/asio/coroutine.hpp for details.
 
 void
 IOFetch::operator()(boost::system::error_code ec, size_t length) {
@@ -320,13 +292,6 @@ IOFetch::operator()(boost::system::error_code ec, size_t length) {
     }
 }
 
-// Function that stops the coroutine sequence.  It is called either when the
-// query finishes or when the timer times out.  Either way, it sets the
-// "stopped_" flag and cancels anything that is in progress.
-//
-// As the function may be entered multiple times as things wind down, it checks
-// if the stopped_ flag is already set.  If it is, the call is a no-op.
-
 void
 IOFetch::stop(Result result) {
     if (!data_->stopped) {
@@ -385,8 +350,6 @@ IOFetch::stop(Result result) {
     }
 }
 
-// Log an error - called on I/O failure
-
 void IOFetch::logIOFailure(boost::system::error_code ec) {
     // Should only get here with a known error code.
     if ((data_->origin != ASIODNS_OPEN_SOCKET) &&
@@ -403,5 +366,5 @@ void IOFetch::logIOFailure(boost::system::error_code ec) {
         arg(data_->remote_snd->getPort());
 }
 
-} // namespace asiodns
-} // namespace isc {
+}  // namespace asiodns
+}  // namespace isc

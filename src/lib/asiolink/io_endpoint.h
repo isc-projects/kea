@@ -174,10 +174,7 @@ public:
 /// \return A reference to the same \c std::ostream object referenced by
 /// parameter \c os after the insertion operation.
 std::ostream& operator<<(std::ostream& os, const IOEndpoint& endpoint);
-} // namespace asiolink
-} // namespace isc
+}  // namespace asiolink
+}  // namespace isc
 #endif // IO_ENDPOINT_H
 
-// Local Variables:
-// mode: c++
-// End:

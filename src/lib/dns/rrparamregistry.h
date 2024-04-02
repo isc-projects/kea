@@ -90,11 +90,11 @@ public:
     /// of specific class corresponding to the specific derived class of
     /// \c AbstractRdataFactory.
     ///
-    /// \param buffer A reference to an \c InputBuffer object storing the
+    /// \param buff A reference to an \c InputBuffer object storing the
     /// \c Rdata to parse.
     /// \param rdata_len The length in buffer of the \c Rdata.  In bytes.
     /// \return An \c RdataPtr object pointing to the created \c Rdata object.
-    virtual RdataPtr create(isc::util::InputBuffer& buffer,
+    virtual RdataPtr create(isc::util::InputBuffer& buff,
                             size_t rdata_len) const = 0;
 
     /// \brief Create RDATA from another \c Rdata object of the same type.
@@ -483,13 +483,13 @@ public:
     ///
     /// \param rrtype An \c RRType object specifying the type/class pair.
     /// \param rrclass An \c RRClass object specifying the type/class pair.
-    /// \param buffer A reference to an \c InputBuffer object storing the
+    /// \param buff A reference to an \c InputBuffer object storing the
     /// \c Rdata to parse.
     /// \param len The length in buffer of the \c Rdata.  In bytes.
     /// \return An \c rdata::RdataPtr object pointing to the created \c Rdata
     /// object.
     rdata::RdataPtr createRdata(const RRType& rrtype, const RRClass& rrclass,
-                                isc::util::InputBuffer& buffer, size_t len);
+                                isc::util::InputBuffer& buff, size_t len);
     /// \brief Create RDATA of a given pair of RR type and class, copying
     /// of another RDATA of same kind.
     ///

@@ -5,16 +5,15 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
-#include <log/logger_support.h>
 
 #include <gtest/gtest.h>
+
+#include <util/unittests/run_all.h>
+#include <log/logger_support.h>
 
 int
 main(int argc, char* argv[]) {
     ::testing::InitGoogleTest(&argc, argv);
     isc::log::initLogger();
-
-    int result = RUN_ALL_TESTS();
-
-    return (result);
+    return (isc::util::unittests::run_all());
 }

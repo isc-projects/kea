@@ -31,12 +31,14 @@
 #include <iterator>
 #include <vector>
 
-using namespace boost::asio::ip;
-using namespace boost::asio;
 using namespace isc::asiolink;
 using namespace isc::dns;
 using namespace isc::util;
+
+using namespace boost::asio;
+using namespace boost::asio::ip;
 using namespace std;
+
 namespace ph = std::placeholders;
 
 namespace isc {
@@ -760,5 +762,5 @@ TEST_F(IOFetchTest, TcpSendReceive8192ShortSend) {
 }
 
 
-} // namespace asiodns
-} // namespace isc
+}  // namespace asiodns
+}  // namespace isc

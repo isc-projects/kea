@@ -32,11 +32,12 @@
 #include <string>
 #include <vector>
 
+using namespace isc::asiolink;
+using namespace isc::util;
+
+using namespace std;
 using namespace boost::asio;
 using namespace boost::asio::ip;
-using namespace isc::util;
-using namespace isc::asiolink;
-using namespace std;
 
 namespace {
 

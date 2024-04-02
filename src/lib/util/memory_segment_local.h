@@ -94,7 +94,3 @@ private:
 } // namespace isc
 
 #endif // MEMORY_SEGMENT_LOCAL_H
-
-// Local Variables:
-// mode: c++
-// End:

@@ -106,8 +106,8 @@ public:
     /// It may throw an exception if the construction of these component
     /// classes fails.
     ///
-    /// \param buffer A buffer storing the wire format data.
-    Question(isc::util::InputBuffer& buffer);
+    /// \param buff A buffer storing the wire format data.
+    Question(isc::util::InputBuffer& buff);
 
     /// \brief Constructor from fixed parameters of the \c Question.
     ///

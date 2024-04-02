@@ -258,7 +258,3 @@ public:
 
 }
 #endif // EXCEPTIONS_H
-
-// Local Variables:
-// mode: c++
-// End:

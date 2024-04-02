@@ -32,9 +32,10 @@
 #include <vector>
 
 
-using namespace boost::asio;
-using namespace isc::util;
 using namespace isc::asiolink;
+using namespace isc::util;
+
+using namespace boost::asio;
 using namespace std;
 
 namespace {

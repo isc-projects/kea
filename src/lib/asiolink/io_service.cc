@@ -175,5 +175,5 @@ IOService::post(const std::function<void ()>& callback) {
     return (io_impl_->post(callback));
 }
 
-} // namespace asiolink
-} // namespace isc
+}  // namespace asiolink
+}  // namespace isc

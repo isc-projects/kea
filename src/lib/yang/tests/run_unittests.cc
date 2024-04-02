@@ -8,14 +8,12 @@
 
 #include <gtest/gtest.h>
 
-#include <log/logger_support.h>
 #include <util/unittests/run_all.h>
+#include <log/logger_support.h>
 
 int
 main(int argc, char* argv[]) {
     ::testing::InitGoogleTest(&argc, argv);
-
     isc::log::initLogger();
-
     return (isc::util::unittests::run_all());
 }

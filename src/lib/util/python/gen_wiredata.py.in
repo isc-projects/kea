@@ -841,49 +841,6 @@ class SSHFP(RR):
                                                                          self.fingerprint))
         f.write('%02x %02x %s\n' % (self.algorithm, self.fingerprint_type, self.fingerprint))
 
-class MINFO(RR):
-    '''Implements rendering MINFO RDATA in the test data format.
-
-    Configurable parameters are as follows (see the description of the
-    same name of attribute for the default value):
-    - rmailbox (string): The rmailbox field.
-    - emailbox (string): The emailbox field.
-    These strings must be interpreted as a valid domain name.
-    '''
-    rmailbox = 'rmailbox.example.com'
-    emailbox = 'emailbox.example.com'
-    def dump(self, f):
-        rmailbox_wire = encode_name(self.rmailbox)
-        emailbox_wire = encode_name(self.emailbox)
-        if self.rdlen is None:
-            self.rdlen = (len(rmailbox_wire) + len(emailbox_wire)) / 2
-        else:
-            self.rdlen = int(self.rdlen)
-        self.dump_header(f, self.rdlen)
-        f.write('# RMAILBOX=%s EMAILBOX=%s\n' % (self.rmailbox, self.emailbox))
-        f.write('%s %s\n' % (rmailbox_wire, emailbox_wire))
-
-class AFSDB(RR):
-    '''Implements rendering AFSDB RDATA in the test data format.
-
-    Configurable parameters are as follows (see the description of the
-    same name of attribute for the default value):
-    - subtype (16 bit int): The subtype field.
-    - server (string): The server field.
-    The string must be interpreted as a valid domain name.
-    '''
-    subtype = 1
-    server = 'afsdb.example.com'
-    def dump(self, f):
-        server_wire = encode_name(self.server)
-        if self.rdlen is None:
-            self.rdlen = 2 + len(server_wire) / 2
-        else:
-            self.rdlen = int(self.rdlen)
-        self.dump_header(f, self.rdlen)
-        f.write('# SUBTYPE=%d SERVER=%s\n' % (self.subtype, self.server))
-        f.write('%04x %s\n' % (self.subtype, server_wire))
-
 class CAA(RR):
     '''Implements rendering CAA RDATA in the test data format.
 
@@ -1381,6 +1338,49 @@ class TSIG(RR):
         f.write('# Other-Len=%d Other-Data=(see hex)\n' % other_len)
         f.write('%04x%s\n' % (other_len,
                               ' ' + other_data if len(other_data) > 0 else ''))
+
+class MINFO(RR):
+    '''Implements rendering MINFO RDATA in the test data format.
+
+    Configurable parameters are as follows (see the description of the
+    same name of attribute for the default value):
+    - rmailbox (string): The rmailbox field.
+    - emailbox (string): The emailbox field.
+    These strings must be interpreted as a valid domain name.
+    '''
+    rmailbox = 'rmailbox.example.com'
+    emailbox = 'emailbox.example.com'
+    def dump(self, f):
+        rmailbox_wire = encode_name(self.rmailbox)
+        emailbox_wire = encode_name(self.emailbox)
+        if self.rdlen is None:
+            self.rdlen = (len(rmailbox_wire) + len(emailbox_wire)) / 2
+        else:
+            self.rdlen = int(self.rdlen)
+        self.dump_header(f, self.rdlen)
+        f.write('# RMAILBOX=%s EMAILBOX=%s\n' % (self.rmailbox, self.emailbox))
+        f.write('%s %s\n' % (rmailbox_wire, emailbox_wire))
+
+class AFSDB(RR):
+    '''Implements rendering AFSDB RDATA in the test data format.
+
+    Configurable parameters are as follows (see the description of the
+    same name of attribute for the default value):
+    - subtype (16 bit int): The subtype field.
+    - server (string): The server field.
+    The string must be interpreted as a valid domain name.
+    '''
+    subtype = 1
+    server = 'afsdb.example.com'
+    def dump(self, f):
+        server_wire = encode_name(self.server)
+        if self.rdlen is None:
+            self.rdlen = 2 + len(server_wire) / 2
+        else:
+            self.rdlen = int(self.rdlen)
+        self.dump_header(f, self.rdlen)
+        f.write('# SUBTYPE=%d SERVER=%s\n' % (self.subtype, self.server))
+        f.write('%04x %s\n' % (self.subtype, server_wire))
 
 # Build section-class mapping
 config_param = { 'name' : (Name, {}),

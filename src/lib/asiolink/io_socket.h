@@ -122,7 +122,7 @@ public:
     static IOSocket& getDummyTCPSocket();
 };
 
-} // namespace asiolink
-} // namespace isc
+}  // namespace asiolink
+}  // namespace isc
 
 #endif // IO_SOCKET_H

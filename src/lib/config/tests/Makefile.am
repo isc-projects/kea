@@ -1,4 +1,4 @@
-SUBDIRS = testdata .
+SUBDIRS = .
 
 AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES) $(CRYPTO_CFLAGS) $(CRYPTO_INCLUDES)
@@ -12,7 +12,6 @@ AM_LDFLAGS = -static
 endif
 
 CLEANFILES = *.gcno *.gcda
-DISTCLEANFILES = data_def_unittests_config.h
 
 TESTS_ENVIRONMENT = $(LIBTOOL) --mode=execute $(VALGRIND_COMMAND)
 

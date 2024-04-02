@@ -1,11 +1,13 @@
 SUBDIRS = . tests
 
-AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
+AM_CPPFLAGS  = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES)
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 
 CLEANFILES = *.gcno *.gcda
+
+EXTRA_DIST = asiodns_messages.mes
 
 lib_LTLIBRARIES = libkea-asiodns.la
 
@@ -15,10 +17,7 @@ libkea_asiodns_la_SOURCES = io_fetch.cc io_fetch.h
 libkea_asiodns_la_SOURCES += logger.h logger.cc
 libkea_asiodns_la_SOURCES += asiodns_messages.cc asiodns_messages.h
 
-EXTRA_DIST = asiodns_messages.mes
-
-# Note: the ordering matters: -Wno-... must follow -Wextra (defined in
-# KEA_CXXFLAGS)
+# Note: the ordering matters: -Wno-... must follow -Wextra (defined in KEA_CXXFLAGS)
 libkea_asiodns_la_CXXFLAGS = $(AM_CXXFLAGS)
 libkea_asiodns_la_CPPFLAGS = $(AM_CPPFLAGS)
 libkea_asiodns_la_LIBADD  = $(top_builddir)/src/lib/asiolink/libkea-asiolink.la

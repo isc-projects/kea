@@ -56,8 +56,7 @@ if HAVE_OPENSSL
 libkea_asiolink_la_SOURCES += openssl_tls.cc
 endif
 
-# Note: the ordering matters: -Wno-... must follow -Wextra (defined in
-# KEA_CXXFLAGS)
+# Note: the ordering matters: -Wno-... must follow -Wextra (defined in KEA_CXXFLAGS)
 libkea_asiolink_la_CXXFLAGS = $(AM_CXXFLAGS)
 libkea_asiolink_la_CPPFLAGS = $(AM_CPPFLAGS)
 libkea_asiolink_la_LIBADD  = $(top_builddir)/src/lib/util/libkea-util.la

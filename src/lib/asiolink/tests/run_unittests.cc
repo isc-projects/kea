@@ -7,13 +7,13 @@
 #include <config.h>
 
 #include <gtest/gtest.h>
+
 #include <util/unittests/run_all.h>
-#include <log/logger_manager.h>
+#include <log/logger_support.h>
 
 int
-main(int argc, char* argv[])
-{
-    ::testing::InitGoogleTest(&argc, argv);         // Initialize Google test
-    isc::log::LoggerManager::init("unittest");      // Set a root logger name
+main(int argc, char* argv[]) {
+    ::testing::InitGoogleTest(&argc, argv);
+    isc::log::initLogger();
     return (isc::util::unittests::run_all());
 }

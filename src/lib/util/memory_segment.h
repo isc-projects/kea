@@ -327,7 +327,3 @@ protected:
 } // namespace isc
 
 #endif // MEMORY_SEGMENT_H
-
-// Local Variables:
-// mode: c++
-// End:

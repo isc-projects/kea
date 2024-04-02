@@ -121,6 +121,7 @@ private:
 /// @brief Defines a smart pointer to an IOService instance.
 typedef boost::shared_ptr<IOService> IOServicePtr;
 
-} // namespace asiolink
-} // namespace isc
+}  // namespace asiolink
+}  // namespace isc
+
 #endif // ASIOLINK_IO_SERVICE_H

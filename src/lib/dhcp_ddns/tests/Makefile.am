@@ -39,6 +39,7 @@ libdhcp_ddns_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink
 libdhcp_ddns_unittests_LDADD += $(top_builddir)/src/lib/dns/libkea-dns++.la
 libdhcp_ddns_unittests_LDADD += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
 libdhcp_ddns_unittests_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
+libdhcp_ddns_unittests_LDADD += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
 libdhcp_ddns_unittests_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
 libdhcp_ddns_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 libdhcp_ddns_unittests_LDADD += $(LOG4CPLUS_LIBS) $(CRYPTO_LIBS)

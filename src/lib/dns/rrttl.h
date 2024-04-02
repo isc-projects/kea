@@ -89,8 +89,8 @@ public:
     /// If the given data does not large enough to contain a 16-bit integer,
     /// an exception of class \c IncompleteRRTTL will be thrown.
     ///
-    /// \param buffer A buffer storing the wire format data.
-    explicit RRTTL(isc::util::InputBuffer& buffer);
+    /// \param buff A buffer storing the wire format data.
+    explicit RRTTL(isc::util::InputBuffer& buff);
 
     /// A separate factory of RRTTL from text.
     ///
@@ -157,8 +157,8 @@ public:
     /// If resource allocation in rendering process fails, a corresponding
     /// standard exception will be thrown.
     ///
-    /// \param buffer An output buffer to store the wire data.
-    void toWire(isc::util::OutputBuffer& buffer) const;
+    /// \param buff An output buffer to store the wire data.
+    void toWire(isc::util::OutputBuffer& buff) const;
     //@}
 
     ///

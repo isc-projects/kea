@@ -32,8 +32,7 @@ run_unittests_LDADD += $(BOOST_LIBS) $(GTEST_LDADD)
 
 run_unittests_LDFLAGS = $(AM_LDFLAGS) $(CRYPTO_LDFLAGS) $(GTEST_LDFLAGS)
 
-# Note: the ordering matters: -Wno-... must follow -Wextra (defined in
-# KEA_CXXFLAGS)
+# Note: the ordering matters: -Wno-... must follow -Wextra (defined in KEA_CXXFLAGS)
 run_unittests_CXXFLAGS = $(AM_CXXFLAGS)
 if USE_GXX
 run_unittests_CXXFLAGS += -Wno-unused-parameter

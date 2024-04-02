@@ -7,7 +7,7 @@
 #include <config.h>
 
 #include <log/logger_support.h>
-#include <dhcp4/dhcp4_log.h>
+
 #include <gtest/gtest.h>
 
 int

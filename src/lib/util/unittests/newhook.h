@@ -68,7 +68,3 @@ extern size_t throw_size_on_new;
 }
 
 #endif // UTIL_UNITTESTS_NEWHOOK_H
-
-// Local Variables:
-// mode: c++
-// End:

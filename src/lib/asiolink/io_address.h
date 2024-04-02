@@ -324,6 +324,7 @@ operator<<(std::ostream& os, const IOAddress& address);
 /// \return The hash of the IOAddress.
 size_t hash_value(const IOAddress& address);
 
-} // namespace asiolink
-} // namespace isc
+}  // namespace asiolink
+}  // namespace isc
+
 #endif // IO_ADDRESS_H

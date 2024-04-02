@@ -70,7 +70,3 @@ convertSockAddr(struct sockaddr* sa) {
 }
 
 #endif  // SOCKADDR_UTIL_H
-
-// Local Variables:
-// mode: c++
-// End:

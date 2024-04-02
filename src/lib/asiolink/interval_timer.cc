@@ -200,5 +200,5 @@ IntervalTimer::getInterval() const {
     return (impl_->getInterval());
 }
 
-} // namespace asiolink
-} // namespace isc
+}  // namespace asiolink
+}  // namespace isc

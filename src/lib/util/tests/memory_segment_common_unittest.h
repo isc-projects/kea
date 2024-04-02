@@ -22,7 +22,3 @@ void checkSegmentNamedAddress(MemorySegment& segment, bool out_of_segment_ok);
 }
 }
 }
-
-// Local Variables:
-// mode: c++
-// End:

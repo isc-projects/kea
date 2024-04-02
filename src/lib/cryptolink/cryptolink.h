@@ -19,36 +19,35 @@
 namespace isc {
 namespace cryptolink {
 
-/// \brief Hash algorithm identifiers
+/// @brief Hash algorithm identifiers.
 enum HashAlgorithm {
-    UNKNOWN_HASH = 0,   ///< This value can be used in conversion
-                        ///  functions, to be returned when the
-                        ///  input is unknown (but a value MUST be
-                        ///  returned), for instance when the input
-                        ///  is a Name or a string, and the return
-                        ///  value is a HashAlgorithm.
-    MD5 = 1,            ///< MD5
-    SHA1 = 2,           ///< SHA-1
-    SHA256 = 3,         ///< SHA-256
-    SHA224 = 4,         ///< SHA-224
-    SHA384 = 5,         ///< SHA-384
-    SHA512 = 6          ///< SHA-512
-
+    UNKNOWN_HASH = 0,   // This value can be used in conversion
+                        // functions, to be returned when the
+                        // input is unknown (but a value MUST be
+                        // returned), for instance when the input
+                        // is a Name or a string, and the return
+                        // value is a HashAlgorithm.
+    MD5 = 1,            // MD5
+    SHA1 = 2,           // SHA-1
+    SHA256 = 3,         // SHA-256
+    SHA224 = 4,         // SHA-224
+    SHA384 = 5,         // SHA-384
+    SHA512 = 6          // SHA-512
 };
 
-/// \brief Forward declaration for createHash()
+/// @brief Forward declaration for createHash().
 class Hash;
 
-/// \brief Forward declaration for createHMAC()
+/// @brief Forward declaration for createHMAC().
 class HMAC;
 
-/// \brief Forward declaration for getRNG()
+/// @brief Forward declaration for getRNG().
 class RNG;
 
-/// \brief Type representing the pointer to the RNG.
+/// @brief Type representing the pointer to the RNG.
 typedef boost::shared_ptr<RNG> RNGPtr;
 
-/// General exception class that is the base for all crypto-related
+/// @brief General exception class that is the base for all crypto-related
 /// exceptions
 class CryptoLinkError : public Exception {
 public:
@@ -56,7 +55,7 @@ public:
         isc::Exception(file, line, what) {}
 };
 
-/// This exception is thrown if there was a problem initializing the
+/// @brief This exception is thrown if there was a problem initializing the
 /// crypto library
 class InitializationError : public CryptoLinkError {
 public:
@@ -64,7 +63,7 @@ public:
         CryptoLinkError(file, line, what) {}
 };
 
-/// This exception is thrown when a cryptographic action is requested
+/// @brief This exception is thrown when a cryptographic action is requested
 /// for an algorithm that is not supported by the underlying library.
 class UnsupportedAlgorithm : public CryptoLinkError {
 public:
@@ -72,7 +71,7 @@ public:
         CryptoLinkError(file, line, what) {}
 };
 
-/// This exception is thrown when the underlying library could not
+/// @brief This exception is thrown when the underlying library could not
 /// handle the key data.
 class BadKey : public CryptoLinkError {
 public:
@@ -80,7 +79,7 @@ public:
         CryptoLinkError(file, line, what) {}
 };
 
-/// This exception is raised when a general error that was not
+/// @brief This exception is raised when a general error that was not
 /// specifically caught is thrown by the underlying library. It
 /// is replaced by this one so as not have 'external' exceptions
 /// bubbling up
@@ -90,16 +89,16 @@ public:
         CryptoLinkError(file, line, what) {}
 };
 
-/// \brief Forward declarations for CryptoLink pimpl.
+/// @brief Forward declarations for CryptoLink pimpl.
 class CryptoLinkImpl;
 
-/// \brief Type representing the pointer to the CryptoLinkImpl.
+/// @brief Type representing the pointer to the CryptoLinkImpl.
 typedef boost::shared_ptr<CryptoLinkImpl> CryptoLinkImplPtr;
 
-/// \brief Forward declarations for RNG pimpl.
+/// @brief Forward declarations for RNG pimpl.
 class RNGImpl;
 
-/// \brief Singleton entry point and factory class
+/// @brief Singleton entry point and factory class
 ///
 /// This is a singleton class that serves as the entry point to
 /// the underlying cryptography library, and as a factory for objects
@@ -128,15 +127,15 @@ class RNGImpl;
 /// sure you do not forget this, is to place the result of the create
 /// functions in a shared_ptr with the corresponding deleter function.
 ///
-/// \note All other classes within cryptolink should have private
+/// @note All other classes within cryptolink should have private
 /// constructors as well, and should have a factory function from
 /// CryptoLink, and a deleter function.
 ///
-// Internal note: we can use this class later to initialize and manage
-// dynamic (PKCS#11) libs
+/// Internal note: we can use this class later to initialize and manage
+/// dynamic (PKCS#11) libs.
 class CryptoLink : private boost::noncopyable {
 public:
-    /// \brief Returns a reference to the singleton instance
+    /// @brief Returns a reference to the singleton instance.
     ///
     /// If the library has not been initialized yet, it will be
     /// initialized with some default values.
@@ -144,15 +143,17 @@ public:
     /// Since this class is noncopyable, you must use the return
     /// value directly, or store it in a reference variable.
     ///
-    /// \exception InitializationError if initialization fails
+    /// @throw InitializationError if initialization fails.
     ///
-    /// \return Reference to the singleton instance
+    /// @return Reference to the singleton instance.
     static CryptoLink& getCryptoLink();
 
-    /// \brief Get version string
+    /// @brief Get version string.
+    ///
+    /// @return The version as string.
     static std::string getVersion();
 
-    /// \brief Factory function for Hash objects
+    /// @brief Factory function for Hash objects.
     ///
     /// CryptoLink objects cannot be constructed directly. This
     /// function creates a new Hash object usable for signing or
@@ -164,17 +165,19 @@ public:
     ///
     /// If you want to safely delete objects created with this method,
     /// you can use the function deleteHash() as defined in
-    /// crypto_hash.h
+    /// crypto_hash.h.
     ///
-    /// \exception UnsupportedAlgorithmException if the given algorithm
-    ///            is unknown or not supported by the underlying library
-    /// \exception LibraryError if there was any unexpected exception
-    ///                         in the underlying library
+    /// @throw UnsupportedAlgorithmException if the given algorithm
+    ///        is unknown or not supported by the underlying library.
+    /// @throw LibraryError if there was any unexpected exception
+    ///        in the underlying library.
     ///
-    /// \param hash_algorithm The hash algorithm
+    /// @param hash_algorithm The hash algorithm.
+    ///
+    /// @return The new hash.
     Hash* createHash(const HashAlgorithm hash_algorithm);
 
-    /// \brief Factory function for HMAC objects
+    /// @brief Factory function for HMAC objects
     ///
     /// CryptoLink objects cannot be constructed directly. This
     /// function creates a new HMAC object usable for signing or
@@ -187,58 +190,62 @@ public:
     /// Notes: if the secret is longer than the block size of its
     /// algorithm, the constructor will run it through the hash
     /// algorithm, and use the digest as the secret for this HMAC
-    /// operation
+    /// operation.
     ///
     /// If you want to safely delete objects created with this method,
     /// you can use the function deleteHMAC() as defined in
-    /// crypto_hmac.h
+    /// crypto_hmac.h.
     ///
-    /// \exception UnsupportedAlgorithmException if the given algorithm
-    ///            is unknown or not supported by the underlying library
-    /// \exception InvalidKeyLength if the given key secret_len is bad
-    /// \exception LibraryError if there was any unexpected exception
-    ///                         in the underlying library
+    /// @throw UnsupportedAlgorithmException if the given algorithm
+    ///        is unknown or not supported by the underlying library.
+    /// @throw InvalidKeyLength if the given key secret_len is bad.
+    /// @throw LibraryError if there was any unexpected exception
+    ///        in the underlying library.
     ///
-    /// \param secret The secret to sign with
-    /// \param secret_len The length of the secret
-    /// \param hash_algorithm The hash algorithm
+    /// @param secret The secret to sign with
+    /// @param secret_len The length of the secret
+    /// @param hash_algorithm The hash algorithm
+    ///
+    /// @return The new hash.
     HMAC* createHMAC(const void* secret, size_t secret_len,
                      const HashAlgorithm hash_algorithm);
 
-    /// \brief Get the global RNG
+    /// @brief Get the global RNG.
     ///
-    /// \exception NotImplemented if the method was not implemented
-    ///                           in a derived class
-    /// \exception LibraryError if there was any unexpected exception
-    ///                         in the underlying library
+    /// @throw NotImplemented if the method was not implemented
+    ///        in a derived class.
+    /// @throw LibraryError if there was any unexpected exception
+    ///        in the underlying library.
+    ///
+    /// @return The gobal RNG.
     virtual RNGPtr const& getRNG() const;
 
 private:
-    /// \brief Initialize the library
+    /// @brief Initialize the library.
     ///
     /// If the library has already been initialized (either by a call
     /// to initialize() or automatically in getCryptoLink()), this
     /// function does nothing.
     ///
-    /// \note A call to initialize() is not strictly necessary with
+    /// @note A call to initialize() is not strictly necessary with
     /// the current implementation.
     ///
-    /// \exception InitializationError if initialization fails
+    /// @throw InitializationError if initialization fails.
     ///
-    /// \param c the CryptoLink singleton instance which is being initialized.
+    /// @param c the CryptoLink singleton instance which is being initialized.
     void initialize(CryptoLink& c);
 
-    // To prevent people constructing their own, we make the constructor
-    // private too.
+    /// @note To prevent people constructing their own, we make the constructor
+    /// private too.
     CryptoLink() {
         initialize(*this);
     }
     ~CryptoLink();
 
-    /// \brief Smart pointer holding the implementation.
+    /// @brief Smart pointer holding the implementation.
     CryptoLinkImplPtr impl_;
 
-    /// \brief Smart pointer holding the RNG.
+    /// @brief Smart pointer holding the RNG.
     RNGPtr rng_;
 };
 

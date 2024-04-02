@@ -33,6 +33,7 @@
 
 using namespace std;
 using namespace isc::log;
+using namespace isc::util;
 using namespace isc::util::file;
 
 /// \file log/compiler/message.cc
@@ -98,7 +99,7 @@ sentinel(Path& file) {
     string name = file.stem();
     string ext = file.extension();
     string sentinel_text = name + "_" + ext.substr(1);
-    isc::util::str::uppercase(sentinel_text);
+    str::uppercase(sentinel_text);
     return (sentinel_text);
 }
 
@@ -175,7 +176,7 @@ splitNamespace(string ns) {
 
     // ... and return the vector of namespace components split on the single
     // colon.
-    return (isc::util::str::tokens(ns, ":"));
+    return (str::tokens(ns, ":"));
 }
 
 /// \brief Write Opening Namespace(s)

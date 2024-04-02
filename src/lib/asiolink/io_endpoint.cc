@@ -64,5 +64,6 @@ operator<<(ostream& os, const IOEndpoint& endpoint) {
     os << ":" << boost::lexical_cast<string>(endpoint.getPort());
     return (os);
 }
-} // namespace asiolink
-} // namespace isc
+
+}  // namespace asiolink
+}  // namespace isc

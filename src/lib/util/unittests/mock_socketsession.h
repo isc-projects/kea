@@ -146,6 +146,3 @@ private:
 } // end of isc
 #endif  // UTIL_UNITTESTS_MOCKSOCKETSESSION_H
 
-// Local Variables:
-// mode: c++
-// End:

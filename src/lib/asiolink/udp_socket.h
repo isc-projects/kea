@@ -130,14 +130,14 @@ public:
     ///        processed.
     /// \param offset Unused.
     /// \param expected unused.
-    /// \param outbuff Output buffer.  Data in the staging buffer is be copied
+    /// \param buff Output buffer.  Data in the staging buffer is be copied
     ///        to this output buffer in the call.
     ///
     /// \return Always true
     virtual bool processReceivedData(const void* staging, size_t length,
                                      size_t& cumulative, size_t& offset,
                                      size_t& expected,
-                                     isc::util::OutputBufferPtr& outbuff);
+                                     isc::util::OutputBufferPtr& buff);
 
     /// \brief Cancel I/O On Socket
     virtual void cancel();
@@ -315,7 +315,7 @@ UDPSocket<C>::close() {
     }
 }
 
-} // namespace asiolink
-} // namespace isc
+}  // namespace asiolink
+}  // namespace isc
 
 #endif // UDP_SOCKET_H

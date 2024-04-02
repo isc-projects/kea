@@ -4,8 +4,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#ifndef FD_SHARE_H_
-#define FD_SHARE_H_
+#ifndef FD_SHARE_H
+#define FD_SHARE_H
 
 /**
  * \file fd_share.h
@@ -50,12 +50,8 @@ int recv_fd(const int sock);
  */
 int send_fd(const int sock, const int fd);
 
-} // End for namespace io
-} // End for namespace util
-} // End for namespace isc
+}  // namespace io
+}  // namespace util
+}  // namespace isc
 
-#endif
-
-// Local Variables:
-// mode: c++
-// End:
+#endif // FD_SHARE_H

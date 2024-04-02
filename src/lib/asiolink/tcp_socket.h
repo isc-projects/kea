@@ -5,30 +5,28 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #ifndef TCP_SOCKET_H
-#define TCP_SOCKET_H 1
+#define TCP_SOCKET_H
 
 #ifndef BOOST_ASIO_HPP
 #error "asio.hpp must be included before including this, see asiolink.h as to why"
 #endif
 
-#include <netinet/in.h>
-#include <sys/socket.h>
-#include <unistd.h>             // for some IPC/network system calls
+#include <asiolink/io_asio_socket.h>
+#include <asiolink/io_endpoint.h>
+#include <asiolink/io_service.h>
+#include <asiolink/tcp_endpoint.h>
+#include <exceptions/isc_assert.h>
+#include <util/buffer.h>
+#include <util/io.h>
 
 #include <algorithm>
 #include <cstddef>
 
 #include <boost/numeric/conversion/cast.hpp>
 
-#include <util/buffer.h>
-#include <util/io.h>
-
-#include <asiolink/io_asio_socket.h>
-#include <asiolink/io_endpoint.h>
-#include <asiolink/io_service.h>
-#include <asiolink/tcp_endpoint.h>
-
-#include <exceptions/isc_assert.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <unistd.h>             // for some IPC/network system calls
 
 namespace isc {
 namespace asiolink {
@@ -199,14 +197,14 @@ public:
     ///        processed.
     /// \param offset Unused.
     /// \param expected unused.
-    /// \param outbuff Output buffer.  Data in the staging buffer is be copied
+    /// \param buff Output buffer.  Data in the staging buffer is be copied
     ///        to this output buffer in the call.
     ///
     /// \return Always true
     virtual bool processReceivedData(const void* staging, size_t length,
                                      size_t& cumulative, size_t& offset,
                                      size_t& expected,
-                                     isc::util::OutputBufferPtr& outbuff);
+                                     isc::util::OutputBufferPtr& buff);
 
     /// \brief Cancel I/O On Socket
     virtual void cancel();
@@ -495,7 +493,7 @@ TCPSocket<C>::close() {
     }
 }
 
-} // namespace asiolink
-} // namespace isc
+}  // namespace asiolink
+}  // namespace isc
 
 #endif // TCP_SOCKET_H

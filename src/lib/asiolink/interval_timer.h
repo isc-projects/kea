@@ -137,6 +137,7 @@ private:
 
 typedef boost::shared_ptr<isc::asiolink::IntervalTimer> IntervalTimerPtr;
 
-} // namespace asiolink
-} // namespace isc
+}  // namespace asiolink
+}  // namespace isc
+
 #endif // ASIOLINK_INTERVAL_TIMER_H

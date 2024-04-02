@@ -106,10 +106,6 @@ private:
     boost::asio::ip::tcp::endpoint& asio_endpoint_;
 };
 
-} // namespace asiolink
-} // namespace isc
+}  // namespace asiolink
+}  // namespace isc
 #endif // TCP_ENDPOINT_H
-
-// Local Variables:
-// mode: c++
-// End:

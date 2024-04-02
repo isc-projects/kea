@@ -18,6 +18,3 @@ unsigned char parentReadState(int fd);
 }
 }
 
-// Local Variables:
-// mode: c++
-// End:

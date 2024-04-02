@@ -296,9 +296,9 @@ public:
     /// In addition, if resource allocation for the new name fails, a
     /// corresponding standard exception will be thrown.
     ///
-    /// \param buffer A buffer storing the wire format %data.
+    /// \param buff A buffer storing the wire format %data.
     /// \param downcase Whether to convert upper case alphabets to lower case.
-    explicit Name(isc::util::InputBuffer& buffer, bool downcase = false);
+    explicit Name(isc::util::InputBuffer& buff, bool downcase = false);
     ///
     /// We use the default copy constructor intentionally.
     //@}
@@ -420,8 +420,8 @@ public:
     /// <code>buffer.getCapacity() - buffer.getLength() >= Name::MAX_WIRE</code>
     /// then this method should not throw an exception.
     ///
-    /// \param buffer An output buffer to store the wire %data.
-    void toWire(isc::util::OutputBuffer& buffer) const;
+    /// \param buff An output buffer to store the wire %data.
+    void toWire(isc::util::OutputBuffer& buff) const;
     //@}
 
     ///

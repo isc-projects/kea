@@ -89,7 +89,3 @@ matchTextData(const std::string& expected_text,
 }
 
 #endif // UTIL_UNITTESTS_TEXTDATA_H
-
-// Local Variables:
-// mode: c++
-// End:

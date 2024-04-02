@@ -153,8 +153,8 @@ class Message {
 public:
     /// Constants to specify the operation mode of the \c Message.
     enum Mode {
-        PARSE = 0,              ///< Parse mode (handling an incoming message)
-        RENDER = 1              ///< Render mode (building an outgoing message)
+        PARSE = 0,              // Parse mode (handling an incoming message)
+        RENDER = 1              // Render mode (building an outgoing message)
     };
 
     /// \brief Constants for flag bit fields of a DNS message header.
@@ -200,13 +200,13 @@ public:
     /// between the complexity and advantage, but hopefully the cast notation
     /// is sufficiently ugly to prevent proliferation of the usage.
     enum HeaderFlag {
-        HEADERFLAG_QR = 0x8000, ///< Query (if cleared) or response (if set)
-        HEADERFLAG_AA = 0x0400, ///< Authoritative answer
-        HEADERFLAG_TC = 0x0200, ///< Truncation
-        HEADERFLAG_RD = 0x0100, ///< Recursion desired
-        HEADERFLAG_RA = 0x0080, ///< Recursion available
-        HEADERFLAG_AD = 0x0020, ///< Authentic %data (RFC4035)
-        HEADERFLAG_CD = 0x0010  ///< DNSSEC checking disabled (RFC4035)
+        HEADERFLAG_QR = 0x8000, // Query (if cleared) or response (if set)
+        HEADERFLAG_AA = 0x0400, // Authoritative answer
+        HEADERFLAG_TC = 0x0200, // Truncation
+        HEADERFLAG_RD = 0x0100, // Recursion desired
+        HEADERFLAG_RA = 0x0080, // Recursion available
+        HEADERFLAG_AD = 0x0020, // Authentic %data (RFC4035)
+        HEADERFLAG_CD = 0x0010  // DNSSEC checking disabled (RFC4035)
     };
 
     /// \brief Constants to specify sections of a DNS message.
@@ -240,10 +240,10 @@ public:
     /// <b>Future Extension:</b> We'll probably also define constants for
     /// the section names used in dynamic updates in future versions.
     enum Section {
-        SECTION_QUESTION = 0,   ///< %Question section
-        SECTION_ANSWER = 1,     ///< Answer section
-        SECTION_AUTHORITY = 2,  ///< Authority section
-        SECTION_ADDITIONAL = 3  ///< Additional section
+        SECTION_QUESTION = 0,   // Question section
+        SECTION_ANSWER = 1,     // Answer section
+        SECTION_AUTHORITY = 2,  // Authority section
+        SECTION_ADDITIONAL = 3  // Additional section
     };
 
     ///
@@ -594,8 +594,8 @@ public:
     /// These are values of a bitmask type.  Bitwise operations can be
     /// performed on these values to express compound options.
     enum ParseOptions {
-        PARSE_DEFAULT = 0,       ///< The default options
-        PRESERVE_ORDER = 1       ///< Preserve RR order and don't combine them
+        PARSE_DEFAULT = 0,      // The default options
+        PRESERVE_ORDER = 1      // Preserve RR order and don't combine them
     };
 
     /// \brief Parse the header section of the \c Message.

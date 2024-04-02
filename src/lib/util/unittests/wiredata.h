@@ -31,7 +31,3 @@ void matchWireData(const void* expected_data, std::size_t expected_len,
 }
 
 #endif // UTIL_UNITTESTS_WIREDATA_H
-
-// Local Variables:
-// mode: c++
-// End:

@@ -11,13 +11,13 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <gtest/gtest.h>
 
+using namespace isc::asiolink;
+
 namespace {
 // TODO: Consider this margin
 const boost::posix_time::time_duration TIMER_MARGIN_MSEC =
     boost::posix_time::milliseconds(50);
 }
-
-using namespace isc::asiolink;
 
 // This fixture is for testing IntervalTimer. Some callback functors are
 // registered as callback function of the timer to test if they are called

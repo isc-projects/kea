@@ -22,8 +22,7 @@ public:
         isc::Exception(file, line, what) {}
 };
 
-
-} // namespace asiolink
-} // namespace isc
+}  // namespace asiolink
+}  // namespace isc
 
 #endif // IO_ERROR_H

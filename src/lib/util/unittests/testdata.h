@@ -40,7 +40,3 @@ void openTestData(const char* const datafile, std::ifstream& ifs);
 }
 
 #endif // UTIL_UNITTESTS_TESTDATA_H
-
-// Local Variables:
-// mode: c++
-// End:

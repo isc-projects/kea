@@ -26,35 +26,6 @@ using namespace isc::cryptolink;
 
 namespace isc {
 namespace dns {
-namespace {
-    HashAlgorithm
-    convertAlgorithmName(const isc::dns::Name& name) {
-        if (name == TSIGKey::HMACMD5_NAME()) {
-            return (isc::cryptolink::MD5);
-        }
-        if (name == TSIGKey::HMACMD5_SHORT_NAME()) {
-            return (isc::cryptolink::MD5);
-        }
-        if (name == TSIGKey::HMACSHA1_NAME()) {
-            return (isc::cryptolink::SHA1);
-        }
-        if (name == TSIGKey::HMACSHA256_NAME()) {
-            return (isc::cryptolink::SHA256);
-        }
-        if (name == TSIGKey::HMACSHA224_NAME()) {
-            return (isc::cryptolink::SHA224);
-        }
-        if (name == TSIGKey::HMACSHA384_NAME()) {
-            return (isc::cryptolink::SHA384);
-        }
-        if (name == TSIGKey::HMACSHA512_NAME()) {
-            return (isc::cryptolink::SHA512);
-        }
-
-        return (isc::cryptolink::UNKNOWN_HASH);
-    }
-}
-
 struct
 TSIGKey::TSIGKeyImpl {
     TSIGKeyImpl(const Name& key_name, const Name& algorithm_name,
@@ -91,6 +62,35 @@ TSIGKey::TSIGKeyImpl {
     size_t digestbits_;
     const vector<uint8_t> secret_;
 };
+
+namespace {
+    HashAlgorithm
+    convertAlgorithmName(const isc::dns::Name& name) {
+        if (name == TSIGKey::HMACMD5_NAME()) {
+            return (isc::cryptolink::MD5);
+        }
+        if (name == TSIGKey::HMACMD5_SHORT_NAME()) {
+            return (isc::cryptolink::MD5);
+        }
+        if (name == TSIGKey::HMACSHA1_NAME()) {
+            return (isc::cryptolink::SHA1);
+        }
+        if (name == TSIGKey::HMACSHA224_NAME()) {
+            return (isc::cryptolink::SHA224);
+        }
+        if (name == TSIGKey::HMACSHA256_NAME()) {
+            return (isc::cryptolink::SHA256);
+        }
+        if (name == TSIGKey::HMACSHA384_NAME()) {
+            return (isc::cryptolink::SHA384);
+        }
+        if (name == TSIGKey::HMACSHA512_NAME()) {
+            return (isc::cryptolink::SHA512);
+        }
+
+        return (isc::cryptolink::UNKNOWN_HASH);
+    }
+}
 
 TSIGKey::TSIGKey(const Name& key_name, const Name& algorithm_name,
                  const void* secret, size_t secret_len,
@@ -248,54 +248,6 @@ TSIGKey::toText() const {
     }
 }
 
-const
-Name& TSIGKey::HMACMD5_NAME() {
-    static Name alg_name("hmac-md5.sig-alg.reg.int");
-    return (alg_name);
-}
-
-const
-Name& TSIGKey::HMACMD5_SHORT_NAME() {
-    static Name alg_name("hmac-md5");
-    return (alg_name);
-}
-
-const
-Name& TSIGKey::HMACSHA1_NAME() {
-    static Name alg_name("hmac-sha1");
-    return (alg_name);
-}
-
-const
-Name& TSIGKey::HMACSHA256_NAME() {
-    static Name alg_name("hmac-sha256");
-    return (alg_name);
-}
-
-const
-Name& TSIGKey::HMACSHA224_NAME() {
-    static Name alg_name("hmac-sha224");
-    return (alg_name);
-}
-
-const
-Name& TSIGKey::HMACSHA384_NAME() {
-    static Name alg_name("hmac-sha384");
-    return (alg_name);
-}
-
-const
-Name& TSIGKey::HMACSHA512_NAME() {
-    static Name alg_name("hmac-sha512");
-    return (alg_name);
-}
-
-const
-Name& TSIGKey::GSSTSIG_NAME() {
-    static Name alg_name("gss-tsig");
-    return (alg_name);
-}
-
 struct TSIGKeyRing::TSIGKeyRingImpl {
     typedef map<Name, TSIGKey> TSIGKeyMap;
     typedef pair<Name, TSIGKey> NameAndKey;
@@ -315,9 +267,7 @@ TSIGKeyRing::size() const {
 
 TSIGKeyRing::Result
 TSIGKeyRing::add(const TSIGKey& key) {
-    if (impl_->keys.insert(
-                TSIGKeyRingImpl::NameAndKey(key.getKeyName(), key)).second
-        == true) {
+    if (impl_->keys.insert(TSIGKeyRingImpl::NameAndKey(key.getKeyName(), key)).second) {
         return (SUCCESS);
     } else {
         return (EXIST);
@@ -348,6 +298,54 @@ TSIGKeyRing::find(const Name& key_name, const Name& algorithm_name) const {
         return (FindResult(NOTFOUND, 0));
     }
     return (FindResult(SUCCESS, &((*found).second)));
+}
+
+const
+Name& TSIGKey::HMACMD5_NAME() {
+    static Name alg_name("hmac-md5.sig-alg.reg.int");
+    return (alg_name);
+}
+
+const
+Name& TSIGKey::HMACMD5_SHORT_NAME() {
+    static Name alg_name("hmac-md5");
+    return (alg_name);
+}
+
+const
+Name& TSIGKey::HMACSHA1_NAME() {
+    static Name alg_name("hmac-sha1");
+    return (alg_name);
+}
+
+const
+Name& TSIGKey::HMACSHA224_NAME() {
+    static Name alg_name("hmac-sha224");
+    return (alg_name);
+}
+
+const
+Name& TSIGKey::HMACSHA256_NAME() {
+    static Name alg_name("hmac-sha256");
+    return (alg_name);
+}
+
+const
+Name& TSIGKey::HMACSHA384_NAME() {
+    static Name alg_name("hmac-sha384");
+    return (alg_name);
+}
+
+const
+Name& TSIGKey::HMACSHA512_NAME() {
+    static Name alg_name("hmac-sha512");
+    return (alg_name);
+}
+
+const
+Name& TSIGKey::GSSTSIG_NAME() {
+    static Name alg_name("gss-tsig");
+    return (alg_name);
 }
 
 } // namespace dns

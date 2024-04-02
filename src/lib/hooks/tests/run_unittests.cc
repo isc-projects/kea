@@ -6,10 +6,10 @@
 
 #include <config.h>
 
-#include <log/logger_support.h>
-#include <util/unittests/run_all.h>
-
 #include <gtest/gtest.h>
+
+#include <util/unittests/run_all.h>
+#include <log/logger_support.h>
 
 int
 main(int argc, char* argv[]) {

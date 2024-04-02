@@ -53,5 +53,5 @@ IOSocket::getDummyTCPSocket() {
     return (socket);
 }
 
-} // namespace asiolink
-} // namespace isc
+}  // namespace asiolink
+}  // namespace isc

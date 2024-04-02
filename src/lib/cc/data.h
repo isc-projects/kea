@@ -1069,7 +1069,3 @@ bool operator<(const Element& a, const Element& b);
 }  // namespace isc
 
 #endif // ISC_DATA_H
-
-// Local Variables:
-// mode: c++
-// End:
