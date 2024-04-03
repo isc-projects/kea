@@ -175,13 +175,13 @@ DurationKey::getLabel() const {
         << "." << subnet_id_;
 
     return (oss.str());
-};
+}
 
 std::string
 DurationKey::getStatName(const std::string& value_name) const {
     std::ostringstream oss;
     if (subnet_id_ != SUBNET_ID_GLOBAL) {
-        oss << "subnet-id["  << subnet_id_ << "].";
+        oss << "subnet-id[" << subnet_id_ << "].";
     }
 
     oss << "perfmon."
@@ -192,7 +192,7 @@ DurationKey::getStatName(const std::string& value_name) const {
         << "." << value_name;
 
     return (oss.str());
-};
+}
 
 bool
 DurationKey::operator==(const DurationKey& other) const {

@@ -94,8 +94,8 @@ PerfMonMgr::processPktEventStack(isc::dhcp::PktPtr query,
 
     LOG_DEBUG(perfmon_logger, DBGLVL_TRACE_DETAIL,
               (family_ == AF_INET ? PERFMON_DHCP4_PKT_EVENTS : PERFMON_DHCP6_PKT_EVENTS))
-              .arg(query->getLabel())
-              .arg(query->dumpPktEvents());
+            .arg(query->getLabel())
+            .arg(query->dumpPktEvents());
 
     // If monitoring is disabled, then punt.
     if (!enable_monitoring_) {
@@ -115,7 +115,7 @@ PerfMonMgr::processPktEventStack(isc::dhcp::PktPtr query,
         } else {
             Duration sample = event.timestamp_ - prev_time;
             DurationKeyPtr key(new DurationKey(family_, query_type, response_type,
-                               prev_event_label, event.label_, subnet_id));
+                                               prev_event_label, event.label_, subnet_id));
             addDurationSample(key, sample);
 
             // Update global duration.
@@ -132,7 +132,7 @@ PerfMonMgr::processPktEventStack(isc::dhcp::PktPtr query,
     // Generate composite total.
     Duration sample = prev_time - start_time;
     DurationKeyPtr key(new DurationKey(family_, query_type, response_type,
-                       "composite", "total_response", subnet_id));
+                                       "composite", "total_response", subnet_id));
     addDurationSample(key, sample);
     // Update global duration.
     if (subnet_id != SUBNET_ID_GLOBAL) {
@@ -162,12 +162,12 @@ PerfMonMgr::addDurationSample(DurationKeyPtr key, const Duration& sample) {
 Duration
 PerfMonMgr::reportToStatsMgr(MonitoredDurationPtr duration) {
     if (!duration) {
-        isc_throw(BadValue, "reportToStatsMgr - duration is empty");
+        isc_throw(BadValue, "reportToStatsMgr - duration is empty!");
     }
 
     auto previous_interval = duration->getPreviousInterval();
     if (!previous_interval) {
-        isc_throw(BadValue, "reportToStatsMgr - duration previous interval is empty");
+        isc_throw(BadValue, "reportToStatsMgr - duration previous interval is empty!");
     }
 
     auto average = previous_interval->getAverageDuration();
@@ -178,7 +178,7 @@ PerfMonMgr::reportToStatsMgr(MonitoredDurationPtr duration) {
 
     /// @todo - decide if we want to report min and max values too.
 
-    return(average);
+    return (average);
 }
 
 void

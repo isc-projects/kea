@@ -129,7 +129,6 @@ public:
                 // No use case for this (yet).
                 break;
             }
-
         } else {
             // State should have changed.
             ASSERT_LT(before->getStosTime(), after->getStosTime());
@@ -149,7 +148,6 @@ public:
                 // No use case for this (yet).
                 break;
             }
-
         }
 
         before = after;
@@ -157,11 +155,11 @@ public:
 
     /// @brief Check the content of a stored MonitoredDuration.
     ///
-    /// @param line_no source line of the invocation
-    /// @param key DurationKey of the target duration
-    /// @param exp_current_total_ms expected value of the current interval's total_duration_
-    /// @param exp_previous true if the duration should have previous interval, defaults to false
-    /// @param exp_previous_total_ms expected value of the previous interval's total_duration_
+    /// @param line_no source line of the invocation.
+    /// @param key DurationKey of the target duration.
+    /// @param exp_current_total_ms expected value of the current interval's total_duration_.
+    /// @param exp_previous true if the duration should have previous interval, defaults to false.
+    /// @param exp_previous_total_ms expected value of the previous interval's total_duration_.
     void checkDuration(int line_no, DurationKeyPtr key, uint64_t exp_current_total_ms,
                        bool exp_previous = false, uint64_t exp_previous_total_ms = 0) {
         std::ostringstream oss;
@@ -293,7 +291,7 @@ public:
         ASSERT_EQ(durations->size(), 0);
     }
 
-    /// @brief Exercises  PerfMonMgr::reportToStatsMgr().
+    /// @brief Exercises PerfMonMgr::reportToStatsMgr().
     void testReportToStatsMgr() {
         // Minimal valid configuration.
         std::string valid_config =
@@ -307,15 +305,15 @@ public:
 
         MonitoredDurationPtr mond;
         ASSERT_THROW_MSG(mgr_->reportToStatsMgr(mond), BadValue,
-                        "reportToStatsMgr - duration is empty");
+                         "reportToStatsMgr - duration is empty!");
 
         ASSERT_NO_THROW_LOG(
             mond.reset(new MonitoredDuration(family_, 0, 0,
                                              "process-started", "process-completed",
-                                             70,  seconds(60))));
+                                             70, seconds(60))));
 
         ASSERT_THROW_MSG(mgr_->reportToStatsMgr(mond), BadValue,
-                        "reportToStatsMgr - duration previous interval is empty");
+                         "reportToStatsMgr - duration previous interval is empty!");
 
         mond->addSample(milliseconds(100));
         mond->addSample(milliseconds(250));
@@ -375,7 +373,7 @@ public:
         ASSERT_TRUE(before_alarm);
         EXPECT_EQ(Alarm::CLEAR, before_alarm->getState());
 
-        // 1.  Add two samples to the duratson inside the current interval
+        // 1. Add two samples to the duratson inside the current interval.
         // This should create the duration in the store.  Note both samples above
         // high-water-ms.
         ASSERT_NO_THROW_LOG(mgr_->addDurationSample(key, milliseconds(75)));
@@ -402,7 +400,7 @@ public:
         // Duration should have a current total of 95 ms, and a previous total of 160.
         checkDuration(__LINE__, key, 95, true, 160);
 
-        //  Should have one stat reported with a average value of 80.
+        // Should have one stat reported with a average value of 80.
         EXPECT_EQ(1, StatsMgr::instance().count());
         auto obs = StatsMgr::instance().getObservation(key->getStatName("average-ms"));
         ASSERT_TRUE(obs);
@@ -441,7 +439,7 @@ public:
         beforeAndAfterAlarm(__LINE__, before_alarm, Alarm::TRIGGERED, true);
         addString("reported average duration 00:00:00.100000 exceeds high-water-ms: 50");
 
-        //  Should have one stat reported with a value of 100.
+        // Should have one stat reported with a value of 100.
         EXPECT_EQ(1, StatsMgr::instance().count());
         obs = StatsMgr::instance().getObservation(key->getStatName("average-ms"));
         ASSERT_TRUE(obs);
@@ -459,9 +457,9 @@ public:
         // The Alarm should now be CLEAR since the newly completed interval is
         // below high water. The alarm should low-water report.
         beforeAndAfterAlarm(__LINE__, before_alarm, Alarm::CLEAR, false);
-        addString("reported average duration 00:00:00.010000 is now beloe low-water-ms: 25");
+        addString("reported average duration 00:00:00.010000 is now below low-water-ms: 25");
 
-        //  Should have one stat reported with a value of 10.
+        // Should have one stat reported with a value of 10.
         EXPECT_EQ(1, StatsMgr::instance().count());
         obs = StatsMgr::instance().getObservation(key->getStatName("average-ms"));
         ASSERT_TRUE(obs);

@@ -39,6 +39,7 @@ public:
     void configure(const isc::data::ConstElementPtr& params);
 
     /// @brief Sets convenience values and (re)creates the duration store.
+    ///
     /// Called by the constructor and also by configure().
     virtual void init();
 

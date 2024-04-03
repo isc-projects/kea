@@ -56,7 +56,7 @@ TEST(MonitoredDurationStore, invalidConstructors) {
                      " -00:00:00.005000, must be greater than zero");
 }
 
-/// @brief Text fixture class for @c MonitoredDurationStore
+/// @brief Text fixture class for @c MonitoredDurationStore.
 ///
 /// In order to facilitate single and multi threaded testing,
 /// individual tests are implemented as methods that are called
@@ -64,18 +64,18 @@ TEST(MonitoredDurationStore, invalidConstructors) {
 class MonitoredDurationStoreTest : public ::testing::Test {
 public:
 
-    /// @brief Constructor
+    /// @brief Constructor.
     MonitoredDurationStoreTest() = default;
 
-    /// @brief Destructor
+    /// @brief Destructor.
     virtual ~MonitoredDurationStoreTest() = default;
 
-    /// @brief Creates a protocol-specific DurationKey for a given subnet
+    /// @brief Creates a protocol-specific DurationKey for a given subnet.
     ///
     /// The message-pair and socket-event pairs are fixed.
     ///
-    /// @param family protocol family to test, AF_INET or AF_INET6
-    /// @param subnet SubnetID of the duration
+    /// @param family protocol family to test, AF_INET or AF_INET6.
+    /// @param subnet SubnetID of the duration.
     DurationKeyPtr makeKey(uint16_t family, SubnetID subnet = 1) {
         DurationKeyPtr key;
         if (family == AF_INET) {
@@ -90,7 +90,7 @@ public:
     /// @brief Verifies that durations can be added to the store and fetched
     /// by DurationKey.
     ///
-    /// @param family protocol family to test, AF_INET or AF_INET6
+    /// @param family protocol family to test, AF_INET or AF_INET6.
     void addDurationTest(uint16_t family) {
         Duration interval_duration(milliseconds(10));
         MonitoredDurationStore store(family, interval_duration);
@@ -130,7 +130,7 @@ public:
 
     /// @brief Verifies that duplicate durations cannot be added to the store.
     ///
-    /// @param family protocol family to test, AF_INET or AF_INET6
+    /// @param family protocol family to test, AF_INET or AF_INET6.
     void addDurationDuplicateTest(uint16_t family) {
         Duration interval_duration(milliseconds(10));
         MonitoredDurationStore store(family, interval_duration);
@@ -175,7 +175,7 @@ public:
 
     /// @brief Verify that durations can be deleted from the store.
     ///
-    /// @param family protocol family to test, AF_INET or AF_INET6
+    /// @param family protocol family to test, AF_INET or AF_INET6.
     void deleteDurationTest(uint16_t family) {
         MonitoredDurationStore store(family, milliseconds(5));
 
@@ -246,7 +246,7 @@ public:
 
     /// @brief Verify that durations in the store can be updated.
     ///
-    /// @param family protocol family to test, AF_INET or AF_INET6
+    /// @param family protocol family to test, AF_INET or AF_INET6.
     void updateDurationTest(uint16_t family) {
         Duration interval_duration(seconds(60));
         MonitoredDurationStore store(family, interval_duration);
@@ -330,7 +330,7 @@ public:
 
     /// @brief Exercises addDurationSample() valid behavior.
     ///
-    /// @param family protocol family to test, AF_INET or AF_INET6
+    /// @param family protocol family to test, AF_INET or AF_INET6.
     void addDurationSampleTest(uint16_t family) {
         // Create a store.
         Duration interval_duration(milliseconds(50));
@@ -393,9 +393,9 @@ public:
         EXPECT_EQ(previous_interval->getTotalDuration(), (five_ms) * 2);
     }
 
-    /// @brief Veriries getReportsNext and getOverdueReports
+    /// @brief Veriries getReportsNext and getOverdueReports.
     ///
-    /// @param family protocol family to test, AF_INET or AF_INET6
+    /// @param family protocol family to test, AF_INET or AF_INET6.
     void reportDueTest(uint16_t family) {
         // Create a store.
         Duration interval_duration(milliseconds(100));
@@ -486,7 +486,7 @@ public:
     /// of adding duration samples. It does not pass or fail and thus is not
     /// included in explicit UTs.
     ///
-    /// @param family protocol family to test, AF_INET or AF_INET6
+    /// @param family protocol family to test, AF_INET or AF_INET6.
     void speedCheck(uint16_t family) {
         // Create a store.
         Duration interval_duration(microseconds(100));
@@ -534,7 +534,7 @@ public:
 
     /// @brief Verifies that composite key index compares correctly with adjacent events.
     ///
-    /// @param family protocol family to test, AF_INET or AF_INET6
+    /// @param family protocol family to test, AF_INET or AF_INET6.
     void adjacentEventTest(uint16_t family) {
         Duration interval_duration(milliseconds(10));
         MonitoredDurationStore store(family, interval_duration);
@@ -568,11 +568,11 @@ public:
 
 };
 
-TEST_F(MonitoredDurationStoreTest, addDuration) {
+TEST_F(MonitoredDurationStoreTest, addDuration4) {
     addDurationTest(AF_INET);
 }
 
-TEST_F(MonitoredDurationStoreTest, addDurationMultiThreading) {
+TEST_F(MonitoredDurationStoreTest, addDuration4MultiThreading) {
     MultiThreadingTest mt;
     addDurationTest(AF_INET);
 }
@@ -586,11 +586,11 @@ TEST_F(MonitoredDurationStoreTest, addDuration6MultiThreading) {
     addDurationTest(AF_INET6);
 }
 
-TEST_F(MonitoredDurationStoreTest, addDurationDuplicate) {
+TEST_F(MonitoredDurationStoreTest, addDuration4Duplicate) {
     addDurationDuplicateTest(AF_INET);
 }
 
-TEST_F(MonitoredDurationStoreTest, addDurationDuplicateMultiThreading) {
+TEST_F(MonitoredDurationStoreTest, addDuration4DuplicateMultiThreading) {
     MultiThreadingTest mt;
     addDurationDuplicateTest(AF_INET);
 }
@@ -613,11 +613,11 @@ TEST_F(MonitoredDurationStoreTest, addDurationInvalidMultiThreading) {
     addDurationInvalidTest();
 }
 
-TEST_F(MonitoredDurationStoreTest, deleteDuration) {
+TEST_F(MonitoredDurationStoreTest, deleteDuration4) {
     deleteDurationTest(AF_INET);
 }
 
-TEST_F(MonitoredDurationStoreTest, deleteDurationMultiThreading) {
+TEST_F(MonitoredDurationStoreTest, deleteDuration4MultiThreading) {
     MultiThreadingTest mt;
     deleteDurationTest(AF_INET);
 }
@@ -640,11 +640,11 @@ TEST_F(MonitoredDurationStoreTest, deleteDurationInvalidMultiThreading) {
     deleteDurationInvalidTest();
 }
 
-TEST_F(MonitoredDurationStoreTest, updateDuration) {
+TEST_F(MonitoredDurationStoreTest, updateDuration4) {
     updateDurationTest(AF_INET);
 }
 
-TEST_F(MonitoredDurationStoreTest, updateDurationMultiThreading) {
+TEST_F(MonitoredDurationStoreTest, updateDuration4MultiThreading) {
     MultiThreadingTest mt;
     updateDurationTest(AF_INET);
 }
@@ -667,11 +667,11 @@ TEST_F(MonitoredDurationStoreTest, updateDurationInvalidMultiThreading) {
     updateDurationInvalidTest();
 }
 
-TEST_F(MonitoredDurationStoreTest, addDurationSample) {
+TEST_F(MonitoredDurationStoreTest, addDurationSample4) {
     addDurationSampleTest(AF_INET);
 }
 
-TEST_F(MonitoredDurationStoreTest, addDurationSampleMultiThreading) {
+TEST_F(MonitoredDurationStoreTest, addDurationSample4MultiThreading) {
     MultiThreadingTest mt;
     addDurationSampleTest(AF_INET);
 }
@@ -685,11 +685,11 @@ TEST_F(MonitoredDurationStoreTest, addDurationSample6MultiThreading) {
     addDurationSampleTest(AF_INET6);
 }
 
-TEST_F(MonitoredDurationStoreTest, reportDue) {
+TEST_F(MonitoredDurationStoreTest, reportDue4) {
     reportDueTest(AF_INET);
 }
 
-TEST_F(MonitoredDurationStoreTest, reportDueMultiThreading) {
+TEST_F(MonitoredDurationStoreTest, reportDue4MultiThreading) {
     MultiThreadingTest mt;
     reportDueTest(AF_INET);
 }
@@ -703,7 +703,7 @@ TEST_F(MonitoredDurationStoreTest, reportDue6MultiThreading) {
     reportDueTest(AF_INET6);
 }
 
-TEST_F(MonitoredDurationStoreTest, adjacentEvent) {
+TEST_F(MonitoredDurationStoreTest, adjacentEvent4) {
     adjacentEventTest(AF_INET);
 }
 

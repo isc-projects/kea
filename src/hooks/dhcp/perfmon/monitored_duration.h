@@ -190,7 +190,7 @@ public:
 
     /// @brief Set the subnet id.
     ///
-    /// @param subnet_id new value for subnet id.x
+    /// @param subnet_id new value for subnet id.
     void setSubnetId(dhcp::SubnetID subnet_id) {
         subnet_id_ = subnet_id;
     }
@@ -224,16 +224,16 @@ public:
     /// @return the composite label.
     std::string getLabel() const;
 
-    /// @brief Get the StatsMgr formatted compatible name
+    /// @brief Get the StatsMgr formatted compatible name.
     ///
-    /// @param value_name  name of the specific value (e.g. "average-ms", "min-duration-ms")
+    /// @param value_name name of the specific value (e.g. "average-ms", "min-duration-ms").
     /// The format of the string:
     ///
     /// @code
     ///
     ///     {subnet-id[x]}.perfmon.<query type>-<response type>.<start event>-<end event>.<value-name>
     ///
-    /// Example:
+    /// Examples:
     ///
     ///  perfmon.discover-offer.socket_received-buffer_read.average-ms
     ///

@@ -44,14 +44,15 @@ public:
     }
 
     /// @brief Registers hooks in the hook manager.
+    ///
     /// Normally this is done by the server core code.
     void registerHooks() {
         if (isc::dhcp::CfgMgr::instance().getFamily() == AF_INET) {
             hook_index_dhcpx_srv_configured_ = HooksManager::registerHook("dhcp4_srv_configured");
-            hook_index_pktx_send_ =  HooksManager::registerHook("pkt4_send");
+            hook_index_pktx_send_ = HooksManager::registerHook("pkt4_send");
         } else {
             hook_index_dhcpx_srv_configured_ = HooksManager::registerHook("dhcp6_srv_configured");
-            hook_index_pktx_send_ =  HooksManager::registerHook("pkt6_send");
+            hook_index_pktx_send_ = HooksManager::registerHook("pkt6_send");
         }
     }
 

@@ -116,7 +116,7 @@ MonitoredDurationStore::addDuration(DurationKeyPtr key) {
         if (ret.second == false) {
             isc_throw(DuplicateDurationKey,
                       "MonitoredDurationStore::addDuration: duration already exists for: "
-                      << key->getLabel());
+                      << mond->getLabel());
         }
     }
 

@@ -38,18 +38,16 @@ extern "C" {
 int dhcp4_srv_configured(CalloutHandle& /* handle */) {
     // We do this here rather than in load() to ensure we check after the
     // packet filter has been determined.
-    LOG_DEBUG(perfmon_logger, DBGLVL_TRACE_BASIC,
-              PERFMON_DHCP4_SOCKET_RECEIVED_TIME_SUPPORT)
-              .arg(IfaceMgr::instance().isSocketReceivedTimeSupported() ? "Yes" : "No");
+    LOG_DEBUG(perfmon_logger, DBGLVL_TRACE_BASIC, PERFMON_DHCP4_SOCKET_RECEIVED_TIME_SUPPORT)
+            .arg(IfaceMgr::instance().isSocketReceivedTimeSupported() ? "Yes" : "No");
     return (0);
 }
 
 int dhcp6_srv_configured(CalloutHandle& /* handle */) {
     // We do this here rather than in load() to ensure we check after the
     // packet filter has been determined.
-    LOG_DEBUG(perfmon_logger, DBGLVL_TRACE_BASIC,
-              PERFMON_DHCP6_SOCKET_RECEIVED_TIME_SUPPORT)
-              .arg(IfaceMgr::instance().isSocketReceivedTimeSupported() ? "Yes" : "No");
+    LOG_DEBUG(perfmon_logger, DBGLVL_TRACE_BASIC, PERFMON_DHCP6_SOCKET_RECEIVED_TIME_SUPPORT)
+            .arg(IfaceMgr::instance().isSocketReceivedTimeSupported() ? "Yes" : "No");
     return (0);
 }
 
@@ -78,8 +76,8 @@ int pkt4_send(CalloutHandle& handle) {
         mgr->processPktEventStack(query, response, subnet->getID());
     } catch (const std::exception& ex) {
         LOG_DEBUG(perfmon_logger, DBGLVL_TRACE_DETAIL, PERFMON_DHCP4_PKT_PROCESS_ERROR)
-                  .arg(query->getLabel())
-                  .arg(ex.what());
+                .arg(query->getLabel())
+                .arg(ex.what());
     }
 
     return (0);
@@ -110,8 +108,8 @@ int pkt6_send(CalloutHandle& handle) {
         mgr->processPktEventStack(query, response, subnet->getID());
     } catch (const std::exception& ex) {
         LOG_DEBUG(perfmon_logger, DBGLVL_TRACE_DETAIL, PERFMON_DHCP6_PKT_PROCESS_ERROR)
-                  .arg(query->getLabel())
-                  .arg(ex.what());
+                .arg(query->getLabel())
+                .arg(ex.what());
     }
 
     return (0);
@@ -146,7 +144,8 @@ int load(LibraryHandle& handle) {
         /// @todo register commands
         /// handle.registerCommandCallout("command-here", handler_here);
     } catch (const std::exception& ex) {
-        LOG_ERROR(perfmon_logger, PERFMON_INIT_FAILED).arg(ex.what());
+        LOG_ERROR(perfmon_logger, PERFMON_INIT_FAILED)
+	        .arg(ex.what());
         return (1);
     }
 
