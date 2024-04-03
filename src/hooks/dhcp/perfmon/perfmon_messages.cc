@@ -20,7 +20,7 @@ extern const isc::log::MessageID PERFMON_INIT_OK = "PERFMON_INIT_OK";
 namespace {
 
 const char* values[] = {
-    "PERFMON_ALARM_CLEARED", "Alarm for %1 has been cleared, reported average duration %2 is now beloe low-water-ms: %3",
+    "PERFMON_ALARM_CLEARED", "Alarm for %1 has been cleared, reported average duration %2 is now below low-water-ms: %3",
     "PERFMON_ALARM_TRIGGERED", "Alarm for %1 has been triggered since %2, reported average duration %3 exceeds high-water-ms: %4",
     "PERFMON_DEINIT_FAILED", "unloading PerfMon hooks library failed: %1",
     "PERFMON_DEINIT_OK", "unloading PerfMon hooks library successful",

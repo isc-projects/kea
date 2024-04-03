@@ -1,3 +1,10 @@
+2216.	[func]		tmark
+	PerfMon hook library is now functional. It accumulates
+	and reports performance data, and supports alarms. Still
+	lacking are API commands.
+	(Gitlab #3297)
+
+
 2215.	[bug]		tmark
 	Corrected an issue that can cause kea-dhcp-ddns to
 	stop processing queued requests. Thanks to Shawn

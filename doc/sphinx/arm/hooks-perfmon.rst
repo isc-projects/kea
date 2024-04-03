@@ -9,7 +9,8 @@ to extend them with the ability to track and report performance related data.
 
 .. note::
 
-    This library is currently under development and not fully functional.
+    This library is experimental and not recommended for use in production
+    environments.
 
 Overview
 ~~~~~~~~
@@ -93,23 +94,127 @@ uniquely identified by a "duration key" which consists of the following values:
 Once the server has finished constructing a response to a query, the query's event stack
 is processed into a series of updates to monitored durations.  If upon updating, a
 duration's sample interval is found to have been completed, it is sent to reporting
-and a new sample  interval is begun.
+and a new sample  interval is begun.  The interval width is dictacted by configuration
+parameter ``interval-width-secs``.
 
-.. Note:
-    Monitoring is not yet functional.
+The event stack for the multi-threaded mode DHCPDISCOVER/DHCPOFFER cycle shown above
+contains the following events:
+
+    +-----------------------------+--------------------+
+    | Event Timestamp             | Event Label        |
+    +=============================+====================+
+    | 2024-Mar-20 14:52:20.067563 | socket_received    |
+    +-----------------------------+--------------------+
+    | 2024-Mar-20 14:52:20.067810 | buffer_read        |
+    +-----------------------------+--------------------+
+    | 2024-Mar-20 14:52:20.067897 | mt_queued          |
+    +-----------------------------+--------------------+
+    | 2024-Mar-20 14:52:20.067952 | process_started    |
+    +-----------------------------+--------------------+
+    | 2024-Mar-20 14:52:20.069614 | process_completed  |
+    +-----------------------------+--------------------+
+
+Assuming the selected subnet's ID was 100, the duration updates formed by PerfMon
+from these events are shown below:
+
+    +--------------------------------------------------------------+--------------+
+    | Duration Keys for SubnetID 100                               | Update in    |
+    |                                                              | microseconds |
+    +==============================================================+==============+
+    | DHCPDISCOVER.DHCPOFFER.socket_received-buffer_read.100       |          247 |
+    +--------------------------------------------------------------+--------------+
+    | DHCPDISCOVER.DHCPOFFER.buffer_read-mt_queue.100              |           87 |
+    +--------------------------------------------------------------+--------------+
+    | DHCPDISCOVER.DHCPOFFER.mt_queued-process_started.100         |           55 |
+    +--------------------------------------------------------------+--------------+
+    | DHCPDISCOVER.DHCPOFFER.process_started-process_completed.100 |         1662 |
+    +--------------------------------------------------------------+--------------+
+    | DHCPDISCOVER.DHCPOFFER.composite-total_response.100          |         2051 |
+    +--------------------------------------------------------------+--------------+
+
+Notice that in addition to the adjacent event updates, there is an additional duration
+update for the total duration of the entire stack whose key contains the event-pair
+``composite-total_response``.  This tracks the total time to responds from query
+received until the response is ready to send.  Finally, there would also be global
+duration updates for each of the above:
+
+    +--------------------------------------------------------------+--------------+
+    |  Global Duration Keys                                        | Update in    |
+    |                                                              | milliseconds |
+    +==============================================================+==============+
+    | DHCPDISCOVER.DHCPOFFER.socket_received-buffer_read.0         |          247 |
+    +--------------------------------------------------------------+--------------+
+    | DHCPDISCOVER.DHCPOFFER.buffer_read-mt_queue.0                |           87 |
+    +--------------------------------------------------------------+--------------+
+    | DHCPDISCOVER.DHCPOFFER.mt_queued-process_started.0           |           55 |
+    +--------------------------------------------------------------+--------------+
+    | DHCPDISCOVER.DHCPOFFER.process_started-process_completed.0   |         1662 |
+    +--------------------------------------------------------------+--------------+
+    | DHCPDISCOVER.DHCPOFFER.composite-total_response.0            |         2051 |
+    +--------------------------------------------------------------+--------------+
+
+Statistics Reporting
+~~~~~~~~~~~~~~~~~~~~
+
+When enabled (see ``stats-mgr-reporting``), PerfMon will report a duration's data
+data each time the duration completes a sampling interval.  Each statistic employs
+the following naming convention:
+
+::
+
+    {subnet-id[x]}.perfmon.<query type>-<response type>.<start event>-<end event>.<value-name>
+
+And there will be both a global and a subnet-specific value for each.  Currently the only
+value reported for a given duration key is "average-ms".  This statistic is the average time
+between the duration's event pair over the most recently completed interval.  In other
+words if during a given interval there were 7 occurrences (i.e. updates) totaling
+350ms, the the average-ms reported would be 50ms.  Continuing with example above, the
+statistics reported would be named as follows for subnet level values:
+
+::
+
+    subnet[100].perfmon.DHCPDISCOVER.DHCPOFFER.socket_received-buffer_read.average-ms
+    subnet[100].perfmon.DHCPDISCOVER.DHCPOFFER.buffer_read-mt_queue.average-ms
+    subnet[100].perfmon.DHCPDISCOVER.DHCPOFFER.mt_queued-process_started.average-ms
+    subnet[100].perfmon.DHCPDISCOVER.DHCPOFFER.process_started-process_completed.average-ms
+    subnet[100].perfmon.DHCPDISCOVER.DHCPOFFER.composite-total_response.average-ms
+
+and as shown for global values:
+
+::
+
+    perfmon.DHCPDISCOVER.DHCPOFFER.socket_received-buffer_read.average-ms
+    perfmon.DHCPDISCOVER.DHCPOFFER.buffer_read-mt_queue.average-ms
+    perfmon.DHCPDISCOVER.DHCPOFFER.mt_queued-process_started.average-ms
+    perfmon.DHCPDISCOVER.DHCPOFFER.process_started-process_completed.average-ms
+    perfmon.DHCPDISCOVER.DHCPOFFER.composite-total_response.average-ms
+
+Since they are reported to StatsMgr they may be fetched using the commands :isccmd:`statistic-get-all`
+or :isccmd:`statistic-get`.
 
 Alarms
 ~~~~~~
 
-Alarms may be defined to watch specific durations. Each alarm defines a high-water mark and a
-low-water mark.  When the reported average value for duration exceeds the high-water mark, a
-WARN level alarm log will be emitted at which point the alarm is considered "triggered".  Once
-triggered the WARN level log will be repeated at a specified alarm report interval as long the
-reported average for the duration remains above the low-water mark.  Once the average falls
-below the low-water mark the alarm is "cleared" and an INFO level log will be emitted.
+Alarms may be defined to watch specific durations. Each alarm defines a high-water mark,
+``high-water-ms`` and a low-water mark, ``low-water-ms``.  When the reported average value
+for duration exceeds the high-water mark, a WARN level alarm log will be emitted at which
+point the alarm is considered "triggered".  Once triggered the WARN level log will be
+repeated at a specified alarm report interval, ``alarm-report-secs`` as long the reported
+average for the duration remains above the low-water mark. Once the average falls below the
+low-water mark the alarm is "cleared" and an INFO level log will be emitted.
 
-.. Note:
-    Alarms are not yet functional.
+The alarm triggered WARN log will look similar to the following:
+
+::
+
+    2024-03-20 10:22:14.030 WARN [kea-dhcp6.leases/47195.139913679886272] PERFMON_ALARM_TRIGGERED Alarm for DHCPDISCOVER.DHCPOFFER.composite-total_response.0 has been triggered since 2024-03-20 10:18:20.070000, reported average duration 00:00:00.700000 exceeds high-water-ms: 500
+
+
+and he alarm cleared INFO log will look similar to the following:
+
+::
+
+     2024-03-20 10:30:14.030 INFO [kea-dhcp6.leases/47195.139913679886272] PERFMON_ALARM_CLEARED Alarm for DHCPDISCOVER.DHCPOFFER.composite-total_response.0 has been cleared, reported average duration 00:00:00.010000 is now below low-water-ms: 25
 
 API Commands
 ~~~~~~~~~~~~
@@ -153,7 +258,7 @@ An example of the anticipated configuration is shown below:
 Where:
 
 * enable-monitoring
-    Enables event data aggregation for reporting, statisitcs, and alarms. Defaults to false.
+    Enables event data aggregation for reporting, statistics, and alarms. Defaults to false.
 * interval-width-secs
     The amount of time, in seconds, that individual task durations are accumulated into an
     aggregate before it is reported. Default is 60 seconds.
@@ -167,7 +272,7 @@ Where:
     defined by the following:
 
   * duration-key
-        Idenitifies the monitored duration to watch
+        Identifies the monitored duration to watch
 
     * query-type - Message type of the client query (e.g.DHCPDISCOVER, DHCPV6_REQUEST)
     * response-type - Message type of the server response  (e.g. DHCPOFFER, DHCPV6_REPLY)
