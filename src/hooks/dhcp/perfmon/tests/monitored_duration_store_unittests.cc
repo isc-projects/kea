@@ -546,8 +546,8 @@ public:
 
         // Make multiple calls to addDurationSample() for each key, starting with key1.
         for (int i = 0; i < 4; ++i) {
-            ASSERT_NO_THROW_LOG(mond = store.addDurationSample(key1, milliseconds(1)));
-            ASSERT_NO_THROW_LOG(mond = store.addDurationSample(key2, milliseconds(2)));
+            ASSERT_NO_THROW_LOG(store.addDurationSample(key1, milliseconds(1)));
+            ASSERT_NO_THROW_LOG(store.addDurationSample(key2, milliseconds(2)));
         }
 
         // Get all should retrieve all four in ascending order.
