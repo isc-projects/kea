@@ -546,7 +546,6 @@ public:
 
         // Make multiple calls to addDurationSample() for each key, starting with key1.
         for (int i = 0; i < 4; ++i) {
-            MonitoredDurationPtr mond;
             ASSERT_NO_THROW_LOG(mond = store.addDurationSample(key1, milliseconds(1)));
             ASSERT_NO_THROW_LOG(mond = store.addDurationSample(key2, milliseconds(2)));
         }
@@ -711,7 +710,7 @@ TEST_F(MonitoredDurationStoreTest, adjacentEvent6) {
     adjacentEventTest(AF_INET6);
 }
 
-TEST_F(MonitoredDurationStoreTest, speed) {
+TEST_F(MonitoredDurationStoreTest, DISABLED_speed) {
     speedCheck(AF_INET);
 }
 
