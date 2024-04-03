@@ -94,7 +94,7 @@ uniquely identified by a "duration key" which consists of the following values:
 Once the server has finished constructing a response to a query, the query's event stack
 is processed into a series of updates to monitored durations.  If upon updating, a
 duration's sample interval is found to have been completed, it is sent to reporting
-and a new sample  interval is begun.  The interval width is dictacted by configuration
+and a new sample interval is begun.  The interval width is dictacted by configuration
 parameter ``interval-width-secs``.
 
 The event stack for the multi-threaded mode DHCPDISCOVER/DHCPOFFER cycle shown above
@@ -157,8 +157,8 @@ Statistics Reporting
 ~~~~~~~~~~~~~~~~~~~~
 
 When enabled (see ``stats-mgr-reporting``), PerfMon will report a duration's data
-data each time the duration completes a sampling interval.  Each statistic employs
-the following naming convention:
+each time the duration completes a sampling interval.  Each statistic employs the
+following naming convention:
 
 ::
 
@@ -210,7 +210,7 @@ The alarm triggered WARN log will look similar to the following:
     2024-03-20 10:22:14.030 WARN [kea-dhcp6.leases/47195.139913679886272] PERFMON_ALARM_TRIGGERED Alarm for DHCPDISCOVER.DHCPOFFER.composite-total_response.0 has been triggered since 2024-03-20 10:18:20.070000, reported average duration 00:00:00.700000 exceeds high-water-ms: 500
 
 
-and he alarm cleared INFO log will look similar to the following:
+and the alarm cleared INFO log will look similar to the following:
 
 ::
 
@@ -275,7 +275,7 @@ Where:
         Identifies the monitored duration to watch
 
     * query-type - Message type of the client query (e.g.DHCPDISCOVER, DHCPV6_REQUEST)
-    * response-type - Message type of the server response  (e.g. DHCPOFFER, DHCPV6_REPLY)
+    * response-type - Message type of the server response (e.g. DHCPOFFER, DHCPV6_REPLY)
     * start-event - Event that defines the beginning of the task (e.g. socket_received, process_started)
     * stop-event - Event that defines the end of the task
     * subnet-id - subnet selected during message processing (or 0 for global durations)
