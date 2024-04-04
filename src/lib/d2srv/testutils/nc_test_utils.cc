@@ -142,12 +142,12 @@ FauxServer::requestHandler(const boost::system::error_code& error,
 
         // If context is not NULL, then we need to verify the message.
         if (context) {
-            dns::TSIGError error = context->verify(request.getTSIGRecord(),
-                                                   receive_buffer_,
-                                                   bytes_recvd);
-            if (error != dns::TSIGError::NOERROR()) {
+            dns::TSIGError tsig_error = context->verify(request.getTSIGRecord(),
+                                                        receive_buffer_,
+                                                        bytes_recvd);
+            if (tsig_error != dns::TSIGError::NOERROR()) {
                 isc_throw(TSIGVerifyError, "TSIG verification failed: "
-                          << error.toText());
+                          << tsig_error.toText());
             }
         }
     } catch (const std::exception& ex) {

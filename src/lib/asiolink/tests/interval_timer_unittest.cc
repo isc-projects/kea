@@ -13,12 +13,6 @@
 
 using namespace isc::asiolink;
 
-namespace {
-// TODO: Consider this margin
-const boost::posix_time::time_duration TIMER_MARGIN_MSEC =
-    boost::posix_time::milliseconds(50);
-}
-
 // This fixture is for testing IntervalTimer. Some callback functors are
 // registered as callback function of the timer to test if they are called
 // or not.
@@ -48,16 +42,13 @@ protected:
     };
     class TimerCallBackCounter {
     public:
-        TimerCallBackCounter(IntervalTimerTest* test_obj) :
-            test_obj_(test_obj) {
+        TimerCallBackCounter(IntervalTimerTest* /* test_obj */) {
             counter_ = 0;
         }
         void operator()() {
             ++counter_;
         }
         int counter_;
-    private:
-        IntervalTimerTest* test_obj_;
     };
     class TimerCallBackCancelDeleter {
     public:
@@ -133,14 +124,13 @@ protected:
     };
     class TimerCallBackAccumulator {
     public:
-        TimerCallBackAccumulator(IntervalTimerTest* test_obj, int &counter) :
-            test_obj_(test_obj), counter_(counter) {
+        TimerCallBackAccumulator(IntervalTimerTest* /* test_obj */, int &counter) :
+            counter_(counter) {
         }
         void operator()() {
             ++counter_;
         }
     private:
-        IntervalTimerTest* test_obj_;
         // Reference to integer accumulator
         int& counter_;
     };

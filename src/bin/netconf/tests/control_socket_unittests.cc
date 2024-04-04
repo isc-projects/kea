@@ -135,7 +135,7 @@ TEST(StdoutControlSocketTest, configSet) {
 //////////////////////////////// UNIX ////////////////////////////////
 
 /// @brief Test timeout in ms.
-const long TEST_TIMEOUT = 10000;
+const long TEST_TIMEOUT = 1500;
 
 /// @brief Test fixture class for unix control sockets.
 class UnixControlSocketTest : public ThreadedTest {
@@ -231,7 +231,7 @@ UnixControlSocketTest::reflectServer() {
     timer.setup([&timeout]() {
             timeout = true;
             FAIL() << "timeout";
-        }, 1500, IntervalTimer::ONE_SHOT);
+        }, TEST_TIMEOUT, IntervalTimer::ONE_SHOT);
 
     // Accept.
     bool accepted = false;

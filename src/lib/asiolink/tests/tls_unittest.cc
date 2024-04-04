@@ -103,8 +103,7 @@ public:
     }
 
     /// @brief Destructor.
-    virtual ~TestCallback() {
-    }
+    virtual ~TestCallback() = default;
 
     /// @brief Callback function (one argument).
     ///

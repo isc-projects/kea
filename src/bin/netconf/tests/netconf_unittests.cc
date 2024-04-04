@@ -147,9 +147,9 @@ public:
         string socket_path;
         const char* env = getenv("KEA_SOCKET_TEST_DIR");
         if (env) {
-            socket_path = string(env) + "/test-socket";
+            socket_path = string(env) + "/" + TEST_SOCKET;
         } else {
-            socket_path = sandbox.join("test-socket");
+            socket_path = sandbox.join(TEST_SOCKET);
         }
         return (socket_path);
     }

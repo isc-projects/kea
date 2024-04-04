@@ -504,11 +504,11 @@ public:
 
         // Start the requisite number of requests:
         //   batch * listeners * threads.
-        int sequence = 0;
-        for (auto b = 0; b < num_batches; ++b) {
-            for (auto l = 0; l < num_listeners_; ++l) {
-                for (auto t = 0; t < effective_threads; ++t) {
-                    startRequest(++sequence, l);
+        int sequence_nr = 0;
+        for (size_t b = 0; b < num_batches; ++b) {
+            for (size_t l = 0; l < num_listeners_; ++l) {
+                for (size_t t = 0; t < effective_threads; ++t) {
+                    startRequest(++sequence_nr, l);
                 }
             }
         }
@@ -662,11 +662,11 @@ public:
 
         // Start the requisite number of requests:
         //   batch * listeners * threads.
-        int sequence = 0;
-        for (auto b = 0; b < num_batches; ++b) {
-            for (auto l = 0; l < num_listeners_; ++l) {
-                for (auto t = 0; t < num_threads_; ++t) {
-                    startRequestSimple(++sequence, l);
+        int sequence_nr = 0;
+        for (size_t b = 0; b < num_batches; ++b) {
+            for (size_t l = 0; l < num_listeners_; ++l) {
+                for (size_t t = 0; t < num_threads_; ++t) {
+                    startRequestSimple(++sequence_nr, l);
                 }
             }
         }

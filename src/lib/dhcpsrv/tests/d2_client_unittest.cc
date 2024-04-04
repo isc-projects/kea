@@ -1233,7 +1233,6 @@ TEST_F(D2ClientMgrParamsTest, sanitizeFqdnV6) {
         }
     };
 
-    Option6ClientFqdnPtr response;
     for (auto const& scenario : scenarios) {
         SCOPED_TRACE(scenario.description_);
         {

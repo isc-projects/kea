@@ -4435,8 +4435,8 @@ Dhcpv6Srv::requiredClassify(const Pkt6Ptr& pkt, AllocEngine::ClientContext6& ctx
                                      resource.getAddress(),
                                      false);
             if (pool) {
-                const ClientClasses& to_add = pool->getRequiredClasses();
-                for (auto const& cclass : to_add) {
+                const ClientClasses& pool_to_add = pool->getRequiredClasses();
+                for (auto const& cclass : pool_to_add) {
                     classes.insert(cclass);
                 }
             }

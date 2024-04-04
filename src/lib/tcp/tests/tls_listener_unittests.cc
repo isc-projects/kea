@@ -28,18 +28,8 @@ namespace {
 /// @brief IP address to which service is bound.
 const std::string SERVER_ADDRESS = "127.0.0.1";
 
-/// @brief IPv6 address to whch service is bound.
-const std::string IPV6_SERVER_ADDRESS = "::1";
-
 /// @brief Port number to which service is bound.
 const unsigned short SERVER_PORT = 18123;
-
-/// @brief Request Timeout used in most of the tests (ms).
-const long REQUEST_TIMEOUT = 10000;
-
-/// @brief Connection idle timeout used in tests where idle connections
-/// are tested (ms).
-const long SHORT_REQUEST_TIMEOUT = 200;
 
 /// @brief Connection idle timeout used in most of the tests (ms).
 const long IDLE_TIMEOUT = 10000;

@@ -2474,7 +2474,6 @@ Dhcpv4Srv::processClientName(Dhcpv4Exchange& ex) {
         bool fqdn_fwd = false;
         bool fqdn_rev = false;
 
-
         OptionStringPtr opt_hostname;
         fqdn = boost::dynamic_pointer_cast<Option4ClientFqdn>(resp->getOption(DHO_FQDN));
         if (fqdn) {
@@ -2556,8 +2555,7 @@ Dhcpv4Srv::processClientName(Dhcpv4Exchange& ex) {
 
                 // If there's an outbound FQDN option in the response we need
                 // to update it with the new host name.
-                Option4ClientFqdnPtr fqdn = boost::dynamic_pointer_cast<Option4ClientFqdn>
-                                            (resp->getOption(DHO_FQDN));
+                fqdn = boost::dynamic_pointer_cast<Option4ClientFqdn>(resp->getOption(DHO_FQDN));
                 if (fqdn) {
                     fqdn->setDomainName(hook_hostname, Option4ClientFqdn::FULL);
                     // Hook disabled updates, Set flags back to client accordingly.
@@ -2613,7 +2611,6 @@ Dhcpv4Srv::processClientFqdnOption(Dhcpv4Exchange& ex) {
 
     if (ex.getContext()->currentHost() &&
         !ex.getContext()->currentHost()->getHostname().empty()) {
-        D2ClientMgr& d2_mgr = CfgMgr::instance().getD2ClientMgr();
         fqdn_resp->setDomainName(d2_mgr.qualifyName(ex.getContext()->currentHost()->getHostname(),
                                                     *(ex.getContext()->getDdnsParams()), true),
                                  Option4ClientFqdn::FULL);
@@ -4669,8 +4666,8 @@ void Dhcpv4Srv::requiredClassify(Dhcpv4Exchange& ex) {
         if (!addr.isV4Zero()) {
             PoolPtr pool = subnet->getPool(Lease::TYPE_V4, addr, false);
             if (pool) {
-                const ClientClasses& to_add = pool->getRequiredClasses();
-                for (auto const& cclass : to_add) {
+                const ClientClasses& pool_to_add = pool->getRequiredClasses();
+                for (auto const& cclass : pool_to_add) {
                     classes.insert(cclass);
                 }
             }

@@ -1088,7 +1088,7 @@ HAService::adjustNetworkState() {
                                 (getCurrState() == HA_TERMINATED_ST));
 
     if (!should_enable && network_state_->isServiceEnabled()) {
-        std::string current_state_name = getStateLabel(getCurrState());
+        current_state_name = getStateLabel(getCurrState());
         boost::to_upper(current_state_name);
         LOG_INFO(ha_logger, HA_LOCAL_DHCP_DISABLE)
             .arg(config_->getThisServerName())
@@ -1096,7 +1096,7 @@ HAService::adjustNetworkState() {
         network_state_->disableService(getLocalOrigin());
 
     } else if (should_enable && !network_state_->isServiceEnabled()) {
-        std::string current_state_name = getStateLabel(getCurrState());
+        current_state_name = getStateLabel(getCurrState());
         boost::to_upper(current_state_name);
         LOG_INFO(ha_logger, HA_LOCAL_DHCP_ENABLE)
             .arg(config_->getThisServerName())
@@ -1677,7 +1677,7 @@ HAService::processStatusGet() const {
 
     try {
         role = config_->getFailoverPeerConfig()->getRole();
-        std::string role_txt = HAConfig::PeerConfig::roleToString(role);
+        role_txt = HAConfig::PeerConfig::roleToString(role);
         remote->set("role", Element::create(role_txt));
 
     } catch (...) {
