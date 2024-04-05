@@ -1,3 +1,9 @@
+2217.	[func]		fdupont
+	Extended the lenient-option-parsing compatibility
+	flag to ignore DHCPv4 fqdn (81) option with some
+	invalid domain names (e.g. beginning with an empty label).
+	(Gitlab 3289)
+
 2216.	[func]		tmark
 	PerfMon hook library is now functional. It accumulates
 	and reports performance data, and supports alarms. Still

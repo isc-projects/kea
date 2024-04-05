@@ -8228,6 +8228,9 @@ or in terms of the log message above, the tuple length ``y`` becomes ``x``.
       }
     }
 
+Starting with Kea version 2.5.8 this is extended to silently ignore
+fqdn (81) options with some invalid domain names.
+
 Ignore DHCP Server Identifier
 -----------------------------
 

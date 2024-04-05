@@ -56,11 +56,11 @@ namespace {
 
 /// Structure that holds registered hook indexes
 struct AllocEngineHooks {
-    int hook_index_lease4_select_; ///< index for "lease4_receive" hook point
+    int hook_index_lease4_select_; ///< index for "lease4_select" hook point
     int hook_index_lease4_renew_;  ///< index for "lease4_renew" hook point
     int hook_index_lease4_expire_; ///< index for "lease4_expire" hook point
     int hook_index_lease4_recover_;///< index for "lease4_recover" hook point
-    int hook_index_lease6_select_; ///< index for "lease6_receive" hook point
+    int hook_index_lease6_select_; ///< index for "lease6_select" hook point
     int hook_index_lease6_renew_;  ///< index for "lease6_renew" hook point
     int hook_index_lease6_rebind_; ///< index for "lease6_rebind" hook point
     int hook_index_lease6_expire_; ///< index for "lease6_expire" hook point

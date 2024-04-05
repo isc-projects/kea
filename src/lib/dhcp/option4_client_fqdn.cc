@@ -272,9 +272,14 @@ Option4ClientFqdnImpl::parseWireData(OptionBufferConstIter first,
 
         }
     } catch (const Exception& ex) {
-        isc_throw(InvalidOption4FqdnDomainName,
-                  "failed to parse the domain-name in DHCPv4 Client FQDN"
-                  << " Option: " << ex.what());
+        std::ostringstream errmsg;
+        errmsg << "failed to parse the domain-name in DHCPv4 Client FQDN "
+               << " Option: " << ex.what();
+        if (Option::lenient_parsing_) {
+            isc_throw(SkipThisOptionError, errmsg.str());
+        } else {
+            isc_throw(InvalidOption4FqdnDomainName, errmsg.str());
+        }
     }
 }
 

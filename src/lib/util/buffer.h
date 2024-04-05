@@ -298,7 +298,7 @@ typedef boost::shared_ptr<InputBuffer> InputBufferPtr;
 ///  sendto(s, buffer.getDataAsVoidPtr(), buffer.getLength(), 0, &to, sizeof(to));
 /// @endcode
 ///
-/// where the @c getData() (in fact @getDataAsVoidPtr()) method gives
+/// where the @c getData() (in fact @c getDataAsVoidPtr()) method gives
 /// a reference to the internal memory region stored in the @c buffer
 /// object.  This is a suboptimal design in that it exposes an
 /// encapsulated "handle" of an object to its user.  Unfortunately,

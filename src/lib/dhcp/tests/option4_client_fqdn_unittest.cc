@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -15,6 +15,18 @@ namespace {
 
 using namespace isc;
 using namespace isc::dhcp;
+
+// RAII device to make sure that lenient parsing flag is reset to false on exit.
+class LenientOptionParsing {
+public:
+    LenientOptionParsing(bool value) {
+        Option::lenient_parsing_ = value;
+    }
+
+    ~LenientOptionParsing() {
+        Option::lenient_parsing_ = false;
+    }
+};
 
 // This test verifies that constructor accepts empty partial domain-name but
 // does not accept empty fully qualified domain name.
@@ -222,8 +234,12 @@ TEST(Option4ClientFqdnTest, constructFromWireInvalidName) {
     size_t in_data_size = sizeof(in_data) / sizeof(in_data[0]);
     OptionBuffer in_buf(in_data, in_data + in_data_size);
 
+    LenientOptionParsing lop(false);
     EXPECT_THROW(Option4ClientFqdn(in_buf.begin(), in_buf.end()),
                  InvalidOption4FqdnDomainName);
+    Option::lenient_parsing_ = true;
+    EXPECT_THROW(Option4ClientFqdn(in_buf.begin(), in_buf.end()),
+                 SkipThisOptionError);
 }
 
 // This test verifies that exception is thrown when invalid domain-name
@@ -240,8 +256,12 @@ TEST(Option4ClientFqdnTest, constructFromWireInvalidASCIIName) {
     size_t in_data_size = sizeof(in_data) / sizeof(in_data[0]);
     OptionBuffer in_buf(in_data, in_data + in_data_size);
 
+    LenientOptionParsing lop(false);
     EXPECT_THROW(Option4ClientFqdn(in_buf.begin(), in_buf.end()),
                  InvalidOption4FqdnDomainName);
+    Option::lenient_parsing_ = true;
+    EXPECT_THROW(Option4ClientFqdn(in_buf.begin(), in_buf.end()),
+                 SkipThisOptionError);
 }
 
 // This test verifies that the option in the on-wire format with partial
