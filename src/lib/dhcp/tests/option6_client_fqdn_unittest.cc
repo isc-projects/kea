@@ -187,7 +187,7 @@ TEST(Option6ClientFqdnTest, constructFromWireTooLongLabel) {
     in_buf.insert(in_buf.end(), 70, 109);
     // Don't add a 0 i.e. use a partial name (vs fully qualified).
 
-    LenientOptionParsing(false);
+    LenientOptionParsing lop(false);
     EXPECT_THROW(Option6ClientFqdn(in_buf.begin(), in_buf.end()),
                  InvalidOption6FqdnDomainName);
     Option::lenient_parsing_ = true;
@@ -209,7 +209,7 @@ TEST(Option6ClientFqdnTest, constructFromWireTooLongDomainName) {
     // Terminate FQDN with a dot.
     in_buf.push_back(0);
 
-    LenientOptionParsing(false);
+    LenientOptionParsing lop(false);
     EXPECT_THROW(Option6ClientFqdn(in_buf.begin(), in_buf.end()),
                  InvalidOption6FqdnDomainName);
     Option::lenient_parsing_ = true;
