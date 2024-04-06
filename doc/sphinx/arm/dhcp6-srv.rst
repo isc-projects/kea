@@ -7996,6 +7996,9 @@ MiNID.
       }
     }
 
+Starting with Kea version 2.5.8 this is extended to silently ignore
+client-fqdn (39) options with some invalid domain names.
+
 .. _dhcp6_allocation_strategies:
 
 Allocation Strategies in DHCPv6
