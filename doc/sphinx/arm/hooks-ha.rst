@@ -172,7 +172,11 @@ case, the administrator should synchronize the clocks and restart the servers.
 .. note::
 
    It is possible to restart the servers one at a time, in no particular order.
-   The clocks must be in sync before restarting the servers.
+   The clocks must be in sync before restarting the servers. A restarted server
+   remains in the ``waiting`` state until the partner is also restarted. If the
+   partner is not restarted within 10 minutes, the restarted server transitions
+   back to the ``terminated`` state to continue serving the DHCP clients. Restart
+   both servers to resume the normal HA service.
 
 .. note::
 
