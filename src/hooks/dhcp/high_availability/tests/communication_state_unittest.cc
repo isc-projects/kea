@@ -65,11 +65,11 @@ public:
     /// tested in a different test case.
     void partnerStateUnavailableTest();
 
-    /// @brief Verifies that the duration since the partner time is updated
+    /// @brief Verifies that the duration since the partner state time is updated
     /// correctly when the partner has certain state.
     void partnerStateTimeExplicitStateTest();
 
-    /// @brief Verifies that the duration since the partner time is updated
+    /// @brief Verifies that the duration since the partner state time is updated
     /// correctly when the partner is unavailable.
     void partnerStateTimeUnavailableTest();
 
@@ -216,7 +216,7 @@ CommunicationStateTest::partnerStateTest() {
     EXPECT_THROW(state_.setPartnerState("unsupported"), BadValue);
 }
 
-// Verifies that the duration since the partner time is updated
+// Verifies that the duration since the partner state time is updated
 // correctly when the partner has certain state.
 void
 CommunicationStateTest::partnerStateTimeExplicitStateTest() {
@@ -245,7 +245,7 @@ CommunicationStateTest::partnerStateTimeExplicitStateTest() {
     EXPECT_LT(duration_since_waiting.seconds(), 10);
 }
 
-// Verifies that the duration since the partner time is updated
+// Verifies that the duration since the partner state time is updated
 // correctly when the partner is unavailable.
 void
 CommunicationStateTest::partnerStateTimeUnavailableTest() {

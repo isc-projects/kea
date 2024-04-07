@@ -753,7 +753,7 @@ database and start normal operation.
 % HA_TERMINATED_PARTNER_DID_NOT_RESTART %1: service is terminating because the terminated partner was not restarted within %2 minutes
 This warning message is issued to indicate that the HA service is terminating
 because partner server is in the terminated state and was not restarted within
-an expacted time frame. The terminated servers should be restarted after correcting
+an expected time frame. The terminated servers should be restarted after correcting
 the problem that caused the termination. They can be restarted sequentially but the
 duration between the restarts should not be too long. If it is long it may mean that
 the restart of one of the servers was unintentional (e.g., power outage). If the
