@@ -104,11 +104,19 @@ if GENERATE_MESSAGES
 messages: log_messages.cc log_messages.h logimpl_messages.cc logimpl_messages.h
 	@echo Message files regenerated
 
+# If bootstrapping, do not generate log messages because there is nothing to generate them with.
+# A second make command or an explicit "make messages" command should do the job.
 log_messages.cc log_messages.h: log_messages.mes
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/log/log_messages.mes
+	@if test -f $(top_builddir)/src/lib/log/compiler/kea-msg-compiler; then \
+		$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/log/log_messages.mes; \
+	fi
 
+# If bootstrapping, do not generate log messages because there is nothing to generate them with.
+# A second make command or an explicit "make messages" command should do the job.
 logimpl_messages.cc logimpl_messages.h: logimpl_messages.mes
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/log/logimpl_messages.mes
+	@if test -f $(top_builddir)/src/lib/log/compiler/kea-msg-compiler; then \
+		$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/log/logimpl_messages.mes; \
+	fi
 
 else
 
