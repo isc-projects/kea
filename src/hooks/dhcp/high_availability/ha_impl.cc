@@ -25,6 +25,7 @@ using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::hooks;
 using namespace isc::log;
+using namespace isc::stats;
 
 namespace isc {
 namespace ha {
@@ -104,10 +105,8 @@ HAImpl::buffer4Receive(hooks::CalloutHandle& callout_handle) {
             .arg(ex.what());
 
         // Increase the statistics of parse failures and dropped packets.
-        isc::stats::StatsMgr::instance().addValue("pkt4-parse-failed",
-                                                  static_cast<int64_t>(1));
-        isc::stats::StatsMgr::instance().addValue("pkt4-receive-drop",
-                                                  static_cast<int64_t>(1));
+        StatsMgr::instance().addValue("pkt4-parse-failed", static_cast<int64_t>(1));
+        StatsMgr::instance().addValue("pkt4-receive-drop", static_cast<int64_t>(1));
 
 
         callout_handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
@@ -154,6 +153,7 @@ HAImpl::subnet4Select(hooks::CalloutHandle& callout_handle) {
         LOG_DEBUG(ha_logger, DBGLVL_TRACE_BASIC, HA_SUBNET4_SELECT_NO_SUBNET_SELECTED)
             .arg(query4->getLabel());
         callout_handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
+        StatsMgr::instance().addValue("pkt4-receive-drop", static_cast<int64_t>(1));
         return;
     }
 
@@ -169,6 +169,7 @@ HAImpl::subnet4Select(hooks::CalloutHandle& callout_handle) {
                 .arg(query4->getLabel())
                 .arg(subnet4->toText());
             callout_handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
+            StatsMgr::instance().addValue("pkt4-receive-drop", static_cast<int64_t>(1));
             return;
         }
 
@@ -177,6 +178,7 @@ HAImpl::subnet4Select(hooks::CalloutHandle& callout_handle) {
             .arg(query4->getLabel())
             .arg(subnet4->toText());
         callout_handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
+        StatsMgr::instance().addValue("pkt4-receive-drop", static_cast<int64_t>(1));
         return;
     }
 
@@ -187,6 +189,7 @@ HAImpl::subnet4Select(hooks::CalloutHandle& callout_handle) {
             .arg(query4->getLabel())
             .arg(server_name);
         callout_handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
+        StatsMgr::instance().addValue("pkt4-receive-drop", static_cast<int64_t>(1));
         return;
     }
 
@@ -366,10 +369,8 @@ HAImpl::buffer6Receive(hooks::CalloutHandle& callout_handle) {
             .arg(ex.what());
 
         // Increase the statistics of parse failures and dropped packets.
-        isc::stats::StatsMgr::instance().addValue("pkt6-parse-failed",
-                                                  static_cast<int64_t>(1));
-        isc::stats::StatsMgr::instance().addValue("pkt6-receive-drop",
-                                                  static_cast<int64_t>(1));
+        StatsMgr::instance().addValue("pkt6-parse-failed", static_cast<int64_t>(1));
+        StatsMgr::instance().addValue("pkt6-receive-drop", static_cast<int64_t>(1));
 
 
         callout_handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
@@ -416,6 +417,7 @@ HAImpl::subnet6Select(hooks::CalloutHandle& callout_handle) {
         LOG_DEBUG(ha_logger, DBGLVL_TRACE_BASIC, HA_SUBNET6_SELECT_NO_SUBNET_SELECTED)
             .arg(query6->getLabel());
         callout_handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
+        StatsMgr::instance().addValue("pkt6-receive-drop", static_cast<int64_t>(1));
         return;
     }
 
@@ -431,6 +433,7 @@ HAImpl::subnet6Select(hooks::CalloutHandle& callout_handle) {
                 .arg(query6->getLabel())
                 .arg(subnet6->toText());
             callout_handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
+            StatsMgr::instance().addValue("pkt6-receive-drop", static_cast<int64_t>(1));
             return;
         }
 
@@ -439,6 +442,7 @@ HAImpl::subnet6Select(hooks::CalloutHandle& callout_handle) {
             .arg(query6->getLabel())
             .arg(subnet6->toText());
         callout_handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
+        StatsMgr::instance().addValue("pkt6-receive-drop", static_cast<int64_t>(1));
         return;
     }
 
@@ -449,6 +453,7 @@ HAImpl::subnet6Select(hooks::CalloutHandle& callout_handle) {
             .arg(query6->getLabel())
             .arg(server_name);
         callout_handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
+        StatsMgr::instance().addValue("pkt6-receive-drop", static_cast<int64_t>(1));
         return;
     }
 

@@ -19,6 +19,7 @@
 #include <dhcpsrv/shared_network.h>
 #include <dhcpsrv/subnet.h>
 #include <hooks/hooks_manager.h>
+#include <stats/stats_mgr.h>
 #include <testutils/gtest_utils.h>
 #include <boost/pointer_cast.hpp>
 #include <gtest/gtest.h>
@@ -31,6 +32,7 @@ using namespace isc::dhcp;
 using namespace isc::ha;
 using namespace isc::ha::test;
 using namespace isc::hooks;
+using namespace isc::stats;
 
 namespace {
 
@@ -76,6 +78,8 @@ class HAImplTest : public HATest {
 public:
     /// @brief Constructor.
     HAImplTest() {
+        // Clear statistics.
+        StatsMgr::instance().removeAll();
     }
 
     /// @brief Destructor.
@@ -94,6 +98,22 @@ public:
             io_service_->poll();
         } catch (...) {
         }
+        // Clear statistics.
+        StatsMgr::instance().removeAll();
+    }
+
+    /// @brief Fetches the current value of the given statistic.
+    ///
+    /// @param name name of the desired statistic.
+    /// @return Current value of the statistic, or zero if the
+    /// statistic is not found.
+    uint64_t getStatistic(const std::string& name) {
+        ObservationPtr stat = StatsMgr::instance().getObservation(name);
+        if (!stat) {
+            return (0);
+        }
+
+        return (stat->getInteger().first);
     }
 
     /// @brief Tests handler of a ha-sync command.
@@ -250,6 +270,9 @@ TEST_F(HAImplTest, buffer4Receive) {
     // Malformed message should not be classified.
     EXPECT_TRUE(query4->getClasses().empty());
 
+    // Drop statistics should have been increased.
+    EXPECT_EQ(1, getStatistic("pkt4-receive-drop"));
+
     // Turn this into the DHCP message by appending a magic cookie and the
     // options.
     std::vector<uint8_t> magic_cookie = {
@@ -294,6 +317,9 @@ TEST_F(HAImplTest, buffer4Receive) {
     EXPECT_FALSE(query4->getOption(DHO_VIVSO_SUBOPTIONS));
     // Domain name should not be skipped because the vendor option was truncated.
     EXPECT_TRUE(query4->getOption(DHO_DOMAIN_NAME));
+
+    // Drop statistics should not change.
+    EXPECT_EQ(1, getStatistic("pkt4-receive-drop"));
 }
 
 // Tests subnet4_select callout implementation when the server name
@@ -348,6 +374,9 @@ TEST_F(HAImplTest, subnet4Select) {
     // to which the query belongs.
     ASSERT_EQ(1, query4->getClasses().size());
     EXPECT_TRUE(query4->inClass("HA_server3"));
+
+    // Drop statistics should not increase.
+    EXPECT_EQ(0, getStatistic("pkt4-receive-drop"));
 }
 
 // Tests subnet4_select callout implementation when the server name
@@ -405,6 +434,9 @@ TEST_F(HAImplTest, subnet4SelectSharedNetwork) {
     // to which the query belongs.
     ASSERT_EQ(1, query4->getClasses().size());
     EXPECT_TRUE(query4->inClass("HA_server3"));
+
+    // Drop statistics should not increase.
+    EXPECT_EQ(0, getStatistic("pkt4-receive-drop"));
 }
 
 // Tests that subnet4_select callout returns when there is a single relationship.
@@ -443,6 +475,9 @@ TEST_F(HAImplTest, subnet4SelectSingleRelationship) {
     // because the callout didn't call the HAService::inScope function.
     EXPECT_EQ(CalloutHandle::NEXT_STEP_CONTINUE, callout_handle->getStatus());
     EXPECT_TRUE(query4->getClasses().empty());
+
+    // Drop statistics should not increase.
+    EXPECT_EQ(0, getStatistic("pkt4-receive-drop"));
 }
 
 // Tests that the subnet4_select drops the packet when server name is not
@@ -485,6 +520,9 @@ TEST_F(HAImplTest, subnet4SelectDropNoServerName) {
     // The request should be dropped and no classes assigned to it.
     EXPECT_EQ(CalloutHandle::NEXT_STEP_DROP, callout_handle->getStatus());
     EXPECT_TRUE(query4->getClasses().empty());
+
+    // Drop statistics should have been increased.
+    EXPECT_EQ(1, getStatistic("pkt4-receive-drop"));
 }
 
 // Tests that the subnet4_select drops the packet when server name has
@@ -531,6 +569,9 @@ TEST_F(HAImplTest, subnet4SelectDropInvalidServerNameType) {
     // The request should be dropped and no classes assigned to it.
     EXPECT_EQ(CalloutHandle::NEXT_STEP_DROP, callout_handle->getStatus());
     EXPECT_TRUE(query4->getClasses().empty());
+
+    // Drop statistics should have been increased.
+    EXPECT_EQ(1, getStatistic("pkt4-receive-drop"));
 }
 
 // Tests that the subnet4_select drops the packet when server name is valid
@@ -580,6 +621,10 @@ TEST_F(HAImplTest, subnet4SelectDropNotInScope) {
     // However, the class should be assigned after calling HAService::inScope.
     ASSERT_EQ(1, query4->getClasses().size());
     EXPECT_TRUE(query4->inClass("HA_server3"));
+
+    // Drop statistics should not increase when the server doesn't serve the
+    // particular scope.
+    EXPECT_EQ(0, getStatistic("pkt4-receive-drop"));
 }
 
 // Tests that the subnet4_select drops a packet when no subnet has been selected.
@@ -621,6 +666,9 @@ TEST_F(HAImplTest, subnet4SelectNoSubnet) {
 
     // No HA-specific classes should be assigned.
     EXPECT_TRUE(query4->getClasses().empty());
+
+    // Drop statistics should have been increased.
+    EXPECT_EQ(1, getStatistic("pkt4-receive-drop"));
 }
 
 // Tests for buffer6_receive callout implementation.
@@ -668,6 +716,9 @@ TEST_F(HAImplTest, buffer6Receive) {
     EXPECT_EQ(CalloutHandle::NEXT_STEP_DROP, callout_handle->getStatus());
     // Malformed message should not be classified.
     EXPECT_TRUE(query6->getClasses().empty());
+
+    // Drop statistics should have been increased.
+    EXPECT_EQ(1, getStatistic("pkt6-receive-drop"));
 
     // Append transaction id (3 bytes, each set to 1).
     msg.insert(msg.end(), 3, 1);
@@ -820,6 +871,9 @@ TEST_F(HAImplTest, subnet6SelectSharedNetwork) {
     // to which the query belongs.
     ASSERT_EQ(1, query6->getClasses().size());
     EXPECT_TRUE(query6->inClass("HA_server3"));
+
+    // Drop statistics should not increase.
+    EXPECT_EQ(0, getStatistic("pkt6-receive-drop"));
 }
 
 // Tests that subnet6_select callout returns when there is a single relationship.
@@ -858,6 +912,9 @@ TEST_F(HAImplTest, subnet6SelectSingleRelationship) {
     // because the callout didn't call the HAService::inScope function.
     EXPECT_EQ(CalloutHandle::NEXT_STEP_CONTINUE, callout_handle->getStatus());
     EXPECT_TRUE(query6->getClasses().empty());
+
+    // Drop statistics should not increase.
+    EXPECT_EQ(0, getStatistic("pkt6-receive-drop"));
 }
 
 // Tests that the subnet6_select drops the packet when server name is not
@@ -900,6 +957,9 @@ TEST_F(HAImplTest, subnet6SelectDropNoServerName) {
     // The request should be dropped and no classes assigned to it.
     EXPECT_EQ(CalloutHandle::NEXT_STEP_DROP, callout_handle->getStatus());
     EXPECT_TRUE(query6->getClasses().empty());
+
+    // Drop statistics should have been increased.
+    EXPECT_EQ(1, getStatistic("pkt6-receive-drop"));
 }
 
 // Tests that the subnet6_select drops the packet when server name has
@@ -946,6 +1006,9 @@ TEST_F(HAImplTest, subnet6SelectDropInvalidServerNameType) {
     // The request should be dropped and no classes assigned to it.
     EXPECT_EQ(CalloutHandle::NEXT_STEP_DROP, callout_handle->getStatus());
     EXPECT_TRUE(query6->getClasses().empty());
+
+    // Drop statistics should have been increased.
+    EXPECT_EQ(1, getStatistic("pkt6-receive-drop"));
 }
 
 // Tests that the subnet6_select drops the packet when server name is valid
@@ -995,6 +1058,10 @@ TEST_F(HAImplTest, subnet6SelectDropNotInScope) {
     // However, the class should be assigned after calling HAService::inScope.
     ASSERT_EQ(1, query6->getClasses().size());
     EXPECT_TRUE(query6->inClass("HA_server3"));
+
+    // Drop statistics should not increase when the server doesn't serve the
+    // particular scope.
+    EXPECT_EQ(0, getStatistic("pkt6-receive-drop"));
 }
 
 // Tests that the subnet6_select drops a packet when no subnet has been selected.
@@ -1036,6 +1103,9 @@ TEST_F(HAImplTest, subnet6SelectNoSubnet) {
 
     // No HA-specific classes should be assigned.
     EXPECT_TRUE(query6->getClasses().empty());
+
+    // Drop statistics should have been increased.
+    EXPECT_EQ(1, getStatistic("pkt6-receive-drop"));
 }
 
 // Tests leases4_committed callout implementation.
