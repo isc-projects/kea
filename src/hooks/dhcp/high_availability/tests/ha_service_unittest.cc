@@ -2056,18 +2056,14 @@ public:
     /// up the status codes to be returned by the servers, verifying a response and
     /// leases in the lease database.
     ///
+    /// @param config_storage test HA configuration.
     /// @param [out] rsp pointer to the object where response will be stored.
-    void runProcessSynchronize4(ConstElementPtr& rsp) {
+    void runProcessSynchronize4(HAConfigPtr config_storage, ConstElementPtr& rsp) {
         // Create lease manager.
         ASSERT_NO_THROW(LeaseMgrFactory::create("universe=4 type=memfile persist=false"));
 
         // Create IPv4 leases which will be fetched from the other server.
         ASSERT_NO_THROW(generateTestLeases4());
-
-        // Create HA configuration for 3 servers. This server is
-        // server 1.
-        HAConfigPtr config_storage = createValidConfiguration();
-        setBasicAuth(config_storage);
 
         // Leases are fetched in pages, so the lease4-get-page should be
         // sent multiple times. The server is configured to return leases
@@ -2108,18 +2104,14 @@ public:
     /// up the status codes to be returned by the servers, verifying a response and
     /// leases in the lease database.
     ///
+    /// @param config_storage test HA configuration.
     /// @param [out] rsp pointer to the object where response will be stored.
-    void runProcessSynchronize6(ConstElementPtr& rsp) {
+    void runProcessSynchronize6(HAConfigPtr config_storage, ConstElementPtr& rsp) {
         // Create lease manager.
         ASSERT_NO_THROW(LeaseMgrFactory::create("universe=6 type=memfile persist=false"));
 
         // Create IPv4 leases which will be fetched from the other server.
         ASSERT_NO_THROW(generateTestLeases6());
-
-        // Create HA configuration for 3 servers. This server is
-        // server 1.
-        HAConfigPtr config_storage = createValidConfiguration();
-        setBasicAuth(config_storage);
 
         // Leases are fetched in pages, so the lease6-get-page should be
         // sent multiple times. The server is configured to return leases
@@ -3962,9 +3954,47 @@ TEST_F(HAServiceTest, asyncSyncLeases6Hub) {
 // DHCPv4 server.
 TEST_F(HAServiceTest, processSynchronize4) {
 
+    // Create HA configuration for 3 servers. This server is
+    // server 1.
+    HAConfigPtr config_storage = createValidConfiguration();
+    setBasicAuth(config_storage);
+
     // Run HAService::processSynchronize and gather a response.
     ConstElementPtr rsp;
-    runProcessSynchronize4(rsp);
+    runProcessSynchronize4(config_storage, rsp);
+
+    // The response should indicate success.
+    ASSERT_TRUE(rsp);
+    checkAnswer(rsp, CONTROL_RESULT_SUCCESS, "Lease database synchronization"
+                " complete.");
+
+    // All leases should have been inserted into the database.
+    for (size_t i = 0; i < leases4_.size(); ++i) {
+        Lease4Ptr existing_lease = LeaseMgrFactory::instance().getLease4(leases4_[i]->addr_);
+        ASSERT_TRUE(existing_lease) << "lease " << leases4_[i]->addr_.toText()
+                                    << " not in the lease database";
+    }
+
+    // The following commands should have been sent to the server2: dhcp-disable,
+    // lease4-get-page and ha-sync-complete-notify.
+    EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("dhcp-disable","20"));
+    EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("lease4-get-page",""));
+    EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("ha-sync-complete-notify", ""));
+    EXPECT_FALSE(factory2_->getResponseCreator()->findRequest("dhcp-enable", ""));
+}
+
+// This test verifies that the ha-sync command is processed successfully for the
+// DHCPv4 server in the passive-backup configuration.
+TEST_F(HAServiceTest, processSynchronize4PassiveBackup) {
+
+    // Create passive-backup configuration for 3 servers.
+    // This server is server 1.
+    HAConfigPtr config_storage = createValidPassiveBackupConfiguration();
+    setBasicAuth(config_storage);
+
+    // Run HAService::processSynchronize and gather a response.
+    ConstElementPtr rsp;
+    runProcessSynchronize4(config_storage, rsp);
 
     // The response should indicate success.
     ASSERT_TRUE(rsp);
@@ -3999,9 +4029,14 @@ TEST_F(HAServiceTest, processSynchronize4Authorized) {
     factory2_->getResponseCreator()->addBasicAuth("foo", "bar");
     factory3_->getResponseCreator()->addBasicAuth("test", "1234");
 
+    // Create HA configuration for 3 servers. This server is
+    // server 1.
+    HAConfigPtr config_storage = createValidConfiguration();
+    setBasicAuth(config_storage);
+
     // Run HAService::processSynchronize and gather a response.
     ConstElementPtr rsp;
-    runProcessSynchronize4(rsp);
+    runProcessSynchronize4(config_storage, rsp);
 
     // The response should indicate success.
     ASSERT_TRUE(rsp);
@@ -4030,9 +4065,14 @@ TEST_F(HAServiceTest, processSynchronizeDisableError) {
     factory2_->getResponseCreator()->setControlResult("dhcp-disable",
                                                       CONTROL_RESULT_ERROR);
 
+    // Create HA configuration for 3 servers. This server is
+    // server 1.
+    HAConfigPtr config_storage = createValidConfiguration();
+    setBasicAuth(config_storage);
+
     // Run HAService::processSynchronize and gather a response.
     ConstElementPtr rsp;
-    runProcessSynchronize4(rsp);
+    runProcessSynchronize4(config_storage, rsp);
 
     // The response should indicate an error
     ASSERT_TRUE(rsp);
@@ -4052,9 +4092,14 @@ TEST_F(HAServiceTest, processSynchronizeUnauthorized) {
     // Instruct server2 to require authentication.
     factory2_->getResponseCreator()->addBasicAuth("foo", "bar");
 
+    // Create HA configuration for 3 servers. This server is
+    // server 1.
+    HAConfigPtr config_storage = createValidConfiguration();
+    setBasicAuth(config_storage);
+
     // Run HAService::processSynchronize and gather a response.
     ConstElementPtr rsp;
-    runProcessSynchronize4(rsp);
+    runProcessSynchronize4(config_storage, rsp);
 
     // The response should indicate an error
     ASSERT_TRUE(rsp);
@@ -4071,9 +4116,14 @@ TEST_F(HAServiceTest, processSynchronizeLease4GetPageError) {
     factory2_->getResponseCreator()->setControlResult("lease4-get-page",
                                                       CONTROL_RESULT_ERROR);
 
+    // Create HA configuration for 3 servers. This server is
+    // server 1.
+    HAConfigPtr config_storage = createValidConfiguration();
+    setBasicAuth(config_storage);
+
     // Run HAService::processSynchronize and gather a response.
     ConstElementPtr rsp;
-    runProcessSynchronize4(rsp);
+    runProcessSynchronize4(config_storage, rsp);
 
     // The response should indicate an error
     ASSERT_TRUE(rsp);
@@ -4103,9 +4153,14 @@ TEST_F(HAServiceTest, processSynchronizeEnableError) {
     factory2_->getResponseCreator()->setControlResult("ha-sync-complete-notify",
                                                       CONTROL_RESULT_COMMAND_UNSUPPORTED);
 
+    // Create HA configuration for 3 servers. This server is
+    // server 1.
+    HAConfigPtr config_storage = createValidConfiguration();
+    setBasicAuth(config_storage);
+
     // Run HAService::processSynchronize and gather a response.
     ConstElementPtr rsp;
-    runProcessSynchronize4(rsp);
+    runProcessSynchronize4(config_storage, rsp);
 
     // The response should indicate an error
     ASSERT_TRUE(rsp);
@@ -4146,9 +4201,14 @@ TEST_F(HAServiceTest, processSynchronizeNotifyError) {
     factory2_->getResponseCreator()->setControlResult("ha-sync-complete-notify",
                                                       CONTROL_RESULT_ERROR);
 
+    // Create HA configuration for 3 servers. This server is
+    // server 1.
+    HAConfigPtr config_storage = createValidConfiguration();
+    setBasicAuth(config_storage);
+
     // Run HAService::processSynchronize and gather a response.
     ConstElementPtr rsp;
-    runProcessSynchronize4(rsp);
+    runProcessSynchronize4(config_storage, rsp);
 
     // The response should indicate an error
     ASSERT_TRUE(rsp);
@@ -4182,9 +4242,47 @@ TEST_F(HAServiceTest, processSynchronizeNotifyError) {
 // DHCPv6 server.
 TEST_F(HAServiceTest, processSynchronize6) {
 
+    // Create HA configuration for 3 servers. This server is
+    // server 1.
+    HAConfigPtr config_storage = createValidConfiguration();
+    setBasicAuth(config_storage);
+
     // Run HAService::processSynchronize and gather a response.
     ConstElementPtr rsp;
-    runProcessSynchronize6(rsp);
+    runProcessSynchronize6(config_storage, rsp);
+
+    // The response should indicate success.
+    ASSERT_TRUE(rsp);
+    checkAnswer(rsp, CONTROL_RESULT_SUCCESS, "Lease database synchronization"
+                " complete.");
+
+    // All leases should have been inserted into the database.
+    for (size_t i = 0; i < leases6_.size(); ++i) {
+        Lease6Ptr existing_lease = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA,
+                                                                         leases6_[i]->addr_);
+        ASSERT_TRUE(existing_lease) << "lease " << leases6_[i]->addr_.toText()
+                                    << " not in the lease database";
+    }
+
+    // The following commands should have been sent to the server2: dhcp-disable,
+    // lease6-get-page and ha-sync-complete-notify.
+    EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("dhcp-disable","20"));
+    EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("lease6-get-page",""));
+    EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("ha-sync-complete-notify",""));
+}
+
+// This test verifies that the ha-sync command is processed successfully for the
+// DHCPv6 server in the passive-backup configuration.
+TEST_F(HAServiceTest, processSynchronize6PassiveBackup) {
+
+    // Create HA configuration for 3 servers. This server is
+    // server 1.
+    HAConfigPtr config_storage = createValidPassiveBackupConfiguration();
+    setBasicAuth(config_storage);
+
+    // Run HAService::processSynchronize and gather a response.
+    ConstElementPtr rsp;
+    runProcessSynchronize6(config_storage, rsp);
 
     // The response should indicate success.
     ASSERT_TRUE(rsp);
@@ -4219,9 +4317,14 @@ TEST_F(HAServiceTest, processSynchronize6Authorized) {
     factory2_->getResponseCreator()->addBasicAuth("foo", "bar");
     factory3_->getResponseCreator()->addBasicAuth("test", "1234");
 
+    // Create HA configuration for 3 servers. This server is
+    // server 1.
+    HAConfigPtr config_storage = createValidConfiguration();
+    setBasicAuth(config_storage);
+
     // Run HAService::processSynchronize and gather a response.
     ConstElementPtr rsp;
-    runProcessSynchronize6(rsp);
+    runProcessSynchronize6(config_storage, rsp);
 
     // The response should indicate success.
     ASSERT_TRUE(rsp);
@@ -4250,9 +4353,14 @@ TEST_F(HAServiceTest, processSynchronize6DisableError) {
     factory2_->getResponseCreator()->setControlResult("dhcp-disable",
                                                       CONTROL_RESULT_ERROR);
 
+    // Create HA configuration for 3 servers. This server is
+    // server 1.
+    HAConfigPtr config_storage = createValidConfiguration();
+    setBasicAuth(config_storage);
+
     // Run HAService::processSynchronize and gather a response.
     ConstElementPtr rsp;
-    runProcessSynchronize6(rsp);
+    runProcessSynchronize6(config_storage, rsp);
 
     // The response should indicate an error
     ASSERT_TRUE(rsp);
@@ -4271,9 +4379,14 @@ TEST_F(HAServiceTest, processSynchronize6Unauthorized) {
     // Instruct server2 to require authentication.
     factory2_->getResponseCreator()->addBasicAuth("foo", "bar");
 
+    // Create HA configuration for 3 servers. This server is
+    // server 1.
+    HAConfigPtr config_storage = createValidConfiguration();
+    setBasicAuth(config_storage);
+
     // Run HAService::processSynchronize and gather a response.
     ConstElementPtr rsp;
-    runProcessSynchronize6(rsp);
+    runProcessSynchronize6(config_storage, rsp);
 
     // The response should indicate an error
     ASSERT_TRUE(rsp);
@@ -4290,9 +4403,14 @@ TEST_F(HAServiceTest, processSynchronizeLease6GetPageError) {
     factory2_->getResponseCreator()->setControlResult("lease6-get-page",
                                                       CONTROL_RESULT_ERROR);
 
+    // Create HA configuration for 3 servers. This server is
+    // server 1.
+    HAConfigPtr config_storage = createValidConfiguration();
+    setBasicAuth(config_storage);
+
     // Run HAService::processSynchronize and gather a response.
     ConstElementPtr rsp;
-    runProcessSynchronize6(rsp);
+    runProcessSynchronize6(config_storage, rsp);
 
     // The response should indicate an error
     ASSERT_TRUE(rsp);
@@ -4318,9 +4436,14 @@ TEST_F(HAServiceTest, processSynchronize6EnableError) {
     factory2_->getResponseCreator()->setControlResult("ha-sync-complete-notify",
                                                       CONTROL_RESULT_COMMAND_UNSUPPORTED);
 
+    // Create HA configuration for 3 servers. This server is
+    // server 1.
+    HAConfigPtr config_storage = createValidConfiguration();
+    setBasicAuth(config_storage);
+
     // Run HAService::processSynchronize and gather a response.
     ConstElementPtr rsp;
-    runProcessSynchronize6(rsp);
+    runProcessSynchronize6(config_storage, rsp);
 
     // The response should indicate an error
     ASSERT_TRUE(rsp);
@@ -4341,9 +4464,14 @@ TEST_F(HAServiceTest, processSynchronize6NotifyError) {
     factory2_->getResponseCreator()->setControlResult("ha-sync-complete-notify",
                                                       CONTROL_RESULT_ERROR);
 
+    // Create HA configuration for 3 servers. This server is
+    // server 1.
+    HAConfigPtr config_storage = createValidConfiguration();
+    setBasicAuth(config_storage);
+
     // Run HAService::processSynchronize and gather a response.
     ConstElementPtr rsp;
-    runProcessSynchronize6(rsp);
+    runProcessSynchronize6(config_storage, rsp);
 
     // The response should indicate an error
     ASSERT_TRUE(rsp);

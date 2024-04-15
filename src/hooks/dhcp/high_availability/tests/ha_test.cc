@@ -209,6 +209,7 @@ HATest::createValidPassiveBackupJsonConfiguration() const {
         "     {"
         "         \"this-server-name\": \"server1\","
         "         \"mode\": \"passive-backup\","
+        "         \"sync-page-limit\": 3,"
         "         \"multi-threading\": {"
         "             \"enable-multi-threading\": false"
         "         },"

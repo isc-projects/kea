@@ -2135,7 +2135,7 @@ HAService::asyncSyncLeasesInternal(http::HttpClient& http_client,
                                    PostSyncCallback post_sync_action,
                                    const bool dhcp_disabled) {
 
-    HAConfig::PeerConfigPtr partner_config = config_->getFailoverPeerConfig();
+    HAConfig::PeerConfigPtr partner_config = config_->getPeerConfig(server_name);
 
     // Create HTTP/1.1 request including our command.
     PostHttpRequestJsonPtr request = boost::make_shared<PostHttpRequestJson>
