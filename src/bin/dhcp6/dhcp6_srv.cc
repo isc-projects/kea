@@ -786,9 +786,11 @@ Dhcpv6Srv::processPacket(Pkt6Ptr query) {
                 .arg(query->getLocalAddr().toText())
                 .arg(query->getIface());
 
-            // Increase the statistic of dropped packets.
-            StatsMgr::instance().addValue("pkt6-receive-drop",
-                                          static_cast<int64_t>(1));
+            // Not increasing the statistics of the dropped packets because it
+            // is the callouts' responsibility to increase it. There are some
+            // cases when the callouts may elect to not increase the statistics.
+            // For example, packets dropped by the load-balancing algorithm must
+            // not increase the statistics.
             return (Pkt6Ptr());
         }
 
@@ -900,9 +902,11 @@ Dhcpv6Srv::processPacket(Pkt6Ptr query) {
             (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_DROP)) {
             LOG_DEBUG(hooks_logger, DBG_DHCP6_HOOKS, DHCP6_HOOK_PACKET_RCVD_SKIP)
                 .arg(query->getLabel());
-            // Increase the statistic of dropped packets.
-            StatsMgr::instance().addValue("pkt6-receive-drop",
-                                          static_cast<int64_t>(1));
+            // Not increasing the statistics of the dropped packets because it
+            // is the callouts' responsibility to increase it. There are some
+            // cases when the callouts may elect to not increase the statistics.
+            // For example, packets dropped by the load-balancing algorithm must
+            // not increase the statistics.
             return (Pkt6Ptr());
         }
 

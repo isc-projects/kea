@@ -1324,6 +1324,9 @@ TEST_F(HooksDhcpv4SrvTest, buffer4ReceiveDrop) {
 
     // Check if the callout handle state was reset after the callout.
     checkCalloutHandleReset(discover);
+
+    // Drop statistics should be maintained by the callouts, not by the server.
+    EXPECT_EQ(0, getStatistic("pkt4-receive-drop"));
 }
 
 // Checks if callouts installed on pkt4_receive are indeed called and the
@@ -1496,6 +1499,9 @@ TEST_F(HooksDhcpv4SrvTest, pkt4ReceiveDrop) {
 
     // Check if the callout handle state was reset after the callout.
     checkCalloutHandleReset(discover);
+
+    // Drop statistics should be maintained by the callouts, not by the server.
+    EXPECT_EQ(0, getStatistic("pkt4-receive-drop"));
 }
 
 // Checks if callouts installed on pkt4_send are indeed called and the
@@ -2030,6 +2036,9 @@ TEST_F(HooksDhcpv4SrvTest, subnet4SelectDrop) {
 
     // Check if the callout handle state was reset after the callout.
     checkCalloutHandleReset(discover);
+
+    // Drop statistics should be maintained by the callouts, not by the server.
+    EXPECT_EQ(0, getStatistic("pkt4-receive-drop"));
 }
 
 // This test verifies that the leases4_committed hook point is not triggered

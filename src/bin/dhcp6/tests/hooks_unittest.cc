@@ -1244,6 +1244,9 @@ TEST_F(HooksDhcpv6SrvTest, buffer6ReceiveDrop) {
 
     // Check if the callout handle state was reset after the callout.
     checkCalloutHandleReset(sol);
+
+    // Drop statistics should be maintained by the callouts, not by the server.
+    EXPECT_EQ(0, getStatistic("pkt6-receive-drop"));
 }
 
 // Checks if callouts installed on pkt6_receive are indeed called and the
@@ -1406,6 +1409,9 @@ TEST_F(HooksDhcpv6SrvTest, pkt6ReceiveDrop) {
 
     // Check if the callout handle state was reset after the callout.
     checkCalloutHandleReset(sol);
+
+    // Drop statistics should be maintained by the callouts, not by the server.
+    EXPECT_EQ(0, getStatistic("pkt6-receive-drop"));
 }
 
 // Checks if callouts installed on pkt6_send are indeed called and the
@@ -1907,6 +1913,9 @@ TEST_F(HooksDhcpv6SrvTest, subnet6SelectDrop) {
 
     // Check if the callout handle state was reset after the callout.
     checkCalloutHandleReset(sol);
+
+    // Drop statistics should be maintained by the callouts, not by the server.
+    EXPECT_EQ(0, getStatistic("pkt6-receive-drop"));
 }
 
 // This test verifies that the leases6_committed hook point is not triggered
