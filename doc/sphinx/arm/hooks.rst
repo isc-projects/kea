@@ -403,7 +403,6 @@ It lowers the number of concurrently parked packets to 128.
 
     {
       "Dhcp6": {
-        // Limit the number of concurrently parked packets to 128.
         "parked-packet-limit": 128
         "hooks-libraries": [
           {
@@ -432,7 +431,7 @@ It lowers the number of concurrently parked packets to 128.
               ]
             }
           }
-        ],
+        ]
       }
     }
 
