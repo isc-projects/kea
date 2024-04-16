@@ -71,16 +71,16 @@ public:
     ///
     /// This variant of the method uses default HTTP client for communication.
     ///
-    /// @param server_name name of the server to which the command should be
+    /// @param remote_config config of the server to which the command should be
     /// sent.
     /// @param max_period maximum number of seconds for which the DHCP service
     /// should be disabled.
     /// @param post_request_action pointer to the function to be executed when
     /// the request is completed.
-    void asyncDisableDHCPService(const std::string& server_name,
+    void asyncDisableDHCPService(const HAConfig::PeerConfigPtr& remote_config,
                                  const unsigned int max_period,
                                  const PostRequestCallback& post_request_action) {
-        HAService::asyncDisableDHCPService(*client_, server_name, max_period,
+        HAService::asyncDisableDHCPService(*client_, remote_config, max_period,
                                            post_request_action);
     }
 
@@ -89,13 +89,13 @@ public:
     ///
     /// This variant of the method uses default HTTP client for communication.
     ///
-    /// @param server_name name of the server to which the command should be
+    /// @param remote_config config of the server to which the command should be
     /// sent.
     /// @param post_request_action pointer to the function to be executed when
     /// the request is completed.
-    void asyncEnableDHCPService(const std::string& server_name,
+    void asyncEnableDHCPService(const HAConfig::PeerConfigPtr& remote_config,
                                 const PostRequestCallback& post_request_action) {
-        HAService::asyncEnableDHCPService(*client_, server_name, post_request_action);
+        HAService::asyncEnableDHCPService(*client_, remote_config, post_request_action);
     }
 
     using HAService::asyncSendHeartbeat;

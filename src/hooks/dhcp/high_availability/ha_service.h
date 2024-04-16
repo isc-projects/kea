@@ -768,14 +768,14 @@ protected:
     ///
     /// @param http_client reference to the client to be used to communicate
     /// with the other server.
-    /// @param server_name name of the server to which the command should be
-    /// sent.
+    /// @param remote_config config of the partner to which the command should
+    /// be sent.
     /// @param max_period maximum number of seconds for which the DHCP service
     /// should be disabled.
     /// @param post_request_action pointer to the function to be executed when
     /// the request is completed.
     void asyncDisableDHCPService(http::HttpClient& http_client,
-                                 const std::string& server_name,
+                                 const HAConfig::PeerConfigPtr& remote_config,
                                  const unsigned int max_period,
                                  PostRequestCallback post_request_action);
 
@@ -784,12 +784,12 @@ protected:
     ///
     /// @param http_client reference to the client to be used to communicate
     /// with the other server.
-    /// @param server_name name of the server to which the command should be
-    /// sent.
+    /// @param remote_config config of the partner to which the command should
+    /// be sent.
     /// @param post_request_action pointer to the function to be executed when
     /// the request is completed.
     void asyncEnableDHCPService(http::HttpClient& http_client,
-                                const std::string& server_name,
+                                const HAConfig::PeerConfigPtr& remote_config,
                                 PostRequestCallback post_request_action);
 
     /// @brief Disables local DHCP service.
@@ -851,7 +851,7 @@ protected:
     ///
     /// @param http_client reference to the client to be used to communicate
     /// with the other server.
-    /// @param server_name name of the server to fetch leases from.
+    /// @param remote_config config of the partner to fetch leases from.
     /// @param max_period maximum number of seconds to disable DHCP service
     /// @param last_lease Pointer to the last lease returned on the previous
     /// page of leases. This lease is used to set the value of the "from"
@@ -866,7 +866,7 @@ protected:
     /// @c post_sync_action to indicate whether the DHCP service has to
     /// be enabled after the leases synchronization.
     void asyncSyncLeases(http::HttpClient& http_client,
-                         const std::string& server_name,
+                         const HAConfig::PeerConfigPtr& remote_config,
                          const unsigned int max_period,
                          const dhcp::LeasePtr& last_lease,
                          PostSyncCallback post_sync_action,
@@ -884,7 +884,7 @@ protected:
     ///
     /// @param http_client reference to the client to be used to communicate
     /// with the other server.
-    /// @param server_name name of the server to fetch leases from.
+    /// @param remote_config config of the partner to fetch leases from.
     /// @param max_period maximum number of seconds to disable DHCP service
     /// @param last_lease Pointer to the last lease returned on the previous
     /// page of leases. This lease is used to set the value of the "from"
@@ -899,7 +899,7 @@ protected:
     /// @c post_sync_action to indicate whether the DHCP service has to
     /// be enabled after the leases synchronization.
     void asyncSyncLeasesInternal(http::HttpClient& http_client,
-                                 const std::string& server_name,
+                                 const HAConfig::PeerConfigPtr& remote_config,
                                  const unsigned int max_period,
                                  const dhcp::LeasePtr& last_lease,
                                  PostSyncCallback post_sync_action,
@@ -944,14 +944,15 @@ protected:
     /// invokes IOService::run().
     ///
     /// @param [out] status_message status message in textual form.
-    /// @param server_name name of the server to fetch leases from.
+    /// @param remote_config config of the server to fetch leases from.
     /// @param max_period maximum number of seconds to disable DHCP service
     /// of the peer. This value is used in dhcp-disable command issued to
     /// the peer before the lease4-get-page command.
     ///
     /// @return Synchronization result according to the status codes returned
     /// in responses to control commands.
-    int synchronize(std::string& status_message, const std::string& server_name,
+    int synchronize(std::string& status_message,
+                    const HAConfig::PeerConfigPtr& remote_config,
                     const unsigned int max_period);
 
     /// @brief Sends lease updates from backlog to partner asynchronously.
@@ -1100,12 +1101,12 @@ protected:
     ///
     /// @param http_client reference to the client to be used to communicate
     /// with the other server.
-    /// @param server_name name of the server to which the command should be
-    /// sent.
+    /// @param remote_config config of the partner to which the command should
+    /// be sent.
     /// @param post_request_action pointer to the function to be executed when
     /// the request is completed.
     void asyncSyncCompleteNotify(http::HttpClient& http_client,
-                                 const std::string& server_name,
+                                 const HAConfig::PeerConfigPtr& remote_config,
                                  PostRequestCallback post_request_action);
 
 public:

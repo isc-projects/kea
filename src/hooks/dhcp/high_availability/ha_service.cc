@@ -771,7 +771,7 @@ HAService::syncingStateHandler() {
         // Perform synchronous leases update.
         std::string status_message;
         int sync_status = synchronize(status_message,
-                                      config_->getFailoverPeerConfig()->getName(),
+                                      config_->getFailoverPeerConfig(),
                                       dhcp_disable_timeout);
 
         // If the leases synchronization was successful, let's transition
@@ -1908,11 +1908,9 @@ HAService::startHeartbeat() {
 
 void
 HAService::asyncDisableDHCPService(HttpClient& http_client,
-                                   const std::string& server_name,
+                                   const HAConfig::PeerConfigPtr& remote_config,
                                    const unsigned int max_period,
                                    PostRequestCallback post_request_action) {
-    HAConfig::PeerConfigPtr remote_config = config_->getPeerConfig(server_name);
-
     // Create HTTP/1.1 request including our command.
     PostHttpRequestJsonPtr request = boost::make_shared<PostHttpRequestJson>
         (HttpRequest::Method::HTTP_POST, "/", HttpVersion::HTTP_11(),
@@ -1991,10 +1989,8 @@ HAService::asyncDisableDHCPService(HttpClient& http_client,
 
 void
 HAService::asyncEnableDHCPService(HttpClient& http_client,
-                                  const std::string& server_name,
+                                  const HAConfig::PeerConfigPtr& remote_config,
                                   PostRequestCallback post_request_action) {
-    HAConfig::PeerConfigPtr remote_config = config_->getPeerConfig(server_name);
-
     // Create HTTP/1.1 request including our command.
     PostHttpRequestJsonPtr request = boost::make_shared<PostHttpRequestJson>
         (HttpRequest::Method::HTTP_POST, "/", HttpVersion::HTTP_11(),
@@ -2092,13 +2088,13 @@ HAService::asyncSyncLeases() {
     }
 
     lease_sync_filter_.apply();
-    asyncSyncLeases(*client_, config_->getFailoverPeerConfig()->getName(),
+    asyncSyncLeases(*client_, config_->getFailoverPeerConfig(),
                     dhcp_disable_timeout, LeasePtr(), null_action);
 }
 
 void
 HAService::asyncSyncLeases(http::HttpClient& http_client,
-                           const std::string& server_name,
+                           const HAConfig::PeerConfigPtr& remote_config,
                            const unsigned int max_period,
                            const dhcp::LeasePtr& last_lease,
                            PostSyncCallback post_sync_action,
@@ -2108,8 +2104,8 @@ HAService::asyncSyncLeases(http::HttpClient& http_client,
     // to allocate new leases while we fetch from it. The DHCP service will
     // be disabled for a certain amount of time and will be automatically
     // re-enabled if we die during the synchronization.
-    asyncDisableDHCPService(http_client, server_name, max_period,
-                            [this, &http_client, server_name, max_period, last_lease,
+    asyncDisableDHCPService(http_client, remote_config, max_period,
+                            [this, &http_client, remote_config, max_period, last_lease,
                              post_sync_action, dhcp_disabled]
                             (const bool success, const std::string& error_message, const int) {
 
@@ -2118,7 +2114,7 @@ HAService::asyncSyncLeases(http::HttpClient& http_client,
         if (success) {
             // The last argument indicates that disabling the DHCP
             // service on the partner server was successful.
-            asyncSyncLeasesInternal(http_client, server_name, max_period,
+            asyncSyncLeasesInternal(http_client, remote_config, max_period,
                                     last_lease, post_sync_action, true);
 
         } else {
@@ -2129,19 +2125,16 @@ HAService::asyncSyncLeases(http::HttpClient& http_client,
 
 void
 HAService::asyncSyncLeasesInternal(http::HttpClient& http_client,
-                                   const std::string& server_name,
+                                   const HAConfig::PeerConfigPtr& remote_config,
                                    const unsigned int max_period,
                                    const dhcp::LeasePtr& last_lease,
                                    PostSyncCallback post_sync_action,
                                    const bool dhcp_disabled) {
-
-    HAConfig::PeerConfigPtr partner_config = config_->getPeerConfig(server_name);
-
     // Create HTTP/1.1 request including our command.
     PostHttpRequestJsonPtr request = boost::make_shared<PostHttpRequestJson>
         (HttpRequest::Method::HTTP_POST, "/", HttpVersion::HTTP_11(),
-         HostHttpHeader(partner_config->getUrl().getStrippedHostname()));
-    partner_config->addBasicAuthHttpHeader(request);
+         HostHttpHeader(remote_config->getUrl().getStrippedHostname()));
+    remote_config->addBasicAuthHttpHeader(request);
     if (server_type_ == HAServerType::DHCPv4) {
         request->setBodyAsJson(CommandCreator::createLease4GetPage(
             boost::dynamic_pointer_cast<Lease4>(last_lease), config_->getSyncPageLimit()));
@@ -2157,11 +2150,10 @@ HAService::asyncSyncLeasesInternal(http::HttpClient& http_client,
     HttpResponseJsonPtr response = boost::make_shared<HttpResponseJson>();
 
     // Schedule asynchronous HTTP request.
-    http_client.asyncSendRequest(partner_config->getUrl(),
-                                 partner_config->getTlsContext(),
+    http_client.asyncSendRequest(remote_config->getUrl(),
+                                 remote_config->getTlsContext(),
                                  request, response,
-        [this, partner_config, post_sync_action, &http_client, server_name,
-         max_period, dhcp_disabled]
+        [this, remote_config, post_sync_action, &http_client, max_period, dhcp_disabled]
             (const boost::system::error_code& ec,
              const HttpResponsePtr& response,
              const std::string& error_str) {
@@ -2183,7 +2175,7 @@ HAService::asyncSyncLeasesInternal(http::HttpClient& http_client,
                 error_message = (ec ? ec.message() : error_str);
                 LOG_ERROR(ha_logger, HA_LEASES_SYNC_COMMUNICATIONS_FAILED)
                     .arg(config_->getThisServerName())
-                    .arg(partner_config->getLogLabel())
+                    .arg(remote_config->getLogLabel())
                     .arg(error_message);
 
             } else {
@@ -2211,7 +2203,7 @@ HAService::asyncSyncLeasesInternal(http::HttpClient& http_client,
                     LOG_INFO(ha_logger, HA_LEASES_SYNC_LEASE_PAGE_RECEIVED)
                         .arg(config_->getThisServerName())
                         .arg(leases_element.size())
-                        .arg(server_name);
+                        .arg(remote_config->getLogLabel());
 
                     // Count actually applied leases.
                     uint64_t applied_lease_count = 0;
@@ -2314,7 +2306,7 @@ HAService::asyncSyncLeasesInternal(http::HttpClient& http_client,
                     error_message = ex.what();
                     LOG_ERROR(ha_logger, HA_LEASES_SYNC_FAILED)
                         .arg(config_->getThisServerName())
-                        .arg(partner_config->getLogLabel())
+                        .arg(remote_config->getLogLabel())
                         .arg(error_message);
                 }
             }
@@ -2327,7 +2319,7 @@ HAService::asyncSyncLeasesInternal(http::HttpClient& http_client,
              } else if (last_lease) {
                  // This indicates that there are more leases to be fetched.
                  // Therefore, we have to send another leaseX-get-page command.
-                 asyncSyncLeases(http_client, server_name, max_period, last_lease,
+                 asyncSyncLeases(http_client, remote_config, max_period, last_lease,
                                  post_sync_action, dhcp_disabled);
                  return;
              }
@@ -2350,20 +2342,32 @@ HAService::asyncSyncLeasesInternal(http::HttpClient& http_client,
 ConstElementPtr
 HAService::processSynchronize(const std::string& server_name,
                               const unsigned int max_period) {
+    HAConfig::PeerConfigPtr remote_config;
+    try {
+        remote_config = config_->getPeerConfig(server_name);
+    } catch (const std::exception& ex) {
+        return (createAnswer(CONTROL_RESULT_ERROR, ex.what()));
+    }
+    // We must not synchronize with self.
+    if (remote_config->getName() == config_->getThisServerName()) {
+        return (createAnswer(CONTROL_RESULT_ERROR, "'" + remote_config->getName()
+            + "' points to local server but should point to a partner"));
+    }
     std::string answer_message;
-    int sync_status = synchronize(answer_message, server_name, max_period);
+    int sync_status = synchronize(answer_message, remote_config, max_period);
     return (createAnswer(sync_status, answer_message));
 }
 
 int
-HAService::synchronize(std::string& status_message, const std::string& server_name,
+HAService::synchronize(std::string& status_message,
+                       const HAConfig::PeerConfigPtr& remote_config,
                        const unsigned int max_period) {
     lease_sync_filter_.apply();
 
     IOServicePtr io_service(new IOService());
     HttpClient client(io_service, false);
 
-    asyncSyncLeases(client, server_name, max_period, Lease4Ptr(),
+    asyncSyncLeases(client, remote_config, max_period, Lease4Ptr(),
                     [&](const bool success, const std::string& error_message,
                         const bool dhcp_disabled) {
         // If there was a fatal error while fetching the leases, let's
@@ -2381,7 +2385,7 @@ HAService::synchronize(std::string& status_message, const std::string& server_na
             // try to send the ha-sync-complete-notify command to the
             // partner.
             if (success) {
-                asyncSyncCompleteNotify(client, server_name,
+                asyncSyncCompleteNotify(client, remote_config,
                                         [&](const bool success,
                                             const std::string& error_message,
                                             const int rcode) {
@@ -2389,7 +2393,7 @@ HAService::synchronize(std::string& status_message, const std::string& server_na
                     // runs an older Kea version. In that case, send the dhcp-enable
                     // command as in previous Kea version.
                     if (rcode == CONTROL_RESULT_COMMAND_UNSUPPORTED) {
-                        asyncEnableDHCPService(client, server_name,
+                        asyncEnableDHCPService(client, remote_config,
                                                [&](const bool success,
                                                    const std::string& error_message,
                                                    const int) {
@@ -2422,7 +2426,7 @@ HAService::synchronize(std::string& status_message, const std::string& server_na
                 //  re-enable the DHCP service. Note, that we don't send the
                 // ha-sync-complete-notify command in this case. It is only sent in
                 // the case when synchronization ends successfully.
-                asyncEnableDHCPService(client, server_name,
+                asyncEnableDHCPService(client, remote_config,
                                        [&](const bool success,
                                            const std::string& error_message,
                                            const int) {
@@ -2447,7 +2451,7 @@ HAService::synchronize(std::string& status_message, const std::string& server_na
 
     LOG_INFO(ha_logger, HA_SYNC_START)
         .arg(config_->getThisServerName())
-        .arg(server_name);
+        .arg(remote_config->getLogLabel());
 
     // Measure duration of the synchronization.
     Stopwatch stopwatch;
@@ -2475,7 +2479,7 @@ HAService::synchronize(std::string& status_message, const std::string& server_na
 
         LOG_ERROR(ha_logger, HA_SYNC_FAILED)
             .arg(config_->getThisServerName())
-            .arg(server_name)
+            .arg(remote_config->getLogLabel())
             .arg(status_message);
 
         return (CONTROL_RESULT_ERROR);
@@ -2488,7 +2492,7 @@ HAService::synchronize(std::string& status_message, const std::string& server_na
 
     LOG_INFO(ha_logger, HA_SYNC_SUCCESSFUL)
         .arg(config_->getThisServerName())
-        .arg(server_name)
+        .arg(remote_config->getLogLabel())
         .arg(stopwatch.logFormatLastDuration());
 
     return (CONTROL_RESULT_SUCCESS);
@@ -3015,10 +3019,8 @@ HAService::processMaintenanceCancel() {
 
 void
 HAService::asyncSyncCompleteNotify(HttpClient& http_client,
-                                   const std::string& server_name,
+                                   const HAConfig::PeerConfigPtr& remote_config,
                                    PostRequestCallback post_request_action) {
-    HAConfig::PeerConfigPtr remote_config = config_->getPeerConfig(server_name);
-
     // Create HTTP/1.1 request including our command.
     PostHttpRequestJsonPtr request = boost::make_shared<PostHttpRequestJson>
         (HttpRequest::Method::HTTP_POST, "/", HttpVersion::HTTP_11(),

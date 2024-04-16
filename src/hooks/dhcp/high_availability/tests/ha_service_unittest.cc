@@ -170,16 +170,16 @@ public:
     ///
     /// This variant of the method uses default HTTP client for communication.
     ///
-    /// @param server_name name of the server to which the command should be
+    /// @param remote_config config of the server to which the command should be
     /// sent.
     /// @param max_period maximum number of seconds for which the DHCP service
     /// should be disabled.
     /// @param post_request_action pointer to the function to be executed when
     /// the request is completed.
-    void asyncDisableDHCPService(const std::string& server_name,
+    void asyncDisableDHCPService(const HAConfig::PeerConfigPtr& remote_config,
                                  const unsigned int max_period,
                                  const PostRequestCallback& post_request_action) {
-        HAService::asyncDisableDHCPService(*client_, server_name, max_period,
+        HAService::asyncDisableDHCPService(*client_, remote_config, max_period,
                                            post_request_action);
     }
 
@@ -188,13 +188,13 @@ public:
     ///
     /// This variant of the method uses default HTTP client for communication.
     ///
-    /// @param server_name name of the server to which the command should be
+    /// @param remote_config config of the server to which the command should be
     /// sent.
     /// @param post_request_action pointer to the function to be executed when
     /// the request is completed.
-    void asyncEnableDHCPService(const std::string& server_name,
+    void asyncEnableDHCPService(const HAConfig::PeerConfigPtr& remote_config,
                                 const PostRequestCallback& post_request_action) {
-        HAService::asyncEnableDHCPService(*client_, server_name, post_request_action);
+        HAService::asyncEnableDHCPService(*client_, remote_config, post_request_action);
     }
 
     using HAService::asyncSendHeartbeat;
@@ -2057,8 +2057,9 @@ public:
     /// leases in the lease database.
     ///
     /// @param config_storage test HA configuration.
+    /// @param server_name name of the partner server.
     /// @param [out] rsp pointer to the object where response will be stored.
-    void runProcessSynchronize4(HAConfigPtr config_storage, ConstElementPtr& rsp) {
+    void runProcessSynchronize4(HAConfigPtr config_storage, std::string server_name, ConstElementPtr& rsp) {
         // Create lease manager.
         ASSERT_NO_THROW(LeaseMgrFactory::create("universe=4 type=memfile persist=false"));
 
@@ -2084,7 +2085,7 @@ public:
         auto thread = runIOServiceInThread();
 
         // Process ha-sync command.
-        ASSERT_NO_THROW(rsp = service.processSynchronize("server2", 20));
+        ASSERT_NO_THROW(rsp = service.processSynchronize(server_name, 20));
 
         // Stop the IO service. This should cause the thread to terminate.
         io_service_->stop();
@@ -2105,8 +2106,9 @@ public:
     /// leases in the lease database.
     ///
     /// @param config_storage test HA configuration.
+    /// @param server_name name of the partner server.
     /// @param [out] rsp pointer to the object where response will be stored.
-    void runProcessSynchronize6(HAConfigPtr config_storage, ConstElementPtr& rsp) {
+    void runProcessSynchronize6(HAConfigPtr config_storage, std::string server_name, ConstElementPtr& rsp) {
         // Create lease manager.
         ASSERT_NO_THROW(LeaseMgrFactory::create("universe=6 type=memfile persist=false"));
 
@@ -2133,7 +2135,7 @@ public:
         auto thread = runIOServiceInThread();
 
         // Process ha-sync command.
-        ASSERT_NO_THROW(rsp = service.processSynchronize("server2", 20));
+        ASSERT_NO_THROW(rsp = service.processSynchronize(server_name, 20));
 
         // Stop the IO service. This should cause the thread to terminate.
         io_service_->stop();
@@ -3961,7 +3963,7 @@ TEST_F(HAServiceTest, processSynchronize4) {
 
     // Run HAService::processSynchronize and gather a response.
     ConstElementPtr rsp;
-    runProcessSynchronize4(config_storage, rsp);
+    runProcessSynchronize4(config_storage, "server2", rsp);
 
     // The response should indicate success.
     ASSERT_TRUE(rsp);
@@ -3994,7 +3996,7 @@ TEST_F(HAServiceTest, processSynchronize4PassiveBackup) {
 
     // Run HAService::processSynchronize and gather a response.
     ConstElementPtr rsp;
-    runProcessSynchronize4(config_storage, rsp);
+    runProcessSynchronize4(config_storage, "server2", rsp);
 
     // The response should indicate success.
     ASSERT_TRUE(rsp);
@@ -4036,7 +4038,7 @@ TEST_F(HAServiceTest, processSynchronize4Authorized) {
 
     // Run HAService::processSynchronize and gather a response.
     ConstElementPtr rsp;
-    runProcessSynchronize4(config_storage, rsp);
+    runProcessSynchronize4(config_storage, "server2", rsp);
 
     // The response should indicate success.
     ASSERT_TRUE(rsp);
@@ -4072,7 +4074,7 @@ TEST_F(HAServiceTest, processSynchronizeDisableError) {
 
     // Run HAService::processSynchronize and gather a response.
     ConstElementPtr rsp;
-    runProcessSynchronize4(config_storage, rsp);
+    runProcessSynchronize4(config_storage, "server2", rsp);
 
     // The response should indicate an error
     ASSERT_TRUE(rsp);
@@ -4099,7 +4101,7 @@ TEST_F(HAServiceTest, processSynchronizeUnauthorized) {
 
     // Run HAService::processSynchronize and gather a response.
     ConstElementPtr rsp;
-    runProcessSynchronize4(config_storage, rsp);
+    runProcessSynchronize4(config_storage, "server2", rsp);
 
     // The response should indicate an error
     ASSERT_TRUE(rsp);
@@ -4123,7 +4125,7 @@ TEST_F(HAServiceTest, processSynchronizeLease4GetPageError) {
 
     // Run HAService::processSynchronize and gather a response.
     ConstElementPtr rsp;
-    runProcessSynchronize4(config_storage, rsp);
+    runProcessSynchronize4(config_storage, "server2", rsp);
 
     // The response should indicate an error
     ASSERT_TRUE(rsp);
@@ -4160,7 +4162,7 @@ TEST_F(HAServiceTest, processSynchronizeEnableError) {
 
     // Run HAService::processSynchronize and gather a response.
     ConstElementPtr rsp;
-    runProcessSynchronize4(config_storage, rsp);
+    runProcessSynchronize4(config_storage, "server2", rsp);
 
     // The response should indicate an error
     ASSERT_TRUE(rsp);
@@ -4208,7 +4210,7 @@ TEST_F(HAServiceTest, processSynchronizeNotifyError) {
 
     // Run HAService::processSynchronize and gather a response.
     ConstElementPtr rsp;
-    runProcessSynchronize4(config_storage, rsp);
+    runProcessSynchronize4(config_storage, "server2", rsp);
 
     // The response should indicate an error
     ASSERT_TRUE(rsp);
@@ -4238,6 +4240,27 @@ TEST_F(HAServiceTest, processSynchronizeNotifyError) {
     EXPECT_FALSE(factory2_->getResponseCreator()->findRequest("dhcp-enable",""));
 }
 
+// This test verifies that an error is reported when server-name parameter
+// points to a non-existing server.
+TEST_F(HAServiceTest, processSynchronize4InvalidServerName) {
+    // Create HA configuration for 3 servers. This server is
+    // server 1.
+    HAConfigPtr config_storage = createValidConfiguration();
+    setBasicAuth(config_storage);
+
+    // Run HAService::processSynchronize and gather a response.
+    ConstElementPtr rsp;
+    runProcessSynchronize4(config_storage, "server8", rsp);
+
+    // The response should indicate an error
+    ASSERT_TRUE(rsp);
+    checkAnswer(rsp, CONTROL_RESULT_ERROR);
+
+    // This server should issue no command because we expect that
+    // it returns after checking that the specified server doesn't exist.
+    EXPECT_FALSE(factory2_->getResponseCreator()->findRequest("dhcp-disable", ""));
+}
+
 // This test verifies that the ha-sync command is processed successfully for the
 // DHCPv6 server.
 TEST_F(HAServiceTest, processSynchronize6) {
@@ -4249,7 +4272,7 @@ TEST_F(HAServiceTest, processSynchronize6) {
 
     // Run HAService::processSynchronize and gather a response.
     ConstElementPtr rsp;
-    runProcessSynchronize6(config_storage, rsp);
+    runProcessSynchronize6(config_storage, "server2", rsp);
 
     // The response should indicate success.
     ASSERT_TRUE(rsp);
@@ -4282,7 +4305,7 @@ TEST_F(HAServiceTest, processSynchronize6PassiveBackup) {
 
     // Run HAService::processSynchronize and gather a response.
     ConstElementPtr rsp;
-    runProcessSynchronize6(config_storage, rsp);
+    runProcessSynchronize6(config_storage, "server2", rsp);
 
     // The response should indicate success.
     ASSERT_TRUE(rsp);
@@ -4324,7 +4347,7 @@ TEST_F(HAServiceTest, processSynchronize6Authorized) {
 
     // Run HAService::processSynchronize and gather a response.
     ConstElementPtr rsp;
-    runProcessSynchronize6(config_storage, rsp);
+    runProcessSynchronize6(config_storage, "server2", rsp);
 
     // The response should indicate success.
     ASSERT_TRUE(rsp);
@@ -4360,7 +4383,7 @@ TEST_F(HAServiceTest, processSynchronize6DisableError) {
 
     // Run HAService::processSynchronize and gather a response.
     ConstElementPtr rsp;
-    runProcessSynchronize6(config_storage, rsp);
+    runProcessSynchronize6(config_storage, "server2", rsp);
 
     // The response should indicate an error
     ASSERT_TRUE(rsp);
@@ -4386,7 +4409,7 @@ TEST_F(HAServiceTest, processSynchronize6Unauthorized) {
 
     // Run HAService::processSynchronize and gather a response.
     ConstElementPtr rsp;
-    runProcessSynchronize6(config_storage, rsp);
+    runProcessSynchronize6(config_storage, "server2", rsp);
 
     // The response should indicate an error
     ASSERT_TRUE(rsp);
@@ -4410,7 +4433,7 @@ TEST_F(HAServiceTest, processSynchronizeLease6GetPageError) {
 
     // Run HAService::processSynchronize and gather a response.
     ConstElementPtr rsp;
-    runProcessSynchronize6(config_storage, rsp);
+    runProcessSynchronize6(config_storage, "server2", rsp);
 
     // The response should indicate an error
     ASSERT_TRUE(rsp);
@@ -4443,7 +4466,7 @@ TEST_F(HAServiceTest, processSynchronize6EnableError) {
 
     // Run HAService::processSynchronize and gather a response.
     ConstElementPtr rsp;
-    runProcessSynchronize6(config_storage, rsp);
+    runProcessSynchronize6(config_storage, "server2", rsp);
 
     // The response should indicate an error
     ASSERT_TRUE(rsp);
@@ -4471,7 +4494,7 @@ TEST_F(HAServiceTest, processSynchronize6NotifyError) {
 
     // Run HAService::processSynchronize and gather a response.
     ConstElementPtr rsp;
-    runProcessSynchronize6(config_storage, rsp);
+    runProcessSynchronize6(config_storage, "server2", rsp);
 
     // The response should indicate an error
     ASSERT_TRUE(rsp);
@@ -4481,6 +4504,27 @@ TEST_F(HAServiceTest, processSynchronize6NotifyError) {
     EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("lease6-get-page",""));
     EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("ha-sync-complete-notify",""));
     EXPECT_FALSE(factory2_->getResponseCreator()->findRequest("dhcp-enable",""));
+}
+
+// This test verifies that an error is reported when server-name parameter
+// points to a local server.
+TEST_F(HAServiceTest, processSynchronize6LocalServer) {
+    // Create HA configuration for 3 servers. This server is
+    // server 1.
+    HAConfigPtr config_storage = createValidConfiguration();
+    setBasicAuth(config_storage);
+
+    // Run HAService::processSynchronize and gather a response.
+    ConstElementPtr rsp;
+    runProcessSynchronize6(config_storage, "server1", rsp);
+
+    // The response should indicate an error
+    ASSERT_TRUE(rsp);
+    checkAnswer(rsp, CONTROL_RESULT_ERROR);
+
+    // This server should issue no command because we expect that
+    // it returns after checking that the specified server doesn't exist.
+    EXPECT_FALSE(factory2_->getResponseCreator()->findRequest("dhcp-disable", ""));
 }
 
 // This test verifies that the DHCPv4 service can be disabled on the remote server.
@@ -4500,7 +4544,7 @@ TEST_F(HAServiceTest, asyncDisableDHCPService4) {
 
     // Send dhcp-disable command with max-period of 10 seconds.
     // When the transaction is finished, the IO service gets stopped.
-    ASSERT_NO_THROW(service.asyncDisableDHCPService("server3", 10,
+    ASSERT_NO_THROW(service.asyncDisableDHCPService(config_storage->getPeerConfig("server3"), 10,
                                                     [this](const bool success,
                                                            const std::string& error_message,
                                                            const int) {
@@ -4546,7 +4590,7 @@ TEST_F(HAServiceTest, asyncDisableDHCPService4Authorized) {
 
     // Send dhcp-disable command with max-period of 10 seconds.
     // When the transaction is finished, the IO service gets stopped.
-    ASSERT_NO_THROW(service.asyncDisableDHCPService("server3", 10,
+    ASSERT_NO_THROW(service.asyncDisableDHCPService(config_storage->getPeerConfig("server3"), 10,
                                                     [this](const bool success,
                                                            const std::string& error_message,
                                                            const int) {
@@ -4575,7 +4619,7 @@ TEST_F(HAServiceTest, asyncDisableDHCPService4ServerOffline) {
 
     // Send dhcp-disable command with max-period of 10 seconds.
     // When the transaction is finished, the IO service gets stopped.
-    ASSERT_NO_THROW(service.asyncDisableDHCPService("server2", 10,
+    ASSERT_NO_THROW(service.asyncDisableDHCPService(config_storage->getPeerConfig("server2"), 10,
                                                     [this](const bool success,
                                                            const std::string& error_message,
                                                            const int) {
@@ -4610,7 +4654,7 @@ TEST_F(HAServiceTest, asyncDisableDHCPService4ControlResultError) {
 
     // Send dhcp-disable command with max-period of 10 seconds.
     // When the transaction is finished, the IO service gets stopped.
-    ASSERT_NO_THROW(service.asyncDisableDHCPService("server3", 10,
+    ASSERT_NO_THROW(service.asyncDisableDHCPService(config_storage->getPeerConfig("server3"), 10,
                                                     [this](const bool success,
                                                            const std::string& error_message,
                                                            const int) {
@@ -4644,7 +4688,7 @@ TEST_F(HAServiceTest, asyncDisableDHCPService4ControlResultUnauthorized) {
 
     // Send dhcp-disable command with max-period of 10 seconds.
     // When the transaction is finished, the IO service gets stopped.
-    ASSERT_NO_THROW(service.asyncDisableDHCPService("server3", 10,
+    ASSERT_NO_THROW(service.asyncDisableDHCPService(config_storage->getPeerConfig("server3"), 10,
                                                     [this](const bool success,
                                                            const std::string& error_message,
                                                            const int) {
@@ -4674,7 +4718,7 @@ TEST_F(HAServiceTest, asyncEnableDHCPService4) {
 
     // Send dhcp-enable command. When the transaction is finished,
     // the IO service gets stopped.
-    ASSERT_NO_THROW(service.asyncEnableDHCPService("server2",
+    ASSERT_NO_THROW(service.asyncEnableDHCPService(config_storage->getPeerConfig("server2"),
                                                    [this](const bool success,
                                                           const std::string& error_message,
                                                           const int) {
@@ -4719,7 +4763,7 @@ TEST_F(HAServiceTest, asyncEnableDHCPService4Authorized) {
 
     // Send dhcp-enable command. When the transaction is finished,
     // the IO service gets stopped.
-    ASSERT_NO_THROW(service.asyncEnableDHCPService("server2",
+    ASSERT_NO_THROW(service.asyncEnableDHCPService(config_storage->getPeerConfig("server2"),
                                                    [this](const bool success,
                                                           const std::string& error_message,
                                                           const int) {
@@ -4747,7 +4791,7 @@ TEST_F(HAServiceTest, asyncEnableDHCPService4ServerOffline) {
 
     // Send dhcp-enable command. When the transaction is finished,
     // the IO service gets stopped.
-    ASSERT_NO_THROW(service.asyncEnableDHCPService("server2",
+    ASSERT_NO_THROW(service.asyncEnableDHCPService(config_storage->getPeerConfig("server2"),
                                                    [this](const bool success,
                                                           const std::string& error_message,
                                                           const int) {
@@ -4782,7 +4826,7 @@ TEST_F(HAServiceTest, asyncEnableDHCPService4ControlResultError) {
 
     // Send dhcp-enable command. When the transaction is finished,
     // the IO service gets stopped.
-    ASSERT_NO_THROW(service.asyncEnableDHCPService("server2",
+    ASSERT_NO_THROW(service.asyncEnableDHCPService(config_storage->getPeerConfig("server2"),
                                                    [this](const bool success,
                                                           const std::string& error_message,
                                                           const int) {
@@ -4816,7 +4860,7 @@ TEST_F(HAServiceTest, asyncEnableDHCPService4ControlResultUnauthorized) {
 
     // Send dhcp-enable command. When the transaction is finished,
     // the IO service gets stopped.
-    ASSERT_NO_THROW(service.asyncEnableDHCPService("server2",
+    ASSERT_NO_THROW(service.asyncEnableDHCPService(config_storage->getPeerConfig("server2"),
                                                    [this](const bool success,
                                                           const std::string& error_message,
                                                           const int) {
