@@ -888,7 +888,7 @@ HAService::waitingStateHandler() {
     case HA_TERMINATED_ST: {
         auto partner_in_terminated = communication_state_->getDurationSincePartnerStateTime();
         if (!partner_in_terminated.is_not_a_date_time() &&
-            partner_in_terminated.minutes() >= HA_WAITING_TO_TERMINATED_ST_DELAY_MINUTES) {
+            (partner_in_terminated.total_seconds()) / 60 >= HA_WAITING_TO_TERMINATED_ST_DELAY_MINUTES) {
             LOG_WARN(ha_logger, HA_TERMINATED_PARTNER_DID_NOT_RESTART)
                 .arg(config_->getThisServerName())
                 .arg(HA_WAITING_TO_TERMINATED_ST_DELAY_MINUTES);
