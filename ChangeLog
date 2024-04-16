@@ -1,3 +1,10 @@
+2220.	[bug]		marcin
+	Exclude packets ignored during load balancing from the
+	pkt6-receive-drop statistics. The packets dropped by the
+	HA hook library during subnet selection are counted in
+	the pkt4-receive-drop and pkt6-receive-drop statistics.
+	(Gitlab #3125)
+
 2219.	[bug]		marcin
 	Corrected an issue in processing the server-name argument
 	of the ha-sync command. The argument was ignored when the
