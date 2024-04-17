@@ -16,7 +16,8 @@
 
 #include <boost/shared_ptr.hpp>
 
-namespace isc::util {
+namespace isc {
+namespace util {
 
 /// @brief The @c InputBuffer class is a buffer abstraction for manipulating read-only data.
 ///
@@ -569,6 +570,7 @@ private:
 /// @brief Type of pointers to output buffers.
 typedef boost::shared_ptr<OutputBuffer> OutputBufferPtr;
 
-}  // namespace isc::util
+}  // namespace util
+}  // namespace isc
 
 #endif  // BUFFER_H

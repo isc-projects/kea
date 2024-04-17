@@ -19,7 +19,9 @@
 
 #include <boost/lexical_cast.hpp>
 
-namespace isc::util::str {
+namespace isc {
+namespace util {
+namespace str {
 
 /// @brief A Set of C++ Utilities for Manipulating Strings
 
@@ -64,6 +66,7 @@ seekTrimmed(Iterator const& begin, Iterator end, uint8_t const trim_val) {
     while (end != begin && *(end - 1) == trim_val) {
         --end;
     }
+
     return (end);
 }
 
@@ -283,6 +286,8 @@ isPrintable(const std::vector<uint8_t>& content);
 std::string
 dumpAsHex(const uint8_t* data, size_t length);
 
-}  // namespace isc::util::str
+}  // namespace str
+}  // namespace util
+}  // namespace isc
 
 #endif  // KEA_UTIL_STR_H
