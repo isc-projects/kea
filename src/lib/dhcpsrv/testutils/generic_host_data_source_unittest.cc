@@ -5099,6 +5099,38 @@ HostMgrTest::testDeleteByIDAndAddress(BaseHostDataSource& data_source1,
 }
 
 void
+HostMgrTest::testDeleteOneHostByIDAndAddress(BaseHostDataSource& data_source) {
+    ASSERT_TRUE(HostMgr::instance().setIPReservationsUnique(false));
+
+    // This test expects alternate data source - MySQL or PostgreSQL hosts DB.
+    EXPECT_FALSE(isPrimaryDataSource(data_source));
+
+    // Add 3 IPv4 hosts.
+    addHost4(data_source, hwaddrs_[0], SubnetID(1), IOAddress("192.0.2.4"));
+    addHost4(data_source, hwaddrs_[1], SubnetID(1), IOAddress("192.0.2.5"));
+    addHost4(data_source, hwaddrs_[2], SubnetID(1), IOAddress("192.0.2.6"));
+
+    // Add 3 IPv6 hosts.
+    addHost6(data_source, duids_[0], SubnetID(1), IOAddress("2001:db8:1::4"));
+    addHost6(data_source, duids_[1], SubnetID(1), IOAddress("2001:db8:1::5"));
+    addHost6(data_source, duids_[2], SubnetID(1), IOAddress("2001:db8:1::6"));
+
+    CfgMgr::instance().commit();
+
+    // Delete only one IPv4 host - provide SubnetId and IP address for the host to be deleted.
+    EXPECT_TRUE(HostMgr::instance().del(SubnetID(1), IOAddress("192.0.2.4")));
+
+    // Delete only one IPv6 host - provide SubnetId and IP address for the host to be deleted.
+    EXPECT_TRUE(HostMgr::instance().del(SubnetID(1), IOAddress("2001:db8:1::4")));
+
+    // Expect other two IPv4 hosts still in reservations.
+    EXPECT_EQ(4, HostMgr::instance().getAll4(SubnetID(1)).size());
+
+    // Expect other two IPv6 hosts still in reservations.
+    EXPECT_EQ(2, HostMgr::instance().getAll6(SubnetID(1)).size());
+}
+
+void
 HostMgrTest::testDelete4ByIDAndIdentifier(BaseHostDataSource& data_source1,
                                           BaseHostDataSource& data_source2) {
     // Set the mode of operation with multiple reservations for the same

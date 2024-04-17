@@ -1048,6 +1048,14 @@ protected:
     void testDeleteByIDAndAddress(BaseHostDataSource& data_source1,
                                   BaseHostDataSource& data_source2);
 
+    /// @brief This test verifies that HostMgr deletes only desired
+    /// reservations by the subnet ID and subnet address in alternate
+    /// data sources (hosts DB backends). It verifies that other reservations
+    /// in the subnet remain undeleted.
+    ///
+    /// @param data_source alternate host data source
+    void testDeleteOneHostByIDAndAddress(BaseHostDataSource& data_source);
+
     /// @brief This test verifies that HostMgr deletes the IPv4 reservations by
     /// the subnet ID and identifier.
     ///

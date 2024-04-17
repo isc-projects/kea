@@ -1671,6 +1671,13 @@ TEST_F(MySQLHostMgrTest, del) {
     testDeleteByIDAndAddress(*getCfgHosts(), HostMgr::instance());
 }
 
+// This test verifies that the reservation can be deleted from database
+// by providing subnet ID and address, and other reservations in the subnet
+// remain undeleted.
+TEST_F(MySQLHostMgrTest, delOneHost) {
+    testDeleteOneHostByIDAndAddress(HostMgr::instance());
+}
+
 // This test verifies that the IPv4 reservations can be deleted from a
 // configuration file and a database by subnet ID and identifier.
 TEST_F(MySQLHostMgrTest, del4) {
