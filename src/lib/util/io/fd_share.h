@@ -1,22 +1,22 @@
 // Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
-// // @todo - please update
+//
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
- // @todo - please update
+
 #ifndef FD_SHARE_H
 #define FD_SHARE_H
- // @todo - please update
+
 /**
  * \file fd_share.h
  * \short Support to transfer file descriptors between processes.
  * \todo This interface is very C-ish. Should we have some kind of exceptions?
  */
 
-namespace isc { // @todo - please update
+namespace isc {
 namespace util {
 namespace io {
- // @todo - please update
+
 const int FD_SYSTEM_ERROR = -2;
 const int FD_OTHER_ERROR = -1;
 
@@ -34,7 +34,7 @@ const int FD_OTHER_ERROR = -1;
  *     not work with a pipe.
  */
 int recv_fd(const int sock);
- // @todo - please update
+
 /**
  * \short Sends a file descriptor.
  * This sends a file descriptor over an unix domain socket. This is the
@@ -49,9 +49,9 @@ int recv_fd(const int sock);
  *     file descriptor.
  */
 int send_fd(const int sock, const int fd);
- // @todo - please update
+
 }  // namespace io
 }  // namespace util
 }  // namespace isc
- // @todo - please update
+
 #endif // FD_SHARE_H

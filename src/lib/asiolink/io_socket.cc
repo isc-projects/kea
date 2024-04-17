@@ -8,7 +8,7 @@
 #include <asiolink/asio_wrapper.h>
 #include <asiolink/io_socket.h>
 
-namespace isc { // @todo - please update
+namespace isc {
 namespace asiolink {
 
 /// \brief The \c DummySocket class is a concrete derived class of

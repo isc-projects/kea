@@ -25,7 +25,7 @@ using boost::asio::ip::tcp;
 
 using namespace std;
 
-namespace isc { // @todo - please update
+namespace isc {
 namespace asiolink {
 
 size_t

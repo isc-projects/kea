@@ -603,7 +603,7 @@ public:
     /// NOTE: If the header has already been parsed by a previous call
     /// to this method, this method simply returns (i.e., it does not
     /// read from the \c buffer).
-    void parseHeader(isc::util::InputBuffer& buffer); // @todo - please update
+    void parseHeader(isc::util::InputBuffer& buffer);
 
     /// \brief (Re)build a \c Message object from wire-format data.
     ///
@@ -668,7 +668,7 @@ private:
 /// that ongoing state information will not be lost if the object
 /// that originated the asynchronous call falls out of scope.
 typedef boost::shared_ptr<Message> MessagePtr;
-typedef boost::shared_ptr<const Message> ConstMessagePtr; // @todo - please update
+typedef boost::shared_ptr<const Message> ConstMessagePtr;
 
 /// Insert the \c Message as a string into stream.
 ///

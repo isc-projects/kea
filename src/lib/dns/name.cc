@@ -19,7 +19,7 @@
 #include <iostream>
 #include <algorithm>
 
-using namespace isc::util; // @todo - please update
+using namespace isc::util;
 using namespace isc::dns::name::internal;
 
 using namespace std;

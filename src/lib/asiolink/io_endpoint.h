@@ -23,7 +23,7 @@
 
 #include <sys/socket.h>         // for sockaddr
 
-namespace isc { // @todo - please update
+namespace isc {
 namespace asiolink {
 
 /// \brief The \c IOEndpoint class is an abstract base class to represent

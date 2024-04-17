@@ -22,7 +22,7 @@
 using namespace std;
 namespace ph = std::placeholders;
 
-namespace isc { // @todo - please update
+namespace isc {
 namespace asiolink {
 
 /// This class holds a call back function of asynchronous operations.

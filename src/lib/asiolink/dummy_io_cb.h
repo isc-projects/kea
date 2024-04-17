@@ -13,7 +13,7 @@
 
 #include <boost/asio/error.hpp>
 
-namespace isc { // @todo - please update
+namespace isc {
 namespace asiolink {
 
 /// \brief Asynchronous I/O Completion Callback

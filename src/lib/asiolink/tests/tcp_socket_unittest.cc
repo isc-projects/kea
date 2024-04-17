@@ -32,7 +32,7 @@
 #include <string>
 #include <vector>
 
-using namespace isc::asiolink; // @todo - please update
+using namespace isc::asiolink;
 using namespace isc::util;
 
 using namespace std;

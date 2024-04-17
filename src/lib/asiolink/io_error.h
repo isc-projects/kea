@@ -10,7 +10,7 @@
 
 #include <exceptions/exceptions.h>
 
-namespace isc { // @todo - please update
+namespace isc {
 namespace asiolink {
 
 /// \brief An exception that is thrown if an error occurs within the IO

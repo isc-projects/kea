@@ -21,7 +21,7 @@
 #include <netdb.h>
 #include <string.h>
 
-using namespace isc::asiolink; // @todo - please update
+using namespace isc::asiolink;
 
 namespace {
 typedef boost::shared_ptr<const IOEndpoint> ConstIOEndpointPtr;

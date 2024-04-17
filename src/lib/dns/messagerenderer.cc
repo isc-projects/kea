@@ -20,9 +20,9 @@
 #include <cassert>
 #include <vector>
 
-using namespace isc::util; // @todo - please update
+using namespace isc::util;
 using isc::dns::name::internal::maptolower;
- // @todo - please update
+
 using namespace std;
 
 namespace isc {

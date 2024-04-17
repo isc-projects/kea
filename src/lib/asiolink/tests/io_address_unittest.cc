@@ -17,7 +17,7 @@
 #include <sstream>
 #include <unordered_set>
 
-using namespace isc::asiolink; // @todo - please update
+using namespace isc::asiolink;
 
 TEST(IOAddressHashTest, hashIPv4) {
     IOAddress::Hash hash;

@@ -11,7 +11,7 @@
 #include <gtest/gtest.h>
 #include <netinet/in.h>
 
-using namespace isc::asiolink; // @todo - please update
+using namespace isc::asiolink;
 
 TEST(IOSocketTest, dummySockets) {
     EXPECT_EQ(static_cast<short>(IPPROTO_UDP),

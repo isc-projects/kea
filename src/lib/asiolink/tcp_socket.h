@@ -28,7 +28,7 @@
 #include <sys/socket.h>
 #include <unistd.h>             // for some IPC/network system calls
 
-namespace isc { // @todo - please update
+namespace isc {
 namespace asiolink {
 
 /// \brief Buffer Too Large

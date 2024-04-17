@@ -21,7 +21,7 @@
 
 using namespace std;
 
-namespace isc { // @todo - please update
+namespace isc {
 namespace asiolink {
 
 const IOEndpoint*

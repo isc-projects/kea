@@ -14,7 +14,7 @@
 #include <boost/shared_ptr.hpp>
 #include <sys/socket.h>
 
-namespace isc { // @todo - please update
+namespace isc {
 namespace asiolink {
 
 class IOServiceImpl {

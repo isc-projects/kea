@@ -21,7 +21,7 @@
 #include <boost/shared_ptr.hpp>
 
 using namespace isc::dns;
-using namespace isc::util; // @todo - please update
+using namespace isc::util;
 using namespace isc::dns::rdata;
 
 using namespace std;

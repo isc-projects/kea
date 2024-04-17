@@ -13,7 +13,7 @@
 
 #include <string>
 
-using namespace isc::asiolink; // @todo - please update
+using namespace isc::asiolink;
 using namespace std;
 
 // This test checks that the endpoint can manage its own internal

@@ -21,7 +21,7 @@
 #include <cryptolink/crypto_rng.h>
 #include <dns/rcode.h>
 #include <util/io.h>
- // @todo - please update
+
 #include <boost/scoped_ptr.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 
@@ -31,7 +31,7 @@
 #include <stdint.h>
 #include <sys/socket.h>
 
-using namespace isc::asiolink; // @todo - please update
+using namespace isc::asiolink;
 using namespace isc::dns;
 using namespace isc::log;
 using namespace isc::util;
@@ -39,8 +39,8 @@ using namespace isc::util;
 using namespace boost::asio;
 using namespace std;
 
-namespace isc { // @todo - please update
-namespace asiodns { // @todo - please update
+namespace isc {
+namespace asiodns {
 
 // Log debug verbosity.
 
@@ -167,9 +167,9 @@ IOFetch::IOFetch(Protocol protocol, const IOServicePtr& service,
 
     initIOFetch(question, protocol, service, **(query_message->beginQuestion()), address,
                 port, buff, cb, wait);
-} // @todo - please update
- // @todo - please update
-void // @todo - please update
+}
+
+void
 IOFetch::initIOFetch(MessagePtr& query, Protocol protocol, const IOServicePtr& service,
                      const isc::dns::Question& question, const IOAddress& address, uint16_t port,
                      OutputBufferPtr& buff, Callback* cb, int wait, bool edns) {
@@ -190,8 +190,8 @@ IOFetch::initIOFetch(MessagePtr& query, Protocol protocol, const IOServicePtr& s
     r.setBuffer(data_->msgbuf.get());
     query->toWire(r);
     r.setBuffer(NULL);
-} // @todo - please update
- // @todo - please update
+}
+
 IOFetch::Protocol
 IOFetch::getProtocol() const {
     return (data_->protocol);

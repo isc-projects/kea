@@ -21,7 +21,7 @@
 
 using namespace std;
 using namespace isc::dns;
-using namespace isc::util; // @todo - please update
+using namespace isc::util;
 
 namespace {
 

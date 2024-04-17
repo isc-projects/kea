@@ -22,7 +22,7 @@ namespace asio {
 }
 }
 
-namespace isc { // @todo - please update
+namespace isc {
 namespace asiolink {
 
 class IOServiceImpl;

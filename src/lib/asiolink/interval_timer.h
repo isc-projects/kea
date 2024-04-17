@@ -12,7 +12,7 @@
 
 #include <asiolink/io_service.h>
 
-namespace isc { // @todo - please update
+namespace isc {
 namespace asiolink {
 
 class IntervalTimerImpl;
