@@ -2191,7 +2191,8 @@ TaggedStatementArray tagged_statements = { {
      { OID_INT8, OID_VARCHAR },
      "del_host_addr6",
      "DELETE FROM hosts USING ipv6_reservations "
-     "  WHERE dhcp6_subnet_id = $1 AND ipv6_reservations.address = cast($2 as inet)"
+     "  WHERE hosts.host_id = ipv6_reservations.host_id"
+     "  AND dhcp6_subnet_id = $1 AND ipv6_reservations.address = cast($2 as inet)"
     },
 
     // PgSqlHostDataSourceImpl::DEL_HOST_SUBID4_ID
