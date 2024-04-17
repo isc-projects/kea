@@ -265,7 +265,7 @@ private:
     /// @brief Base of the buffer.
     const uint8_t* base_;
 
-    /// @brief Current poisition in the buffer.
+    /// @brief Current position in the buffer.
     const uint8_t* current_;
 
     /// @brief End of the buffer (address of the byte after).
