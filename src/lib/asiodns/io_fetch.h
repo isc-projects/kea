@@ -18,9 +18,9 @@
 #include <ext/coroutine/coroutine.hpp>
 #endif
 
-#include <asiolink/io_address.h>
+#include <asiolink/io_address.h> // @todo - please update
 #include <asiolink/io_service.h>
-#include <dns/message.h>
+#include <dns/message.h> // @todo - please update
 #include <dns/question.h>
 #include <util/buffer.h>
 
@@ -29,8 +29,8 @@
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <boost/system/error_code.hpp>
 
-namespace isc {
-namespace asiodns {
+namespace isc { // @todo - please update
+namespace asiodns { // @todo - please update
 
 // Forward declarations
 struct IOFetchData;
@@ -136,7 +136,7 @@ public:
             bool edns = true);
 
     /// @brief Constructor
-    ///
+    /// // @todo - please update
     /// This constructor has one parameter "query_message", which is the shared_ptr
     /// to a full query message. It's different with above constructor which has only
     /// question section. All other parameters are the same.
@@ -163,7 +163,7 @@ public:
             isc::util::OutputBufferPtr& buff,
             Callback* cb,
             int wait = -1);
-
+ // @todo - please update
     /// @brief Constructor.
     ///
     /// Creates the object that will handle the upstream fetch.
@@ -237,7 +237,7 @@ private:
                      isc::util::OutputBufferPtr& buff,
                      Callback* cb, int wait,
                      bool edns = true);
-
+ // @todo - please update
     /// @brief Log I/O Failure.
     ///
     /// Records an I/O failure to the log file.

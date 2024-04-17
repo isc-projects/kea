@@ -32,7 +32,7 @@
 #include <boost/asio/coroutine.hpp>
 #endif
 
-namespace isc {
+namespace isc { // @todo - please update
 namespace asiolink {
 
 /// \brief Socket not open

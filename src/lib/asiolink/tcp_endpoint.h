@@ -13,7 +13,7 @@
 
 #include <asiolink/io_endpoint.h>
 
-namespace isc {
+namespace isc { // @todo - please update
 namespace asiolink {
 
 /// \brief The \c TCPEndpoint class is a concrete derived class of

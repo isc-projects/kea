@@ -33,7 +33,7 @@
 
 using namespace isc::asiolink;
 using namespace isc::dns;
-using namespace isc::util;
+using namespace isc::util; // @todo - please update
 
 using namespace boost::asio;
 using namespace boost::asio::ip;
@@ -41,8 +41,8 @@ using namespace std;
 
 namespace ph = std::placeholders;
 
-namespace isc {
-namespace asiodns {
+namespace isc { // @todo - please update
+namespace asiodns { // @todo - please update
 
 const boost::asio::ip::address TEST_HOST(boost::asio::ip::address::from_string("127.0.0.1"));
 const uint16_t TEST_PORT(5301);

@@ -19,7 +19,7 @@
 #include <stdint.h>
 
 namespace isc {
-namespace dns {
+namespace dns { // @todo - please update
 class AbstractMessageRenderer;
 class RRType;
 class RRClass;

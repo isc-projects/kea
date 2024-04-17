@@ -20,7 +20,7 @@
 
 #include <exceptions/exceptions.h>
 
-namespace isc {
+namespace isc { // @todo - please update
 namespace asiolink {
 
     /// Defines length of IPv6 address (in binary format).

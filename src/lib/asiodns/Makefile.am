@@ -1,10 +1,10 @@
-SUBDIRS = . tests
-
+SUBDIRS = . tests // @todo - please update
+ // @todo - please update
 AM_CPPFLAGS  = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
-AM_CPPFLAGS += $(BOOST_INCLUDES)
-
+AM_CPPFLAGS += $(BOOST_INCLUDES) // @todo - please update
+ // @todo - please update
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
-
+ // @todo - please update
 CLEANFILES = *.gcno *.gcda
 
 EXTRA_DIST = asiodns_messages.mes

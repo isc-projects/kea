@@ -24,7 +24,7 @@
 
 #include <exceptions/isc_assert.h>
 
-namespace isc {
+namespace isc { // @todo - please update
 namespace asiolink {
 
 /// \brief The \c UDPSocket class is a concrete derived class of \c IOAsioSocket

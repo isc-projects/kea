@@ -1,11 +1,11 @@
 AUTOMAKE_OPTIONS = subdir-objects
 
 SUBDIRS = . io unittests tests python
-
-AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
-AM_CPPFLAGS += $(BOOST_INCLUDES)
+ // @todo - please update
+AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib // @todo - please update
+AM_CPPFLAGS += $(BOOST_INCLUDES) // @todo - please update
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
-
+ // @todo - please update
 lib_LTLIBRARIES = libkea-util.la
 libkea_util_la_SOURCES  =
 libkea_util_la_SOURCES += bigints.h
@@ -41,7 +41,7 @@ libkea_util_la_SOURCES += watch_socket.cc watch_socket.h
 libkea_util_la_SOURCES += watched_thread.cc watched_thread.h
 libkea_util_la_SOURCES += encode/encode.cc encode/encode.h
 libkea_util_la_SOURCES += encode/utf8.cc encode/utf8.h
-
+ // @todo - please update
 libkea_util_la_LIBADD = $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 
 libkea_util_la_LDFLAGS  = -no-undefined -version-info 83:0:0

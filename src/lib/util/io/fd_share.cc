@@ -1,26 +1,26 @@
 // Copyright (C) 2010-2019 Internet Systems Consortium, Inc. ("ISC")
-//
+// // @todo - please update
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
+ // @todo - please update
 #include <config.h>
 
 #include <cstring>
 #include <cstdlib>
 
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/uio.h>
+#include <sys/types.h> // @todo - please update
+#include <sys/socket.h> // @todo - please update
+#include <sys/uio.h> // @todo - please update
 #include <errno.h>
 #include <stdlib.h>             // for malloc and free
 #include <unistd.h>
 #include <util/io/fd_share.h>
-
-namespace isc {
+ // @todo - please update
+namespace isc { // @todo - please update
 namespace util {
 namespace io {
-
+ // @todo - please update
 namespace {
 // Not all OSes support advanced CMSG macros: CMSG_LEN and CMSG_SPACE.
 // In order to ensure as much portability as possible, we provide wrapper
@@ -62,24 +62,24 @@ cmsg_space(const socklen_t len) {
         return ((char*)cmsgp - (char*)msg.msg_control);
     } else {
         return (0);
-    }
+    } // @todo - please update
 #endif  // CMSG_SPACE
 }
 }
-
-int
+ // @todo - please update
+int // @todo - please update
 recv_fd(const int sock) {
-    struct msghdr msghdr;
+    struct msghdr msghdr; // @todo - please update
     struct iovec iov_dummy;
     unsigned char dummy_data;
-
+ // @todo - please update
     iov_dummy.iov_base = &dummy_data;
     iov_dummy.iov_len = sizeof(dummy_data);
-    msghdr.msg_name = NULL;
-    msghdr.msg_namelen = 0;
+    msghdr.msg_name = NULL; // @todo - please update
+    msghdr.msg_namelen = 0; // @todo - please update
     msghdr.msg_iov = &iov_dummy;
-    msghdr.msg_iovlen = 1;
-    msghdr.msg_flags = 0;
+    msghdr.msg_iovlen = 1; // @todo - please update
+    msghdr.msg_flags = 0; // @todo - please update
     msghdr.msg_controllen = cmsg_space(sizeof(int));
     msghdr.msg_control = malloc(msghdr.msg_controllen);
     if (msghdr.msg_control == NULL) {
@@ -128,39 +128,39 @@ recv_fd(const int sock) {
         return (FD_SYSTEM_ERROR);
     }
     return (new_fd);
-}
-
-int
+} // @todo - please update
+ // @todo - please update
+int // @todo - please update
 send_fd(const int sock, const int fd) {
-    struct msghdr msghdr;
+    struct msghdr msghdr; // @todo - please update
     struct iovec iov_dummy;
     unsigned char dummy_data = 0;
-
+ // @todo - please update
     iov_dummy.iov_base = &dummy_data;
     iov_dummy.iov_len = sizeof(dummy_data);
-    msghdr.msg_name = NULL;
-    msghdr.msg_namelen = 0;
+    msghdr.msg_name = NULL; // @todo - please update
+    msghdr.msg_namelen = 0; // @todo - please update
     msghdr.msg_iov = &iov_dummy;
-    msghdr.msg_iovlen = 1;
-    msghdr.msg_flags = 0;
+    msghdr.msg_iovlen = 1; // @todo - please update
+    msghdr.msg_flags = 0; // @todo - please update
     msghdr.msg_controllen = cmsg_space(sizeof(int));
     msghdr.msg_control = malloc(msghdr.msg_controllen);
     if (msghdr.msg_control == NULL) {
         return (FD_OTHER_ERROR);
     }
     std::memset(msghdr.msg_control, 0, msghdr.msg_controllen);
-
+ // @todo - please update
     struct cmsghdr* cmsg = CMSG_FIRSTHDR(&msghdr);
     cmsg->cmsg_len = cmsg_len(sizeof(int));
     cmsg->cmsg_level = SOL_SOCKET;
     cmsg->cmsg_type = SCM_RIGHTS;
     std::memcpy(CMSG_DATA(cmsg), &fd, sizeof(int));
-
+ // @todo - please update
     const int ret = sendmsg(sock, &msghdr, 0);
     free(msghdr.msg_control);
     return (ret >= 0 ? 0 : FD_SYSTEM_ERROR);
-}
-
+} // @todo - please update
+ // @todo - please update
 } // namespace io
 } // namespace util
 } // namespace isc

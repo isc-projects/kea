@@ -16,7 +16,7 @@
 #include <string>
 #include <ostream>
 
-using namespace isc::util;
+using namespace isc::util; // @todo - please update
 using isc::dns::RRType;
 
 using namespace std;

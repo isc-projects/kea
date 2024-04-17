@@ -17,7 +17,7 @@
 
 #include <exceptions/exceptions.h>
 
-namespace isc {
+namespace isc { // @todo - please update
 namespace asiolink {
 
 /// \brief The \c IOSocket class is an abstract base class to represent

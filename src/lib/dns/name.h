@@ -18,7 +18,7 @@
 #include <dns/exceptions.h>
 
 namespace isc {
-namespace dns {
+namespace dns { // @todo - please update
 ///
 /// \brief A standard DNS module exception that is thrown if the name parser
 /// encounters an empty label in the middle of a name.
