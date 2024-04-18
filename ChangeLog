@@ -1,3 +1,12 @@
+2222.	[bug]		piotrek
+	Fixed a bug in host_cmds. When PostgreSQL was used as
+	hosts database storage, reservation-del command called
+	with given IPv6 host address and the subnet Id deleted
+	all IPv6 hosts in given subnet.
+	Corrected the issue so that now only given host
+	reservation is deleted.
+	(Gitlab #3294)
+
 2221.	[bug]		tmark
 	Corrected an index on the dhcp4_servers table
 	in the PostgreSQL schema.
