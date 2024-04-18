@@ -1800,6 +1800,8 @@ AC_CONFIG_FILES([src/share/database/scripts/pgsql/upgrade_018_to_019.sh],
                 [chmod +x src/share/database/scripts/pgsql/upgrade_018_to_019.sh])
 AC_CONFIG_FILES([src/share/database/scripts/pgsql/upgrade_019_to_020.sh],
                 [chmod +x src/share/database/scripts/pgsql/upgrade_019_to_020.sh])
+AC_CONFIG_FILES([src/share/database/scripts/pgsql/upgrade_020_to_021.sh],
+                [chmod +x src/share/database/scripts/pgsql/upgrade_020_to_021.sh])
 AC_CONFIG_FILES([src/share/database/scripts/pgsql/wipe_data.sh],
                 [chmod +x src/share/database/scripts/pgsql/wipe_data.sh])
 AC_CONFIG_FILES([src/share/yang/Makefile])

@@ -888,10 +888,27 @@ pgsql_upgrade_18_to_19_test() {
 }
 
 pgsql_upgrade_19_to_20_test() {
-    # For now this function only verifies version number.
-    version=$("${kea_admin}" db-version pgsql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}")
-    assert_str_eq "20.0" "${version}" 'Expected kea-admin to return %s, returned value was %s'
+    # Verify that lease6_by_sunet_id_address index on lease6 is keyed by
+    # attributes number 5 and 1 (i.e. subnet-id and address)
+    qry="select ix.indkey as keys from pg_class t, pg_class i, pg_index ix \
+        where t.oid = ix.indrelid and i.oid = ix.indexrelid and \
+        i.relname = 'lease6_by_subnet_id_address' and t.relname = 'lease6';"
+    run_statement "verify lease6_by_subnet_id_address" "$qry"
+    assert_eq 0 "${EXIT_CODE}" "${query}: expected %d, returned %d"
+    assert_str_eq '5 1' "${OUTPUT}" "${query}: expected output %s, returned %s"
 }
+
+pgsql_upgrade_20_to_21_test() {
+    # Verify that dhcp4_server_modification_ts index on dhcp4_server is keyed by
+    # attribute number 4, modification_ts
+    qry="select ix.indkey as keys from pg_class t, pg_class i, pg_index ix \
+        where t.oid = ix.indrelid and i.oid = ix.indexrelid and \
+        i.relname = 'dhcp4_server_modification_ts' and t.relname = 'dhcp4_server';"
+    run_statement "verify lease6_by_subnet_id_address" "$qry"
+    assert_eq 0 "${EXIT_CODE}" "${query}: expected %d, returned %d"
+    assert_str_eq '4' "${OUTPUT}" "${query}: expected output %s, returned %s"
+}
+
 pgsql_upgrade_test() {
     test_start "pgsql.upgrade"
 
@@ -910,7 +927,7 @@ pgsql_upgrade_test() {
 
     # Verify upgraded schema reports the latest version.
     version=$("${kea_admin}" db-version pgsql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}")
-    assert_str_eq "20.0" "${version}" 'Expected kea-admin to return %s, returned value was %s'
+    assert_str_eq "21.0" "${version}" 'Expected kea-admin to return %s, returned value was %s'
 
     # Check 1.0 to 2.0 upgrade
     pgsql_upgrade_1_0_to_2_0_test
@@ -965,6 +982,9 @@ pgsql_upgrade_test() {
 
     # Check 19 to 20 upgrade
     pgsql_upgrade_19_to_20_test
+
+    # Check 20 to 21 upgrade
+    pgsql_upgrade_20_to_21_test
 
     # Let's wipe the whole database
     pgsql_wipe

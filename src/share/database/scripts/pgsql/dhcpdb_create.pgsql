@@ -6325,6 +6325,18 @@ UPDATE schema_version
 
 -- This line concludes the schema upgrade to version 20.0.
 
+-- This line starts the schema upgrade to version 21.0.
+
+-- Correct dhcp4_server_modifcation_ts to index the dhcp4_server table.
+DROP INDEX dhcp4_server_modification_ts;
+CREATE INDEX dhcp4_server_modification_ts ON dhcp4_server (modification_ts);
+
+-- Update the schema version number.
+UPDATE schema_version
+    SET version = '21', minor = '0';
+
+-- This line concludes the schema upgrade to version 21.0.
+
 -- Commit the script transaction.
 COMMIT;
 
