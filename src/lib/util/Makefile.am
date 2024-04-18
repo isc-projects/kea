@@ -92,5 +92,6 @@ libkea_util_encode_include_HEADERS = \
 
 libkea_util_io_includedir = $(pkgincludedir)/util/io
 libkea_util_io_include_HEADERS = \
+	io/fd.h \
 	io/pktinfo_utilities.h \
 	io/sockaddr_util.h
