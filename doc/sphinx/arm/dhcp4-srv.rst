@@ -3495,7 +3495,7 @@ DDNS-related parameters are split into two groups:
     Behavioral parameters that affect the FQDN are in-effect even in
     if both ``enable-updates`` and ``ddns-send-updates`` are false. They
     behave this way to support environments in which clients are responsible
-    for their own DNS updates.  This applies to ``ddns-replace-client-name"``,
+    for their own DNS updates.  This applies to ``ddns-replace-client-name``,
     ``ddns-generated-prefix``, ``ddns-qualifying-suffix``, ``hostname-char-set``,
     and ``hostname-char-replacement``.
 
