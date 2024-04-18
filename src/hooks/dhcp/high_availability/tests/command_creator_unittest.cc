@@ -399,7 +399,7 @@ TEST(CommandCreatorTest, createLease6BulkApply) {
     Lease6CollectionPtr deleted_leases(new Lease6Collection());
 
     leases->push_back(lease);
-    deleted_leases->push_back(lease);
+    deleted_leases->push_back(deleted_lease);
 
     ConstElementPtr command = CommandCreator::createLease6BulkApply(leases, deleted_leases);
     ConstElementPtr arguments;
@@ -416,7 +416,7 @@ TEST(CommandCreatorTest, createLease6BulkApply) {
     ASSERT_EQ(Element::list, deleted_leases_json->getType());
     ASSERT_EQ(1, deleted_leases_json->size());
     auto lease_as_json = deleted_leases_json->get(0);
-    EXPECT_EQ(leaseAsJson(createLease6())->str(), lease_as_json->str());
+    EXPECT_EQ(leaseAsJson(deleted_lease)->str(), lease_as_json->str());
 
     // Verify leases.
     auto leases_json = arguments->get("leases");
@@ -424,7 +424,45 @@ TEST(CommandCreatorTest, createLease6BulkApply) {
     ASSERT_EQ(Element::list, leases_json->getType());
     ASSERT_EQ(1, leases_json->size());
     lease_as_json = leases_json->get(0);
-    EXPECT_EQ(leaseAsJson(createLease6())->str(), lease_as_json->str());
+    EXPECT_EQ(leaseAsJson(lease)->str(), lease_as_json->str());
+}
+
+// This test verifies that the lease6-bulk-apply command is correct when
+// deleted leases have lifetimes of 0.
+TEST(CommandCreatorTest, createLease6BulkApplySoftDelete) {
+    Lease6Ptr deleted_lease = createLease6();
+    deleted_lease->valid_lft_ = 0;
+    deleted_lease->preferred_lft_ = 0;
+    deleted_lease->state_ = Lease6::STATE_RELEASED;
+
+    Lease6CollectionPtr leases(new Lease6Collection());
+    Lease6CollectionPtr deleted_leases(new Lease6Collection());
+
+    deleted_leases->push_back(deleted_lease);
+
+    ConstElementPtr command = CommandCreator::createLease6BulkApply(leases, deleted_leases);
+    ConstElementPtr arguments;
+    ASSERT_NO_FATAL_FAILURE(testCommandBasics(command, "lease6-bulk-apply",
+                                              "dhcp6", arguments));
+
+    ConstElementPtr origin = arguments->get("origin");
+    ASSERT_TRUE(origin);
+    ASSERT_EQ("ha-partner", origin->stringValue());
+
+    // There should be no deleted leases.
+    auto deleted_leases_json = arguments->get("deleted-leases");
+    ASSERT_TRUE(deleted_leases_json);
+    ASSERT_EQ(Element::list, deleted_leases_json->getType());
+    EXPECT_EQ(0, deleted_leases_json->size());
+
+    // The lease with the valid lifetime of 0 should be in the updated
+    // leases list.
+    auto leases_json = arguments->get("leases");
+    ASSERT_TRUE(leases_json);
+    ASSERT_EQ(Element::list, leases_json->getType());
+    ASSERT_EQ(1, leases_json->size());
+    auto lease_as_json = leases_json->get(0);
+    EXPECT_EQ(leaseAsJson(deleted_lease)->str(), lease_as_json->str());
 }
 
 // This test verifies that the lease6-bulk-apply command can be created

@@ -169,17 +169,18 @@ ReleaseTest::acquireAndRelease(const std::string& hw_address_1,
     uint64_t after = assigned_cnt->getInteger().first;
 
     // We check if the release process was successful by checking if the
-    // lease is in the database. It is expected that it is not present,
-    // i.e. has been deleted with the release.
+    // lease is in the database.
     if (expected_result == SHOULD_PASS_EXPIRED) {
         ASSERT_TRUE(lease);
 
         // The update succeeded, so the assigned-address should be expired
         EXPECT_EQ(lease->valid_lft_, 0);
+        EXPECT_EQ(Lease4::STATE_RELEASED, lease->state_);
 
-        // No lease has been removed, so the assigned-address should be the same
-        // as before
-        EXPECT_EQ(before, after);
+        // The removal succeeded, so the assigned-addresses statistic should
+        // be decreased by one
+        EXPECT_EQ(before, after + 1);
+
     } else if (expected_result == SHOULD_PASS_DELETED) {
         EXPECT_FALSE(lease);
 
@@ -188,6 +189,7 @@ ReleaseTest::acquireAndRelease(const std::string& hw_address_1,
         EXPECT_EQ(before, after + 1);
     } else {
         EXPECT_TRUE(lease);
+        EXPECT_EQ(Lease4::STATE_DEFAULT, lease->state_);
 
         // The removal failed, so the assigned-address should be the same
         // as before

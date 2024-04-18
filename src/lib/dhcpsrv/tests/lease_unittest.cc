@@ -589,6 +589,7 @@ TEST_F(Lease4Test, stateToText) {
     EXPECT_EQ("default", Lease4::statesToText(Lease::STATE_DEFAULT));
     EXPECT_EQ("declined", Lease4::statesToText(Lease::STATE_DECLINED));
     EXPECT_EQ("expired-reclaimed", Lease4::statesToText(Lease::STATE_EXPIRED_RECLAIMED));
+    EXPECT_EQ("released", Lease4::statesToText(Lease::STATE_RELEASED));
 }
 
 /// @brief Creates an instance of the lease with certain FQDN data.
@@ -1363,6 +1364,7 @@ TEST(Lease6Test, stateToText) {
     EXPECT_EQ("default", Lease6::statesToText(Lease::STATE_DEFAULT));
     EXPECT_EQ("declined", Lease6::statesToText(Lease::STATE_DECLINED));
     EXPECT_EQ("expired-reclaimed", Lease6::statesToText(Lease::STATE_EXPIRED_RECLAIMED));
+    EXPECT_EQ("released", Lease6::statesToText(Lease::STATE_RELEASED));
 }
 
 } // end of anonymous namespace

@@ -1218,7 +1218,14 @@ HAService::asyncSendLeaseUpdates(const dhcp::Pkt4Ptr& query,
         if (shouldQueueLeaseUpdates(conf)) {
             // Lease updates for deleted leases.
             for (auto const& l : *deleted_leases) {
-                lease_update_backlog_.push(LeaseUpdateBacklog::DELETE, l);
+                // If a released lease is preserved in the database send the lease
+                // update with the zero lifetime to the partner. Otherwise, delete
+                // the lease.
+                if (l->state_ == Lease4::STATE_RELEASED) {
+                    lease_update_backlog_.push(LeaseUpdateBacklog::ADD, l);
+                } else {
+                    lease_update_backlog_.push(LeaseUpdateBacklog::DELETE, l);
+                }
             }
 
             // Lease updates for new allocations and updated leases.
@@ -1245,8 +1252,16 @@ HAService::asyncSendLeaseUpdates(const dhcp::Pkt4Ptr& query,
 
         // Lease updates for deleted leases.
         for (auto const& l : *deleted_leases) {
-            asyncSendLeaseUpdate(query, conf, CommandCreator::createLease4Delete(*l),
-                                 parking_lot);
+            // If a released lease is preserved in the database send the lease
+            // update with the zero lifetime to the partner. Otherwise, delete
+            // the lease.
+            if (l->state_ == Lease4::STATE_RELEASED) {
+                asyncSendLeaseUpdate(query, conf, CommandCreator::createLease4Update(*l),
+                                     parking_lot);
+            } else {
+                asyncSendLeaseUpdate(query, conf, CommandCreator::createLease4Delete(*l),
+                                     parking_lot);
+            }
         }
 
         // Lease updates for new allocations and updated leases.
@@ -1297,7 +1312,14 @@ HAService::asyncSendLeaseUpdates(const dhcp::Pkt6Ptr& query,
         // be sent when the communication is re-established.
         if (shouldQueueLeaseUpdates(conf)) {
             for (auto const& l : *deleted_leases) {
-                lease_update_backlog_.push(LeaseUpdateBacklog::DELETE, l);
+                // If a released lease is preserved in the database send the lease
+                // update with the zero lifetime to the partner. Otherwise, delete
+                // the lease.
+                if (l->state_ == Lease4::STATE_RELEASED) {
+                    lease_update_backlog_.push(LeaseUpdateBacklog::ADD, l);
+                } else {
+                    lease_update_backlog_.push(LeaseUpdateBacklog::DELETE, l);
+                }
             }
 
             // Lease updates for new allocations and updated leases.

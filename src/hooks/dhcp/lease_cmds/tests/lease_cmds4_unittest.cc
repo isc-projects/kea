@@ -150,6 +150,9 @@ public:
     /// @brief Check that a simple, well formed lease4 can be added.
     void testLease4AddDeclinedLeases();
 
+        /// @brief Check that a simple, well formed released lease4 can be added.
+    void testLease4AddReleasedLeases();
+
     /// @brief Check that a lease4 is not added when it already exists.
     void testLease4AddExisting();
 
@@ -546,11 +549,11 @@ void Lease4CmdsTest::testLease4AddBadParams() {
         "        \"subnet-id\": 44,\n"
         "        \"ip-address\": \"192.0.2.1\",\n"
         "        \"hw-address\": \"1a:1b:1c:1d:1e:1f\",\n"
-        "        \"state\": 123\n"
+        "        \"state\": 4\n"
         "    }\n"
         "}";
-    exp_rsp = "Invalid state value: 123, supported values are: 0 (default), 1 "
-        "(declined) and 2 (expired-reclaimed)";
+    exp_rsp = "Invalid state value: 4, supported values are: 0 (default), 1 "
+        "(declined), 2 (expired-reclaimed) and 3 (released)";
     testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
 
     // Bad user context: not a map.
@@ -705,6 +708,52 @@ void Lease4CmdsTest::testLease4AddDeclinedLeases() {
     // by one is ok.
     EXPECT_LE(abs(l->cltt_ - time(NULL)), 1);
     EXPECT_EQ(1, l->state_);
+}
+
+void Lease4CmdsTest::testLease4AddReleasedLeases() {
+    // Initialize lease manager (false = v4, false = don't add leases)
+    initLeaseMgr(false, false);
+
+    checkLease4Stats(44, 0, 0);
+
+    checkLease4Stats(88, 0, 0);
+
+    // Now send the command.
+    string txt =
+        "{\n"
+        "    \"command\": \"lease4-add\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 44,\n"
+        "        \"ip-address\": \"192.0.2.202\",\n"
+        "        \"state\": 3,\n"
+        "        \"hw-address\": \"1a:1b:1c:1d:1e:1f\"\n"
+        "    }\n"
+        "}";
+    string exp_rsp = "Lease for address 192.0.2.202, subnet-id 44 added.";
+    testCommand(txt, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    checkLease4Stats(44, 1, 0);
+
+    checkLease4Stats(88, 0, 0);
+
+    // Now check that the lease is really there.
+    Lease4Ptr l = lmptr_->getLease4(IOAddress("192.0.2.202"));
+    ASSERT_TRUE(l);
+
+    // Make sure the lease has proper value set.
+    ASSERT_TRUE(l->hwaddr_);
+    EXPECT_EQ("1a:1b:1c:1d:1e:1f", l->hwaddr_->toText(false));
+    EXPECT_EQ(3, l->valid_lft_); // taken from subnet configuration
+    EXPECT_FALSE(l->fqdn_fwd_);
+    EXPECT_FALSE(l->fqdn_rev_);
+    EXPECT_EQ("", l->hostname_);
+    EXPECT_FALSE(l->getContext());
+
+    // Test execution is fast. The cltt should be set to now. In some rare
+    // cases we could have the seconds counter to tick, so having a value off
+    // by one is ok.
+    EXPECT_LE(abs(l->cltt_ - time(NULL)), 1);
+    EXPECT_EQ(3, l->state_);
 }
 
 void Lease4CmdsTest::testLease4AddExisting() {
@@ -3465,6 +3514,15 @@ TEST_F(Lease4CmdsTest, lease4AddDeclinedLeases) {
 }
 
 TEST_F(Lease4CmdsTest, lease4AddDeclinedLeasesMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease4AddDeclinedLeases();
+}
+
+TEST_F(Lease4CmdsTest, lease4AddReleasedLeases) {
+    testLease4AddDeclinedLeases();
+}
+
+TEST_F(Lease4CmdsTest, lease4AddReleasedLeasesMultiThreading) {
     MultiThreadingTest mt(true);
     testLease4AddDeclinedLeases();
 }

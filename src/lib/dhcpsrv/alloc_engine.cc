@@ -2445,7 +2445,7 @@ AllocEngine::updateLeaseData(ClientContext6& ctx, const Lease6Collection& leases
         if (!ctx.fake_allocation_) {
             bool update_stats = false;
 
-            if (lease->state_ == Lease::STATE_EXPIRED_RECLAIMED) {
+            if (lease->state_ == Lease::STATE_EXPIRED_RECLAIMED || lease->state_ == Lease::STATE_RELEASED) {
                 // Transition lease state to default (aka assigned)
                 lease->state_ = Lease::STATE_DEFAULT;
 
@@ -2908,6 +2908,20 @@ AllocEngine::reclaimExpiredLease(const Lease6Ptr& lease,
 
     // Update statistics.
 
+    // Increase number of reclaimed leases for a subnet.
+    StatsMgr::instance().addValue(StatsMgr::generateName("subnet",
+                                                         lease->subnet_id_,
+                                                         "reclaimed-leases"),
+        static_cast<int64_t>(1));
+
+    // Increase total number of reclaimed leases.
+    StatsMgr::instance().addValue("reclaimed-leases", static_cast<int64_t>(1));
+
+    // Statistics must have been updated during the release.
+    if (lease->state_ == Lease::STATE_RELEASED) {
+        return;
+    }
+
     // Decrease number of assigned leases.
     if (lease->type_ == Lease::TYPE_NA) {
         // IA_NA
@@ -2959,15 +2973,6 @@ AllocEngine::reclaimExpiredLease(const Lease6Ptr& lease,
             }
         }
     }
-
-    // Increase number of reclaimed leases for a subnet.
-    StatsMgr::instance().addValue(StatsMgr::generateName("subnet",
-                                                         lease->subnet_id_,
-                                                         "reclaimed-leases"),
-        static_cast<int64_t>(1));
-
-    // Increase total number of reclaimed leases.
-    StatsMgr::instance().addValue("reclaimed-leases", static_cast<int64_t>(1));
 }
 
 void
@@ -3043,17 +3048,25 @@ AllocEngine::reclaimExpiredLease(const Lease4Ptr& lease,
 
     // Update statistics.
 
-    // Decrease number of assigned addresses.
-    StatsMgr::instance().addValue(StatsMgr::generateName("subnet",
-                                                         lease->subnet_id_,
-                                                         "assigned-addresses"),
-        static_cast<int64_t>(-1));
+    // Increase total number of reclaimed leases.
+    StatsMgr::instance().addValue("reclaimed-leases", static_cast<int64_t>(1));
 
     // Increase number of reclaimed leases for a subnet.
     StatsMgr::instance().addValue(StatsMgr::generateName("subnet",
                                                          lease->subnet_id_,
                                                          "reclaimed-leases"),
         static_cast<int64_t>(1));
+
+    // Statistics must have been updated during the release.
+    if (lease->state_ == Lease4::STATE_RELEASED) {
+        return;
+    }
+
+    // Decrease number of assigned addresses.
+    StatsMgr::instance().addValue(StatsMgr::generateName("subnet",
+                                                         lease->subnet_id_,
+                                                         "assigned-addresses"),
+        static_cast<int64_t>(-1));
 
     auto const& subnet = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getBySubnetId(lease->subnet_id_);
     if (subnet) {
@@ -3072,9 +3085,6 @@ AllocEngine::reclaimExpiredLease(const Lease4Ptr& lease,
                 static_cast<int64_t>(1));
         }
     }
-
-    // Increase total number of reclaimed leases.
-    StatsMgr::instance().addValue("reclaimed-leases", static_cast<int64_t>(1));
 }
 
 void
@@ -4134,7 +4144,7 @@ AllocEngine::requestLease4(AllocEngine::ClientContext4& ctx) {
             .arg(ctx.query_->getLabel())
             .arg(client_lease->addr_.toText());
 
-        if (LeaseMgrFactory::instance().deleteLease(client_lease)) {
+        if (LeaseMgrFactory::instance().deleteLease(client_lease) && (client_lease->state_ != Lease4::STATE_RELEASED)) {
             // Need to decrease statistic for assigned addresses.
             StatsMgr::instance().addValue(
                 StatsMgr::generateName("subnet", client_lease->subnet_id_,

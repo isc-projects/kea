@@ -159,6 +159,9 @@ public:
     /// @brief Check that a simple, well formed lease6 can be added.
     void testLease6AddDeclinedLeases();
 
+    /// @brief Check that a simple, well formed released lease6 can be added.
+    void testLease6AddReleasedLeases();
+
     /// @brief Check that a lease6 is not added when it already exists.
     void testLease6AddExisting();
 
@@ -609,11 +612,11 @@ void Lease6CmdsTest::testLease6AddBadParams() {
         "        \"ip-address\": \"2001:db8:1::1\",\n"
         "        \"duid\": \"1a:1b:1c:1d:1e:1f\",\n"
         "        \"iaid\": 1234\n,"
-        "        \"state\": 123\n"
+        "        \"state\": 4\n"
         "    }\n"
         "}";
-    exp_rsp = "Invalid state value: 123, supported values are: 0 (default), 1 "
-        "(declined) and 2 (expired-reclaimed)";
+    exp_rsp = "Invalid state value: 4, supported values are: 0 (default), 1 "
+        "(declined), 2 (expired-reclaimed) and 3 (released)";
     testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
 
     // Bad user context: not a map.
@@ -807,6 +810,53 @@ void Lease6CmdsTest::testLease6AddDeclinedLeases() {
     // by one is ok.
     EXPECT_LE(abs(l->cltt_ - time(NULL)), 1);
     EXPECT_EQ(1, l->state_);
+}
+
+void Lease6CmdsTest::testLease6AddReleasedLeases() {
+    // Initialize lease manager (true = v6, false = don't add leases)
+    initLeaseMgr(true, false);
+
+    checkLease6Stats(66, 0, 0, 0);
+
+    checkLease6Stats(99, 0, 0, 0);
+
+    // Now send the command.
+    string txt =
+        "{\n"
+        "    \"command\": \"lease6-add\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 66,\n"
+        "        \"ip-address\": \"2001:db8:1::3\",\n"
+        "        \"state\": 3,\n"
+        "        \"duid\": \"1a:1b:1c:1d:1e:1f\",\n"
+        "        \"iaid\": 1234\n"
+        "    }\n"
+        "}";
+    string exp_rsp = "Lease for address 2001:db8:1::3, subnet-id 66 added.";
+    testCommand(txt, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    checkLease6Stats(66, 1, 0, 0);
+
+    checkLease6Stats(99, 0, 0, 0);
+
+    // Now check that the lease is really there.
+    Lease6Ptr l = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::3"));
+    ASSERT_TRUE(l);
+
+    // Make sure the lease has proper value set.
+    ASSERT_TRUE(l->duid_);
+    EXPECT_EQ("1a:1b:1c:1d:1e:1f", l->duid_->toText());
+    EXPECT_EQ(4, l->valid_lft_); // taken from subnet configuration
+    EXPECT_FALSE(l->fqdn_fwd_);
+    EXPECT_FALSE(l->fqdn_rev_);
+    EXPECT_EQ("", l->hostname_);
+    EXPECT_FALSE(l->getContext());
+
+    // Test execution is fast. The cltt should be set to now. In some rare
+    // cases we could have the seconds counter to tick, so having a value off
+    // by one is ok.
+    EXPECT_LE(abs(l->cltt_ - time(NULL)), 1);
+    EXPECT_EQ(3, l->state_);
 }
 
 void Lease6CmdsTest::testLease6AddExisting() {
@@ -4202,6 +4252,15 @@ TEST_F(Lease6CmdsTest, lease6AddDeclinedLeases) {
 TEST_F(Lease6CmdsTest, lease6AddDeclinedLeasesMultiThreading) {
     MultiThreadingTest mt(true);
     testLease6AddDeclinedLeases();
+}
+
+TEST_F(Lease6CmdsTest, lease6AddReleasedLeases) {
+    testLease6AddReleasedLeases();
+}
+
+TEST_F(Lease6CmdsTest, lease6AddReleasedLeasesMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease6AddReleasedLeases();
 }
 
 TEST_F(Lease6CmdsTest, lease6AddExisting) {

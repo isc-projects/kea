@@ -815,12 +815,16 @@ public:
     /// from the backup servers.
     /// @param create_service a boolean flag indicating whether the test should
     /// re-create HA service and communication state.
+    /// @param soft_delete_leases a boolean flag indicating that the test should simulate
+    /// soft release of leases, i.e., lease lifetime is set to 0 and the lease is not
+    /// deleted.
     void testSendLeaseUpdates(std::function<void()> unpark_handler,
                               const bool should_fail,
                               const size_t num_updates,
                               const MyState& my_state = MyState(HA_LOAD_BALANCING_ST),
                               const bool wait_backup_ack = false,
-                              const bool create_service = true) {
+                              const bool create_service = true,
+                              const bool soft_delete_leases = false) {
         // Create parking lot where query is going to be parked and unparked.
         ParkingLotPtr parking_lot(new ParkingLot());
         ParkingLotHandlePtr parking_lot_handle(new ParkingLotHandle(parking_lot));
@@ -841,6 +845,10 @@ public:
         Lease4Ptr deleted_lease4(new Lease4(IOAddress("192.2.3.4"), hwaddr,
                                             static_cast<const uint8_t*>(0), 0,
                                             60, 0, 1));
+        if (soft_delete_leases) {
+            deleted_lease4->valid_lft_ = 0;
+            deleted_lease4->state_ = Lease4::STATE_RELEASED;
+        }
         deleted_leases4->push_back(deleted_lease4);
 
         if (create_service) {
@@ -927,12 +935,16 @@ public:
     /// from the backup servers.
     /// @param create_service a boolean flag indicating whether the test should
     /// re-create HA service and communication state.
+    /// @param soft_delete_leases a boolean flag indicating that the test should simulate
+    /// soft release of leases, i.e., lease lifetime is set to 0 and the lease is not
+    /// deleted.
     void testSendLeaseUpdates6(std::function<void()> unpark_handler,
                                const bool should_fail,
                                const size_t num_updates,
                                const MyState& my_state = MyState(HA_LOAD_BALANCING_ST),
                                const bool wait_backup_ack = false,
-                               const bool create_service = true) {
+                               const bool create_service = true,
+                               const bool soft_delete_leases = false) {
 
         // Create parking lot where query is going to be parked and unparked.
         ParkingLotPtr parking_lot(new ParkingLot());
@@ -958,6 +970,11 @@ public:
         Lease6CollectionPtr deleted_leases6(new Lease6Collection());
         Lease6Ptr deleted_lease6(new Lease6(Lease::TYPE_NA, IOAddress("2001:db8:1::efac"),
                                             duid, 1234, 50, 60, 1));
+        if (soft_delete_leases) {
+            deleted_lease6->valid_lft_ = 0;
+            deleted_lease6->preferred_lft_ = 0;
+            deleted_lease6->state_ = Lease6::STATE_RELEASED;
+        }
         deleted_leases6->push_back(deleted_lease6);
 
         if (create_service) {
@@ -1143,6 +1160,63 @@ public:
         EXPECT_TRUE(delete_request3);
     }
 
+    /// @brief Tests scenarios when released leases have zero valid
+    /// lifetime and should be preserved in the partner's lease
+    /// database.
+    void testSendSuccessfulUpdatesSoftDelete() {
+        // Start HTTP servers.
+        ASSERT_NO_THROW({
+                listener_->start();
+                listener2_->start();
+                listener3_->start();
+        });
+
+        // This flag will be set to true if unpark is called.
+        bool unpark_called = false;
+        testSendLeaseUpdates([&unpark_called] { unpark_called = true; },
+                             false, 1, MyState(HA_LOAD_BALANCING_ST), false,
+                             true, true);
+
+        // Expecting that the packet was unparked because lease
+        // updates are expected to be successful.
+        EXPECT_TRUE(unpark_called);
+
+        // Updates have been sent so this counter should remain 0.
+        EXPECT_EQ(0, service_->communication_state_->getUnsentUpdateCount());
+
+        // The server 2 should have received two commands.
+        EXPECT_EQ(2, factory2_->getResponseCreator()->getReceivedRequests().size());
+
+        // Check that the server 2 has received lease4-update command.
+        auto update_request2 =
+            factory2_->getResponseCreator()->findRequest("lease4-update",
+                                                         "192.1.2.3");
+        EXPECT_TRUE(update_request2);
+
+        // Check that the server 2 has received lease4-update command
+        // for released lease.
+        auto soft_delete_request2 =
+            factory2_->getResponseCreator()->findRequest("lease4-update",
+                                                         "192.2.3.4");
+        EXPECT_TRUE(soft_delete_request2);
+
+        // Lease updates should be successfully sent to server3.
+        EXPECT_EQ(2, factory3_->getResponseCreator()->getReceivedRequests().size());
+
+        // Check that the server 3 has received lease4-update command.
+        auto update_request3 =
+            factory3_->getResponseCreator()->findRequest("lease4-update",
+                                                         "192.1.2.3");
+        EXPECT_TRUE(update_request3);
+
+        // Check that the server 3 has received lease4-update command
+        // for released lease.
+        auto soft_delete_request3 =
+            factory3_->getResponseCreator()->findRequest("lease4-update",
+                                                         "192.2.3.4");
+        EXPECT_TRUE(soft_delete_request3);
+    }
+
     /// @brief Tests that DHCPv4 lease updates are queued when the server is in the
     /// communication-recovery state and later sent before transitioning back to
     /// the load-balancing state.
@@ -1182,6 +1256,51 @@ public:
         EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("lease4-update",
                                                                  "192.1.2.3"));
         EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("lease4-del",
+                                                                 "192.2.3.4"));
+
+        // Backlog should be empty.
+        EXPECT_EQ(0, service_->lease_update_backlog_.size());
+    }
+
+    /// @brief Tests sending outstanding lease updates in the communication-recovery
+    /// state when released leases are preserved in the database.
+    void testSendUpdatesCommunicationRecoverySoftDelete() {
+        // Start HTTP servers.
+        ASSERT_NO_THROW({
+                listener_->start();
+                listener2_->start();
+                listener3_->start();
+        });
+
+        // This flag will be set to true if unpark is called.
+        bool unpark_called = false;
+        testSendLeaseUpdates([&unpark_called] { unpark_called = true; },
+                             false, 0, MyState(HA_COMMUNICATION_RECOVERY_ST),
+                             false, true, true);
+
+        // Packet shouldn't be unparked because no updates went out. We merely
+        // queued the updates.
+        EXPECT_FALSE(unpark_called);
+
+        // Let's make sure they have been queued.
+        EXPECT_EQ(2, service_->lease_update_backlog_.size());
+
+        // Make partner available.
+        service_->communication_state_->poke();
+        service_->communication_state_->setPartnerState("load-balancing");
+
+        // This should cause the server to send outstanding lease updates and
+        // because they are all successful the server should transition to the
+        // load-balancing state and continue normal operation.
+        testSynchronousCommands([this]() {
+            service_->runModel(HAService::NOP_EVT);
+            EXPECT_EQ(HA_LOAD_BALANCING_ST, service_->getCurrState());
+        });
+
+        // Lease updates should have been sent.
+        EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("lease4-update",
+                                                                 "192.1.2.3"));
+        EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("lease4-update",
                                                                  "192.2.3.4"));
 
         // Backlog should be empty.
@@ -1507,6 +1626,7 @@ public:
 
         // Change the partner's response to success.
         factory2_->getResponseCreator()->setControlResult(CONTROL_RESULT_SUCCESS);
+        factory3_->getResponseCreator()->setControlResult(CONTROL_RESULT_SUCCESS);
 
         io_service_->stopAndPoll();
 
@@ -1562,6 +1682,67 @@ public:
         EXPECT_TRUE(update_request3);
     }
 
+    /// @brief Tests scenarios when released leases have zero valid
+    /// lifetime and should be preserved in the partner's lease
+    /// database.
+    void testSendSuccessfulUpdates6SoftDelete() {
+        // Start HTTP servers.
+        ASSERT_NO_THROW({
+                listener_->start();
+                listener2_->start();
+                listener3_->start();
+        });
+
+        // This flag will be set to true if unpark is called.
+        bool unpark_called = false;
+        testSendLeaseUpdates6([&unpark_called] { unpark_called = true; },
+                              false, 1, MyState(HA_LOAD_BALANCING_ST),
+                              false, true, true);
+
+        // Expecting that the packet was unparked because lease
+        // updates are expected to be successful.
+        EXPECT_TRUE(unpark_called);
+
+        // Updates have been sent so this counter should remain 0.
+        EXPECT_EQ(0, service_->communication_state_->getUnsentUpdateCount());
+
+        // The server 2 should have received one command.
+        EXPECT_EQ(1, factory2_->getResponseCreator()->getReceivedRequests().size());
+
+        // Check that the server 2 has received lease6-bulk-apply command.
+        auto update_request2 =
+            factory2_->getResponseCreator()->findRequest("lease6-bulk-apply",
+                                                         "2001:db8:1::cafe",
+                                                         "2001:db8:1::efac");
+        ASSERT_TRUE(update_request2);
+
+        // Make sure that both leases are to be updated in the partner's
+        // database.
+        auto arguments = update_request2->getBodyAsJson()->get("arguments");
+        ASSERT_TRUE(arguments);
+        EXPECT_EQ(Element::map, arguments->getType());
+        auto leases = arguments->get("leases");
+        ASSERT_TRUE(leases);
+        EXPECT_EQ(Element::list, leases->getType());
+        EXPECT_EQ(2, leases->size());
+
+        // Lease updates should be successfully sent to server3.
+        EXPECT_EQ(1, factory3_->getResponseCreator()->getReceivedRequests().size());
+
+        // Check that the server 3 has received lease6-bulk-apply command.
+        auto update_request3 =
+            factory3_->getResponseCreator()->findRequest("lease6-bulk-apply",
+                                                         "2001:db8:1::cafe",
+                                                         "2001:db8:1::efac");
+        EXPECT_TRUE(update_request3);
+
+        arguments = update_request3->getBodyAsJson()->get("arguments");
+        EXPECT_EQ(Element::map, arguments->getType());
+        leases = arguments->get("leases");
+        EXPECT_EQ(Element::list, leases->getType());
+        EXPECT_EQ(2, leases->size());
+    }
+
     /// @brief Tests that DHCPv6 lease updates are queued when the server is in the
     /// communication-recovery state and later sent before transitioning back to
     /// the load-balancing state.
@@ -1598,9 +1779,75 @@ public:
         });
 
         // Bulk lease update should have been sent.
-        EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("lease6-bulk-apply",
-                                                                 "2001:db8:1::cafe",
-                                                                 "2001:db8:1::efac"));
+        auto update_request = factory2_->getResponseCreator()->findRequest("lease6-bulk-apply",
+                                                                           "2001:db8:1::cafe",
+                                                                           "2001:db8:1::efac");
+        ASSERT_TRUE(update_request);
+
+        // Verify that there is one lease to be updated and one to be deleted.
+        auto arguments = update_request->getBodyAsJson()->get("arguments");
+        EXPECT_EQ(Element::map, arguments->getType());
+        auto leases = arguments->get("leases");
+        ASSERT_TRUE(leases);
+        EXPECT_EQ(Element::list, leases->getType());
+        EXPECT_EQ(1, leases->size());
+        auto deleted_leases = arguments->get("deleted-leases");
+        ASSERT_TRUE(deleted_leases);
+        EXPECT_EQ(Element::list, deleted_leases->getType());
+        EXPECT_EQ(1, deleted_leases->size());
+
+        // Backlog should be empty.
+        EXPECT_EQ(0, service_->lease_update_backlog_.size());
+    }
+
+    /// @brief Tests sending outstanding lease updates in the communication-recovery
+    /// state when released leases are preserved in the database.
+    void testSendUpdatesCommunicationRecovery6SoftDelete() {
+        // Start HTTP servers.
+        ASSERT_NO_THROW({
+                listener_->start();
+                listener2_->start();
+                listener3_->start();
+        });
+
+        // This flag will be set to true if unpark is called.
+        bool unpark_called = false;
+        testSendLeaseUpdates6([&unpark_called] { unpark_called = true; },
+                              false, 0, MyState(HA_COMMUNICATION_RECOVERY_ST),
+                              false, true, true);
+
+        // Packet shouldn't be unparked because no updates went out. We merely
+        // queued the updates.
+        EXPECT_FALSE(unpark_called);
+
+        // Let's make sure they have been queued.
+        EXPECT_EQ(2, service_->lease_update_backlog_.size());
+
+        // Make partner available.
+        service_->communication_state_->poke();
+        service_->communication_state_->setPartnerState("load-balancing");
+
+        // This should cause the server to send outstanding lease updates and
+        // because they are all successful the server should transition to the
+        // load-balancing state and continue normal operation.
+        testSynchronousCommands([this]() {
+            service_->runModel(HAService::NOP_EVT);
+            EXPECT_EQ(HA_LOAD_BALANCING_ST, service_->getCurrState());
+        });
+
+        // Bulk lease update should have been sent.
+        auto update_request = factory2_->getResponseCreator()->findRequest("lease6-bulk-apply",
+                                                                           "2001:db8:1::cafe",
+                                                                           "2001:db8:1::efac");
+        EXPECT_TRUE(update_request);
+
+        // Make sure that both leases are to be updated in the partner's
+        // database.
+        auto arguments = update_request->getBodyAsJson()->get("arguments");
+        EXPECT_EQ(Element::map, arguments->getType());
+        auto leases = arguments->get("leases");
+        EXPECT_EQ(Element::list, leases->getType());
+        EXPECT_EQ(2, leases->size());
 
         // Backlog should be empty.
         EXPECT_EQ(0, service_->lease_update_backlog_.size());
@@ -2489,6 +2736,19 @@ TEST_F(HAServiceTest, sendSuccessfulUpdatesMultiThreading) {
     testSendSuccessfulUpdates();
 }
 
+// Tests scenarios when released leases have zero valid lifetime
+// and should be preserved in the partner's lease database.
+TEST_F(HAServiceTest, sendSuccessfulUpdatesSoftDelete) {
+    testSendSuccessfulUpdatesSoftDelete();
+}
+
+// Tests scenarios when released leases are have zero valid lifetime
+// and should be preserved in the partner's lease database.
+TEST_F(HAServiceTest, sendSuccessfulUpdatesSoftDeleteMultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    testSendSuccessfulUpdatesSoftDelete();
+}
+
 // Test scenario when lease updates are queued in the communication-recovery
 // state for later send.
 TEST_F(HAServiceTest, sendUpdatesCommunicationRecovery) {
@@ -2500,6 +2760,19 @@ TEST_F(HAServiceTest, sendUpdatesCommunicationRecovery) {
 TEST_F(HAServiceTest, sendUpdatesCommunicationRecoveryMultiThreading) {
     MultiThreadingMgr::instance().setMode(true);
     testSendUpdatesCommunicationRecovery();
+}
+
+// Tests sending outstanding lease updates in the communication-recovery
+// state when released leases are preserved in the database.
+TEST_F(HAServiceTest, sendUpdatesCommunicationRecoverySoftDelete) {
+    testSendUpdatesCommunicationRecoverySoftDelete();
+}
+
+// Tests sending outstanding lease updates in the communication-recovery
+// state when released leases are preserved in the database.
+TEST_F(HAServiceTest, senUpdatesCommunicationRecoverySoftDeleteMultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    testSendUpdatesCommunicationRecoverySoftDelete();
 }
 
 // Test scenario when lease updates are queued in the communication-recovery
@@ -2671,6 +2944,19 @@ TEST_F(HAServiceTest, sendSuccessfulUpdates6MultiThreading) {
     testSendSuccessfulUpdates6();
 }
 
+// Tests scenarios when released leases have zero valid lifetime
+// and should be preserved in the partner's lease database.
+TEST_F(HAServiceTest, sendSuccessfulUpdates6SoftDelete) {
+    testSendSuccessfulUpdates6SoftDelete();
+}
+
+// Tests scenarios when released leases are have zero valid lifetime
+// and should be preserved in the partner's lease database.
+TEST_F(HAServiceTest, sendSuccessfulUpdates6SoftDeleteMultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    testSendSuccessfulUpdates6SoftDelete();
+}
+
 // Test scenario when lease updates are queued in the communication-recovery
 // state for later send. Then, the partner refuses lease updates causing the
 // server to transition to the waiting state.
@@ -2684,6 +2970,19 @@ TEST_F(HAServiceTest, sendUpdatesCommunicationRecovery6) {
 TEST_F(HAServiceTest, sendUpdatesCommunicationRecovery6MultiThreading) {
     MultiThreadingMgr::instance().setMode(true);
     testSendUpdatesCommunicationRecovery6();
+}
+
+// Tests sending outstanding lease updates in the communication-recovery
+// state when released leases are preserved in the database.
+TEST_F(HAServiceTest, sendUpdatesCommunicationRecovery6SoftDelete) {
+    testSendUpdatesCommunicationRecovery6SoftDelete();
+}
+
+// Tests sending outstanding lease updates in the communication-recovery
+// state when released leases are preserved in the database.
+TEST_F(HAServiceTest, sendUpdatesCommunicationRecovery6SoftDeleteMultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    testSendUpdatesCommunicationRecovery6SoftDelete();
 }
 
 // Test scenario when lease updates are queued in the communication-recovery

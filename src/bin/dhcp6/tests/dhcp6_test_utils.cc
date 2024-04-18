@@ -653,13 +653,13 @@ Dhcpv6SrvTest::testReleaseBasic(Lease::Type type, const IOAddress& existing,
         ASSERT_TRUE(stat);
         EXPECT_EQ(0, stat->getInteger().first);
     } else {
-        // Check that the lease is really gone in the database
-        // get lease by address
         l = LeaseMgrFactory::instance().getLease6(type, release_addr);
         ASSERT_TRUE(l);
 
         EXPECT_EQ(l->valid_lft_, 0);
         EXPECT_EQ(l->preferred_lft_, 0);
+
+        EXPECT_EQ(Lease6::STATE_RELEASED, l->state_);
 
         // get lease by subnetid/duid/iaid combination
         l = LeaseMgrFactory::instance().getLease6(type, *duid_, iaid,
@@ -668,11 +668,12 @@ Dhcpv6SrvTest::testReleaseBasic(Lease::Type type, const IOAddress& existing,
 
         EXPECT_EQ(l->valid_lft_, 0);
         EXPECT_EQ(l->preferred_lft_, 0);
+        EXPECT_EQ(Lease::STATE_DEFAULT, lease->state_);
 
         // We should have decremented the address counter
         stat = StatsMgr::instance().getObservation(name);
         ASSERT_TRUE(stat);
-        EXPECT_EQ(before, stat->getInteger().first);
+        EXPECT_EQ(0, stat->getInteger().first);
     }
 }
 

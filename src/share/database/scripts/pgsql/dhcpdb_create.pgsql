@@ -6377,6 +6377,19 @@ UPDATE schema_version
 
 -- This line concludes the schema upgrade to version 22.0.
 
+-- This line starts the schema upgrade to version 23.0.
+
+-- Introduce new lease state indicating that the lease has been
+-- released by a client.
+INSERT INTO lease_state VALUES (3, 'released');
+
+-- Update the schema version number.
+UPDATE schema_version
+    SET version = '23', minor = '0';
+
+-- This line concludes the schema upgrade to version 23.0.
+
+
 -- Commit the script transaction.
 COMMIT;
 

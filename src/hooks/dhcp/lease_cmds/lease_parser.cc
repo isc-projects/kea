@@ -144,9 +144,10 @@ Lease4Parser::parse(ConstSrvConfigPtr& cfg,
     }
 
     // Check if the state value is sane.
-    if (state > Lease::STATE_EXPIRED_RECLAIMED) {
+    if (state > Lease::STATE_RELEASED) {
         isc_throw(BadValue, "Invalid state value: " << state << ", supported "
-                  "values are: 0 (default), 1 (declined) and 2 (expired-reclaimed)");
+                  "values are: 0 (default), 1 (declined), 2 (expired-reclaimed)"
+                  " and 3 (released)");
     }
 
     // Handle user context.
@@ -351,9 +352,10 @@ Lease6Parser::parse(ConstSrvConfigPtr& cfg,
     }
 
     // Check if the state value is sane.
-    if (state > Lease::STATE_EXPIRED_RECLAIMED) {
+    if (state > Lease::STATE_RELEASED) {
         isc_throw(BadValue, "Invalid state value: " << state << ", supported "
-                  "values are: 0 (default), 1 (declined) and 2 (expired-reclaimed)");
+                  "values are: 0 (default), 1 (declined), 2 (expired-reclaimed)"
+                  " and 3 (released)");
     }
 
     if ((state == Lease::STATE_DECLINED) && (type == Lease::TYPE_PD)) {

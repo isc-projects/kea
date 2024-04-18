@@ -3366,6 +3366,12 @@ Dhcpv6Srv::releaseIA_NA(const DuidPtr& duid, const Pkt6Ptr& query,
             // Expire the lease.
             lease->valid_lft_ = 0;
             lease->preferred_lft_ = 0;
+            // Set the lease state to released to indicate that this lease
+            // must be preserved in the database. It is particularly useful
+            // in HA to differentiate between the leases that should be
+            // updated in the partner's database and deleted from the partner's
+            // database.
+            lease->state_ = Lease6::STATE_RELEASED;
             LeaseMgrFactory::instance().updateLease6(lease);
             expired = true;
             success = true;
@@ -3410,26 +3416,26 @@ Dhcpv6Srv::releaseIA_NA(const DuidPtr& duid, const Pkt6Ptr& query,
                 .arg(lease->addr_.toText())
                 .arg(lease->iaid_);
 
-            // Need to decrease statistic for assigned addresses.
-            StatsMgr::instance().addValue(
-                StatsMgr::generateName("subnet", lease->subnet_id_, "assigned-nas"),
-                static_cast<int64_t>(-1));
-
-            auto const& subnet = CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getBySubnetId(lease->subnet_id_);
-            if (subnet) {
-                auto const& pool = subnet->getPool(Lease::TYPE_NA, lease->addr_, false);
-                if (pool) {
-                    StatsMgr::instance().addValue(
-                        StatsMgr::generateName("subnet", subnet->getID(),
-                                               StatsMgr::generateName("pool", pool->getID(), "assigned-nas")),
-                        static_cast<int64_t>(-1));
-                }
-            }
-
             // Check if a lease has flags indicating that the FQDN update has
             // been performed. If so, create NameChangeRequest which removes
             // the entries.
             queueNCR(CHG_REMOVE, lease);
+        }
+
+        // Need to decrease statistic for assigned addresses.
+        StatsMgr::instance().addValue(
+            StatsMgr::generateName("subnet", lease->subnet_id_, "assigned-nas"),
+            static_cast<int64_t>(-1));
+
+        auto const& subnet = CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getBySubnetId(lease->subnet_id_);
+        if (subnet) {
+            auto const& pool = subnet->getPool(Lease::TYPE_NA, lease->addr_, false);
+            if (pool) {
+                StatsMgr::instance().addValue(
+                    StatsMgr::generateName("subnet", subnet->getID(),
+                                           StatsMgr::generateName("pool", pool->getID(), "assigned-nas")),
+                    static_cast<int64_t>(-1));
+            }
         }
 
         return (ia_rsp);
@@ -3571,6 +3577,12 @@ Dhcpv6Srv::releaseIA_PD(const DuidPtr& duid, const Pkt6Ptr& query,
             // Expire the lease.
             lease->valid_lft_ = 0;
             lease->preferred_lft_ = 0;
+            // Set the lease state to released to indicate that this lease
+            // must be preserved in the database. It is particularly useful
+            // in HA to differentiate between the leases that should be
+            // updated in the partner's database and deleted from the partner's
+            // database.
+            lease->state_ = Lease6::STATE_RELEASED;
             LeaseMgrFactory::instance().updateLease6(lease);
             expired = true;
             success = true;
@@ -3617,21 +3629,21 @@ Dhcpv6Srv::releaseIA_PD(const DuidPtr& duid, const Pkt6Ptr& query,
                 .arg(lease->addr_.toText())
                 .arg(static_cast<int>(lease->prefixlen_))
                 .arg(lease->iaid_);
+        }
 
-            // Need to decrease statistic for assigned prefixes.
-            StatsMgr::instance().addValue(
-                StatsMgr::generateName("subnet", lease->subnet_id_, "assigned-pds"),
-                static_cast<int64_t>(-1));
+        // Need to decrease statistic for assigned prefixes.
+        StatsMgr::instance().addValue(
+            StatsMgr::generateName("subnet", lease->subnet_id_, "assigned-pds"),
+            static_cast<int64_t>(-1));
 
-            auto const& subnet = CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getBySubnetId(lease->subnet_id_);
-            if (subnet) {
-                auto const& pool = subnet->getPool(Lease::TYPE_PD, lease->addr_, false);
-                if (pool) {
-                    StatsMgr::instance().addValue(
-                        StatsMgr::generateName("subnet", subnet->getID(),
-                                               StatsMgr::generateName("pd-pool", pool->getID(), "assigned-pds")),
-                        static_cast<int64_t>(-1));
-                }
+        auto const& subnet = CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getBySubnetId(lease->subnet_id_);
+        if (subnet) {
+            auto const& pool = subnet->getPool(Lease::TYPE_PD, lease->addr_, false);
+            if (pool) {
+                StatsMgr::instance().addValue(
+                    StatsMgr::generateName("subnet", subnet->getID(),
+                                           StatsMgr::generateName("pd-pool", pool->getID(), "assigned-pds")),
+                    static_cast<int64_t>(-1));
             }
         }
     }

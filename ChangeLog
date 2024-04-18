@@ -1,3 +1,13 @@
+2256.	[func]		marcin
+	High Availability hook now supports lease affinity for the
+	released leases. When a lease is released but left in the
+	database for a possible re-allocation this information is
+	propagated to the partner server. Previously, a released
+	lease was always deleted in the partner, causing a loss of
+	the association between the lease and the client in the
+	partner's lease database.
+	(Gitlab #3246)
+
 2255.	[bug]		razvan
 	The environment is now inherited by kea-lfc when started by
 	the kea dhcp server.

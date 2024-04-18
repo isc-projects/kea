@@ -1950,6 +1950,72 @@ TEST_F(AllocEngine4Test, requestReuseDeclinedLease4Stats) {
     EXPECT_TRUE(testStatistics("reclaimed-declined-addresses", 1, subnet_->getID()));
 }
 
+// This test checks if a released lease can be reused in REQUEST (actual allocation)
+TEST_F(AllocEngine4Test, requestReuseReleasedLease4) {
+    boost::scoped_ptr<AllocEngine> engine;
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(0)));
+    ASSERT_TRUE(engine);
+
+    IOAddress addr("192.0.2.105");
+
+    EXPECT_TRUE(testStatistics("assigned-addresses", 0, subnet_->getID()));
+    int64_t cumulative = getStatistics("cumulative-assigned-addresses",
+                                       subnet_->getID());
+    int64_t glbl_cumulative = getStatistics("cumulative-assigned-addresses");
+    EXPECT_TRUE(testStatistics("reclaimed-leases", 0));
+    EXPECT_TRUE(testStatistics("reclaimed-leases", 0, subnet_->getID()));
+
+    // Just a different hw/client-id for the second client
+    uint8_t hwaddr2_data[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe };
+    HWAddrPtr hwaddr2(new HWAddr(hwaddr2_data, sizeof(hwaddr2_data), HTYPE_ETHER));
+    uint8_t clientid2[] = { 8, 7, 6, 5, 4, 3, 2, 1 };
+    time_t now = time(NULL) - 500; // Allocated 500 seconds ago
+
+    Lease4Ptr lease(new Lease4(addr, hwaddr2, clientid2, sizeof(clientid2),
+                               495, now, subnet_->getID()));
+    lease->state_ = Lease4::STATE_RELEASED;
+    // Make a copy of the lease, so as we can compare that with the old lease
+    // instance returned by the allocation engine.
+    Lease4 original_lease(*lease);
+
+    // Lease was assigned 500 seconds ago, but its valid lifetime is 495, so it
+    // is expired already
+    ASSERT_TRUE(lease->expired());
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
+
+    // A client comes along, asking specifically for this address
+    AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_,
+                                    IOAddress(addr), false, false,
+                                    "host.example.com.", false);
+    ctx.query_.reset(new Pkt4(DHCPREQUEST, 1234));
+    lease = engine->allocateLease4(ctx);
+
+    // Check that he got that single lease
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(addr, lease->addr_);
+
+    // Check that the lease is indeed updated in LeaseMgr
+    Lease4Ptr from_mgr = LeaseMgrFactory::instance().getLease4(addr);
+    ASSERT_TRUE(from_mgr);
+
+    // Now check that the lease in LeaseMgr has the same parameters
+    detailCompareLease(lease, from_mgr);
+
+    // The allocation engine should return a copy of the old lease. This
+    // lease should be equal to the original lease.
+    ASSERT_TRUE(ctx.old_lease_);
+    EXPECT_TRUE(*ctx.old_lease_ == original_lease);
+
+    EXPECT_TRUE(testStatistics("assigned-addresses", 1, subnet_->getID()));
+    cumulative += 1;
+    EXPECT_TRUE(testStatistics("cumulative-assigned-addresses",
+                               cumulative, subnet_->getID()));
+    glbl_cumulative += 1;
+    EXPECT_TRUE(testStatistics("cumulative-assigned-addresses", glbl_cumulative));
+    EXPECT_TRUE(testStatistics("reclaimed-leases", 1));
+    EXPECT_TRUE(testStatistics("reclaimed-leases", 1, subnet_->getID()));
+}
+
 // This test checks that the Allocation Engine correctly identifies the
 // existing client's lease in the lease database, using the client
 // identifier and HW address.

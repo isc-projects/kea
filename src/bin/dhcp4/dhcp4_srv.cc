@@ -3920,6 +3920,12 @@ Dhcpv4Srv::processRelease(Pkt4Ptr& release, AllocEngine::ClientContext4Ptr& cont
                 lease->valid_lft_ != Lease::INFINITY_LFT) {
                 // Expire the lease.
                 lease->valid_lft_ = 0;
+                // Set the lease state to released to indicate that this lease
+                // must be preserved in the database. It is particularly useful
+                // in HA to differentiate between the leases that should be
+                // updated in the partner's database and deleted from the partner's
+                // database.
+                lease->state_ = Lease4::STATE_RELEASED;
                 LeaseMgrFactory::instance().updateLease4(lease);
                 expired = true;
                 success = true;
@@ -3945,25 +3951,26 @@ Dhcpv4Srv::processRelease(Pkt4Ptr& release, AllocEngine::ClientContext4Ptr& cont
                         .arg(release->getLabel())
                         .arg(lease->addr_.toText());
 
-                    // Need to decrease statistic for assigned addresses.
-                    StatsMgr::instance().addValue(
-                        StatsMgr::generateName("subnet", lease->subnet_id_, "assigned-addresses"),
-                        static_cast<int64_t>(-1));
-
-                    auto const& subnet = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getBySubnetId(lease->subnet_id_);
-                    if (subnet) {
-                        auto const& pool = subnet->getPool(Lease::TYPE_V4, lease->addr_, false);
-                        if (pool) {
-                            StatsMgr::instance().addValue(
-                                StatsMgr::generateName("subnet", subnet->getID(),
-                                                       StatsMgr::generateName("pool", pool->getID(), "assigned-addresses")),
-                                static_cast<int64_t>(-1));
-                        }
-                    }
-
                     // Remove existing DNS entries for the lease, if any.
                     queueNCR(CHG_REMOVE, lease);
                 }
+
+                // Need to decrease statistic for assigned addresses.
+                StatsMgr::instance().addValue(
+                    StatsMgr::generateName("subnet", lease->subnet_id_, "assigned-addresses"),
+                    static_cast<int64_t>(-1));
+
+                auto const& subnet = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getBySubnetId(lease->subnet_id_);
+                if (subnet) {
+                    auto const& pool = subnet->getPool(Lease::TYPE_V4, lease->addr_, false);
+                    if (pool) {
+                        StatsMgr::instance().addValue(
+                            StatsMgr::generateName("subnet", subnet->getID(),
+                                                   StatsMgr::generateName("pool", pool->getID(), "assigned-addresses")),
+                            static_cast<int64_t>(-1));
+                    }
+                }
+
             } else {
                 // Release failed
                 LOG_ERROR(lease4_logger, DHCP4_RELEASE_FAIL)

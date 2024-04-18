@@ -74,6 +74,9 @@ struct Lease : public isc::data::UserContext, public isc::data::CfgToElement {
     /// @brief Expired and reclaimed lease.
     static const uint32_t STATE_EXPIRED_RECLAIMED;
 
+    /// @brief Released lease held in the database for lease affinity.
+    static const uint32_t STATE_RELEASED;
+
     /// @brief Returns name(s) of the basic lease state(s).
     ///
     /// @param state A numeric value holding a state information.

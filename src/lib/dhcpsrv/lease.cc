@@ -24,9 +24,10 @@ using namespace std;
 namespace isc {
 namespace dhcp {
 
-const uint32_t Lease::STATE_DEFAULT = 0x0;
-const uint32_t Lease::STATE_DECLINED = 0x1;
-const uint32_t Lease::STATE_EXPIRED_RECLAIMED = 0x2;
+const uint32_t Lease::STATE_DEFAULT = 0;
+const uint32_t Lease::STATE_DECLINED = 1;
+const uint32_t Lease::STATE_EXPIRED_RECLAIMED = 2;
+const uint32_t Lease::STATE_RELEASED = 3;
 
 std::string
 Lease::lifetimeToText(uint32_t lifetime) {
@@ -97,6 +98,8 @@ Lease::basicStatesToText(const uint32_t state) {
         return ("declined");
     case STATE_EXPIRED_RECLAIMED:
         return ("expired-reclaimed");
+    case STATE_RELEASED:
+        return ("released");
     default:
         // The default case will be handled further on
         ;
