@@ -29,7 +29,6 @@ run_unittests_SOURCES += csv_file_unittest.cc
 run_unittests_SOURCES += dhcp_space_unittest.cc
 run_unittests_SOURCES += doubles_unittest.cc
 run_unittests_SOURCES += encode_unittest.cc
-run_unittests_SOURCES += fd_share_tests.cc
 run_unittests_SOURCES += fd_tests.cc
 run_unittests_SOURCES += filesystem_unittests.cc
 run_unittests_SOURCES += hash_unittest.cc

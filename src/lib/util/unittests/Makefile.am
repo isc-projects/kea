@@ -22,7 +22,4 @@ libutil_unittests_la_LIBADD += $(top_builddir)/src/lib/exceptions/libkea-excepti
 libutil_unittests_la_LIBADD += $(GTEST_LDADD)
 endif
 
-# For now, this isn't needed for libutil_unittests
-EXTRA_DIST = mock_socketsession.h
-
 CLEANFILES = *.gcno *.gcda

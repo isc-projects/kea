@@ -151,7 +151,6 @@
  *   - @subpage logDeveloperUse
  *   - @subpage logNotes
  * - @subpage LoggingApi
- * - @subpage SocketSessionUtility
  * - @subpage crossCompile
  * - @subpage debug
  * - @subpage docs
