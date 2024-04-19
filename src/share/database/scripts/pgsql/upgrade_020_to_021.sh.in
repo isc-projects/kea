@@ -39,7 +39,7 @@ START TRANSACTION;
 
 -- This line starts the schema upgrade to version 21.0.
 
--- Correct dhcp4_server_modifcation_ts to index the dhcp4_server table.
+-- Correct dhcp4_server_modification_ts to index the dhcp4_server table.
 DROP INDEX dhcp4_server_modification_ts;
 CREATE INDEX dhcp4_server_modification_ts ON dhcp4_server (modification_ts);
 

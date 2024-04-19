@@ -1,3 +1,8 @@
+2221.	[bug]		tmark
+	Corrected an index on the dhcp4_servers table
+	in the PostgreSQL schema.
+	(Gitlab #2957)
+
 2220.	[bug]		marcin
 	Exclude packets ignored during load balancing from the
 	pkt6-receive-drop statistics. The packets dropped by the

@@ -142,7 +142,7 @@ pgsql_db_version_test() {
     run_command \
         "${kea_admin}" db-version pgsql -u "${db_user}" -p "${db_password}" -n "${db_name}"
     version="${OUTPUT}"
-    assert_str_eq "20.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
+    assert_str_eq "21.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
 
     # Let's wipe the whole database
     pgsql_wipe
@@ -888,7 +888,7 @@ pgsql_upgrade_18_to_19_test() {
 }
 
 pgsql_upgrade_19_to_20_test() {
-    # Verify that lease6_by_sunet_id_address index on lease6 is keyed by
+    # Verify that lease6_by_subnet_id_address index on lease6 is keyed by
     # attributes number 5 and 1 (i.e. subnet-id and address)
     qry="select ix.indkey as keys from pg_class t, pg_class i, pg_index ix \
         where t.oid = ix.indrelid and i.oid = ix.indexrelid and \
