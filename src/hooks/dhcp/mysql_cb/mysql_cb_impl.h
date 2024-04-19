@@ -839,7 +839,7 @@ public:
     /// @brief Get the hook I/O service.
     ///
     /// @return the hook I/O service.
-    static isc::asiolink::IOServicePtr& getIOService() {
+    static isc::asiolink::IOServicePtr getIOService() {
         return (io_service_);
     }
 
@@ -848,20 +848,6 @@ public:
     /// @param io_service the hook I/O service.
     static void setIOService(isc::asiolink::IOServicePtr io_service) {
         io_service_ = io_service;
-    }
-
-    /// @brief Get the main I/O service.
-    ///
-    /// @return the main I/O service.
-    static isc::asiolink::IOServicePtr& getMainIOService() {
-        return (main_io_service_);
-    }
-
-    /// @brief Set the main I/O service.
-    ///
-    /// @param io_service the main I/O service.
-    static void setMainIOService(isc::asiolink::IOServicePtr io_service) {
-        main_io_service_ = io_service;
     }
 
     /// @brief Represents connection to the MySQL database.
@@ -882,9 +868,6 @@ private:
 
     /// @brief The hook I/O service.
     static isc::asiolink::IOServicePtr io_service_;
-
-    /// @brief The main I/O service.
-    static isc::asiolink::IOServicePtr main_io_service_;
 };
 
 } // end of namespace isc::dhcp

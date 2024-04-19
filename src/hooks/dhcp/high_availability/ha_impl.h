@@ -224,7 +224,7 @@ public:
     /// @brief Get the hook I/O service.
     ///
     /// @return the hook I/O service.
-    isc::asiolink::IOServicePtr& getIOService() {
+    isc::asiolink::IOServicePtr getIOService() {
         return (io_service_);
     }
 
@@ -235,27 +235,10 @@ public:
         io_service_ = io_service;
     }
 
-    /// @brief Get the main I/O service.
-    ///
-    /// @return the main I/O service.
-    isc::asiolink::IOServicePtr& getMainIOService() {
-        return (main_io_service_);
-    }
-
-    /// @brief Set the main I/O service.
-    ///
-    /// @param io_service the main I/O service.
-    void setMainIOService(isc::asiolink::IOServicePtr io_service) {
-        main_io_service_ = io_service;
-    }
-
 protected:
 
     /// @brief The hook I/O service.
     isc::asiolink::IOServicePtr io_service_;
-
-    /// @brief The main I/O service.
-    isc::asiolink::IOServicePtr main_io_service_;
 
     /// @brief Holds parsed configuration.
     HAConfigMapperPtr config_;

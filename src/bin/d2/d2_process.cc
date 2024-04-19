@@ -6,6 +6,7 @@
 
 #include <config.h>
 #include <asiolink/asio_wrapper.h>
+#include <asiolink/io_service_mgr.h>
 #include <cc/command_interpreter.h>
 #include <config/command_mgr.h>
 #include <d2/d2_controller.h>
@@ -17,6 +18,7 @@
 #include <hooks/hooks.h>
 #include <hooks/hooks_manager.h>
 
+using namespace isc::asiolink;
 using namespace isc::config;
 using namespace isc::hooks;
 using namespace isc::process;
@@ -129,7 +131,7 @@ D2Process::run() {
 
 size_t
 D2Process::runIO() {
-    getIOService()->pollExternalIOServices();
+    IOServiceMgr::instance().pollIOServices();
     // We want to block until at least one handler is called.  We'll use
     // boost::asio::io_service directly for two reasons. First off
     // asiolink::IOService::runOne is a void and boost::asio::io_service::stopped
@@ -303,7 +305,7 @@ D2Process::configure(isc::data::ConstElementPtr config_set, bool check_only) {
 
     /// Let postponed hook initializations to run.
     try {
-        getIOService()->pollExternalIOServices();
+        IOServiceMgr::instance().pollIOServices();
     } catch (const std::exception& ex) {
         std::ostringstream err;
         err << "Error initializing hooks: "

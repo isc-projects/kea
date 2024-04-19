@@ -7,6 +7,7 @@
 #include <config.h>
 
 #include <agent/simple_parser.h>
+#include <asiolink/io_service_mgr.h>
 #include <cc/data.h>
 #include <cc/dhcp_config_error.h>
 #include <hooks/hooks_manager.h>
@@ -14,6 +15,7 @@
 #include <http/basic_auth_config.h>
 
 using namespace isc::data;
+using namespace isc::asiolink;
 
 namespace isc {
 namespace agent {
@@ -182,6 +184,7 @@ AgentSimpleParser::parse(const CtrlAgentCfgContextPtr& ctx,
         // change causes problems when trying to roll back.
         HooksManager::prepareUnloadLibraries();
         static_cast<void>(HooksManager::unloadLibraries());
+        IOServiceMgr::instance().clearIOServices();
         libraries.loadLibraries(false);
     }
 }

@@ -19,7 +19,9 @@ LEASE_FILE="@abs_top_builddir@/src/bin/dhcp6/tests/test_leases.csv"
 # Path to the Kea LFC application
 export KEA_LFC_EXECUTABLE="@abs_top_builddir@/src/bin/lfc/kea-lfc"
 # Path to test hooks library
-HOOK_PATH="@abs_top_builddir@/src/bin/dhcp6/tests/.libs/libco3.so"
+HOOK_FAIL_LOAD_PATH="@abs_top_builddir@/src/bin/dhcp6/tests/.libs/libco3.so"
+# Path to test hooks library
+HOOK_FAIL_POLL_PATH="@abs_top_builddir@/src/bin/dhcp6/tests/.libs/libco3.so"
 # Kea configuration to be stored in the configuration file.
 CONFIG="{
     \"Dhcp6\":
@@ -214,7 +216,7 @@ INVALID_CONFIG_HOOKS_LOAD="{
         },
         \"hooks-libraries\": [
         {
-            \"library\": \"$HOOK_PATH\",
+            \"library\": \"$HOOK_FAIL_LOAD_PATH\",
                 \"parameters\": {
                     \"mode\": \"fail-on-load\"
             }
@@ -235,18 +237,18 @@ INVALID_CONFIG_HOOKS_LOAD="{
 
 # Invalid configuration (hook point returns error) to check that performing
 # extra configuration checks detects the error.
-INVALID_CONFIG_HOOKS_CALLOUT_FAIL="{
+INVALID_CONFIG_HOOKS_CALLOUT_FAIL_ON_LOAD="{
     \"Dhcp6\":
     {
         \"interfaces-config\": {
-          \"interfaces\": [ ]
+            \"interfaces\": [ ]
         },
         \"multi-threading\": {
-          \"enable-multi-threading\": false
+            \"enable-multi-threading\": false
         },
         \"server-id\": {
-          \"type\": \"LLT\",
-          \"persist\": false
+            \"type\": \"LLT\",
+            \"persist\": false
         },
         \"preferred-lifetime\": 3000,
         \"valid-lifetime\": 4000,
@@ -271,7 +273,64 @@ INVALID_CONFIG_HOOKS_CALLOUT_FAIL="{
         },
         \"hooks-libraries\": [
         {
-            \"library\": \"$HOOK_PATH\",
+            \"library\": \"$HOOK_FAIL_LOAD_PATH\",
+                \"parameters\": {
+                    \"mode\": \"fail-without-error\"
+            }
+        } ],
+        \"loggers\": [
+        {
+            \"name\": \"kea-dhcp6\",
+            \"output-options\": [
+                {
+                    \"output\": \"$LOG_FILE\"
+                }
+            ],
+            \"severity\": \"INFO\"
+        }
+        ]
+    }
+}"
+
+# Invalid configuration (poll after load throws exception) to check that performing
+# extra configuration checks detects the error.
+INVALID_CONFIG_HOOKS_CALLOUT_FAIL_ON_POLL="{
+    \"Dhcp6\":
+    {
+        \"interfaces-config\": {
+            \"interfaces\": [ ]
+        },
+        \"multi-threading\": {
+            \"enable-multi-threading\": false
+        },
+        \"server-id\": {
+            \"type\": \"LLT\",
+            \"persist\": false
+        },
+        \"preferred-lifetime\": 3000,
+        \"valid-lifetime\": 4000,
+        \"renew-timer\": 1000,
+        \"rebind-timer\": 2000,
+        \"lease-database\":
+        {
+            \"type\": \"memfile\",
+            \"name\": \"$LEASE_FILE\",
+            \"persist\": false,
+            \"lfc-interval\": 0
+        },
+        \"subnet6\": [
+        {
+            \"subnet\": \"2001:db8:1::/64\",
+            \"id\": 1,
+            \"pools\": [ { \"pool\": \"2001:db8:1::10-2001:db8:1::100\" } ]
+        } ],
+        \"dhcp-ddns\": {
+            \"enable-updates\": true,
+            \"qualifying-suffix\": \"\"
+        },
+        \"hooks-libraries\": [
+        {
+            \"library\": \"$HOOK_FAIL_POLL_PATH\",
                 \"parameters\": {
                     \"mode\": \"fail-without-error\"
             }
@@ -602,5 +661,6 @@ syntax_check_test "dhcpv6.syntax_check_success" "${CONFIG}" 0 -t
 syntax_check_test "dhcpv6.syntax_check_bad_syntax" "${CONFIG_BAD_SYNTAX}" 1 -t
 syntax_check_test "dhcpv6.syntax_check_bad_values" "${CONFIG_BAD_VALUES}" 1 -t
 syntax_check_test "dhcpv6.syntax_check_hooks_load_fail" "${INVALID_CONFIG_HOOKS_LOAD}" 1 -T
-syntax_check_test "dhcpv6.syntax_check_hooks_callout_fail" "${INVALID_CONFIG_HOOKS_CALLOUT_FAIL}" 1 -T
+syntax_check_test "dhcpv6.syntax_check_hooks_callout_fail_on_load" "${INVALID_CONFIG_HOOKS_CALLOUT_FAIL_ON_LOAD}" 1 -T
+syntax_check_test "dhcpv6.syntax_check_hooks_callout_fail_on_poll" "${INVALID_CONFIG_HOOKS_CALLOUT_FAIL_ON_POLL}" 1 -T
 password_redact_test "dhcpv6.password_redact_test" "$(kea_dhcp_config 6)" 0

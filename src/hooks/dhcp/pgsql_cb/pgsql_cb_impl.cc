@@ -29,7 +29,6 @@ namespace isc {
 namespace dhcp {
 
 isc::asiolink::IOServicePtr PgSqlConfigBackendImpl::io_service_;
-isc::asiolink::IOServicePtr PgSqlConfigBackendImpl::main_io_service_;
 
 PgSqlTaggedStatement&
 PgSqlConfigBackendImpl::getStatement(size_t /* index */) const {

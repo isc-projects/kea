@@ -131,20 +131,25 @@ loop), but each loop pass contains a call to:
 
 @code
 getIOService()->poll();
+IOServiceMgr::instance().pollIOServices();
 @endcode
 
 which executes callbacks for completed asynchronous operations, such as
 timers, asynchronous sends and receives. The instance of the IOService
-is owned by the DHCP servers, but hooks libraries must have access to it
-and must use this instance to schedule asynchronous tasks. This is why
-the new hook points "dhcp4_srv_configured" and "dhcp6_srv_configured"
-have been introduced. These hook points are used by the DHCPv4 and the
-DHCPv6 servers respectively, to pass the instance of the IOService
-(via "io_context" argument) to the hooks libraries which require to
-schedule asynchronous tasks.
-The hook's IOService object must be registered on the server's main IOService by
-calling registerExternalIOService and must unregister it on "unload" hook point
-by calling unregisterExternalIOService.
+is owned by the DHCP servers, but hooks libraries must create their own
+IOService access to schedule asynchronous tasks.
+The hook's IOService object must be registered on the IOServiceMgr by
+calling registerIOService and must unregister it on "unload" hook point
+by calling unregisterIOService.
+
+
+The hook points "dhcp4_srv_configured" and "dhcp6_srv_configured" have been
+introduced to give access to the server configuration if needed.
+These hook points are used by the DHCPv4 and the DHCPv6 servers respectively, to
+pass the server configuration to the hooks libraries which require it.
+The "io_context" parameter gives access to the main IOService, but it's use
+has been deprecated in favor of a local IOService to avoid issues when
+unloading the library. The parameter will be removed in future versions.
 
 It is also worth to note that the blocking reception of the DHCP packets
 may cause up to 1 second delays in the asynchronous operations. This is
@@ -152,25 +157,27 @@ due to the structure of the main server loop:
 
 @code
 bool
-Dhcpv4Srv::run() {
+Dhcpv[4|6]Srv::run() {
+[...]
     while (!shutdown_) {
+[...]
         try {
             runOne();
+            IOServiceMgr::instance().pollIOServices();
             getIOService()->poll();
         } catch (const std::exception& e) {
             // General catch-all exception that are not caught by more specific
             // catches. This one is for exceptions derived from std::exception.
-            LOG_ERROR(packet4_logger, DHCP4_PACKET_PROCESS_STD_EXCEPTION)
-                .arg(e.what());
+            [...]
         } catch (...) {
             // General catch-all exception that are not caught by more specific
             // catches. This one is for other exceptions, not derived from
             // std::exception.
-            LOG_ERROR(packet4_logger, DHCP4_PACKET_PROCESS_EXCEPTION);
+            [...]
         }
     }
 
-    return (true);
+    [...]
 }
 @endcode
 

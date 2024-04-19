@@ -30,7 +30,6 @@ namespace isc {
 namespace dhcp {
 
 isc::asiolink::IOServicePtr MySqlConfigBackendImpl::io_service_;
-isc::asiolink::IOServicePtr MySqlConfigBackendImpl::main_io_service_;
 
 MySqlConfigBackendImpl::
 ScopedAuditRevision::ScopedAuditRevision(MySqlConfigBackendImpl* impl,

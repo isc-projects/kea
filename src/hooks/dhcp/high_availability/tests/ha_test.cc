@@ -71,7 +71,6 @@ void
 HATest::startHAService() {
     if (HooksManager::calloutsPresent(Hooks.hooks_index_dhcp4_srv_configured_)) {
         CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
-        callout_handle->setArgument("io_context", io_service_);
         callout_handle->setArgument("network_state", network_state_);
         HooksManager::callCallouts(Hooks.hooks_index_dhcp4_srv_configured_,
                                    *callout_handle);

@@ -54,7 +54,7 @@ public:
     /// @brief Start the underlying event loop.
     ///
     /// This method does not return control to the caller until
-    /// the @ref stop() method is called via some handler.
+    /// the @ref stop() or @ref stopWork() method is called via some handler.
     void run();
 
     /// @brief Run the underlying event loop for a single event.
@@ -120,38 +120,10 @@ public:
     /// by small bits that are called from time to time).
     void post(const std::function<void ()>& callback);
 
-    /// @brief Register external IOService.
-    ///
-    /// @param io_service The external IOService to be registered.
-    void registerExternalIOService(IOServicePtr io_service);
-
-    /// @brief Unregister external IOService.
-    ///
-    /// @param io_service The external IOService to be unregistered.
-    void unregisterExternalIOService(IOServicePtr io_service);
-
-    /// @brief Clear the list of external IOService objects.
-    void clearExternalIOServices() {
-        external_io_services_.clear();
-    }
-
-    /// @brief The count of external IOService objects.
-    ///
-    // @return The count of external IOService objects.
-    size_t externalIOServiceCount() {
-        return (external_io_services_.size());
-    }
-
-    /// @brief Poll external IOService objects.
-    void pollExternalIOServices();
-
 private:
 
     /// @brief The implementation.
     boost::shared_ptr<IOServiceImpl> io_impl_;
-
-    /// @brief The list of external IOService objects.
-    std::list<IOServicePtr> external_io_services_;
 };
 
 }  // namespace asiolink

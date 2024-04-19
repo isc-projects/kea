@@ -380,7 +380,6 @@ TEST_F(CloseHATest, close4) {
     EXPECT_TRUE(HooksManager::calloutsPresent(testHooks.hook_index_dhcp4_srv_configured_));
     {
         CalloutHandlePtr handle = HooksManager::createCalloutHandle();
-        handle->setArgument("io_context", io_service);
         handle->setArgument("network_state", network_state);
         HooksManager::callCallouts(testHooks.hook_index_dhcp4_srv_configured_,
                                    *handle);
@@ -515,7 +514,6 @@ TEST_F(CloseHATest, close4Backup) {
     EXPECT_TRUE(HooksManager::calloutsPresent(testHooks.hook_index_dhcp4_srv_configured_));
     {
         CalloutHandlePtr handle = HooksManager::createCalloutHandle();
-        handle->setArgument("io_context", io_service);
         handle->setArgument("network_state", network_state);
         HooksManager::callCallouts(testHooks.hook_index_dhcp4_srv_configured_,
                                    *handle);
@@ -619,7 +617,6 @@ TEST_F(CloseHATest, close6) {
     EXPECT_TRUE(HooksManager::calloutsPresent(testHooks.hook_index_dhcp6_srv_configured_));
     {
         CalloutHandlePtr handle = HooksManager::createCalloutHandle();
-        handle->setArgument("io_context", io_service);
         handle->setArgument("network_state", network_state);
         HooksManager::callCallouts(testHooks.hook_index_dhcp6_srv_configured_,
                                    *handle);
@@ -754,7 +751,6 @@ TEST_F(CloseHATest, close6Backup) {
     EXPECT_TRUE(HooksManager::calloutsPresent(testHooks.hook_index_dhcp6_srv_configured_));
     {
         CalloutHandlePtr handle = HooksManager::createCalloutHandle();
-        handle->setArgument("io_context", io_service);
         handle->setArgument("network_state", network_state);
         HooksManager::callCallouts(testHooks.hook_index_dhcp6_srv_configured_,
                                    *handle);

@@ -40,7 +40,7 @@ public:
     /// @brief Start the underlying event loop.
     ///
     /// This method does not return control to the caller until
-    /// the @ref stop() method is called via some handler.
+    /// the @ref stop() or @ref stopWork() method is called via some handler.
     void run() {
         io_service_.run();
     };
@@ -177,26 +177,6 @@ IOService::getInternalIOService() {
 void
 IOService::post(const std::function<void ()>& callback) {
     return (io_impl_->post(callback));
-}
-
-void
-IOService::registerExternalIOService(IOServicePtr io_service) {
-    external_io_services_.push_back(io_service);
-}
-
-void
-IOService::unregisterExternalIOService(IOServicePtr io_service) {
-    auto it = std::find(external_io_services_.begin(), external_io_services_.end(), io_service);
-    if (it != external_io_services_.end()) {
-        external_io_services_.erase(it);
-    }
-}
-
-void
-IOService::pollExternalIOServices() {
-    for (auto& io_service : external_io_services_) {
-        io_service->poll();
-    }
 }
 
 }  // namespace asiolink

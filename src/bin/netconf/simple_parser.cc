@@ -6,6 +6,7 @@
 
 #include <config.h>
 
+#include <asiolink/io_service_mgr.h>
 #include <cc/data.h>
 #include <cc/dhcp_config_error.h>
 #include <hooks/hooks_manager.h>
@@ -14,6 +15,7 @@
 #include <netconf/simple_parser.h>
 
 using namespace isc::data;
+using namespace isc::asiolink;
 
 namespace isc {
 namespace netconf {
@@ -189,6 +191,7 @@ NetconfSimpleParser::parse(const NetconfConfigPtr& ctx,
         // change causes problems when trying to roll back.
         HooksManager::prepareUnloadLibraries();
         static_cast<void>(HooksManager::unloadLibraries());
+        IOServiceMgr::instance().clearIOServices();
         libraries.loadLibraries(false);
     }
 }

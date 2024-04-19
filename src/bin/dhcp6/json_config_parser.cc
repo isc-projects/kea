@@ -7,6 +7,7 @@
 #include <config.h>
 
 #include <asiolink/io_address.h>
+#include <asiolink/io_service_mgr.h>
 #include <cc/data.h>
 #include <cc/command_interpreter.h>
 #include <config/command_mgr.h>
@@ -1012,6 +1013,7 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
             // change causes problems when trying to roll back.
             HooksManager::prepareUnloadLibraries();
             static_cast<void>(HooksManager::unloadLibraries());
+            IOServiceMgr::instance().clearIOServices();
             const HooksConfig& libraries =
                 CfgMgr::instance().getStagingCfg()->getHooksConfig();
             bool multi_threading_enabled = true;
@@ -1066,6 +1068,16 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
             auto notify_libraries = ControlledDhcpv6Srv::finishConfigHookLibraries(config_set);
             if (notify_libraries) {
                 return (notify_libraries);
+            }
+
+            /// Let postponed hook initializations to run.
+            try {
+                IOServiceMgr::instance().pollIOServices();
+            } catch (const std::exception& ex) {
+                std::ostringstream err;
+                err << "Error initializing hooks: "
+                    << ex.what();
+                return (isc::config::createAnswer(CONTROL_RESULT_ERROR, err.str()));
             }
         }
 

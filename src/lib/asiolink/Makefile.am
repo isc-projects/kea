@@ -29,6 +29,7 @@ libkea_asiolink_la_SOURCES += io_asio_socket.h
 libkea_asiolink_la_SOURCES += io_endpoint.cc io_endpoint.h
 libkea_asiolink_la_SOURCES += io_error.h
 libkea_asiolink_la_SOURCES += io_service.h io_service.cc
+libkea_asiolink_la_SOURCES += io_service_mgr.h io_service_mgr.cc
 libkea_asiolink_la_SOURCES += io_service_signal.cc io_service_signal.h
 libkea_asiolink_la_SOURCES += io_service_thread_pool.cc io_service_thread_pool.h
 libkea_asiolink_la_SOURCES += io_socket.h io_socket.cc
@@ -82,6 +83,7 @@ libkea_asiolink_include_HEADERS = \
 	io_endpoint.h \
 	io_error.h \
 	io_service.h \
+	io_service_mgr.h \
 	io_service_signal.h \
 	io_service_thread_pool.h \
 	io_socket.h \

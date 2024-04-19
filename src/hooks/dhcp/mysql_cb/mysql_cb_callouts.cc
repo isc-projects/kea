@@ -10,6 +10,7 @@
 
 #include <config.h>
 
+#include <asiolink/io_service_mgr.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <hooks/hooks.h>
 #include <process/daemon.h>
@@ -68,15 +69,8 @@ int load(LibraryHandle& /* handle */) {
 /// @param handle callout handle passed to the callout.
 /// @return 0 on success, 1 otherwise.
 int dhcp4_srv_configured(CalloutHandle& handle) {
-    handle.getArgument("io_context", isc::dhcp::MySqlConfigBackendImpl::getMainIOService());
-    if (!isc::dhcp::MySqlConfigBackendImpl::getMainIOService()) {
-        const string error("Error: io_context is null");
-        handle.setArgument("error", error);
-        handle.setStatus(isc::hooks::CalloutHandle::NEXT_STEP_DROP);
-        return (1);
-    }
     isc::dhcp::MySqlConfigBackendImpl::getIOService().reset(new IOService());
-    isc::dhcp::MySqlConfigBackendImpl::getMainIOService()->registerExternalIOService(isc::dhcp::MySqlConfigBackendImpl::getIOService());
+    IOServiceMgr::instance().registerIOService(isc::dhcp::MySqlConfigBackendImpl::getIOService());
     return (0);
 }
 
@@ -87,15 +81,8 @@ int dhcp4_srv_configured(CalloutHandle& handle) {
 /// @param handle callout handle passed to the callout.
 /// @return 0 on success, 1 otherwise.
 int dhcp6_srv_configured(CalloutHandle& handle) {
-    handle.getArgument("io_context", isc::dhcp::MySqlConfigBackendImpl::getMainIOService());
-    if (!isc::dhcp::MySqlConfigBackendImpl::getMainIOService()) {
-        const string error("Error: io_context is null");
-        handle.setArgument("error", error);
-        handle.setStatus(isc::hooks::CalloutHandle::NEXT_STEP_DROP);
-        return (1);
-    }
     isc::dhcp::MySqlConfigBackendImpl::getIOService().reset(new IOService());
-    isc::dhcp::MySqlConfigBackendImpl::getMainIOService()->registerExternalIOService(isc::dhcp::MySqlConfigBackendImpl::getIOService());
+    IOServiceMgr::instance().registerIOService(isc::dhcp::MySqlConfigBackendImpl::getIOService());
     return (0);
 }
 
@@ -107,9 +94,7 @@ int unload() {
     // Unregister the factories and remove MySQL backends
     isc::dhcp::MySqlConfigBackendDHCPv4::unregisterBackendType();
     isc::dhcp::MySqlConfigBackendDHCPv6::unregisterBackendType();
-    if (isc::dhcp::MySqlConfigBackendImpl::getMainIOService()) {
-        isc::dhcp::MySqlConfigBackendImpl::getMainIOService()->unregisterExternalIOService(isc::dhcp::MySqlConfigBackendImpl::getIOService());
-    }
+    IOServiceMgr::instance().unregisterIOService(isc::dhcp::MySqlConfigBackendImpl::getIOService());
     if (isc::dhcp::MySqlConfigBackendImpl::getIOService()) {
         isc::dhcp::MySqlConfigBackendImpl::getIOService()->stop();
         isc::dhcp::MySqlConfigBackendImpl::getIOService()->restart();

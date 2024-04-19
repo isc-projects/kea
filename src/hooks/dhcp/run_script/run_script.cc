@@ -19,7 +19,6 @@ namespace isc {
 namespace run_script {
 
 IOServicePtr RunScriptImpl::io_service_;
-IOServicePtr RunScriptImpl::main_io_service_;
 
 RunScriptImpl::RunScriptImpl() : io_context_(new IOService()), name_(), sync_(false) {
 }

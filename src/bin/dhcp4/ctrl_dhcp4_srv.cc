@@ -6,6 +6,7 @@
 
 #include <config.h>
 
+#include <asiolink/io_service_mgr.h>
 #include <cc/command_interpreter.h>
 #include <cc/data.h>
 #include <config/command_mgr.h>
@@ -241,7 +242,7 @@ ControlledDhcpv4Srv::commandLibReloadHandler(const string&, ConstElementPtr) {
         HookLibsCollection loaded = HooksManager::getLibraryInfo();
         HooksManager::prepareUnloadLibraries();
         static_cast<void>(HooksManager::unloadLibraries());
-        getIOService()->clearExternalIOServices();
+        IOServiceMgr::instance().clearIOServices();
         bool multi_threading_enabled = true;
         uint32_t thread_count = 0;
         uint32_t queue_size = 0;
@@ -453,7 +454,7 @@ ControlledDhcpv4Srv::commandConfigSetHandler(const string&,
 
     /// Let postponed hook initializations to run.
     try {
-        getIOService()->pollExternalIOServices();
+        IOServiceMgr::instance().pollIOServices();
     } catch (const std::exception& ex) {
         std::ostringstream err;
         err << "Error initializing hooks: "

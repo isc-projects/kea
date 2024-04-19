@@ -6,6 +6,7 @@
 
 #include <config.h>
 #include <asiolink/asio_wrapper.h>
+#include <asiolink/io_service_mgr.h>
 #include <agent/ca_process.h>
 #include <agent/ca_controller.h>
 #include <agent/ca_response_creator_factory.h>
@@ -89,7 +90,7 @@ CtrlAgentProcess::run() {
 
 size_t
 CtrlAgentProcess::runIO() {
-    getIOService()->pollExternalIOServices();
+    IOServiceMgr::instance().pollIOServices();
     size_t cnt = getIOService()->poll();
     if (!cnt) {
         cnt = getIOService()->runOne();
@@ -196,7 +197,7 @@ CtrlAgentProcess::configure(isc::data::ConstElementPtr config_set,
 
     /// Let postponed hook initializations to run.
     try {
-        getIOService()->pollExternalIOServices();
+        IOServiceMgr::instance().pollIOServices();
     } catch (const std::exception& ex) {
         std::ostringstream err;
         err << "Error initializing hooks: "

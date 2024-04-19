@@ -6,6 +6,7 @@
 
 #include <config.h>
 
+#include <asiolink/io_service_mgr.h>
 #include <cc/command_interpreter.h>
 #include <hooks/hooks.h>
 #include <run_script.h>
@@ -80,8 +81,8 @@ int load(LibraryHandle& handle) {
 ///
 /// @return always 0.
 int unload() {
-    if (RunScriptImpl::getMainIOService()) {
-        RunScriptImpl::getMainIOService()->unregisterExternalIOService(impl->getIOContext());
+    if (impl) {
+        IOServiceMgr::instance().unregisterIOService(impl->getIOContext());
     }
     impl.reset();
     if (RunScriptImpl::getIOService()) {
@@ -102,16 +103,8 @@ int unload() {
 /// @param handle callout handle.
 int dhcp4_srv_configured(CalloutHandle& handle) {
     try {
-        handle.getArgument("io_context", RunScriptImpl::getMainIOService());
-        if (!RunScriptImpl::getMainIOService()) {
-            // Should not happen!
-            handle.setStatus(isc::hooks::CalloutHandle::NEXT_STEP_DROP);
-            const string error("Error: io_context is null");
-            handle.setArgument("error", error);
-            return (1);
-        }
         RunScriptImpl::setIOService(impl->getIOContext());
-        RunScriptImpl::getMainIOService()->registerExternalIOService(impl->getIOContext());
+        IOServiceMgr::instance().registerIOService(impl->getIOContext());
 
     } catch (const exception& ex) {
         LOG_ERROR(run_script_logger, RUN_SCRIPT_LOAD_ERROR)
@@ -127,16 +120,8 @@ int dhcp4_srv_configured(CalloutHandle& handle) {
 /// @param handle callout handle.
 int dhcp6_srv_configured(CalloutHandle& handle) {
     try {
-        handle.getArgument("io_context", RunScriptImpl::getMainIOService());
-        if (!RunScriptImpl::getMainIOService()) {
-            // Should not happen!
-            handle.setStatus(isc::hooks::CalloutHandle::NEXT_STEP_DROP);
-            const string error("Error: io_context is null");
-            handle.setArgument("error", error);
-            return (1);
-        }
         RunScriptImpl::setIOService(impl->getIOContext());
-        RunScriptImpl::getMainIOService()->registerExternalIOService(impl->getIOContext());
+        IOServiceMgr::instance().registerIOService(impl->getIOContext());
 
     } catch (const exception& ex) {
         LOG_ERROR(run_script_logger, RUN_SCRIPT_LOAD_ERROR)

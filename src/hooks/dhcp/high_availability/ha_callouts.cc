@@ -13,6 +13,7 @@
 #include <ha_impl.h>
 #include <ha_log.h>
 #include <asiolink/io_service.h>
+#include <asiolink/io_service_mgr.h>
 #include <cc/command_interpreter.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/network_state.h>
@@ -31,6 +32,7 @@ HAImplPtr impl;
 } // end of namespace isc::ha
 } // end of namespace isc
 
+using namespace isc::asiolink;
 using namespace isc::config;
 using namespace isc::data;
 using namespace isc::dhcp;
@@ -46,18 +48,10 @@ extern "C" {
 /// @param handle callout handle.
 int dhcp4_srv_configured(CalloutHandle& handle) {
     try {
-        handle.getArgument("io_context", impl->getMainIOService());
-        if (!impl->getMainIOService()) {
-            // Should not happen!
-            handle.setStatus(isc::hooks::CalloutHandle::NEXT_STEP_DROP);
-            const string error("Error: io_context is null");
-            handle.setArgument("error", error);
-            return (1);
-        }
         isc::dhcp::NetworkStatePtr network_state;
         handle.getArgument("network_state", network_state);
         impl->startServices(network_state, HAServerType::DHCPv4);
-        impl->getMainIOService()->registerExternalIOService(impl->getIOService());
+        IOServiceMgr::instance().registerIOService(impl->getIOService());
 
     } catch (const std::exception& ex) {
         LOG_ERROR(ha_logger, HA_DHCP4_START_SERVICE_FAILED)
@@ -164,18 +158,10 @@ int lease4_server_decline(CalloutHandle& handle) {
 /// @param handle callout handle.
 int dhcp6_srv_configured(CalloutHandle& handle) {
     try {
-        handle.getArgument("io_context", impl->getMainIOService());
-        if (!impl->getMainIOService()) {
-            // Should not happen!
-            handle.setStatus(isc::hooks::CalloutHandle::NEXT_STEP_DROP);
-            const string error("Error: io_context is null");
-            handle.setArgument("error", error);
-            return (1);
-        }
         isc::dhcp::NetworkStatePtr network_state;
         handle.getArgument("network_state", network_state);
         impl->startServices(network_state, HAServerType::DHCPv6);
-        impl->getMainIOService()->registerExternalIOService(impl->getIOService());
+        IOServiceMgr::instance().registerIOService(impl->getIOService());
 
     } catch (const std::exception& ex) {
         LOG_ERROR(ha_logger, HA_DHCP6_START_SERVICE_FAILED)
@@ -443,9 +429,7 @@ int load(LibraryHandle& handle) {
 /// @return 0 if deregistration was successful, 1 otherwise
 int unload() {
     if (impl) {
-        if (impl->getMainIOService()) {
-            impl->getMainIOService()->unregisterExternalIOService(impl->getIOService());
-        }
+        IOServiceMgr::instance().unregisterIOService(impl->getIOService());
         impl->getIOService()->stop();
         impl->getIOService()->restart();
         try {

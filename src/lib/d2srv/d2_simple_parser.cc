@@ -6,12 +6,14 @@
 
 #include <config.h>
 
+#include <asiolink/io_service_mgr.h>
 #include <d2srv/d2_config.h>
 #include <d2srv/d2_simple_parser.h>
 #include <cc/data.h>
 #include <hooks/hooks_manager.h>
 #include <hooks/hooks_parser.h>
 
+using namespace isc::asiolink;
 using namespace isc::data;
 using namespace isc::d2;
 using namespace isc;
@@ -292,6 +294,7 @@ void D2SimpleParser::parse(const D2CfgContextPtr& ctx,
         // change causes problems when trying to roll back.
         HooksManager::prepareUnloadLibraries();
         static_cast<void>(HooksManager::unloadLibraries());
+        IOServiceMgr::instance().clearIOServices();
         libraries.loadLibraries(false);
     }
 }

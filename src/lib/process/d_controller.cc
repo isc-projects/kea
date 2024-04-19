@@ -5,6 +5,8 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+
+#include <asiolink/io_service_mgr.h>
 #include <cc/command_interpreter.h>
 #include <process/cfgrpt/config_report.h>
 #include <cryptolink/crypto_hash.h>
@@ -415,8 +417,6 @@ DControllerBase::configFromFile() {
         // case of problems.
         storage->applyLoggingCfg();
 
-        getIOService()->clearExternalIOServices();
-
         answer = updateConfig(module_config);
         // In all cases the right logging configuration is in the context.
         process_->getCfgMgr()->getContext()->applyLoggingCfg();
@@ -657,8 +657,6 @@ DControllerBase::configSetHandler(const std::string&, ConstElementPtr args) {
         // case of problems.
         storage->applyLoggingCfg();
 
-        getIOService()->clearExternalIOServices();
-
         ConstElementPtr answer = updateConfig(module_config);
         int rcode = 0;
         parseAnswer(rcode, answer);
@@ -848,7 +846,7 @@ DControllerBase::~DControllerBase() {
         LOG_ERROR(dctl_logger, DCTL_UNLOAD_LIBRARIES_ERROR).arg(msg);
     }
 
-    getIOService()->clearExternalIOServices();
+    IOServiceMgr::instance().clearIOServices();
 
     io_signal_set_.reset();
     try {

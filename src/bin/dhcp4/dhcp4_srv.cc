@@ -7,6 +7,7 @@
 #include <config.h>
 #include <kea_version.h>
 
+#include <asiolink/io_service_mgr.h>
 #include <dhcp/dhcp4.h>
 #include <dhcp/duid.h>
 #include <dhcp/hwaddr.h>
@@ -706,7 +707,7 @@ Dhcpv4Srv::~Dhcpv4Srv() {
         }
         LOG_ERROR(dhcp4_logger, DHCP4_SRV_UNLOAD_LIBRARIES_ERROR).arg(msg);
     }
-    getIOService()->clearExternalIOServices();
+    IOServiceMgr::instance().clearIOServices();
     io_service_->stop();
     io_service_->restart();
     try {
@@ -1133,7 +1134,7 @@ Dhcpv4Srv::run() {
 #endif // ENABLE_AFL
         try {
             runOne();
-            getIOService()->pollExternalIOServices();
+            IOServiceMgr::instance().pollIOServices();
             getIOService()->poll();
         } catch (const std::exception& e) {
             // General catch-all exception that are not caught by more specific

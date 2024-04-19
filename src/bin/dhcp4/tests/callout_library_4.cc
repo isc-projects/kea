@@ -15,6 +15,7 @@ static const int LIBRARY_NUMBER = 4;
 #include <config.h>
 
 #include <asiolink/io_service.h>
+#include <asiolink/io_service_mgr.h>
 #include <dhcp4/tests/callout_library_common.h>
 #include <dhcpsrv/srv_config.h>
 
@@ -32,7 +33,6 @@ void start_service(void) {
 };
 
 IOServicePtr io_service;
-IOServicePtr main_io_service;
 
 } // end anonymous
 
@@ -57,9 +57,7 @@ do_load_impl(LibraryHandle& handle) {
 
 int
 do_unload_impl() {
-    if (main_io_service) {
-        main_io_service->unregisterExternalIOService(io_service);
-    }
+    IOServiceMgr::instance().unregisterIOService(io_service);
     return (0);
 }
 
@@ -92,14 +90,10 @@ dhcp4_srv_configured(CalloutHandle& handle) {
     // Get the IO context to post start_service on it.
     std::string error("");
     try {
-        handle.getArgument("io_context", main_io_service);
-        if (!main_io_service) {
-            error = "null io_context";
-        }
-        main_io_service->registerExternalIOService(io_service);
+        IOServiceMgr::instance().registerIOService(io_service);
         io_service->post(start_service);
     } catch (const std::exception& ex) {
-        error = "no io_context in arguments";
+        error = "unknown error";
     }
     if (!error.empty()) {
         handle.setArgument("error", error);
