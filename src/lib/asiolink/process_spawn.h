@@ -63,29 +63,15 @@ public:
 
     /// @brief Constructor.
     ///
-    /// @param io_service The IOService which handles signal handlers.
+    /// @param sync enables synchronous mode (spawning thread waits on
+    /// child to complete if true)
     /// @param executable A full path to the program to be executed.
     /// @param args Arguments for the program to be executed.
     /// @param vars Environment variables for the program to be executed.
     /// @param inherit_env whether the spawned process will inherit the
-    ///        environment before adding 'vars' on top.
-    ProcessSpawn(isc::asiolink::IOServicePtr io_service,
+    /// environment before adding 'vars' on top.
+    ProcessSpawn(bool sync,
                  const std::string& executable,
-                 const ProcessArgs& args = ProcessArgs(),
-                 const ProcessEnvVars& vars = ProcessEnvVars(),
-                 const bool inherit_env = false);
-
-    /// @brief Constructor for synchronous spawn and wait.
-    ///
-    /// Abstracts away the IO service detail since the caller is not
-    /// required to interact with it in sync mode.
-    ///
-    /// @param executable A full path to the program to be executed.
-    /// @param args Arguments for the program to be executed.
-    /// @param vars Environment variables for the program to be executed.
-    /// @param inherit_env whether the spawned process will inherit the
-    ///        environment before adding 'vars' on top.
-    ProcessSpawn(const std::string& executable,
                  const ProcessArgs& args = ProcessArgs(),
                  const ProcessEnvVars& vars = ProcessEnvVars(),
                  const bool inherit_env = false);
@@ -155,7 +141,24 @@ public:
     /// @param pid A process pid.
     void clearState(const pid_t pid);
 
+    /// @brief Get the I/O service.
+    ///
+    /// @return the I/O service.
+    static isc::asiolink::IOServicePtr getIOService() {
+        return (io_service_);
+    }
+
+    /// @brief Set the I/O service.
+    ///
+    /// @param io_service the I/O service.
+    static void setIOService(isc::asiolink::IOServicePtr io_service) {
+        io_service_ = io_service;
+    }
+
 private:
+
+    /// @brief The IOService object, used for all ASIO operations.
+    static isc::asiolink::IOServicePtr io_service_;
 
     /// @brief A smart pointer to the implementation of this class.
     ProcessSpawnImplPtr impl_;

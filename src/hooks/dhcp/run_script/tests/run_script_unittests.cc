@@ -788,13 +788,13 @@ public:
     /// @brief Constructor.
     RunScriptTest() :
         co_manager_(new CalloutManager(1)), io_service_(new IOService()) {
-        RunScriptImpl::setIOService(io_service_);
+        ProcessSpawn::setIOService(io_service_);
         clearLogFile();
     }
 
     /// @brief Destructor.
     ~RunScriptTest() {
-        RunScriptImpl::setIOService(IOServicePtr());
+        ProcessSpawn::setIOService(IOServicePtr());
         clearLogFile();
     }
 

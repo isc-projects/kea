@@ -277,6 +277,9 @@ Dhcpv6SrvTest::loadConfigFile(const string& path) {
 
     // Reset DatabaseConnection IO service.
     DatabaseConnection::setIOService(IOServicePtr());
+
+    // Reset ProcessSpawn IO service.
+    ProcessSpawn::setIOService(IOServicePtr());
 }
 
 /// @brief Class which handles initialization of database

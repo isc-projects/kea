@@ -118,6 +118,7 @@ public:
 
         timer_mgr_->setIOService(io_service_);
         DatabaseConnection::setIOService(io_service_);
+        ProcessSpawn::setIOService(io_service_);
 
         std::ostringstream s;
         s << KEA_LFC_BUILD_DIR << "/kea-lfc";

@@ -242,34 +242,6 @@ public:
     /// @brief This function parses and applies configuration parameters.
     void configure(isc::hooks::LibraryHandle& handle);
 
-    /// @brief Get the hook I/O service.
-    ///
-    /// @return the hook I/O service.
-    isc::asiolink::IOServicePtr getIOContext() {
-        return (io_context_);
-    }
-
-    /// @brief Set the hook I/O service.
-    ///
-    /// @param io_service the hook I/O service.
-    void setIOContext(isc::asiolink::IOServicePtr io_service) {
-        io_context_ = io_service;
-    }
-
-    /// @brief Get the hook I/O service.
-    ///
-    /// @return the hook I/O service.
-    static isc::asiolink::IOServicePtr getIOService() {
-        return (io_service_);
-    }
-
-    /// @brief Set the hook I/O service.
-    ///
-    /// @param io_service the hook I/O service.
-    static void setIOService(isc::asiolink::IOServicePtr io_service) {
-        io_service_ = io_service;
-    }
-
 private:
 
     /// @brief The IOService object, used for all ASIO operations.
@@ -284,9 +256,6 @@ private:
     /// exits, otherwise the call will return immediately after the script is
     /// started.
     bool sync_;
-
-    /// @brief The hook I/O service.
-    static isc::asiolink::IOServicePtr io_service_;
 };
 
 /// @brief The type of shared pointers to Run Script implementations.

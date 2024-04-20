@@ -13,6 +13,7 @@
 
 #include <gtest/gtest.h>
 
+#include <asiolink/process_spawn.h>
 #include <dhcp6/dhcp6_srv.h>
 #include <dhcp6/parser_context.h>
 #include <dhcp/pkt6.h>
@@ -136,6 +137,9 @@ public:
         // Open the "memfile" database for leases
         std::string memfile = "type=memfile universe=6 persist=false";
         isc::dhcp::LeaseMgrFactory::create(memfile);
+
+        isc::asiolink::ProcessSpawn::setIOService(getIOService());
+
         db::DatabaseConnection::setIOService(getIOService());
 
         dhcp::TimerMgr::instance()->setIOService(getIOService());

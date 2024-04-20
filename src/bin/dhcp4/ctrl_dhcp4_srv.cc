@@ -7,6 +7,7 @@
 #include <config.h>
 
 #include <asiolink/io_service_mgr.h>
+#include <asiolink/process_spawn.h>
 #include <cc/command_interpreter.h>
 #include <cc/data.h>
 #include <config/command_mgr.h>
@@ -1165,6 +1166,9 @@ ControlledDhcpv4Srv::ControlledDhcpv4Srv(uint16_t server_port /*= DHCP4_SERVER_P
                   "There is another Dhcpv4Srv instance already.");
     }
     server_ = this; // remember this instance for later use in handlers
+
+    // ProcessSpawn uses IO service to handle signal set events.
+    ProcessSpawn::setIOService(getIOService());
 
     // TimerMgr uses IO service to run asynchronous timers.
     TimerMgr::instance()->setIOService(getIOService());

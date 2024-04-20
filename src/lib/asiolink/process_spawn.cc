@@ -77,20 +77,18 @@ public:
 
     /// @brief Constructor.
     ///
-    /// @param io_service The IOService which handles signal handlers.
+    /// @param sync enables synchronous mode (spawning thread waits on
+    /// child to complete if true)
     /// @param executable A full path to the program to be executed.
     /// @param args Arguments for the program to be executed.
     /// @param vars Environment variables for the program to be executed.
     /// @param inherit_env whether the spawned process will inherit the
-    ///        environment before adding 'vars' on top.
-    /// @param sync enables synchronous mode (spawning thread waits on
-    /// child to complete if true)
-    ProcessSpawnImpl(IOServicePtr io_service,
+    /// environment before adding 'vars' on top.
+    ProcessSpawnImpl(const bool sync,
                      const std::string& executable,
                      const ProcessArgs& args,
                      const ProcessEnvVars& vars,
-                     const bool inherit_env,
-                     const bool sync);
+                     const bool inherit_env);
 
     /// @brief Destructor.
     ~ProcessSpawnImpl();
@@ -211,10 +209,15 @@ private:
     /// for any child process
     /// @param sync whether this function is called immediately after spawning
     /// (synchronous) or not (asynchronous, default).
-    static void waitForProcess(int signum, pid_t const wpid = -1, bool const sync = false);
+    static void waitForProcess(int signum, pid_t const wpid = -1,
+                               bool const sync = false);
 
     /// @brief A map holding the status codes of executed processes.
     static ProcessCollection process_collection_;
+
+    /// @brief Whether the process is waited immediately after spawning
+    /// (synchronous) or not (asynchronous, default).
+    bool sync_;
 
     /// @brief Path to an executable.
     std::string executable_;
@@ -236,13 +239,6 @@ private:
 
     /// @brief Mutex to protect internal state.
     static std::mutex mutex_;
-
-    /// @brief The IOService which handles IO operations.
-    IOServicePtr io_service_;
-
-    /// @brief Whether the process is waited immediately after spawning
-    /// (synchronous) or not (asynchronous, default).
-    bool sync_;
 };
 
 ProcessCollection ProcessSpawnImpl::process_collection_;
@@ -252,14 +248,13 @@ void ProcessSpawnImpl::IOSignalSetInitializer::initIOSignalSet(IOServicePtr io_s
     static IOSignalSetInitializer init(io_service);
 }
 
-ProcessSpawnImpl::ProcessSpawnImpl(IOServicePtr io_service,
+ProcessSpawnImpl::ProcessSpawnImpl(const bool sync,
                                    const std::string& executable,
                                    const ProcessArgs& args,
                                    const ProcessEnvVars& vars,
-                                   const bool inherit_env,
-                                   const bool sync)
-    : executable_(executable), args_(new char*[args.size() + 2]),
-      store_(false), io_service_(io_service), sync_(sync) {
+                                   const bool inherit_env)
+    : sync_(sync), executable_(executable), args_(new char*[args.size() + 2]),
+      store_(false) {
 
     // Size of vars except the trailing null
     size_t vars_size;
@@ -335,7 +330,7 @@ pid_t
 ProcessSpawnImpl::spawn(bool dismiss) {
     lock_guard<std::mutex> lk(mutex_);
     if (!sync_) {
-        ProcessSpawnImpl::IOSignalSetInitializer::initIOSignalSet(io_service_);
+        ProcessSpawnImpl::IOSignalSetInitializer::initIOSignalSet(ProcessSpawn::getIOService());
     }
     // Create the child
     pid_t pid = fork();
@@ -479,29 +474,14 @@ ProcessSpawnImpl::clearState(const pid_t pid) {
     }
 }
 
-ProcessSpawn::ProcessSpawn(IOServicePtr io_service,
+IOServicePtr ProcessSpawn::io_service_;
+
+ProcessSpawn::ProcessSpawn(const bool sync,
                            const std::string& executable,
                            const ProcessArgs& args,
                            const ProcessEnvVars& vars,
                            const bool inherit_env /* = false */)
-    : impl_(new ProcessSpawnImpl(io_service,
-                                 executable,
-                                 args,
-                                 vars,
-                                 inherit_env,
-                                 /* sync = */ false)) {
-}
-
-ProcessSpawn::ProcessSpawn(const std::string& executable,
-                           const ProcessArgs& args,
-                           const ProcessEnvVars& vars,
-                           const bool inherit_env /* = false */)
-    : impl_(new ProcessSpawnImpl(IOServicePtr(new IOService()),
-                                 executable,
-                                 args,
-                                 vars,
-                                 inherit_env,
-                                 /* sync = */ true)) {
+    : impl_(new ProcessSpawnImpl(sync, executable, args, vars, inherit_env)) {
 }
 
 std::string

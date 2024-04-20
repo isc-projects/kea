@@ -7,7 +7,6 @@
 #include <config.h>
 
 #include <asiolink/addr_utilities.h>
-#include <database/database_connection.h>
 #include <dhcpsrv/cfg_consistency.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/dhcpsrv_exceptions.h>
@@ -210,7 +209,7 @@ LFCSetup::setup(const uint32_t lfc_interval,
     args.push_back("ignored-path");
 
     // Create the process (do not start it yet).
-    process_.reset(new ProcessSpawn(DatabaseConnection::getIOService(), executable, args));
+    process_.reset(new ProcessSpawn(false, executable, args));
 
     // If we've been told to run it once now, invoke the callback directly.
     if (run_once_now) {

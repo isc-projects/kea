@@ -12,6 +12,8 @@
 #define DHCP4_TEST_UTILS_H
 
 #include <gtest/gtest.h>
+
+#include <asiolink/process_spawn.h>
 #include <dhcp/iface_mgr.h>
 #include <dhcp/option4_addrlst.h>
 #include <dhcp/pkt4.h>
@@ -123,9 +125,13 @@ public:
         // Create a default lease database backend.
         std::string dbconfig = "type=memfile universe=4 persist=false";
         isc::dhcp::LeaseMgrFactory::create(dbconfig);
+
         // Create fixed server id.
         server_id_.reset(new Option4AddrLst(DHO_DHCP_SERVER_IDENTIFIER,
                                             asiolink::IOAddress("192.0.3.1")));
+
+        isc::asiolink::ProcessSpawn::setIOService(getIOService());
+
         db::DatabaseConnection::setIOService(getIOService());
 
         dhcp::TimerMgr::instance()->setIOService(getIOService());

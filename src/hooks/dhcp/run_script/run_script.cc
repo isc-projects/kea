@@ -18,8 +18,6 @@ using namespace std;
 namespace isc {
 namespace run_script {
 
-IOServicePtr RunScriptImpl::io_service_;
-
 RunScriptImpl::RunScriptImpl() : io_context_(new IOService()), name_(), sync_(false) {
 }
 
@@ -33,7 +31,7 @@ RunScriptImpl::configure(LibraryHandle& handle) {
         isc_throw(InvalidParameter, "The 'name' parameter must be a string");
     }
     try {
-        ProcessSpawn process(IOServicePtr(), name->stringValue());
+        ProcessSpawn process(false, name->stringValue());
     } catch (const isc::Exception& ex) {
         isc_throw(InvalidParameter, "Invalid 'name' parameter: " << ex.what());
     }
@@ -49,7 +47,7 @@ RunScriptImpl::configure(LibraryHandle& handle) {
 
 void
 RunScriptImpl::runScript(const ProcessArgs& args, const ProcessEnvVars& vars) {
-    ProcessSpawn process(getIOService(), name_, args, vars);
+    ProcessSpawn process(false, name_, args, vars);
     process.spawn(true);
 }
 

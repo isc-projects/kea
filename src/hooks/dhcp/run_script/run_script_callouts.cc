@@ -81,54 +81,8 @@ int load(LibraryHandle& handle) {
 ///
 /// @return always 0.
 int unload() {
-    if (impl) {
-        IOServiceMgr::instance().unregisterIOService(impl->getIOContext());
-    }
     impl.reset();
-    if (RunScriptImpl::getIOService()) {
-        RunScriptImpl::getIOService()->stop();
-        RunScriptImpl::getIOService()->restart();
-        try {
-            RunScriptImpl::getIOService()->poll();
-        } catch (...) {
-        }
-    }
-    RunScriptImpl::setIOService(IOServicePtr());
     LOG_INFO(run_script_logger, RUN_SCRIPT_UNLOAD);
-    return (0);
-}
-
-/// @brief dhcp4_srv_configured callout implementation.
-///
-/// @param handle callout handle.
-int dhcp4_srv_configured(CalloutHandle& handle) {
-    try {
-        RunScriptImpl::setIOService(impl->getIOContext());
-        IOServiceMgr::instance().registerIOService(impl->getIOContext());
-
-    } catch (const exception& ex) {
-        LOG_ERROR(run_script_logger, RUN_SCRIPT_LOAD_ERROR)
-            .arg(ex.what());
-        handle.setStatus(isc::hooks::CalloutHandle::NEXT_STEP_DROP);
-        return (1);
-    }
-    return (0);
-}
-
-/// @brief dhcp6_srv_configured callout implementation.
-///
-/// @param handle callout handle.
-int dhcp6_srv_configured(CalloutHandle& handle) {
-    try {
-        RunScriptImpl::setIOService(impl->getIOContext());
-        IOServiceMgr::instance().registerIOService(impl->getIOContext());
-
-    } catch (const exception& ex) {
-        LOG_ERROR(run_script_logger, RUN_SCRIPT_LOAD_ERROR)
-            .arg(ex.what());
-        handle.setStatus(isc::hooks::CalloutHandle::NEXT_STEP_DROP);
-        return (1);
-    }
     return (0);
 }
 
