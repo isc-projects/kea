@@ -66,6 +66,7 @@ NetconfProcess::run() {
 
 size_t
 NetconfProcess::runIO() {
+    // Handle events registered by hooks using external IOService objects.
     IOServiceMgr::instance().pollIOServices();
     size_t cnt = getIOService()->poll();
     if (!cnt) {
@@ -88,8 +89,9 @@ NetconfProcess::configure(isc::data::ConstElementPtr config_set,
     int rcode = 0;
     config::parseAnswer(rcode, answer);
 
-    /// Let postponed hook initializations to run.
+    /// Let postponed hook initializations run.
     try {
+        // Handle events registered by hooks using external IOService objects.
         IOServiceMgr::instance().pollIOServices();
     } catch (const std::exception& ex) {
         std::ostringstream err;

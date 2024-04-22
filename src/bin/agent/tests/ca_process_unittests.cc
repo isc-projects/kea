@@ -86,12 +86,7 @@ TEST_F(CtrlAgentProcessTest, shutdown) {
                 elapsed.total_milliseconds() <= 400);
 
     timer.cancel();
-    getIOService()->stop();
-    getIOService()->restart();
-    try {
-        getIOService()->poll();
-    } catch (...) {
-    }
+    getIOService()->stopAndPoll();
 }
 
 }

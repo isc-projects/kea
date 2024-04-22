@@ -130,12 +130,7 @@ public:
         responses_.clear();
         removeUnixSocketFile();
         SysrepoSetup::cleanSharedMemory();
-        io_service_->stop();
-        io_service_->restart();
-        try {
-            io_service_->poll();
-        } catch (...) {
-        }
+        io_service_->stopAndPoll();
     }
 
     /// @brief Returns socket file path.

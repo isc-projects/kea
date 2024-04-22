@@ -102,12 +102,7 @@ HttpControlSocket::sendCommand(ConstElementPtr command) {
     io_service->run();
 
     client.stop();
-    io_service->stop();
-    io_service->restart();
-    try {
-        io_service->poll();
-    } catch (...) {
-    }
+    io_service->stopAndPoll();
 
     if (received_ec) {
         // Got an error code.

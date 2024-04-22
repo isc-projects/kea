@@ -166,12 +166,7 @@ public:
         // Disable multi-threading.
         MultiThreadingMgr::instance().setMode(false);
 
-        getIOService()->stop();
-        getIOService()->restart();
-        try {
-            getIOService()->poll();
-        } catch(...) {
-        }
+        getIOService()->stopAndPoll();
     }
 
     /// @brief Remove files being products of Lease File Cleanup.

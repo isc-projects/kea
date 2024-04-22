@@ -131,6 +131,7 @@ D2Process::run() {
 
 size_t
 D2Process::runIO() {
+    // Handle events registered by hooks using external IOService objects.
     IOServiceMgr::instance().pollIOServices();
     // We want to block until at least one handler is called.  We'll use
     // boost::asio::io_service directly for two reasons. First off
@@ -303,8 +304,9 @@ D2Process::configure(isc::data::ConstElementPtr config_set, bool check_only) {
         }
     }
 
-    /// Let postponed hook initializations to run.
+    /// Let postponed hook initializations run.
     try {
+        // Handle events registered by hooks using external IOService objects.
         IOServiceMgr::instance().pollIOServices();
     } catch (const std::exception& ex) {
         std::ostringstream err;
@@ -452,12 +454,7 @@ D2Process::reconfigureQueueMgr() {
 
 D2Process::~D2Process() {
     queue_mgr_->stopListening();
-    getIOService()->stop();
-    getIOService()->restart();
-    try {
-        getIOService()->poll();
-    } catch (...) {
-    }
+    getIOService()->stopAndPoll();
     queue_mgr_->removeListener();
 }
 

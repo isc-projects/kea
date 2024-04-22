@@ -2465,12 +2465,7 @@ HAService::synchronize(std::string& status_message,
 
     client.stop();
 
-    io_service->stop();
-    io_service->restart();
-    try {
-        io_service->poll();
-    } catch (...) {
-    }
+    io_service->stopAndPoll();
 
     // If an error message has been recorded, return an error to the controlling
     // client.
@@ -2612,12 +2607,7 @@ HAService::sendLeaseUpdatesFromBacklog() {
 
     client.stop();
 
-    io_service->stop();
-    io_service->restart();
-    try {
-        io_service->poll();
-    } catch (...) {
-    }
+    io_service->stopAndPoll();
 
     if (updates_successful) {
         LOG_INFO(ha_logger, HA_LEASES_BACKLOG_SUCCESS)
@@ -2700,12 +2690,7 @@ HAService::sendHAReset() {
 
     client.stop();
 
-    io_service->stop();
-    io_service->restart();
-    try {
-        io_service->poll();
-    } catch (...) {
-    }
+    io_service->stopAndPoll();
 
     return (reset_successful);
 }
@@ -2868,12 +2853,7 @@ HAService::processMaintenanceStart() {
 
     client.stop();
 
-    io_service->stop();
-    io_service->restart();
-    try {
-        io_service->poll();
-    } catch (...) {
-    }
+    io_service->stopAndPoll();
 
     // If there was a communication problem with the partner we assume that
     // the partner is already down while we receive this command.
@@ -2991,12 +2971,7 @@ HAService::processMaintenanceCancel() {
 
     client.stop();
 
-    io_service->stop();
-    io_service->restart();
-    try {
-        io_service->poll();
-    } catch (...) {
-    }
+    io_service->stopAndPoll();
 
     // There was an error in communication with the partner or the
     // partner was unable to revert its state.

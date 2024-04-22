@@ -708,12 +708,7 @@ Dhcpv4Srv::~Dhcpv4Srv() {
         LOG_ERROR(dhcp4_logger, DHCP4_SRV_UNLOAD_LIBRARIES_ERROR).arg(msg);
     }
     IOServiceMgr::instance().clearIOServices();
-    io_service_->stop();
-    io_service_->restart();
-    try {
-        io_service_->poll();
-    } catch (...) {
-    }
+    io_service_->stopAndPoll();
 }
 
 void
@@ -1134,6 +1129,7 @@ Dhcpv4Srv::run() {
 #endif // ENABLE_AFL
         try {
             runOne();
+            // Handle events registered by hooks using external IOService objects.
             IOServiceMgr::instance().pollIOServices();
             getIOService()->poll();
         } catch (const std::exception& e) {

@@ -120,6 +120,11 @@ public:
     /// by small bits that are called from time to time).
     void post(const std::function<void ()>& callback);
 
+    /// @brief Stop and poll to handle all registered events.
+    ///
+    /// @param ignore_errors Flag which indicates if errors should be ignored.
+    void stopAndPoll(bool ignore_errors = true);
+
 private:
 
     /// @brief The implementation.

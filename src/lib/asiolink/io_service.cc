@@ -179,5 +179,20 @@ IOService::post(const std::function<void ()>& callback) {
     return (io_impl_->post(callback));
 }
 
+void
+IOService::stopAndPoll(bool ignore_errors) {
+    stop();
+    restart();
+    if (ignore_errors) {
+        try {
+            poll();
+        } catch (...) {
+            // Ignore all exceptions.
+        }
+    } else {
+        poll();
+    }
+}
+
 }  // namespace asiolink
 }  // namespace isc

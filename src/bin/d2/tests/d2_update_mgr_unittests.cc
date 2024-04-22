@@ -85,12 +85,7 @@ public:
         if (server_) {
             server_->stop();
         }
-        io_service_->stop();
-        io_service_->restart();
-        try {
-            io_service_->poll();
-        } catch (...) {
-        }
+        io_service_->stopAndPoll();
     }
 
     /// @brief Creates a list of valid NameChangeRequest.

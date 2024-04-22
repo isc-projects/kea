@@ -69,7 +69,7 @@ int load(LibraryHandle& /* handle */) {
 /// @param handle callout handle passed to the callout.
 /// @return 0 on success, 1 otherwise.
 int dhcp4_srv_configured(CalloutHandle& handle) {
-    isc::dhcp::PgSqlConfigBackendImpl::getIOService().reset(new IOService());
+    isc::dhcp::PgSqlConfigBackendImpl::setIOService(IOServicePtr(new IOService()));
     IOServiceMgr::instance().registerIOService(isc::dhcp::PgSqlConfigBackendImpl::getIOService());
     return (0);
 }
@@ -81,7 +81,7 @@ int dhcp4_srv_configured(CalloutHandle& handle) {
 /// @param handle callout handle passed to the callout.
 /// @return 0 on success, 1 otherwise.
 int dhcp6_srv_configured(CalloutHandle& handle) {
-    isc::dhcp::PgSqlConfigBackendImpl::getIOService().reset(new IOService());
+    isc::dhcp::PgSqlConfigBackendImpl::setIOService(IOServicePtr(new IOService()));
     IOServiceMgr::instance().registerIOService(isc::dhcp::PgSqlConfigBackendImpl::getIOService());
     return (0);
 }
@@ -96,12 +96,7 @@ int unload() {
     isc::dhcp::PgSqlConfigBackendDHCPv6::unregisterBackendType();
     IOServiceMgr::instance().unregisterIOService(isc::dhcp::PgSqlConfigBackendImpl::getIOService());
     if (isc::dhcp::PgSqlConfigBackendImpl::getIOService()) {
-        isc::dhcp::PgSqlConfigBackendImpl::getIOService()->stop();
-        isc::dhcp::PgSqlConfigBackendImpl::getIOService()->restart();
-        try {
-            isc::dhcp::PgSqlConfigBackendImpl::getIOService()->poll();
-        } catch (...) {
-        }
+        isc::dhcp::PgSqlConfigBackendImpl::getIOService()->stopAndPoll();
     }
     return (0);
 }

@@ -228,12 +228,7 @@ public:
     virtual ~TLSAcceptorTest() {
         running_ = false;
         test_timer_.cancel();
-        io_service_->stop();
-        io_service_->restart();
-        try {
-            io_service_->poll();
-        } catch (...) {
-        }
+        io_service_->stopAndPoll();
     }
 
     /// @brief Specifies how many new connections are expected before the IO

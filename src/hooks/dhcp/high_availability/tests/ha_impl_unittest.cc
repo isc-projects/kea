@@ -84,20 +84,10 @@ public:
 
     /// @brief Destructor.
     ~HAImplTest() {
-        io_service_->stop();
-        io_service_->restart();
-        try {
-            io_service_->poll();
-        } catch (...) {
-        }
+        io_service_->stopAndPoll();
         ha_impl_.reset();
         test_ha_impl_.reset();
-        io_service_->stop();
-        io_service_->restart();
-        try {
-            io_service_->poll();
-        } catch (...) {
-        }
+        io_service_->stopAndPoll();
         // Clear statistics.
         StatsMgr::instance().removeAll();
     }
@@ -149,19 +139,9 @@ public:
         checkAnswer(response, CONTROL_RESULT_ERROR, expected_response);
         callout_handle.reset();
 
-        io_service_->stop();
-        io_service_->restart();
-        try {
-            io_service_->poll();
-        } catch (...) {
-        }
+        io_service_->stopAndPoll();
         ha_impl_.reset();
-        io_service_->stop();
-        io_service_->restart();
-        try {
-            io_service_->poll();
-        } catch (...) {
-        }
+        io_service_->stopAndPoll();
     }
 
     /// @brief HA Instance under test.

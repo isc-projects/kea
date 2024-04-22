@@ -18,7 +18,13 @@ IOServiceMgr& IOServiceMgr::instance() {
 
 void
 IOServiceMgr::registerIOService(IOServicePtr io_service) {
-    io_services_.push_back(io_service);
+    if (!io_service) {
+        return;
+    }
+    auto it = std::find(io_services_.begin(), io_services_.end(), io_service);
+    if (it == io_services_.end()) {
+        io_services_.push_back(io_service);
+    }
 }
 
 void

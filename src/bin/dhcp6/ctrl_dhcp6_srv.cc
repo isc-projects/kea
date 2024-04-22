@@ -455,8 +455,9 @@ ControlledDhcpv6Srv::commandConfigSetHandler(const string&,
         LOG_FATAL(dhcp6_logger, DHCP6_CONFIG_UNRECOVERABLE_ERROR);
     }
 
-    /// Let postponed hook initializations to run.
+    /// Let postponed hook initializations run.
     try {
+        // Handle events registered by hooks using external IOService objects.
         IOServiceMgr::instance().pollIOServices();
     } catch (const std::exception& ex) {
         std::ostringstream err;

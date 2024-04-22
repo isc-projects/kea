@@ -625,12 +625,7 @@ public:
         listener_->stop();
         listener2_->stop();
         listener3_->stop();
-        io_service_->stop();
-        io_service_->restart();
-        try {
-            io_service_->poll();
-        } catch (...) {
-        }
+        io_service_->stopAndPoll();
         MultiThreadingMgr::instance().setMode(false);
         CfgMgr::instance().clear();
     }
@@ -1513,12 +1508,7 @@ public:
         // Change the partner's response to success.
         factory2_->getResponseCreator()->setControlResult(CONTROL_RESULT_SUCCESS);
 
-        io_service_->stop();
-        io_service_->restart();
-        try {
-            io_service_->poll();
-        } catch (...) {
-        }
+        io_service_->stopAndPoll();
 
         // Try sending the lease updates again. The previously rejected lease should
         // now be accepted and the counter should be 0.
@@ -5782,12 +5772,7 @@ public:
     }
 
     ~HAServiceStateMachineTest() {
-        io_service_->stop();
-        io_service_->restart();
-        try {
-            io_service_->poll();
-        } catch (...) {
-        }
+        io_service_->stopAndPoll();
     }
 
     /// @brief Creates common HA service instance from the provided configuration.

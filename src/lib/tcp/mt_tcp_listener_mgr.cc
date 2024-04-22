@@ -88,12 +88,7 @@ MtTcpListenerMgr::start() {
         }
 
         if (thread_io_service_) {
-            thread_io_service_->stop();
-            thread_io_service_->restart();
-            try {
-                thread_io_service_->poll();
-            } catch (...) {
-            }
+            thread_io_service_->stopAndPoll();
             thread_io_service_->stop();
         }
 
@@ -139,8 +134,8 @@ MtTcpListenerMgr::stop() {
     }
 
     LOG_DEBUG(tcp_logger, isc::log::DBGLVL_TRACE_BASIC, MT_TCP_LISTENER_MGR_STOPPING)
-              .arg(address_)
-              .arg(port_);
+        .arg(address_)
+        .arg(port_);
 
     // Stop the thread pool.
     thread_pool_->stop();
@@ -148,12 +143,7 @@ MtTcpListenerMgr::stop() {
     // Stop the listener.
     tcp_listener_->stop();
 
-    thread_io_service_->stop();
-    thread_io_service_->restart();
-    try {
-        thread_io_service_->poll();
-    } catch (...) {
-    }
+    thread_io_service_->stopAndPoll();
     thread_io_service_->stop();
 
     // Get rid of the thread pool.
@@ -166,8 +156,8 @@ MtTcpListenerMgr::stop() {
     thread_io_service_.reset();
 
     LOG_DEBUG(tcp_logger, isc::log::DBGLVL_TRACE_BASIC, MT_TCP_LISTENER_MGR_STOPPED)
-              .arg(address_)
-              .arg(port_);
+        .arg(address_)
+        .arg(port_);
 }
 
 bool

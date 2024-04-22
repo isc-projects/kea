@@ -146,12 +146,7 @@ public:
 
     /// @brief Destructor
     virtual ~DProcessBase() {
-        io_service_->stop();
-        io_service_->restart();
-        try {
-            io_service_->poll();
-        } catch (...) {
-        }
+        io_service_->stopAndPoll();
     }
 
     /// @brief Checks if the process has been instructed to shut down.

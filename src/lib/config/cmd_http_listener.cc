@@ -92,12 +92,7 @@ CmdHttpListener::start() {
         }
 
         if (thread_io_service_) {
-            thread_io_service_->stop();
-            thread_io_service_->restart();
-            try {
-                thread_io_service_->poll();
-            } catch (...) {
-            }
+            thread_io_service_->stopAndPoll();
             thread_io_service_->stop();
         }
 
@@ -152,12 +147,7 @@ CmdHttpListener::stop() {
     // Stop the listener.
     http_listener_->stop();
 
-    thread_io_service_->stop();
-    thread_io_service_->restart();
-    try {
-        thread_io_service_->poll();
-    } catch (...) {
-    }
+    thread_io_service_->stopAndPoll();
     thread_io_service_->stop();
 
     // Get rid of the thread pool.

@@ -1070,8 +1070,9 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
                 return (notify_libraries);
             }
 
-            /// Let postponed hook initializations to run.
+            /// Let postponed hook initializations run.
             try {
+                // Handle events registered by hooks using external IOService objects.
                 IOServiceMgr::instance().pollIOServices();
             } catch (const std::exception& ex) {
                 std::ostringstream err;

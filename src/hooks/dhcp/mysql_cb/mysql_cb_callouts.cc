@@ -69,7 +69,7 @@ int load(LibraryHandle& /* handle */) {
 /// @param handle callout handle passed to the callout.
 /// @return 0 on success, 1 otherwise.
 int dhcp4_srv_configured(CalloutHandle& handle) {
-    isc::dhcp::MySqlConfigBackendImpl::getIOService().reset(new IOService());
+    isc::dhcp::MySqlConfigBackendImpl::setIOService(IOServicePtr(new IOService()));
     IOServiceMgr::instance().registerIOService(isc::dhcp::MySqlConfigBackendImpl::getIOService());
     return (0);
 }
@@ -81,7 +81,7 @@ int dhcp4_srv_configured(CalloutHandle& handle) {
 /// @param handle callout handle passed to the callout.
 /// @return 0 on success, 1 otherwise.
 int dhcp6_srv_configured(CalloutHandle& handle) {
-    isc::dhcp::MySqlConfigBackendImpl::getIOService().reset(new IOService());
+    isc::dhcp::MySqlConfigBackendImpl::setIOService(IOServicePtr(new IOService()));
     IOServiceMgr::instance().registerIOService(isc::dhcp::MySqlConfigBackendImpl::getIOService());
     return (0);
 }
@@ -96,12 +96,7 @@ int unload() {
     isc::dhcp::MySqlConfigBackendDHCPv6::unregisterBackendType();
     IOServiceMgr::instance().unregisterIOService(isc::dhcp::MySqlConfigBackendImpl::getIOService());
     if (isc::dhcp::MySqlConfigBackendImpl::getIOService()) {
-        isc::dhcp::MySqlConfigBackendImpl::getIOService()->stop();
-        isc::dhcp::MySqlConfigBackendImpl::getIOService()->restart();
-        try {
-            isc::dhcp::MySqlConfigBackendImpl::getIOService()->poll();
-        } catch (...) {
-        }
+        isc::dhcp::MySqlConfigBackendImpl::getIOService()->stopAndPoll();
     }
     return (0);
 }

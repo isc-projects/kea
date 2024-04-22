@@ -57,7 +57,7 @@ to the end of this list.
    its (re)configuration. The server provides received and parsed configuration
    structures to the hook library.
    If the library uses any IO operations, it should create a local IOService
-   object and register it to the IOServiceMgr. This way the local IOService is
+   object and register it with the IOServiceMgr. This way the local IOService is
    used by the server to run asynchronous operations. The hooks library can use
    the local IOService object to schedule asynchronous tasks which are triggered
    by the DHCP server's main loop. The hook library can use the local IOService

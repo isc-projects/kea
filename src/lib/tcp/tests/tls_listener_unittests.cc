@@ -66,12 +66,7 @@ public:
         }
 
         test_timer_.cancel();
-        io_service_->stop();
-        io_service_->restart();
-        try {
-            io_service_->poll();
-        } catch (...) {
-        }
+        io_service_->stopAndPoll();
     }
 
     /// @brief Fetch the server TLS context.
@@ -168,9 +163,7 @@ public:
                                         IntervalTimer::ONE_SHOT);
         }
         io_service_->run();
-        io_service_->stop();
-        io_service_->restart();
-        io_service_->poll();
+        io_service_->stopAndPoll(false);
     }
 
     /// @brief Filter that denies every other connection.

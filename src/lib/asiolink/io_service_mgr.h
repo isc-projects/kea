@@ -16,6 +16,14 @@ namespace asiolink {
 
 class IOServiceMgr;
 
+/// @brief Class which handles events on IOService objects.
+///
+/// Usually hook libraries create a local IOService object which handles events
+/// related to the respective library. To be able to handle these events, the
+/// IOService objects need to be registered on the '[X]_srv_configured' or
+/// on 'load' hook points (before the MT settings are applied).
+/// This class is not thread safe, so all operations must be done on the main
+/// thread, while all other threads are either stopped or paused.
 class IOServiceMgr : boost::noncopyable {
 public:
 
@@ -26,10 +34,17 @@ public:
 
     /// @brief Register IOService.
     ///
+    /// Registering a null IOService does nothing.
+    /// One IOService object can be registered only once, all consecutive calls
+    /// using the same object will be silently ignored.
+    ///
     /// @param io_service The IOService to be registered.
     void registerIOService(IOServicePtr io_service);
 
     /// @brief Unregister IOService.
+    ///
+    /// Unregistering an non registered IOService object will be silently
+    /// ignored.
     ///
     /// @param io_service The IOService to be unregistered.
     void unregisterIOService(IOServicePtr io_service);

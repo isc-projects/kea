@@ -248,9 +248,7 @@ public:
 
         // We have some cancelled operations for which we need to invoke the
         // handlers with the operation_aborted error code.
-        getIOService()->stop();
-        getIOService()->restart();
-        getIOService()->poll();
+        getIOService()->stopAndPoll(false);
 
         EXPECT_EQ(expected_responses, server_socket_->getResponseNum());
         checkAnswer(answer, expected_result0, expected_result1, expected_result2);
@@ -414,9 +412,7 @@ TEST_F(CtrlAgentCommandMgrTest, forwardListCommands) {
 
     // We have some cancelled operations for which we need to invoke the
     // handlers with the operation_aborted error code.
-    getIOService()->stop();
-    getIOService()->restart();
-    getIOService()->poll();
+    getIOService()->stopAndPoll(false);
 
     // Answer of 3 is specific to the stub response we send when the
     // command is forwarded. So having this value returned means that

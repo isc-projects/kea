@@ -413,12 +413,7 @@ public:
             client->close();
         }
         test_timer_.cancel();
-        io_service_->stop();
-        io_service_->restart();
-        try {
-            io_service_->poll();
-        } catch (...) {
-        }
+        io_service_->stopAndPoll();
     }
 
     /// @brief Connect to the endpoint.
@@ -459,9 +454,7 @@ public:
                                         timeout, IntervalTimer::ONE_SHOT);
         }
         io_service_->run();
-        io_service_->stop();
-        io_service_->restart();
-        io_service_->poll();
+        io_service_->stopAndPoll(false);
     }
 
     /// @brief Returns HTTP OK response expected by unit tests.
@@ -1030,12 +1023,7 @@ public:
         listener_.stop();
         listener2_.stop();
         listener3_.stop();
-        io_service_->stop();
-        io_service_->restart();
-        try {
-            io_service_->poll();
-        } catch(...) {
-        }
+        io_service_->stopAndPoll();
         MultiThreadingMgr::instance().setMode(false);
     }
 

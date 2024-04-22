@@ -157,12 +157,7 @@ public:
     virtual ~IOFetchTest() {
         shutdown_ = true;
         timer_.cancel();
-        service_->stop();
-        service_->restart();
-        try {
-            service_->poll();
-        } catch (...) {
-        }
+        service_->stopAndPoll();
     }
 
     /// \brief UDP Response handler (the "remote UDP DNS server")

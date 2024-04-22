@@ -218,12 +218,7 @@ public:
     virtual ~NakedDhcpv6Srv() {
         // Close the lease database
         isc::dhcp::LeaseMgrFactory::destroy();
-        getIOService()->stop();
-        getIOService()->restart();
-        try {
-            getIOService()->poll();
-        } catch (...) {
-        }
+        getIOService()->stopAndPoll();
     }
 
     /// @brief Processes incoming Solicit message.

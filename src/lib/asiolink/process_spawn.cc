@@ -208,7 +208,7 @@ private:
     /// @param pid the pid to wait for, -1 by default meaning wait
     /// for any child process
     /// @param sync whether this function is called immediately after spawning
-    /// (synchronous) or not (asynchronous, default).
+    /// (synchronous) or not (asynchronous).
     static void waitForProcess(int signum, pid_t const wpid = -1,
                                bool const sync = false);
 
@@ -216,7 +216,7 @@ private:
     static ProcessCollection process_collection_;
 
     /// @brief Whether the process is waited immediately after spawning
-    /// (synchronous) or not (asynchronous, default).
+    /// (synchronous) or not (asynchronous).
     bool sync_;
 
     /// @brief Path to an executable.

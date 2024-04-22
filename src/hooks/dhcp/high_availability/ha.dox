@@ -137,8 +137,8 @@ IOServiceMgr::instance().pollIOServices();
 which executes callbacks for completed asynchronous operations, such as
 timers, asynchronous sends and receives. The instance of the IOService
 is owned by the DHCP servers, but hooks libraries must create their own
-IOService access to schedule asynchronous tasks.
-The hook's IOService object must be registered on the IOServiceMgr by
+IOService to schedule asynchronous tasks.
+The hook's IOService object must be registered with the IOServiceMgr by
 calling registerIOService and must unregister it on "unload" hook point
 by calling unregisterIOService.
 
@@ -163,6 +163,7 @@ Dhcpv[4|6]Srv::run() {
 [...]
         try {
             runOne();
+            // Handle events registered by hooks using external IOService objects.
             IOServiceMgr::instance().pollIOServices();
             getIOService()->poll();
         } catch (const std::exception& e) {

@@ -585,12 +585,7 @@ TEST_F(D2ProcessTest, normalShutdown) {
                 elapsed.total_milliseconds() <= 2200);
 
     timer.cancel();
-    getIOService()->stop();
-    getIOService()->restart();
-    try {
-        getIOService()->poll();
-    } catch (...) {
-    }
+    getIOService()->stopAndPoll();
 }
 
 /// @brief Verifies that an "uncaught" exception thrown during event loop
@@ -617,12 +612,7 @@ TEST_F(D2ProcessTest, fatalErrorShutdown) {
                 elapsed.total_milliseconds() <= 2200);
 
     timer.cancel();
-    getIOService()->stop();
-    getIOService()->restart();
-    try {
-        getIOService()->poll();
-    } catch (...) {
-    }
+    getIOService()->stopAndPoll();
 }
 
 /// @brief Used to permit visual inspection of logs to ensure

@@ -23,12 +23,7 @@ protected:
         timer_cancel_success_(false) {
     }
     ~IntervalTimerTest() {
-        io_service_->stop();
-        io_service_->restart();
-        try {
-            io_service_->poll();
-        } catch (...) {
-        }
+        io_service_->stopAndPoll();
     }
     class TimerCallBack {
     public:

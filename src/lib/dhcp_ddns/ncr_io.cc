@@ -231,9 +231,7 @@ NameChangeSender::stopSending() {
 
     if (io_service_) {
         try {
-            io_service_->stop();
-            io_service_->restart();
-            io_service_->poll();
+            io_service_->stopAndPoll(false);
         } catch (const std::exception& ex) {
             // Swallow exceptions. If we have some sort of error we'll log
             // it but we won't propagate the throw.

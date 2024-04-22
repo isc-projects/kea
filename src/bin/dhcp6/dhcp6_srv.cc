@@ -304,12 +304,7 @@ Dhcpv6Srv::~Dhcpv6Srv() {
         LOG_ERROR(dhcp6_logger, DHCP6_SRV_UNLOAD_LIBRARIES_ERROR).arg(msg);
     }
     IOServiceMgr::instance().clearIOServices();
-    io_service_->stop();
-    io_service_->restart();
-    try {
-        io_service_->poll();
-    } catch (...) {
-    }
+    io_service_->stopAndPoll();
 }
 
 void Dhcpv6Srv::shutdown() {
@@ -615,6 +610,7 @@ Dhcpv6Srv::run() {
 #endif // ENABLE_AFL
         try {
             runOne();
+            // Handle events registered by hooks using external IOService objects.
             IOServiceMgr::instance().pollIOServices();
             getIOService()->poll();
         } catch (const std::exception& e) {
