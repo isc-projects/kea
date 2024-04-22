@@ -61,16 +61,21 @@ typedef std::vector<std::string> ProcessEnvVars;
 class ProcessSpawn : boost::noncopyable {
 public:
 
+    /// @brief The spawn type.
+    enum SpawnMode {
+       ASYNC, // thread continues without waiting for the child to finish.
+       SYNC   // thread waits for the child to finish.
+    };
+
     /// @brief Constructor.
     ///
-    /// @param sync enables synchronous mode (spawning thread waits on
-    /// child to complete if true)
+    /// @param mode specifies synchronous or asynchronous mode.
     /// @param executable A full path to the program to be executed.
     /// @param args Arguments for the program to be executed.
     /// @param vars Environment variables for the program to be executed.
     /// @param inherit_env whether the spawned process will inherit the
     /// environment before adding 'vars' on top.
-    ProcessSpawn(bool sync,
+    ProcessSpawn(const SpawnMode mode,
                  const std::string& executable,
                  const ProcessArgs& args = ProcessArgs(),
                  const ProcessEnvVars& vars = ProcessEnvVars(),

@@ -77,14 +77,13 @@ public:
 
     /// @brief Constructor.
     ///
-    /// @param sync enables synchronous mode (spawning thread waits on
-    /// child to complete if true)
+    /// @param mode specifies synchronous or asynchronous mode.
     /// @param executable A full path to the program to be executed.
     /// @param args Arguments for the program to be executed.
     /// @param vars Environment variables for the program to be executed.
     /// @param inherit_env whether the spawned process will inherit the
     /// environment before adding 'vars' on top.
-    ProcessSpawnImpl(const bool sync,
+    ProcessSpawnImpl(const ProcessSpawn::SpawnMode mode,
                      const std::string& executable,
                      const ProcessArgs& args,
                      const ProcessEnvVars& vars,
@@ -217,7 +216,7 @@ private:
 
     /// @brief Whether the process is waited immediately after spawning
     /// (synchronous) or not (asynchronous).
-    bool sync_;
+    ProcessSpawn::SpawnMode mode_;
 
     /// @brief Path to an executable.
     std::string executable_;
@@ -248,12 +247,12 @@ void ProcessSpawnImpl::IOSignalSetInitializer::initIOSignalSet(IOServicePtr io_s
     static IOSignalSetInitializer init(io_service);
 }
 
-ProcessSpawnImpl::ProcessSpawnImpl(const bool sync,
+ProcessSpawnImpl::ProcessSpawnImpl(const ProcessSpawn::SpawnMode mode,
                                    const std::string& executable,
                                    const ProcessArgs& args,
                                    const ProcessEnvVars& vars,
                                    const bool inherit_env)
-    : sync_(sync), executable_(executable), args_(new char*[args.size() + 2]),
+    : mode_(mode), executable_(executable), args_(new char*[args.size() + 2]),
       store_(false) {
 
     // Size of vars except the trailing null
@@ -329,7 +328,7 @@ ProcessSpawnImpl::getCommandLine() const {
 pid_t
 ProcessSpawnImpl::spawn(bool dismiss) {
     lock_guard<std::mutex> lk(mutex_);
-    if (!sync_) {
+    if (mode_ == ProcessSpawn::ASYNC) {
         ProcessSpawnImpl::IOSignalSetInitializer::initIOSignalSet(ProcessSpawn::getIOService());
     }
     // Create the child
@@ -355,7 +354,7 @@ ProcessSpawnImpl::spawn(bool dismiss) {
         process_collection_[this].insert(std::pair<pid_t, ProcessStatePtr>(pid, ProcessStatePtr(new ProcessState())));
     }
 
-    if (sync_) {
+    if (mode_ == ProcessSpawn::SYNC) {
         waitForProcess(SIGCHLD, pid, /* sync = */ true);
     }
 
@@ -476,12 +475,12 @@ ProcessSpawnImpl::clearState(const pid_t pid) {
 
 IOServicePtr ProcessSpawn::io_service_;
 
-ProcessSpawn::ProcessSpawn(const bool sync,
+ProcessSpawn::ProcessSpawn(const SpawnMode mode,
                            const std::string& executable,
                            const ProcessArgs& args,
                            const ProcessEnvVars& vars,
                            const bool inherit_env /* = false */)
-    : impl_(new ProcessSpawnImpl(sync, executable, args, vars, inherit_env)) {
+    : impl_(new ProcessSpawnImpl(mode, executable, args, vars, inherit_env)) {
 }
 
 std::string

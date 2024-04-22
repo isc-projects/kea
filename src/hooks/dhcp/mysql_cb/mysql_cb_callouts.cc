@@ -68,7 +68,7 @@ int load(LibraryHandle& /* handle */) {
 ///
 /// @param handle callout handle passed to the callout.
 /// @return 0 on success, 1 otherwise.
-int dhcp4_srv_configured(CalloutHandle& handle) {
+int dhcp4_srv_configured(CalloutHandle& /* handle */) {
     isc::dhcp::MySqlConfigBackendImpl::setIOService(IOServicePtr(new IOService()));
     IOServiceMgr::instance().registerIOService(isc::dhcp::MySqlConfigBackendImpl::getIOService());
     return (0);
@@ -80,7 +80,7 @@ int dhcp4_srv_configured(CalloutHandle& handle) {
 ///
 /// @param handle callout handle passed to the callout.
 /// @return 0 on success, 1 otherwise.
-int dhcp6_srv_configured(CalloutHandle& handle) {
+int dhcp6_srv_configured(CalloutHandle& /* handle */) {
     isc::dhcp::MySqlConfigBackendImpl::setIOService(IOServicePtr(new IOService()));
     IOServiceMgr::instance().registerIOService(isc::dhcp::MySqlConfigBackendImpl::getIOService());
     return (0);

@@ -209,7 +209,7 @@ LFCSetup::setup(const uint32_t lfc_interval,
     args.push_back("ignored-path");
 
     // Create the process (do not start it yet).
-    process_.reset(new ProcessSpawn(false, executable, args));
+    process_.reset(new ProcessSpawn(ProcessSpawn::ASYNC, executable, args));
 
     // If we've been told to run it once now, invoke the callback directly.
     if (run_once_now) {

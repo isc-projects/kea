@@ -110,7 +110,7 @@ TEST_F(ProcessSpawnTest, spawnWithArgs) {
     args.push_back("-e");
     args.push_back("64");
 
-    ProcessSpawn process(false, TEST_SCRIPT_SH, args);
+    ProcessSpawn process(ProcessSpawn::ASYNC, TEST_SCRIPT_SH, args);
     pid_t pid = 0;
     ASSERT_NO_THROW(pid = process.spawn());
 
@@ -144,7 +144,7 @@ TEST_F(ProcessSpawnTest, spawnWithArgsAndEnvVars) {
     args.push_back("TEST_VARIABLE_VALUE");
     vars.push_back("TEST_VARIABLE_NAME=TEST_VARIABLE_VALUE");
 
-    ProcessSpawn process(false, TEST_SCRIPT_SH, args, vars);
+    ProcessSpawn process(ProcessSpawn::ASYNC, TEST_SCRIPT_SH, args, vars);
     pid_t pid = 0;
     ASSERT_NO_THROW(pid = process.spawn());
 
@@ -176,7 +176,7 @@ TEST_F(ProcessSpawnTest, spawnTwoProcesses) {
     vector<string> args;
     args.push_back("-p");
 
-    ProcessSpawn process(false, TEST_SCRIPT_SH, args);
+    ProcessSpawn process(ProcessSpawn::ASYNC, TEST_SCRIPT_SH, args);
     pid_t pid1 = 0;
     ASSERT_NO_THROW(pid1 = process.spawn());
 
@@ -232,7 +232,7 @@ TEST_F(ProcessSpawnTest, spawnTwoProcesses) {
 // This test verifies that the external application can be ran without
 // arguments and that the exit code is gathered.
 TEST_F(ProcessSpawnTest, spawnNoArgs) {
-    ProcessSpawn process(false, TEST_SCRIPT_SH);
+    ProcessSpawn process(ProcessSpawn::ASYNC, TEST_SCRIPT_SH);
     pid_t pid = 0;
     ASSERT_NO_THROW(pid = process.spawn());
 
@@ -281,14 +281,14 @@ TEST_F(ProcessSpawnTest, spawnNoArgs) {
 // application can't be executed.
 TEST_F(ProcessSpawnTest, invalidExecutable) {
     std::string expected = "File not found: foo";
-    ASSERT_THROW_MSG(ProcessSpawn process(false, "foo"),
+    ASSERT_THROW_MSG(ProcessSpawn process(ProcessSpawn::ASYNC, "foo"),
                      ProcessSpawnError, expected);
 
     std::string name = INVALID_TEST_SCRIPT_SH;
 
     expected = "File not executable: ";
     expected += name;
-    ASSERT_THROW_MSG(ProcessSpawn process(false, name),
+    ASSERT_THROW_MSG(ProcessSpawn process(ProcessSpawn::ASYNC, name),
                      ProcessSpawnError, expected);
 }
 
@@ -302,7 +302,7 @@ TEST_F(ProcessSpawnTest, getCommandLine) {
         args.push_back("-y");
         args.push_back("foo");
         args.push_back("bar");
-        ProcessSpawn process(false, TEST_SCRIPT_SH, args);
+        ProcessSpawn process(ProcessSpawn::ASYNC, TEST_SCRIPT_SH, args);
         std::string expected = TEST_SCRIPT_SH;
         expected += " -x -y foo bar";
         EXPECT_EQ(expected, process.getCommandLine());
@@ -310,7 +310,7 @@ TEST_F(ProcessSpawnTest, getCommandLine) {
 
     {
         // Case 2: no arguments.
-        ProcessSpawn process(false, TEST_SCRIPT_SH);
+        ProcessSpawn process(ProcessSpawn::ASYNC, TEST_SCRIPT_SH);
         EXPECT_EQ(TEST_SCRIPT_SH, process.getCommandLine());
     }
 }
@@ -324,7 +324,7 @@ TEST_F(ProcessSpawnTest, isRunning) {
     args.push_back("-s");
     args.push_back("10");
 
-    ProcessSpawn process(false, TEST_SCRIPT_SH, args);
+    ProcessSpawn process(ProcessSpawn::ASYNC, TEST_SCRIPT_SH, args);
     pid_t pid = 0;
     ASSERT_NO_THROW(pid = process.spawn());
 
@@ -358,7 +358,7 @@ TEST_F(ProcessSpawnTest, inheritEnv) {
 
     ProcessEnvVars vars{"VAR=value"};
 
-    ProcessSpawn process(false, TEST_SCRIPT_SH, args, vars,
+    ProcessSpawn process(ProcessSpawn::ASYNC, TEST_SCRIPT_SH, args, vars,
                          /* inherit_env = */ true);
     pid_t pid = 0;
     ASSERT_NO_THROW(pid = process.spawn());
@@ -392,7 +392,7 @@ TEST_F(ProcessSpawnTest, inheritEnvWithParentVar) {
 
     ProcessEnvVars vars{"VAR=value"};
 
-    ProcessSpawn process(false, TEST_SCRIPT_SH, args, vars,
+    ProcessSpawn process(ProcessSpawn::ASYNC, TEST_SCRIPT_SH, args, vars,
                          /* inherit_env = */ true);
     pid_t pid = 0;
     ASSERT_NO_THROW(pid = process.spawn());
@@ -424,7 +424,7 @@ TEST_F(ProcessSpawnTest, spawnWithArgsSync) {
     args.push_back("-e");
     args.push_back("64");
 
-    ProcessSpawn process(true, TEST_SCRIPT_SH, args);
+    ProcessSpawn process(ProcessSpawn::SYNC, TEST_SCRIPT_SH, args);
     pid_t pid = 0;
     ASSERT_NO_THROW(pid = process.spawn());
 
@@ -442,7 +442,7 @@ TEST_F(ProcessSpawnTest, spawnWithArgsAndEnvVarsSync) {
     args.push_back("TEST_VARIABLE_VALUE");
     vars.push_back("TEST_VARIABLE_NAME=TEST_VARIABLE_VALUE");
 
-    ProcessSpawn process(true, TEST_SCRIPT_SH, args, vars);
+    ProcessSpawn process(ProcessSpawn::SYNC, TEST_SCRIPT_SH, args, vars);
     pid_t pid = 0;
     ASSERT_NO_THROW(pid = process.spawn());
 
@@ -458,7 +458,7 @@ TEST_F(ProcessSpawnTest, spawnTwoProcessesSync) {
     vector<string> args;
     args.push_back("-p");
 
-    ProcessSpawn process(true, TEST_SCRIPT_SH, args);
+    ProcessSpawn process(ProcessSpawn::SYNC, TEST_SCRIPT_SH, args);
     pid_t pid1 = 0;
     ASSERT_NO_THROW(pid1 = process.spawn());
 
@@ -481,7 +481,7 @@ TEST_F(ProcessSpawnTest, spawnTwoProcessesSync) {
 // This test verifies that the external application can be ran synchronously
 // without arguments and that the exit code is gathered.
 TEST_F(ProcessSpawnTest, spawnNoArgsSync) {
-    ProcessSpawn process(true, TEST_SCRIPT_SH);
+    ProcessSpawn process(ProcessSpawn::SYNC, TEST_SCRIPT_SH);
     pid_t pid = 0;
     ASSERT_NO_THROW(pid = process.spawn());
 
@@ -497,14 +497,14 @@ TEST_F(ProcessSpawnTest, spawnNoArgsSync) {
 // application can't be executed synchronously.
 TEST_F(ProcessSpawnTest, invalidExecutableSync) {
     std::string expected = "File not found: foo";
-    ASSERT_THROW_MSG(ProcessSpawn process(true, "foo"),
+    ASSERT_THROW_MSG(ProcessSpawn process(ProcessSpawn::SYNC, "foo"),
                      ProcessSpawnError, expected);
 
     std::string name = INVALID_TEST_SCRIPT_SH;
 
     expected = "File not executable: ";
     expected += name;
-    ASSERT_THROW_MSG(ProcessSpawn process(true, name),
+    ASSERT_THROW_MSG(ProcessSpawn process(ProcessSpawn::SYNC, name),
                      ProcessSpawnError, expected);
 }
 
@@ -518,7 +518,7 @@ TEST_F(ProcessSpawnTest, getCommandLineSync) {
         args.push_back("-y");
         args.push_back("foo");
         args.push_back("bar");
-        ProcessSpawn process(true, TEST_SCRIPT_SH, args);
+        ProcessSpawn process(ProcessSpawn::SYNC, TEST_SCRIPT_SH, args);
         std::string expected = TEST_SCRIPT_SH;
         expected += " -x -y foo bar";
         EXPECT_EQ(expected, process.getCommandLine());
@@ -526,7 +526,7 @@ TEST_F(ProcessSpawnTest, getCommandLineSync) {
 
     {
         // Case 2: no arguments.
-        ProcessSpawn process(true, TEST_SCRIPT_SH);
+        ProcessSpawn process(ProcessSpawn::SYNC, TEST_SCRIPT_SH);
         EXPECT_EQ(TEST_SCRIPT_SH, process.getCommandLine());
     }
 }
@@ -534,7 +534,7 @@ TEST_F(ProcessSpawnTest, getCommandLineSync) {
 // This test verifies that the synchronous process reports as not running after
 // it was spawned.
 TEST_F(ProcessSpawnTest, isRunningSync) {
-    ProcessSpawn process(true, TEST_SCRIPT_SH);
+    ProcessSpawn process(ProcessSpawn::SYNC, TEST_SCRIPT_SH);
     pid_t pid = 0;
     ASSERT_NO_THROW(pid = process.spawn());
 
@@ -549,7 +549,7 @@ TEST_F(ProcessSpawnTest, inheritEnvSync) {
 
     ProcessEnvVars vars{"VAR=value"};
 
-    ProcessSpawn process(true, TEST_SCRIPT_SH, args, vars,
+    ProcessSpawn process(ProcessSpawn::SYNC, TEST_SCRIPT_SH, args, vars,
                          /* inherit_env = */ true);
     pid_t pid = 0;
     ASSERT_NO_THROW(pid = process.spawn());
@@ -567,7 +567,7 @@ TEST_F(ProcessSpawnTest, inheritEnvWithParentVarSync) {
 
     ProcessEnvVars vars{"VAR=value"};
 
-    ProcessSpawn process(true, TEST_SCRIPT_SH, args, vars,
+    ProcessSpawn process(ProcessSpawn::SYNC, TEST_SCRIPT_SH, args, vars,
                          /* inherit_env = */ true);
     pid_t pid = 0;
     ASSERT_NO_THROW(pid = process.spawn());

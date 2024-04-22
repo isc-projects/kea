@@ -31,7 +31,7 @@ RunScriptImpl::configure(LibraryHandle& handle) {
         isc_throw(InvalidParameter, "The 'name' parameter must be a string");
     }
     try {
-        ProcessSpawn process(false, name->stringValue());
+        ProcessSpawn process(ProcessSpawn::ASYNC, name->stringValue());
     } catch (const isc::Exception& ex) {
         isc_throw(InvalidParameter, "Invalid 'name' parameter: " << ex.what());
     }
@@ -47,7 +47,7 @@ RunScriptImpl::configure(LibraryHandle& handle) {
 
 void
 RunScriptImpl::runScript(const ProcessArgs& args, const ProcessEnvVars& vars) {
-    ProcessSpawn process(false, name_, args, vars);
+    ProcessSpawn process(ProcessSpawn::ASYNC, name_, args, vars);
     process.spawn(true);
 }
 

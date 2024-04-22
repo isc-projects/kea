@@ -434,7 +434,7 @@ MySqlConnection::initializeSchema(const ParameterMap& parameters) {
     kea_admin_parameters.insert(kea_admin_parameters.begin(), "db-init");
 
     // Run.
-    ProcessSpawn kea_admin(true, KEA_ADMIN_, kea_admin_parameters, vars,
+    ProcessSpawn kea_admin(ProcessSpawn::SYNC, KEA_ADMIN_, kea_admin_parameters, vars,
                            /* inherit_env = */ true);
     DB_LOG_INFO(MYSQL_INITIALIZE_SCHEMA).arg(kea_admin.getCommandLine());
     pid_t const pid(kea_admin.spawn());
