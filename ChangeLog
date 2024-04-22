@@ -1,3 +1,9 @@
+2223.	[bug]		tmark
+	Fixed an issue in PerfMon hook library which can cause
+	the server to crash when a packet is processed for which
+	server does not select a subnet.
+	(Gitlab #3347)
+
 2222.	[bug]		piotrek
 	Fixed a bug in host_cmds. When PostgreSQL was used as
 	hosts database storage, reservation-del command called
