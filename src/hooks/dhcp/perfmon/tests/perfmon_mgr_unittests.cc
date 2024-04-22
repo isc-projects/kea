@@ -10,6 +10,7 @@
 #include <dhcp/dhcp6.h>
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt6.h>
+#include <dhcpsrv/subnet.h>
 #include <stats/stats_mgr.h>
 #include <testutils/log_utils.h>
 #include <testutils/gtest_utils.h>
@@ -20,6 +21,7 @@
 
 using namespace std;
 using namespace isc;
+using namespace isc::asiolink;
 using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::perfmon;
@@ -75,6 +77,13 @@ public:
         StatsMgr::instance();
         StatsMgr::instance().removeAll();
         StatsMgr::instance().setMaxSampleCountAll(1);
+        if (family_ == AF_INET) {
+            subnet22_.reset(new Subnet4(IOAddress("192.0.22.0"), 8, 100, 200, 300, 22));
+            subnet33_.reset(new Subnet4(IOAddress("192.0.33.0"), 8, 100, 200, 300, 33));
+        } else {
+            subnet22_.reset(new Subnet6(IOAddress("3001:22::"), 64, 100, 200, 300, 300, 22));
+            subnet33_.reset(new Subnet6(IOAddress("3002:33::"), 64, 100, 200, 300, 300, 33));
+        }
     }
 
     /// @brief Destructor.
@@ -478,9 +487,8 @@ public:
         ASSERT_NO_THROW_LOG(createMgr(valid_config));
         PktPtr query;
         PktPtr response;
-        SubnetID subnet_id = SUBNET_ID_GLOBAL;
         // No query
-        ASSERT_THROW_MSG(mgr_->processPktEventStack(query, response, subnet_id), Unexpected,
+        ASSERT_THROW_MSG(mgr_->processPktEventStack(query, response, SubnetPtr()), Unexpected,
                          "PerfMonMgr::processPktEventStack - query is empty!");
 
         // Invalid message pair
@@ -492,12 +500,12 @@ public:
             << (family_ == AF_INET ? Pkt4::getName(response->getType())
                                    : Pkt6::getName(response->getType()));
 
-        ASSERT_THROW_MSG(mgr_->processPktEventStack(response, query, subnet_id), BadValue,
+        ASSERT_THROW_MSG(mgr_->processPktEventStack(response, query, SubnetPtr()), BadValue,
                          oss.str());
 
         // Packet stack size less than 2.
         query->addPktEvent("just one");
-        ASSERT_THROW_MSG(mgr_->processPktEventStack(query, response, subnet_id), Unexpected,
+        ASSERT_THROW_MSG(mgr_->processPktEventStack(query, response, SubnetPtr()), Unexpected,
                          "PerfMonMgr::processPtkEventStack - incomplete stack, size: 1");
     }
 
@@ -528,8 +536,9 @@ public:
 
         // Now process the packets on two different subnets.
         // With monitoring disabled no duration data should be stored.
-        ASSERT_NO_THROW_LOG(mgr_->processPktEventStack(query, response, 22));
-        ASSERT_NO_THROW_LOG(mgr_->processPktEventStack(query, response, 33));
+        ASSERT_NO_THROW_LOG(mgr_->processPktEventStack(query, response, SubnetPtr()));
+        ASSERT_NO_THROW_LOG(mgr_->processPktEventStack(query, response, subnet22_));
+        ASSERT_NO_THROW_LOG(mgr_->processPktEventStack(query, response, subnet33_));
 
         // Fetch all the durations in primary key order.
         MonitoredDurationCollectionPtr durations = mgr_->getDurationStore()->getAll();
@@ -537,8 +546,9 @@ public:
 
         // Enabled monitoring and process the queries again.
         mgr_->setEnableMonitoring(true);
-        ASSERT_NO_THROW_LOG(mgr_->processPktEventStack(query, response, 22));
-        ASSERT_NO_THROW_LOG(mgr_->processPktEventStack(query, response, 33));
+        ASSERT_NO_THROW_LOG(mgr_->processPktEventStack(query, response, SubnetPtr()));
+        ASSERT_NO_THROW_LOG(mgr_->processPktEventStack(query, response, subnet22_));
+        ASSERT_NO_THROW_LOG(mgr_->processPktEventStack(query, response, subnet33_));
 
         // Fetch all the durations in primary key order.
         durations = mgr_->getDurationStore()->getAll();
@@ -555,19 +565,19 @@ public:
 
         // Specifies the expected durations in the order they should be returned.
         std::list<ExpectedDuration> exp_data_rows {
-            { "buffer_read", "process_started", 0,  2, 8 },
+            { "buffer_read", "process_started", 0,  3, 12 },
             { "buffer_read", "process_started", 22, 1, 4 },
             { "buffer_read", "process_started", 33, 1, 4 },
 
-            { "composite", "total_response", 0,  2, 24 },
+            { "composite", "total_response", 0,  3, 36 },
             { "composite", "total_response", 22, 1, 12 },
             { "composite", "total_response", 33, 1, 12 },
 
-            { "process_started", "process_completed", 0,  2, 6 },
+            { "process_started", "process_completed", 0,  3, 9 },
             { "process_started", "process_completed", 22, 1, 3 },
             { "process_started", "process_completed", 33, 1, 3 },
 
-            { "socket_received", "buffer_read", 0,  2, 10 },
+            { "socket_received", "buffer_read", 0,  3, 15 },
             { "socket_received", "buffer_read", 22, 1,  5 },
             { "socket_received", "buffer_read", 33, 1,  5 }
         };
@@ -618,6 +628,11 @@ public:
 
     /// @brief PerfMonMgr instance used in test functions.
     PerfMonMgrPtr mgr_;
+
+    /// @brief Family specific subnets.
+    SubnetPtr subnet22_;
+    SubnetPtr subnet33_;
+
 };
 
 /// @brief Test fixture for testing PerfMonConfig for DHCPV4.

@@ -15,6 +15,7 @@
 #include <monitored_duration_store.h>
 #include <asiolink/io_service.h>
 #include <asiolink/interval_timer.h>
+#include <dhcpsrv/subnet.h>
 
 namespace isc {
 namespace perfmon {
@@ -49,10 +50,11 @@ public:
     ///
     /// @param query query packet whose stack is to be processed.
     /// @param response response packet generated for the query.
-    /// @param subnet_id id of the selected subnet.
+    /// @param subnet selected subnet, if empty use the global
+    /// subnet id.
     void processPktEventStack(isc::dhcp::PktPtr query,
                               isc::dhcp::PktPtr response,
-                              const isc::dhcp::SubnetID& subnet_id);
+                              const isc::dhcp::SubnetPtr subnet);
 
     /// @brief Adds a duration sample to a MonitoredDuration.
     ///

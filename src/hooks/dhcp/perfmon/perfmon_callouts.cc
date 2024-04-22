@@ -73,7 +73,7 @@ int pkt4_send(CalloutHandle& handle) {
     handle.getArgument("subnet4", subnet);
 
     try {
-        mgr->processPktEventStack(query, response, subnet->getID());
+        mgr->processPktEventStack(query, response, subnet);
     } catch (const std::exception& ex) {
         LOG_DEBUG(perfmon_logger, DBGLVL_TRACE_DETAIL, PERFMON_DHCP4_PKT_PROCESS_ERROR)
                 .arg(query->getLabel())
@@ -105,7 +105,7 @@ int pkt6_send(CalloutHandle& handle) {
     handle.getArgument("subnet6", subnet);
 
     try {
-        mgr->processPktEventStack(query, response, subnet->getID());
+        mgr->processPktEventStack(query, response, subnet);
     } catch (const std::exception& ex) {
         LOG_DEBUG(perfmon_logger, DBGLVL_TRACE_DETAIL, PERFMON_DHCP6_PKT_PROCESS_ERROR)
                 .arg(query->getLabel())

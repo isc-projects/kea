@@ -65,9 +65,7 @@ PerfMonMgr::configure(const ConstElementPtr& params) {
 }
 
 void
-PerfMonMgr::processPktEventStack(isc::dhcp::PktPtr query,
-                                 isc::dhcp::PktPtr response,
-                                 const isc::dhcp::SubnetID& subnet_id) {
+PerfMonMgr::processPktEventStack(PktPtr query, PktPtr response, SubnetPtr subnet) {
     if (!query) {
         isc_throw(Unexpected, "PerfMonMgr::processPktEventStack - query is empty!");
     }
@@ -91,6 +89,9 @@ PerfMonMgr::processPktEventStack(isc::dhcp::PktPtr query,
         isc_throw(Unexpected, "PerfMonMgr::processPtkEventStack - incomplete stack, size: "
                               << events.size());
     }
+
+    // If we're here without a selected subnet, use global subnet id.
+    SubnetID subnet_id = (subnet ? subnet->getID() : SUBNET_ID_GLOBAL);
 
     LOG_DEBUG(perfmon_logger, DBGLVL_TRACE_DETAIL,
               (family_ == AF_INET ? PERFMON_DHCP4_PKT_EVENTS : PERFMON_DHCP6_PKT_EVENTS))
