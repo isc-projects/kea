@@ -1390,6 +1390,7 @@ AllocEngine::allocateGlobalReservedLeases6(ClientContext6& ctx,
                 if (!valid_subnet) {
                     LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
                               ALLOC_ENGINE_IGNORING_UNSUITABLE_GLOBAL_ADDRESS6)
+                              .arg(ctx.query_->getLabel())
                               .arg(addr.toText())
                               .arg(labelNetworkOrSubnet(ctx.subnet_));
                     continue;
@@ -1499,11 +1500,13 @@ AllocEngine::removeNonmatchingReservedLeases6(ClientContext6& ctx,
             if (hosts.size() == 1) {
                 if (ctx.currentIA().type_ == Lease::TYPE_NA) {
                     LOG_INFO(alloc_engine_logger, ALLOC_ENGINE_V6_REVOKED_ADDR_LEASE)
+                        .arg(ctx.query_->getLabel())
                         .arg(candidate->addr_.toText())
                         .arg(ctx.duid_->toText())
                         .arg(hosts.front()->getIdentifierAsText());
                 } else {
                     LOG_INFO(alloc_engine_logger, ALLOC_ENGINE_V6_REVOKED_PREFIX_LEASE)
+                        .arg(ctx.query_->toText())
                         .arg(candidate->addr_.toText())
                         .arg(static_cast<int>(candidate->prefixlen_))
                         .arg(ctx.duid_->toText())
@@ -1512,11 +1515,13 @@ AllocEngine::removeNonmatchingReservedLeases6(ClientContext6& ctx,
             } else {
                 if (ctx.currentIA().type_ == Lease::TYPE_NA) {
                     LOG_INFO(alloc_engine_logger, ALLOC_ENGINE_V6_REVOKED_SHARED_ADDR_LEASE)
+                        .arg(ctx.query_->getLabel())
                         .arg(candidate->addr_.toText())
                         .arg(ctx.duid_->toText())
                         .arg(hosts.size());
                 } else {
                     LOG_INFO(alloc_engine_logger, ALLOC_ENGINE_V6_REVOKED_SHARED_PREFIX_LEASE)
+                        .arg(ctx.query_->getLabel())
                         .arg(candidate->addr_.toText())
                         .arg(static_cast<int>(candidate->prefixlen_))
                         .arg(ctx.duid_->toText())
@@ -3453,6 +3458,7 @@ hasAddressReservation(AllocEngine::ClientContext4& ctx) {
     if (global_host_address != IOAddress::IPV4_ZERO_ADDRESS()) {
         LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
                   ALLOC_ENGINE_IGNORING_UNSUITABLE_GLOBAL_ADDRESS)
+            .arg(ctx.query_->getLabel())
             .arg(ctx.currentHost()->getIPv4Reservation().toText())
             .arg(AllocEngine::labelNetworkOrSubnet(ctx.subnet_));
     }

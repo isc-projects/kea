@@ -93,8 +93,8 @@ extern const isc::log::MessageID ALLOC_ENGINE_V6_REVOKED_SHARED_PREFIX_LEASE = "
 namespace {
 
 const char* values[] = {
-    "ALLOC_ENGINE_IGNORING_UNSUITABLE_GLOBAL_ADDRESS", "ignoring globally reserved address %1, it falls outside %2",
-    "ALLOC_ENGINE_IGNORING_UNSUITABLE_GLOBAL_ADDRESS6", "ignoring globally reserved address %1, it falls outside %2",
+    "ALLOC_ENGINE_IGNORING_UNSUITABLE_GLOBAL_ADDRESS", "%1: ignoring globally reserved address %2, it falls outside %3",
+    "ALLOC_ENGINE_IGNORING_UNSUITABLE_GLOBAL_ADDRESS6", "%1: ignoring globally reserved address %2, it falls outside %3",
     "ALLOC_ENGINE_LEASE_RECLAIMED", "successfully reclaimed lease %1",
     "ALLOC_ENGINE_REMOVAL_NCR_FAILED", "sending removal name change request failed for lease %1: %2",
     "ALLOC_ENGINE_V4_ALLOC_ERROR", "%1: error during attempt to allocate an IPv4 address: %2",
@@ -168,10 +168,10 @@ const char* values[] = {
     "ALLOC_ENGINE_V6_RENEW_REMOVE_RESERVED", "%1: checking if existing client's leases are reserved for another client",
     "ALLOC_ENGINE_V6_RENEW_REMOVE_UNRESERVED", "dynamically allocating leases for the renewing client %1",
     "ALLOC_ENGINE_V6_REUSE_EXPIRED_LEASE_DATA", "%1: reusing expired lease, updated lease information: %2",
-    "ALLOC_ENGINE_V6_REVOKED_ADDR_LEASE", "address %1 was revoked from client %2 as it is reserved for client %3",
-    "ALLOC_ENGINE_V6_REVOKED_PREFIX_LEASE", "prefix %1/%2 was revoked from client %3 as it is reserved for client %4",
-    "ALLOC_ENGINE_V6_REVOKED_SHARED_ADDR_LEASE", "address %1 was revoked from client %2 as it is reserved for %3 other clients",
-    "ALLOC_ENGINE_V6_REVOKED_SHARED_PREFIX_LEASE", "prefix %1/%2 was revoked from client %3 as it is reserved for %4 other clients",
+    "ALLOC_ENGINE_V6_REVOKED_ADDR_LEASE", "%1: address %2 was revoked from client %3 as it is reserved for client %4",
+    "ALLOC_ENGINE_V6_REVOKED_PREFIX_LEASE", "%1: prefix %2/%3 was revoked from client %4 as it is reserved for client %5",
+    "ALLOC_ENGINE_V6_REVOKED_SHARED_ADDR_LEASE", "%1: address %2 was revoked from client %3 as it is reserved for %4 other clients",
+    "ALLOC_ENGINE_V6_REVOKED_SHARED_PREFIX_LEASE", "%1: prefix %2/%3 was revoked from client %4 as it is reserved for %5 other clients",
     NULL
 };
 

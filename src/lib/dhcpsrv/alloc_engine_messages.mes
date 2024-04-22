@@ -6,13 +6,13 @@
 
 $NAMESPACE isc::dhcp
 
-% ALLOC_ENGINE_IGNORING_UNSUITABLE_GLOBAL_ADDRESS ignoring globally reserved address %1, it falls outside %2
+% ALLOC_ENGINE_IGNORING_UNSUITABLE_GLOBAL_ADDRESS %1: ignoring globally reserved address %2, it falls outside %3
 This debug message is issued when the allocation engine determines that
 the globally reserved address falls outside the selected subnet or
 shared-network.  The server should ignore the reserved address and
 attempt a dynamic allocation.
 
-% ALLOC_ENGINE_IGNORING_UNSUITABLE_GLOBAL_ADDRESS6 ignoring globally reserved address %1, it falls outside %2
+% ALLOC_ENGINE_IGNORING_UNSUITABLE_GLOBAL_ADDRESS6 %1: ignoring globally reserved address %2, it falls outside %3
 This debug message is issued when the allocation engine determines that
 the globally reserved address falls outside the selected subnet or
 shared-network.  The server should ignore the reserved address and
@@ -588,7 +588,7 @@ an existing lease. The details of the updated lease are
 printed. The first argument includes the client identification
 information.
 
-% ALLOC_ENGINE_V6_REVOKED_ADDR_LEASE address %1 was revoked from client %2 as it is reserved for client %3
+% ALLOC_ENGINE_V6_REVOKED_ADDR_LEASE %1: address %2 was revoked from client %3 as it is reserved for client %4
 This informational message is an indication that the specified IPv6
 address was used by client A but it is now reserved for client B. Client
 A has been told to stop using it so that it can be leased to client B.
@@ -597,7 +597,7 @@ in cases such as the system administrator adding a reservation for an
 address that is currently in use by another client.  The server will fully
 recover from this situation, but clients will change their addresses.
 
-% ALLOC_ENGINE_V6_REVOKED_PREFIX_LEASE prefix %1/%2 was revoked from client %3 as it is reserved for client %4
+% ALLOC_ENGINE_V6_REVOKED_PREFIX_LEASE %1: prefix %2/%3 was revoked from client %4 as it is reserved for client %5
 This informational message is an indication that the specified IPv6
 prefix was used by client A but it is now reserved for client B. Client
 A has been told to stop using it so that it can be leased to client B.
@@ -606,7 +606,7 @@ in cases such as the system administrator adding a reservation for an
 address that is currently in use by another client.  The server will fully
 recover from this situation, but clients will change their prefixes.
 
-% ALLOC_ENGINE_V6_REVOKED_SHARED_ADDR_LEASE address %1 was revoked from client %2 as it is reserved for %3 other clients
+% ALLOC_ENGINE_V6_REVOKED_SHARED_ADDR_LEASE %1: address %2 was revoked from client %3 as it is reserved for %4 other clients
 This informational message is an indication that the specified IPv6
 address was used by client A but it is now reserved for multiple other
 clients. Client A has been told to stop using it so that it can be
@@ -616,7 +616,7 @@ such as the system administrator adding reservations for an address
 that is currently in use by another client.  The server will fully
 recover from this situation, but clients will change their addresses.
 
-% ALLOC_ENGINE_V6_REVOKED_SHARED_PREFIX_LEASE prefix %1/%2 was revoked from client %3 as it is reserved for %4 other clients
+% ALLOC_ENGINE_V6_REVOKED_SHARED_PREFIX_LEASE %1: prefix %2/%3 was revoked from client %4 as it is reserved for %5 other clients
 This informational message is an indication that the specified IPv6
 prefix was used by client A but it is now reserved for multiple other
 clients. Client A has been told to stop using it so that it can be
