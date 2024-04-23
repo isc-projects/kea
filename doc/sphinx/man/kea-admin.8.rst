@@ -111,7 +111,10 @@ Arguments
    ``lease-dump``.
 
 ``-v|--version``
-   Prints the ``kea-admin`` version and quits.
+   Displays the Kea version.
+
+``-V``
+   Displays the extended Kea version.
 
 ``-4``
    Directs ``kea-admin`` to lease-dump the DHCPv4 leases. Incompatible with

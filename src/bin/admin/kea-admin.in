@@ -32,7 +32,8 @@ exec_prefix="@exec_prefix@"
 export exec_prefix
 BASENAME=$(basename ${0})
 SCRIPTS_DIR_DEFAULT="@datarootdir@/@PACKAGE@/scripts"
-VERSION="@PACKAGE_VERSION@"
+PACKAGE_VERSION="@PACKAGE_VERSION@"
+EXTENDED_VERSION="@EXTENDED_VERSION@"
 
 assume_yes=0
 
@@ -99,7 +100,7 @@ PARAMETERS: Parameters are optional in general, but may be required
      -i or --input to specify the name of file from which leases will be uploaded
      -o or --output to specify the name of file to which leases will be dumped
      -y or --yes - assume yes on overwriting temporary files
-' "${BASENAME}" "${VERSION}" "${BASENAME}" "${SCRIPTS_DIR_DEFAULT}"
+' "${BASENAME}" "${PACKAGE_VERSION}" "${BASENAME}" "${SCRIPTS_DIR_DEFAULT}"
 }
 
 ### Logging functions ###
@@ -819,8 +820,13 @@ if test "${command}" = "--help" ; then
 fi
 
 # Check if this is a simple question about version.
-if test "${command}" = "-v" || test "${command}" = "--version" ; then
-    echo "${VERSION}"
+if test "${command}" = "-v" || test "${command}" = "--version"; then
+    echo "${PACKAGE_VERSION}"
+    exit 0
+fi
+
+if test "${command}" = "-V"; then
+    echo "${EXTENDED_VERSION}"
     exit 0
 fi
 

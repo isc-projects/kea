@@ -73,10 +73,10 @@ The arguments are as follows:
    if one of the processes was interrupted before completing its task.
 
 ``-v``
-   Causes the version stamp to be printed.
+   Displays the Kea version.
 
 ``-V``
-   Causes a longer form of the version stamp to be printed.
+   Displays the extended Kea version.
 
 ``-W``
    Displays the configuration report.

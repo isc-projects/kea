@@ -38,7 +38,7 @@ The arguments are as follows:
    Displays help regarding command-line parameters.
 
 ``-v``
-   Displays the version.
+   Displays the Kea version.
 
 ``--host``
    Specifies the host to connect to. The Control Agent must be running at the

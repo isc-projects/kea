@@ -133,6 +133,8 @@ directly. It accepts the following command-line switches:
 
 -  ``-v`` - displays the Kea version and exits.
 
+-  ``-V`` - displays the extended Kea version and exits.
+
 -  ``-W`` - displays the Kea configuration report and exits. The report
    is a copy of the ``config.report`` file produced by ``./configure``;
    it is embedded in the executable binary.

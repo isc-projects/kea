@@ -446,7 +446,6 @@ TEST_F(DStubControllerTest, getVersion) {
     text = controller_->getVersion(true);
     EXPECT_NE(std::string::npos, text.find(VERSION));
     EXPECT_NE(std::string::npos, text.find(EXTENDED_VERSION));
-    EXPECT_NE(std::string::npos, text.find(controller_->getVersionAddendum()));
 }
 
 // Tests that the SIGTERM triggers a normal shutdown.

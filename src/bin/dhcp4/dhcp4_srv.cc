@@ -4832,7 +4832,7 @@ Dhcpv4Srv::getVersion(bool extended) {
 
     tmp << VERSION;
     if (extended) {
-        tmp << endl << EXTENDED_VERSION << endl;
+        tmp << " (" << EXTENDED_VERSION << ")" << endl;
         tmp << "premium: " << PREMIUM_EXTENDED_VERSION << endl;
         tmp << "linked with:" << endl;
         tmp << "- " << Logger::getVersion() << endl;

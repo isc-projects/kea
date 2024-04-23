@@ -53,10 +53,6 @@ public:
     /// @note Does not throw.
     void deregisterCommands();
 
-protected:
-    /// @brief Returns version info specific to D2
-    virtual std::string getVersionAddendum();
-
 private:
     /// @brief Creates an instance of the DHCP-DDNS specific application
     /// process.  This method is invoked during the process initialization

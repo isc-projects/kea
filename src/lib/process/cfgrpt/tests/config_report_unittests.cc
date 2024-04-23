@@ -23,5 +23,6 @@ TEST(ConfigReportTest, getConfigReport) {
     // Verify that it is not empty and does contain the
     // extended version number
     ASSERT_FALSE(cfgReport.empty());
-    EXPECT_NE(std::string::npos, cfgReport.find(EXTENDED_VERSION, 0));
+    EXPECT_NE(std::string::npos, cfgReport.find(VERSION));
+    EXPECT_NE(std::string::npos, cfgReport.find(EXTENDED_VERSION));
 }

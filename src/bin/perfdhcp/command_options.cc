@@ -5,6 +5,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+#include <kea_version.h>
 
 #include <perfdhcp/command_options.h>
 
@@ -207,7 +208,7 @@ CommandOptions::parse(int argc, char** const argv, bool print_cmd_line) {
     // Reset values of class members
     reset();
 
-    // Informs if program has been run with 'h' or 'v' option.
+    // Informs if program has been run with 'h', 'v' or 'V' option.
     bool help_or_version_mode = initialize(argc, argv, print_cmd_line);
     if (!help_or_version_mode) {
         validate();
@@ -245,7 +246,7 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
     // In this section we collect argument values from command line
     // they will be tuned and validated elsewhere
     while((opt = getopt_long(argc, argv,
-                             "huv46A:r:t:R:b:n:p:d:D:l:P:a:L:N:M:s:iBc1"
+                             "huvV46A:r:t:R:b:n:p:d:D:l:P:a:L:N:M:s:iBc1"
                              "J:T:X:O:o:E:S:I:x:W:w:e:f:F:g:C:y:Y:",
                              long_options, &opt_long_index)) != -1) {
         stream << " -";
@@ -560,6 +561,10 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
 
         case 'v':
             version();
+            return (true);
+
+        case 'V':
+            extendedVersion();
             return (true);
 
         case 'w':
@@ -1365,7 +1370,8 @@ Options:
 -u: Enable checking address uniqueness. Lease valid lifetime should not be
     shorter than test duration and clients should not request address more than
     once without releasing it first.
--v: Report the version number of this program.
+-v: Display the Kea version.
+-V: Display the extended Kea version.
 -W<time>: Specifies exit-wait-time parameter, that makes perfdhcp wait
     for <time> us after an exit condition has been met to receive all
     packets without sending any new packets. Expressed in microseconds.
@@ -1442,7 +1448,12 @@ The exit status is:
 
 void
 CommandOptions::version() const {
-    std::cout << "VERSION: " << VERSION << std::endl;
+    std::cout << VERSION << std::endl;
+}
+
+void
+CommandOptions::extendedVersion() const {
+    cout << VERSION << " (" << EXTENDED_VERSION << ")" << endl;
 }
 
 

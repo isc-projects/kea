@@ -445,9 +445,10 @@ public:
     static void usage();
 
     /// \brief Print program version.
-    ///
-    /// Prints perfdhcp version.
     void version() const;
+
+    /// @brief Print extended program version.
+    void extendedVersion() const;
 
 private:
     /// \brief Initializes class members based on the command line.

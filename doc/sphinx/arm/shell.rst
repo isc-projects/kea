@@ -66,7 +66,9 @@ Other switches are:
 
 -  ``-h`` - prints a help message.
 
--  ``-v`` - prints the software version.
+-  ``-v`` - displays the Kea version.
+
+-  ``-V`` - displays the extended Kea version.
 
 See :ref:`shell-tls` for new command-line arguments associated with TLS/HTTPS support.
 

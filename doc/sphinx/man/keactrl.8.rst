@@ -87,7 +87,10 @@ Options
       built. This is the default.
 
 ``-v|--version``
-   Prints the ``keactrl`` version and quits.
+   Displays the Kea version.
+
+``-V``
+   Displays the extended Kea version.
 
 Documentation
 ~~~~~~~~~~~~~

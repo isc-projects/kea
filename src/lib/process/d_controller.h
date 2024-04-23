@@ -608,7 +608,7 @@ protected:
     /// version text returned when DControllerBase::getVersion(true) is
     /// invoked.
     /// @return a string containing additional version info
-    virtual std::string getVersionAddendum() { return (""); }
+    virtual std::string getVersionAddendum() { return (std::string()); }
 
     /// @brief Deals with other (i.e. not application name) global objects.
     ///

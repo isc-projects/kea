@@ -29,6 +29,7 @@ from kea_conn import CARequest  # CAResponse
 
 
 VERSION = "@PACKAGE_VERSION@"
+EXTENDED_VERSION = "@EXTENDED_VERSION@"
 
 
 def timeout_handler(signum, frame):
@@ -81,10 +82,15 @@ def shell_body():
                         help='command to be executed. If not specified, '
                         '"list-commands" is used')
     parser.add_argument('-v', action="store_true", help="Prints version")
+    parser.add_argument('-V', action="store_true", help="Prints extended version")
     cmd_args = parser.parse_args()
 
     if cmd_args.v:
         print(VERSION)
+        sys.exit(0)
+
+    if cmd_args.V:
+        print(EXTENDED_VERSION)
         sys.exit(0)
 
     # Ok, now it's time to put the parameters parsed into the structure to be

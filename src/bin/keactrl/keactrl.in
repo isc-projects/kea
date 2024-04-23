@@ -21,7 +21,8 @@
 # used.
 set -eu
 
-VERSION="@PACKAGE_VERSION@"
+PACKAGE_VERSION="@PACKAGE_VERSION@"
+EXTENDED_VERSION="@EXTENDED_VERSION@"
 
 # Set the have_netconf flag to know if netconf is available.
 if test '@HAVE_NETCONF@' = 'yes'; then
@@ -338,8 +339,13 @@ if [ -z "${command}" ]; then
 fi
 
 # Check if this is a simple question about version.
-if test "${command}" = "-v" || test "${command}" = "--version" ; then
-    echo "${VERSION}"
+if test "${command}" = "-v" || test "${command}" = "--version"; then
+    echo "${PACKAGE_VERSION}"
+    exit 0
+fi
+
+if test "${command}" = "-V"; then
+    echo "${EXTENDED_VERSION}"
     exit 0
 fi
 
@@ -576,7 +582,7 @@ ${args}" 1
         exit 0 ;;
 
     version)
-        echo "keactrl: ${VERSION}"
+        echo "keactrl: ${PACKAGE_VERSION}"
         run_conditional "dhcp4" "print_version kea-dhcp4 ${dhcp4_srv}" 0
         run_conditional "dhcp6" "print_version kea-dhcp6 ${dhcp6_srv}" 0
         run_conditional "dhcp_ddns" "print_version kea-dhcp-ddns ${dhcp_ddns_srv}" 0

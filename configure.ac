@@ -61,7 +61,7 @@ else
         AC_MSG_RESULT("tarball")
 fi
 
-# Export KEA_SRCID to config.h
+# Export KEA_SRCID to a C++ header.
 # This will be either package version or "tarball" or "git abcd".
 # We do not want to put this in a config.h, because it messes up ccache
 # horribly. When building different branches, the commit-id is different
@@ -1823,16 +1823,13 @@ AC_CONFIG_FILES([tools/path_replacer.sh],
 AC_CONFIG_FILES([tools/extract_bnf.sh],
                 [chmod +x tools/extract_bnf.sh])
 
-
-AC_OUTPUT
-
-dnl Print the results
-dnl
-
 EXTENDED_VERSION=${PACKAGE_VERSION}
 if test "$KEA_SRCID" != ""; then
    EXTENDED_VERSION="${EXTENDED_VERSION} ($KEA_SRCID)"
 fi
+AC_SUBST(EXTENDED_VERSION)
+
+AC_OUTPUT
 
 # By default the following variables are defined:
 # - prefix = /usr/local
@@ -1850,6 +1847,7 @@ fi
 libdir_real="$(eval echo ${libdir})"
 libdir_real="$(eval echo ${libdir_real})"
 
+# Print the report.
 cat > config.report << END
 
        Kea source configure results:

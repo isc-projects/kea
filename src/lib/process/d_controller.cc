@@ -863,11 +863,11 @@ DControllerBase::getVersion(bool extended) {
 
     tmp << VERSION;
     if (extended) {
-        tmp << std::endl << EXTENDED_VERSION << std::endl;
+        tmp << " (" << EXTENDED_VERSION << ")" << std::endl;
         tmp << "premium: " << PREMIUM_EXTENDED_VERSION << std::endl;
         tmp << "linked with:" << std::endl;
         tmp << "- " << isc::log::Logger::getVersion() << std::endl;
-        tmp << getVersionAddendum();
+        tmp << "- " << isc::cryptolink::CryptoLink::getVersion();
     }
 
     return (tmp.str());

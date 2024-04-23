@@ -287,7 +287,10 @@ Options
    releasing it.
 
 ``-v``
-   Prints the version of this program.
+   Displays the Kea version.
+
+``-V``
+   Displays the extended Kea version.
 
 ``-W exit-wait-time``
    Specifies the exit-wait-time parameter, which causes ``perfdhcp`` to wait for

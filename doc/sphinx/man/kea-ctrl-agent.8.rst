@@ -34,10 +34,10 @@ Arguments
 The arguments are as follows:
 
 ``-v``
-   Displays the version.
+   Displays the Kea version.
 
 ``-V``
-   Displays the extended version.
+   Displays the extended Kea version.
 
 ``-W``
    Displays the configuration report.
