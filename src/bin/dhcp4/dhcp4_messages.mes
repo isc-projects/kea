@@ -281,11 +281,11 @@ detected as a duplicate (i.e. another device in the network is using this addres
 However, the server does not have a record for this address. This may indicate
 a client's error or a server's purged database.
 
-% DHCP4_DEFERRED_OPTION_MISSING can find deferred option code %1 in the query
+% DHCP4_DEFERRED_OPTION_MISSING %1: cannot find deferred option code %2 in the query
 This debug message is printed when a deferred option cannot be found in
 the query.
 
-% DHCP4_DEFERRED_OPTION_UNPACK_FAIL An error unpacking the deferred option %1: %2
+% DHCP4_DEFERRED_OPTION_UNPACK_FAIL %1: An error unpacking the deferred option %2: %3
 A debug message issued when deferred unpacking of an option failed, making it
 to be left unpacked in the packet. The first argument is the option code,
 the second the error.
@@ -645,7 +645,7 @@ are unavailable, and the server exits. This error should be reported.
 A warning message issued when IfaceMgr fails to open and bind a socket. The reason
 for the failure is appended as an argument of the log message.
 
-% DHCP4_PACKET_DROP_0001 failed to parse packet from %1 to %2, received over interface %3, reason: %4, %5
+% DHCP4_PACKET_DROP_0001 %1: failed to parse packet from %2 to %3, received over interface %4, reason: %5, %6
 The DHCPv4 server has received a packet that it is unable to
 interpret. The reason why the packet is invalid is included in the message.
 

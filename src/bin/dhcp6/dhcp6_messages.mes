@@ -633,7 +633,7 @@ the same client by dropping new packets until processing is finished.
 Packet details and thread identifiers are included for both packets in
 this warning message.
 
-% DHCP6_PACKET_DROP_PARSE_FAIL failed to parse packet from %1 to %2, received over interface %3, reason: %4, %5
+% DHCP6_PACKET_DROP_PARSE_FAIL %1: failed to parse packet from %2 to %3, received over interface %4, reason: %5, %6
 The DHCPv6 server has received a packet that it is unable to
 interpret. The reason why the packet is invalid is included in the message.
 
@@ -658,7 +658,7 @@ during packet processing that was not caught by other, more specific
 exception handlers. This packet will be dropped and the server will
 continue operation.
 
-% DHCP6_PACKET_PROCESS_FAIL processing of %1 message received from %2 failed: %3
+% DHCP6_PACKET_PROCESS_FAIL %1: processing of %2 message received from %3 failed: %4
 This is a general catch-all message indicating that the processing of the
 specified packet type from the indicated address failed.  The reason is given in the
 message.  The server will not send a response but will instead ignore the packet.
@@ -945,7 +945,7 @@ client and transaction identification information. The second and third
 argument identify the prefix. The fourth and fifth argument hold the
 expected IAID and IAID found respectively.
 
-% DHCP6_REQUIRED_OPTIONS_CHECK_FAIL %1 message received from %2 failed the following check: %3
+% DHCP6_REQUIRED_OPTIONS_CHECK_FAIL %1: %2 message received from %3 failed the following check: %4
 This message indicates that received DHCPv6 packet is invalid.  This may be due
 to a number of reasons, e.g. the mandatory client-id option is missing,
 the server-id forbidden in that particular type of message is present,
@@ -1047,7 +1047,7 @@ processing will continue, but the response will only contain generic
 configuration and no addresses or prefixes. The argument includes
 the client and the transaction identification information.
 
-% DHCP6_UNKNOWN_MSG_RECEIVED received unknown message (type %1) on interface %2
+% DHCP6_UNKNOWN_MSG_RECEIVED %1: received unknown message (type %2) on interface %3
 This debug message is printed when server receives a message of unknown type.
 That could either mean missing functionality or invalid or broken relay or client.
 The list of formally defined message types is available here:

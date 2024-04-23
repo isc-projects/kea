@@ -1334,6 +1334,7 @@ Dhcpv4Srv::processPacket(Pkt4Ptr query, bool allow_answer_park) {
         } catch (const std::exception& e) {
             // Failed to parse the packet.
             LOG_DEBUG(bad_packet4_logger, DBGLVL_PKT_HANDLING, DHCP4_PACKET_DROP_0001)
+                .arg(query->getLabel())
                 .arg(query->getRemoteAddr().toText())
                 .arg(query->getLocalAddr().toText())
                 .arg(query->getIface())
@@ -4767,6 +4768,7 @@ Dhcpv4Srv::deferredUnpack(Pkt4Ptr& query) {
             // should not happen but do not crash anyway
             LOG_DEBUG(bad_packet4_logger, DBG_DHCP4_DETAIL,
                       DHCP4_DEFERRED_OPTION_MISSING)
+                .arg(query->getLabel())
                 .arg(code);
             continue;
         }
@@ -4780,6 +4782,7 @@ Dhcpv4Srv::deferredUnpack(Pkt4Ptr& query) {
             // Failed to parse the option.
             LOG_DEBUG(bad_packet4_logger, DBG_DHCP4_DETAIL,
                       DHCP4_DEFERRED_OPTION_UNPACK_FAIL)
+                .arg(query->getLabel())
                 .arg(code)
                 .arg(e.what());
             continue;

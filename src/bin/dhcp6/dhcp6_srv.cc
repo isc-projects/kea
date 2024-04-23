@@ -818,6 +818,7 @@ Dhcpv6Srv::processPacket(Pkt6Ptr query) {
         } catch (const std::exception &e) {
             // Failed to parse the packet.
             LOG_DEBUG(bad_packet6_logger, DBGLVL_PKT_HANDLING, DHCP6_PACKET_DROP_PARSE_FAIL)
+                .arg(query->getLabel())
                 .arg(query->getRemoteAddr().toText())
                 .arg(query->getLocalAddr().toText())
                 .arg(query->getIface())
@@ -1093,6 +1094,7 @@ Dhcpv6Srv::processLocalizedQuery6(AllocEngine::ClientContext6& ctx) {
         // disabled by default - it prevents a DDOS attack based on the
         // sending of problem packets.)
         LOG_DEBUG(bad_packet6_logger, DBG_DHCP6_BASIC, DHCP6_PACKET_PROCESS_FAIL)
+            .arg(query->getLabel())
             .arg(query->getName())
             .arg(query->getRemoteAddr().toText())
             .arg(e.what());
@@ -1905,16 +1907,17 @@ Dhcpv6Srv::sanityCheck(const Pkt6Ptr& pkt) {
         default:
             LOG_DEBUG(bad_packet6_logger, DBG_DHCP6_BASIC,
                       DHCP6_UNKNOWN_MSG_RECEIVED)
+                .arg(pkt->getLabel())
                 .arg(static_cast<int>(pkt->getType()))
                 .arg(pkt->getIface());
         }
 
     } catch (const RFCViolation& e) {
         LOG_DEBUG(bad_packet6_logger, DBG_DHCP6_BASIC, DHCP6_REQUIRED_OPTIONS_CHECK_FAIL)
+            .arg(pkt->getLabel())
             .arg(pkt->getName())
             .arg(pkt->getRemoteAddr().toText())
             .arg(e.what());
-
     }
 
     // Increase the statistic of dropped packets.
