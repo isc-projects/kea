@@ -632,7 +632,6 @@ public:
     /// @brief Family specific subnets.
     SubnetPtr subnet22_;
     SubnetPtr subnet33_;
-
 };
 
 /// @brief Test fixture for testing PerfMonConfig for DHCPV4.

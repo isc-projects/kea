@@ -1,7 +1,7 @@
 2223.	[bug]		tmark
-	Fixed an issue in PerfMon hook library which can cause
-	the server to crash when a packet is processed for which
-	server does not select a subnet.
+	Fixed an issue in PerfMon hook library which causes
+	the kea6_server to crash when the server responds
+	to a client query for which no subnet was selected.
 	(Gitlab #3347)
 
 2222.	[bug]		piotrek
