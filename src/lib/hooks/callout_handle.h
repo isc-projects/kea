@@ -281,6 +281,39 @@ public:
         value = boost::any_cast<T>(element_ptr->second);
     }
 
+    /// @brief Fetch an optional named element from the current library
+    /// context.
+    ///
+    /// Gets an element from the context associated with the current library.
+    /// If either context or the named element do not exist, the function
+    /// returns false.
+    ///
+    /// @param name Name of the element in the context to get.
+    /// @param value [out] Value to set.  The type of "value" is important:
+    ///        it must match the type of the value set.
+    ///
+    /// @throw boost::bad_any_cast Thrown if the context element is present
+    ///        but the type of the data is not the same as the type of the
+    ///        variable provided to receive its value.
+    /// @return true if the named element exists, false otherwise.
+    template <typename T>
+    bool getOptionalContext(const std::string& name, T& value) const {
+        const auto context_iter = context_collection_.find(current_library_);
+        if (context_iter == context_collection_.end()) {
+            // No context, punt.
+            return (false);
+        }
+
+        auto lib_context = context_iter->second;
+        ElementCollection::const_iterator element_ptr = lib_context.find(name);
+        if (element_ptr == lib_context.end()) {
+            return (false);
+        }
+
+        value = boost::any_cast<T>(element_ptr->second);
+        return (true);
+    }
+
     /// @brief Get context names
     ///
     /// Returns a vector holding the names of items in the context associated

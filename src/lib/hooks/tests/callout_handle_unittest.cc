@@ -377,6 +377,34 @@ TEST_F(CalloutHandleTest, scopedState) {
     EXPECT_EQ(three, value);
 }
 
+TEST_F(CalloutHandleTest, getOptionalContext) {
+    // Create pointer to the handle to be wrapped.
+    CalloutHandlePtr handle(new CalloutHandle(getCalloutManager()));
+
+    int two = 2;
+    int three = 3;
+    int value = 77;
+
+    // Should not find two or three. Value should not change.
+    EXPECT_FALSE(handle->getOptionalContext("two", value));
+    EXPECT_EQ(77, value);
+
+    EXPECT_FALSE(handle->getOptionalContext("three", value));
+    EXPECT_EQ(77, value);
+
+    // Set "two" in the context.
+    handle->setContext("two", two);
+
+    // Should be find two but not three.
+    EXPECT_TRUE(handle->getOptionalContext("two", value));
+    EXPECT_EQ(two, value);
+    EXPECT_FALSE(handle->getOptionalContext("three", value));
+
+    // Should find three.
+    handle->setContext("three", three);
+    EXPECT_TRUE(handle->getOptionalContext("two", value));
+}
+
 // Further tests of the "skip" flag and tests of getting the name of the
 // hook to which the current callout is attached is in the "handles_unittest"
 // module.
