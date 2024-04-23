@@ -402,7 +402,8 @@ TEST_F(CalloutHandleTest, getOptionalContext) {
 
     // Should find three.
     handle->setContext("three", three);
-    EXPECT_TRUE(handle->getOptionalContext("two", value));
+    EXPECT_TRUE(handle->getOptionalContext("three", value));
+    EXPECT_EQ(three, value);
 }
 
 // Further tests of the "skip" flag and tests of getting the name of the
