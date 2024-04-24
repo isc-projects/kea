@@ -1100,7 +1100,7 @@ class VagrantEnv(object):
 def _install_gtest_sources():
     """Install gtest sources."""
     # download gtest sources only if it is not present as native package
-    gtest_version = '1.10.0'
+    gtest_version = '1.14.0'
     gtest_path = f'/usr/src/googletest-release-{gtest_version}/googletest'
     if os.path.exists(gtest_path):
             log.info(f'gtest is already installed in {gtest_path}.')
@@ -1108,11 +1108,11 @@ def _install_gtest_sources():
 
     execute('mkdir -p ~/.hammer-tmp')
     cmd = 'wget --no-verbose -O ~/.hammer-tmp/gtest.tar.gz '
-    cmd += f'https://github.com/google/googletest/archive/release-{gtest_version}.tar.gz'
+    cmd += f'https://github.com/google/googletest/archive/refs/tags/v{gtest_version}.tar.gz'
     execute(cmd)
     execute('sudo mkdir -p /usr/src')
     execute('sudo tar -C /usr/src -zxf ~/.hammer-tmp/gtest.tar.gz')
-    execute(f'sudo ln -sf /usr/src/googletest-release-{gtest_version} /usr/src/googletest')
+    execute(f'sudo ln -sf /usr/src/googletest-{gtest_version} /usr/src/googletest')
     execute('rm -rf ~/.hammer-tmp')
 
 
