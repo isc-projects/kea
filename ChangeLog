@@ -1,3 +1,9 @@
+2224.	[func]		andrei
+	Printing the version now mentions if premium is included and
+	shows the git commit hash for the premium source code repository
+	if the executable is built from sources.
+	(Gitlab #3254)
+
 2223.	[bug]		tmark
 	Fixed an issue in PerfMon hook library which causes
 	the kea6_server to crash when the server responds
