@@ -395,7 +395,7 @@ TEST_F(CalloutHandleTest, getOptionalContext) {
     // Set "two" in the context.
     handle->setContext("two", two);
 
-    // Should be find two but not three.
+    // Should find two but not three.
     EXPECT_TRUE(handle->getOptionalContext("two", value));
     EXPECT_EQ(two, value);
     EXPECT_FALSE(handle->getOptionalContext("three", value));
