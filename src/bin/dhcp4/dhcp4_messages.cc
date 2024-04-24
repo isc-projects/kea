@@ -353,7 +353,7 @@ const char* values[] = {
     "DHCP4_RESPONSE_HOSTNAME_DATA", "%1: including Hostname option in the server's response: %2",
     "DHCP4_RESPONSE_HOSTNAME_GENERATE", "%1: server has generated hostname %2 for the client",
     "DHCP4_SERVER_FAILED", "server failed: %1",
-    "DHCP4_SERVER_INITIATED_DECLINE", "Lease for addr %1 has been found to be already in use. The lease will be unavailable for %2 seconds.",
+    "DHCP4_SERVER_INITIATED_DECLINE", "%1: Lease for addr %2 has been found to be already in use. The lease will be unavailable for %3 seconds.",
     "DHCP4_SERVER_INITIATED_DECLINE_ADD_FAILED", "%1: error adding a lease for address %2",
     "DHCP4_SERVER_INITIATED_DECLINE_FAILED", "%1: error on server-initiated decline lease for address %2: %3",
     "DHCP4_SERVER_INITIATED_DECLINE_RESOURCE_BUSY", "%1: error declining a lease for address %2",

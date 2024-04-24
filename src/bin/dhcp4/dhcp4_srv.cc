@@ -4129,6 +4129,7 @@ void
 Dhcpv4Srv::serverDecline(hooks::CalloutHandlePtr& callout_handle, Pkt4Ptr& query,
                          Lease4Ptr lease, bool lease_exists) {
     LOG_INFO(lease4_logger, DHCP4_SERVER_INITIATED_DECLINE)
+            .arg(query->getLabel())
             .arg(lease->addr_.toText())
             .arg(lease->valid_lft_);
 

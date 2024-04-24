@@ -988,7 +988,7 @@ generated hostname.
 The DHCPv4 server has encountered a fatal error and is terminating.
 The reason for the failure is included in the message.
 
-% DHCP4_SERVER_INITIATED_DECLINE Lease for addr %1 has been found to be already in use. The lease will be unavailable for %2 seconds.
+% DHCP4_SERVER_INITIATED_DECLINE %1: Lease for addr %2 has been found to be already in use. The lease will be unavailable for %3 seconds.
 This informational message is printed when the server has detected via
 ICMP ECHO (i.e. ping check) or other means that a lease which should be
 free to offer is actually in use. This message may indicate a misconfiguration
