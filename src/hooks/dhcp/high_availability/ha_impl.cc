@@ -859,15 +859,24 @@ HAImpl::syncCompleteNotifyHandler(hooks::CalloutHandle& callout_handle) {
     static_cast<void>(parseCommand(args, command));
 
     HAServicePtr service;
-    auto origin_value = NetworkState::HA_REMOTE_COMMAND+1;
+    auto origin_id_value = NetworkState::HA_REMOTE_COMMAND+1;
     try {
         if (args) {
+            auto origin_id = args->get("origin-id");
             auto origin = args->get("origin");
-            if (origin) {
+            // The origin-id is a new parameter replacing the origin. However, some versions
+            // of Kea may still send the origin parameter instead.
+            if (origin_id) {
+                if (origin_id->getType() != Element::integer) {
+                    isc_throw(BadValue, "'origin-id' must be an integer in the 'ha-sync-complete-notify' command");
+                }
+                origin_id_value = origin_id->intValue();
+
+            } else if (origin) {
                 if (origin->getType() != Element::integer) {
                     isc_throw(BadValue, "'origin' must be an integer in the 'ha-sync-complete-notify' command");
                 }
-                origin_value = origin->intValue();
+                origin_id_value = origin->intValue();
             }
         }
 
@@ -881,7 +890,7 @@ HAImpl::syncCompleteNotifyHandler(hooks::CalloutHandle& callout_handle) {
         return;
     }
 
-    ConstElementPtr response = service->processSyncCompleteNotify(origin_value);
+    ConstElementPtr response = service->processSyncCompleteNotify(origin_id_value);
     callout_handle.setArgument("response", response);
 }
 

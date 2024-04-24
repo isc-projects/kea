@@ -2304,9 +2304,10 @@ TEST_F(HAImplTest, haHeartbeatBadServerName) {
     checkAnswer(response, CONTROL_RESULT_ERROR, "server5 matches no configured 'server-name'");
 }
 
-// Test ha-sync-complete-notify command handler with a specified server name.
-TEST_F(HAImplTest, haSyncCompleteNotify) {
-    ha_impl_.reset(new HAImpl());
+// Test ha-sync-complete-notify command handler with a specified server name
+// and origin-id.
+TEST_F(HAImplTest, haSyncCompleteNotifyOriginId) {
+    ha_impl_.reset(new TestHAImpl());
     ha_impl_->setIOService(io_service_);
     ASSERT_NO_THROW(ha_impl_->configure(createValidJsonConfiguration()));
 
@@ -2319,13 +2320,18 @@ TEST_F(HAImplTest, haSyncCompleteNotify) {
         "{"
         "    \"command\": \"ha-sync-complete-notify\","
         "    \"arguments\": {"
-        "        \"server-name\": \"server1\""
+        "        \"server-name\": \"server1\","
+        "        \"origin-id\": 2002"
         "    }"
         "}"
     );
 
     CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
     callout_handle->setArgument("command", command);
+
+    // Disable the DHCP service for origin of 2002. Running the command
+    // handler should unlock it.
+    network_state->disableService(NetworkState::HA_REMOTE_COMMAND + 2);
 
     ASSERT_NO_THROW(ha_impl_->syncCompleteNotifyHandler(*callout_handle));
 
@@ -2335,6 +2341,57 @@ TEST_F(HAImplTest, haSyncCompleteNotify) {
 
     checkAnswer(response, CONTROL_RESULT_SUCCESS,
                 "Server successfully notified about the synchronization completion.");
+
+    // The command handler should keep the service disabled under the HA_LOCAL_COMMAND.
+    // Let's try to enable it and see if it unlocks the DHCP service.
+    EXPECT_FALSE(network_state->isServiceEnabled());
+    network_state->enableService(NetworkState::HA_LOCAL_COMMAND);
+    EXPECT_TRUE(network_state->isServiceEnabled());
+}
+
+// Test ha-sync-complete-notify command handler with a specified server name
+// and origin.
+TEST_F(HAImplTest, haSyncCompleteNotifyOrigin) {
+    ha_impl_.reset(new TestHAImpl());
+    ha_impl_->setIOService(io_service_);
+    ASSERT_NO_THROW(ha_impl_->configure(createValidJsonConfiguration()));
+
+    // Starting the service is required prior to running any callouts.
+    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv4));
+    ASSERT_NO_THROW(ha_impl_->startServices(network_state,
+                                            HAServerType::DHCPv4));
+
+    ConstElementPtr command = Element::fromJSON(
+        "{"
+        "    \"command\": \"ha-sync-complete-notify\","
+        "    \"arguments\": {"
+        "        \"server-name\": \"server1\","
+        "        \"origin\": 2002"
+        "    }"
+        "}"
+    );
+
+    CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
+    callout_handle->setArgument("command", command);
+
+    // Disable the DHCP service for origin of 2002. Running the command
+    // handler should unlock it.
+    network_state->disableService(NetworkState::HA_REMOTE_COMMAND + 2);
+
+    ASSERT_NO_THROW(ha_impl_->syncCompleteNotifyHandler(*callout_handle));
+
+    ConstElementPtr response;
+    callout_handle->getArgument("response", response);
+    ASSERT_TRUE(response);
+
+    checkAnswer(response, CONTROL_RESULT_SUCCESS,
+                "Server successfully notified about the synchronization completion.");
+
+    // The command handler should keep the service disabled under the HA_LOCAL_COMMAND.
+    // Let's try to enable it and see if it unlocks the DHCP service.
+    EXPECT_FALSE(network_state->isServiceEnabled());
+    network_state->enableService(NetworkState::HA_LOCAL_COMMAND);
+    EXPECT_TRUE(network_state->isServiceEnabled());
 }
 
 // Test ha-sync-complete-notify command handler without a specified server name.

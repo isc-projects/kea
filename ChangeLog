@@ -1,3 +1,13 @@
+2225.	[func]		marcin
+	Ensure backward compatibility of High Availability
+	between Kea 2.5.8+ and earlier versions. It introduces
+	a new origin-id argument to the dhcp-enable, dhcp-disable
+	and ha-sync-complete-notify commands. It is ignored by the
+	earlier Kea versions. The origin argument is sent in addition
+	to the origin-id and has the format recognizable by the old
+	Kea versions.
+	(Gitlab #3344)
+
 2224.	[func]		andrei
 	Printing the version now mentions if premium is included and
 	shows the git commit hash for the premium source code repository

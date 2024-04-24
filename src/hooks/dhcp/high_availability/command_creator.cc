@@ -38,12 +38,14 @@ unordered_set<string> CommandCreator::ha_commands6_ = {
 };
 
 ConstElementPtr
-CommandCreator::createDHCPDisable(const unsigned int origin,
+CommandCreator::createDHCPDisable(const unsigned int origin_id,
                                   const unsigned int max_period,
                                   const HAServerType& server_type) {
     ElementPtr args;
     args = Element::createMap();
-    args->set("origin", Element::create(origin));
+    args->set("origin-id", Element::create(origin_id));
+    // Add for backward compatibility with Kea 2.4.0 and earlier.
+    args->set("origin", Element::create("ha-partner"));
     // max-period is optional. A value of 0 means that it is not specified.
     if (max_period > 0) {
         args->set("max-period", Element::create(static_cast<long int>(max_period)));
@@ -54,11 +56,13 @@ CommandCreator::createDHCPDisable(const unsigned int origin,
 }
 
 ConstElementPtr
-CommandCreator::createDHCPEnable(const unsigned int origin,
+CommandCreator::createDHCPEnable(const unsigned int origin_id,
                                  const HAServerType& server_type) {
     ElementPtr args;
     args = Element::createMap();
-    args->set("origin", Element::create(origin));
+    args->set("origin-id", Element::create(origin_id));
+    // Add for backward compatibility with Kea 2.4.0 and earlier.
+    args->set("origin", Element::create("ha-partner"));
     ConstElementPtr command = config::createCommand("dhcp-enable", args);
     insertService(command, server_type);
     return (command);
@@ -257,12 +261,14 @@ CommandCreator::createMaintenanceNotify(const std::string& server_name,
 }
 
 ConstElementPtr
-CommandCreator::createSyncCompleteNotify(const unsigned int origin,
+CommandCreator::createSyncCompleteNotify(const unsigned int origin_id,
                                          const std::string& server_name,
                                          const HAServerType& server_type) {
     auto args = Element::createMap();
     args->set("server-name", Element::create(server_name));
-    args->set("origin", Element::create(origin));
+    args->set("origin-id", Element::create(origin_id));
+    // Add for backward compatibility with Kea 2.4.0 and earlier.
+    args->set("origin", Element::create("ha-partner"));
     auto command = config::createCommand("ha-sync-complete-notify", args);
     insertService(command, server_type);
     return (command);

@@ -1727,6 +1727,32 @@ TEST_F(CtrlChannelDhcpv4SrvTest, dhcpDisableBadParam) {
     sendUnixCommand("{"
                     "    \"command\": \"dhcp-disable\","
                     "    \"arguments\": {"
+                    "        \"origin-id\": \"\""
+                    "    }"
+                    "}", response);
+
+    // The response should be a valid JSON.
+    EXPECT_NO_THROW(rsp = Element::fromJSON(response));
+    ASSERT_TRUE(rsp);
+
+    EXPECT_EQ("{ \"result\": 1, \"text\": \"'origin-id' argument must be a number\" }", response);
+
+    sendUnixCommand("{"
+                    "    \"command\": \"dhcp-disable\","
+                    "    \"arguments\": {"
+                    "        \"origin-id\": \"foo\""
+                    "    }"
+                    "}", response);
+
+    // The response should be a valid JSON.
+    EXPECT_NO_THROW(rsp = Element::fromJSON(response));
+    ASSERT_TRUE(rsp);
+
+    EXPECT_EQ("{ \"result\": 1, \"text\": \"'origin-id' argument must be a number\" }", response);
+
+    sendUnixCommand("{"
+                    "    \"command\": \"dhcp-disable\","
+                    "    \"arguments\": {"
                     "        \"origin\": \"\""
                     "    }"
                     "}", response);
@@ -1836,6 +1862,39 @@ TEST_F(CtrlChannelDhcpv4SrvTest, dhcpDisable) {
     EXPECT_TRUE(server_->network_state_->isServiceEnabled());
 }
 
+// This test verifies if it is possible to disable DHCP service using
+// the origin-id.
+TEST_F(CtrlChannelDhcpv4SrvTest, dhcpDisableOriginId) {
+    createUnixChannelServer();
+    std::string response;
+
+    EXPECT_TRUE(server_->network_state_->isServiceEnabled());
+
+    sendUnixCommand("{"
+                    "    \"command\": \"dhcp-disable\","
+                    "    \"arguments\": {"
+                    "        \"origin-id\": 2002,"
+                    "        \"origin\": \"user\""
+                    "    }"
+                    "}", response);
+
+    ConstElementPtr rsp;
+
+    // The response should be a valid JSON.
+    EXPECT_NO_THROW(rsp = Element::fromJSON(response));
+    ASSERT_TRUE(rsp);
+
+    int status;
+    ConstElementPtr cfg = parseAnswer(status, rsp);
+    EXPECT_EQ(CONTROL_RESULT_SUCCESS, status);
+
+    EXPECT_FALSE(server_->network_state_->isServiceEnabled());
+
+    server_->network_state_->enableService(NetworkState::HA_REMOTE_COMMAND+2);
+
+    EXPECT_TRUE(server_->network_state_->isServiceEnabled());
+}
+
 // This test verifies that it is possible to disable DHCP service for a short
 // period of time, after which the service is automatically enabled.
 TEST_F(CtrlChannelDhcpv4SrvTest, dhcpDisableTemporarily) {
@@ -1871,6 +1930,33 @@ TEST_F(CtrlChannelDhcpv4SrvTest, dhcpDisableTemporarily) {
 TEST_F(CtrlChannelDhcpv4SrvTest, dhcpEnableBadParam) {
     createUnixChannelServer();
     std::string response;
+    ConstElementPtr rsp;
+
+    sendUnixCommand("{"
+                    "    \"command\": \"dhcp-enable\","
+                    "    \"arguments\": {"
+                    "        \"origin-id\": \"\""
+                    "    }"
+                    "}", response);
+
+    // The response should be a valid JSON.
+    EXPECT_NO_THROW(rsp = Element::fromJSON(response));
+    ASSERT_TRUE(rsp);
+
+    EXPECT_EQ("{ \"result\": 1, \"text\": \"'origin-id' argument must be a number\" }", response);
+
+    sendUnixCommand("{"
+                    "    \"command\": \"dhcp-enable\","
+                    "    \"arguments\": {"
+                    "        \"origin-id\": \"foo\""
+                    "    }"
+                    "}", response);
+
+    // The response should be a valid JSON.
+    EXPECT_NO_THROW(rsp = Element::fromJSON(response));
+    ASSERT_TRUE(rsp);
+
+    EXPECT_EQ("{ \"result\": 1, \"text\": \"'origin-id' argument must be a number\" }", response);
 
     sendUnixCommand("{"
                     "    \"command\": \"dhcp-enable\","
@@ -1878,7 +1964,6 @@ TEST_F(CtrlChannelDhcpv4SrvTest, dhcpEnableBadParam) {
                     "        \"origin\": \"\""
                     "    }"
                     "}", response);
-    ConstElementPtr rsp;
 
     // The response should be a valid JSON.
     EXPECT_NO_THROW(rsp = Element::fromJSON(response));
@@ -1978,6 +2063,61 @@ TEST_F(CtrlChannelDhcpv4SrvTest, dhcpEnable) {
     cfg = parseAnswer(status, rsp);
     EXPECT_EQ(CONTROL_RESULT_SUCCESS, status);
 
+    EXPECT_TRUE(server_->network_state_->isServiceEnabled());
+}
+
+// This test verifies if it is possible to enable DHCP service using
+// the origin-id.
+TEST_F(CtrlChannelDhcpv4SrvTest, dhcpEnableOriginId) {
+    createUnixChannelServer();
+    std::string response;
+
+    ConstElementPtr rsp;
+
+    int status;
+
+    // Disable the service using two distinct origins.
+    server_->network_state_->disableService(NetworkState::HA_REMOTE_COMMAND+1);
+    server_->network_state_->disableService(NetworkState::USER_COMMAND);
+
+    EXPECT_FALSE(server_->network_state_->isServiceEnabled());
+
+    // Enable the service for the 'origin-id' of 2001. The 'origin' should
+    // be ignored.
+    sendUnixCommand("{"
+                    "    \"command\": \"dhcp-enable\","
+                    "    \"arguments\": {"
+                    "        \"origin-id\": 2001,"
+                    "        \"origin\": \"user\""
+                    "    }"
+                    "}", response);
+
+    // The response should be a valid JSON.
+    EXPECT_NO_THROW(rsp = Element::fromJSON(response));
+    ASSERT_TRUE(rsp);
+
+    ConstElementPtr cfg = parseAnswer(status, rsp);
+    EXPECT_EQ(CONTROL_RESULT_SUCCESS, status);
+
+    // The service should still be disabled.
+    EXPECT_FALSE(server_->network_state_->isServiceEnabled());
+
+    // Enable the service for the user command.
+    sendUnixCommand("{"
+                    "    \"command\": \"dhcp-enable\","
+                    "    \"arguments\": {"
+                    "        \"origin-id\": 1"
+                    "    }"
+                    "}", response);
+
+    // The response should be a valid JSON.
+    EXPECT_NO_THROW(rsp = Element::fromJSON(response));
+    ASSERT_TRUE(rsp);
+
+    cfg = parseAnswer(status, rsp);
+    EXPECT_EQ(CONTROL_RESULT_SUCCESS, status);
+
+    // The service should be enabled.
     EXPECT_TRUE(server_->network_state_->isServiceEnabled());
 }
 

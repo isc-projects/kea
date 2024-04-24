@@ -3076,7 +3076,7 @@ HAService::asyncSyncCompleteNotify(HttpClient& http_client,
 }
 
 ConstElementPtr
-HAService::processSyncCompleteNotify(const unsigned int origin) {
+HAService::processSyncCompleteNotify(const unsigned int origin_id) {
     if (getCurrState() == HA_PARTNER_DOWN_ST) {
         sync_complete_notified_ = true;
         // We're in the partner-down state and the partner notified us
@@ -3091,7 +3091,7 @@ HAService::processSyncCompleteNotify(const unsigned int origin) {
     // Release the network state lock for the remote origin because we have
     // acquired the local network state lock above (partner-down state), or
     // we don't need the lock (other states).
-    network_state_->enableService(origin);
+    network_state_->enableService(origin_id);
     return (createAnswer(CONTROL_RESULT_SUCCESS,
                          "Server successfully notified about the synchronization completion."));
 }

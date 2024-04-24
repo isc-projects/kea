@@ -2366,7 +2366,7 @@ responding to clients.
        "command": "ha-sync-complete-notify",
        "service": [ "dhcp4" ],
        "arguments": {
-           "origin": 2000,
+           "origin-id": 2000,
            "server-name": "server2"
        }
    }
@@ -2375,9 +2375,11 @@ The optional ``server-name`` parameter specifies a name of one of the partners b
 to the HA relationship this command pertains to. This parameter can be omitted if the
 server receiving this command has only one HA relationship in the configuration.
 
-The ``origin`` parameter is used to select the HA service for which the receiving server should
+The ``origin-id`` parameter is used to select the HA service for which the receiving server should
 enable the DHCP service when it receives this notification. This is the same origin the
 sending server used previously to disable the DHCP service before synchronization.
+The ``origin-id`` parameter deprecates the ``origin`` parameter used in some earlier
+Kea versions.
 
 It elicits the response:
 

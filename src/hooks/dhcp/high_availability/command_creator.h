@@ -24,7 +24,7 @@ public:
 
     /// @brief Creates dhcp-disable command for DHCP server.
     ///
-    /// @param origin A numeric value of the origin created from the
+    /// @param origin_id A numeric value of the origin created from the
     /// @c HAService identifier.
     /// @param max_period The max-period time the service can stay disabled
     /// before automatically transitioning to enabled state.
@@ -32,19 +32,19 @@ public:
     ///
     /// @return Pointer to the JSON representation of the command.
     static data::ConstElementPtr
-    createDHCPDisable(const unsigned int origin,
+    createDHCPDisable(const unsigned int origin_id,
                       const unsigned int max_period,
                       const HAServerType& server_type);
 
     /// @brief Creates dhcp-enable command for DHCP server.
     ///
-    /// @param origin A numeric value of the origin created from the
+    /// @param origin_id A numeric value of the origin created from the
     /// @c HAService identifier.
     /// @param server_type type of the DHCP server, i.e. v4 or v6.
     ///
     /// @return Pointer to the JSON representation of the command.
     static data::ConstElementPtr
-    createDHCPEnable(const unsigned int origin,
+    createDHCPEnable(const unsigned int origin_id,
                      const HAServerType& server_type);
 
     /// @brief Creates ha-reset command.
@@ -185,14 +185,14 @@ public:
 
     /// @brief Creates ha-sync-complete-notify command.
     ///
-    /// @param origin a numeric value of the origin created from the
+    /// @param origin_id a numeric value of the origin created from the
     /// @c HAService identifier to enable the DHCP service.
     /// @param server_name name of the server sending the command allowing
     /// for associating the command with the relationship.
     /// @param server_type type of the DHCP server, i.e. v4 or v6.
     /// @return Pointer to the JSON representation of the command.
     static data::ConstElementPtr
-    createSyncCompleteNotify(const unsigned int origin,
+    createSyncCompleteNotify(const unsigned int origin_id,
                              const std::string& server_name,
                              const HAServerType& server_type);
 

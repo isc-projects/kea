@@ -156,24 +156,30 @@ TEST(CommandCreatorTest, createDHCPDisable4) {
     ConstElementPtr arguments;
     ASSERT_NO_FATAL_FAILURE(testCommandBasics(command, "dhcp-disable", "dhcp4",
                                               arguments));
-    ASSERT_EQ(2, arguments->size());
+    ASSERT_EQ(3, arguments->size());
     ConstElementPtr max_period = arguments->get("max-period");
     ASSERT_TRUE(max_period);
     ASSERT_EQ(Element::integer, max_period->getType());
     EXPECT_EQ(20, max_period->intValue());
+    ConstElementPtr origin_id = arguments->get("origin-id");
+    ASSERT_TRUE(origin_id);
+    ASSERT_EQ(NetworkState::HA_REMOTE_COMMAND+1, origin_id->intValue());
     ConstElementPtr origin = arguments->get("origin");
     ASSERT_TRUE(origin);
-    ASSERT_EQ(NetworkState::HA_REMOTE_COMMAND+1, origin->intValue());
+    ASSERT_EQ("ha-partner", origin->stringValue());
 
     // Repeat the test but this time the max-period is not specified.
     command = CommandCreator::createDHCPDisable(NetworkState::HA_REMOTE_COMMAND+1, 0,
                                                 HAServerType::DHCPv4);
     ASSERT_NO_FATAL_FAILURE(testCommandBasics(command, "dhcp-disable", "dhcp4",
                                               arguments));
-    ASSERT_EQ(1, arguments->size());
+    ASSERT_EQ(2, arguments->size());
+    origin_id = arguments->get("origin-id");
+    ASSERT_TRUE(origin_id);
+    ASSERT_EQ(NetworkState::HA_REMOTE_COMMAND+1, origin_id->intValue());
     origin = arguments->get("origin");
     ASSERT_TRUE(origin);
-    ASSERT_EQ(NetworkState::HA_REMOTE_COMMAND+1, origin->intValue());
+    ASSERT_EQ("ha-partner", origin->stringValue());
 }
 
 // This test verifies that the dhcp-enable command is correct.
@@ -183,10 +189,13 @@ TEST(CommandCreatorTest, createDHCPEnable4) {
                                                                HAServerType::DHCPv4);
     ASSERT_NO_FATAL_FAILURE(testCommandBasics(command, "dhcp-enable", "dhcp4",
                                               arguments));
-    ASSERT_EQ(1, arguments->size());
+    ASSERT_EQ(2, arguments->size());
+    ConstElementPtr origin_id = arguments->get("origin-id");
+    ASSERT_TRUE(origin_id);
+    ASSERT_EQ(NetworkState::HA_REMOTE_COMMAND+1, origin_id->intValue());
     ConstElementPtr origin = arguments->get("origin");
     ASSERT_TRUE(origin);
-    ASSERT_EQ(NetworkState::HA_REMOTE_COMMAND+1, origin->intValue());
+    ASSERT_EQ("ha-partner", origin->stringValue());
 }
 
 // This test verifies that the ha-reset command sent to DHCPv4 server is correct.
@@ -302,23 +311,29 @@ TEST(CommandCreatorTest, createDHCPDisable6) {
     ConstElementPtr arguments;
     ASSERT_NO_FATAL_FAILURE(testCommandBasics(command, "dhcp-disable", "dhcp6",
                                               arguments));
-    ASSERT_EQ(2, arguments->size());
+    ASSERT_EQ(3, arguments->size());
     ConstElementPtr max_period = arguments->get("max-period");
     ASSERT_TRUE(max_period);
     ASSERT_EQ(Element::integer, max_period->getType());
     EXPECT_EQ(20, max_period->intValue());
+    ConstElementPtr origin_id = arguments->get("origin-id");
+    ASSERT_TRUE(origin_id);
+    ASSERT_EQ(NetworkState::HA_REMOTE_COMMAND+2, origin_id->intValue());
     ConstElementPtr origin = arguments->get("origin");
     ASSERT_TRUE(origin);
-    ASSERT_EQ(NetworkState::HA_REMOTE_COMMAND+2, origin->intValue());
+    ASSERT_EQ("ha-partner", origin->stringValue());
 
     // Repeat the test but this time the max-period is not specified.
     command = CommandCreator::createDHCPDisable(NetworkState::HA_REMOTE_COMMAND+2, 0, HAServerType::DHCPv6);
     ASSERT_NO_FATAL_FAILURE(testCommandBasics(command, "dhcp-disable", "dhcp6",
                                               arguments));
-    ASSERT_EQ(1, arguments->size());
+    ASSERT_EQ(2, arguments->size());
+    origin_id = arguments->get("origin-id");
+    ASSERT_TRUE(origin_id);
+    ASSERT_EQ(NetworkState::HA_REMOTE_COMMAND+2, origin_id->intValue());
     origin = arguments->get("origin");
     ASSERT_TRUE(origin);
-    ASSERT_EQ(NetworkState::HA_REMOTE_COMMAND+2, origin->intValue());
+    ASSERT_EQ("ha-partner", origin->stringValue());
 }
 
 // This test verifies that the dhcp-enable command (DHCPv6 case) is
@@ -328,10 +343,13 @@ TEST(CommandCreatorTest, createDHCPEnable6) {
     ConstElementPtr command = CommandCreator::createDHCPEnable(NetworkState::HA_REMOTE_COMMAND+2, HAServerType::DHCPv6);
     ASSERT_NO_FATAL_FAILURE(testCommandBasics(command, "dhcp-enable", "dhcp6",
                                               arguments));
-    ASSERT_EQ(1, arguments->size());
+    ASSERT_EQ(2, arguments->size());
+    ConstElementPtr origin_id = arguments->get("origin-id");
+    ASSERT_TRUE(origin_id);
+    ASSERT_EQ(NetworkState::HA_REMOTE_COMMAND+2, origin_id->intValue());
     ConstElementPtr origin = arguments->get("origin");
     ASSERT_TRUE(origin);
-    ASSERT_EQ(NetworkState::HA_REMOTE_COMMAND+2, origin->intValue());
+    ASSERT_EQ("ha-partner", origin->stringValue());
 }
 
 // This test verifies that the ha-reset command sent to DHCPv6 server is correct.
@@ -542,10 +560,10 @@ TEST(CommandCreatorTest, createSyncCompleteNotify4) {
     ASSERT_TRUE(server_name);
     ASSERT_EQ(Element::string, server_name->getType());
     EXPECT_EQ("server1", server_name->stringValue());
-    auto origin = arguments->get("origin");
-    ASSERT_TRUE(origin);
-    EXPECT_EQ(Element::integer, origin->getType());
-    EXPECT_EQ(1, origin->intValue());
+    auto origin_id = arguments->get("origin-id");
+    ASSERT_TRUE(origin_id);
+    EXPECT_EQ(Element::integer, origin_id->getType());
+    EXPECT_EQ(1, origin_id->intValue());
 }
 
 // This test verifies that the ha-sync-complete-notify command sent to a
@@ -558,10 +576,10 @@ TEST(CommandCreatorTest, createSyncCompleteNotify6) {
     ASSERT_TRUE(server_name);
     ASSERT_EQ(Element::string, server_name->getType());
     EXPECT_EQ("server1", server_name->stringValue());
-    auto origin = arguments->get("origin");
-    ASSERT_TRUE(origin);
-    EXPECT_EQ(Element::integer, origin->getType());
-    EXPECT_EQ(1, origin->intValue());
+    auto origin_id = arguments->get("origin-id");
+    ASSERT_TRUE(origin_id);
+    EXPECT_EQ(Element::integer, origin_id->getType());
+    EXPECT_EQ(1, origin_id->intValue());
 }
 
 }
