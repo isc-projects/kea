@@ -73,6 +73,9 @@ SYSTEMS = {
         '8': True,
         '9': True,
     },
+    'rocky': {
+        '9': True,
+    },
     'ubuntu': {
         '16.04': False,
         '18.04': True,
@@ -275,6 +278,8 @@ def get_system_revision():
             elif system == 'redhat':
                 system = 'rhel'
                 revision = revision[0]
+            elif system == 'rocky':
+                revision = revision[0]
             elif system == 'centos':
                 revision = revision[0]
             if not system or not revision:
@@ -290,10 +295,14 @@ def get_system_revision():
 
                 for i in ['ID', 'ID_LIKE']:
                     if i in vals:
-                        system_candidate=vals[i].strip('"')
-                        if system_candidate in SYSTEMS:
-                            system = system_candidate
-                            break
+                        system_candidates=vals[i].strip('"').split()
+                        for system_candidate in system_candidates:
+                            if system_candidate in SYSTEMS:
+                                system = system_candidate
+                                break
+                        else:
+                           continue
+                        break
                 if system is None:
                     raise Exception('cannot determine system')
 
@@ -304,7 +313,7 @@ def get_system_revision():
                 if revision is None:
                     raise Exception('cannot determine revision')
 
-                if system in ['alpine', 'rhel']:
+                if system in ['alpine', 'rhel', 'rocky']:
                     revision = revision.rsplit('.', 1)[0]
             else:
                 raise Exception('cannot determine system or its revision')
@@ -496,8 +505,8 @@ def install_pkgs(pkgs, timeout=60, env=None, check_times=False, pkg_cache=None):
         pkg_cache = {}
 
     # prepare cache if needed
-    if not pkg_cache and system in ['centos', 'rhel', 'fedora', 'debian', 'ubuntu']:#, 'alpine']: # TODO: complete caching support for alpine
-        if system in ['centos', 'rhel', 'fedora']:
+    if not pkg_cache and system in ['centos', 'rhel', 'fedora', 'debian', 'ubuntu', 'rocky']:#, 'alpine']: # TODO: complete caching support for alpine
+        if system in ['centos', 'rhel', 'fedora', 'rocky']:
             pkg_cache.update(_prepare_installed_packages_cache_for_rpms())
         elif system in ['debian', 'ubuntu']:
             pkg_cache.update(_prepare_installed_packages_cache_for_debs())
@@ -521,7 +530,7 @@ def install_pkgs(pkgs, timeout=60, env=None, check_times=False, pkg_cache=None):
         log.info('all packages already installed')
         return
 
-    if system in ['centos', 'fedora', 'rhel']:
+    if system in ['centos', 'fedora', 'rhel', 'rocky']:
         if system in ['centos', 'rhel'] and revision == '7':
             execute('sudo yum install -y dnf')
         cmd = 'sudo dnf -y install'
@@ -892,7 +901,7 @@ class VagrantEnv(object):
                     upload_cmd += ' -X POST -H "Content-Type: multipart/form-data" --data-binary "@%s" '
                     file_ext = 'deb' # include both '.deb' and '.ddeb' files
 
-                elif self.system in ['fedora', 'centos', 'rhel']:
+                elif self.system in ['fedora', 'centos', 'rhel', 'rocky']:
                     upload_cmd += ' --upload-file %s '
                     file_ext = '.rpm'
 
@@ -1026,7 +1035,7 @@ class VagrantEnv(object):
 
         # RPM-based distributions install libraries in /usr/local/lib64, but they
         # tend to not look there at runtime without explicit mention in ld.so.conf.d.
-        if self.system in ['centos', 'fedora', 'rhel']:
+        if self.system in ['centos', 'fedora', 'rhel', 'rocky']:
             self.execute('sudo echo /usr/local/lib64 > /etc/ld.so.conf.d/kea.conf')
             # ldconfig only in case the change above was not there before system startup
             self.execute('sudo ldconfig')
@@ -1058,7 +1067,7 @@ class VagrantEnv(object):
         log.info('')
 
     def prepare_for_boxing(self):
-        if self.system in ['debian', 'ubuntu', 'fedora', 'centos', 'rhel']:
+        if self.system in ['debian', 'ubuntu', 'fedora', 'centos', 'rhel', 'rocky']:
             # setup a script that on first boot will set machine-id
             cmd = 'bash -c \'cat <<EOF | sudo tee /usr/lib/systemd/system/systemd-firstboot.service\n'
             cmd += '[Unit]\n'
@@ -1107,11 +1116,11 @@ def _install_gtest_sources():
 def _install_libyang_from_sources(ignore_errors = False):
     """Install libyang from sources."""
     for prefix in ['/usr', '/usr/local']:
-        libyang_so = f'{prefix}/lib/libyang.so'
+        libyang_so_candidates = [f'{prefix}/lib/libyang.so', f'{prefix}/lib64/libyang.so']
         libyang_header = f'{prefix}/include/libyang/version.h'
-        if (os.path.exists(libyang_so) and os.path.exists(libyang_header) and
+        if (any(os.path.exists(i) for i in libyang_so_candidates) and os.path.exists(libyang_header) and
             execute(f"grep -F '#define LY_VERSION_MAJOR 2' '{libyang_header}'", raise_error=False) == 0):
-            log.info(f'libyang is already installed at {libyang_so}.')
+            log.info(f'libyang is already installed at {libyang_header}.')
             return
 
     version='v2.1.4'
@@ -1139,11 +1148,11 @@ def _install_libyang_from_sources(ignore_errors = False):
 def _install_sysrepo_from_sources(ignore_errors = False):
     """Install sysrepo from sources."""
     for prefix in ['/usr', '/usr/local']:
-        sysrepo_so = f'{prefix}/lib/libsysrepo.so'
+        sysrepo_so_candidates = [f'{prefix}/lib/libsysrepo.so', f'{prefix}/lib64/libsysrepo.so']
         sysrepo_header = f'{prefix}/include/sysrepo/version.h'
-        if (os.path.exists(sysrepo_so) and os.path.exists(sysrepo_header) and
+        if (any(os.path.exists(i) for i in sysrepo_so_candidates) and os.path.exists(sysrepo_header) and
             execute(f"grep -F '#define SR_VERSION_MAJOR 7' '{sysrepo_header}'", raise_error=False) == 0):
-            log.info(f'sysrepo is already installed at {sysrepo_so}.')
+            log.info(f'sysrepo is already installed at {sysrepo_header}.')
             return
 
     version='v2.2.12'
@@ -1174,9 +1183,9 @@ def _install_sysrepo_from_sources(ignore_errors = False):
 
 def _install_libyang_cpp_from_sources(ignore_errors = False):
     """Install libyang-cpp from sources."""
-    for prefix in ['/usr', '/usr/local']:
-        libyang_cpp_so = f'{prefix}/lib/libyang-cpp.so'
-        libyang_cpp_pc = f'{prefix}/lib/pkgconfig/libyang-cpp.pc'
+    for prefix_lib in ['/usr/lib', '/usr/lib64', '/usr/local/lib', '/usr/local/lib64']:
+        libyang_cpp_so = f'{prefix_lib}/libyang-cpp.so'
+        libyang_cpp_pc = f'{prefix_lib}/pkgconfig/libyang-cpp.pc'
         if (os.path.exists(libyang_cpp_so) and os.path.exists(libyang_cpp_pc) and
             execute(f"grep -F 'Version: 1.1.0' '{libyang_cpp_pc}'", raise_error=False) == 0):
             log.info(f'libyang-cpp is already installed at {libyang_cpp_so}.')
@@ -1206,9 +1215,9 @@ def _install_libyang_cpp_from_sources(ignore_errors = False):
 
 def _install_sysrepo_cpp_from_sources(ignore_errors = False):
     """Install sysrepo-cpp from sources."""
-    for prefix in ['/usr', '/usr/local']:
-        sysrepo_cpp_so = f'{prefix}/lib/libsysrepo-cpp.so'
-        sysrepo_cpp_pc = f'{prefix}/lib/pkgconfig/sysrepo-cpp.pc'
+    for prefix_lib in ['/usr/lib', '/usr/lib64', '/usr/local/lib', '/usr/local/lib64']:
+        sysrepo_cpp_so = f'{prefix_lib}/libsysrepo-cpp.so'
+        sysrepo_cpp_pc = f'{prefix_lib}/pkgconfig/sysrepo-cpp.pc'
         if (os.path.exists(sysrepo_cpp_so) and os.path.exists(sysrepo_cpp_pc) and
             execute(f"grep -F 'Version: 1.1.0' '{sysrepo_cpp_pc}'", raise_error=False) == 0):
             log.info(f'sysrepo-cpp is already installed at {sysrepo_cpp_so}.')
@@ -1331,7 +1340,7 @@ ssl_key = {cert_dir}/kea-client.key
         # For all added files and directories, change owner to mysql.
         execute('sudo chown -R mysql:mysql {} {}'.format(cert_dir, kea_cnf))
 
-    if system in ['debian', 'fedora', 'centos', 'rhel']:
+    if system in ['debian', 'fedora', 'centos', 'rhel', 'rocky']:
         execute('sudo systemctl enable mariadb.service')
         exit_code = execute('sudo systemctl restart mariadb.service', raise_error=False)
         if exit_code != 0:
@@ -1476,7 +1485,7 @@ def _configure_pgsql(system, revision, features):
     # avoid the error:
     #   could not change as postgres user directory to "/home/jenkins": Permission denied
 
-    if system in ['fedora', 'centos', 'rhel']:
+    if system in ['fedora', 'centos', 'rhel', 'rocky']:
         # https://fedoraproject.org/wiki/PostgreSQL
         exitcode = execute('sudo ls /var/lib/pgsql/data/postgresql.conf', raise_error=False)
         if exitcode != 0:
@@ -1589,8 +1598,8 @@ def _get_package_version(package: str):
         cmd = "apk search --exact {0} | sed 's/{0}-//g'"
     elif system in ['debian', 'ubuntu']:
         cmd = "apt-cache show {} | grep -F 'Version:' | cut -d ' ' -f 2"
-    elif system in ['centos', 'fedora', 'rhel']:
-        cmd = "dnf list {} | tr -s ' ' | cut -d ' ' -f 2 | tail -n 1"
+    elif system in ['centos', 'fedora', 'rhel', 'rocky']:
+        cmd = "dnf list {} -y | tr -s ' ' | cut -d ' ' -f 2 | tail -n 1"
     elif system == 'freebsd':
         cmd = "pkg search {0} | grep -Eo '^{0}-[0-9_,\.]+' | sed 's/{0}-//g'"
     elif system == 'arch':
@@ -1789,6 +1798,42 @@ def install_packages_local(system, revision, features, check_times, ignore_error
             packages.append('wget')
             deferred_functions.append(_install_gtest_sources)
 
+        install_pkgs(packages, env=env, timeout=120, check_times=check_times)
+
+    # prepare rocky
+    elif system == 'rocky':
+        install_pkgs('epel-release', env=env, check_times=check_times)
+
+        packages = ['autoconf', 'automake', 'bison', 'boost-devel', 'flex', 'gcc-c++',
+                    'libtool', 'log4cplus-devel', 'make',
+                    'openssl-devel']
+
+        if 'docs' in features:
+            packages.extend(['python3-sphinx', 'python3-sphinx_rtd_theme'])
+
+        if 'native-pkg' in features:
+            packages.extend(['bison', 'flex', 'python3-devel', 'rpm-build'])
+
+        if 'mysql' in features:
+            packages.extend(['mariadb', 'mariadb-server', 'mariadb-connector-c-devel'])
+
+        if 'pgsql' in features:
+            packages.extend(['postgresql', 'postgresql-server', 'postgresql-server-devel'])
+
+        if 'gssapi' in features:
+            packages.extend(['krb5-devel'])
+
+        if 'ccache' in features:
+            packages.extend(['ccache'])
+
+        if 'netconf' in features:
+            packages.extend(['cmake', 'git', 'pcre2-devel'])
+
+        if 'unittest' in features:
+            packages.append('wget')
+            deferred_functions.append(_install_gtest_sources)
+
+        execute('sudo dnf config-manager --set-enabled crb')
         install_pkgs(packages, env=env, timeout=120, check_times=check_times)
 
     # prepare ubuntu
@@ -2037,7 +2082,7 @@ def _prepare_ccache_if_needed(system, ccache_dir, env):
     if ccache_dir is not None:
         if system in ['debian', 'ubuntu']:
             ccache_bin_path = '/usr/lib/ccache/'
-        elif system in ['centos', 'rhel', 'fedora']:
+        elif system in ['centos', 'rhel', 'fedora', 'rocky']:
             ccache_bin_path = '/usr/lib64/ccache'
             env['CC'] = 'ccache gcc'
             env['CXX'] = 'ccache g++'
@@ -2071,7 +2116,7 @@ def _build_binaries_and_run_ut(system, revision, features, tarball_path, env, ch
         cmd += ' --with-pgsql'
     if 'unittest' in features:
         # prepare gtest switch - use downloaded gtest sources only if it is not present as native package
-        if system in ['centos', 'fedora', 'rhel', 'freebsd', 'alpine']:
+        if system in ['centos', 'fedora', 'rhel', 'freebsd', 'alpine', 'rocky']:
             cmd += ' --with-gtest-source=/usr/src/googletest-release-1.10.0/googletest/'
         elif system == 'debian' and revision == '8':
             cmd += ' --with-gtest-source=/usr/src/googletest-release-1.10.0/googletest/'
@@ -2390,7 +2435,7 @@ def _build_native_pkg(system, revision, features, tarball_path, env, check_times
     repo_url = _get_full_repo_url(repository_url, system, revision, pkg_version)
     assert repo_url is not None
 
-    if system in ['fedora', 'centos', 'rhel']:
+    if system in ['fedora', 'centos', 'rhel', 'rocky']:
         _build_rpm(system, revision, features, tarball_path, env, check_times, dry_run,
                    pkg_version, pkg_isc_version, repo_url)
 
@@ -2411,7 +2456,7 @@ def _build_native_pkg(system, revision, features, tarball_path, env, check_times
     if system in ['ubuntu', 'debian']:
         execute('mv kea-src/isc-kea_* %s' % pkgs_dir)
         execute('mv kea-src/*deb %s' % pkgs_dir)
-    elif system in ['fedora', 'centos', 'rhel']:
+    elif system in ['fedora', 'centos', 'rhel', 'rocky']:
         execute('mv pkgs/* %s' % pkgs_dir)
     elif system in ['alpine']:
         # Don't move files if the source and the target locations are the same.
@@ -2529,7 +2574,7 @@ def ssh(provider, system, revision):
 
 def _install_vagrant(ver=RECOMMENDED_VAGRANT_VERSION, upgrade=False):
     system, _ = get_system_revision()
-    if system in ['fedora', 'centos', 'rhel']:
+    if system in ['fedora', 'centos', 'rhel', 'rocky']:
         if upgrade:
             execute('sudo yum remove -y vagrant')
         execute('mkdir -p ~/.hammer-tmp')
@@ -2960,7 +3005,7 @@ def upload_to_repo(args, pkgs_dir):
         upload_cmd += ' -X POST -H "Content-Type: multipart/form-data" --data-binary "@%s" '
         file_ext = 'deb' # include both '.deb' and '.ddeb' files
 
-    elif system in ['fedora', 'centos', 'rhel']:
+    elif system in ['fedora', 'centos', 'rhel', 'rocky']:
         upload_cmd += ' --upload-file %s '
         file_ext = '.rpm'
 
