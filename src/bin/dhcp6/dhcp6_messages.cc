@@ -216,7 +216,7 @@ const char* values[] = {
     "DHCP6_DB_RECONNECT_LOST_CONNECTION", "database connection lost.",
     "DHCP6_DB_RECONNECT_NO_DB_CTL", "unexpected error in database reconnect",
     "DHCP6_DB_RECONNECT_SUCCEEDED", "database connection recovered.",
-    "DHCP6_DDNS_CREATE_ADD_NAME_CHANGE_REQUEST", "created name change request: %1",
+    "DHCP6_DDNS_CREATE_ADD_NAME_CHANGE_REQUEST", "%1: created name change request: %2",
     "DHCP6_DDNS_FQDN_GENERATED", "%1: generated FQDN for the client: %2",
     "DHCP6_DDNS_GENERATED_FQDN_UPDATE_FAIL", "%1: failed to update the lease using address %2, after generating FQDN for a client, reason: %3",
     "DHCP6_DDNS_GENERATE_FQDN", "%1: client did not send a FQDN option; FQDN will be",

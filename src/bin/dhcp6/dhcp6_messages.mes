@@ -198,7 +198,7 @@ should be reported.
 This info message indicates that the connection has been recovered and the dhcp
 service has been restored.
 
-% DHCP6_DDNS_CREATE_ADD_NAME_CHANGE_REQUEST created name change request: %1
+% DHCP6_DDNS_CREATE_ADD_NAME_CHANGE_REQUEST %1: created name change request: %2
 This debug message is logged when the new NameChangeRequest has been created
 to perform the DNS Update, which adds new RRs.
 

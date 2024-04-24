@@ -2416,8 +2416,9 @@ Dhcpv6Srv::createNameChangeRequests(const Pkt6Ptr& answer,
                                         calculateDdnsTtl(iaaddr->getValid(),
                                                          ctx.getDdnsParams()->getTtlPercent()),
                                         cr_mode));
-        LOG_DEBUG(ddns6_logger, DBG_DHCP6_DETAIL,
-                  DHCP6_DDNS_CREATE_ADD_NAME_CHANGE_REQUEST).arg(ncr->toText());
+        LOG_DEBUG(ddns6_logger, DBG_DHCP6_DETAIL, DHCP6_DDNS_CREATE_ADD_NAME_CHANGE_REQUEST)
+            .arg(answer->getLabel())
+            .arg(ncr->toText());
 
         // Post the NCR to the D2ClientMgr.
         CfgMgr::instance().getD2ClientMgr().sendRequest(ncr);
