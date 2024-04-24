@@ -20,6 +20,8 @@
 //#include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
 
+#include "dhcp/pkt.h"
+
 using namespace std;
 using namespace isc::log;
 
@@ -83,6 +85,13 @@ public:
     ///
     /// @param new_string the string to add to the end of the vector
     void addString(const string& new_string);
+
+    /// @brief Generates and adds a string to the vector of expected strings
+    ///
+    /// @param logger_msg logger message that will be prepended to the string
+    /// @param new_string the string used to generate the outcome
+    /// @param pkt reference to the packet for which the message is generated
+    void addString(const string& logger_msg, const string& new_string, Pkt& pkt);
 
     vector<string> exp_strings_;
     static const char* LOG_FILE;

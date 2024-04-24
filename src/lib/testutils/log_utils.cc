@@ -118,6 +118,12 @@ void LogContentTest::addString(const string& new_string) {
     exp_strings_.push_back(new_string);
 }
 
+void LogContentTest::addString(const string& logger_msg, const string& new_string, Pkt& pkt) {
+    std::ostringstream stream;
+    stream << logger_msg << " " << pkt.getLabel() << ": " << new_string;
+    exp_strings_.push_back(stream.str());
+}
+
 // Set up the name of the LOG_FILE for use in checking
 // the debug statements.
 // Must not be the same file name used by test shell scripts.

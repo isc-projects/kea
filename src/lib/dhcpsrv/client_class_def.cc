@@ -148,21 +148,25 @@ ClientClassDef::test(PktPtr pkt, const ExpressionPtr& expr_ptr) {
         bool status = evaluateBool(*expr_ptr, *pkt);
         if (status) {
             LOG_INFO(dhcpsrv_logger, EVAL_RESULT)
+                .arg(pkt->getLabel())
                 .arg(getName())
                 .arg("true");
             // Matching: add the class
             pkt->addClass(getName());
         } else {
             LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, EVAL_RESULT)
+                .arg(pkt->getLabel())
                 .arg(getName())
                 .arg("false");
         }
     } catch (const Exception& ex) {
         LOG_ERROR(dhcpsrv_logger, EVAL_RESULT)
+            .arg(pkt->getLabel())
             .arg(getName())
             .arg(ex.what());
     } catch (...) {
         LOG_ERROR(dhcpsrv_logger, EVAL_RESULT)
+            .arg(pkt->getLabel())
             .arg(getName())
             .arg("get exception?");
     }
@@ -184,6 +188,7 @@ TemplateClientClassDef::test(PktPtr pkt, const ExpressionPtr& expr_ptr) {
         std::string subclass = evaluateString(*expr_ptr, *pkt);
         if (!subclass.empty()) {
             LOG_INFO(dhcpsrv_logger, EVAL_RESULT)
+                .arg(pkt->getLabel())
                 .arg(getName())
                 .arg(subclass);
             // Matching: add the subclass
@@ -195,10 +200,12 @@ TemplateClientClassDef::test(PktPtr pkt, const ExpressionPtr& expr_ptr) {
         }
     } catch (const Exception& ex) {
         LOG_ERROR(dhcpsrv_logger, EVAL_RESULT)
+            .arg(pkt->getLabel())
             .arg(getName())
             .arg(ex.what());
     } catch (...) {
         LOG_ERROR(dhcpsrv_logger, EVAL_RESULT)
+            .arg(pkt->getLabel())
             .arg(getName())
             .arg("get exception?");
     }

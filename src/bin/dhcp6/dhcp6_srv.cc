@@ -4476,21 +4476,25 @@ Dhcpv6Srv::requiredClassify(const Pkt6Ptr& pkt, AllocEngine::ClientContext6& ctx
             bool status = evaluateBool(*expr_ptr, *pkt);
             if (status) {
                 LOG_INFO(dhcp6_logger, EVAL_RESULT)
+                    .arg(pkt->getLabel())
                     .arg(cclass)
                     .arg("true");
                 // Matching: add the class
                 pkt->addClass(cclass);
             } else {
                 LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, EVAL_RESULT)
+                    .arg(pkt->getLabel())
                     .arg(cclass)
                     .arg("false");
             }
         } catch (const Exception& ex) {
             LOG_ERROR(dhcp6_logger, EVAL_RESULT)
+                .arg(pkt->getLabel())
                 .arg(cclass)
                 .arg(ex.what());
         } catch (...) {
             LOG_ERROR(dhcp6_logger, EVAL_RESULT)
+                .arg(pkt->getLabel())
                 .arg(cclass)
                 .arg("get exception?");
         }
