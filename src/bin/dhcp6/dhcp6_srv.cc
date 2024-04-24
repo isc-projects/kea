@@ -805,6 +805,7 @@ Dhcpv6Srv::processPacket(Pkt6Ptr query) {
     if (!skip_unpack) {
         try {
             LOG_DEBUG(options6_logger, DBG_DHCP6_DETAIL, DHCP6_BUFFER_UNPACK)
+                .arg(query->getLabel())
                 .arg(query->getRemoteAddr().toText())
                 .arg(query->getLocalAddr().toText())
                 .arg(query->getIface());
@@ -814,6 +815,7 @@ Dhcpv6Srv::processPacket(Pkt6Ptr query) {
             // anyway.  Log it and let's hope for the best.
             LOG_DEBUG(options6_logger, DBG_DHCP6_DETAIL,
                       DHCP6_PACKET_OPTIONS_SKIPPED)
+                .arg(query->getLabel())
                 .arg(e.what());
         } catch (const std::exception &e) {
             // Failed to parse the packet.
@@ -1373,7 +1375,9 @@ Dhcpv6Srv::processPacketPktSend(hooks::CalloutHandlePtr& callout_handle,
         try {
             rsp->pack();
         } catch (const std::exception& e) {
-            LOG_ERROR(options6_logger, DHCP6_PACK_FAIL).arg(e.what());
+            LOG_ERROR(options6_logger, DHCP6_PACK_FAIL)
+                .arg(query->getLabel())
+                .arg(e.what());
             return;
         }
 

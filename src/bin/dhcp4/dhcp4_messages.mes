@@ -33,7 +33,7 @@ The DHCPv4 server tried to receive a packet but an error
 occurred during this attempt. The reason for the error is included in
 the message.
 
-% DHCP4_BUFFER_UNPACK parsing buffer received from %1 to %2 over interface %3
+% DHCP4_BUFFER_UNPACK %1: parsing buffer received from %2 to %3 over interface %4
 This debug message is issued when the server starts parsing the received
 buffer holding the DHCPv4 message. The arguments specify the source and
 destination IPv4 addresses as well as the interface over which the buffer has
@@ -763,7 +763,7 @@ identification information. The second argument contains the IPv4 address
 in the ciaddr field. The third argument contains the IPv4 address in the
 requested-ip-address option (if present).
 
-% DHCP4_PACKET_OPTIONS_SKIPPED An error unpacking an option, caused subsequent options to be skipped: %1
+% DHCP4_PACKET_OPTIONS_SKIPPED %1: An error unpacking an option, caused subsequent options to be skipped: %2
 A debug message issued when an option failed to unpack correctly, making it
 impossible to unpack the remaining options in the packet.  The server will
 server will still attempt to service the packet.

@@ -48,7 +48,7 @@ over the socket. When the message is logged the contents of the received
 packet hasn't been parsed yet. The only available information is the
 interface and the source and destination addresses/ports.
 
-% DHCP6_BUFFER_UNPACK parsing buffer received from %1 to %2 over interface %3
+% DHCP6_BUFFER_UNPACK %1: parsing buffer received from %2 to %3 over interface %4
 This debug message is issued when the server starts parsing the received
 buffer holding the DHCPv6 message. The arguments specify the source and
 destination addresses as well as the interface over which the buffer has
@@ -647,7 +647,7 @@ because packets of this type must be sent to multicast. The first argument
 specifies the client and transaction identification information, the
 second argument specifies packet type.
 
-% DHCP6_PACKET_OPTIONS_SKIPPED An error unpacking an option, caused subsequent options to be skipped: %1
+% DHCP6_PACKET_OPTIONS_SKIPPED %1: An error unpacking an option, caused subsequent options to be skipped: %2
 A debug message issued when an option failed to unpack correctly, making it
 impossible to unpack the remaining options in the packet.  The server will
 server will still attempt to service the packet.
@@ -698,7 +698,7 @@ This error is output if the IPv6 DHCP server fails to send an assembled
 DHCP message to a client. The reason for the error is included in the
 message.
 
-% DHCP6_PACK_FAIL failed to assemble response correctly
+% DHCP6_PACK_FAIL 1%: failed to assemble response correctly: %2
 This error is output if the server failed to assemble the data to be
 returned to the client into a valid packet.  The reason is most likely
 to be to a programming error: please raise a bug report.

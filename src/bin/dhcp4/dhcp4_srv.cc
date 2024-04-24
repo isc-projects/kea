@@ -1321,6 +1321,7 @@ Dhcpv4Srv::processPacket(Pkt4Ptr query, bool allow_answer_park) {
     if (!skip_unpack) {
         try {
             LOG_DEBUG(options4_logger, DBG_DHCP4_DETAIL, DHCP4_BUFFER_UNPACK)
+                .arg(query->getLabel())
                 .arg(query->getRemoteAddr().toText())
                 .arg(query->getLocalAddr().toText())
                 .arg(query->getIface());
@@ -1330,6 +1331,7 @@ Dhcpv4Srv::processPacket(Pkt4Ptr query, bool allow_answer_park) {
             // anyway.  Log it and let's hope for the best.
             LOG_DEBUG(options4_logger, DBG_DHCP4_DETAIL,
                       DHCP4_PACKET_OPTIONS_SKIPPED)
+                .arg(query->getLabel())
                 .arg(e.what());
         } catch (const std::exception& e) {
             // Failed to parse the packet.
