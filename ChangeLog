@@ -1,3 +1,9 @@
+2226.	[func]		piotrek
+	Added information about transaction ID in all possible
+	places in loggers: alloc-engine, bad-packets, ddns,
+	eval, leases, options, packets.
+	(Gitlab #2820)
+
 2225.	[func]		marcin
 	Ensure backward compatibility of High Availability
 	between Kea 2.5.8+ and earlier versions. It introduces
