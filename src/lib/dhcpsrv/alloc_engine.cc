@@ -1506,7 +1506,7 @@ AllocEngine::removeNonmatchingReservedLeases6(ClientContext6& ctx,
                         .arg(hosts.front()->getIdentifierAsText());
                 } else {
                     LOG_INFO(alloc_engine_logger, ALLOC_ENGINE_V6_REVOKED_PREFIX_LEASE)
-                        .arg(ctx.query_->toText())
+                        .arg(ctx.query_->getLabel())
                         .arg(candidate->addr_.toText())
                         .arg(static_cast<int>(candidate->prefixlen_))
                         .arg(ctx.duid_->toText())
