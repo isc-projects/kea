@@ -267,8 +267,8 @@ CommandCreator::createSyncCompleteNotify(const unsigned int origin_id,
     auto args = Element::createMap();
     args->set("server-name", Element::create(server_name));
     args->set("origin-id", Element::create(origin_id));
-    // Add for backward compatibility with Kea 2.4.0 and earlier.
-    args->set("origin", Element::create("ha-partner"));
+    // Add for backward compatibility with Kea 2.5.5.
+    args->set("origin", Element::create(origin_id));
     auto command = config::createCommand("ha-sync-complete-notify", args);
     insertService(command, server_type);
     return (command);

@@ -564,6 +564,10 @@ TEST(CommandCreatorTest, createSyncCompleteNotify4) {
     ASSERT_TRUE(origin_id);
     EXPECT_EQ(Element::integer, origin_id->getType());
     EXPECT_EQ(1, origin_id->intValue());
+    auto origin = arguments->get("origin");
+    ASSERT_TRUE(origin);
+    EXPECT_EQ(Element::integer, origin->getType());
+    EXPECT_EQ(1, origin->intValue());
 }
 
 // This test verifies that the ha-sync-complete-notify command sent to a
@@ -580,6 +584,10 @@ TEST(CommandCreatorTest, createSyncCompleteNotify6) {
     ASSERT_TRUE(origin_id);
     EXPECT_EQ(Element::integer, origin_id->getType());
     EXPECT_EQ(1, origin_id->intValue());
+    auto origin = arguments->get("origin");
+    ASSERT_TRUE(origin);
+    EXPECT_EQ(Element::integer, origin->getType());
+    EXPECT_EQ(1, origin->intValue());
 }
 
 }
