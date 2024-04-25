@@ -57,7 +57,6 @@ void Dhcp6to4Ipc::open() {
 void Dhcp6to4Ipc::handler(int /* fd */) {
     Dhcp6to4Ipc& ipc = Dhcp6to4Ipc::instance();
     Pkt6Ptr pkt;
-    string label = "duid=[no info], [no hwaddr info], tid=[no info]";
 
     try {
         LOG_DEBUG(packet6_logger, DBG_DHCP6_DETAIL, DHCP6_DHCP4O6_RECEIVING);
@@ -65,9 +64,7 @@ void Dhcp6to4Ipc::handler(int /* fd */) {
         pkt = ipc.receive();
 
         if (pkt) {
-            label = pkt->getLabel();
             LOG_DEBUG(packet6_logger, DBG_DHCP6_BASIC, DHCP6_DHCP4O6_PACKET_RECEIVED)
-                .arg(label)
                 .arg(static_cast<int>(pkt->getType()))
                 .arg(pkt->getRemoteAddr().toText())
                 .arg(pkt->getRemotePort())
@@ -75,7 +72,6 @@ void Dhcp6to4Ipc::handler(int /* fd */) {
         }
     } catch (const std::exception& e) {
         LOG_DEBUG(packet6_logger,DBG_DHCP6_DETAIL, DHCP6_DHCP4O6_RECEIVE_FAIL)
-            .arg(label)
             .arg(e.what());
     }
 

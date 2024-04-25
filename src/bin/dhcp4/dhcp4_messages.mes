@@ -22,24 +22,24 @@ the server.  In such an event, it would be necessary to manually remove
 the PID file.  The first argument is the DHCPv4 process name, the
 second contains the PID and PID file.
 
-% DHCP4_BUFFER_RECEIVED %1: received buffer from %2:%3 to %4:%5 over interface %6
+% DHCP4_BUFFER_RECEIVED received buffer from %1:%2 to %3:%4 over interface %5
 This debug message is logged when the server has received a packet
 over the socket. When the message is logged the contents of the received
 packet hasn't been parsed yet. The only available information is the
 interface and the source and destination IPv4 addresses/ports.
 
-% DHCP4_BUFFER_RECEIVE_FAIL %1: error on attempt to receive packet: %2
+% DHCP4_BUFFER_RECEIVE_FAIL error on attempt to receive packet: %1
 The DHCPv4 server tried to receive a packet but an error
 occurred during this attempt. The reason for the error is included in
 the message.
 
-% DHCP4_BUFFER_UNPACK %1: parsing buffer received from %2 to %3 over interface %4
+% DHCP4_BUFFER_UNPACK parsing buffer received from %1 to %2 over interface %3
 This debug message is issued when the server starts parsing the received
 buffer holding the DHCPv4 message. The arguments specify the source and
 destination IPv4 addresses as well as the interface over which the buffer has
 been received.
 
-% DHCP4_BUFFER_WAIT_SIGNAL %1: signal received while waiting for next packet
+% DHCP4_BUFFER_WAIT_SIGNAL signal received while waiting for next packet
 This debug message is issued when the server was waiting for the
 packet, but the wait has been interrupted by the signal received
 by the process. The signal will be handled before the server starts
@@ -318,7 +318,7 @@ will be only able to offer global options - no addresses will be assigned.
 The argument specifies the client and transaction identification
 information.
 
-% DHCP4_DHCP4O6_PACKET_RECEIVED %1: received DHCPv4o6 packet from DHCPv4 server (type %2) for %3 on interface %4
+% DHCP4_DHCP4O6_PACKET_RECEIVED received DHCPv4o6 packet from DHCPv4 server (type %1) for %2 on interface %3
 This debug message is printed when the server is receiving a DHCPv4o6
 from the DHCPv4 server over inter-process communication.
 
@@ -333,7 +333,7 @@ This error is output if the IPv4 DHCP server fails to send an
 DHCPv4o6 message to the IPv6 DHCP server. The reason for the
 error is included in the message.
 
-% DHCP4_DHCP4O6_RECEIVE_FAIL %1: failed to receive DHCPv4o6: %2
+% DHCP4_DHCP4O6_RECEIVE_FAIL failed to receive DHCPv4o6: %1
 This debug message indicates the inter-process communication with the
 DHCPv6 server failed. The reason for the error is included in
 the message.

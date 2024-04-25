@@ -642,7 +642,6 @@ void
 Dhcpv6Srv::runOne() {
     // client's message and server's response
     Pkt6Ptr query;
-    string label = "duid=[no info], [no hwaddr info], tid=[no info]";
 
     try {
         // Set select() timeout to 1s. This value should not be modified
@@ -658,9 +657,7 @@ Dhcpv6Srv::runOne() {
         // point are: the interface, source address and destination addresses
         // and ports.
         if (query) {
-            label = query->getLabel();
             LOG_DEBUG(packet6_logger, DBG_DHCP6_BASIC, DHCP6_BUFFER_RECEIVED)
-                .arg(label)
                 .arg(query->getRemoteAddr().toText())
                 .arg(query->getRemotePort())
                 .arg(query->getLocalAddr().toText())
@@ -686,10 +683,9 @@ Dhcpv6Srv::runOne() {
         // SIGINT, SIGHUP or SIGCHLD which are handled by the server. For
         // signals that are not handled by the server we rely on the default
         // behavior of the system.
-        LOG_DEBUG(packet6_logger, DBG_DHCP6_DETAIL, DHCP6_BUFFER_WAIT_SIGNAL).arg(label);
+        LOG_DEBUG(packet6_logger, DBG_DHCP6_DETAIL, DHCP6_BUFFER_WAIT_SIGNAL);
     } catch (const std::exception& e) {
         LOG_ERROR(packet6_logger, DHCP6_PACKET_RECEIVE_FAIL)
-            .arg(label)
             .arg(e.what());
     }
 
@@ -815,7 +811,6 @@ Dhcpv6Srv::processPacket(Pkt6Ptr query) {
     if (!skip_unpack) {
         try {
             LOG_DEBUG(options6_logger, DBG_DHCP6_DETAIL, DHCP6_BUFFER_UNPACK)
-                .arg(query->getLabel())
                 .arg(query->getRemoteAddr().toText())
                 .arg(query->getLocalAddr().toText())
                 .arg(query->getIface());

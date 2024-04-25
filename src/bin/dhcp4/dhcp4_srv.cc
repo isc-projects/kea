@@ -1161,7 +1161,6 @@ void
 Dhcpv4Srv::runOne() {
     // client's message and server's response
     Pkt4Ptr query;
-    string label = "[no hwaddr info], cid=[no info], tid=[no info]";
 
     try {
         // Set select() timeout to 1s. This value should not be modified
@@ -1177,9 +1176,7 @@ Dhcpv4Srv::runOne() {
         // point are: the interface, source address and destination addresses
         // and ports.
         if (query) {
-            label = query->getLabel();
             LOG_DEBUG(packet4_logger, DBG_DHCP4_BASIC, DHCP4_BUFFER_RECEIVED)
-                .arg(label)
                 .arg(query->getRemoteAddr().toText())
                 .arg(query->getRemotePort())
                 .arg(query->getLocalAddr().toText())
@@ -1199,12 +1196,10 @@ Dhcpv4Srv::runOne() {
         // SIGINT, SIGHUP or SIGCHLD which are handled by the server. For
         // signals that are not handled by the server we rely on the default
         // behavior of the system.
-        LOG_DEBUG(packet4_logger, DBG_DHCP4_DETAIL, DHCP4_BUFFER_WAIT_SIGNAL)
-            .arg(label);
+        LOG_DEBUG(packet4_logger, DBG_DHCP4_DETAIL, DHCP4_BUFFER_WAIT_SIGNAL);
     } catch (const std::exception& e) {
         // Log all other errors.
         LOG_ERROR(packet4_logger, DHCP4_BUFFER_RECEIVE_FAIL)
-            .arg(label)
             .arg(e.what());
     }
 
@@ -1331,7 +1326,6 @@ Dhcpv4Srv::processPacket(Pkt4Ptr query, bool allow_answer_park) {
     if (!skip_unpack) {
         try {
             LOG_DEBUG(options4_logger, DBG_DHCP4_DETAIL, DHCP4_BUFFER_UNPACK)
-                .arg(query->getLabel())
                 .arg(query->getRemoteAddr().toText())
                 .arg(query->getLocalAddr().toText())
                 .arg(query->getIface());
