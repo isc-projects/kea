@@ -42,7 +42,7 @@ the server.  In such an event, it would be necessary to manually remove
 the PID file.  The first argument is the DHCPv6 process name, the second
 contains the PID and PID file.
 
-% DHCP6_BUFFER_RECEIVED received buffer from %1:%2 to %3:%4 over interface %5
+% DHCP6_BUFFER_RECEIVED %1: received buffer from %2:%3 to %4:%5 over interface %6
 This debug message is logged when the server has received a packet
 over the socket. When the message is logged the contents of the received
 packet hasn't been parsed yet. The only available information is the
@@ -54,7 +54,7 @@ buffer holding the DHCPv6 message. The arguments specify the source and
 destination addresses as well as the interface over which the buffer has
 been received.
 
-% DHCP6_BUFFER_WAIT_SIGNAL signal received while waiting for next packet
+% DHCP6_BUFFER_WAIT_SIGNAL %1: signal received while waiting for next packet
 This debug message is issued when the server was waiting for the
 packet, but the wait has been interrupted by the signal received
 by the process. The signal will be handled before the server starts
@@ -321,11 +321,11 @@ should plan your strategy to stop using it soon.
 This warning message is displayed when the version is a development
 (vs stable) one: the second number of the version is odd.
 
-% DHCP6_DHCP4O6_PACKET_RECEIVED received DHCPv4o6 packet from DHCPv4 server (type %1) for %2 port %3 on interface %4
+% DHCP6_DHCP4O6_PACKET_RECEIVED %1: received DHCPv4o6 packet from DHCPv4 server (type %2) for %3 port %4 on interface %5
 This debug message is printed when the server is receiving a DHCPv4o6
 from the DHCPv4 server over inter-process communication.
 
-% DHCP6_DHCP4O6_RECEIVE_FAIL failed to receive DHCPv4o6: %1
+% DHCP6_DHCP4O6_RECEIVE_FAIL %1: failed to receive DHCPv4o6: %2
 This debug message indicates the inter-process communication with the
 DHCPv4 server failed. The reason for the error is included in
 the message.
@@ -341,7 +341,7 @@ identification information. The second and third argument contains the
 packet name and type respectively. The fourth argument contains detailed
 packet information.
 
-% DHCP6_DHCP4O6_SEND_FAIL failed to send DHCPv4o6 packet: %1
+% DHCP6_DHCP4O6_SEND_FAIL %1: failed to send DHCPv4o6 packet: %2
 This error is output if the IPv6 DHCP server fails to send an assembled
 DHCPv4o6 message to a client. The reason for the error is included in the
 message.
@@ -358,7 +358,7 @@ DHCP server failed.
 This is info message logged when the dynamic reconfiguration of the DHCP server
 succeeded.
 
-% DHCP6_FLEX_ID flexible identifier generated for incoming packet: %1
+% DHCP6_FLEX_ID %1: flexible identifier generated for incoming packet: %2
 This debug message is printed when host reservation type is set to flexible identifier
 and the expression specified in its configuration generated (was evaluated to)
 an identifier for incoming packet. This debug message is mainly intended as a
@@ -652,7 +652,7 @@ A debug message issued when an option failed to unpack correctly, making it
 impossible to unpack the remaining options in the packet.  The server will
 server will still attempt to service the packet.
 
-% DHCP6_PACKET_PROCESS_EXCEPTION exception occurred during packet processing
+% DHCP6_PACKET_PROCESS_EXCEPTION %1: exception occurred during packet processing
 This error message indicates that a non-standard exception was raised
 during packet processing that was not caught by other, more specific
 exception handlers. This packet will be dropped and the server will
@@ -663,7 +663,7 @@ This is a general catch-all message indicating that the processing of the
 specified packet type from the indicated address failed.  The reason is given in the
 message.  The server will not send a response but will instead ignore the packet.
 
-% DHCP6_PACKET_PROCESS_STD_EXCEPTION exception occurred during packet processing: %1
+% DHCP6_PACKET_PROCESS_STD_EXCEPTION %1: exception occurred during packet processing: %2
 This error message indicates that a standard exception was raised
 during packet processing that was not caught by other, more specific
 exception handlers. This packet will be dropped and the server will
@@ -682,7 +682,7 @@ respectively. The remaining arguments specify the source address,
 destination IP address and the name of the interface on which the
 message has been received.
 
-% DHCP6_PACKET_RECEIVE_FAIL error on attempt to receive packet: %1
+% DHCP6_PACKET_RECEIVE_FAIL %1: error on attempt to receive packet: %2
 The IPv6 DHCP server tried to receive a packet but an error
 occurred during this attempt. The reason for the error is included in
 the message.
@@ -693,7 +693,7 @@ and client identifier), DHCP message name and type, source IPv6
 address and port, destination IPv6 address and port and the
 interface name.
 
-% DHCP6_PACKET_SEND_FAIL failed to send DHCPv6 packet: %1
+% DHCP6_PACKET_SEND_FAIL %1: failed to send DHCPv6 packet: %2
 This error is output if the IPv6 DHCP server fails to send an assembled
 DHCP message to a client. The reason for the error is included in the
 message.

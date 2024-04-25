@@ -55,6 +55,7 @@ void Dhcp4to6Ipc::open() {
 void Dhcp4to6Ipc::handler(int /* fd */) {
     Dhcp4to6Ipc& ipc = Dhcp4to6Ipc::instance();
     Pkt6Ptr pkt;
+    string label = "[no hwaddr info], cid=[no info], tid=[no info]";
 
     try {
         LOG_DEBUG(packet4_logger, DBG_DHCP4_DETAIL, DHCP4_DHCP4O6_RECEIVING);
@@ -63,7 +64,9 @@ void Dhcp4to6Ipc::handler(int /* fd */) {
 
         // From Dhcpv4Srv::runOne() after receivePacket()
         if (pkt) {
+            label = pkt->getLabel();
             LOG_DEBUG(packet4_logger, DBG_DHCP4_BASIC, DHCP4_DHCP4O6_PACKET_RECEIVED)
+                .arg(label)
                 .arg(static_cast<int>(pkt->getType()))
                 .arg(pkt->getRemoteAddr().toText())
                 .arg(pkt->getRemotePort())
@@ -71,6 +74,7 @@ void Dhcp4to6Ipc::handler(int /* fd */) {
         }
     } catch (const std::exception& e) {
         LOG_DEBUG(packet4_logger, DBG_DHCP4_DETAIL, DHCP4_DHCP4O6_RECEIVE_FAIL)
+            .arg(label)
             .arg(e.what());
     }
 
@@ -82,10 +86,12 @@ void Dhcp4to6Ipc::handler(int /* fd */) {
     OptionCollection msgs = pkt->getOptions(D6O_DHCPV4_MSG);
     if (msgs.empty()) {
         LOG_DEBUG(packet4_logger, DBG_DHCP4_DETAIL, DHCP4_DHCP4O6_BAD_PACKET)
+            .arg(pkt->getLabel())
             .arg("DHCPv4 message option not present");
         return;
     } else if (msgs.size() > 1) {
         LOG_DEBUG(packet4_logger, DBG_DHCP4_DETAIL, DHCP4_DHCP4O6_BAD_PACKET)
+            .arg(pkt->getLabel())
             .arg("more than one DHCPv4 message option");
         return;
     }
@@ -94,6 +100,7 @@ void Dhcp4to6Ipc::handler(int /* fd */) {
     OptionPtr msg = msgs.begin()->second;
     if (!msg) {
         LOG_DEBUG(packet4_logger, DBG_DHCP4_DETAIL, DHCP4_DHCP4O6_BAD_PACKET)
+            .arg(pkt->getLabel())
             .arg("null DHCPv4 message option");
         return;
     }

@@ -486,6 +486,7 @@ Dhcpv4Exchange::setHostIdentifiers(AllocEngine::ClientContext4Ptr context) {
                     !id.empty()) {
 
                     LOG_DEBUG(packet4_logger, DBGLVL_TRACE_BASIC, DHCP4_FLEX_ID)
+                        .arg(context->query_->getLabel())
                         .arg(Host::getIdentifierAsText(type, &id[0], id.size()));
 
                     context->addHostIdentifier(type, id);
@@ -1136,12 +1137,14 @@ Dhcpv4Srv::run() {
             // General catch-all exception that are not caught by more specific
             // catches. This one is for exceptions derived from std::exception.
             LOG_ERROR(packet4_logger, DHCP4_PACKET_PROCESS_STD_EXCEPTION)
+                .arg("[no hwaddr info], cid=[no info], tid=[no info]")
                 .arg(e.what());
         } catch (...) {
             // General catch-all exception that are not caught by more specific
             // catches. This one is for other exceptions, not derived from
             // std::exception.
-            LOG_ERROR(packet4_logger, DHCP4_PACKET_PROCESS_EXCEPTION);
+            LOG_ERROR(packet4_logger, DHCP4_PACKET_PROCESS_EXCEPTION)
+                .arg("[no hwaddr info], cid=[no info], tid=[no info]");
         }
     }
 
@@ -1158,6 +1161,7 @@ void
 Dhcpv4Srv::runOne() {
     // client's message and server's response
     Pkt4Ptr query;
+    string label = "[no hwaddr info], cid=[no info], tid=[no info]";
 
     try {
         // Set select() timeout to 1s. This value should not be modified
@@ -1173,7 +1177,9 @@ Dhcpv4Srv::runOne() {
         // point are: the interface, source address and destination addresses
         // and ports.
         if (query) {
+            label = query->getLabel();
             LOG_DEBUG(packet4_logger, DBG_DHCP4_BASIC, DHCP4_BUFFER_RECEIVED)
+                .arg(label)
                 .arg(query->getRemoteAddr().toText())
                 .arg(query->getRemotePort())
                 .arg(query->getLocalAddr().toText())
@@ -1193,10 +1199,13 @@ Dhcpv4Srv::runOne() {
         // SIGINT, SIGHUP or SIGCHLD which are handled by the server. For
         // signals that are not handled by the server we rely on the default
         // behavior of the system.
-        LOG_DEBUG(packet4_logger, DBG_DHCP4_DETAIL, DHCP4_BUFFER_WAIT_SIGNAL);
+        LOG_DEBUG(packet4_logger, DBG_DHCP4_DETAIL, DHCP4_BUFFER_WAIT_SIGNAL)
+            .arg(label);
     } catch (const std::exception& e) {
         // Log all other errors.
-        LOG_ERROR(packet4_logger, DHCP4_BUFFER_RECEIVE_FAIL).arg(e.what());
+        LOG_ERROR(packet4_logger, DHCP4_BUFFER_RECEIVE_FAIL)
+            .arg(label)
+            .arg(e.what());
     }
 
     // Timeout may be reached or signal received, which breaks select()
@@ -1233,9 +1242,10 @@ Dhcpv4Srv::processPacketAndSendResponseNoThrow(Pkt4Ptr query) {
         processPacketAndSendResponse(query);
     } catch (const std::exception& e) {
         LOG_ERROR(packet4_logger, DHCP4_PACKET_PROCESS_STD_EXCEPTION)
+            .arg(query->getLabel())
             .arg(e.what());
     } catch (...) {
-        LOG_ERROR(packet4_logger, DHCP4_PACKET_PROCESS_EXCEPTION);
+        LOG_ERROR(packet4_logger, DHCP4_PACKET_PROCESS_EXCEPTION).arg(query->getLabel());
     }
 }
 
@@ -1450,9 +1460,10 @@ Dhcpv4Srv::processDhcp4QueryAndSendResponse(Pkt4Ptr query,
         processPacketBufferSend(callout_handle, rsp);
     } catch (const std::exception& e) {
         LOG_ERROR(packet4_logger, DHCP4_PACKET_PROCESS_STD_EXCEPTION)
+            .arg(query->getLabel())
             .arg(e.what());
     } catch (...) {
-        LOG_ERROR(packet4_logger, DHCP4_PACKET_PROCESS_EXCEPTION);
+        LOG_ERROR(packet4_logger, DHCP4_PACKET_PROCESS_EXCEPTION).arg(query->getLabel());
     }
 }
 
@@ -1528,9 +1539,10 @@ Dhcpv4Srv::processLocalizedQuery4AndSendResponse(Pkt4Ptr query,
         processPacketBufferSend(callout_handle, rsp);
     } catch (const std::exception& e) {
         LOG_ERROR(packet4_logger, DHCP4_PACKET_PROCESS_STD_EXCEPTION)
+            .arg(query->getLabel())
             .arg(e.what());
     } catch (...) {
-        LOG_ERROR(packet4_logger, DHCP4_PACKET_PROCESS_EXCEPTION);
+        LOG_ERROR(packet4_logger, DHCP4_PACKET_PROCESS_EXCEPTION).arg(query->getLabel());
     }
 }
 
@@ -1797,9 +1809,10 @@ Dhcpv4Srv::sendResponseNoThrow(hooks::CalloutHandlePtr& callout_handle,
             processPacketBufferSend(callout_handle, rsp);
         } catch (const std::exception& e) {
             LOG_ERROR(packet4_logger, DHCP4_PACKET_PROCESS_STD_EXCEPTION)
+                .arg(query->getLabel())
                 .arg(e.what());
     } catch (...) {
-        LOG_ERROR(packet4_logger, DHCP4_PACKET_PROCESS_EXCEPTION);
+        LOG_ERROR(packet4_logger, DHCP4_PACKET_PROCESS_EXCEPTION).arg(query->getLabel());
     }
 }
 
@@ -4249,7 +4262,7 @@ Dhcpv4Srv::serverDeclineNoThrow(hooks::CalloutHandlePtr& callout_handle, Pkt4Ptr
     try {
         serverDecline(callout_handle, query, lease, lease_exists);
     } catch (...) {
-        LOG_ERROR(packet4_logger, DHCP4_PACKET_PROCESS_EXCEPTION);
+        LOG_ERROR(packet4_logger, DHCP4_PACKET_PROCESS_EXCEPTION).arg(query->getLabel());
     }
 }
 

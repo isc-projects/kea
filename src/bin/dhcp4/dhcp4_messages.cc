@@ -186,7 +186,6 @@ extern const isc::log::MessageID DHCP4_SUBNET_SELECTED = "DHCP4_SUBNET_SELECTED"
 extern const isc::log::MessageID DHCP4_SUBNET_SELECTION_FAILED = "DHCP4_SUBNET_SELECTION_FAILED";
 extern const isc::log::MessageID DHCP4_TESTING_MODE_SEND_TO_SOURCE_ENABLED = "DHCP4_TESTING_MODE_SEND_TO_SOURCE_ENABLED";
 extern const isc::log::MessageID DHCP4_UNKNOWN_ADDRESS_REQUESTED = "DHCP4_UNKNOWN_ADDRESS_REQUESTED";
-extern const isc::log::MessageID DHCP6_DHCP4O6_PACKET_RECEIVED = "DHCP6_DHCP4O6_PACKET_RECEIVED";
 
 } // namespace dhcp
 } // namespace isc
@@ -196,10 +195,10 @@ namespace {
 const char* values[] = {
     "DHCP4_ACTIVATE_INTERFACE", "activating interface %1",
     "DHCP4_ALREADY_RUNNING", "%1 already running? %2",
-    "DHCP4_BUFFER_RECEIVED", "received buffer from %1:%2 to %3:%4 over interface %5",
-    "DHCP4_BUFFER_RECEIVE_FAIL", "error on attempt to receive packet: %1",
+    "DHCP4_BUFFER_RECEIVED", "%1: received buffer from %2:%3 to %4:%5 over interface %6",
+    "DHCP4_BUFFER_RECEIVE_FAIL", "%1: error on attempt to receive packet: %2",
     "DHCP4_BUFFER_UNPACK", "%1: parsing buffer received from %2 to %3 over interface %4",
-    "DHCP4_BUFFER_WAIT_SIGNAL", "signal received while waiting for next packet",
+    "DHCP4_BUFFER_WAIT_SIGNAL", "%1: signal received while waiting for next packet",
     "DHCP4_CB_ON_DEMAND_FETCH_UPDATES_FAIL", "error on demand attempt to fetch configuration updates from the configuration backend(s): %1",
     "DHCP4_CB_PERIODIC_FETCH_UPDATES_FAIL", "error on periodic attempt to fetch configuration updates from the configuration backend(s): %1",
     "DHCP4_CB_PERIODIC_FETCH_UPDATES_RETRIES_EXHAUSTED", "maximum number of configuration fetch attempts: 10, has been exhausted without success",
@@ -244,13 +243,13 @@ const char* values[] = {
     "DHCP4_DEFERRED_OPTION_UNPACK_FAIL", "%1: An error unpacking the deferred option %2: %3",
     "DHCP4_DEPRECATED", "The following mechanism is now deprecated and will be removed in the future: %1",
     "DHCP4_DEVELOPMENT_VERSION", "This software is a development branch of Kea. It is not recommended for production use.",
-    "DHCP4_DHCP4O6_BAD_PACKET", "received malformed DHCPv4o6 packet: %1",
+    "DHCP4_DHCP4O6_BAD_PACKET", "%1: received malformed DHCPv4o6 packet: %2",
     "DHCP4_DHCP4O6_HOOK_SUBNET4_SELECT_DROP", "%1: packet was dropped, because a callout set the next step to 'drop'",
     "DHCP4_DHCP4O6_HOOK_SUBNET4_SELECT_SKIP", "%1: no subnet was selected, because a callout set the next skip flag",
-    "DHCP4_DHCP4O6_PACKET_RECEIVED", "received DHCPv4o6 packet from DHCPv4 server (type %1) for %2 on interface %3",
+    "DHCP4_DHCP4O6_PACKET_RECEIVED", "%1: received DHCPv4o6 packet from DHCPv4 server (type %2) for %3 on interface %4",
     "DHCP4_DHCP4O6_PACKET_SEND", "%1: trying to send packet %2 (type %3) to %4 port %5 on interface %6 encapsulating %7: %8 (type %9)",
     "DHCP4_DHCP4O6_PACKET_SEND_FAIL", "%1: failed to send DHCPv4o6 packet: %2",
-    "DHCP4_DHCP4O6_RECEIVE_FAIL", "failed to receive DHCPv4o6: %1",
+    "DHCP4_DHCP4O6_RECEIVE_FAIL", "%1: failed to receive DHCPv4o6: %2",
     "DHCP4_DHCP4O6_RECEIVING", "receiving DHCPv4o6 packet from DHCPv6 server",
     "DHCP4_DHCP4O6_RESPONSE_DATA", "%1: responding with packet %2 (type %3), packet details: %4",
     "DHCP4_DHCP4O6_SUBNET_DATA", "%1: the selected subnet details: %2",
@@ -261,7 +260,7 @@ const char* values[] = {
     "DHCP4_DYNAMIC_RECONFIGURATION_FAIL", "dynamic server reconfiguration failed with file: %1",
     "DHCP4_DYNAMIC_RECONFIGURATION_SUCCESS", "dynamic server reconfiguration succeeded with file: %1",
     "DHCP4_EMPTY_HOSTNAME", "%1: received empty hostname from the client, skipping processing of this option",
-    "DHCP4_FLEX_ID", "flexible identifier generated for incoming packet: %1",
+    "DHCP4_FLEX_ID", "%1: flexible identifier generated for incoming packet: %2",
     "DHCP4_GENERATE_FQDN", "%1: client did not send a FQDN or hostname; FQDN will be generated for the client",
     "DHCP4_HANDLE_SIGNAL_EXCEPTION", "An exception was thrown while handing signal: %1",
     "DHCP4_HOOKS_LIBS_RELOAD_FAIL", "reload of hooks libraries failed",
@@ -324,8 +323,8 @@ const char* values[] = {
     "DHCP4_PACKET_OPTION_UNPACK_FAIL", "An error unpacking the option %1: %2",
     "DHCP4_PACKET_PACK", "%1: preparing on-wire format of the packet to be sent",
     "DHCP4_PACKET_PACK_FAIL", "%1: preparing on-wire-format of the packet to be sent failed %2",
-    "DHCP4_PACKET_PROCESS_EXCEPTION", "exception occurred during packet processing",
-    "DHCP4_PACKET_PROCESS_STD_EXCEPTION", "exception occurred during packet processing: %1",
+    "DHCP4_PACKET_PROCESS_EXCEPTION", "%1: exception occurred during packet processing",
+    "DHCP4_PACKET_PROCESS_STD_EXCEPTION", "%1: exception occurred during packet processing: %2",
     "DHCP4_PACKET_QUEUE_FULL", "multi-threading packet queue is full",
     "DHCP4_PACKET_RECEIVED", "%1: %2 (type %3) received from %4 to %5 on interface %6",
     "DHCP4_PACKET_SEND", "%1: trying to send packet %2 (type %3) from %4:%5 to %6:%7 on interface %8",
@@ -373,7 +372,6 @@ const char* values[] = {
     "DHCP4_SUBNET_SELECTION_FAILED", "%1: failed to select subnet for the client",
     "DHCP4_TESTING_MODE_SEND_TO_SOURCE_ENABLED", "All packets will be send to source address of an incoming packet - use only for testing",
     "DHCP4_UNKNOWN_ADDRESS_REQUESTED", "%1: client requested an unknown address, client sent ciaddr %2, requested-ip-address %3",
-    "DHCP6_DHCP4O6_PACKET_RECEIVED", "received DHCPv4o6 packet from DHCPv6 server (type %1) for %2 port %3 on interface %4",
     NULL
 };
 

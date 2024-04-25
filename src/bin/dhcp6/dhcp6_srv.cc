@@ -412,6 +412,7 @@ Dhcpv6Srv::setHostIdentifiers(AllocEngine::ClientContext6& ctx) {
                     !id.empty()) {
 
                     LOG_DEBUG(packet6_logger, DBGLVL_TRACE_BASIC, DHCP6_FLEX_ID)
+                        .arg(ctx.query_->getLabel())
                         .arg(Host::getIdentifierAsText(type, &id[0], id.size()));
 
                     ctx.addHostIdentifier(type, id);
@@ -617,12 +618,14 @@ Dhcpv6Srv::run() {
             // General catch-all standard exceptions that are not caught by more
             // specific catches.
             LOG_ERROR(packet6_logger, DHCP6_PACKET_PROCESS_STD_EXCEPTION)
+                .arg("duid=[no info], [no hwaddr info], tid=[no info]")
                 .arg(e.what());
 
         } catch (...) {
             // General catch-all non-standard exception that are not caught
             // by more specific catches.
-            LOG_ERROR(packet6_logger, DHCP6_PACKET_PROCESS_EXCEPTION);
+            LOG_ERROR(packet6_logger, DHCP6_PACKET_PROCESS_EXCEPTION)
+                .arg("duid=[no info], [no hwaddr info], tid=[no info]");
         }
     }
 
@@ -639,6 +642,7 @@ void
 Dhcpv6Srv::runOne() {
     // client's message and server's response
     Pkt6Ptr query;
+    string label = "duid=[no info], [no hwaddr info], tid=[no info]";
 
     try {
         // Set select() timeout to 1s. This value should not be modified
@@ -654,7 +658,9 @@ Dhcpv6Srv::runOne() {
         // point are: the interface, source address and destination addresses
         // and ports.
         if (query) {
+            label = query->getLabel();
             LOG_DEBUG(packet6_logger, DBG_DHCP6_BASIC, DHCP6_BUFFER_RECEIVED)
+                .arg(label)
                 .arg(query->getRemoteAddr().toText())
                 .arg(query->getRemotePort())
                 .arg(query->getLocalAddr().toText())
@@ -680,9 +686,11 @@ Dhcpv6Srv::runOne() {
         // SIGINT, SIGHUP or SIGCHLD which are handled by the server. For
         // signals that are not handled by the server we rely on the default
         // behavior of the system.
-        LOG_DEBUG(packet6_logger, DBG_DHCP6_DETAIL, DHCP6_BUFFER_WAIT_SIGNAL);
+        LOG_DEBUG(packet6_logger, DBG_DHCP6_DETAIL, DHCP6_BUFFER_WAIT_SIGNAL).arg(label);
     } catch (const std::exception& e) {
-        LOG_ERROR(packet6_logger, DHCP6_PACKET_RECEIVE_FAIL).arg(e.what());
+        LOG_ERROR(packet6_logger, DHCP6_PACKET_RECEIVE_FAIL)
+            .arg(label)
+            .arg(e.what());
     }
 
     // Timeout may be reached or signal received, which breaks select()
@@ -718,9 +726,11 @@ Dhcpv6Srv::processPacketAndSendResponseNoThrow(Pkt6Ptr query) {
         processPacketAndSendResponse(query);
     } catch (const std::exception& e) {
         LOG_ERROR(packet6_logger, DHCP6_PACKET_PROCESS_STD_EXCEPTION)
+            .arg(query->getLabel())
             .arg(e.what());
     } catch (...) {
-        LOG_ERROR(packet6_logger, DHCP6_PACKET_PROCESS_EXCEPTION);
+        LOG_ERROR(packet6_logger, DHCP6_PACKET_PROCESS_EXCEPTION)
+            .arg(query->getLabel());
     }
 }
 
@@ -949,9 +959,11 @@ Dhcpv6Srv::processDhcp6QueryAndSendResponse(Pkt6Ptr query) {
         processPacketBufferSend(callout_handle, rsp);
     } catch (const std::exception& e) {
         LOG_ERROR(packet6_logger, DHCP6_PACKET_PROCESS_STD_EXCEPTION)
+            .arg(query->getLabel())
             .arg(e.what());
     } catch (...) {
-        LOG_ERROR(packet6_logger, DHCP6_PACKET_PROCESS_EXCEPTION);
+        LOG_ERROR(packet6_logger, DHCP6_PACKET_PROCESS_EXCEPTION)
+            .arg(query->getLabel());
     }
 }
 
@@ -1014,9 +1026,11 @@ Dhcpv6Srv::processLocalizedQuery6AndSendResponse(Pkt6Ptr query,
         processPacketBufferSend(callout_handle, rsp);
     } catch (const std::exception& e) {
         LOG_ERROR(packet6_logger, DHCP6_PACKET_PROCESS_STD_EXCEPTION)
+            .arg(query->getLabel())
             .arg(e.what());
     } catch (...) {
-        LOG_ERROR(packet6_logger, DHCP6_PACKET_PROCESS_EXCEPTION);
+        LOG_ERROR(packet6_logger, DHCP6_PACKET_PROCESS_EXCEPTION)
+            .arg(query->getLabel());
     }
 }
 
@@ -1307,9 +1321,11 @@ Dhcpv6Srv::sendResponseNoThrow(hooks::CalloutHandlePtr& callout_handle,
             processPacketBufferSend(callout_handle, rsp);
         } catch (const std::exception& e) {
             LOG_ERROR(packet6_logger, DHCP6_PACKET_PROCESS_STD_EXCEPTION)
+                .arg(query->getLabel())
                 .arg(e.what());
     } catch (...) {
-        LOG_ERROR(packet6_logger, DHCP6_PACKET_PROCESS_EXCEPTION);
+        LOG_ERROR(packet6_logger, DHCP6_PACKET_PROCESS_EXCEPTION)
+            .arg(query->getLabel());
     }
 }
 
@@ -1449,7 +1465,9 @@ Dhcpv6Srv::processPacketBufferSend(CalloutHandlePtr& callout_handle,
         processStatsSent(rsp);
 
     } catch (const std::exception& e) {
-        LOG_ERROR(packet6_logger, DHCP6_PACKET_SEND_FAIL).arg(e.what());
+        LOG_ERROR(packet6_logger, DHCP6_PACKET_SEND_FAIL)
+            .arg(rsp->getLabel())
+            .arg(e.what());
     }
 }
 

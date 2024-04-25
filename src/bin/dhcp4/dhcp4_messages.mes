@@ -22,13 +22,13 @@ the server.  In such an event, it would be necessary to manually remove
 the PID file.  The first argument is the DHCPv4 process name, the
 second contains the PID and PID file.
 
-% DHCP4_BUFFER_RECEIVED received buffer from %1:%2 to %3:%4 over interface %5
+% DHCP4_BUFFER_RECEIVED %1: received buffer from %2:%3 to %4:%5 over interface %6
 This debug message is logged when the server has received a packet
 over the socket. When the message is logged the contents of the received
 packet hasn't been parsed yet. The only available information is the
 interface and the source and destination IPv4 addresses/ports.
 
-% DHCP4_BUFFER_RECEIVE_FAIL error on attempt to receive packet: %1
+% DHCP4_BUFFER_RECEIVE_FAIL %1: error on attempt to receive packet: %2
 The DHCPv4 server tried to receive a packet but an error
 occurred during this attempt. The reason for the error is included in
 the message.
@@ -39,7 +39,7 @@ buffer holding the DHCPv4 message. The arguments specify the source and
 destination IPv4 addresses as well as the interface over which the buffer has
 been received.
 
-% DHCP4_BUFFER_WAIT_SIGNAL signal received while waiting for next packet
+% DHCP4_BUFFER_WAIT_SIGNAL %1: signal received while waiting for next packet
 This debug message is issued when the server was waiting for the
 packet, but the wait has been interrupted by the signal received
 by the process. The signal will be handled before the server starts
@@ -299,7 +299,7 @@ should plan your strategy to stop using it soon.
 This warning message is displayed when the version is a development
 (vs stable) one: the second number of the version is odd.
 
-% DHCP4_DHCP4O6_BAD_PACKET received malformed DHCPv4o6 packet: %1
+% DHCP4_DHCP4O6_BAD_PACKET %1: received malformed DHCPv4o6 packet: %2
 A malformed DHCPv4o6 packet was received.
 
 % DHCP4_DHCP4O6_HOOK_SUBNET4_SELECT_DROP %1: packet was dropped, because a callout set the next step to 'drop'
@@ -318,7 +318,7 @@ will be only able to offer global options - no addresses will be assigned.
 The argument specifies the client and transaction identification
 information.
 
-% DHCP4_DHCP4O6_PACKET_RECEIVED received DHCPv4o6 packet from DHCPv4 server (type %1) for %2 on interface %3
+% DHCP4_DHCP4O6_PACKET_RECEIVED %1: received DHCPv4o6 packet from DHCPv4 server (type %2) for %3 on interface %4
 This debug message is printed when the server is receiving a DHCPv4o6
 from the DHCPv4 server over inter-process communication.
 
@@ -333,7 +333,7 @@ This error is output if the IPv4 DHCP server fails to send an
 DHCPv4o6 message to the IPv6 DHCP server. The reason for the
 error is included in the message.
 
-% DHCP4_DHCP4O6_RECEIVE_FAIL failed to receive DHCPv4o6: %1
+% DHCP4_DHCP4O6_RECEIVE_FAIL %1: failed to receive DHCPv4o6: %2
 This debug message indicates the inter-process communication with the
 DHCPv6 server failed. The reason for the error is included in
 the message.
@@ -398,7 +398,7 @@ from a client. Server does not process empty Hostname options and therefore
 option is skipped. The argument holds the client and transaction identification
 information.
 
-% DHCP4_FLEX_ID flexible identifier generated for incoming packet: %1
+% DHCP4_FLEX_ID %1: flexible identifier generated for incoming packet: %2
 This debug message is printed when host reservation type is set to flexible identifier
 and the expression specified in its configuration generated (was evaluated to)
 an identifier for incoming packet. This debug message is mainly intended as a
@@ -783,13 +783,13 @@ This error message is issued when preparing an on-wire format of the packet
 has failed. The first argument identifies the client and the DHCP transaction.
 The second argument includes the error string.
 
-% DHCP4_PACKET_PROCESS_EXCEPTION exception occurred during packet processing
+% DHCP4_PACKET_PROCESS_EXCEPTION %1: exception occurred during packet processing
 This error message indicates that a non-standard exception was raised
 during packet processing that was not caught by other, more specific
 exception handlers. This packet will be dropped and the server will
 continue operation.
 
-% DHCP4_PACKET_PROCESS_STD_EXCEPTION exception occurred during packet processing: %1
+% DHCP4_PACKET_PROCESS_STD_EXCEPTION %1: exception occurred during packet processing: %2
 This error message indicates that a standard exception was raised
 during packet processing that was not caught by other, more specific
 exception handlers. This packet will be dropped and the server will
@@ -1115,6 +1115,3 @@ The second argument contains the IPv4 address in the ciaddr field. The
 third argument contains the IPv4 address in the requested-ip-address
 option (if present).
 
-% DHCP6_DHCP4O6_PACKET_RECEIVED received DHCPv4o6 packet from DHCPv6 server (type %1) for %2 port %3 on interface %4
-This debug message is printed when the server is receiving a DHCPv4o6
-from the DHCPv6 server over inter-process communication.
