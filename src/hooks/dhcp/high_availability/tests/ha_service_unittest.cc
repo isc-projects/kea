@@ -816,8 +816,7 @@ public:
     /// @param create_service a boolean flag indicating whether the test should
     /// re-create HA service and communication state.
     /// @param soft_delete_leases a boolean flag indicating that the test should simulate
-    /// soft release of leases, i.e., lease lifetime is set to 0 and the lease is not
-    /// deleted.
+    /// soft release of leases, i.e., lease state is released and the lease is not deleted.
     void testSendLeaseUpdates(std::function<void()> unpark_handler,
                               const bool should_fail,
                               const size_t num_updates,
@@ -936,8 +935,7 @@ public:
     /// @param create_service a boolean flag indicating whether the test should
     /// re-create HA service and communication state.
     /// @param soft_delete_leases a boolean flag indicating that the test should simulate
-    /// soft release of leases, i.e., lease lifetime is set to 0 and the lease is not
-    /// deleted.
+    /// soft release of leases, i.e., lease is released and the lease is not deleted.
     void testSendLeaseUpdates6(std::function<void()> unpark_handler,
                                const bool should_fail,
                                const size_t num_updates,
@@ -1160,9 +1158,8 @@ public:
         EXPECT_TRUE(delete_request3);
     }
 
-    /// @brief Tests scenarios when released leases have zero valid
-    /// lifetime and should be preserved in the partner's lease
-    /// database.
+    /// @brief Tests scenarios when released leases should be preserved
+    /// in the partner's lease database.
     void testSendSuccessfulUpdatesSoftDelete() {
         // Start HTTP servers.
         ASSERT_NO_THROW({
@@ -1682,9 +1679,8 @@ public:
         EXPECT_TRUE(update_request3);
     }
 
-    /// @brief Tests scenarios when released leases have zero valid
-    /// lifetime and should be preserved in the partner's lease
-    /// database.
+    /// @brief Tests scenarios when released leases should be preserved
+    /// in the partner's lease database.
     void testSendSuccessfulUpdates6SoftDelete() {
         // Start HTTP servers.
         ASSERT_NO_THROW({
@@ -2736,14 +2732,14 @@ TEST_F(HAServiceTest, sendSuccessfulUpdatesMultiThreading) {
     testSendSuccessfulUpdates();
 }
 
-// Tests scenarios when released leases have zero valid lifetime
-// and should be preserved in the partner's lease database.
+// Tests scenarios when released leases should be preserved in the
+/// partner's lease database.
 TEST_F(HAServiceTest, sendSuccessfulUpdatesSoftDelete) {
     testSendSuccessfulUpdatesSoftDelete();
 }
 
-// Tests scenarios when released leases are have zero valid lifetime
-// and should be preserved in the partner's lease database.
+// Tests scenarios when released leases should be preserved in the
+/// partner's lease database.
 TEST_F(HAServiceTest, sendSuccessfulUpdatesSoftDeleteMultiThreading) {
     MultiThreadingMgr::instance().setMode(true);
     testSendSuccessfulUpdatesSoftDelete();

@@ -1219,8 +1219,7 @@ HAService::asyncSendLeaseUpdates(const dhcp::Pkt4Ptr& query,
             // Lease updates for deleted leases.
             for (auto const& l : *deleted_leases) {
                 // If a released lease is preserved in the database send the lease
-                // update with the zero lifetime to the partner. Otherwise, delete
-                // the lease.
+                // update to the partner. Otherwise, delete the lease.
                 if (l->state_ == Lease4::STATE_RELEASED) {
                     lease_update_backlog_.push(LeaseUpdateBacklog::ADD, l);
                 } else {
@@ -1253,8 +1252,7 @@ HAService::asyncSendLeaseUpdates(const dhcp::Pkt4Ptr& query,
         // Lease updates for deleted leases.
         for (auto const& l : *deleted_leases) {
             // If a released lease is preserved in the database send the lease
-            // update with the zero lifetime to the partner. Otherwise, delete
-            // the lease.
+            // update to the partner. Otherwise, delete the lease.
             if (l->state_ == Lease4::STATE_RELEASED) {
                 asyncSendLeaseUpdate(query, conf, CommandCreator::createLease4Update(*l),
                                      parking_lot);
@@ -1313,8 +1311,7 @@ HAService::asyncSendLeaseUpdates(const dhcp::Pkt6Ptr& query,
         if (shouldQueueLeaseUpdates(conf)) {
             for (auto const& l : *deleted_leases) {
                 // If a released lease is preserved in the database send the lease
-                // update with the zero lifetime to the partner. Otherwise, delete
-                // the lease.
+                // update to the partner. Otherwise, delete the lease.
                 if (l->state_ == Lease4::STATE_RELEASED) {
                     lease_update_backlog_.push(LeaseUpdateBacklog::ADD, l);
                 } else {

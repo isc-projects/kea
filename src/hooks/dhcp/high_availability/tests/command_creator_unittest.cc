@@ -427,8 +427,8 @@ TEST(CommandCreatorTest, createLease6BulkApply) {
     EXPECT_EQ(leaseAsJson(lease)->str(), lease_as_json->str());
 }
 
-// This test verifies that the lease6-bulk-apply command is correct when
-// deleted leases have lifetimes of 0.
+// This test verifies that the lease6-bulk-apply command is correct
+// when sending a lease update for the lease in the relased state.
 TEST(CommandCreatorTest, createLease6BulkApplySoftDelete) {
     Lease6Ptr deleted_lease = createLease6();
     deleted_lease->valid_lft_ = 0;
@@ -455,8 +455,7 @@ TEST(CommandCreatorTest, createLease6BulkApplySoftDelete) {
     ASSERT_EQ(Element::list, deleted_leases_json->getType());
     EXPECT_EQ(0, deleted_leases_json->size());
 
-    // The lease with the valid lifetime of 0 should be in the updated
-    // leases list.
+    // The lease in the released state should be in the updated leases list.
     auto leases_json = arguments->get("leases");
     ASSERT_TRUE(leases_json);
     ASSERT_EQ(Element::list, leases_json->getType());

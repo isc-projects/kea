@@ -149,8 +149,8 @@ CommandCreator::createLease6BulkApply(const Lease6CollectionPtr& leases,
     for (auto const& lease : *deleted_leases) {
         ElementPtr lease_as_json = lease->toElement();
         insertLeaseExpireTime(lease_as_json);
-        // If the deleted/released lease has zero lifetimes it means that
-        // it should be preserved in the database. It is treated as released
+        // If the deleted lease is in the released state it means that it
+        // should be preserved in the database. It is treated as released
         // but can be re-allocated to the same client later (lease affinity).
         // Such a lease should be updated by the partner rather than deleted.
         if (lease->state_ == Lease6::STATE_RELEASED) {

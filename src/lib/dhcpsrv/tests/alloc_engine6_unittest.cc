@@ -1249,8 +1249,7 @@ TEST_F(AllocEngine6Test, reservedAddressInPoolSolicitNoHint) {
     createHost6(true, IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::1c"), 128);
 
     AllocEngine engine(100);
-
-                                                                                                                                                     }
+}
 
 // Checks that a client gets the address reserved (in-pool case)
 // This test checks the behavior of the allocation engine in the following
