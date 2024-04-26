@@ -973,20 +973,19 @@ public:
     /// @brief Checks that features related to lease caching (such as lease reuse statistics) work.
     void leaseCaching();
 
-    /// @brief Checks that stash-agent-options enables direct renewall
+    /// @brief Checks that stash-agent-options enables direct renewal
     /// of addresses from pool allocation for a relayed client.
     ///
     /// @note: no negative counterpart as the stash-agent-options is not
     /// required for this scenario.
     void stashAgentOptions();
 
-    /// @brief Checks that stash-agent-options enables direct renewall
+    /// @brief Checks that stash-agent-options enables direct renewal
     /// of addresses from host reservation using the relay-agent-info option.
     void stashAgentOptionsReservation();
 
-    /// @brief Checks that stash-agent-options is required for direct
-    /// renewall of addresses from host reservation using the
-    /// relay-agent-info option.
+    /// @brief Checks that stash-agent-options is required for direct renewal
+    /// of addresses from host reservation using the relay-agent-info option.
     void noStashAgentOptionsReservation();
 
     /// @brief Checks the value of a statistic.

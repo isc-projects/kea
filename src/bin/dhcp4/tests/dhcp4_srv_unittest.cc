@@ -5293,37 +5293,37 @@ public:
         LeaseMgrFactory::destroy();
     }
 
-    /// RAI definition.
+    /// @brief RAI definition.
     static OptionDefinitionPtr rai_def_;
 
-    /// Client address.
+    /// @brief Client address.
     IOAddress addr_;
 
-    /// Query.
+    /// @brief Query.
     Pkt4Ptr query_;
 
-    /// Hardware address.
+    /// @brief Hardware address.
     HWAddrPtr hwaddr_;
 
-    /// RAI option.
+    /// @brief RAI option.
     OptionPtr rai_;
 
-    /// RAI suboption.
+    /// @brief RAI suboption.
     OptionPtr rai_sub_;
 
-    /// Lease.
+    /// @brief Lease.
     Lease4Ptr lease_;
 
-    /// Lease user context.
+    /// @brief Lease user context.
     ElementPtr user_context_;
 
-    /// ISC map.
+    /// @brief ISC map.
     ElementPtr isc_;
 
-    /// Relay agent info (map or string).
+    /// @brief Relay agent info (map or string).
     ElementPtr relay_agent_info_;
 
-    /// Sub-options i.e. RAI content (hexstring).
+    /// @brief Sub-options i.e. RAI content (hexstring).
     ElementPtr sub_options_;
 };
 
@@ -5568,7 +5568,7 @@ TEST_F(StashAgentOptionTest, iscEntry) {
 }
 
 // Verify that the ISC entry in the lease user context must be a map.
-// getLeaseClientClasses throws BadValue on addLease.}
+// getLeaseClientClasses throws BadValue on addLease.
 
 // Verify that the relay-agent-info entry is required.
 TEST_F(StashAgentOptionTest, relayAgentInfoEntry) {

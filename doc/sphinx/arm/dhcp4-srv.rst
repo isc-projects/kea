@@ -4506,15 +4506,15 @@ Stash Agent Options
 -------------------
 
 Introduced in version 2.5.8 the ``stash-agent-options`` global parameter
-when set to ``true`` (its default is ``false``) allows to solve a common
+when set to ``true`` (defaults to ``false``) allows to solve a common
 problem with host reservations using an identifier based on the content
-of the dhcp-agent-options option inserted relays. When a client tries
+of the dhcp-agent-options option inserted by relays. When a client tries
 to renew its reserved address the request is sent directly to the server
-so no through the relay: the server is not able to recognize the client
+so not through the relay: the server is not able to recognize the client
 as the host identifier can't be found in a direct request.
 
-Set in flex-id (:ref:`hooks-flex-id`) the ``replace-client-id`` to ``true``
-allows to use the same identifier for leases and host reservations.
+Setting in flex-id (:ref:`hooks-flex-id`) the ``replace-client-id`` to ``true``
+allows the use of the same identifier for leases and host reservations.
 This solves some problems but not this one. In fact this configuration
 is incompatible with ``stash-agent-options``.
 
@@ -4526,7 +4526,7 @@ server behaves as the option was included.
 
 .. note::
 
-   Here belongs to the client is implemented the same way as for Releases.
+   Belongs to the client here is implemented the same way as for Releases.
    This guarantees the security of the feature but does not allow the use
    the same identity for both leases and host reservations based on the
    content of the dhcp-agent-options option, i.e. if the client changes
