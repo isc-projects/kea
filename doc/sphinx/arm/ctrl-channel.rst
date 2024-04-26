@@ -721,7 +721,7 @@ communication between HA partners and should not be specified in the
 administrator's commands, as it may interfere with HA operation. The
 administrator should either omit this parameter or set it to "user".
 
-Introduction of ``origin-id`` deprecates the use of the ``origin`` parameter
+Introduction of ``origin-id`` in Kea 2.5.8 deprecates the use of the ``origin`` parameter
 in the messages exchanged between the Kea HA partners. The ``origin-id`` parameter
 must not be used in messages sent by the user.
 

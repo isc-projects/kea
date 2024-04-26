@@ -559,9 +559,9 @@ ControlledDhcpv4Srv::commandDhcpDisableHandler(const std::string&,
                     }
                 }
             }
-            // 'origin-id' replaces the older parameter 'origin' since Kea 2.6.0
+            // 'origin-id' replaces the older parameter 'origin' since Kea 2.5.8
             // stable release. However, the 'origin' is kept for backward compatibility
-            // with Kea versions before 2.6.0. It is common to receive both parameters
+            // with Kea versions before 2.5.8. It is common to receive both parameters
             // because HA hook library sends both in case the partner server hasn't been
             // upgraded to the new version. The 'origin-id' takes precedence over the
             // 'origin'.
@@ -638,9 +638,9 @@ ControlledDhcpv4Srv::commandDhcpEnableHandler(const std::string&,
             message << "arguments for the 'dhcp-enable' command must be a map";
 
         } else {
-            // 'origin-id' replaces the older parameter 'origin' since Kea 2.6.0
+            // 'origin-id' replaces the older parameter 'origin' since Kea 2.5.8
             // stable release. However, the 'origin' is kept for backward compatibility
-            // with Kea versions before 2.6.0. It is common to receive both parameters
+            // with Kea versions before 2.5.8. It is common to receive both parameters
             // because HA hook library sends both in case the partner server hasn't been
             // upgraded to the new version. The 'origin-id' takes precedence over the
             // 'origin'.
