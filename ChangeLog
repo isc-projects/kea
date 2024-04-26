@@ -1,3 +1,8 @@
+2228.	[build]		piotrek
+	The library version numbers have been bumped up for the Kea 2.5.8
+	development release.
+	(Gitlab #3355)
+
 2227.	[func]		fdupont
 	Implemented the stash-agent-options global parameter
 	for DHCPv4 (new feature from ISC DHCP allowing to
