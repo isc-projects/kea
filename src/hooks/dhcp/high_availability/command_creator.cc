@@ -267,7 +267,10 @@ CommandCreator::createSyncCompleteNotify(const unsigned int origin_id,
     auto args = Element::createMap();
     args->set("server-name", Element::create(server_name));
     args->set("origin-id", Element::create(origin_id));
-    // Add for backward compatibility with Kea 2.5.5.
+    // Add for backward compatibility with Kea 2.5.5 to Kea 2.5.7.
+    // The origin parameter was introduced for this command in Kea 2.5.5 but
+    // renamed to origin-id to be consistent with the origin-id used in
+    // dhcp-enable and dhcp-disable commands starting from Kea 2.5.8.
     args->set("origin", Element::create(origin_id));
     auto command = config::createCommand("ha-sync-complete-notify", args);
     insertService(command, server_type);

@@ -714,16 +714,28 @@ if the :isccmd:`dhcp-enable` command is not sent before this time elapses.
 Since Kea 1.9.4, there is an additional ``origin`` parameter that specifies the
 command source. A server administrator should typically omit this parameter
 because the default value "user" indicates that the administrator sent the
-command. This command can also be sent by the partner server running HA hooks
-library. In that case, the partner server sets the parameter to a unique
-integer identifier of an HA service. The integer values are reserved for the
-communication between HA partners and should not be specified in the
-administrator's commands, as it may interfere with HA operation. The
-administrator should either omit this parameter or set it to "user".
+command. In Kea 2.5.5 thru 2.5.7 this parameter was also used in communication
+between the HA partners to specify the identifier of an HA service sending the command
+in a numeric format. However, due to the compatibility issues with the older
+Kea versions that did not properly parse the numeric values, it was necessary
+to introduce the new parameter, ``origin-id``, in Kea 2.5.8.
 
-Introduction of ``origin-id`` in Kea 2.5.8 deprecates the use of the ``origin`` parameter
-in the messages exchanged between the Kea HA partners. The ``origin-id`` parameter
-must not be used in messages sent by the user.
+It holds a numeric value representing the origin of the command. The same value
+can still be passed using the ``origin`` parameter, but it can cause the
+aforementioned compatibility issues between the HA partners running different
+Kea versions. Therefore, new Kea versions favor using ``origin-id`` in communication
+between the HA partners. The ``origin`` parameter can still be used, but the
+``origin-id`` takes precedence. Overall, it is recommended that both parameters be
+omitted from the user commands.
+
+The following codes represent the supported origins in numeric format:
+
+ -  ``1`` - a user command, same as specifying ``"origin": "user"``,
+ -  ``2000``, ``2001``, ``2002`` etc. - origins specified by HA partners where
+    the increments above ``2000`` are distinct HA service identifiers used when
+    the partners have many relationships.
+
+In the following example:
 
 ::
 
@@ -736,6 +748,10 @@ must not be used in messages sent by the user.
        }
    }
 
+the effective origin will be ``2002`` which indicates it is an HA partner
+sending the command for the service with ID of ``2``. The ``origin``
+parameter will be ignored in this case.
+
 .. isccmd:: dhcp-enable
 .. _command-dhcp-enable:
 
@@ -747,26 +763,43 @@ The :isccmd:`dhcp-enable` command globally enables the DHCP service.
 Since Kea 1.9.4, there is an additional ``origin`` parameter that specifies the
 command source. A server administrator should typically omit this parameter
 because the default value "user" indicates that the administrator sent the
-command. This command can also be sent by the partner server running the HA hook
-library. In that case, the partner server sets the parameter to a unique
-integer identifier of an HA service. The integer values are reserved for the
-communication between HA partners and should not be specified in the
-administrator's commands, as it may interfere with HA operation. The
-administrator should either omit this parameter or set it to
-"user".
+command. In Kea 2.5.5 thru 2.5.7 this parameter was also used in communication
+between the HA partners to specify the identifier of an HA service sending the command
+in a numeric format. However, due to the compatibility issues with the older
+Kea versions that did not properly parse the numeric values, it was necessary
+to introduce the new parameter, ``origin-id``, in Kea 2.5.8.
 
-Introduction of ``origin-id`` deprecates the use of the ``origin`` parameter
-in the messages exchanged between the Kea HA partners. The ``origin-id`` parameter
-must not be used in messages sent by the user.
+It holds a numeric value representing the origin of the command. The same value
+can still be passed using the ``origin`` parameter, but it can cause the
+aforementioned compatibility issues between the HA partners running different
+Kea versions. Therefore, new Kea versions favor using ``origin-id`` in communication
+between the HA partners. The ``origin`` parameter can still be used, but the
+``origin-id`` takes precedence. Overall, it is recommended that both parameters be
+omitted from the user commands.
+
+The following codes represent the supported origins in numeric format:
+
+ -  ``1`` - a user command, same as specifying ``"origin": "user"``,
+ -  ``2000``, ``2001``, ``2002`` etc. - origins specified by HA partners where
+    the increments above ``2000`` are distinct HA service identifiers used when
+    the partners have many relationships.
+
+In the following example:
 
 ::
 
    {
        "command": "dhcp-enable",
        "arguments": {
+           "origin-id": 2002,
            "origin": "user"
        }
    }
+
+the effective origin will be ``2002`` which indicates it is an HA partner
+sending the command for the service with ID of ``2``. The ``origin``
+parameter will be ignored in this case.
+
 
 .. isccmd:: status-get
 .. _command-status-get:
