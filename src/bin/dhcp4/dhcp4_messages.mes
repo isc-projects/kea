@@ -789,11 +789,25 @@ during packet processing that was not caught by other, more specific
 exception handlers. This packet will be dropped and the server will
 continue operation.
 
+% DHCP4_PACKET_PROCESS_EXCEPTION_MAIN exception occurred during packet processing
+This error message indicates that a non-standard exception was raised
+during packet processing that was not caught by other, more specific
+exception handlers. This packet will be dropped and the server will
+continue operation. This error message may appear in main server processing
+loop.
+
 % DHCP4_PACKET_PROCESS_STD_EXCEPTION %1: exception occurred during packet processing: %2
 This error message indicates that a standard exception was raised
 during packet processing that was not caught by other, more specific
 exception handlers. This packet will be dropped and the server will
 continue operation.
+
+% DHCP4_PACKET_PROCESS_STD_EXCEPTION_MAIN exception occurred during packet processing: %1
+This error message indicates that a standard exception was raised
+during packet processing that was not caught by other, more specific
+exception handlers. This packet will be dropped and the server will
+continue operation. This error message may appear in main server processing
+loop.
 
 % DHCP4_PACKET_QUEUE_FULL multi-threading packet queue is full
 A debug message noting that the multi-threading packet queue is full so

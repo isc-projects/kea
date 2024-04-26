@@ -115,8 +115,10 @@ extern const isc::log::MessageID DHCP6_PACKET_DROP_SERVERID_MISMATCH = "DHCP6_PA
 extern const isc::log::MessageID DHCP6_PACKET_DROP_UNICAST = "DHCP6_PACKET_DROP_UNICAST";
 extern const isc::log::MessageID DHCP6_PACKET_OPTIONS_SKIPPED = "DHCP6_PACKET_OPTIONS_SKIPPED";
 extern const isc::log::MessageID DHCP6_PACKET_PROCESS_EXCEPTION = "DHCP6_PACKET_PROCESS_EXCEPTION";
+extern const isc::log::MessageID DHCP6_PACKET_PROCESS_EXCEPTION_MAIN = "DHCP6_PACKET_PROCESS_EXCEPTION_MAIN";
 extern const isc::log::MessageID DHCP6_PACKET_PROCESS_FAIL = "DHCP6_PACKET_PROCESS_FAIL";
 extern const isc::log::MessageID DHCP6_PACKET_PROCESS_STD_EXCEPTION = "DHCP6_PACKET_PROCESS_STD_EXCEPTION";
+extern const isc::log::MessageID DHCP6_PACKET_PROCESS_STD_EXCEPTION_MAIN = "DHCP6_PACKET_PROCESS_STD_EXCEPTION_MAIN";
 extern const isc::log::MessageID DHCP6_PACKET_QUEUE_FULL = "DHCP6_PACKET_QUEUE_FULL";
 extern const isc::log::MessageID DHCP6_PACKET_RECEIVED = "DHCP6_PACKET_RECEIVED";
 extern const isc::log::MessageID DHCP6_PACKET_RECEIVE_FAIL = "DHCP6_PACKET_RECEIVE_FAIL";
@@ -291,8 +293,10 @@ const char* values[] = {
     "DHCP6_PACKET_DROP_UNICAST", "%1: dropping unicast %2 packet as this packet should be sent to multicast",
     "DHCP6_PACKET_OPTIONS_SKIPPED", "%1: An error unpacking an option, caused subsequent options to be skipped: %2",
     "DHCP6_PACKET_PROCESS_EXCEPTION", "%1: exception occurred during packet processing",
+    "DHCP6_PACKET_PROCESS_EXCEPTION_MAIN", "exception occurred during packet processing",
     "DHCP6_PACKET_PROCESS_FAIL", "%1: processing of %2 message received from %3 failed: %4",
     "DHCP6_PACKET_PROCESS_STD_EXCEPTION", "%1: exception occurred during packet processing: %2",
+    "DHCP6_PACKET_PROCESS_STD_EXCEPTION_MAIN", "exception occurred during packet processing: %1",
     "DHCP6_PACKET_QUEUE_FULL", "multi-threading packet queue is full",
     "DHCP6_PACKET_RECEIVED", "%1: %2 (type %3) received from %4 to %5 on interface %6",
     "DHCP6_PACKET_RECEIVE_FAIL", "error on attempt to receive packet: %1",

@@ -617,15 +617,13 @@ Dhcpv6Srv::run() {
         } catch (const std::exception& e) {
             // General catch-all standard exceptions that are not caught by more
             // specific catches.
-            LOG_ERROR(packet6_logger, DHCP6_PACKET_PROCESS_STD_EXCEPTION)
-                .arg("duid=[no info], [no hwaddr info], tid=[no info]")
+            LOG_ERROR(packet6_logger, DHCP6_PACKET_PROCESS_STD_EXCEPTION_MAIN)
                 .arg(e.what());
 
         } catch (...) {
             // General catch-all non-standard exception that are not caught
             // by more specific catches.
-            LOG_ERROR(packet6_logger, DHCP6_PACKET_PROCESS_EXCEPTION)
-                .arg("duid=[no info], [no hwaddr info], tid=[no info]");
+            LOG_ERROR(packet6_logger, DHCP6_PACKET_PROCESS_EXCEPTION_MAIN);
         }
     }
 

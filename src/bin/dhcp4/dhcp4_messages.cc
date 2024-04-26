@@ -138,7 +138,9 @@ extern const isc::log::MessageID DHCP4_PACKET_OPTION_UNPACK_FAIL = "DHCP4_PACKET
 extern const isc::log::MessageID DHCP4_PACKET_PACK = "DHCP4_PACKET_PACK";
 extern const isc::log::MessageID DHCP4_PACKET_PACK_FAIL = "DHCP4_PACKET_PACK_FAIL";
 extern const isc::log::MessageID DHCP4_PACKET_PROCESS_EXCEPTION = "DHCP4_PACKET_PROCESS_EXCEPTION";
+extern const isc::log::MessageID DHCP4_PACKET_PROCESS_EXCEPTION_MAIN = "DHCP4_PACKET_PROCESS_EXCEPTION_MAIN";
 extern const isc::log::MessageID DHCP4_PACKET_PROCESS_STD_EXCEPTION = "DHCP4_PACKET_PROCESS_STD_EXCEPTION";
+extern const isc::log::MessageID DHCP4_PACKET_PROCESS_STD_EXCEPTION_MAIN = "DHCP4_PACKET_PROCESS_STD_EXCEPTION_MAIN";
 extern const isc::log::MessageID DHCP4_PACKET_QUEUE_FULL = "DHCP4_PACKET_QUEUE_FULL";
 extern const isc::log::MessageID DHCP4_PACKET_RECEIVED = "DHCP4_PACKET_RECEIVED";
 extern const isc::log::MessageID DHCP4_PACKET_SEND = "DHCP4_PACKET_SEND";
@@ -324,7 +326,9 @@ const char* values[] = {
     "DHCP4_PACKET_PACK", "%1: preparing on-wire format of the packet to be sent",
     "DHCP4_PACKET_PACK_FAIL", "%1: preparing on-wire-format of the packet to be sent failed %2",
     "DHCP4_PACKET_PROCESS_EXCEPTION", "%1: exception occurred during packet processing",
+    "DHCP4_PACKET_PROCESS_EXCEPTION_MAIN", "exception occurred during packet processing",
     "DHCP4_PACKET_PROCESS_STD_EXCEPTION", "%1: exception occurred during packet processing: %2",
+    "DHCP4_PACKET_PROCESS_STD_EXCEPTION_MAIN", "exception occurred during packet processing: %1",
     "DHCP4_PACKET_QUEUE_FULL", "multi-threading packet queue is full",
     "DHCP4_PACKET_RECEIVED", "%1: %2 (type %3) received from %4 to %5 on interface %6",
     "DHCP4_PACKET_SEND", "%1: trying to send packet %2 (type %3) from %4:%5 to %6:%7 on interface %8",
