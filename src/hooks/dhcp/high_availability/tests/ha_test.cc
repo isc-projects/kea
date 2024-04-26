@@ -99,6 +99,12 @@ HATest::runIOService(long ms, std::function<bool()> stop_condition) {
     }
 
     timer_->cancel();
+
+    try {
+        // Run any outstanding handlers and protect against uncaught exceptions.
+        io_service_->poll();
+    } catch (...) {
+    }
 }
 
 boost::shared_ptr<std::thread>

@@ -1487,7 +1487,7 @@ public:
     void testSendUpdatesControlResultConflict() {
         // Instruct the server 2 to return an error as a result of receiving a command.
         factory2_->getResponseCreator()->setControlResult(CONTROL_RESULT_CONFLICT);
-        factory3_->getResponseCreator()->setControlResult(CONTROL_RESULT_CONFLICT);
+        factory3_->getResponseCreator()->setControlResult(CONTROL_RESULT_SUCCESS);
 
         // Start HTTP servers.
         ASSERT_NO_THROW({
@@ -1966,6 +1966,7 @@ public:
         // Change the active server's response to success. The initially rejected
         // lease update should no longer be tracked.
         factory2_->getResponseCreator()->setControlResult(CONTROL_RESULT_SUCCESS);
+        factory3_->getResponseCreator()->setControlResult(CONTROL_RESULT_SUCCESS);
 
         bool unpark_called = false;
         testSendLeaseUpdates6([&unpark_called] {
