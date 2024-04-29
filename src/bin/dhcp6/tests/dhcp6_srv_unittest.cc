@@ -48,9 +48,7 @@
 #include <boost/pointer_cast.hpp>
 #include <boost/scoped_ptr.hpp>
 
-#include <fstream>
 #include <iostream>
-#include <sstream>
 
 #include <dirent.h>
 #include <unistd.h>
@@ -1706,8 +1704,11 @@ TEST_F(Dhcpv6SrvTest, RequestCache) {
 
     // Check the address.
     EXPECT_EQ(addr, iaaddr->getAddress());
-    EXPECT_EQ(pref - delta, iaaddr->getPreferred());
-    EXPECT_EQ(valid - delta, iaaddr->getValid());
+
+    // Since the initial time values were set, one second could have ticked,
+    // so allow one second of margin error.
+    EXPECT_EQ_MARGIN(pref - delta, iaaddr->getPreferred(), 1);
+    EXPECT_EQ_MARGIN(valid - delta, iaaddr->getValid(), 1);
 
     // check DUIDs
     checkServerId(reply, srv.getServerID());
@@ -1781,8 +1782,8 @@ TEST_F(Dhcpv6SrvTest, pdRequestCache) {
     // Check the prefix.
     EXPECT_EQ(prefix, iapref->getAddress());
     EXPECT_EQ(prefixlen, iapref->getLength());
-    EXPECT_EQ(pref - delta, iapref->getPreferred());
-    EXPECT_EQ(valid - delta, iapref->getValid());
+    EXPECT_EQ_MARGIN(pref - delta, iapref->getPreferred(), 1);
+    EXPECT_EQ_MARGIN(valid - delta, iapref->getValid(), 1);
 
     // check DUIDs
     checkServerId(reply, srv.getServerID());
@@ -1996,8 +1997,8 @@ TEST_F(Dhcpv6SrvTest, RenewCache) {
 
     // Check the address.
     EXPECT_EQ(addr, iaaddr->getAddress());
-    EXPECT_EQ(pref - delta, iaaddr->getPreferred());
-    EXPECT_EQ(valid - delta, iaaddr->getValid());
+    EXPECT_EQ_MARGIN(pref - delta, iaaddr->getPreferred(), 1);
+    EXPECT_EQ_MARGIN(valid - delta, iaaddr->getValid(), 1);
 
     // check DUIDs
     checkServerId(reply, srv.getServerID());
@@ -2071,8 +2072,8 @@ TEST_F(Dhcpv6SrvTest, pdRenewCache) {
     // Check the prefix.
     EXPECT_EQ(prefix, iapref->getAddress());
     EXPECT_EQ(prefixlen, iapref->getLength());
-    EXPECT_EQ(pref - delta, iapref->getPreferred());
-    EXPECT_EQ(valid - delta, iapref->getValid());
+    EXPECT_EQ_MARGIN(pref - delta, iapref->getPreferred(), 1);
+    EXPECT_EQ_MARGIN(valid - delta, iapref->getValid(), 1);
 
     // check DUIDs
     checkServerId(reply, srv.getServerID());
