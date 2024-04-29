@@ -113,7 +113,7 @@ public:
         CommandMgr::instance().setConnectionTimeout(DEFAULT_CONNECTION_TIMEOUT);
 
         reset();
-    };
+    }
 
     /// @brief Reset hooks data
     ///
@@ -178,7 +178,7 @@ public:
         IfaceMgr::instance().clearIfaces();
         IfaceMgr::instance().closeSockets();
         IfaceMgr::instance().detectIfaces();
-    };
+    }
 
     /// @brief Returns pointer to the server's IO service.
     ///
@@ -261,7 +261,7 @@ public:
     }
 
     /// @brief Reset
-    void reset() {
+    void reset() override {
         CtrlDhcpv6SrvTest::reset();
 
         // Remove unix socket file
@@ -2205,7 +2205,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, longCommand) {
 
     // This is the desired size of the command sent to the server (1MB). The
     // actual size sent will be slightly greater than that.
-    const size_t command_size = 1024 * 1000;
+    const ssize_t command_size = 1024 * 1000;
 
     while (command.tellp() < command_size) {
 
@@ -2318,7 +2318,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, longResponse) {
 
         // Remember the response size so as we know when we should stop
         // receiving.
-        const size_t long_response_size = reference_response.size();
+        const ssize_t long_response_size = reference_response.size();
 
         // Create the client and connect it to the server.
         boost::scoped_ptr<UnixControlClient> client(new UnixControlClient());
@@ -2387,8 +2387,8 @@ TEST_F(CtrlChannelDhcpv6SrvTest, connectionTimeoutPartialCommand) {
         // Let's wait up to 15s for the server's response. The response
         // should arrive sooner assuming that the timeout mechanism for
         // the server is working properly.
-        const unsigned int timeout = 15;
-        ASSERT_TRUE(client->getResponse(response, timeout));
+        const unsigned int response_timeout = 15;
+        ASSERT_TRUE(client->getResponse(response, response_timeout));
 
         // Explicitly close the client's connection.
         client->disconnectFromServer();
@@ -2437,8 +2437,8 @@ TEST_F(CtrlChannelDhcpv6SrvTest, connectionTimeoutNoData) {
         // Let's wait up to 15s for the server's response. The response
         // should arrive sooner assuming that the timeout mechanism for
         // the server is working properly.
-        const unsigned int timeout = 15;
-        ASSERT_TRUE(client->getResponse(response, timeout));
+        const unsigned int response_timeout = 15;
+        ASSERT_TRUE(client->getResponse(response, response_timeout));
 
         // Explicitly close the client's connection.
         client->disconnectFromServer();

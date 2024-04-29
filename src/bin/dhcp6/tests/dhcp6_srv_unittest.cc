@@ -2418,7 +2418,7 @@ TEST_F(Dhcpv6SrvTest, testUnicast) {
         DHCPV6_INFORMATION_REQUEST
     };
     // Iterate over these messages and make sure they are discarded.
-    for (int i = 0; i < sizeof(not_allowed_unicast); ++i) {
+    for (size_t i = 0; i < sizeof(not_allowed_unicast); ++i) {
         Pkt6Ptr msg = Pkt6Ptr(new Pkt6(not_allowed_unicast[i], 1234));
         msg->setLocalAddr(IOAddress("2001:db8:1::1"));
         EXPECT_FALSE(srv.testUnicast(msg))
@@ -2438,7 +2438,7 @@ TEST_F(Dhcpv6SrvTest, testUnicast) {
     };
     // Iterate over these messages and check that they are accepted being
     // sent to unicast.
-    for (int i = 0; i < sizeof(allowed_unicast); ++i) {
+    for (size_t i = 0; i < sizeof(allowed_unicast); ++i) {
         Pkt6Ptr msg = Pkt6Ptr(new Pkt6(allowed_unicast[i], 1234));
         msg->setLocalAddr(IOAddress("2001:db8:1::1"));
         msg->addOption(srv.getServerID());
@@ -2930,8 +2930,7 @@ TEST_F(Dhcpv6SrvTest, relaySourcePort) {
     // Simulate that we have received that traffic
     sol->pack();
     EXPECT_EQ(DHCPV6_RELAY_FORW, sol->getBuffer()[0]);
-    Pkt6Ptr query(new Pkt6(static_cast<const uint8_t*>
-                           (sol->getBuffer().getData()),
+    Pkt6Ptr query(new Pkt6(sol->getBuffer().getData(),
                            sol->getBuffer().getLength()));
     query->setRemoteAddr(sol->getRemoteAddr());
     query->setRemotePort(sol->getRemotePort());
@@ -2962,8 +2961,7 @@ TEST_F(Dhcpv6SrvTest, relaySourcePort) {
     EXPECT_EQ(DHCPV6_RELAY_REPL, rsp->getBuffer()[0]);
 
     // Get Advertise
-    Pkt6Ptr adv(new Pkt6(static_cast<const uint8_t*>
-                         (rsp->getBuffer().getData()),
+    Pkt6Ptr adv(new Pkt6(rsp->getBuffer().getData(),
                          rsp->getBuffer().getLength()));
     adv->unpack();
 
