@@ -744,12 +744,6 @@ due to an unacceptable condition (e.g. too large of a clock skew). The exact
 cause should appear in a previous error message.  Address the condition
 reported then restart the servers to resume service.
 
-% HA_TERMINATED_RESTART_PARTNER %1: waiting for the partner in the TERMINATED state to be restarted
-This informational message is issued when the server has been restarted after
-correcting the clock skew. The partner server is still in the terminated
-state. The partner must be restarted before the server can synchronize the
-database and start normal operation.
-
 % HA_TERMINATED_PARTNER_DID_NOT_RESTART %1: service is terminating because the terminated partner was not restarted within %2 minutes
 This warning message is issued to indicate that the HA service is terminating
 because partner server is in the terminated state and was not restarted within
@@ -759,3 +753,9 @@ duration between the restarts should not be too long. If it is long it may mean 
 the restart of one of the servers was unintentional (e.g., power outage). If the
 restarted server remains in the waiting state it cannot serve DHCP clients. Moving
 to the terminated state at least allows for responding to the DHCP traffic.
+
+% HA_TERMINATED_RESTART_PARTNER %1: waiting for the partner in the TERMINATED state to be restarted
+This informational message is issued when the server has been restarted after
+correcting the clock skew. The partner server is still in the terminated
+state. The partner must be restarted before the server can synchronize the
+database and start normal operation.

@@ -1,5 +1,20 @@
 # Copyright (C) 2024 Internet Systems Consortium, Inc. ("ISC")
 
+% PERFMON_ALARM_CLEARED Alarm for %1 has been cleared, reported average duration %2 is now below low-water-ms: %3
+This info message is emitted when the reported average duration for
+an alarm that has been triggered has fallen below the value of its
+low-water-ms parameter. The arguments detail the alarm's key and
+the most recently reported average.
+
+% PERFMON_ALARM_TRIGGERED Alarm for %1 has been triggered since %2, reported average duration %3 exceeds high-water-ms: %4
+This warning message is emitted when the reported average duration for
+an alarm exceeds its high-water-ms value.  As long as the reported
+averges remain above the low-water-ms value, the alarm will remain
+triggered and this message will be repeated every alarm-report-secs.
+Arguments detail the alarm's key, the time the alarm was first
+triggered, the most recent reported average, and the high-water-ms
+value.
+
 % PERFMON_DEINIT_FAILED unloading PerfMon hooks library failed: %1
 This error message indicates an error unloading the PerfMon hooks
 library. The details of the error are provided as argument of
@@ -14,6 +29,13 @@ This debug message is emitted after an inbound DHCPv4 query has been
 processed, the arguments are the query label and the dump of the
 query's packet event stack.
 
+% PERFMON_DHCP4_PKT_PROCESS_ERROR Packet event stack was not processed for query %1, reason %2
+This debug message is emitted when the query's event stack could not
+be processed. This is most likely a programmatic error and should be
+reported.  The arguments identify the query and the reason it could
+not be processed.  These errors should not affect server's normal
+operations.
+
 % PERFMON_DHCP4_SOCKET_RECEIVED_TIME_SUPPORT Kernel supports socket received time? %1
 This debug message is emitted after a (re)configuration and indicates
 whether or not the packet filter being used by kea-dhcp4 can supply
@@ -25,6 +47,13 @@ will not have data available to determine kernel buffer wait times.
 The debug message is emitted after an inbound DHCPv6 query has been
 processed, the arguments are the query label and the dump of the
 query's packet event stack.
+
+% PERFMON_DHCP6_PKT_PROCESS_ERROR Packet event stack was not processed for query %1, reason %2
+This debug message is emitted when the query's event stack could not
+be processed. This is most likely a programmatic error and should be
+reported.  The arguments identify the query and the reason it could
+not be processed.  These errors should not affect server's normal
+operations.
 
 % PERFMON_DHCP6_SOCKET_RECEIVED_TIME_SUPPORT Kernel supports socket received time? %1
 This debug message is emitted after a (re)configuration and indicates
@@ -41,32 +70,3 @@ the log message.
 % PERFMON_INIT_OK loading PerfMon hooks library successful
 This info message indicates that the PerfMon hooks library has been
 loaded successfully. Enjoy!
-
-% PERFMON_ALARM_CLEARED Alarm for %1 has been cleared, reported average duration %2 is now below low-water-ms: %3
-This info message is emitted when the reported average duration for
-an alarm that has been triggered has fallen below the value of its
-low-water-ms parameter. The arguments detail the alarm's key and
-the most recently reported average.
-
-% PERFMON_ALARM_TRIGGERED Alarm for %1 has been triggered since %2, reported average duration %3 exceeds high-water-ms: %4
-This warning message is emitted when the reported average duration for
-an alarm exceeds its high-water-ms value.  As long as the reported
-averges remain above the low-water-ms value, the alarm will remain
-triggered and this message will be repeated every alarm-report-secs.
-Arguments detail the alarm's key, the time the alarm was first
-triggered, the most recent reported average, and the high-water-ms
-value.
-
-% PERFMON_DHCP4_PKT_PROCESS_ERROR Packet event stack was not processed for query %1, reason %2
-This debug message is emitted when the query's event stack could not
-be processed. This is most likely a programmatic error and should be
-reported.  The arguments identify the query and the reason it could
-not be processed.  These errors should not affect server's normal
-operations.
-
-% PERFMON_DHCP6_PKT_PROCESS_ERROR Packet event stack was not processed for query %1, reason %2
-This debug message is emitted when the query's event stack could not
-be processed. This is most likely a programmatic error and should be
-reported.  The arguments identify the query and the reason it could
-not be processed.  These errors should not affect server's normal
-operations.

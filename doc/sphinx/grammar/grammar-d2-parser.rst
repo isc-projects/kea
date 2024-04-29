@@ -201,6 +201,7 @@ This grammar is generated from ``d2_parser.yy``. See :ref:`dhcp-ddns-server` for
                    | tsig_key_algorithm
                    | tsig_key_digest_bits
                    | tsig_key_secret
+                   | tsig_key_secret_file
                    | user_context
                    | comment
                    | unknown_map_entry
@@ -212,6 +213,8 @@ This grammar is generated from ``d2_parser.yy``. See :ref:`dhcp-ddns-server` for
      tsig_key_digest_bits ::= "digest-bits" ":" INTEGER
 
      tsig_key_secret ::= "secret" ":" STRING
+
+     tsig_key_secret_file ::= "secret-file" ":" STRING
 
      control_socket ::= "control-socket" ":" "{" control_socket_params "}"
 

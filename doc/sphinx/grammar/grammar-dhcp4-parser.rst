@@ -154,6 +154,7 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
                  | parked_packet_limit
                  | allocator
                  | offer_lifetime
+                 | stash_agent_options
                  | unknown_map_entry
 
      valid_lifetime ::= "valid-lifetime" ":" INTEGER
@@ -238,6 +239,8 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
      reservations_lookup_first ::= "reservations-lookup-first" ":" BOOLEAN
 
      offer_lifetime ::= "offer-lifetime" ":" INTEGER
+
+     stash_agent_options ::= "stash-agent-options" ":" BOOLEAN
 
      interfaces_config ::= "interfaces-config" ":" "{" interfaces_config_params "}"
 
