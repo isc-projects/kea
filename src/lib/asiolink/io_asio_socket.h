@@ -146,7 +146,7 @@ public:
     /// asynchronous operation.  On a UDP socket, it is just a call to "open()"
     /// and completes synchronously.
     ///
-    /// For TCP, signalling of the completion of the operation is done by
+    /// For TCP, signaling of the completion of the operation is done by
     /// by calling the callback function in the normal way.  This could be done
     /// for UDP (by posting en event on the event queue); however, that will
     /// incur additional overhead in the most common case.  So we give the
@@ -170,7 +170,7 @@ public:
     /// \brief Open AsioSocket
     ///
     /// Opens the socket for asynchronous I/O.  The open will complete
-    /// synchronously on UCP or asynchronously on TCP (in which case a callback
+    /// synchronously on UDP or asynchronously on TCP (in which case a callback
     /// will be queued).
     ///
     /// \param endpoint Pointer to the endpoint object.  This is ignored for

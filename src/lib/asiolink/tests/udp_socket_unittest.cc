@@ -215,7 +215,7 @@ TEST(UDPSocket, SequenceTest) {
     UDPEndpoint server_remote_endpoint;                       // Address where server received message from
 
     // The client - the UDPSocket being tested
-    UDPSocket<UDPCallback>  client(service);                  // Socket under test
+    UDPSocket<UDPCallback> client(service);                   // Socket under test
     UDPCallback client_cb("Client");                          // Async I/O callback function
     UDPEndpoint client_remote_endpoint;                       // Where client receives message from
     size_t      client_cumulative = 0;                        // Cumulative data received
