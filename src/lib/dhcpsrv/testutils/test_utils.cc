@@ -55,8 +55,8 @@ detailCompareLease(const Lease4Ptr& first, const Lease4Ptr& second) {
 
     // Since the initial time values were set, one second could have ticked,
     // so allow one second of margin error.
-    EXPECT_EQ_MARGIN(first->valid_lft_, second->valid_lft_, 1);
-    EXPECT_EQ_MARGIN(first->cltt_, second->cltt_, 1);
+    EXPECT_NEAR(first->valid_lft_, second->valid_lft_, 1);
+    EXPECT_NEAR(first->cltt_, second->cltt_, 1);
 
     EXPECT_EQ(first->subnet_id_, second->subnet_id_);
     EXPECT_EQ(first->pool_id_, second->pool_id_);
@@ -92,9 +92,9 @@ detailCompareLease(const Lease6Ptr& first, const Lease6Ptr& second) {
 
     // Since the initial time values were set, one second could have ticked,
     // so allow one second of margin error.
-    EXPECT_EQ_MARGIN(first->preferred_lft_, second->preferred_lft_, 1);
-    EXPECT_EQ_MARGIN(first->valid_lft_, second->valid_lft_, 1);
-    EXPECT_EQ_MARGIN(first->cltt_, second->cltt_, 1);
+    EXPECT_NEAR(first->preferred_lft_, second->preferred_lft_, 1);
+    EXPECT_NEAR(first->valid_lft_, second->valid_lft_, 1);
+    EXPECT_NEAR(first->cltt_, second->cltt_, 1);
 
     EXPECT_EQ(first->subnet_id_, second->subnet_id_);
     EXPECT_EQ(first->pool_id_, second->pool_id_);

@@ -1891,7 +1891,7 @@ TEST_F(Dhcpv4SrvTest, DiscoverCache) {
     OptionUint32Ptr opt = boost::dynamic_pointer_cast<
         OptionUint32>(offer->getOption(DHO_DHCP_LEASE_TIME));
     ASSERT_TRUE(opt);
-    EXPECT_EQ_MARGIN(subnet_->getValid() - delta, opt->getValue(), 1);
+    EXPECT_NEAR(subnet_->getValid() - delta, opt->getValue(), 1);
 
     // Check address
     EXPECT_EQ(addr, offer->getYiaddr());
@@ -2072,7 +2072,7 @@ TEST_F(Dhcpv4SrvTest, RenewBasic) {
     int32_t cltt = static_cast<int32_t>(l->cltt_);
     int32_t expected = static_cast<int32_t>(time(NULL));
     // Equality or difference by 1 between cltt and expected is ok.
-    EXPECT_EQ_MARGIN(cltt, expected, 1);
+    EXPECT_NEAR(cltt, expected, 1);
 
     Lease4Ptr lease = LeaseMgrFactory::instance().getLease4(addr);
     EXPECT_TRUE(LeaseMgrFactory::instance().deleteLease(lease));
@@ -2195,7 +2195,7 @@ TEST_F(Dhcpv4SrvTest, RenewDefaultLifetime) {
     int32_t cltt = static_cast<int32_t>(c.l->cltt_);
     int32_t expected = static_cast<int32_t>(time(NULL));
     // Equality or difference by 1 between cltt and expected is ok.
-    EXPECT_EQ_MARGIN(cltt, expected, 1);
+    EXPECT_NEAR(cltt, expected, 1);
 
     Lease4Ptr lease = LeaseMgrFactory::instance().getLease4(c.addr);
     EXPECT_TRUE(LeaseMgrFactory::instance().deleteLease(lease));
@@ -2241,7 +2241,7 @@ TEST_F(Dhcpv4SrvTest, RenewHintLifetime) {
     int32_t cltt = static_cast<int32_t>(c.l->cltt_);
     int32_t expected = static_cast<int32_t>(time(NULL));
     // Equality or difference by 1 between cltt and expected is ok.
-    EXPECT_EQ_MARGIN(cltt, expected, 1);
+    EXPECT_NEAR(cltt, expected, 1);
 
     Lease4Ptr lease = LeaseMgrFactory::instance().getLease4(c.addr);
     EXPECT_TRUE(LeaseMgrFactory::instance().deleteLease(lease));
@@ -2287,7 +2287,7 @@ TEST_F(Dhcpv4SrvTest, RenewMinLifetime) {
     int32_t cltt = static_cast<int32_t>(c.l->cltt_);
     int32_t expected = static_cast<int32_t>(time(NULL));
     // Equality or difference by 1 between cltt and expected is ok.
-    EXPECT_EQ_MARGIN(cltt, expected, 1);
+    EXPECT_NEAR(cltt, expected, 1);
 
     Lease4Ptr lease = LeaseMgrFactory::instance().getLease4(c.addr);
     EXPECT_TRUE(LeaseMgrFactory::instance().deleteLease(lease));
@@ -2332,7 +2332,7 @@ TEST_F(Dhcpv4SrvTest, RenewMaxLifetime) {
     int32_t cltt = static_cast<int32_t>(c.l->cltt_);
     int32_t expected = static_cast<int32_t>(time(NULL));
     // Equality or difference by 1 between cltt and expected is ok.
-    EXPECT_EQ_MARGIN(cltt, expected, 1);
+    EXPECT_NEAR(cltt, expected, 1);
 
     Lease4Ptr lease = LeaseMgrFactory::instance().getLease4(c.addr);
     EXPECT_TRUE(LeaseMgrFactory::instance().deleteLease(lease));
@@ -2400,7 +2400,7 @@ TEST_F(Dhcpv4SrvTest, RenewCache) {
     OptionUint32Ptr opt = boost::dynamic_pointer_cast<
         OptionUint32>(ack->getOption(DHO_DHCP_LEASE_TIME));
     ASSERT_TRUE(opt);
-    EXPECT_EQ_MARGIN(subnet_->getValid() - delta, opt->getValue(), 1);
+    EXPECT_NEAR(subnet_->getValid() - delta, opt->getValue(), 1);
 
     // Check address
     EXPECT_EQ(addr, ack->getYiaddr());
