@@ -72,6 +72,37 @@ shellcheck:
   script:
     - ./tools/shellcheck-all.sh
 
+.base_get_list_of_modified_files: &get_modified_files
+  - MODIFIED_FILES=$(git diff --name-only $(git merge-base origin/master HEAD))
+  - echo "${MODIFIED_FILES}"
+
+.base_get_list_of_python_scripts: &get_python_scripts
+  - PYTHON_SCRIPTS=$(find ${INPUT-.} -type f -not -path './.git/*' -and \( -name '*.py' -or -name '*.py.in' \) | sort)
+  - echo "${PYTHON_SCRIPTS}"
+  - if test -z "${PYTHON_SCRIPTS}"; then echo "No python scripts to check. Exiting early."; exit 0; fi
+
+bandit:
+  script:
+    - bandit -r ./
+
+pycodestyle:
+  stage: test
+  script:
+    # - *get_modified_files
+    # - INPUT="${MODIFIED_FILES}"
+    - *get_python_scripts
+    - pycodestyle --config=.gitlab/ci/pycodestyle.cfg ${PYTHON_SCRIPTS}
+
+pylint:
+  stage: test
+  script:
+    # - *get_modified_files
+    # - INPUT="${MODIFIED_FILES}"
+    - *get_python_scripts
+    - pylint --jobs "$(nproc || gnproc || echo 1)" --rcfile ./.gitlab/ci/pylint.rc ${PYTHON_SCRIPTS}
+    # If we reached this point, it means pylint passed. Run again with all warnings enabled, but ignore the return code to show a list of improvements that the developer could do, even when CI is passing.
+    - pylint --jobs "$(nproc || gnproc || echo 1)" --rcfile ./.gitlab/ci/pylint.rc --enable all ${PYTHON_SCRIPTS} || true
+
 ############################### SAST ################################
 # Read more about this feature here: https://docs.gitlab.com/ee/user/application_security/sast/
 #
