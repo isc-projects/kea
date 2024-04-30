@@ -118,9 +118,9 @@ void LogContentTest::addString(const string& new_string) {
     exp_strings_.push_back(new_string);
 }
 
-void LogContentTest::addString(const string& logger_msg, const string& new_string, Pkt& pkt) {
+void LogContentTest::addString(const string& logger_msg, const string& new_string, const string& label) {
     std::ostringstream stream;
-    stream << logger_msg << " " << pkt.getLabel() << ": " << new_string;
+    stream << logger_msg << " " << label << ": " << new_string;
     exp_strings_.push_back(stream.str());
 }
 

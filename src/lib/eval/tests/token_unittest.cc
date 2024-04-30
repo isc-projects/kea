@@ -585,7 +585,7 @@ TEST_F(TokenTest, string4) {
     // Check that the debug output was correct.  Add the strings
     // to the test vector in the class and then call checkFile
     // for comparison
-    addString("EVAL_DEBUG_STRING", "Pushing text string 'foo'", *pkt4_);
+    addString("EVAL_DEBUG_STRING", "Pushing text string 'foo'", pkt4_->getLabel());
     EXPECT_TRUE(checkFile());
 }
 
@@ -612,7 +612,7 @@ TEST_F(TokenTest, string4Complex) {
                       "12345~!@#$%^&*()_+{}[];:<>/?\\67890\t \0\b\r\f'\""
                       "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'";
     string expected_str(expected, sizeof(expected) - 1);
-    addString("EVAL_DEBUG_STRING", expected_str, *pkt4_);
+    addString("EVAL_DEBUG_STRING", expected_str, pkt4_->getLabel());
     EXPECT_TRUE(checkFile());
 }
 
@@ -633,7 +633,7 @@ TEST_F(TokenTest, string6) {
     // Check that the debug output was correct.  Add the strings
     // to the test vector in the class and then call checkFile
     // for comparison
-    addString("EVAL_DEBUG_STRING", "Pushing text string 'foo'", *pkt6_);
+    addString("EVAL_DEBUG_STRING", "Pushing text string 'foo'", pkt6_->getLabel());
     EXPECT_TRUE(checkFile());
 }
 
@@ -660,7 +660,7 @@ TEST_F(TokenTest, string6Complex) {
                       "12345~!@#$%^&*()_+{}[];:<>/?\\67890\t \0\b\r\f'\""
                       "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'";
     string expected_str(expected, sizeof(expected) - 1);
-    addString("EVAL_DEBUG_STRING", expected_str, *pkt6_);
+    addString("EVAL_DEBUG_STRING", expected_str, pkt6_->getLabel());
     EXPECT_TRUE(checkFile());
 }
 
@@ -722,13 +722,13 @@ TEST_F(TokenTest, hexstring4) {
     // Check that the debug output was correct.  Add the strings
     // to the test vector in the class and then call checkFile
     // for comparison
-    addString("EVAL_DEBUG_HEXSTRING", "Pushing hex string 0x", *pkt4_);
-    addString("EVAL_DEBUG_HEXSTRING", "Pushing hex string 0x", *pkt4_);
-    addString("EVAL_DEBUG_HEXSTRING", "Pushing hex string 0x", *pkt4_);
-    addString("EVAL_DEBUG_HEXSTRING", "Pushing hex string 0x", *pkt4_);
-    addString("EVAL_DEBUG_HEXSTRING", "Pushing hex string 0x07", *pkt4_);
-    addString("EVAL_DEBUG_HEXSTRING", "Pushing hex string 0x666F6F", *pkt4_);
-    addString("EVAL_DEBUG_HEXSTRING", "Pushing hex string 0x63825363", *pkt4_);
+    addString("EVAL_DEBUG_HEXSTRING", "Pushing hex string 0x", pkt4_->getLabel());
+    addString("EVAL_DEBUG_HEXSTRING", "Pushing hex string 0x", pkt4_->getLabel());
+    addString("EVAL_DEBUG_HEXSTRING", "Pushing hex string 0x", pkt4_->getLabel());
+    addString("EVAL_DEBUG_HEXSTRING", "Pushing hex string 0x", pkt4_->getLabel());
+    addString("EVAL_DEBUG_HEXSTRING", "Pushing hex string 0x07", pkt4_->getLabel());
+    addString("EVAL_DEBUG_HEXSTRING", "Pushing hex string 0x666F6F", pkt4_->getLabel());
+    addString("EVAL_DEBUG_HEXSTRING", "Pushing hex string 0x63825363", pkt4_->getLabel());
     EXPECT_TRUE(checkFile());
 }
 
@@ -789,13 +789,13 @@ TEST_F(TokenTest, hexstring6) {
     // Check that the debug output was correct.  Add the strings
     // to the test vector in the class and then call checkFile
     // for comparison
-    addString("EVAL_DEBUG_HEXSTRING", "Pushing hex string 0x", *pkt6_);
-    addString("EVAL_DEBUG_HEXSTRING", "Pushing hex string 0x", *pkt6_);
-    addString("EVAL_DEBUG_HEXSTRING", "Pushing hex string 0x", *pkt6_);
-    addString("EVAL_DEBUG_HEXSTRING", "Pushing hex string 0x", *pkt6_);
-    addString("EVAL_DEBUG_HEXSTRING", "Pushing hex string 0x07", *pkt6_);
-    addString("EVAL_DEBUG_HEXSTRING", "Pushing hex string 0x666F6F", *pkt6_);
-    addString("EVAL_DEBUG_HEXSTRING", "Pushing hex string 0x63825363", *pkt6_);
+    addString("EVAL_DEBUG_HEXSTRING", "Pushing hex string 0x", pkt6_->getLabel());
+    addString("EVAL_DEBUG_HEXSTRING", "Pushing hex string 0x", pkt6_->getLabel());
+    addString("EVAL_DEBUG_HEXSTRING", "Pushing hex string 0x", pkt6_->getLabel());
+    addString("EVAL_DEBUG_HEXSTRING", "Pushing hex string 0x", pkt6_->getLabel());
+    addString("EVAL_DEBUG_HEXSTRING", "Pushing hex string 0x07", pkt6_->getLabel());
+    addString("EVAL_DEBUG_HEXSTRING", "Pushing hex string 0x666F6F", pkt6_->getLabel());
+    addString("EVAL_DEBUG_HEXSTRING", "Pushing hex string 0x63825363", pkt6_->getLabel());
     EXPECT_TRUE(checkFile());
 }
 
@@ -817,7 +817,8 @@ TEST_F(TokenTest, lcase) {
     // to the test vector in the class and then call checkFile
     // for comparison
     addString("EVAL_DEBUG_LCASE",
-              "Popping string 'LoWeR' and pushing converted value to lower case 'lower'", *pkt6_);
+              "Popping string 'LoWeR' and pushing converted value to lower case 'lower'",
+              pkt6_->getLabel());
     EXPECT_TRUE(checkFile());
 }
 
@@ -847,7 +848,7 @@ TEST_F(TokenTest, lcaseComplex) {
                       "and pushing converted value to lower case '"
                       "12345~!@#$%^&*()_+lower{}[];:<>/?\\67890\t \0\b\r\f'";
     string expected_str(expected, sizeof(expected) - 1);
-    addString("EVAL_DEBUG_LCASE", expected_str, *pkt6_);
+    addString("EVAL_DEBUG_LCASE", expected_str, pkt6_->getLabel());
     EXPECT_TRUE(checkFile());
 }
 
@@ -869,7 +870,8 @@ TEST_F(TokenTest, ucase) {
     // to the test vector in the class and then call checkFile
     // for comparison
     addString("EVAL_DEBUG_UCASE",
-              "Popping string 'uPpEr' and pushing converted value to upper case 'UPPER'", *pkt6_);
+              "Popping string 'uPpEr' and pushing converted value to upper case 'UPPER'",
+              pkt6_->getLabel());
     EXPECT_TRUE(checkFile());
 }
 
@@ -899,7 +901,7 @@ TEST_F(TokenTest, ucaseComplex) {
                       "and pushing converted value to upper case '"
                       "12345~!@#$%^&*()_+UPPER{}[];:<>/?\\67890\t \0\b\r\f'";
     string expected_str(expected, sizeof(expected) - 1);
-    addString("EVAL_DEBUG_UCASE", expected_str, *pkt6_);
+    addString("EVAL_DEBUG_UCASE", expected_str, pkt6_->getLabel());
     EXPECT_TRUE(checkFile());
 }
 
@@ -950,11 +952,11 @@ TEST_F(TokenTest, ipaddress) {
     // Check that the debug output was correct.  Add the strings
     // to the test vector in the class and then call checkFile
     // for comparison
-    addString("EVAL_DEBUG_IPADDRESS", "Pushing IPAddress 0x0A000001", *pkt4_);
+    addString("EVAL_DEBUG_IPADDRESS", "Pushing IPAddress 0x0A000001", pkt4_->getLabel());
     addString("EVAL_DEBUG_IPADDRESS", "Pushing IPAddress 0x20010DB8000000000000000000000001",
-              *pkt6_);
-    addString("EVAL_DEBUG_IPADDRESS", "Pushing IPAddress 0x", *pkt4_);
-    addString("EVAL_DEBUG_IPADDRESS", "Pushing IPAddress 0x", *pkt6_);
+              pkt6_->getLabel());
+    addString("EVAL_DEBUG_IPADDRESS", "Pushing IPAddress 0x", pkt4_->getLabel());
+    addString("EVAL_DEBUG_IPADDRESS", "Pushing IPAddress 0x", pkt6_->getLabel());
     EXPECT_TRUE(checkFile());
 }
 
@@ -1012,8 +1014,8 @@ TEST_F(TokenTest, addressToText) {
     // Check that the debug output was correct.  Add the strings
     // to the test vector in the class and then call checkFile
     // for comparison
-    addString("EVAL_DEBUG_IPADDRESSTOTEXT", "Pushing IPAddress 10.0.0.1", *pkt4_);
-    addString("EVAL_DEBUG_IPADDRESSTOTEXT", "Pushing IPAddress 2001:db8::1", *pkt4_);
+    addString("EVAL_DEBUG_IPADDRESSTOTEXT", "Pushing IPAddress 10.0.0.1", pkt4_->getLabel());
+    addString("EVAL_DEBUG_IPADDRESSTOTEXT", "Pushing IPAddress 2001:db8::1", pkt4_->getLabel());
     EXPECT_TRUE(checkFile());
 }
 
@@ -1204,12 +1206,12 @@ TEST_F(TokenTest, integerToText) {
     // Check that the debug output was correct.  Add the strings
     // to the test vector in the class and then call checkFile
     // for comparison
-    addString("EVAL_DEBUG_INT8TOTEXT", "Pushing Int8 -1", *pkt4_);
-    addString("EVAL_DEBUG_INT16TOTEXT", "Pushing Int16 -1", *pkt4_);
-    addString("EVAL_DEBUG_INT32TOTEXT", "Pushing Int32 -1", *pkt4_);
-    addString("EVAL_DEBUG_UINT8TOTEXT", "Pushing UInt8 255", *pkt4_);
-    addString("EVAL_DEBUG_UINT16TOTEXT", "Pushing UInt16 65535", *pkt4_);
-    addString("EVAL_DEBUG_UINT32TOTEXT", "Pushing UInt32 4294967295", *pkt4_);
+    addString("EVAL_DEBUG_INT8TOTEXT", "Pushing Int8 -1", pkt4_->getLabel());
+    addString("EVAL_DEBUG_INT16TOTEXT", "Pushing Int16 -1", pkt4_->getLabel());
+    addString("EVAL_DEBUG_INT32TOTEXT", "Pushing Int32 -1", pkt4_->getLabel());
+    addString("EVAL_DEBUG_UINT8TOTEXT", "Pushing UInt8 255", pkt4_->getLabel());
+    addString("EVAL_DEBUG_UINT16TOTEXT", "Pushing UInt16 65535", pkt4_->getLabel());
+    addString("EVAL_DEBUG_UINT32TOTEXT", "Pushing UInt32 4294967295", pkt4_->getLabel());
     EXPECT_TRUE(checkFile());
 }
 
@@ -1243,8 +1245,8 @@ TEST_F(TokenTest, optionString4) {
     // Check that the debug output was correct.  Add the strings
     // to the test vector in the class and then call checkFile
     // for comparison
-    addString("EVAL_DEBUG_OPTION", "Pushing option 100 with value 'hundred4'", *pkt4_);
-    addString("EVAL_DEBUG_OPTION", "Pushing option 101 with value ''", *pkt4_);
+    addString("EVAL_DEBUG_OPTION", "Pushing option 100 with value 'hundred4'", pkt4_->getLabel());
+    addString("EVAL_DEBUG_OPTION", "Pushing option 101 with value ''", pkt4_->getLabel());
     EXPECT_TRUE(checkFile());
 }
 
@@ -1279,8 +1281,9 @@ TEST_F(TokenTest, optionHexString4) {
     // Check that the debug output was correct.  Add the strings
     // to the test vector in the class and then call checkFile
     // for comparison
-    addString("EVAL_DEBUG_OPTION", "Pushing option 100 with value 0x68756E6472656434", *pkt4_);
-    addString("EVAL_DEBUG_OPTION", "Pushing option 101 with value 0x", *pkt4_);
+    addString("EVAL_DEBUG_OPTION", "Pushing option 100 with value 0x68756E6472656434",
+              pkt4_->getLabel());
+    addString("EVAL_DEBUG_OPTION", "Pushing option 101 with value 0x", pkt4_->getLabel());
     EXPECT_TRUE(checkFile());
 }
 
@@ -1308,8 +1311,8 @@ TEST_F(TokenTest, optionExistsString4) {
     // Check that the debug output was correct.  Add the strings
     // to the test vector in the class and then call checkFile
     // for comparison
-    addString("EVAL_DEBUG_OPTION", "Pushing option 100 with value 'true'", *pkt4_);
-    addString("EVAL_DEBUG_OPTION", "Pushing option 101 with value 'false'", *pkt4_);
+    addString("EVAL_DEBUG_OPTION", "Pushing option 100 with value 'true'", pkt4_->getLabel());
+    addString("EVAL_DEBUG_OPTION", "Pushing option 101 with value 'false'", pkt4_->getLabel());
     EXPECT_TRUE(checkFile());
 }
 
@@ -1343,8 +1346,8 @@ TEST_F(TokenTest, optionString6) {
     // Check that the debug output was correct.  Add the strings
     // to the test vector in the class and then call checkFile
     // for comparison
-    addString("EVAL_DEBUG_OPTION", "Pushing option 100 with value 'hundred6'", *pkt6_);
-    addString("EVAL_DEBUG_OPTION", "Pushing option 101 with value ''", *pkt6_);
+    addString("EVAL_DEBUG_OPTION", "Pushing option 100 with value 'hundred6'", pkt6_->getLabel());
+    addString("EVAL_DEBUG_OPTION", "Pushing option 101 with value ''", pkt6_->getLabel());
     EXPECT_TRUE(checkFile());
 }
 
@@ -1379,8 +1382,9 @@ TEST_F(TokenTest, optionHexString6) {
     // Check that the debug output was correct.  Add the strings
     // to the test vector in the class and then call checkFile
     // for comparison
-    addString("EVAL_DEBUG_OPTION", "Pushing option 100 with value 0x68756E6472656436", *pkt6_);
-    addString("EVAL_DEBUG_OPTION", "Pushing option 101 with value 0x", *pkt6_);
+    addString("EVAL_DEBUG_OPTION", "Pushing option 100 with value 0x68756E6472656436",
+              pkt6_->getLabel());
+    addString("EVAL_DEBUG_OPTION", "Pushing option 101 with value 0x", pkt6_->getLabel());
     EXPECT_TRUE(checkFile());
 }
 
@@ -1408,8 +1412,8 @@ TEST_F(TokenTest, optionExistsString6) {
     // Check that the debug output was correct.  Add the strings
     // to the test vector in the class and then call checkFile
     // for comparison
-    addString("EVAL_DEBUG_OPTION", "Pushing option 100 with value 'true'", *pkt6_);
-    addString("EVAL_DEBUG_OPTION", "Pushing option 101 with value 'false'", *pkt6_);
+    addString("EVAL_DEBUG_OPTION", "Pushing option 100 with value 'true'", pkt6_->getLabel());
+    addString("EVAL_DEBUG_OPTION", "Pushing option 101 with value 'false'", pkt6_->getLabel());
     EXPECT_TRUE(checkFile());
 }
 
@@ -1435,7 +1439,7 @@ TEST_F(TokenTest, relay4Option) {
     // Check that the debug output was correct.  Add the strings
     // to the test vector in the class and then call checkFile
     // for comparison
-    addString("EVAL_DEBUG_OPTION", "Pushing option 13 with value 'thirteen'", *pkt4_);
+    addString("EVAL_DEBUG_OPTION", "Pushing option 13 with value 'thirteen'", pkt4_->getLabel());
     EXPECT_TRUE(checkFile());
 }
 
@@ -1462,7 +1466,7 @@ TEST_F(TokenTest, relay4OptionNoSuboption) {
     // Check that the debug output was correct.  Add the strings
     // to the test vector in the class and then call checkFile
     // for comparison
-    addString("EVAL_DEBUG_OPTION", "Pushing option 15 with value ''", *pkt4_);
+    addString("EVAL_DEBUG_OPTION", "Pushing option 15 with value ''", pkt4_->getLabel());
     EXPECT_TRUE(checkFile());
 }
 
@@ -1488,7 +1492,7 @@ TEST_F(TokenTest, relay4OptionNoRai) {
     // Check that the debug output was correct.  Add the strings
     // to the test vector in the class and then call checkFile
     // for comparison
-    addString("EVAL_DEBUG_OPTION", "Pushing option 13 with value ''", *pkt4_);
+    addString("EVAL_DEBUG_OPTION", "Pushing option 13 with value ''", pkt4_->getLabel());
     EXPECT_TRUE(checkFile());
 }
 
@@ -1550,11 +1554,11 @@ TEST_F(TokenTest, relay4RAIOnly) {
     // Check that the debug output was correct.  Add the strings
     // to the test vector in the class and then call checkFile
     // for comparison
-    addString("EVAL_DEBUG_OPTION", "Pushing option 13 with value 'thirteen'", *pkt4_);
-    addString("EVAL_DEBUG_OPTION", "Pushing option 1 with value 'one'", *pkt4_);
-    addString("EVAL_DEBUG_OPTION", "Pushing option 70 with value ''", *pkt4_);
-    addString("EVAL_DEBUG_OPTION", "Pushing option 1 with value 'true'", *pkt4_);
-    addString("EVAL_DEBUG_OPTION", "Pushing option 70 with value 'false'", *pkt4_);
+    addString("EVAL_DEBUG_OPTION", "Pushing option 13 with value 'thirteen'", pkt4_->getLabel());
+    addString("EVAL_DEBUG_OPTION", "Pushing option 1 with value 'one'", pkt4_->getLabel());
+    addString("EVAL_DEBUG_OPTION", "Pushing option 70 with value ''", pkt4_->getLabel());
+    addString("EVAL_DEBUG_OPTION", "Pushing option 1 with value 'true'", pkt4_->getLabel());
+    addString("EVAL_DEBUG_OPTION", "Pushing option 70 with value 'false'", pkt4_->getLabel());
     EXPECT_TRUE(checkFile());
 }
 
@@ -1608,29 +1612,37 @@ TEST_F(TokenTest, relay6Option) {
     // Check that the debug output was correct.  Add the strings
     // to the test vector in the class and then call checkFile
     // for comparison
-    addString("EVAL_DEBUG_OPTION", "Pushing option 100 with value 'hundred.zero'", *pkt6_);
-    addString("EVAL_DEBUG_OPTION", "Pushing option 100 with value 'true'", *pkt6_);
-    addString("EVAL_DEBUG_OPTION", "Pushing option 101 with value 'hundredone.zero'", *pkt6_);
-    addString("EVAL_DEBUG_OPTION", "Pushing option 102 with value ''", *pkt6_);
-    addString("EVAL_DEBUG_OPTION", "Pushing option 102 with value 'false'", *pkt6_);
+    addString("EVAL_DEBUG_OPTION", "Pushing option 100 with value 'hundred.zero'",
+              pkt6_->getLabel());
+    addString("EVAL_DEBUG_OPTION", "Pushing option 100 with value 'true'", pkt6_->getLabel());
+    addString("EVAL_DEBUG_OPTION", "Pushing option 101 with value 'hundredone.zero'",
+              pkt6_->getLabel());
+    addString("EVAL_DEBUG_OPTION", "Pushing option 102 with value ''", pkt6_->getLabel());
+    addString("EVAL_DEBUG_OPTION", "Pushing option 102 with value 'false'", pkt6_->getLabel());
 
-    addString("EVAL_DEBUG_OPTION", "Pushing option 100 with value 'hundred.one'", *pkt6_);
-    addString("EVAL_DEBUG_OPTION", "Pushing option 101 with value ''", *pkt6_);
-    addString("EVAL_DEBUG_OPTION", "Pushing option 102 with value 'hundredtwo.one'", *pkt6_);
+    addString("EVAL_DEBUG_OPTION", "Pushing option 100 with value 'hundred.one'",
+              pkt6_->getLabel());
+    addString("EVAL_DEBUG_OPTION", "Pushing option 101 with value ''", pkt6_->getLabel());
+    addString("EVAL_DEBUG_OPTION", "Pushing option 102 with value 'hundredtwo.one'",
+              pkt6_->getLabel());
 
-    addString("EVAL_DEBUG_OPTION", "Pushing option 100 with value ''", *pkt6_);
+    addString("EVAL_DEBUG_OPTION", "Pushing option 100 with value ''", pkt6_->getLabel());
 
-    addString("EVAL_DEBUG_OPTION", "Pushing option 100 with value 'hundred.one'", *pkt6_);
-    addString("EVAL_DEBUG_OPTION", "Pushing option 101 with value ''", *pkt6_);
-    addString("EVAL_DEBUG_OPTION", "Pushing option 102 with value 'hundredtwo.one'", *pkt6_);
+    addString("EVAL_DEBUG_OPTION", "Pushing option 100 with value 'hundred.one'",
+              pkt6_->getLabel());
+    addString("EVAL_DEBUG_OPTION", "Pushing option 101 with value ''", pkt6_->getLabel());
+    addString("EVAL_DEBUG_OPTION", "Pushing option 102 with value 'hundredtwo.one'",
+              pkt6_->getLabel());
 
-    addString("EVAL_DEBUG_OPTION", "Pushing option 100 with value 'hundred.zero'", *pkt6_);
-    addString("EVAL_DEBUG_OPTION", "Pushing option 100 with value 'true'", *pkt6_);
-    addString("EVAL_DEBUG_OPTION", "Pushing option 101 with value 'hundredone.zero'", *pkt6_);
-    addString("EVAL_DEBUG_OPTION", "Pushing option 102 with value ''", *pkt6_);
-    addString("EVAL_DEBUG_OPTION", "Pushing option 102 with value 'false'", *pkt6_);
+    addString("EVAL_DEBUG_OPTION", "Pushing option 100 with value 'hundred.zero'",
+              pkt6_->getLabel());
+    addString("EVAL_DEBUG_OPTION", "Pushing option 100 with value 'true'", pkt6_->getLabel());
+    addString("EVAL_DEBUG_OPTION", "Pushing option 101 with value 'hundredone.zero'",
+              pkt6_->getLabel());
+    addString("EVAL_DEBUG_OPTION", "Pushing option 102 with value ''", pkt6_->getLabel());
+    addString("EVAL_DEBUG_OPTION", "Pushing option 102 with value 'false'", pkt6_->getLabel());
 
-    addString("EVAL_DEBUG_OPTION", "Pushing option 100 with value ''", *pkt6_);
+    addString("EVAL_DEBUG_OPTION", "Pushing option 100 with value ''", pkt6_->getLabel());
 
     EXPECT_TRUE(checkFile());
 }
@@ -1691,10 +1703,13 @@ TEST_F(TokenTest, pkt4MetaData) {
     // Check that the debug output was correct.  Add the strings
     // to the test vector in the class and then call checkFile
     // for comparison
-    addString("EVAL_DEBUG_PKT", "Pushing PKT meta data iface with value eth0", *pkt4_);
-    addString("EVAL_DEBUG_PKT", "Pushing PKT meta data src with value 0x0A000002", *pkt4_);
-    addString("EVAL_DEBUG_PKT", "Pushing PKT meta data dst with value 0x0A000001", *pkt4_);
-    addString("EVAL_DEBUG_PKT", "Pushing PKT meta data len with value 0x000000F9", *pkt4_);
+    addString("EVAL_DEBUG_PKT", "Pushing PKT meta data iface with value eth0", pkt4_->getLabel());
+    addString("EVAL_DEBUG_PKT", "Pushing PKT meta data src with value 0x0A000002",
+              pkt4_->getLabel());
+    addString("EVAL_DEBUG_PKT", "Pushing PKT meta data dst with value 0x0A000001",
+              pkt4_->getLabel());
+    addString("EVAL_DEBUG_PKT", "Pushing PKT meta data len with value 0x000000F9",
+              pkt4_->getLabel());
     EXPECT_TRUE(checkFile());
 }
 
@@ -1750,12 +1765,15 @@ TEST_F(TokenTest, pkt6MetaData) {
     // Check that the debug output was correct.  Add the strings
     // to the test vector in the class and then call checkFile
     // for comparison
-    addString("EVAL_DEBUG_PKT", "Pushing PKT meta data iface with value eth0", *pkt6_);
+    addString("EVAL_DEBUG_PKT", "Pushing PKT meta data iface with value eth0", pkt6_->getLabel());
     addString("EVAL_DEBUG_PKT",
-              "Pushing PKT meta data src with value 0xFE800000000000000000000000001234", *pkt6_);
+              "Pushing PKT meta data src with value 0xFE800000000000000000000000001234",
+              pkt6_->getLabel());
     addString("EVAL_DEBUG_PKT",
-              "Pushing PKT meta data dst with value 0xFF020000000000000000000000010002", *pkt6_);
-    addString("EVAL_DEBUG_PKT", "Pushing PKT meta data len with value 0x00000010", *pkt6_);
+              "Pushing PKT meta data dst with value 0xFF020000000000000000000000010002",
+              pkt6_->getLabel());
+    addString("EVAL_DEBUG_PKT", "Pushing PKT meta data len with value 0x00000010",
+              pkt6_->getLabel());
     EXPECT_TRUE(checkFile());
 }
 
@@ -1864,15 +1882,24 @@ TEST_F(TokenTest, pkt4Fields) {
     // Check that the debug output was correct.  Add the strings
     // to the test vector in the class and then call checkFile
     // for comparison
-    addString("EVAL_DEBUG_PKT4", "Pushing PKT4 field mac with value 0x01020304050607", *pkt4_);
-    addString("EVAL_DEBUG_PKT4", "Pushing PKT4 field hlen with value 0x00000007", *pkt4_);
-    addString("EVAL_DEBUG_PKT4", "Pushing PKT4 field htype with value 0x0000007B", *pkt4_);
-    addString("EVAL_DEBUG_PKT4", "Pushing PKT4 field giaddr with value 0xC0000201", *pkt4_);
-    addString("EVAL_DEBUG_PKT4", "Pushing PKT4 field ciaddr with value 0xC0000202", *pkt4_);
-    addString("EVAL_DEBUG_PKT4", "Pushing PKT4 field yiaddr with value 0xC0000203", *pkt4_);
-    addString("EVAL_DEBUG_PKT4", "Pushing PKT4 field siaddr with value 0xC0000204", *pkt4_);
-    addString("EVAL_DEBUG_PKT4", "Pushing PKT4 field msgtype with value 0x00000001", *pkt4_);
-    addString("EVAL_DEBUG_PKT4", "Pushing PKT4 field transid with value 0x00003039", *pkt4_);
+    addString("EVAL_DEBUG_PKT4", "Pushing PKT4 field mac with value 0x01020304050607",
+              pkt4_->getLabel());
+    addString("EVAL_DEBUG_PKT4", "Pushing PKT4 field hlen with value 0x00000007",
+              pkt4_->getLabel());
+    addString("EVAL_DEBUG_PKT4", "Pushing PKT4 field htype with value 0x0000007B",
+              pkt4_->getLabel());
+    addString("EVAL_DEBUG_PKT4", "Pushing PKT4 field giaddr with value 0xC0000201",
+              pkt4_->getLabel());
+    addString("EVAL_DEBUG_PKT4", "Pushing PKT4 field ciaddr with value 0xC0000202",
+              pkt4_->getLabel());
+    addString("EVAL_DEBUG_PKT4", "Pushing PKT4 field yiaddr with value 0xC0000203",
+              pkt4_->getLabel());
+    addString("EVAL_DEBUG_PKT4", "Pushing PKT4 field siaddr with value 0xC0000204",
+              pkt4_->getLabel());
+    addString("EVAL_DEBUG_PKT4", "Pushing PKT4 field msgtype with value 0x00000001",
+              pkt4_->getLabel());
+    addString("EVAL_DEBUG_PKT4", "Pushing PKT4 field transid with value 0x00003039",
+              pkt4_->getLabel());
     EXPECT_TRUE(checkFile());
 }
 
@@ -1909,8 +1936,10 @@ TEST_F(TokenTest, pkt6Fields) {
     // Check that the debug output was correct.  Add the strings
     // to the test vector in the class and then call checkFile
     // for comparison
-    addString("EVAL_DEBUG_PKT6", "Pushing PKT6 field msgtype with value 0x00000001", *pkt6_);
-    addString("EVAL_DEBUG_PKT6", "Pushing PKT6 field transid with value 0x00003039", *pkt6_);
+    addString("EVAL_DEBUG_PKT6", "Pushing PKT6 field msgtype with value 0x00000001",
+              pkt6_->getLabel());
+    addString("EVAL_DEBUG_PKT6", "Pushing PKT6 field transid with value 0x00003039",
+              pkt6_->getLabel());
 
     EXPECT_TRUE(checkFile());
 }
@@ -1984,51 +2013,51 @@ TEST_F(TokenTest, relay6Field) {
     addString("EVAL_DEBUG_RELAY6",
               "Pushing PKT6 relay field linkaddr nest 0 with value "
               "0x00000000000000000000000000000000",
-              *pkt6_);
+              pkt6_->getLabel());
     addString("EVAL_DEBUG_RELAY6",
               "Pushing PKT6 relay field peeraddr nest 0 with value "
               "0x00000000000000000000000000000000",
-              *pkt6_);
+              pkt6_->getLabel());
     addString("EVAL_DEBUG_RELAY6",
               "Pushing PKT6 relay field linkaddr nest 1 with value "
               "0x00010000000000000000000000000001",
-              *pkt6_);
+              pkt6_->getLabel());
     addString("EVAL_DEBUG_RELAY6",
               "Pushing PKT6 relay field peeraddr nest 1 with value "
               "0x00010000000000000000000000000002",
-              *pkt6_);
+              pkt6_->getLabel());
     addString("EVAL_DEBUG_RELAY6_RANGE", "Pushing PKT6 relay field linkaddr nest 2 with value 0x",
-              *pkt6_);
+              pkt6_->getLabel());
 
     addString("EVAL_DEBUG_RELAY6",
               "Pushing PKT6 relay field linkaddr nest -1 with value "
               "0x00010000000000000000000000000001",
-              *pkt6_);
+              pkt6_->getLabel());
     addString("EVAL_DEBUG_RELAY6",
               "Pushing PKT6 relay field peeraddr nest -1 with value "
               "0x00010000000000000000000000000002",
-              *pkt6_);
+              pkt6_->getLabel());
     addString("EVAL_DEBUG_RELAY6",
               "Pushing PKT6 relay field linkaddr nest -2 with value "
               "0x00000000000000000000000000000000",
-              *pkt6_);
+              pkt6_->getLabel());
     addString("EVAL_DEBUG_RELAY6",
               "Pushing PKT6 relay field peeraddr nest -2 with value "
               "0x00000000000000000000000000000000",
-              *pkt6_);
+              pkt6_->getLabel());
     addString("EVAL_DEBUG_RELAY6_RANGE", "Pushing PKT6 relay field linkaddr nest -3 with value 0x",
-              *pkt6_);
+              pkt6_->getLabel());
 
     addString("EVAL_DEBUG_RELAY6",
               "Pushing PKT6 relay field linkaddr nest 1 with value "
               "0x00010000000000000000000000000001",
-              *pkt6_);
+              pkt6_->getLabel());
     addString("EVAL_DEBUG_IPADDRESS", "Pushing IPAddress 0x00010000000000000000000000000001",
-              *pkt6_);
+              pkt6_->getLabel());
     addString("EVAL_DEBUG_EQUAL",
               "Popping 0x00010000000000000000000000000001 and 0x00010000000000000000000000000001 "
               "pushing result 'true'",
-              *pkt6_);
+              pkt6_->getLabel());
 
     EXPECT_TRUE(checkFile());
 }
@@ -2077,7 +2106,8 @@ TEST_F(TokenTest, optionEqualFalse) {
     // Check that the debug output was correct.  Add the strings
     // to the test vector in the class and then call checkFile
     // for comparison
-    addString("EVAL_DEBUG_EQUAL", "Popping 0x626172 and 0x666F6F pushing result 'false'", *pkt4_);
+    addString("EVAL_DEBUG_EQUAL", "Popping 0x626172 and 0x666F6F pushing result 'false'",
+              pkt4_->getLabel());
     EXPECT_TRUE(checkFile());
 }
 
@@ -2099,7 +2129,8 @@ TEST_F(TokenTest, optionEqualTrue) {
     // Check that the debug output was correct.  Add the strings
     // to the test vector in the class and then call checkFile
     // for comparison
-    addString("EVAL_DEBUG_EQUAL", "Popping 0x666F6F and 0x666F6F pushing result 'true'", *pkt4_);
+    addString("EVAL_DEBUG_EQUAL", "Popping 0x666F6F and 0x666F6F pushing result 'true'",
+              pkt4_->getLabel());
     EXPECT_TRUE(checkFile());
 }
 
@@ -2133,7 +2164,7 @@ TEST_F(TokenTest, substringNotEnoughValues) {
     // to the test vector in the class and then call checkFile
     // for comparison
     addString("EVAL_DEBUG_SUBSTRING_EMPTY",
-              "Popping length 0, start 0, string 0x pushing result 0x", *pkt4_);
+              "Popping length 0, start 0, string 0x pushing result 0x", pkt4_->getLabel());
     EXPECT_TRUE(checkFile());
 }
 
@@ -2156,16 +2187,16 @@ TEST_F(TokenTest, substringWholeString) {
     // for comparison
     addString("EVAL_DEBUG_SUBSTRING",
               "Popping length 6, start 0, string 0x666F6F626172 pushing result 0x666F6F626172",
-              *pkt4_);
+              pkt4_->getLabel());
     addString("EVAL_DEBUG_SUBSTRING",
               "Popping length all, start 0, string 0x666F6F626172 pushing result 0x666F6F626172",
-              *pkt4_);
+              pkt4_->getLabel());
     addString("EVAL_DEBUG_SUBSTRING",
               "Popping length 123456, start 0, string 0x666F6F626172 pushing result 0x666F6F626172",
-              *pkt4_);
+              pkt4_->getLabel());
     addString("EVAL_DEBUG_SUBSTRING",
               "Popping length all, start -6, string 0x666F6F626172 pushing result 0x666F6F626172",
-              *pkt4_);
+              pkt4_->getLabel());
     EXPECT_TRUE(checkFile());
 }
 
@@ -2180,15 +2211,17 @@ TEST_F(TokenTest, substringTrailer) {
     // to the test vector in the class and then call checkFile
     // for comparison
     addString("EVAL_DEBUG_SUBSTRING",
-              "Popping length 3, start 3, string 0x666F6F626172 pushing result 0x626172", *pkt4_);
+              "Popping length 3, start 3, string 0x666F6F626172 pushing result 0x626172",
+              pkt4_->getLabel());
     addString("EVAL_DEBUG_SUBSTRING",
-              "Popping length all, start 3, string 0x666F6F626172 pushing result 0x626172", *pkt4_);
+              "Popping length all, start 3, string 0x666F6F626172 pushing result 0x626172",
+              pkt4_->getLabel());
     addString("EVAL_DEBUG_SUBSTRING",
               "Popping length all, start -3, string 0x666F6F626172 pushing result 0x626172",
-              *pkt4_);
+              pkt4_->getLabel());
     addString("EVAL_DEBUG_SUBSTRING",
               "Popping length 123, start -3, string 0x666F6F626172 pushing result 0x626172",
-              *pkt4_);
+              pkt4_->getLabel());
     EXPECT_TRUE(checkFile());
 }
 
@@ -2203,16 +2236,17 @@ TEST_F(TokenTest, substringMiddle) {
     // to the test vector in the class and then call checkFile
     // for comparison
     addString("EVAL_DEBUG_SUBSTRING",
-              "Popping length 4, start 1, string 0x666F6F626172 pushing result 0x6F6F6261", *pkt4_);
+              "Popping length 4, start 1, string 0x666F6F626172 pushing result 0x6F6F6261",
+              pkt4_->getLabel());
     addString("EVAL_DEBUG_SUBSTRING",
               "Popping length 4, start -5, string 0x666F6F626172 pushing result 0x6F6F6261",
-              *pkt4_);
+              pkt4_->getLabel());
     addString("EVAL_DEBUG_SUBSTRING",
               "Popping length -4, start -1, string 0x666F6F626172 pushing result 0x6F6F6261",
-              *pkt4_);
+              pkt4_->getLabel());
     addString("EVAL_DEBUG_SUBSTRING",
               "Popping length -4, start 5, string 0x666F6F626172 pushing result 0x6F6F6261",
-              *pkt4_);
+              pkt4_->getLabel());
     EXPECT_TRUE(checkFile());
 }
 
@@ -2229,17 +2263,23 @@ TEST_F(TokenTest, substringLastLetter) {
     // to the test vector in the class and then call checkFile
     // for comparison
     addString("EVAL_DEBUG_SUBSTRING",
-              "Popping length all, start 5, string 0x666F6F626172 pushing result 0x72", *pkt4_);
+              "Popping length all, start 5, string 0x666F6F626172 pushing result 0x72",
+              pkt4_->getLabel());
     addString("EVAL_DEBUG_SUBSTRING",
-              "Popping length 1, start 5, string 0x666F6F626172 pushing result 0x72", *pkt4_);
+              "Popping length 1, start 5, string 0x666F6F626172 pushing result 0x72",
+              pkt4_->getLabel());
     addString("EVAL_DEBUG_SUBSTRING",
-              "Popping length 5, start 5, string 0x666F6F626172 pushing result 0x72", *pkt4_);
+              "Popping length 5, start 5, string 0x666F6F626172 pushing result 0x72",
+              pkt4_->getLabel());
     addString("EVAL_DEBUG_SUBSTRING",
-              "Popping length all, start -1, string 0x666F6F626172 pushing result 0x72", *pkt4_);
+              "Popping length all, start -1, string 0x666F6F626172 pushing result 0x72",
+              pkt4_->getLabel());
     addString("EVAL_DEBUG_SUBSTRING",
-              "Popping length 1, start -1, string 0x666F6F626172 pushing result 0x72", *pkt4_);
+              "Popping length 1, start -1, string 0x666F6F626172 pushing result 0x72",
+              pkt4_->getLabel());
     addString("EVAL_DEBUG_SUBSTRING",
-              "Popping length 5, start -1, string 0x666F6F626172 pushing result 0x72", *pkt4_);
+              "Popping length 5, start -1, string 0x666F6F626172 pushing result 0x72",
+              pkt4_->getLabel());
     EXPECT_TRUE(checkFile());
 }
 
@@ -2261,21 +2301,29 @@ TEST_F(TokenTest, substringLength) {
     // to the test vector in the class and then call checkFile
     // for comparison
     addString("EVAL_DEBUG_SUBSTRING",
-              "Popping length -4, start 0, string 0x666F6F626172 pushing result 0x", *pkt4_);
+              "Popping length -4, start 0, string 0x666F6F626172 pushing result 0x",
+              pkt4_->getLabel());
     addString("EVAL_DEBUG_SUBSTRING",
-              "Popping length -4, start 1, string 0x666F6F626172 pushing result 0x66", *pkt4_);
+              "Popping length -4, start 1, string 0x666F6F626172 pushing result 0x66",
+              pkt4_->getLabel());
     addString("EVAL_DEBUG_SUBSTRING",
-              "Popping length -4, start 2, string 0x666F6F626172 pushing result 0x666F", *pkt4_);
+              "Popping length -4, start 2, string 0x666F6F626172 pushing result 0x666F",
+              pkt4_->getLabel());
     addString("EVAL_DEBUG_SUBSTRING",
-              "Popping length -4, start 3, string 0x666F6F626172 pushing result 0x666F6F", *pkt4_);
+              "Popping length -4, start 3, string 0x666F6F626172 pushing result 0x666F6F",
+              pkt4_->getLabel());
     addString("EVAL_DEBUG_SUBSTRING",
-              "Popping length 4, start 3, string 0x666F6F626172 pushing result 0x626172", *pkt4_);
+              "Popping length 4, start 3, string 0x666F6F626172 pushing result 0x626172",
+              pkt4_->getLabel());
     addString("EVAL_DEBUG_SUBSTRING",
-              "Popping length 4, start 4, string 0x666F6F626172 pushing result 0x6172", *pkt4_);
+              "Popping length 4, start 4, string 0x666F6F626172 pushing result 0x6172",
+              pkt4_->getLabel());
     addString("EVAL_DEBUG_SUBSTRING",
-              "Popping length 4, start 5, string 0x666F6F626172 pushing result 0x72", *pkt4_);
+              "Popping length 4, start 5, string 0x666F6F626172 pushing result 0x72",
+              pkt4_->getLabel());
     addString("EVAL_DEBUG_SUBSTRING_RANGE",
-              "Popping length 4, start 6, string 0x666F6F626172 pushing result 0x", *pkt4_);
+              "Popping length 4, start 6, string 0x666F6F626172 pushing result 0x",
+              pkt4_->getLabel());
     EXPECT_TRUE(checkFile());
 }
 
@@ -2295,17 +2343,23 @@ TEST_F(TokenTest, substringStartingPosition) {
     // to the test vector in the class and then call checkFile
     // for comparison
     addString("EVAL_DEBUG_SUBSTRING_RANGE",
-              "Popping length 1, start -7, string 0x666F6F626172 pushing result 0x", *pkt4_);
+              "Popping length 1, start -7, string 0x666F6F626172 pushing result 0x",
+              pkt4_->getLabel());
     addString("EVAL_DEBUG_SUBSTRING_RANGE",
-              "Popping length -11, start -7, string 0x666F6F626172 pushing result 0x", *pkt4_);
+              "Popping length -11, start -7, string 0x666F6F626172 pushing result 0x",
+              pkt4_->getLabel());
     addString("EVAL_DEBUG_SUBSTRING_RANGE",
-              "Popping length all, start -7, string 0x666F6F626172 pushing result 0x", *pkt4_);
+              "Popping length all, start -7, string 0x666F6F626172 pushing result 0x",
+              pkt4_->getLabel());
     addString("EVAL_DEBUG_SUBSTRING_RANGE",
-              "Popping length 1, start 6, string 0x666F6F626172 pushing result 0x", *pkt4_);
+              "Popping length 1, start 6, string 0x666F6F626172 pushing result 0x",
+              pkt4_->getLabel());
     addString("EVAL_DEBUG_SUBSTRING_RANGE",
-              "Popping length -11, start 6, string 0x666F6F626172 pushing result 0x", *pkt4_);
+              "Popping length -11, start 6, string 0x666F6F626172 pushing result 0x",
+              pkt4_->getLabel());
     addString("EVAL_DEBUG_SUBSTRING_RANGE",
-              "Popping length all, start 6, string 0x666F6F626172 pushing result 0x", *pkt4_);
+              "Popping length all, start 6, string 0x666F6F626172 pushing result 0x",
+              pkt4_->getLabel());
     EXPECT_TRUE(checkFile());
 }
 
@@ -2334,9 +2388,10 @@ TEST_F(TokenTest, substringReturnEmpty) {
     // to the test vector in the class and then call checkFile
     // for comparison
     addString("EVAL_DEBUG_SUBSTRING_EMPTY",
-              "Popping length all, start 0, string 0x pushing result 0x", *pkt4_);
+              "Popping length all, start 0, string 0x pushing result 0x", pkt4_->getLabel());
     addString("EVAL_DEBUG_SUBSTRING",
-              "Popping length 0, start 0, string 0x666F6F626172 pushing result 0x", *pkt4_);
+              "Popping length 0, start 0, string 0x666F6F626172 pushing result 0x",
+              pkt4_->getLabel());
     EXPECT_TRUE(checkFile());
 }
 
@@ -2397,13 +2452,15 @@ TEST_F(TokenTest, substringEquals) {
     // to the test vector in the class and then call checkFile
     // for comparison
     addString("EVAL_DEBUG_SUBSTRING",
-              "Popping length 4, start 1, string 0x666F6F626172 pushing result 0x6F6F6261", *pkt4_);
+              "Popping length 4, start 1, string 0x666F6F626172 pushing result 0x6F6F6261",
+              pkt4_->getLabel());
     addString("EVAL_DEBUG_EQUAL", "Popping 0x6F6F6261 and 0x6F6F6261 pushing result 'true'",
-              *pkt4_);
+              pkt4_->getLabel());
     addString("EVAL_DEBUG_SUBSTRING",
-              "Popping length 4, start 1, string 0x666F6F626172 pushing result 0x6F6F6261", *pkt4_);
+              "Popping length 4, start 1, string 0x666F6F626172 pushing result 0x6F6F6261",
+              pkt4_->getLabel());
     addString("EVAL_DEBUG_EQUAL", "Popping 0x6F6F6261 and 0x666F6F62 pushing result 'false'",
-              *pkt4_);
+              pkt4_->getLabel());
     EXPECT_TRUE(checkFile());
 }
 
@@ -2431,7 +2488,8 @@ TEST_F(TokenTest, concat) {
     // Check that the debug output was correct.  Add the strings
     // to the test vector in the class and then call checkFile
     // for comparison
-    addString("EVAL_DEBUG_CONCAT", "Popping 0x626172 and 0x666F6F pushing 0x666F6F626172", *pkt4_);
+    addString("EVAL_DEBUG_CONCAT", "Popping 0x626172 and 0x666F6F pushing 0x666F6F626172",
+              pkt4_->getLabel());
     EXPECT_TRUE(checkFile());
 }
 
@@ -2460,7 +2518,8 @@ TEST_F(TokenTest, tohexstring) {
     // to the test vector in the class and then call checkFile
     // for comparison
     addString("EVAL_DEBUG_TOHEXSTRING",
-              "Popping binary value 0x666F6F and separator -, pushing result 66-6f-6f", *pkt4_);
+              "Popping binary value 0x666F6F and separator -, pushing result 66-6f-6f",
+              pkt4_->getLabel());
     EXPECT_TRUE(checkFile());
 }
 
@@ -2538,8 +2597,8 @@ TEST_F(TokenTest, operatorNot) {
     // Check that the debug output was correct.  Add the strings
     // to the test vector in the class and then call checkFile
     // for comparison
-    addString("EVAL_DEBUG_NOT", "Popping 'true' pushing 'false'", *pkt4_);
-    addString("EVAL_DEBUG_NOT", "Popping 'false' pushing 'true'", *pkt4_);
+    addString("EVAL_DEBUG_NOT", "Popping 'true' pushing 'false'", pkt4_->getLabel());
+    addString("EVAL_DEBUG_NOT", "Popping 'false' pushing 'true'", pkt4_->getLabel());
     EXPECT_TRUE(checkFile());
 }
 
@@ -2596,9 +2655,9 @@ TEST_F(TokenTest, operatorAndFalse) {
     // Check that the debug output was correct.  Add the strings
     // to the test vector in the class and then call checkFile
     // for comparison
-    addString("EVAL_DEBUG_AND", "Popping 'false' and 'true' pushing 'false'", *pkt4_);
-    addString("EVAL_DEBUG_AND", "Popping 'true' and 'false' pushing 'false'", *pkt4_);
-    addString("EVAL_DEBUG_AND", "Popping 'false' and 'false' pushing 'false'", *pkt4_);
+    addString("EVAL_DEBUG_AND", "Popping 'false' and 'true' pushing 'false'", pkt4_->getLabel());
+    addString("EVAL_DEBUG_AND", "Popping 'true' and 'false' pushing 'false'", pkt4_->getLabel());
+    addString("EVAL_DEBUG_AND", "Popping 'false' and 'false' pushing 'false'", pkt4_->getLabel());
     EXPECT_TRUE(checkFile());
 }
 
@@ -2619,7 +2678,7 @@ TEST_F(TokenTest, operatorAndTrue) {
     // Check that the debug output was correct.  Add the strings
     // to the test vector in the class and then call checkFile
     // for comparison
-    addString("EVAL_DEBUG_AND", "Popping 'true' and 'true' pushing 'true'", *pkt4_);
+    addString("EVAL_DEBUG_AND", "Popping 'true' and 'true' pushing 'true'", pkt4_->getLabel());
     EXPECT_TRUE(checkFile());
 }
 
@@ -2664,7 +2723,7 @@ TEST_F(TokenTest, operatorOrFalse) {
     // Check that the debug output was correct.  Add the strings
     // to the test vector in the class and then call checkFile
     // for comparison
-    addString("EVAL_DEBUG_OR", "Popping 'false' and 'false' pushing 'false'", *pkt4_);
+    addString("EVAL_DEBUG_OR", "Popping 'false' and 'false' pushing 'false'", pkt4_->getLabel());
     EXPECT_TRUE(checkFile());
 }
 
@@ -2697,9 +2756,9 @@ TEST_F(TokenTest, operatorOrTrue) {
     // Check that the debug output was correct.  Add the strings
     // to the test vector in the class and then call checkFile
     // for comparison
-    addString("EVAL_DEBUG_OR", "Popping 'true' and 'false' pushing 'true'", *pkt4_);
-    addString("EVAL_DEBUG_OR", "Popping 'false' and 'true' pushing 'true'", *pkt4_);
-    addString("EVAL_DEBUG_OR", "Popping 'true' and 'true' pushing 'true'", *pkt4_);
+    addString("EVAL_DEBUG_OR", "Popping 'true' and 'false' pushing 'true'", pkt4_->getLabel());
+    addString("EVAL_DEBUG_OR", "Popping 'false' and 'true' pushing 'true'", pkt4_->getLabel());
+    addString("EVAL_DEBUG_OR", "Popping 'true' and 'true' pushing 'true'", pkt4_->getLabel());
     EXPECT_TRUE(checkFile());
 }
 
@@ -2746,11 +2805,11 @@ TEST_F(TokenTest, vendor4SpecificVendorExists) {
 
     // Check if the logged messages are correct.
     addString("EVAL_DEBUG_VENDOR_NO_OPTION", "Option with code 125 missing, pushing result 'false'",
-              *pkt4_);
+              pkt4_->getLabel());
     addString("EVAL_DEBUG_VENDOR_ENTERPRISE_ID_MISMATCH",
-              "Was looking for 4491, option had 1234, pushing result 'false'", *pkt4_);
+              "Was looking for 4491, option had 1234, pushing result 'false'", pkt4_->getLabel());
     addString("EVAL_DEBUG_VENDOR_EXISTS",
-              "Option with enterprise-id 4491 found, pushing result 'true'", *pkt4_);
+              "Option with enterprise-id 4491 found, pushing result 'true'", pkt4_->getLabel());
     EXPECT_TRUE(checkFile());
 }
 
@@ -2767,11 +2826,11 @@ TEST_F(TokenTest, vendor6SpecificVendorExists) {
 
     // Check if the logged messages are correct.
     addString("EVAL_DEBUG_VENDOR_NO_OPTION", "Option with code 17 missing, pushing result 'false'",
-              *pkt6_);
+              pkt6_->getLabel());
     addString("EVAL_DEBUG_VENDOR_ENTERPRISE_ID_MISMATCH",
-              "Was looking for 4491, option had 1234, pushing result 'false'", *pkt6_);
+              "Was looking for 4491, option had 1234, pushing result 'false'", pkt6_->getLabel());
     addString("EVAL_DEBUG_VENDOR_EXISTS",
-              "Option with enterprise-id 4491 found, pushing result 'true'", *pkt6_);
+              "Option with enterprise-id 4491 found, pushing result 'true'", pkt6_->getLabel());
     EXPECT_TRUE(checkFile());
 }
 
@@ -2788,11 +2847,11 @@ TEST_F(TokenTest, vendor4AnyVendorExists) {
 
     // Check if the logged messages are correct.
     addString("EVAL_DEBUG_VENDOR_NO_OPTION", "Option with code 125 missing, pushing result 'false'",
-              *pkt4_);
+              pkt4_->getLabel());
     addString("EVAL_DEBUG_VENDOR_EXISTS",
-              "Option with enterprise-id 1234 found, pushing result 'true'", *pkt4_);
+              "Option with enterprise-id 1234 found, pushing result 'true'", pkt4_->getLabel());
     addString("EVAL_DEBUG_VENDOR_EXISTS",
-              "Option with enterprise-id 4491 found, pushing result 'true'", *pkt4_);
+              "Option with enterprise-id 4491 found, pushing result 'true'", pkt4_->getLabel());
     EXPECT_TRUE(checkFile());
 }
 
@@ -2809,11 +2868,11 @@ TEST_F(TokenTest, vendor6AnyVendorExists) {
 
     // Check if the logged messages are correct.
     addString("EVAL_DEBUG_VENDOR_NO_OPTION", "Option with code 17 missing, pushing result 'false'",
-              *pkt6_);
+              pkt6_->getLabel());
     addString("EVAL_DEBUG_VENDOR_EXISTS",
-              "Option with enterprise-id 1234 found, pushing result 'true'", *pkt6_);
+              "Option with enterprise-id 1234 found, pushing result 'true'", pkt6_->getLabel());
     addString("EVAL_DEBUG_VENDOR_EXISTS",
-              "Option with enterprise-id 4491 found, pushing result 'true'", *pkt6_);
+              "Option with enterprise-id 4491 found, pushing result 'true'", pkt6_->getLabel());
     EXPECT_TRUE(checkFile());
 }
 
@@ -2831,11 +2890,11 @@ TEST_F(TokenTest, vendor4enterprise) {
 
     // Check if the logged messages are correct.
     addString("EVAL_DEBUG_VENDOR_NO_OPTION", "Option with code 125 missing, pushing result ''",
-              *pkt4_);
+              pkt4_->getLabel());
     addString("EVAL_DEBUG_VENDOR_ENTERPRISE_ID", "Pushing enterprise-id 1234 as result 0x000004D2",
-              *pkt4_);
+              pkt4_->getLabel());
     addString("EVAL_DEBUG_VENDOR_ENTERPRISE_ID",
-              "Pushing enterprise-id 4294967295 as result 0xFFFFFFFF", *pkt4_);
+              "Pushing enterprise-id 4294967295 as result 0xFFFFFFFF", pkt4_->getLabel());
     EXPECT_TRUE(checkFile());
 }
 
@@ -2853,11 +2912,11 @@ TEST_F(TokenTest, vendor6enterprise) {
 
     // Check if the logged messages are correct.
     addString("EVAL_DEBUG_VENDOR_NO_OPTION", "Option with code 17 missing, pushing result ''",
-              *pkt6_);
+              pkt6_->getLabel());
     addString("EVAL_DEBUG_VENDOR_ENTERPRISE_ID", "Pushing enterprise-id 1234 as result 0x000004D2",
-              *pkt6_);
+              pkt6_->getLabel());
     addString("EVAL_DEBUG_VENDOR_ENTERPRISE_ID",
-              "Pushing enterprise-id 4294967295 as result 0xFFFFFFFF", *pkt6_);
+              "Pushing enterprise-id 4294967295 as result 0xFFFFFFFF", pkt6_->getLabel());
     EXPECT_TRUE(checkFile());
 }
 
@@ -2887,13 +2946,13 @@ TEST_F(TokenTest, vendor4SuboptionExists) {
 
     // Check if the logged messages are correct.
     addString("EVAL_DEBUG_VENDOR_NO_OPTION", "Option with code 125 missing, pushing result 'false'",
-              *pkt4_);
+              pkt4_->getLabel());
     addString("EVAL_DEBUG_VENDOR_ENTERPRISE_ID_MISMATCH",
-              "Was looking for 4491, option had 1234, pushing result 'false'", *pkt4_);
+              "Was looking for 4491, option had 1234, pushing result 'false'", pkt4_->getLabel());
     addString("EVAL_DEBUG_VENDOR_ENTERPRISE_ID_MISMATCH",
-              "Was looking for 4491, option had 1234, pushing result 'false'", *pkt4_);
-    addString("EVAL_DEBUG_OPTION", "Pushing option 1 with value 'false'", *pkt4_);
-    addString("EVAL_DEBUG_OPTION", "Pushing option 1 with value 'true'", *pkt4_);
+              "Was looking for 4491, option had 1234, pushing result 'false'", pkt4_->getLabel());
+    addString("EVAL_DEBUG_OPTION", "Pushing option 1 with value 'false'", pkt4_->getLabel());
+    addString("EVAL_DEBUG_OPTION", "Pushing option 1 with value 'true'", pkt4_->getLabel());
     EXPECT_TRUE(checkFile());
 }
 
@@ -2921,13 +2980,13 @@ TEST_F(TokenTest, vendor6SuboptionExists) {
 
     // Check if the logged messages are correct.
     addString("EVAL_DEBUG_VENDOR_NO_OPTION", "Option with code 17 missing, pushing result 'false'",
-              *pkt6_);
+              pkt6_->getLabel());
     addString("EVAL_DEBUG_VENDOR_ENTERPRISE_ID_MISMATCH",
-              "Was looking for 4491, option had 1234, pushing result 'false'", *pkt6_);
+              "Was looking for 4491, option had 1234, pushing result 'false'", pkt6_->getLabel());
     addString("EVAL_DEBUG_VENDOR_ENTERPRISE_ID_MISMATCH",
-              "Was looking for 4491, option had 1234, pushing result 'false'", *pkt6_);
-    addString("EVAL_DEBUG_OPTION", "Pushing option 1 with value 'false'", *pkt6_);
-    addString("EVAL_DEBUG_OPTION", "Pushing option 1 with value 'true'", *pkt6_);
+              "Was looking for 4491, option had 1234, pushing result 'false'", pkt6_->getLabel());
+    addString("EVAL_DEBUG_OPTION", "Pushing option 1 with value 'false'", pkt6_->getLabel());
+    addString("EVAL_DEBUG_OPTION", "Pushing option 1 with value 'true'", pkt6_->getLabel());
     EXPECT_TRUE(checkFile());
 }
 
@@ -2953,13 +3012,13 @@ TEST_F(TokenTest, vendor4SuboptionHex) {
 
     // Check if the logged messages are correct.
     addString("EVAL_DEBUG_VENDOR_NO_OPTION", "Option with code 125 missing, pushing result ''",
-              *pkt4_);
+              pkt4_->getLabel());
     addString("EVAL_DEBUG_VENDOR_ENTERPRISE_ID_MISMATCH",
-              "Was looking for 4491, option had 1234, pushing result ''", *pkt4_);
+              "Was looking for 4491, option had 1234, pushing result ''", pkt4_->getLabel());
     addString("EVAL_DEBUG_VENDOR_ENTERPRISE_ID_MISMATCH",
-              "Was looking for 4491, option had 1234, pushing result ''", *pkt4_);
-    addString("EVAL_DEBUG_OPTION", "Pushing option 1 with value 0x", *pkt4_);
-    addString("EVAL_DEBUG_OPTION", "Pushing option 1 with value 0x616C706861", *pkt4_);
+              "Was looking for 4491, option had 1234, pushing result ''", pkt4_->getLabel());
+    addString("EVAL_DEBUG_OPTION", "Pushing option 1 with value 0x", pkt4_->getLabel());
+    addString("EVAL_DEBUG_OPTION", "Pushing option 1 with value 0x616C706861", pkt4_->getLabel());
     EXPECT_TRUE(checkFile());
 }
 
@@ -2985,13 +3044,13 @@ TEST_F(TokenTest, vendor6SuboptionHex) {
 
     // Check if the logged messages are correct.
     addString("EVAL_DEBUG_VENDOR_NO_OPTION", "Option with code 17 missing, pushing result ''",
-              *pkt6_);
+              pkt6_->getLabel());
     addString("EVAL_DEBUG_VENDOR_ENTERPRISE_ID_MISMATCH",
-              "Was looking for 4491, option had 1234, pushing result ''", *pkt6_);
+              "Was looking for 4491, option had 1234, pushing result ''", pkt6_->getLabel());
     addString("EVAL_DEBUG_VENDOR_ENTERPRISE_ID_MISMATCH",
-              "Was looking for 4491, option had 1234, pushing result ''", *pkt6_);
-    addString("EVAL_DEBUG_OPTION", "Pushing option 1 with value 0x", *pkt6_);
-    addString("EVAL_DEBUG_OPTION", "Pushing option 1 with value 0x616C706861", *pkt6_);
+              "Was looking for 4491, option had 1234, pushing result ''", pkt6_->getLabel());
+    addString("EVAL_DEBUG_OPTION", "Pushing option 1 with value 0x", pkt6_->getLabel());
+    addString("EVAL_DEBUG_OPTION", "Pushing option 1 with value 0x616C706861", pkt6_->getLabel());
     EXPECT_TRUE(checkFile());
 }
 
@@ -3009,11 +3068,11 @@ TEST_F(TokenTest, vendorClass4SpecificVendorExists) {
 
     // Check if the logged messages are correct.
     addString("EVAL_DEBUG_VENDOR_CLASS_NO_OPTION",
-              "Option with code 124 missing, pushing result 'false'", *pkt4_);
+              "Option with code 124 missing, pushing result 'false'", pkt4_->getLabel());
     addString("EVAL_DEBUG_VENDOR_CLASS_ENTERPRISE_ID_MISMATCH",
-              "Was looking for 4491, option had 1234, pushing result 'false'", *pkt4_);
+              "Was looking for 4491, option had 1234, pushing result 'false'", pkt4_->getLabel());
     addString("EVAL_DEBUG_VENDOR_CLASS_EXISTS",
-              "Option with enterprise-id 4491 found, pushing result 'true'", *pkt4_);
+              "Option with enterprise-id 4491 found, pushing result 'true'", pkt4_->getLabel());
     EXPECT_TRUE(checkFile());
 }
 
@@ -3031,11 +3090,11 @@ TEST_F(TokenTest, vendorClass6SpecificVendorExists) {
 
     // Check if the logged messages are correct.
     addString("EVAL_DEBUG_VENDOR_CLASS_NO_OPTION",
-              "Option with code 16 missing, pushing result 'false'", *pkt6_);
+              "Option with code 16 missing, pushing result 'false'", pkt6_->getLabel());
     addString("EVAL_DEBUG_VENDOR_CLASS_ENTERPRISE_ID_MISMATCH",
-              "Was looking for 4491, option had 1234, pushing result 'false'", *pkt6_);
+              "Was looking for 4491, option had 1234, pushing result 'false'", pkt6_->getLabel());
     addString("EVAL_DEBUG_VENDOR_CLASS_EXISTS",
-              "Option with enterprise-id 4491 found, pushing result 'true'", *pkt6_);
+              "Option with enterprise-id 4491 found, pushing result 'true'", pkt6_->getLabel());
     EXPECT_TRUE(checkFile());
 }
 
@@ -3053,11 +3112,11 @@ TEST_F(TokenTest, vendorClass4AnyVendorExists) {
 
     // Check if the logged messages are correct.
     addString("EVAL_DEBUG_VENDOR_CLASS_NO_OPTION",
-              "Option with code 124 missing, pushing result 'false'", *pkt4_);
+              "Option with code 124 missing, pushing result 'false'", pkt4_->getLabel());
     addString("EVAL_DEBUG_VENDOR_CLASS_EXISTS",
-              "Option with enterprise-id 1234 found, pushing result 'true'", *pkt4_);
+              "Option with enterprise-id 1234 found, pushing result 'true'", pkt4_->getLabel());
     addString("EVAL_DEBUG_VENDOR_CLASS_EXISTS",
-              "Option with enterprise-id 4491 found, pushing result 'true'", *pkt4_);
+              "Option with enterprise-id 4491 found, pushing result 'true'", pkt4_->getLabel());
     EXPECT_TRUE(checkFile());
 }
 
@@ -3075,11 +3134,11 @@ TEST_F(TokenTest, vendorClass6AnyVendorExists) {
 
     // Check if the logged messages are correct.
     addString("EVAL_DEBUG_VENDOR_CLASS_NO_OPTION",
-              "Option with code 16 missing, pushing result 'false'", *pkt6_);
+              "Option with code 16 missing, pushing result 'false'", pkt6_->getLabel());
     addString("EVAL_DEBUG_VENDOR_CLASS_EXISTS",
-              "Option with enterprise-id 1234 found, pushing result 'true'", *pkt6_);
+              "Option with enterprise-id 1234 found, pushing result 'true'", pkt6_->getLabel());
     addString("EVAL_DEBUG_VENDOR_CLASS_EXISTS",
-              "Option with enterprise-id 4491 found, pushing result 'true'", *pkt6_);
+              "Option with enterprise-id 4491 found, pushing result 'true'", pkt6_->getLabel());
     EXPECT_TRUE(checkFile());
 }
 
@@ -3097,11 +3156,11 @@ TEST_F(TokenTest, vendorClass4enterprise) {
 
     // Check if the logged messages are correct.
     addString("EVAL_DEBUG_VENDOR_CLASS_NO_OPTION",
-              "Option with code 124 missing, pushing result ''", *pkt4_);
+              "Option with code 124 missing, pushing result ''", pkt4_->getLabel());
     addString("EVAL_DEBUG_VENDOR_CLASS_ENTERPRISE_ID",
-              "Pushing enterprise-id 1234 as result 0x000004D2", *pkt4_);
+              "Pushing enterprise-id 1234 as result 0x000004D2", pkt4_->getLabel());
     addString("EVAL_DEBUG_VENDOR_CLASS_ENTERPRISE_ID",
-              "Pushing enterprise-id 4294967295 as result 0xFFFFFFFF", *pkt4_);
+              "Pushing enterprise-id 4294967295 as result 0xFFFFFFFF", pkt4_->getLabel());
     EXPECT_TRUE(checkFile());
 }
 
@@ -3119,11 +3178,11 @@ TEST_F(TokenTest, vendorClass6enterprise) {
 
     // Check if the logged messages are correct.
     addString("EVAL_DEBUG_VENDOR_CLASS_NO_OPTION", "Option with code 16 missing, pushing result ''",
-              *pkt6_);
+              pkt6_->getLabel());
     addString("EVAL_DEBUG_VENDOR_CLASS_ENTERPRISE_ID",
-              "Pushing enterprise-id 1234 as result 0x000004D2", *pkt6_);
+              "Pushing enterprise-id 1234 as result 0x000004D2", pkt6_->getLabel());
     addString("EVAL_DEBUG_VENDOR_CLASS_ENTERPRISE_ID",
-              "Pushing enterprise-id 4294967295 as result 0xFFFFFFFF", *pkt6_);
+              "Pushing enterprise-id 4294967295 as result 0xFFFFFFFF", pkt6_->getLabel());
     EXPECT_TRUE(checkFile());
 }
 
@@ -3157,15 +3216,17 @@ TEST_F(TokenTest, vendorClass4SpecificVendorData) {
 
     // Check if the logged messages are correct.
     addString("EVAL_DEBUG_VENDOR_CLASS_NO_OPTION",
-              "Option with code 124 missing, pushing result ''", *pkt4_);
+              "Option with code 124 missing, pushing result ''", pkt4_->getLabel());
     addString("EVAL_DEBUG_VENDOR_CLASS_ENTERPRISE_ID_MISMATCH",
-              "Was looking for 4491, option had 1234, pushing result ''", *pkt4_);
+              "Was looking for 4491, option had 1234, pushing result ''", pkt4_->getLabel());
     addString("EVAL_DEBUG_VENDOR_CLASS_DATA",
-              "Data 0 (out of 1 received) in vendor class found, pushing result ''", *pkt4_);
+              "Data 0 (out of 1 received) in vendor class found, pushing result ''",
+              pkt4_->getLabel());
     addString("EVAL_DEBUG_VENDOR_CLASS_ENTERPRISE_ID_MISMATCH",
-              "Was looking for 4491, option had 1234, pushing result ''", *pkt4_);
+              "Was looking for 4491, option had 1234, pushing result ''", pkt4_->getLabel());
     addString("EVAL_DEBUG_VENDOR_CLASS_DATA",
-              "Data 0 (out of 1 received) in vendor class found, pushing result 'alpha'", *pkt4_);
+              "Data 0 (out of 1 received) in vendor class found, pushing result 'alpha'",
+              pkt4_->getLabel());
     EXPECT_TRUE(checkFile());
 }
 
@@ -3195,17 +3256,18 @@ TEST_F(TokenTest, vendorClass6SpecificVendorData) {
 
     // Check if the logged messages are correct.
     addString("EVAL_DEBUG_VENDOR_CLASS_NO_OPTION", "Option with code 16 missing, pushing result ''",
-              *pkt6_);
+              pkt6_->getLabel());
     addString("EVAL_DEBUG_VENDOR_CLASS_ENTERPRISE_ID_MISMATCH",
-              "Was looking for 4491, option had 1234, pushing result ''", *pkt6_);
+              "Was looking for 4491, option had 1234, pushing result ''", pkt6_->getLabel());
     addString("EVAL_DEBUG_VENDOR_CLASS_DATA_NOT_FOUND",
               "Requested data index 0, but option with enterprise-id 4491 has only 0 data "
               "tuple(s), pushing result ''",
-              *pkt6_);
+              pkt6_->getLabel());
     addString("EVAL_DEBUG_VENDOR_CLASS_ENTERPRISE_ID_MISMATCH",
-              "Was looking for 4491, option had 1234, pushing result ''", *pkt6_);
+              "Was looking for 4491, option had 1234, pushing result ''", pkt6_->getLabel());
     addString("EVAL_DEBUG_VENDOR_CLASS_DATA",
-              "Data 0 (out of 1 received) in vendor class found, pushing result 'alpha'", *pkt6_);
+              "Data 0 (out of 1 received) in vendor class found, pushing result 'alpha'",
+              pkt6_->getLabel());
     EXPECT_TRUE(checkFile());
 }
 
@@ -3238,15 +3300,19 @@ TEST_F(TokenTest, vendorClass4AnyVendorData) {
 
     // Check if the logged messages are correct.
     addString("EVAL_DEBUG_VENDOR_CLASS_NO_OPTION",
-              "Option with code 124 missing, pushing result ''", *pkt4_);
+              "Option with code 124 missing, pushing result ''", pkt4_->getLabel());
     addString("EVAL_DEBUG_VENDOR_CLASS_DATA",
-              "Data 0 (out of 1 received) in vendor class found, pushing result ''", *pkt4_);
+              "Data 0 (out of 1 received) in vendor class found, pushing result ''",
+              pkt4_->getLabel());
     addString("EVAL_DEBUG_VENDOR_CLASS_DATA",
-              "Data 0 (out of 1 received) in vendor class found, pushing result ''", *pkt4_);
+              "Data 0 (out of 1 received) in vendor class found, pushing result ''",
+              pkt4_->getLabel());
     addString("EVAL_DEBUG_VENDOR_CLASS_DATA",
-              "Data 0 (out of 1 received) in vendor class found, pushing result 'alpha'", *pkt4_);
+              "Data 0 (out of 1 received) in vendor class found, pushing result 'alpha'",
+              pkt4_->getLabel());
     addString("EVAL_DEBUG_VENDOR_CLASS_DATA",
-              "Data 0 (out of 1 received) in vendor class found, pushing result 'alpha'", *pkt4_);
+              "Data 0 (out of 1 received) in vendor class found, pushing result 'alpha'",
+              pkt4_->getLabel());
     EXPECT_TRUE(checkFile());
 }
 
@@ -3277,19 +3343,21 @@ TEST_F(TokenTest, vendorClass6AnyVendorData) {
 
     // Check if the logged messages are correct.
     addString("EVAL_DEBUG_VENDOR_CLASS_NO_OPTION", "Option with code 16 missing, pushing result ''",
-              *pkt6_);
+              pkt6_->getLabel());
     addString("EVAL_DEBUG_VENDOR_CLASS_DATA_NOT_FOUND",
               "Requested data index 0, but option with enterprise-id 1234 has only 0 data "
               "tuple(s), pushing result ''",
-              *pkt6_);
+              pkt6_->getLabel());
     addString("EVAL_DEBUG_VENDOR_CLASS_DATA_NOT_FOUND",
               "Requested data index 0, but option with enterprise-id 4491 has only 0 data "
               "tuple(s), pushing result ''",
-              *pkt6_);
+              pkt6_->getLabel());
     addString("EVAL_DEBUG_VENDOR_CLASS_DATA",
-              "Data 0 (out of 1 received) in vendor class found, pushing result 'alpha'", *pkt6_);
+              "Data 0 (out of 1 received) in vendor class found, pushing result 'alpha'",
+              pkt6_->getLabel());
     addString("EVAL_DEBUG_VENDOR_CLASS_DATA",
-              "Data 0 (out of 1 received) in vendor class found, pushing result 'alpha'", *pkt6_);
+              "Data 0 (out of 1 received) in vendor class found, pushing result 'alpha'",
+              pkt6_->getLabel());
     EXPECT_TRUE(checkFile());
 }
 
@@ -3329,23 +3397,24 @@ TEST_F(TokenTest, vendorClass4DataIndex) {
 
     // Check if the logged messages are correct.
     addString("EVAL_DEBUG_VENDOR_CLASS_NO_OPTION",
-              "Option with code 124 missing, pushing result ''", *pkt4_);
+              "Option with code 124 missing, pushing result ''", pkt4_->getLabel());
     addString("EVAL_DEBUG_VENDOR_CLASS_ENTERPRISE_ID_MISMATCH",
-              "Was looking for 4491, option had 1234, pushing result ''", *pkt4_);
+              "Was looking for 4491, option had 1234, pushing result ''", pkt4_->getLabel());
     addString("EVAL_DEBUG_VENDOR_CLASS_DATA_NOT_FOUND",
               "Requested data index 3, but option with enterprise-id 4491 has only 1 data "
               "tuple(s), pushing result ''",
-              *pkt4_);
+              pkt4_->getLabel());
     addString("EVAL_DEBUG_VENDOR_CLASS_ENTERPRISE_ID_MISMATCH",
-              "Was looking for 4491, option had 1234, pushing result ''", *pkt4_);
+              "Was looking for 4491, option had 1234, pushing result ''", pkt4_->getLabel());
     addString("EVAL_DEBUG_VENDOR_CLASS_DATA_NOT_FOUND",
               "Requested data index 3, but option with enterprise-id 4491 has only 3 data "
               "tuple(s), pushing result ''",
-              *pkt4_);
+              pkt4_->getLabel());
     addString("EVAL_DEBUG_VENDOR_CLASS_DATA",
-              "Data 3 (out of 5 received) in vendor class found, pushing result 'gamma'", *pkt4_);
+              "Data 3 (out of 5 received) in vendor class found, pushing result 'gamma'",
+              pkt4_->getLabel());
     addString("EVAL_DEBUG_VENDOR_CLASS_ENTERPRISE_ID_MISMATCH",
-              "Was looking for 4491, option had 1234, pushing result ''", *pkt4_);
+              "Was looking for 4491, option had 1234, pushing result ''", pkt4_->getLabel());
     EXPECT_TRUE(checkFile());
 }
 
@@ -3380,21 +3449,22 @@ TEST_F(TokenTest, vendorClass6DataIndex) {
 
     // Check if the logged messages are correct.
     addString("EVAL_DEBUG_VENDOR_CLASS_NO_OPTION", "Option with code 16 missing, pushing result ''",
-              *pkt6_);
+              pkt6_->getLabel());
     addString("EVAL_DEBUG_VENDOR_CLASS_ENTERPRISE_ID_MISMATCH",
-              "Was looking for 4491, option had 1234, pushing result ''", *pkt6_);
+              "Was looking for 4491, option had 1234, pushing result ''", pkt6_->getLabel());
     addString("EVAL_DEBUG_VENDOR_CLASS_DATA_NOT_FOUND",
               "Requested data index 3, but option with enterprise-id 4491 has only 0 data "
               "tuple(s), pushing result ''",
-              *pkt6_);
+              pkt6_->getLabel());
     addString("EVAL_DEBUG_VENDOR_CLASS_ENTERPRISE_ID_MISMATCH",
-              "Was looking for 4491, option had 1234, pushing result ''", *pkt6_);
+              "Was looking for 4491, option had 1234, pushing result ''", pkt6_->getLabel());
     addString("EVAL_DEBUG_VENDOR_CLASS_DATA_NOT_FOUND",
               "Requested data index 3, but option with enterprise-id 4491 has only 3 data "
               "tuple(s), pushing result ''",
-              *pkt6_);
+              pkt6_->getLabel());
     addString("EVAL_DEBUG_VENDOR_CLASS_DATA",
-              "Data 3 (out of 5 received) in vendor class found, pushing result 'gamma'", *pkt6_);
+              "Data 3 (out of 5 received) in vendor class found, pushing result 'gamma'",
+              pkt6_->getLabel());
     EXPECT_TRUE(checkFile());
 }
 
@@ -3421,7 +3491,7 @@ TEST_F(TokenTest, subOption) {
     // to the test vector in the class and then call checkFile
     // for comparison
     addString("EVAL_DEBUG_SUB_OPTION", "Pushing option 82 sub-option 13 with value 'thirteen'",
-              *pkt4_);
+              pkt4_->getLabel());
     EXPECT_TRUE(checkFile());
 }
 
@@ -3449,7 +3519,8 @@ TEST_F(TokenTest, subOptionNoSubOption) {
     // Check that the debug output was correct.  Add the strings
     // to the test vector in the class and then call checkFile
     // for comparison
-    addString("EVAL_DEBUG_SUB_OPTION", "Pushing option 82 sub-option 15 with value ''", *pkt4_);
+    addString("EVAL_DEBUG_SUB_OPTION", "Pushing option 82 sub-option 15 with value ''",
+              pkt4_->getLabel());
     EXPECT_TRUE(checkFile());
 }
 
@@ -3478,7 +3549,7 @@ TEST_F(TokenTest, subOptionNoOption) {
     addString("EVAL_DEBUG_SUB_OPTION_NO_OPTION",
               "Requested option 82 sub-option 13, but the parent option is not present, pushing "
               "result ''",
-              *pkt4_);
+              pkt4_->getLabel());
     EXPECT_TRUE(checkFile());
 }
 
@@ -3541,12 +3612,15 @@ TEST_F(TokenTest, subOptionOptionOnly) {
     // to the test vector in the class and then call checkFile
     // for comparison
     addString("EVAL_DEBUG_SUB_OPTION", "Pushing option 82 sub-option 13 with value 'thirteen'",
-              *pkt4_);
-    addString("EVAL_DEBUG_SUB_OPTION", "Pushing option 82 sub-option 1 with value 'one'", *pkt4_);
-    addString("EVAL_DEBUG_SUB_OPTION", "Pushing option 82 sub-option 70 with value ''", *pkt4_);
-    addString("EVAL_DEBUG_SUB_OPTION", "Pushing option 82 sub-option 1 with value 'true'", *pkt4_);
+              pkt4_->getLabel());
+    addString("EVAL_DEBUG_SUB_OPTION", "Pushing option 82 sub-option 1 with value 'one'",
+              pkt4_->getLabel());
+    addString("EVAL_DEBUG_SUB_OPTION", "Pushing option 82 sub-option 70 with value ''",
+              pkt4_->getLabel());
+    addString("EVAL_DEBUG_SUB_OPTION", "Pushing option 82 sub-option 1 with value 'true'",
+              pkt4_->getLabel());
     addString("EVAL_DEBUG_SUB_OPTION", "Pushing option 82 sub-option 70 with value 'false'",
-              *pkt4_);
+              pkt4_->getLabel());
     EXPECT_TRUE(checkFile());
 }
 
@@ -3593,34 +3667,39 @@ TEST_F(TokenTest, split) {
     // to the test vector in the class and then call checkFile
     // for comparison
     addString("EVAL_DEBUG_SPLIT_EMPTY", "Popping field 1, delimiters ., string , pushing result 0x",
-              *pkt4_);
+              pkt4_->getLabel());
     addString("EVAL_DEBUG_SPLIT_DELIM_EMPTY",
               "Popping field 1, delimiters , string .two.three..five., pushing result "
               "0x2E74776F2E74687265652E2E666976652E",
-              *pkt4_);
+              pkt4_->getLabel());
     addString("EVAL_DEBUG_SPLIT_FIELD_OUT_OF_RANGE",
-              "Popping field 0, delimiters ., string .two.three..five., pushing result 0x", *pkt4_);
+              "Popping field 0, delimiters ., string .two.three..five., pushing result 0x",
+              pkt4_->getLabel());
     addString("EVAL_DEBUG_SPLIT",
-              "Popping field 1, delimiters ., string .two.three..five., pushing result 0x", *pkt4_);
+              "Popping field 1, delimiters ., string .two.three..five., pushing result 0x",
+              pkt4_->getLabel());
     addString("EVAL_DEBUG_SPLIT",
               "Popping field 2, delimiters ., string .two.three..five., pushing result 0x74776F",
-              *pkt4_);
+              pkt4_->getLabel());
     addString("EVAL_DEBUG_SPLIT",
               "Popping field 3, delimiters ., string .two.three..five., pushing result "
               "0x7468726565",
-              *pkt4_);
+              pkt4_->getLabel());
     addString("EVAL_DEBUG_SPLIT",
-              "Popping field 4, delimiters ., string .two.three..five., pushing result 0x", *pkt4_);
+              "Popping field 4, delimiters ., string .two.three..five., pushing result 0x",
+              pkt4_->getLabel());
     addString("EVAL_DEBUG_SPLIT",
               "Popping field 5, delimiters ., string .two.three..five., pushing result 0x66697665",
-              *pkt4_);
+              pkt4_->getLabel());
     addString("EVAL_DEBUG_SPLIT",
-              "Popping field 6, delimiters ., string .two.three..five., pushing result 0x", *pkt4_);
+              "Popping field 6, delimiters ., string .two.three..five., pushing result 0x",
+              pkt4_->getLabel());
     addString("EVAL_DEBUG_SPLIT_FIELD_OUT_OF_RANGE",
-              "Popping field 7, delimiters ., string .two.three..five., pushing result 0x", *pkt4_);
+              "Popping field 7, delimiters ., string .two.three..five., pushing result 0x",
+              pkt4_->getLabel());
     addString("EVAL_DEBUG_SPLIT",
               "Popping field 1, delimiters ., string just_one, pushing result 0x6A7573745F6F6E65",
-              *pkt4_);
+              pkt4_->getLabel());
     EXPECT_TRUE(checkFile());
 }
 
@@ -3655,35 +3734,35 @@ TEST_F(TokenTest, splitMultipleDelims) {
     // for comparison
 
     addString("EVAL_DEBUG_SPLIT_EMPTY",
-              "Popping field 1, delimiters .:, string , pushing result 0x", *pkt4_);
+              "Popping field 1, delimiters .:, string , pushing result 0x", pkt4_->getLabel());
     addString("EVAL_DEBUG_SPLIT_FIELD_OUT_OF_RANGE",
               "Popping field 0, delimiters .:, string .two:three.:five., pushing result 0x",
-              *pkt4_);
+              pkt4_->getLabel());
     addString("EVAL_DEBUG_SPLIT",
               "Popping field 1, delimiters .:, string .two:three.:five., pushing result 0x",
-              *pkt4_);
+              pkt4_->getLabel());
     addString("EVAL_DEBUG_SPLIT",
               "Popping field 2, delimiters .:, string .two:three.:five., pushing result 0x74776F",
-              *pkt4_);
+              pkt4_->getLabel());
     addString("EVAL_DEBUG_SPLIT",
               "Popping field 3, delimiters .:, string .two:three.:five., pushing result "
               "0x7468726565",
-              *pkt4_);
+              pkt4_->getLabel());
     addString("EVAL_DEBUG_SPLIT",
               "Popping field 4, delimiters .:, string .two:three.:five., pushing result 0x",
-              *pkt4_);
+              pkt4_->getLabel());
     addString("EVAL_DEBUG_SPLIT",
               "Popping field 5, delimiters .:, string .two:three.:five., pushing result 0x66697665",
-              *pkt4_);
+              pkt4_->getLabel());
     addString("EVAL_DEBUG_SPLIT",
               "Popping field 6, delimiters .:, string .two:three.:five., pushing result 0x",
-              *pkt4_);
+              pkt4_->getLabel());
     addString("EVAL_DEBUG_SPLIT_FIELD_OUT_OF_RANGE",
               "Popping field 7, delimiters .:, string .two:three.:five., pushing result 0x",
-              *pkt4_);
+              pkt4_->getLabel());
     addString("EVAL_DEBUG_SPLIT",
               "Popping field 1, delimiters .:, string just_one, pushing result 0x6A7573745F6F6E65",
-              *pkt4_);
+              pkt4_->getLabel());
     EXPECT_TRUE(checkFile());
 }
 
