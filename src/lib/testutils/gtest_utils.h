@@ -118,54 +118,6 @@ namespace test {
 }
 #endif
 
-/// @brief Expect two values to be equal with a given margin of error.
-///
-/// Output is similar to official gtest expect macro outputs.
-/// Static casts avoid comparison of integers of different signs.
-///
-/// @param val1 the first value being tested
-/// @param val2 the second value being tested
-/// @param margin the allowed margin of error
-#define EXPECT_EQ_MARGIN(val1_statement, val2_statement, margin_statement)                \
-    {                                                                                     \
-        auto const val1(val1_statement);                                                  \
-        auto const val2(static_cast<decltype(val1)>(val2_statement));                     \
-        auto const margin(static_cast<decltype(val1)>(margin_statement));                 \
-        if (val1 < val2 && val1 + margin < val2 || val2 < val1 && val2 + margin < val1) { \
-            ADD_FAILURE() << "Expected equality of these values:\n"                       \
-                          << "  " << #val1_statement << "\n"                              \
-                          << "    Which is: " << val1 << "\n"                             \
-                          << "  " << #val2_statement << "\n"                              \
-                          << "    Which is: " << val2 << "\n"                             \
-                          << "With a margin of error of:\n"                               \
-                          << "  " << #margin_statement << "\n"                            \
-                          << "    Which is: " << margin << "";                            \
-        }                                                                                 \
-    }
-
-/// @brief Expect a value to be between two other given values.
-///
-/// Output is similar to official gtest expect macro outputs.
-/// Static casts avoid comparison of integers of different signs.
-///
-/// @param value_statement the statement for the value being tested
-/// @param low_statement the low reference value being tested against
-/// @param high_statement the high reference value being tested against
-#define EXPECT_IN_RANGE(value_statement, low_statement, high_statement)                  \
-    {                                                                                    \
-        auto const value(value_statement);                                               \
-        auto const low(static_cast<decltype(value)>(low_statement));                     \
-        auto const high(static_cast<decltype(value)>(high_statement));                   \
-        if (value < low || high < value) {                                               \
-            ADD_FAILURE() << "Expected this value:\n"                                    \
-                          << "  " << #value_statement << "\n"                            \
-                          << "    Which is: " << value << "\n"                           \
-                          << "To be in range:\n"                                         \
-                          << "  [" << #low_statement << ", " << #high_statement << "]\n" \
-                          << "    Which is: [" << low << ", " << high << "]";            \
-        }                                                                                \
-    }
-
 }  // namespace test
 }  // namespace isc
 
