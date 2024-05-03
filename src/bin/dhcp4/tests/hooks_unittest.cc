@@ -59,6 +59,7 @@ TEST_F(Dhcpv4SrvTest, Hooks) {
     int hook_index_host4_identifier = -1;
     int hook_index_lease4_offer = -1;
     int hook_index_lease4_server_decline = -1;
+    int hook_index_ddns4_update = -1;
 
     // check if appropriate indexes are set
     EXPECT_NO_THROW(hook_index_dhcp4_srv_configured = ServerHooks::getServerHooks()
@@ -87,6 +88,8 @@ TEST_F(Dhcpv4SrvTest, Hooks) {
                     .getIndex("lease4_offer"));
     EXPECT_NO_THROW(hook_index_lease4_server_decline = ServerHooks::getServerHooks()
                     .getIndex("lease4_server_decline"));
+    EXPECT_NO_THROW(hook_index_ddns4_update = ServerHooks::getServerHooks()
+                    .getIndex("ddns4_update"));
 
     EXPECT_TRUE(hook_index_dhcp4_srv_configured > 0);
     EXPECT_TRUE(hook_index_buffer4_receive > 0);
@@ -101,6 +104,7 @@ TEST_F(Dhcpv4SrvTest, Hooks) {
     EXPECT_TRUE(hook_index_host4_identifier > 0);
     EXPECT_TRUE(hook_index_lease4_offer > 0);
     EXPECT_TRUE(hook_index_lease4_server_decline > 0);
+    EXPECT_TRUE(hook_index_ddns4_update > 0);
 }
 
 // A dummy MAC address, padded with 0s
@@ -169,6 +173,7 @@ public:
         HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("host4_identifier");
         HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("lease4_offer");
         HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("lease4_server_decline");
+        HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("ddns4_update");
 
         HooksManager::setTestMode(false);
         bool status = HooksManager::unloadLibraries();
@@ -1045,6 +1050,29 @@ public:
         return (0);
     }
 
+    /// @brief Test callback that stores callout name and passed parameters.
+    ///
+    /// @param callout_handle handle passed by the hooks framework
+    /// @return always 0
+    static int
+    ddns4_update_callout(CalloutHandle& callout_handle) {
+        callback_name_ = string("ddns4_update");
+
+        callout_handle.getArgument("query4", callback_qry_pkt4_);
+        callout_handle.getArgument("response4", callback_resp_pkt4_);
+        callout_handle.getArgument("subnet4", callback_subnet4_);
+        callout_handle.getArgument("hostname", callback_hostname_);
+        callout_handle.getArgument("fwd-update", callback_fwd_update_);
+        callout_handle.getArgument("rev-update", callback_rev_update_);
+        callout_handle.getArgument("ddns-params", callback_ddns_params_);
+
+        callback_argument_names_ = callout_handle.getArgumentNames();
+        sort(callback_argument_names_.begin(), callback_argument_names_.end());
+
+        return (0);
+    }
+
+
     /// Resets buffers used to store data received by callouts
     void resetCalloutBuffers() {
         callback_name_ = string("");
@@ -1127,6 +1155,18 @@ public:
 
     /// Old lease returned in the lease4_offer callout
     static Lease4Ptr callback_old_lease_;
+
+    /// Hostname argument returned in ddns4_update callout.
+    static std::string callback_hostname_;
+
+    /// Forward update flag returned in ddns4_update callout.
+    static bool callback_fwd_update_;
+
+    /// Reverse update flag returned in ddns4_update callout.
+    static bool callback_rev_update_;
+
+    /// DDNS behavioral parameters returned in ddns4_update callout.
+    static DdnsParamsPtr callback_ddns_params_;
 };
 
 // The following fields are used in testing pkt4_receive_callout.
@@ -1146,6 +1186,10 @@ bool HooksDhcpv4SrvTest::callback_qry_options_copy_;
 bool HooksDhcpv4SrvTest::callback_resp_options_copy_;
 uint32_t HooksDhcpv4SrvTest::callback_offer_lft_;
 Lease4Ptr HooksDhcpv4SrvTest::callback_old_lease_;
+std::string HooksDhcpv4SrvTest::callback_hostname_;
+bool HooksDhcpv4SrvTest::callback_fwd_update_;
+bool HooksDhcpv4SrvTest::callback_rev_update_;
+DdnsParamsPtr HooksDhcpv4SrvTest::callback_ddns_params_;
 
 /// @brief Fixture class used to do basic library load/unload tests
 class LoadUnloadDhcpv4SrvTest : public ::testing::Test {
@@ -4107,6 +4151,114 @@ TEST_F(LoadUnloadDhcpv4SrvTest, startServiceFail) {
     // The server was destroyed, so the unload() function should now
     // include the library number in its marker file.
     EXPECT_TRUE(checkMarkerFile(UNLOAD_MARKER_FILE, "4"));
+}
+
+// This test verifies that the callout installed on the ddns4_update hook
+// point is executed as a result of DHCPREQUEST message sent to allocate
+// a lease.
+TEST_F(HooksDhcpv4SrvTest, ddns4Update) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    string config = "{ \"interfaces-config\": {"
+        "    \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"parked-packet-limit\": 1,"
+        "\"subnet4\": [ { "
+        "    \"pools\": [ { \"pool\": \"192.0.2.0/24\" } ],"
+        "    \"subnet\": \"192.0.2.0/24\", "
+        "    \"id\": 1, "
+        "    \"interface\": \"eth1\" "
+        " } ],"
+        " \"dhcp-ddns\" : {"
+        "       \"enable-updates\": true"
+        "},"
+        " \"ddns-send-updates\": true,"
+        " \"ddns-qualifying-suffix\": \"example.com\","
+        "\"valid-lifetime\": 4000"
+        "}";
+
+    ConstElementPtr json;
+    EXPECT_NO_THROW(json = parseDHCP4(config));
+    ConstElementPtr status;
+
+    // Configure the server and make sure the config is accepted
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(*srv_, json));
+    ASSERT_TRUE(status);
+    comment_ = parseAnswer(rcode_, status);
+    ASSERT_EQ(0, rcode_);
+
+    // Commit the config
+    CfgMgr::instance().commit();
+    IfaceMgr::instance().openSockets4();
+
+    // Start D2 client so NCR send will succeed.
+    srv_->startD2();
+
+    // Register ddns4_update callout.
+    ASSERT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                    "ddns4_update", ddns4_update_callout));
+
+    // Carry out a DORA.
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+    client.setIfaceName("eth1");
+    client.setIfaceIndex(ETH1_INDEX);
+    client.includeFQDN(Option4ClientFqdn::FLAG_S | Option4ClientFqdn::FLAG_E,
+                                       "client-name", Option4ClientFqdn::PARTIAL);
+    ASSERT_NO_THROW(client.doDORA(boost::shared_ptr<IOAddress>(new IOAddress("192.0.2.100"))));
+
+    // Make sure that we received a response
+    ASSERT_TRUE(client.getContext().response_);
+
+    // Check that the callback called is indeed the one we installed
+    EXPECT_EQ("ddns4_update", callback_name_);
+
+    // Check if all expected parameters were really received
+    vector<string> expected_argument_names;
+    expected_argument_names.push_back("query4");
+    expected_argument_names.push_back("response4");
+    expected_argument_names.push_back("subnet4");
+    expected_argument_names.push_back("hostname");
+    expected_argument_names.push_back("fwd-update");
+    expected_argument_names.push_back("rev-update");
+    expected_argument_names.push_back("ddns-params");
+
+    sort(expected_argument_names.begin(), expected_argument_names.end());
+    EXPECT_TRUE(callback_argument_names_ == expected_argument_names);
+
+    // Verify query in the callout is as expected.
+    ASSERT_TRUE(callback_qry_pkt4_);
+    ASSERT_TRUE(client.getContext().query_);
+    EXPECT_EQ(client.getContext().query_->getType(), callback_qry_pkt4_->getType());
+    EXPECT_EQ(client.getContext().query_->getLabel(), callback_qry_pkt4_->getLabel());
+
+    // Verify response in the callout is as expected.
+    ASSERT_TRUE(callback_resp_pkt4_);
+    ASSERT_TRUE(client.getContext().response_);
+    EXPECT_EQ(client.getContext().response_->getType(), callback_resp_pkt4_->getType());
+    EXPECT_EQ(client.getContext().response_->getLabel(), callback_resp_pkt4_->getLabel());
+
+    // Verify the subnet.
+    ASSERT_TRUE(callback_subnet4_);
+    EXPECT_EQ(1, callback_subnet4_->getID());
+
+    // Verify the hostname.
+    EXPECT_EQ("client-name.example.com.", callback_hostname_);
+
+    // Verify the update direction flags.
+    EXPECT_TRUE(callback_fwd_update_);
+    EXPECT_TRUE(callback_rev_update_);
+
+    // Verify behavioral parameter set.
+    ASSERT_TRUE(callback_ddns_params_);
+    EXPECT_EQ("example.com", callback_ddns_params_->getQualifyingSuffix());
+
+    // Check if the callout handle state was reset after the callout.
+    checkCalloutHandleReset(client.getContext().query_);
+
+    resetCalloutBuffers();
 }
 
 }  // namespace

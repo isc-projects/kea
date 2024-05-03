@@ -267,9 +267,9 @@ called before "subnet4_select".
    - name: @b response4, type: isc::dhcp::Pkt4Ptr, direction: <b>in</b>
    - name: @b subnet4, type: isc::dhcp::Subnet4Ptr, direction: <b>in</b>
    - name: @b hostname, type: std::string, direction: <b>in/out</b>
-   - name: @b fwd_update, type: bool, direction: <b>in/out</b>
-   - name: @b rev_update, type: bool, direction: <b>in/out</b>
-   - name: @b ddns_params, type: isc::dhcp::DdnsParamsPtr, direction: <b>in</b>
+   - name: @b fwd-update, type: bool, direction: <b>in/out</b>
+   - name: @b rev-update, type: bool, direction: <b>in/out</b>
+   - name: @b ddns-params, type: isc::dhcp::DdnsParamsPtr, direction: <b>in</b>
 
  - @b Description: this callout is executed after the server has selected
    a lease and has formed a host name to associate with the lease and/or use
@@ -279,17 +279,17 @@ called before "subnet4_select".
    host name as well as whether or not forward and/or reverse updates are
    enabled.
 
-   Upon entry into the callout, the arguments <b>hostname</b>,<b>fwd_update</b>,
-   and <b>rev_update</b> have been set by the server based on the client packet,
+   Upon entry into the callout, the arguments <b>hostname</b>,<b>fwd-update</b>,
+   and <b>rev-update</b> have been set by the server based on the client packet,
    and various configuration values (e.g host reservations, DDNS behavioral
    parameters, etc).  Upon return from the callout, any changes to these
    values will be applied as follows:
    - If <b>hostname</b> has changed it will be used to update the outbound
    host name (option 12) if it exists, the output FQDN option (option 81)
    if it exists, and used as the FQDN sent in DNS updates
-   - Forward DNS update(s) will be done if <b>fwd_update</b> is true (and
+   - Forward DNS update(s) will be done if <b>fwd-update</b> is true (and
    <b>kea-dhcp-ddns</b> connectivity is enabled)
-   - Reverse DNS update(s) will be done if <b>rev_update</b> is true (and
+   - Reverse DNS update(s) will be done if <b>rev-update</b> is true (and
    <b>kea-dhcp-ddns</b> connectivity is enabled)
 
  - <b>Next step status</b>: Not applicable, its value will be ignored.

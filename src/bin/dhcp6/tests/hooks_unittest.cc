@@ -31,6 +31,7 @@
 #include <util/buffer.h>
 #include <util/range_utilities.h>
 #include <util/multi_threading_mgr.h>
+#include <testutils/gtest_utils.h>
 
 #include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
@@ -38,7 +39,6 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
-
 
 using namespace isc::asiolink;
 using namespace isc::config;
@@ -70,6 +70,7 @@ TEST_F(Dhcpv6SrvTest, Hooks) {
     int hook_index_select_subnet = -1;
     int hook_index_leases6_committed = -1;
     int hook_index_host6_identifier = -1;
+    int hook_index_ddns6_update = -1;
 
     // check if appropriate indexes are set
     EXPECT_NO_THROW(hook_index_dhcp6_srv_configured = ServerHooks::getServerHooks()
@@ -96,6 +97,8 @@ TEST_F(Dhcpv6SrvTest, Hooks) {
                     .getIndex("leases6_committed"));
     EXPECT_NO_THROW(hook_index_host6_identifier = ServerHooks::getServerHooks()
                     .getIndex("host6_identifier"));
+    EXPECT_NO_THROW(hook_index_ddns6_update = ServerHooks::getServerHooks()
+                    .getIndex("ddns6_update"));
 
     EXPECT_TRUE(hook_index_dhcp6_srv_configured > 0);
     EXPECT_TRUE(hook_index_buffer6_receive > 0);
@@ -109,6 +112,7 @@ TEST_F(Dhcpv6SrvTest, Hooks) {
     EXPECT_TRUE(hook_index_select_subnet > 0);
     EXPECT_TRUE(hook_index_leases6_committed > 0);
     EXPECT_TRUE(hook_index_host6_identifier > 0);
+    EXPECT_TRUE(hook_index_ddns6_update > 0);
 }
 
 /// @brief a class dedicated to Hooks testing in DHCPv6 server
@@ -163,6 +167,7 @@ public:
         HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("lease6_rebind");
         HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("lease6_decline");
         HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("host6_identifier");
+        HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("ddns6_update");
 
         HooksManager::setTestMode(false);
         bool status = HooksManager::unloadLibraries();
@@ -950,6 +955,28 @@ public:
         return (0);
     }
 
+    /// @brief Test callback that stores callout name and passed parameters.
+    ///
+    /// @param callout_handle handle passed by the hooks framework
+    /// @return always 0
+    static int
+    ddns6_update_callout(CalloutHandle& callout_handle) {
+        callback_name_ = string("ddns6_update");
+
+        callout_handle.getArgument("query6", callback_qry_pkt6_);
+        callout_handle.getArgument("response6", callback_resp_pkt6_);
+        callout_handle.getArgument("subnet6", callback_subnet6_);
+        callout_handle.getArgument("hostname", callback_hostname_);
+        callout_handle.getArgument("fwd-update", callback_fwd_update_);
+        callout_handle.getArgument("rev-update", callback_rev_update_);
+        callout_handle.getArgument("ddns-params", callback_ddns_params_);
+
+        callback_argument_names_ = callout_handle.getArgumentNames();
+        sort(callback_argument_names_.begin(), callback_argument_names_.end());
+
+        return (0);
+    }
+
     /// Resets buffers used to store data received by callouts
     void resetCalloutBuffers() {
         callback_name_ = string("");
@@ -1024,6 +1051,18 @@ public:
     /// Flag indicating if copying retrieved options was enabled for
     /// a response during callout execution.
     static bool callback_resp_options_copy_;
+
+    /// Hostname argument returned in ddns6_update callout.
+    static std::string callback_hostname_;
+
+    /// Forward update flag returned in ddns6_update callout.
+    static bool callback_fwd_update_;
+
+    /// Reverse update flag returned in ddns6_update callout.
+    static bool callback_rev_update_;
+
+    /// DDNS behavioral parameters returned in ddns6_update callout.
+    static DdnsParamsPtr callback_ddns_params_;
 };
 
 // The following parameters are used by callouts to override
@@ -1047,6 +1086,10 @@ boost::shared_ptr<Option6IA> HooksDhcpv6SrvTest::callback_ia_na_;
 vector<string> HooksDhcpv6SrvTest::callback_argument_names_;
 bool HooksDhcpv6SrvTest::callback_qry_options_copy_;
 bool HooksDhcpv6SrvTest::callback_resp_options_copy_;
+std::string HooksDhcpv6SrvTest::callback_hostname_;
+bool HooksDhcpv6SrvTest::callback_fwd_update_;
+bool HooksDhcpv6SrvTest::callback_rev_update_;
+DdnsParamsPtr HooksDhcpv6SrvTest::callback_ddns_params_;
 
 /// @brief Fixture class used to do basic library load/unload tests
 class LoadUnloadDhcpv6SrvTest : public Dhcpv6SrvTest {
@@ -5902,6 +5945,111 @@ TEST_F(LoadUnloadDhcpv6SrvTest, startServiceFail) {
     // The server was destroyed, so the unload() function should now
     // include the library number in its marker file.
     EXPECT_TRUE(checkMarkerFile(UNLOAD_MARKER_FILE, "4"));
+}
+
+// This test verifies that the callout installed on the ddns6_update hook
+// point is executed as a result of DHCPREQUEST message sent to allocate
+// a lease.
+TEST_F(HooksDhcpv6SrvTest, ddns6Update) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets6();
+
+    string config =
+        "{ \"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"id\": 1, "
+        "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
+        "    \"subnet\": \"2001:db8:1::/48\", "
+        "    \"interface\": \"eth1\" "
+        " } ],"
+        "\"valid-lifetime\": 4000,"
+        "\"dhcp-ddns\" : {"
+        "   \"enable-updates\": true"
+        "},"
+        " \"ddns-send-updates\": true,"
+        " \"ddns-qualifying-suffix\": \"example.com\" "
+        "}";
+
+    ConstElementPtr json;
+    EXPECT_NO_THROW(json = parseDHCP6(config));
+    ConstElementPtr status;
+
+    // Configure the server and make sure the config is accepted
+    ASSERT_NO_THROW_LOG(status = Dhcpv6SrvTest::configure(*srv_, json));
+    ASSERT_TRUE(status);
+    comment_ = parseAnswer(rcode_, status);
+    ASSERT_EQ(0, rcode_);
+
+    // Commit the config
+    CfgMgr::instance().commit();
+    IfaceMgr::instance().openSockets6();
+
+    // Start D2 client so NCR send will succeed.
+    srv_->startD2();
+
+    // Register ddns6_update callout.
+    ASSERT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                    "ddns6_update", ddns6_update_callout));
+
+    // Carry out a SARR.
+    Dhcp6Client client;
+    client.setInterface("eth1");
+    client.requestAddress(0xabca, IOAddress("2001:db8:1::28"));
+    client.useFQDN(Option6ClientFqdn::FLAG_S, "client-name", Option6ClientFqdn::PARTIAL);
+    ASSERT_NO_THROW(client.doSARR());
+
+    // Check that the callback called is indeed the one we installed
+    EXPECT_EQ("ddns6_update", callback_name_);
+
+    // Check if all expected parameters were really received
+    vector<string> expected_argument_names;
+    expected_argument_names.push_back("query6");
+    expected_argument_names.push_back("response6");
+    expected_argument_names.push_back("subnet6");
+    expected_argument_names.push_back("hostname");
+    expected_argument_names.push_back("fwd-update");
+    expected_argument_names.push_back("rev-update");
+    expected_argument_names.push_back("ddns-params");
+
+    sort(expected_argument_names.begin(), expected_argument_names.end());
+    EXPECT_TRUE(callback_argument_names_ == expected_argument_names);
+
+    // Verify query in the callout is as expected.
+    ASSERT_TRUE(callback_qry_pkt6_);
+    ASSERT_TRUE(client.getContext().query_);
+    EXPECT_EQ(client.getContext().query_->getType(), callback_qry_pkt6_->getType());
+    EXPECT_EQ(client.getContext().query_->getLabel(), callback_qry_pkt6_->getLabel());
+
+    // Verify response in the callout is as expected.
+    ASSERT_TRUE(callback_resp_pkt6_);
+    ASSERT_TRUE(client.getContext().response_);
+    EXPECT_EQ(client.getContext().response_->getType(), callback_resp_pkt6_->getType());
+    EXPECT_EQ(client.getContext().response_->getLabel(), callback_resp_pkt6_->getLabel());
+
+    // Verify the subnet.
+    ASSERT_TRUE(callback_subnet6_);
+    EXPECT_EQ(1, callback_subnet6_->getID());
+
+    // Verify the hostname.
+    EXPECT_EQ("client-name.example.com.", callback_hostname_);
+
+    // Verify the update direction flags.
+    EXPECT_TRUE(callback_fwd_update_);
+    EXPECT_TRUE(callback_rev_update_);
+
+    // Verify behavioral parameter set.
+    ASSERT_TRUE(callback_ddns_params_);
+    EXPECT_EQ("example.com", callback_ddns_params_->getQualifyingSuffix());
+
+    // Check if the callout handle state was reset after the callout.
+    checkCalloutHandleReset(client.getContext().query_);
+
+    resetCalloutBuffers();
 }
 
 }  // namespace

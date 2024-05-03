@@ -101,10 +101,10 @@ public:
         work_.reset();
     }
 
-    /// @brief Return the native @ref io_service object used in this wrapper.
+    /// @brief Return the native @c io_service object used in this wrapper.
     ///
     /// This is a short term work around to support other Kea modules
-    /// that share the same @ref io_service with the authoritative server.
+    /// that share the same @c io_service with the authoritative server.
     /// It will eventually be removed once the wrapper interface is
     /// generalized.
     boost::asio::io_service& getInternalIOService() {

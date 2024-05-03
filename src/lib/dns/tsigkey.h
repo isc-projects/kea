@@ -38,7 +38,7 @@ class Name;
 /// In the TSIG protocol, hash algorithms are represented in the form of
 /// domain name.
 /// Our interfaces provide direct translation of this concept; for example,
-/// the constructor from parameters take a @class Name object to specify the
+/// the constructor from parameters take a @ref Name object to specify the
 /// algorithm.
 /// On one hand, this may be counter intuitive.
 /// An API user would rather specify "hmac-md5" instead of
