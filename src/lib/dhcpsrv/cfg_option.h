@@ -561,6 +561,7 @@ public:
     ///
     /// @return Pointer to the container holding returned options. This
     /// container is empty if no options have been found.
+    __attribute__ ((visibility ("default")))
     OptionContainerPtr getAll(const std::string& option_space) const;
 
     /// @brief Returns vendor options for the specified vendor id.
@@ -569,6 +570,7 @@ public:
     ///
     /// @return Pointer to the container holding returned options. This
     /// container is empty if no options have been found.
+    __attribute__ ((visibility ("default")))
     OptionContainerPtr getAll(const uint32_t vendor_id) const;
 
     /// @brief Returns all non-vendor or vendor options for the specified
