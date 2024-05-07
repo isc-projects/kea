@@ -71,11 +71,6 @@
             },
             "renew-timer": 100,
 
-            // "reservation-mode": "all",
-            // It is replaced by the "reservations-global",
-            // "reservations-in-subnet", and "reservations-out-of-pool"
-            // parameters.
-
             // Specify whether the server should look up global reservations.
             "reservations-global": false,
 
@@ -102,10 +97,6 @@
                         "ip-addresses": [ "2001:db8:1::123" ]
                     },
                     "renew-timer": 10,
-                    // "reservation-mode": "all",
-                    // It is replaced by the "reservations-global",
-                    // "reservations-in-subnet", and "reservations-out-of-pool"
-                    // parameters.
                     // Specify whether the server should look up global reservations.
                     "reservations-global": false,
                     // Specify whether the server should look up in-subnet reservations.
@@ -130,10 +121,6 @@
                         "ip-addresses": [ "3000::1" ]
                     },
                     "renew-timer": 10,
-                    // "reservation-mode": "all",
-                    // It is replaced by the "reservations-global",
-                    // "reservations-in-subnet", and "reservations-out-of-pool"
-                    // parameters.
                     // Specify whether the server should look up global reservations.
                     "reservations-global": false,
                     // Specify whether the server should look up in-subnet reservations.

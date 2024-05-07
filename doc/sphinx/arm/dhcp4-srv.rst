@@ -5316,61 +5316,60 @@ address should be revoked and the reserved one be used instead.
 
 Some of those checks may be unnecessary in certain deployments, and not
 performing them may improve performance. The Kea server provides the
-``reservation-mode`` configuration parameter to select the types of
+``reservations-global``, ``reservations-in-subnet`` and
+``reservations-out-of-pool`` configuration parameters to select the types of
 reservations allowed for a particular subnet. Each reservation type has
 different constraints for the checks to be performed by the server when
-allocating or renewing a lease for the client. Although ``reservation-mode``
-was deprecated in Kea 1.9.1, it is still available; the allowed values are:
+allocating or renewing a lease for the client.
 
--  ``all`` - enables both in-pool and out-of-pool host reservation
-   types. This setting is the default value, and is the safest and most
-   flexible. However, as all checks are conducted, it is also the slowest.
-   It does not check against global reservations.
+Configuration flags are:
 
--  ``out-of-pool`` - allows only out-of-pool host reservations. With
-   this setting in place, the server assumes that all host
-   reservations are for addresses that do not belong to the dynamic
-   pool. Therefore, it can skip the reservation checks when dealing with
-   in-pool addresses, thus improving performance. Do not use this mode
-   if any reservations use in-pool addresses. Caution is advised
-   when using this setting; Kea does not sanity-check the reservations
-   against ``reservation-mode`` and misconfiguration may cause problems.
+-  ``reservations-in-subnet`` - enables in-pool host reservation types. This
+   setting is the default value, and is the safest and most flexible. However,
+   as all checks are conducted, it is also the slowest. It does not check
+   against global reservations.
 
--  ``global`` - allows only global host reservations. With this setting
-   in place, the server searches for reservations for a client only
-   among the defined global reservations. If an address is specified,
-   the server skips the reservation checks carried out in
-   other modes, thus improving performance. Caution is advised when
-   using this setting; Kea does not sanity-check reservations when
-   ``global`` is set, and misconfiguration may cause problems.
+-  ``reservations-out-of-pool`` - allows only out-of-pool host reservations.
+   With this setting in place, the server assumes that all host reservations are
+   for addresses that do not belong to the dynamic pool. Therefore, it can skip
+   the reservation checks when dealing with in-pool addresses, thus improving
+   performance. Do not use this mode if any reservations use in-pool addresses.
+   Caution is advised when using this setting; Kea does not sanity-check the
+   reservations against ``reservations-out-of-pool`` and misconfiguration may
+   cause problems.
 
--  ``disabled`` - host reservation support is disabled. As there are no
-   reservations, the server skips all checks. Any reservations
-   defined are completely ignored. As checks are skipped, the
-   server may operate faster in this mode.
+-  ``reservations-global`` - allows global host reservations. With this setting
+   in place, the server searches for reservations for a client among the defined
+   global reservations. If an address is specified, the server skips the
+   reservation checks carried out in other modes, thus improving performance.
+   Caution is advised when using this setting; Kea does not sanity-check the
+   reservations when ``reservations-global`` is set, and misconfiguration may
+   cause problems.
 
-Since Kea 1.9.1, the ``reservation-mode`` parameter is replaced by the
-``reservations-global``, ``reservations-in-subnet``, and
-``reservations-out-of-pool`` flags.
-The flags can be activated independently and can produce various combinations,
-some of which were not supported by the deprecated ``reservation-mode``.
+Note: disabling all flags disables host reservation support. As there are no
+   reservations, the server skips all checks. Any reservations defined are
+   completely ignored. As checks are skipped, the server may operate faster in
+   this mode.
 
-The ``reservation-mode`` parameter can be specified at:
+Since Kea 1.9.1 the ``reservations-global``, ``reservations-in-subnet`` and
+``reservations-out-of-pool`` flags are suported.
 
-- global level: ``.Dhcp4["reservation-mode"]`` (lowest priority: gets overridden
+The ``reservations-global``, ``reservations-in-subnet`` and
+``reservations-out-of-pool`` parameters can be specified at:
+
+- global level: ``.Dhcp4["reservations-global"]`` (lowest priority: gets overridden
   by all others)
 
-- subnet level: ``.Dhcp4.subnet4[]["reservation-mode"]`` (low priority)
+- subnet level: ``.Dhcp4.subnet4[]["reservations-in-subnet"]`` (low priority)
 
-- shared-network level: ``.Dhcp4["shared-networks"][]["reservation-mode"]``
+- shared-network level: ``.Dhcp4["shared-networks"][]["reservations-out-of-pool"]``
   (high priority)
 
 - shared-network subnet-level:
-  ``.Dhcp4["shared-networks"][].subnet4[]["reservation-mode"]`` (highest
+  ``.Dhcp4["shared-networks"][].subnet4[]["reservations-out-of-pool"]`` (highest
   priority: overrides all others)
 
-To decide which ``reservation-mode`` to choose, the
-following decision diagram may be useful:
+To decide which flags to use, the following decision diagram may be useful:
 
 ::
 
@@ -5422,7 +5421,7 @@ following decision diagram may be useful:
             |                |                  |     |
             |             yes|                no|     |
             |                |                  |     V
-            +----------------+                  +--> "all"
+            +----------------+                  +--> "in-subnet"
 
 An example configuration that disables reservations looks as follows:
 
@@ -5438,7 +5437,8 @@ An example configuration that disables reservations looks as follows:
                 "pool": "192.0.2.10-192.0.2.100"
               }
             ],
-            "reservation-mode": "disabled",
+            "reservations-global": false,
+            "reservations-in-subnet": false,
             "subnet": "192.0.2.0/24"
           }
         ]
@@ -5451,7 +5451,7 @@ An example configuration using global reservations is shown below:
 
     {
       "Dhcp4": {
-        "reservation-mode": "global",
+        "reservations-global": true,
         "reservations": [
           {
             "hostname": "host-one",
@@ -5493,7 +5493,7 @@ The meaning of the reservation flags are:
   the respective reservations from inside the dynamic pools (if any) can be
   dynamically assigned to any client.
 
-The ``disabled`` value from the deprecated ``reservation-mode`` corresponds to:
+The ``disabled`` configuration corresponds to:
 
 .. code-block:: json
 
@@ -5504,7 +5504,7 @@ The ``disabled`` value from the deprecated ``reservation-mode`` corresponds to:
       }
     }
 
-The ``global`` value from the deprecated ``reservation-mode`` corresponds to:
+The ``global``configuration using ``reservations-global`` corresponds to:
 
 .. code-block:: json
 
@@ -5515,7 +5515,7 @@ The ``global`` value from the deprecated ``reservation-mode`` corresponds to:
       }
     }
 
-The ``out-of-pool`` value from the deprecated ``reservation-mode`` corresponds to:
+The ``out-of-pool`` configuration using ``reservations-out-of-pool`` corresponds to:
 
 .. code-block:: json
 
@@ -5527,7 +5527,7 @@ The ``out-of-pool`` value from the deprecated ``reservation-mode`` corresponds t
       }
     }
 
-And the ``all`` value from the deprecated ``reservation-mode`` corresponds to:
+And the ``in-subnet`` configuration using ``reservations-in-subnet`` corresponds to:
 
 .. code-block:: json
 
@@ -5539,7 +5539,7 @@ And the ``all`` value from the deprecated ``reservation-mode`` corresponds to:
       }
     }
 
-To activate both ``global`` and ``all``, the following combination can be used:
+To activate both ``global`` and ``in-subnet``, the following combination can be used:
 
 .. code-block:: json
 

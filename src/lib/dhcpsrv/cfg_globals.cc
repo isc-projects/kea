@@ -24,7 +24,6 @@ CfgGlobals::nameToIndex = {
     { "dhcp4o6-port", DHCP4O6_PORT },
     { "comment", COMMENT },
     { "server-tag", SERVER_TAG },
-    { "reservation-mode", RESERVATION_MODE },
     { "reservations-global", RESERVATIONS_GLOBAL },
     { "reservations-in-subnet", RESERVATIONS_IN_SUBNET },
     { "reservations-out-of-pool", RESERVATIONS_OUT_OF_POOL },

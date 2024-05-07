@@ -172,8 +172,6 @@ Parser6Context::contextName() {
         return ("hooks-libraries");
     case SUBNET6:
         return ("subnet6");
-    case RESERVATION_MODE:
-        return ("reservation-mode");
     case OPTION_DEF:
         return ("option-def");
     case OPTION_DATA:

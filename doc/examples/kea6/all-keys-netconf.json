@@ -751,13 +751,6 @@
                 // lease is returned as it was "cached".
                 "cache-max-age": 1000,
 
-                // Enumeration specifying the server's mode of operation when it
-                // fetches host reservations.
-                // "reservation-mode": "all",
-                // It is replaced by the "reservations-global",
-                // "reservations-in-subnet", and "reservations-out-of-pool"
-                // parameters.
-
                 // Specify whether the server should look up global reservations.
                 "reservations-global": false,
 
@@ -975,13 +968,6 @@
                         // Subnet-level renew timer.
                         "renew-timer": 30,
 
-                        // Enumeration specifying the server's mode of operation when it
-                        // fetches host reservations.
-                        // "reservation-mode": "all",
-                        // It is replaced by the "reservations-global",
-                        // "reservations-in-subnet", and
-                        // "reservations-out-of-pool" parameters.
-
                         // Specify whether the server should look up global reservations.
                         "reservations-global": false,
 
@@ -1114,11 +1100,6 @@
             // Capacity is optional.
             "capacity": 64
         },
-
-        // Fetches host reservations.
-        // "reservation-mode": "all",
-        // It is replaced by the "reservations-global",
-        // "reservations-in-subnet", and "reservations-out-of-pool" parameters.
 
         // Specify whether the server should look up global reservations.
         "reservations-global": false,

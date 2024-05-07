@@ -18,24 +18,6 @@ namespace dhcp {
 /// @brief Common configuration parser for shared networks
 /// and subnets.
 class BaseNetworkParser : public data::SimpleParser {
-public:
-
-    /// @brief Moves deprecated reservation-mode parameter to
-    /// new reservations flags.
-    ///
-    /// @param config [in/out] configuration to alter.
-    /// @throw DhcpConfigError on error e.g. when both reservation-mode
-    /// and a flag are specified.
-    static void moveReservationMode(isc::data::ElementPtr config);
-
-    /// @brief Moves deprecated reservation-mode parameter to
-    /// new reservations flags.
-    ///
-    /// @param config [in/out] global parameters to alter.
-    /// @throw DhcpConfigError on error e.g. when both reservation-mode
-    /// and a flag are specified.
-    static void moveReservationMode(CfgGlobalsPtr config);
-
 protected:
 
     /// @brief Parses common parameters

@@ -45,10 +45,8 @@ SharedNetwork4Parser::parse(const data::ConstElementPtr& shared_network_data,
         std::string name = getString(shared_network_data, "name");
         shared_network.reset(new SharedNetwork4(name));
 
-        // Move from reservation mode to new reservations flags.
         ElementPtr mutable_params;
         mutable_params = boost::const_pointer_cast<Element>(shared_network_data);
-        BaseNetworkParser::moveReservationMode(mutable_params);
 
         // Parse parameters common to all Network derivations.
         NetworkPtr network = boost::dynamic_pointer_cast<Network>(shared_network);
@@ -253,10 +251,8 @@ SharedNetwork6Parser::parse(const data::ConstElementPtr& shared_network_data,
         std::string name = getString(shared_network_data, "name");
         shared_network.reset(new SharedNetwork6(name));
 
-        // Move from reservation mode to new reservations flags.
         ElementPtr mutable_params;
         mutable_params = boost::const_pointer_cast<Element>(shared_network_data);
-        BaseNetworkParser::moveReservationMode(mutable_params);
 
         // Parse parameters common to all Network derivations.
         NetworkPtr network = boost::dynamic_pointer_cast<Network>(shared_network);

@@ -352,10 +352,6 @@ processDhcp4Config(isc::data::ConstElementPtr config_set) {
         // default values and will insert derived values as well.
         mutable_cfg = boost::const_pointer_cast<Element>(config_set);
 
-        // Move from reservation mode to new reservations flags.
-        // @todo add warning
-        BaseNetworkParser::moveReservationMode(mutable_cfg);
-
         // Set all default values if not specified by the user.
         SimpleParser4::setAllDefaults(mutable_cfg);
 
@@ -627,7 +623,6 @@ processDhcp4Config(isc::data::ConstElementPtr config_set) {
                  (config_pair.first == "server-hostname") ||
                  (config_pair.first == "boot-file-name") ||
                  (config_pair.first == "server-tag") ||
-                 (config_pair.first == "reservation-mode") ||
                  (config_pair.first == "reservations-global") ||
                  (config_pair.first == "reservations-in-subnet") ||
                  (config_pair.first == "reservations-out-of-pool") ||

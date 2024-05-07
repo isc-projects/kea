@@ -69,7 +69,6 @@ const SimpleKeywords SimpleParser4::GLOBAL4_PARAMETERS = {
     { "reservations",                     Element::list },
     { "config-control",                   Element::map },
     { "server-tag",                       Element::string },
-    { "reservation-mode",                 Element::string },
     { "reservations-global",              Element::boolean },
     { "reservations-in-subnet",           Element::boolean },
     { "reservations-out-of-pool",         Element::boolean },
@@ -225,7 +224,6 @@ const SimpleKeywords SimpleParser4::SUBNET4_PARAMETERS = {
     { "client-class",                   Element::string },
     { "require-client-classes",         Element::list },
     { "reservations",                   Element::list },
-    { "reservation-mode",               Element::string },
     { "reservations-global",            Element::boolean },
     { "reservations-in-subnet",         Element::boolean },
     { "reservations-out-of-pool",       Element::boolean },
@@ -267,8 +265,8 @@ const SimpleKeywords SimpleParser4::SUBNET4_PARAMETERS = {
 /// Note: When updating this array, please also update SHARED_SUBNET4_DEFAULTS
 /// below. In most cases, those two should be kept in sync, except cases
 /// where a parameter can be derived from shared-networks, but is not
-/// defined on global level. Currently there are two such parameters:
-/// interface and reservation-mode
+/// defined on global level. Currently there in only one such parameter:
+/// interface.
 const SimpleDefaults SimpleParser4::SUBNET4_DEFAULTS = {
     { "interface",        Element::string,  "" },
     { "client-class",     Element::string,  "" },
@@ -280,9 +278,9 @@ const SimpleDefaults SimpleParser4::SUBNET4_DEFAULTS = {
 /// @brief This table defines default values for each IPv4 subnet that is
 ///        part of a shared network
 ///
-/// This is mostly the same as @ref SUBNET4_DEFAULTS, except two parameters
+/// This is mostly the same as @ref SUBNET4_DEFAULTS, except one parameter
 /// that can be derived from shared-network, but cannot from global scope.
-/// Those are: interface and reservation-mode.
+/// This is: interface.
 const SimpleDefaults SimpleParser4::SHARED_SUBNET4_DEFAULTS = {
     { "4o6-interface",    Element::string,  "" },
     { "4o6-interface-id", Element::string,  "" },
@@ -355,7 +353,6 @@ const SimpleKeywords SimpleParser4::SHARED_NETWORK4_PARAMETERS = {
     { "server-hostname",                Element::string },
     { "boot-file-name",                 Element::string },
     { "relay",                          Element::map },
-    { "reservation-mode",               Element::string },
     { "reservations-global",            Element::boolean },
     { "reservations-in-subnet",         Element::boolean },
     { "reservations-out-of-pool",       Element::boolean },

@@ -51,9 +51,6 @@
 
 // This directive tells Kea that reservations are global. Note that this
 // can also be specified at shared network and/or subnet level.
-// "reservation-mode": "global",
-// It is replaced by the "reservations-global", "reservations-in-subnet", and
-// "reservations-out-of-pool" parameters.
 
 // Specify whether the server should look up global reservations.
   "reservations-global": true,

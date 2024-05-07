@@ -740,11 +740,8 @@ Subnet4ConfigParser::initSubnet(data::ConstElementPtr params,
                                    subnet_id);
     subnet_ = subnet4;
 
-    // Move from reservation mode to new reservations flags.
     ElementPtr mutable_params;
     mutable_params = boost::const_pointer_cast<Element>(params);
-    // @todo add warning
-    BaseNetworkParser::moveReservationMode(mutable_params);
 
     // Parse parameters common to all Network derivations.
     NetworkPtr network = boost::dynamic_pointer_cast<Network>(subnet4);
@@ -1280,11 +1277,8 @@ Subnet6ConfigParser::initSubnet(data::ConstElementPtr params,
                                    subnet_id);
     subnet_ = subnet6;
 
-    // Move from reservation mode to new reservations flags.
     ElementPtr mutable_params;
     mutable_params = boost::const_pointer_cast<Element>(params);
-    // @todo add warning
-    BaseNetworkParser::moveReservationMode(mutable_params);
 
     // Parse parameters common to all Network derivations.
     NetworkPtr network = boost::dynamic_pointer_cast<Network>(subnet_);

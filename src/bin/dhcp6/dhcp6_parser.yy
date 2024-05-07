@@ -166,11 +166,6 @@ using namespace std;
   INTERFACE_ID "interface-id"
   ID "id"
   RAPID_COMMIT "rapid-commit"
-  RESERVATION_MODE "reservation-mode"
-  DISABLED "disabled"
-  OUT_OF_POOL "out-of-pool"
-  GLOBAL "global"
-  ALL "all"
   RESERVATIONS_GLOBAL "reservations-global"
   RESERVATIONS_IN_SUBNET "reservations-in-subnet"
   RESERVATIONS_OUT_OF_POOL "reservations-out-of-pool"
@@ -300,7 +295,6 @@ using namespace std;
 %type <ElementPtr> map_value
 %type <ElementPtr> db_type
 %type <ElementPtr> on_fail_mode
-%type <ElementPtr> hr_mode
 %type <ElementPtr> duid_type
 %type <ElementPtr> ncr_protocol_value
 %type <ElementPtr> ddns_replace_client_name_value
@@ -538,7 +532,6 @@ global_param: data_directory
             | reservations
             | config_control
             | server_tag
-            | reservation_mode
             | reservations_global
             | reservations_in_subnet
             | reservations_out_of_pool
@@ -1615,7 +1608,6 @@ subnet6_param: preferred_lifetime
              | client_class
              | require_client_classes
              | reservations
-             | reservation_mode
              | reservations_global
              | reservations_in_subnet
              | reservations_out_of_pool
@@ -1710,20 +1702,6 @@ reservations_out_of_pool: RESERVATIONS_OUT_OF_POOL COLON BOOLEAN {
     ctx.stack_.back()->set("reservations-out-of-pool", b);
 };
 
-reservation_mode: RESERVATION_MODE {
-    ctx.unique("reservation-mode", ctx.loc2pos(@1));
-    ctx.enter(ctx.RESERVATION_MODE);
-} COLON hr_mode {
-    ctx.stack_.back()->set("reservation-mode", $4);
-    ctx.leave();
-};
-
-hr_mode: DISABLED { $$ = ElementPtr(new StringElement("disabled", ctx.loc2pos(@1))); }
-       | OUT_OF_POOL { $$ = ElementPtr(new StringElement("out-of-pool", ctx.loc2pos(@1))); }
-       | GLOBAL { $$ = ElementPtr(new StringElement("global", ctx.loc2pos(@1))); }
-       | ALL { $$ = ElementPtr(new StringElement("all", ctx.loc2pos(@1))); }
-       ;
-
 id: ID COLON INTEGER {
     ctx.unique("id", ctx.loc2pos(@1));
     ElementPtr id(new IntElement($3, ctx.loc2pos(@3)));
@@ -1785,7 +1763,6 @@ shared_network_param: name
                     | rebind_timer
                     | option_data_list
                     | relay
-                    | reservation_mode
                     | reservations_global
                     | reservations_in_subnet
                     | reservations_out_of_pool
