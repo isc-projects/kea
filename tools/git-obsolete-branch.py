@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -24,9 +24,12 @@
 #                                                                        tomek
 
 import string
-import subprocess
 import sys
 from optparse import OptionParser
+
+# [B404:blacklist] Consider possible security implications associated with subprocess module.
+import subprocess  # nosec B404
+
 
 class Branch:
     MERGED = 1
@@ -42,7 +45,7 @@ def branch_list_get(verbose):
         if all changes on that branch are also on master. """
 
     # call git branch -r (list of remote branches)
-    txt_list = subprocess.check_output(["git", "branch", "-r"])
+    txt_list = check_output(["git", "branch", "-r"])
 
     txt_list = txt_list.split(b"\n")
 
@@ -73,8 +76,9 @@ def branch_list_get(verbose):
 
         # get a diff with changes that are on that branch only
         # i.e. all unmerged code.
+        # Issue: [B603:subprocess_without_shell_equals_true] subprocess call - check for execution of untrusted input.
         cmd = ["git", "diff", "master..." + branch_info.name ]
-        diff = subprocess.check_output(cmd)
+        diff = check_output(cmd)
         if len(diff) == 0:
             # No diff? Then all changes from that branch are on master as well.
             branch_info.status = Branch.MERGED
@@ -84,7 +88,8 @@ def branch_list_get(verbose):
             # %ai = date, %ae = author e-mail, %an = author name
             cmd = [ "git" , "log", "-n", "1", "--pretty=\"%ai,%ae,%an\"",
                     branch_info.name ]
-            offender = subprocess.check_output(cmd)
+            # Issue: [B603:subprocess_without_shell_equals_true] subprocess call - check for execution of untrusted input.
+            offender = check_output(cmd)
             offender = offender.strip(b"\n\"")
 
             # comment out this 2 lines to disable obfuscation
@@ -144,6 +149,11 @@ def branch_print(branches, csv, print_merged, print_notmerged, print_stats):
         print("#----------")
         print("#Merged    : %d" % merged)
         print("#Not merged: %d" % notmerged)
+
+
+def check_output(cmd):
+    # Issue: [B603:subprocess_without_shell_equals_true] subprocess call - check for execution of untrusted input.
+    return subprocess.check_output(cmd)  # nosec B603
 
 
 def parse_args(args=sys.argv[1:], Parser=OptionParser):

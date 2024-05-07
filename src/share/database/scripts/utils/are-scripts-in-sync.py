@@ -8,8 +8,10 @@ import difflib
 import glob
 import os
 import re
-import subprocess
 import sys
+
+# [B404:blacklist] Consider possible security implications associated with subprocess module.
+import subprocess  # nosec B404
 
 
 def usage():
@@ -185,7 +187,9 @@ def execute(command):
     '''
     if 'DEBUG' in os.environ:
         print(f'> {command}')
-    with subprocess.Popen(command, encoding='utf-8', shell=True,
+    # Issue: [B602:subprocess_popen_with_shell_equals_true] subprocess call with shell=True identified, security
+    #        issue.
+    with subprocess.Popen(command, encoding='utf-8', shell=True,  # nosec B602
                           stdout=subprocess.PIPE, stderr=subprocess.PIPE) as p:
         output, error = p.communicate()
     if error:

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# Copyright (C) 2019-2023 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2019-2024 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -41,7 +41,9 @@ def read_input_files(files):
             except:
                 print('\nError while processing %s\n\n' % f)
                 raise
-            assert name == descr['name']
+            if name != descr['name']:
+                exit("Expected name == descr['name'], but name is {name} and descr['name'] is {descr['name']}")
+
         apis[name] = descr
 
     return apis

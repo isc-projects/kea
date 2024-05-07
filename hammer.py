@@ -24,22 +24,20 @@ import binascii
 import argparse
 import textwrap
 import functools
-import subprocess
 import multiprocessing
 import grp
 import pwd
 import getpass
+import urllib.request
+from urllib.parse import urljoin
 
-try:
-    import urllib.request
-except:
-    pass
-try:
-    from urllib.parse import urljoin
-except:
-    from urlparse import urljoin
+# [B404:blacklist] Consider possible security implications associated with subprocess module.
+import subprocess  # nosec B404
 
-import xml.etree.ElementTree as ET
+# Issue: [B405:blacklist] Using xml.etree.ElementTree to parse untrusted XML data is known to be vulnerable to XML
+#        attacks. Replace xml.etree.ElementTree with the equivalent defusedxml package, or make sure
+#        defusedxml.defuse_stdlib() is called.
+import xml.etree.ElementTree as ET  # nosec B405
 
 
 # SYSTEMS = {
@@ -47,6 +45,8 @@ import xml.etree.ElementTree as ET
 #         'version': True if supported else False,
 #         ...
 #     },
+#     ...
+# }
 
 SYSTEMS = {
     'fedora': {
@@ -381,11 +381,13 @@ def execute(cmd, timeout=60, cwd=None, env=None, raise_error=True, dry_run=False
 
     for attempt in range(attempts):
         if interactive:
-            p = subprocess.Popen(cmd, cwd=cwd, env=env, shell=True)
+            # Issue: [B602:subprocess_popen_with_shell_equals_true] subprocess call with shell=True identified, security issue.
+            p = subprocess.Popen(cmd, cwd=cwd, env=env, shell=True)  # nosec B602
             exitcode = p.wait()
 
         else:
-            p = subprocess.Popen(cmd, cwd=cwd, env=env, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            # Issue: [B602:subprocess_popen_with_shell_equals_true] subprocess call with shell=True identified, security issue.
+            p = subprocess.Popen(cmd, cwd=cwd, env=env, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)  # nosec B602
 
             if capture:
                 output = ''
@@ -692,7 +694,10 @@ class VagrantEnv(object):
             return {}
         url = 'https://app.vagrantup.com/api/v1/box/' + (image_tpl if image_tpl else self.image_tpl)
         try:
-            with urllib.request.urlopen(url) as response:
+            # Issue: [B310:blacklist] Audit url open for permitted schemes.
+            #        Allowing use of file:/ or custom schemes is often unexpected.
+            # Reason for nosec: it is clearly a https link.
+            with urllib.request.urlopen(url) as response:  # nosec B310
                 data = response.read()
         except:
             log.exception('ignored exception')
@@ -897,7 +902,8 @@ class VagrantEnv(object):
 
             if upload:
                 repo_url = _get_full_repo_url(repository_url, self.system, self.revision, pkg_version)
-                assert repo_url is not None
+                if repo_url is None:
+                    raise ValueError('repo_url is None')
                 upload_cmd = 'curl -v --netrc -f'
 
                 if self.system in ['ubuntu', 'debian']:
@@ -2414,7 +2420,8 @@ def _build_native_pkg(system, revision, features, tarball_path, env, check_times
     env = _prepare_ccache_if_needed(system, ccache_dir, env)
 
     repo_url = _get_full_repo_url(repository_url, system, revision, pkg_version)
-    assert repo_url is not None
+    if repo_url is None:
+        raise ValueError('repo_url is None')
 
     if system in ['fedora', 'centos', 'rhel', 'rocky']:
         _build_rpm(system, revision, features, tarball_path, env, check_times, dry_run,
@@ -2832,7 +2839,10 @@ def destroy_system(path):
 
 
 def _coin_toss():
-    if random.randint(0, 65535) % 2 == 0:
+    # Issue: [B311:blacklist] Standard pseudo-random generators are not suitable for security/cryptographic
+    #        purposes.
+    # Reason for nosec: It is not used in a security context.
+    if random.randint(0, 65535) % 2 == 0:  # nosec B311
         return True
     return False
 
@@ -2977,7 +2987,8 @@ def upload_to_repo(args, pkgs_dir):
     # NOTE: note the differences (if any) in system/revision vs args.system/revision
     system, revision = get_system_revision()
     repo_url = _get_full_repo_url(args.repository_url, system, revision, args.pkg_version)
-    assert repo_url is not None
+    if repo_url is None:
+        raise ValueError('repo_url is None')
     upload_cmd = 'curl -v --netrc -f'
     log.info('args.system %s, system = %s', args.system, system)
 
