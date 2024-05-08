@@ -1397,7 +1397,7 @@ Dhcpv4Srv::processPacket(Pkt4Ptr query, bool allow_answer_park) {
     // We have sanity checked (in accept() that the Message Type option
     // exists, so we can safely get it here.
     int type = query->getType();
-    LOG_DEBUG(packet4_logger, DBG_DHCP4_BASIC_DATA, DHCP4_PACKET_RECEIVED)
+    LOG_INFO(packet4_logger, DHCP4_PACKET_RECEIVED)
         .arg(query->getLabel())
         .arg(query->getName())
         .arg(type)
@@ -1938,7 +1938,7 @@ Dhcpv4Srv::processPacketBufferSend(CalloutHandlePtr& callout_handle,
             callout_handle->getArgument("response4", rsp);
         }
 
-        LOG_DEBUG(packet4_logger, DBG_DHCP4_BASIC, DHCP4_PACKET_SEND)
+        LOG_INFO(packet4_logger, DHCP4_PACKET_SEND)
             .arg(rsp->getLabel())
             .arg(rsp->getName())
             .arg(static_cast<int>(rsp->getType()))

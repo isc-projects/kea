@@ -868,7 +868,7 @@ Dhcpv6Srv::processPacket(Pkt6Ptr query) {
     // Assign this packet to a class, if possible
     classifyPacket(query);
 
-    LOG_DEBUG(packet6_logger, DBG_DHCP6_BASIC_DATA, DHCP6_PACKET_RECEIVED)
+    LOG_INFO(packet6_logger, DHCP6_PACKET_RECEIVED)
         .arg(query->getLabel())
         .arg(query->getName())
         .arg(static_cast<int>(query->getType()))
@@ -1437,7 +1437,7 @@ Dhcpv6Srv::processPacketBufferSend(CalloutHandlePtr& callout_handle,
             callout_handle->getArgument("response6", rsp);
         }
 
-        LOG_DEBUG(packet6_logger, DBG_DHCP6_BASIC, DHCP6_PACKET_SEND)
+        LOG_INFO(packet6_logger, DHCP6_PACKET_SEND)
             .arg(rsp->getLabel())
             .arg(rsp->getName())
             .arg(static_cast<int>(rsp->getType()))

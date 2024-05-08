@@ -1,3 +1,10 @@
+2230.	[func]		tmark
+	Both kea-dhcp4 and kea-dhcp6 will now emit a INFO
+	level log statement for each packet received and
+	sent by the server. Formerly these logs were only
+	emitted at DEBUG level.
+	(Gitlab #3203)
+
 2229.	[bug]		tmark
 	Modified configure.ac to detect versions of MySQL
 	client libary for which MYSQL_OPT_RECONNECT is
