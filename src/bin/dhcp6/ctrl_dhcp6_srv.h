@@ -81,7 +81,6 @@ public:
     ///
     /// Currently supported commands are:
     /// - shutdown
-    /// - libreload
     /// - config-reload
     /// - config-set
     /// - config-get
@@ -167,19 +166,6 @@ private:
     isc::data::ConstElementPtr
     commandShutdownHandler(const std::string& command,
                            isc::data::ConstElementPtr args);
-
-    /// @brief Handler for processing 'libreload' command
-    ///
-    /// This handler processes libreload command, which unloads all hook
-    /// libraries and reloads them.
-    ///
-    /// @param command (parameter ignored)
-    /// @param args (parameter ignored)
-    ///
-    /// @return status of the command
-    isc::data::ConstElementPtr
-    commandLibReloadHandler(const std::string& command,
-                            isc::data::ConstElementPtr args);
 
     /// @brief Handler for processing 'config-reload' command
     ///

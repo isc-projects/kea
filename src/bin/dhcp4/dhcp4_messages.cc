@@ -77,7 +77,6 @@ extern const isc::log::MessageID DHCP4_EMPTY_HOSTNAME = "DHCP4_EMPTY_HOSTNAME";
 extern const isc::log::MessageID DHCP4_FLEX_ID = "DHCP4_FLEX_ID";
 extern const isc::log::MessageID DHCP4_GENERATE_FQDN = "DHCP4_GENERATE_FQDN";
 extern const isc::log::MessageID DHCP4_HANDLE_SIGNAL_EXCEPTION = "DHCP4_HANDLE_SIGNAL_EXCEPTION";
-extern const isc::log::MessageID DHCP4_HOOKS_LIBS_RELOAD_FAIL = "DHCP4_HOOKS_LIBS_RELOAD_FAIL";
 extern const isc::log::MessageID DHCP4_HOOK_BUFFER_RCVD_DROP = "DHCP4_HOOK_BUFFER_RCVD_DROP";
 extern const isc::log::MessageID DHCP4_HOOK_BUFFER_RCVD_SKIP = "DHCP4_HOOK_BUFFER_RCVD_SKIP";
 extern const isc::log::MessageID DHCP4_HOOK_BUFFER_SEND_SKIP = "DHCP4_HOOK_BUFFER_SEND_SKIP";
@@ -266,7 +265,6 @@ const char* values[] = {
     "DHCP4_FLEX_ID", "%1: flexible identifier generated for incoming packet: %2",
     "DHCP4_GENERATE_FQDN", "%1: client did not send a FQDN or hostname; FQDN will be generated for the client",
     "DHCP4_HANDLE_SIGNAL_EXCEPTION", "An exception was thrown while handing signal: %1",
-    "DHCP4_HOOKS_LIBS_RELOAD_FAIL", "reload of hooks libraries failed",
     "DHCP4_HOOK_BUFFER_RCVD_DROP", "received buffer from %1 to %2 over interface %3 was dropped because a callout set the drop flag",
     "DHCP4_HOOK_BUFFER_RCVD_SKIP", "received buffer from %1 to %2 over interface %3 is not parsed because a callout set the next step to SKIP.",
     "DHCP4_HOOK_BUFFER_SEND_SKIP", "%1: prepared response is dropped because a callout set the next step to SKIP.",

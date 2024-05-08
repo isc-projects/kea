@@ -368,11 +368,6 @@ debugging assistance for flexible identifier.
 This error message is printed when an exception was raised during signal
 processing. This likely indicates a coding error and should be reported to ISC.
 
-% DHCP6_HOOKS_LIBS_RELOAD_FAIL reload of hooks libraries failed
-A "libreload" command was issued to reload the hooks libraries but for
-some reason the reload failed.  Other error messages issued from the
-hooks framework will indicate the nature of the problem.
-
 % DHCP6_HOOK_BUFFER_RCVD_DROP received buffer from %1 to %2 over interface %3 was dropped because a callout set the drop flag
 This debug message is printed when a callout installed on buffer6_receive
 hook point set the drop flag. For this particular hook point, the

@@ -472,100 +472,6 @@ TEST_F(CtrlDhcpv6SrvTest, commands) {
     EXPECT_EQ(77, srv->getExitValue());
 }
 
-// Check that the "libreload" command will reload libraries
-TEST_F(CtrlChannelDhcpv6SrvTest, libreload) {
-    createUnixChannelServer();
-
-    // Ensure no marker files to start with.
-    ASSERT_FALSE(checkMarkerFileExists(LOAD_MARKER_FILE));
-    ASSERT_FALSE(checkMarkerFileExists(UNLOAD_MARKER_FILE));
-
-    // Load two libraries
-    HookLibsCollection libraries;
-    libraries.push_back(make_pair(CALLOUT_LIBRARY_1, ConstElementPtr()));
-    HooksManager::loadLibraries(libraries);
-
-    // Check they are loaded.
-    HookLibsCollection loaded_libraries =
-        HooksManager::getLibraryInfo();
-    ASSERT_TRUE(libraries == loaded_libraries);
-
-    // ... which also included checking that the marker file created by the
-    // load functions exists and holds the correct value (of "12" - the
-    // first library appends "1" to the file, the second appends "2"). Also
-    // check that the unload marker file does not yet exist.
-    EXPECT_TRUE(checkMarkerFile(LOAD_MARKER_FILE, "1"));
-    EXPECT_FALSE(checkMarkerFileExists(UNLOAD_MARKER_FILE));
-
-    // Now execute the "libreload" command.  This should cause the libraries
-    // to unload and to reload.
-    std::string response;
-    sendUnixCommand("{ \"command\": \"libreload\" }", response);
-    EXPECT_EQ("{ \"result\": 0, "
-              "\"text\": \"Hooks libraries successfully reloaded"
-              " (WARNING: libreload is deprecated).\" }"
-              , response);
-
-    // Check that the libraries have unloaded and reloaded.  The libraries are
-    // unloaded in the reverse order to which they are loaded.  When they load,
-    // they should append information to the loading marker file.
-    EXPECT_TRUE(checkMarkerFile(UNLOAD_MARKER_FILE, "1"));
-    EXPECT_TRUE(checkMarkerFile(LOAD_MARKER_FILE, "11"));
-}
-
-// Check that the "libreload" command will fail to reload libraries which are
-// not compatible when multi-threading is enabled
-TEST_F(CtrlChannelDhcpv6SrvTest, libreloadFailMultiThreading) {
-    createUnixChannelServer();
-
-    // Ensure no marker files to start with.
-    ASSERT_FALSE(checkMarkerFileExists(LOAD_MARKER_FILE));
-    ASSERT_FALSE(checkMarkerFileExists(UNLOAD_MARKER_FILE));
-
-    // Disable multi-threading to temporarily trick the hook manager
-    // into loading single-threaded libraries.
-    MultiThreadingMgr::instance().setMode(false);
-
-    // Load two libraries
-    HookLibsCollection libraries;
-    libraries.push_back(make_pair(CALLOUT_LIBRARY_1, ConstElementPtr()));
-    libraries.push_back(make_pair(CALLOUT_LIBRARY_2, ConstElementPtr()));
-    HooksManager::loadLibraries(libraries);
-
-    // Check they are loaded.
-    HookLibsCollection loaded_libraries =
-        HooksManager::getLibraryInfo();
-    ASSERT_TRUE(libraries == loaded_libraries);
-
-    // ... which also included checking that the marker file created by the
-    // load functions exists and holds the correct value (of "12" - the
-    // first library appends "1" to the file, the second appends "2"). Also
-    // check that the unload marker file does not yet exist.
-    EXPECT_TRUE(checkMarkerFile(LOAD_MARKER_FILE, "12"));
-    EXPECT_FALSE(checkMarkerFileExists(UNLOAD_MARKER_FILE));
-
-    // Enable multi-threading before libreload command which should now fail
-    // as the second library is not multi-threading compatible.
-    MultiThreadingMgr::instance().setMode(true);
-
-    // Now execute the "libreload" command.  This should cause the libraries
-    // to unload and to reload.
-    std::string response;
-    sendUnixCommand("{ \"command\": \"libreload\" }", response);
-    EXPECT_EQ("{ \"result\": 1, "
-              "\"text\": \"Failed to reload hooks libraries "
-              "(WARNING: libreload is deprecated).\" }"
-              , response);
-
-    // Check that the libraries have unloaded and failed to reload.  The
-    // libraries are unloaded in the reverse order to which they are loaded.
-    // When they load, they should append information to the loading marker
-    // file.  Failing to load the second library will also unload the first
-    // library.
-    EXPECT_TRUE(checkMarkerFile(UNLOAD_MARKER_FILE, "211"));
-    EXPECT_TRUE(checkMarkerFile(LOAD_MARKER_FILE, "121"));
-}
-
 typedef std::map<std::string, isc::data::ConstElementPtr> ElementMap;
 
 // This test checks which commands are registered by the DHCPv6 server.
@@ -601,7 +507,6 @@ TEST_F(CtrlDhcpv6SrvTest, commandsRegistration) {
     EXPECT_TRUE(command_list.find("\"config-set\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"config-write\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"leases-reclaim\"") != string::npos);
-    EXPECT_TRUE(command_list.find("\"libreload\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"server-tag-get\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"shutdown\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"statistic-get\"") != string::npos);
@@ -1549,7 +1454,6 @@ TEST_F(CtrlChannelDhcpv6SrvTest, listCommands) {
     checkListCommands(rsp, "config-write");
     checkListCommands(rsp, "list-commands");
     checkListCommands(rsp, "leases-reclaim");
-    checkListCommands(rsp, "libreload");
     checkListCommands(rsp, "version-get");
     checkListCommands(rsp, "server-tag-get");
     checkListCommands(rsp, "shutdown");

@@ -78,7 +78,6 @@ extern const isc::log::MessageID DHCP4_EMPTY_HOSTNAME;
 extern const isc::log::MessageID DHCP4_FLEX_ID;
 extern const isc::log::MessageID DHCP4_GENERATE_FQDN;
 extern const isc::log::MessageID DHCP4_HANDLE_SIGNAL_EXCEPTION;
-extern const isc::log::MessageID DHCP4_HOOKS_LIBS_RELOAD_FAIL;
 extern const isc::log::MessageID DHCP4_HOOK_BUFFER_RCVD_DROP;
 extern const isc::log::MessageID DHCP4_HOOK_BUFFER_RCVD_SKIP;
 extern const isc::log::MessageID DHCP4_HOOK_BUFFER_SEND_SKIP;

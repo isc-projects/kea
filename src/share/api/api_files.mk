@@ -68,7 +68,6 @@ api_files += $(top_srcdir)/src/share/api/lease6-update.json
 api_files += $(top_srcdir)/src/share/api/lease6-wipe.json
 api_files += $(top_srcdir)/src/share/api/lease6-write.json
 api_files += $(top_srcdir)/src/share/api/leases-reclaim.json
-api_files += $(top_srcdir)/src/share/api/libreload.json
 api_files += $(top_srcdir)/src/share/api/list-commands.json
 api_files += $(top_srcdir)/src/share/api/network4-add.json
 api_files += $(top_srcdir)/src/share/api/network4-del.json

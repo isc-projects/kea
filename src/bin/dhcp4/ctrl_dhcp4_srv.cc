@@ -229,43 +229,6 @@ ControlledDhcpv4Srv::commandShutdownHandler(const string&, ConstElementPtr args)
 }
 
 ConstElementPtr
-ControlledDhcpv4Srv::commandLibReloadHandler(const string&, ConstElementPtr) {
-    LOG_WARN(dhcp4_logger, DHCP4_DEPRECATED).arg("libreload command");
-
-    // stop thread pool (if running)
-    MultiThreadingCriticalSection cs;
-
-    // Clear the packet queue.
-    MultiThreadingMgr::instance().getThreadPool().reset();
-
-    try {
-        /// Get list of currently loaded libraries and reload them.
-        HookLibsCollection loaded = HooksManager::getLibraryInfo();
-        HooksManager::prepareUnloadLibraries();
-        static_cast<void>(HooksManager::unloadLibraries());
-        IOServiceMgr::instance().clearIOServices();
-        bool multi_threading_enabled = true;
-        uint32_t thread_count = 0;
-        uint32_t queue_size = 0;
-        CfgMultiThreading::extract(CfgMgr::instance().getStagingCfg()->getDHCPMultiThreading(),
-                                   multi_threading_enabled, thread_count, queue_size);
-        bool status = HooksManager::loadLibraries(loaded, multi_threading_enabled);
-        if (!status) {
-            isc_throw(Unexpected, "Failed to reload hooks libraries "
-                                  "(WARNING: libreload is deprecated).");
-        }
-    } catch (const std::exception& ex) {
-        LOG_ERROR(dhcp4_logger, DHCP4_HOOKS_LIBS_RELOAD_FAIL);
-        ConstElementPtr answer = isc::config::createAnswer(CONTROL_RESULT_ERROR, ex.what());
-        return (answer);
-    }
-    ConstElementPtr answer = isc::config::createAnswer(CONTROL_RESULT_SUCCESS,
-                             "Hooks libraries successfully reloaded "
-                             "(WARNING: libreload is deprecated).");
-    return (answer);
-}
-
-ConstElementPtr
 ControlledDhcpv4Srv::commandConfigReloadHandler(const string&,
                                                 ConstElementPtr /*args*/) {
     // Get configuration file name.
@@ -891,9 +854,6 @@ ControlledDhcpv4Srv::processCommand(const string& command,
         if (command == "shutdown") {
             return (srv->commandShutdownHandler(command, args));
 
-        } else if (command == "libreload") {
-            return (srv->commandLibReloadHandler(command, args));
-
         } else if (command == "config-reload") {
             return (srv->commandConfigReloadHandler(command, args));
 
@@ -1235,9 +1195,6 @@ ControlledDhcpv4Srv::ControlledDhcpv4Srv(uint16_t server_port /*= DHCP4_SERVER_P
     CommandMgr::instance().registerCommand("dhcp-disable",
         std::bind(&ControlledDhcpv4Srv::commandDhcpDisableHandler, this, ph::_1, ph::_2));
 
-    CommandMgr::instance().registerCommand("libreload",
-        std::bind(&ControlledDhcpv4Srv::commandLibReloadHandler, this, ph::_1, ph::_2));
-
     CommandMgr::instance().registerCommand("leases-reclaim",
         std::bind(&ControlledDhcpv4Srv::commandLeasesReclaimHandler, this, ph::_1, ph::_2));
 
@@ -1322,7 +1279,6 @@ ControlledDhcpv4Srv::~ControlledDhcpv4Srv() {
         CommandMgr::instance().deregisterCommand("dhcp-disable");
         CommandMgr::instance().deregisterCommand("dhcp-enable");
         CommandMgr::instance().deregisterCommand("leases-reclaim");
-        CommandMgr::instance().deregisterCommand("libreload");
         CommandMgr::instance().deregisterCommand("server-tag-get");
         CommandMgr::instance().deregisterCommand("shutdown");
         CommandMgr::instance().deregisterCommand("statistic-get");

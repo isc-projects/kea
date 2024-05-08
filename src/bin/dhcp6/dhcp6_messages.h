@@ -70,7 +70,6 @@ extern const isc::log::MessageID DHCP6_DYNAMIC_RECONFIGURATION_FAIL;
 extern const isc::log::MessageID DHCP6_DYNAMIC_RECONFIGURATION_SUCCESS;
 extern const isc::log::MessageID DHCP6_FLEX_ID;
 extern const isc::log::MessageID DHCP6_HANDLE_SIGNAL_EXCEPTION;
-extern const isc::log::MessageID DHCP6_HOOKS_LIBS_RELOAD_FAIL;
 extern const isc::log::MessageID DHCP6_HOOK_BUFFER_RCVD_DROP;
 extern const isc::log::MessageID DHCP6_HOOK_BUFFER_RCVD_SKIP;
 extern const isc::log::MessageID DHCP6_HOOK_BUFFER_SEND_SKIP;

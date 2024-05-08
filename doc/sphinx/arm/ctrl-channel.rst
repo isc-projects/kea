@@ -537,31 +537,6 @@ returning client that previously used that lease. See :ref:`lease-affinity`
 for details. Also, see :ref:`lease-reclamation` for general
 information about the processing of expired leases (lease reclamation).
 
-.. isccmd:: libreload
-.. _command-libreload:
-
-The ``libreload`` Command
--------------------------
-
-This command is now deprecated and will be removed in future Kea versions.
-
-The :isccmd:`libreload` command first unloads and then loads all currently
-loaded hook libraries. This is primarily intended to allow one or more
-hook libraries to be replaced with newer versions, without requiring Kea
-servers to be reconfigured or restarted. The hook libraries
-are passed the same parameter values (if any) that were passed when they
-were originally loaded.
-
-::
-
-   {
-       "command": "libreload",
-       "arguments": { }
-   }
-
-The server responds with a result of either 0, indicating success,
-or 1, indicating failure.
-
 .. isccmd:: list-commands
 .. _command-list-commands:
 

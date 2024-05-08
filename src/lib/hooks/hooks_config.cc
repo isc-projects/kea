@@ -21,10 +21,7 @@ HooksConfig::verifyLibraries(const Element::Position& position,
                              bool multi_threading_enabled) const {
     // The code used to follow this logic:
     //
-    // Check if the list of libraries has changed.  If not, nothing is done
-    // - the command "DhcpN libreload" is required to reload the same
-    // libraries (this prevents needless reloads when anything else in the
-    // configuration is changed).
+    // Check if the list of libraries has changed.  If not, nothing is done.
     //
     // We no longer rely on this. Parameters can change. And even if the
     // parameters stay the same, they could point to files that could
