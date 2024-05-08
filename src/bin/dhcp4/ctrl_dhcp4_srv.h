@@ -74,25 +74,10 @@ public:
 
     /// @brief Command processor
     ///
-    /// This method is uniform for all config backends. It processes received
-    /// command (as a string + JSON arguments). Internally, it's just a
-    /// wrapper that calls process*Command() methods and catches exceptions
-    /// in them.
-    ///
     /// Currently supported commands are:
     /// - shutdown
     /// - config-reload
     /// - config-set
-    /// - config-get
-    /// - config-hash-get
-    /// - config-test
-    /// - dhcp-disable
-    /// - dhcp-enable
-    /// - version-get
-    /// - build-report
-    /// - leases-reclaim
-    /// - config-write
-    /// ...
     ///
     /// @note It never throws.
     ///

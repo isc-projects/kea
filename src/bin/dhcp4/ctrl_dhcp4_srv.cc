@@ -860,41 +860,6 @@ ControlledDhcpv4Srv::processCommand(const string& command,
         } else if (command == "config-set") {
             return (srv->commandConfigSetHandler(command, args));
 
-        } else if (command == "config-get") {
-            return (srv->commandConfigGetHandler(command, args));
-
-        } else if (command == "config-hash-get") {
-            return (srv->commandConfigHashGetHandler(command, args));
-
-        } else if (command == "config-test") {
-            return (srv->commandConfigTestHandler(command, args));
-
-        } else if (command == "dhcp-disable") {
-            return (srv->commandDhcpDisableHandler(command, args));
-
-        } else if (command == "dhcp-enable") {
-            return (srv->commandDhcpEnableHandler(command, args));
-
-        } else if (command == "version-get") {
-            return (srv->commandVersionGetHandler(command, args));
-
-        } else if (command == "build-report") {
-            return (srv->commandBuildReportHandler(command, args));
-
-        } else if (command == "leases-reclaim") {
-            return (srv->commandLeasesReclaimHandler(command, args));
-
-        } else if (command == "config-write") {
-            return (srv->commandConfigWriteHandler(command, args));
-
-        } else if (command == "server-tag-get") {
-            return (srv->commandServerTagGetHandler(command, args));
-
-        } else if (command == "config-backend-pull") {
-            return (srv->commandConfigBackendPullHandler(command, args));
-
-        } else if (command == "status-get") {
-            return (srv->commandStatusGetHandler(command, args));
         }
 
         return (isc::config::createAnswer(CONTROL_RESULT_ERROR, "Unrecognized command:"

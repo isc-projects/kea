@@ -312,9 +312,8 @@ public:
             EXPECT_EQ(cb_control->getDatabaseCurrentConfigFetchCalls(), 0);
             EXPECT_EQ(cb_control->getDatabaseStagingConfigFetchCalls(), 1);
 
-            ConstElementPtr result =
-                ControlledDhcpv4Srv::processCommand("config-backend-pull",
-                                                    ConstElementPtr());
+            ConstElementPtr list_cmds = createCommand("config-backend-pull");
+            ConstElementPtr result = CommandMgr::instance().processCommand(list_cmds);
             EXPECT_EQ(cb_control->getDatabaseTotalConfigFetchCalls(), 2);
             std::string expected;
 
