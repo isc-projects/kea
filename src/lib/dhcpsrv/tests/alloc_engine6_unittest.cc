@@ -796,7 +796,7 @@ TEST_F(AllocEngine6Test, requestReuseReleasedLease6) {
                                        subnet_->getID());
     int64_t glbl_cumulative = getStatistics("cumulative-assigned-nas");
 
-    // Let's create an expired lease
+    // Let's create a released lease
     DuidPtr other_duid = DuidPtr(new DUID(vector<uint8_t>(12, 0xff)));
     const uint32_t other_iaid = 3568;
 
