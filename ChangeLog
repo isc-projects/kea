@@ -5,7 +5,13 @@
 	propagated to the partner server. Previously, a released
 	lease was always deleted in the partner, causing a loss of
 	the association between the lease and the client in the
-	partner's lease database.
+	partner's lease database. This change introduces a new
+	"released" lease state which appears for the released leases
+	in the lease datbase and in the lease updates exchanged
+	between the HA partners. It is a backward incompatible change
+	for the HA partners that haven't been upgraded to the latest
+	Kea version. They will reject the lease updates for the
+	released leases holding the new state value.
 	(Gitlab #3246)
 
 2255.	[bug]		razvan
