@@ -430,15 +430,15 @@ TEST(CommandCreatorTest, createLease6BulkApply) {
 // This test verifies that the lease6-bulk-apply command is correct
 // when sending a lease update for the lease in the relased state.
 TEST(CommandCreatorTest, createLease6BulkApplySoftDelete) {
-    Lease6Ptr deleted_lease = createLease6();
-    deleted_lease->valid_lft_ = 0;
-    deleted_lease->preferred_lft_ = 0;
-    deleted_lease->state_ = Lease6::STATE_RELEASED;
+    Lease6Ptr released_lease = createLease6();
+    released_lease->valid_lft_ = 0;
+    released_lease->preferred_lft_ = 0;
+    released_lease->state_ = Lease6::STATE_RELEASED;
 
     Lease6CollectionPtr leases(new Lease6Collection());
     Lease6CollectionPtr deleted_leases(new Lease6Collection());
 
-    deleted_leases->push_back(deleted_lease);
+    deleted_leases->push_back(released_lease);
 
     ConstElementPtr command = CommandCreator::createLease6BulkApply(leases, deleted_leases);
     ConstElementPtr arguments;
@@ -461,7 +461,7 @@ TEST(CommandCreatorTest, createLease6BulkApplySoftDelete) {
     ASSERT_EQ(Element::list, leases_json->getType());
     ASSERT_EQ(1, leases_json->size());
     auto lease_as_json = leases_json->get(0);
-    EXPECT_EQ(leaseAsJson(deleted_lease)->str(), lease_as_json->str());
+    EXPECT_EQ(leaseAsJson(released_lease)->str(), lease_as_json->str());
 }
 
 // This test verifies that the lease6-bulk-apply command can be created
