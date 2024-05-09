@@ -1183,10 +1183,6 @@ TEST_F(AllocEngine6Test, reallocReleasedLease) {
 
     AllocEngine engine(100);
 
-    // This is what the client will send in his renew message.
-    AllocEngine::HintContainer hints;
-    hints.push_back(AllocEngine::Resource(IOAddress("2001:db8:1::15"), 128));
-
     // Reallocate the released lease.
     Lease6Ptr renewed = simpleAlloc6Test(pool_, IOAddress("::"), false);
     ASSERT_TRUE(renewed);
