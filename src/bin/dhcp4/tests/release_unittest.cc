@@ -177,7 +177,7 @@ ReleaseTest::acquireAndRelease(const std::string& hw_address_1,
         EXPECT_EQ(lease->valid_lft_, 0);
         EXPECT_EQ(Lease4::STATE_RELEASED, lease->state_);
 
-        // The removal succeeded, so the assigned-addresses statistic should
+        // The release succeeded, so the assigned-addresses statistic should
         // be decreased by one
         EXPECT_EQ(before, after + 1);
 
