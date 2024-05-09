@@ -240,8 +240,8 @@ The commands can take several additional optional parameters:
    not used when adding an IPv4 lease.
 
 -  ``state`` - specifies the state of an added lease, which can be 0 for ``default``,
-   1 for ``declined``, and 2 for the ``expired-reclaimed`` state. Any other
-   value causes an error. Using 1 for a ``"IA_PD"`` lease type is
+   1 for ``declined``, 2 for ``expired-reclaimed``, and 3 for the ``released`` state.
+   Any other value causes an error. Using 1 for a ``"IA_PD"`` lease type is
    illegal and will be rejected.
 
 -  ``user-context`` - specifies the user context to be associated with
