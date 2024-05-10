@@ -429,10 +429,6 @@ void configureCommandChannel() {
 /// @param config_set the configuration being processed
 isc::data::ConstElementPtr
 processDhcp6Config(isc::data::ConstElementPtr config_set) {
-    // Before starting any subnet operations, let's reset the subnet-id counter,
-    // so newly recreated configuration starts with first subnet-id equal 1.
-    Subnet::resetSubnetID();
-
     // Revert any runtime option definitions configured so far and not committed.
     LibDHCP::revertRuntimeOptionDefs();
     // Let's set empty container in case a user hasn't specified any configuration

@@ -3129,7 +3129,7 @@ TEST_F(ParseConfigTest, negativeSubnetId4) {
     std::string expected = "Configuration parsing failed: ";
     expected += "subnet configuration failed: ";
     expected += "The 'id' value (-1) is not within expected range: ";
-    expected += "(0 - 4294967294)";
+    expected += "(1 - 4294967294)";
     EXPECT_EQ(expected, comment->stringValue());
 }
 
@@ -3154,7 +3154,7 @@ TEST_F(ParseConfigTest, negativeSubnetId6) {
     std::string expected = "Configuration parsing failed: ";
     expected += "subnet configuration failed: ";
     expected += "The 'id' value (-1) is not within expected range: ";
-    expected += "(0 - 4294967294)";
+    expected += "(1 - 4294967294)";
     EXPECT_EQ(expected, comment->stringValue());
 }
 
@@ -3179,7 +3179,7 @@ TEST_F(ParseConfigTest, reservedSubnetId4) {
     std::string expected = "Configuration parsing failed: ";
     expected += "subnet configuration failed: ";
     expected += "The 'id' value (4294967295) is not within expected range: ";
-    expected += "(0 - 4294967294)";
+    expected += "(1 - 4294967294)";
     EXPECT_EQ(expected, comment->stringValue());
 }
 
@@ -3204,7 +3204,7 @@ TEST_F(ParseConfigTest, reservedSubnetId6) {
     std::string expected = "Configuration parsing failed: ";
     expected += "subnet configuration failed: ";
     expected += "The 'id' value (4294967295) is not within expected range: ";
-    expected += "(0 - 4294967294)";
+    expected += "(1 - 4294967294)";
     EXPECT_EQ(expected, comment->stringValue());
 }
 

@@ -730,11 +730,9 @@ Subnet4ConfigParser::parse(ConstElementPtr subnet, bool encapsulate_options) {
 void
 Subnet4ConfigParser::initSubnet(data::ConstElementPtr params,
                                 asiolink::IOAddress addr, uint8_t len) {
-    // Subnet ID is optional. If it is not supplied the value of 0 is used,
-    // which means autogenerate. The value was inserted earlier by calling
-    // SimpleParser4::setAllDefaults.
+    // Subnet ID is required and must be in 1..SUBNET_ID_MAX.
     int64_t subnet_id_max = static_cast<int64_t>(SUBNET_ID_MAX);
-    SubnetID subnet_id = static_cast<SubnetID>(getInteger(params, "id", 0,
+    SubnetID subnet_id = static_cast<SubnetID>(getInteger(params, "id", 1,
                                                           subnet_id_max));
 
     auto subnet4 = Subnet4::create(addr, len, Triplet<uint32_t>(),
@@ -1259,11 +1257,9 @@ Subnet6ConfigParser::duplicateOptionWarning(uint32_t code,
 void
 Subnet6ConfigParser::initSubnet(data::ConstElementPtr params,
                                 asiolink::IOAddress addr, uint8_t len) {
-    // Subnet ID is optional. If it is not supplied the value of 0 is used,
-    // which means autogenerate. The value was inserted earlier by calling
-    // SimpleParser6::setAllDefaults.
+    // Subnet ID is required and must be in 1..SUBNET_ID_MAX.
     int64_t subnet_id_max = static_cast<int64_t>(SUBNET_ID_MAX);
-    SubnetID subnet_id = static_cast<SubnetID>(getInteger(params, "id", 0,
+    SubnetID subnet_id = static_cast<SubnetID>(getInteger(params, "id", 1,
                                                           subnet_id_max));
 
     // We want to log whether rapid-commit is enabled, so we get this

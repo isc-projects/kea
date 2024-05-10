@@ -41,6 +41,13 @@ TEST(Subnet4Test, constructor) {
     EXPECT_NO_THROW(Subnet4 subnet1(IOAddress("192.0.2.2"), 16,
                                     1, 2, 3, 10));
 
+    EXPECT_THROW(Subnet4 subnet0(IOAddress("192.0.2.0"), 16,
+                                 1, 2, 3, SUBNET_ID_GLOBAL),
+                 BadValue); // invalid id (0).
+    EXPECT_THROW(Subnet4 subnetm(IOAddress("192.0.2.0"), 16,
+                                 1, 2, 3, SUBNET_ID_UNUSED),
+                 BadValue); // invalid id (max).
+
     EXPECT_THROW(Subnet4 subnet2(IOAddress("192.0.2.0"),
                                  33, 1, 2, 3, SubnetID(2)),
                 BadValue); // invalid prefix length
@@ -830,6 +837,13 @@ TEST(Subnet6Test, constructor) {
 
     EXPECT_NO_THROW(Subnet6 subnet1(IOAddress("2001:db8:1::"), 64,
                                     1, 2, 3, 4, SubnetID(1)));
+
+    EXPECT_THROW(Subnet6 subnet0(IOAddress("2001:db8:1::"), 64,
+                                 1, 2, 3, 4, SUBNET_ID_GLOBAL),
+                 BadValue); // invalid id (0).
+    EXPECT_THROW(Subnet6 subnetm(IOAddress("2001:db8:1::"), 64,
+                                 1, 2, 3, 4, SUBNET_ID_UNUSED),
+                 BadValue); // invalid id (max).
 
     EXPECT_THROW(Subnet6 subnet2(IOAddress("2001:db8:1::"),
                                  129, 1, 2, 3, 4, SubnetID(2)),
@@ -1952,89 +1966,6 @@ TEST(SubnetFetcherTest, getSubnet6ById) {
     ASSERT_TRUE(subnet);
     EXPECT_EQ(2048, subnet->getID());
     EXPECT_EQ("2001:db8:2::/64", subnet->toText());
-}
-
-// Test fixture for subnet identifier auto-generation.
-class SubnetIdTest : public LogContentTest {
-public:
-
-    /// @brief virtual destructor.
-    virtual ~SubnetIdTest() {
-        Subnet::resetSubnetID();
-    }
-};
-
-// Test class for subnets with id = 0.
-class TestSubnet : public Subnet {
-public:
-    // @brief Constructor.
-    //
-    // @param prefix subnet prefix.
-    // @param len prefix length for the subnet.
-    TestSubnet(const IOAddress& prefix, uint8_t len)
-        : Subnet(prefix, len, 0) {
-    }
-
-    // @brief Returns the default address that will be used for pool selection.
-    virtual IOAddress default_pool() const {
-        isc_throw(NotImplemented, "default_pool");
-    }
-
-    /// @brief Instantiates the allocators and their states.
-    virtual void createAllocators() {
-        isc_throw(NotImplemented, "createAllocators");
-    }
-
-    /// @brief Checks if used pool type is valid.
-    virtual void checkType(Lease::Type type) const {
-        isc_throw(NotImplemented, "checkType " << type);
-    }
-};
-
-// Type of pointers to test subnets.
-typedef boost::shared_ptr<TestSubnet> TestSubnetPtr;
-
-// Test subnet identifier auto-generation.
-TEST_F(SubnetIdTest, unnumbered) {
-    // Reset subnet identifier counter.
-    Subnet::resetSubnetID();
-
-    // First subnet.
-    IOAddress addr1("192.0.2.0");
-    uint8_t len1(25);
-    TestSubnetPtr subnet1;
-    ASSERT_NO_THROW(subnet1.reset(new TestSubnet(addr1, len1)));
-    ASSERT_TRUE(subnet1);
-    EXPECT_EQ(1, subnet1->getID());
-    EXPECT_EQ("192.0.2.0/25", subnet1->toText());
-
-    // Second subnet.
-    IOAddress addr2("192.0.2.128");
-    uint8_t len2(25);
-    TestSubnetPtr subnet2;
-    ASSERT_NO_THROW(subnet2.reset(new TestSubnet(addr2, len2)));
-    ASSERT_TRUE(subnet2);
-    EXPECT_EQ(2, subnet2->getID());
-    EXPECT_EQ("192.0.2.128/25", subnet2->toText());
-
-    // Reset subnet identifier counter again to get another log.
-    Subnet::resetSubnetID();
-
-    // Third subnet.
-    IOAddress addr3("2001:db8:1::");
-    uint8_t len3(64);
-    TestSubnetPtr subnet3;
-    ASSERT_NO_THROW(subnet3.reset(new TestSubnet(addr3, len3)));
-    ASSERT_TRUE(subnet3);
-    EXPECT_EQ(1, subnet3->getID());
-    EXPECT_EQ("2001:db8:1::/64", subnet3->toText());
-
-    // Subnet 1 and 3 are logged.
-    std::string msg = "DHCPSRV_CONFIGURED_SUBNET_WITHOUT_ID ";
-    msg += "a subnet was configured without an id: ";
-    addString(msg + subnet1->toText());
-    addString(msg + subnet3->toText());
-    EXPECT_TRUE(checkFile());
 }
 
 }

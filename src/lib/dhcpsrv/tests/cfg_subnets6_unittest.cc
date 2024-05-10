@@ -1102,6 +1102,78 @@ TEST(CfgSubnets6Test, mergeSubnets) {
     EXPECT_EQ("RULE!", opstr->getValue());
 }
 
+// This test verifies the Subnet6 parser's validation logic for id parameter.
+TEST(CfgSubnets6Test, idValidation) {
+    {
+        // id 0.
+        SCOPED_TRACE("id 0");
+        std::string json =
+            "        {\n"
+            "            \"id\": 0,\n"
+            "            \"subnet\": \"2001:db8:1::/64\"\n"
+            "        }\n";
+        data::ElementPtr elems;
+        ASSERT_NO_THROW(elems = data::Element::fromJSON(json))
+            << "invalid JSON:" << json  << "\n test is broken";
+        std::string expected = "subnet configuration failed: ";
+        expected += "The 'id' value (0) is not within ";
+        expected += "expected range: (1 - 4294967294)";
+        try {
+            // Attempt to parse the configuration.
+            Subnet6ConfigParser parser;
+            Subnet6Ptr subnet = parser.parse(elems);
+            ADD_FAILURE() << "expected exception";
+        } catch (const std::exception& ex) {
+            EXPECT_EQ(expected, ex.what());
+        }
+    }
+
+    {
+        // id 4294967295.
+        SCOPED_TRACE("id 4294967295");
+        std::string json =
+            "        {\n"
+            "            \"id\": 4294967295,\n"
+            "            \"subnet\": \"2001:db8:1::/64\"\n"
+            "        }\n";
+        data::ElementPtr elems;
+        ASSERT_NO_THROW(elems = data::Element::fromJSON(json))
+            << "invalid JSON:" << json  << "\n test is broken";
+        std::string expected = "subnet configuration failed: ";
+        expected += "The 'id' value (4294967295) is not within ";
+        expected += "expected range: (1 - 4294967294)";
+        try {
+            // Attempt to parse the configuration.
+            Subnet6ConfigParser parser;
+            Subnet6Ptr subnet = parser.parse(elems);
+            ADD_FAILURE() << "expected exception";
+        } catch (const std::exception& ex) {
+            EXPECT_EQ(expected, ex.what());
+        }
+    }
+
+    {
+        // id 1 (valid).
+        SCOPED_TRACE("id 1");
+        std::string json =
+            "        {\n"
+            "            \"id\": 1,\n"
+            "            \"subnet\": \"2001:db8:1::/64\"\n"
+            "        }\n";
+        data::ElementPtr elems;
+        ASSERT_NO_THROW(elems = data::Element::fromJSON(json))
+            << "invalid JSON:" << json  << "\n test is broken";
+        try {
+            // Attempt to parse the configuration.
+            Subnet6ConfigParser parser;
+            Subnet6Ptr subnet = parser.parse(elems);
+            EXPECT_TRUE(subnet);
+        } catch (const std::exception& ex) {
+            ADD_FAILURE() << "unexpected failure " << ex.what();
+        }
+    }
+}
+
 // This test verifies the Subnet6 parser's validation logic for
 // t1-percent and t2-percent parameters.
 TEST(CfgSubnets6Test, teeTimePercentValidation) {

@@ -211,15 +211,6 @@ public:
     /// @return textual representation
     virtual std::string toText() const;
 
-    /// @brief Resets subnet-id counter to its initial value (1).
-    ///
-    /// This should be called during reconfiguration, before any new
-    /// subnet objects are created. It will ensure that the subnet_id will
-    /// be consistent between reconfigures.
-    static void resetSubnetID() {
-        static_id_ = 1;
-    }
-
     /// @brief Retrieves pointer to a shared network associated with a subnet.
     ///
     /// By implementing it as a template function we overcome a need to
@@ -338,15 +329,9 @@ protected:
     /// By making the constructor protected, we make sure that no one will
     /// ever instantiate that class. Subnet4 and Subnet6 should be used instead.
     ///
-    /// This constructor assigns a new subnet-id (see @ref generateNextID).
-    /// This subnet-id has unique value that is strictly monotonously increasing
-    /// for each subnet, until it is explicitly reset back to 1 during
-    /// reconfiguration process.
-    ///
     /// @param prefix subnet prefix
     /// @param len prefix length for the subnet
-    /// @param id arbitrary subnet id, value of 0 triggers autogeneration
-    /// of subnet id
+    /// @param id arbitrary subnet id between 0 and 2^32-1 excluded.
     Subnet(const isc::asiolink::IOAddress& prefix, uint8_t len,
            const SubnetID id);
 
@@ -355,31 +340,6 @@ protected:
     /// A virtual destructor is needed because other classes
     /// derive from this class.
     virtual ~Subnet() { };
-
-    /// @brief keeps the subnet-id value.
-    ///
-    /// It is incremented every time a new Subnet object is created. It is reset
-    /// (@ref resetSubnetID) every time reconfiguration
-    /// occurs.
-    ///
-    /// Static value initialized in subnet.cc.
-    static SubnetID static_id_;
-
-    /// @brief returns the next unique Subnet-ID.
-    ///
-    /// This method generates and returns the next unique subnet-id.
-    /// It is a strictly monotonously increasing value (1,2,3,...) for
-    /// each new Subnet object created. It can be explicitly reset
-    /// back to 1 during reconfiguration (@ref resetSubnetID).
-    ///
-    /// @return the next unique Subnet-ID
-    static SubnetID generateNextID() {
-        if (static_id_ == SUBNET_ID_MAX) {
-            resetSubnetID();
-        }
-
-        return (static_id_++);
-    }
 
     /// @brief Checks if used pool type is valid.
     ///

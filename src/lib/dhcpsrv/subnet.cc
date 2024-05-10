@@ -65,21 +65,14 @@ comparePoolFirstAddress(const PoolPtr& pool1,
 namespace isc {
 namespace dhcp {
 
-// This is an initial value of subnet-id. See comments in subnet.h for details.
-SubnetID Subnet::static_id_ = 1;
-
 Subnet::Subnet(const isc::asiolink::IOAddress& prefix, uint8_t len,
                const SubnetID id)
-    : id_(id == 0 ? generateNextID() : id), prefix_(prefix),
-      prefix_len_(len),
-      shared_network_name_() {
-    if ((id == 0) && (id_ == 1)) {
-        // Emit a warning on the first auto-numbered subnet.
-        LOG_WARN(dhcpsrv_logger, DHCPSRV_CONFIGURED_SUBNET_WITHOUT_ID)
-            .arg(toText());
+    : id_(id), prefix_(prefix), prefix_len_(len), shared_network_name_() {
+    if ((id == SUBNET_ID_GLOBAL) || (id == SUBNET_ID_UNUSED)) {
+        isc_throw(BadValue,
+                  "Invalid id specified for subnet: " << id);
     }
-    if ((prefix.isV6() && len > 128) ||
-        (prefix.isV4() && len > 32)) {
+    if ((prefix.isV6() && len > 128) || (prefix.isV4() && len > 32)) {
         isc_throw(BadValue,
                   "Invalid prefix length specified for subnet: " << len);
     }

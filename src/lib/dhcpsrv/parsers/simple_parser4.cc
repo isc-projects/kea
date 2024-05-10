@@ -270,7 +270,6 @@ const SimpleKeywords SimpleParser4::SUBNET4_PARAMETERS = {
 /// defined on global level. Currently there are two such parameters:
 /// interface and reservation-mode
 const SimpleDefaults SimpleParser4::SUBNET4_DEFAULTS = {
-    { "id",               Element::integer, "0" }, // 0 means autogenerate
     { "interface",        Element::string,  "" },
     { "client-class",     Element::string,  "" },
     { "4o6-interface",    Element::string,  "" },
@@ -285,7 +284,6 @@ const SimpleDefaults SimpleParser4::SUBNET4_DEFAULTS = {
 /// that can be derived from shared-network, but cannot from global scope.
 /// Those are: interface and reservation-mode.
 const SimpleDefaults SimpleParser4::SHARED_SUBNET4_DEFAULTS = {
-    { "id",               Element::integer, "0" }, // 0 means autogenerate
     { "4o6-interface",    Element::string,  "" },
     { "4o6-interface-id", Element::string,  "" },
     { "4o6-subnet",       Element::string,  "" },

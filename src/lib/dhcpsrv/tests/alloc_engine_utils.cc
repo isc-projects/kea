@@ -171,9 +171,6 @@ AllocEngine4Test::generateDeclinedLease(const std::string& addr,
 }
 
 AllocEngine6Test::AllocEngine6Test() {
-    // No longer used but this means too that tests relied far too much on it.
-    //Subnet::resetSubnetID();
-
     CfgMgr::instance().clear();
 
     // This lease mgr needs to exist to before configuration commits.
@@ -649,9 +646,6 @@ AllocEngine4Test::initSubnet(const asiolink::IOAddress& pool_start,
 }
 
 AllocEngine4Test::AllocEngine4Test() {
-    // No longer used but this means too that tests relied far too much on it.
-    //Subnet::resetSubnetID();
-
     CfgMgr::instance().clear();
 
     // This lease mgr needs to exist to before configuration commits.
