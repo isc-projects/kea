@@ -1,3 +1,10 @@
+2229.	[bug]		tmark
+	Modified configure.ac to detect versions of MySQL
+	client libary for which MYSQL_OPT_RECONNECT is
+	deprecated and exclude from Kea core, code attempts
+	to set it false.
+	(Gitlab #3311)
+
 Kea 2.5.8 (development) released on April 30, 2024
 
 2228.	[build]		piotrek

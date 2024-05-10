@@ -172,16 +172,20 @@ MySqlConnection::openDatabase() {
 
     // Set options for the connection:
     //
-    // Set options for the connection:
-    // Make sure auto_reconnect is OFF! Enabling it leaves us with an unusable
+    int result;
+#ifdef HAS_MYSQL_OPT_RECONNECT
+    // Though still supported by Mariadb (as of 11.5.0), MYSQL_OPT_RECONNECT is
+    // deprecated as of MySQL 8.0.34. Where it is still supported we should
+    // continue to ensure it is off. Enabling it leaves us with an unusable
     // connection after a reconnect as among other things, it drops all our
     // pre-compiled statements.
     my_bool auto_reconnect = MLM_FALSE;
-    int result = mysql_options(mysql_, MYSQL_OPT_RECONNECT, &auto_reconnect);
+    result = mysql_options(mysql_, MYSQL_OPT_RECONNECT, &auto_reconnect);
     if (result != 0) {
         isc_throw(DbOpenError, "unable to set auto-reconnect option: " <<
                   mysql_error(mysql_));
     }
+#endif
 
     // Make sure we have a large idle time window ... say 30 days...
     const char *wait_time = "SET SESSION wait_timeout = 30 * 86400";

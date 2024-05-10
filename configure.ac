@@ -790,6 +790,16 @@ $(cat conftest.cpp)
 $(cat conftest.err)])]
     )
 
+    # Beginning with MySQL 8.0.34 MYSQL_OPT_RECONNNECT is deprecated.
+    # Check if MYSQL_OPT_RECONNNECT is defined.
+    AC_COMPILE_IFELSE(
+        [AC_LANG_PROGRAM([#include <mysql.h>
+                          auto temp = MYSQL_OPT_RECONNECT;]
+                         [])],
+        [AC_MSG_RESULT([checking for MySQL MYSQL_OPT_RECONNNECT... yes])
+         AC_DEFINE([HAVE_MYSQL_OPT_RECONNECT], [1], [MySQL has MYSQL_OPT_RECONNNECT])],
+        [AC_MSG_RESULT([checking for MySQL MYSQL_OPT_RECONNECT... no])])
+
     CPPFLAGS=$CPPFLAGS_SAVED
     LIBS=$LIBS_SAVED
 fi
