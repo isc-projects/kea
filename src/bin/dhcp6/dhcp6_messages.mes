@@ -688,7 +688,7 @@ A debug message noting that the multi-threading packet queue is full so
 the oldest packet of the queue was dropped to make room for the received one.
 
 % DHCP6_PACKET_RECEIVED %1: %2 (type %3) received from %4 to %5 on interface %6
-A debug message noting that the server has received the specified type of
+An INFO message noting that the server has received the specified type of
 packet on the specified interface. The first argument specifies the
 client and transaction identification information. The second and third
 argument specify the name of the DHCPv6 message and its numeric type
@@ -702,10 +702,11 @@ occurred during this attempt. The reason for the error is included in
 the message.
 
 % DHCP6_PACKET_SEND %1: trying to send packet %2 (type %3) from [%4]:%5 to [%6]:%7 on interface %8
-The arguments specify the client identification information (HW address
-and client identifier), DHCP message name and type, source IPv6
-address and port, destination IPv6 address and port and the
-interface name.
+An INFO message noting that the server is attempting to send the
+specified type of packet. The arguments specify the client
+identification information (HW address and client identifier),
+DHCP message name and type, source IPv6 address and port,
+destination IPv6 address and port and the interface name.
 
 % DHCP6_PACKET_SEND_FAIL %1: failed to send DHCPv6 packet: %2
 This error is output if the IPv6 DHCP server fails to send an assembled
