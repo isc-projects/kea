@@ -61,9 +61,9 @@ const char* OOR_CONFIGS[] = {
         "       }"
         "    ]"
         "} ],"
+        "\"ddns-qualifying-suffix\": \"\","
         "\"dhcp-ddns\": {"
-        "     \"enable-updates\": true,"
-        "     \"qualifying-suffix\": \"\""
+        "     \"enable-updates\": true"
         "}"
     "}",
 
@@ -87,9 +87,9 @@ const char* OOR_CONFIGS[] = {
         "       }"
         "    ]"
         "} ],"
+        "\"ddns-qualifying-suffix\": \"\","
         "\"dhcp-ddns\": {"
-        "     \"enable-updates\": true,"
-        "     \"qualifying-suffix\": \"\""
+        "     \"enable-updates\": true"
         "}"
     "}",
 
@@ -103,9 +103,9 @@ const char* OOR_CONFIGS[] = {
         "    \"id\": 1, "
         "    \"pools\": [ { \"pool\": \"10.0.0.101-10.0.0.200\" } ],"
         "} ],"
+        "\"ddns-qualifying-suffix\": \"\","
         "\"dhcp-ddns\": {"
-        "     \"enable-updates\": true,"
-        "     \"qualifying-suffix\": \"\""
+        "     \"enable-updates\": true"
         "}"
     "}",
 
@@ -129,9 +129,9 @@ const char* OOR_CONFIGS[] = {
         "       }"
         "    ]"
         "} ],"
+        "\"ddns-qualifying-suffix\": \"\","
         "\"dhcp-ddns\": {"
-        "     \"enable-updates\": true,"
-        "     \"qualifying-suffix\": \"\""
+        "     \"enable-updates\": true"
         "}"
     "}",
 
@@ -145,9 +145,9 @@ const char* OOR_CONFIGS[] = {
         "    \"id\": 1, "
         "    \"pools\": [ { \"pool\": \"192.0.2.101-192.0.2.200\" } ]"
         "} ],"
+        "\"ddns-qualifying-suffix\": \"\","
         "\"dhcp-ddns\": {"
-        "     \"enable-updates\": true,"
-        "     \"qualifying-suffix\": \"\""
+        "     \"enable-updates\": true"
         "}"
     "}",
 
@@ -161,9 +161,9 @@ const char* OOR_CONFIGS[] = {
         "    \"id\": 1, "
         "    \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ]"
         "} ],"
+        "\"ddns-qualifying-suffix\": \"\","
         "\"dhcp-ddns\": {"
-        "     \"enable-updates\": true,"
-        "     \"qualifying-suffix\": \"\""
+        "     \"enable-updates\": true"
         "}"
     "}",
 

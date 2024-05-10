@@ -1799,15 +1799,6 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     }
 }
 
-\"qualifying-suffix\" {
-    switch(driver.ctx_) {
-    case isc::dhcp::Parser4Context::DHCP_DDNS:
-        return isc::dhcp::Dhcp4Parser::make_QUALIFYING_SUFFIX(driver.loc_);
-    default:
-        return isc::dhcp::Dhcp4Parser::make_STRING("qualifying-suffix", driver.loc_);
-    }
-}
-
 \"server-ip\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP_DDNS:
@@ -1871,46 +1862,9 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     }
 }
 
-\"override-no-update\" {
-    switch(driver.ctx_) {
-    case isc::dhcp::Parser4Context::DHCP_DDNS:
-        return isc::dhcp::Dhcp4Parser::make_OVERRIDE_NO_UPDATE(driver.loc_);
-    default:
-        return isc::dhcp::Dhcp4Parser::make_STRING("override-no-update", driver.loc_);
-    }
-}
-
-\"override-client-update\" {
-    switch(driver.ctx_) {
-    case isc::dhcp::Parser4Context::DHCP_DDNS:
-        return isc::dhcp::Dhcp4Parser::make_OVERRIDE_CLIENT_UPDATE(driver.loc_);
-    default:
-        return isc::dhcp::Dhcp4Parser::make_STRING("override-client-update", driver.loc_);
-    }
-}
-
-\"replace-client-name\" {
-    switch(driver.ctx_) {
-    case isc::dhcp::Parser4Context::DHCP_DDNS:
-        return isc::dhcp::Dhcp4Parser::make_REPLACE_CLIENT_NAME(driver.loc_);
-    default:
-        return isc::dhcp::Dhcp4Parser::make_STRING("replace-client-name", driver.loc_);
-    }
-}
-
-\"generated-prefix\" {
-    switch(driver.ctx_) {
-    case isc::dhcp::Parser4Context::DHCP_DDNS:
-        return isc::dhcp::Dhcp4Parser::make_GENERATED_PREFIX(driver.loc_);
-    default:
-        return isc::dhcp::Dhcp4Parser::make_STRING("generated-prefix", driver.loc_);
-    }
-}
-
 \"hostname-char-set\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
-    case isc::dhcp::Parser4Context::DHCP_DDNS:
     case isc::dhcp::Parser4Context::SUBNET4:
     case isc::dhcp::Parser4Context::SHARED_NETWORK:
         return isc::dhcp::Dhcp4Parser::make_HOSTNAME_CHAR_SET(driver.loc_);
@@ -1922,7 +1876,6 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
 \"hostname-char-replacement\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
-    case isc::dhcp::Parser4Context::DHCP_DDNS:
     case isc::dhcp::Parser4Context::SUBNET4:
     case isc::dhcp::Parser4Context::SHARED_NETWORK:
         return isc::dhcp::Dhcp4Parser::make_HOSTNAME_CHAR_REPLACEMENT(driver.loc_);

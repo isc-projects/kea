@@ -352,12 +352,6 @@ processDhcp4Config(isc::data::ConstElementPtr config_set) {
         // default values and will insert derived values as well.
         mutable_cfg = boost::const_pointer_cast<Element>(config_set);
 
-        // Relocate dhcp-ddns parameters that have moved to global scope.
-        // Rule is that a global value overrides the dhcp-ddns value, so
-        // we need to do this before we apply global defaults.
-        // Note this is done for backward compatibility.
-        srv_config->moveDdnsParams(mutable_cfg);
-
         // Move from reservation mode to new reservations flags.
         // @todo add warning
         BaseNetworkParser::moveReservationMode(mutable_cfg);

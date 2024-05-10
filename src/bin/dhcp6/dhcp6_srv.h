@@ -743,7 +743,7 @@ protected:
     /// - If there is a Client FQDN but no reserved hostname then both the
     /// FQDN and lease hostname will be equal to the name provided in the
     /// client FQDN adjusted according the DhcpDdns configuration
-    /// parameters (e.g.replace-client-name, qualifying suffix...).
+    /// parameters (e.g. ddns-replace-client-name, ddns-qualifying-suffix...).
     ///
     /// All the logic required to form appropriate answer to the client is
     /// held in this function.

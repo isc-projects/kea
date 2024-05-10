@@ -425,13 +425,13 @@ TEST_F(D2ClientMgrParamsTest, analyzeFqdnEnabledNoOverrides) {
 }
 
 /// @brief Tests that analyzeFqdn generates correct server S and N flags when
-/// updates are enabled and override-no-update is on.
+/// updates are enabled and ddns-override-no-update is on.
 TEST_F(D2ClientMgrParamsTest, analyzeFqdnEnabledOverrideNoUpdate) {
     D2ClientMgr mgr;
     bool server_s = false;
     bool server_n = false;
 
-    // Create enabled configuration with override-no-update true.
+    // Create enabled configuration with ddns-override-no-update true.
     subnet_->setDdnsSendUpdates(true);
     subnet_->setDdnsOverrideNoUpdate(true);
     subnet_->setDdnsOverrideClientUpdate(false);
@@ -464,13 +464,13 @@ TEST_F(D2ClientMgrParamsTest, analyzeFqdnEnabledOverrideNoUpdate) {
 }
 
 /// @brief Tests that analyzeFqdn generates correct server S and N flags when
-/// updates are enabled and override-client-update is on.
+/// updates are enabled and ddns-override-client-update is on.
 TEST_F(D2ClientMgrParamsTest, analyzeFqdnEnabledOverrideClientUpdate) {
     D2ClientMgr mgr;
     bool server_s = false;
     bool server_n = false;
 
-    // Create enabled configuration with override-client-update true.
+    // Create enabled configuration with ddns-override-client-update true.
     subnet_->setDdnsSendUpdates(true);
     subnet_->setDdnsOverrideNoUpdate(false);
     subnet_->setDdnsOverrideClientUpdate(true);

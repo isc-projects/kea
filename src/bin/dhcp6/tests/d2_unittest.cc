@@ -103,6 +103,11 @@ Dhcp6SrvD2Test::configureD2(bool enable_d2, const bool exp_result,
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
+        "\"ddns-override-no-update\" : true, "
+        "\"ddns-override-client-update\" : true, "
+        "\"ddns-replace-client-name\" : \"when-present\", "
+        "\"ddns-generated-prefix\" : \"test.prefix\", "
+        "\"ddns-qualifying-suffix\" : \"test.suffix.\", "
         "\"subnet6\": [ { "
         "    \"id\": 1, "
         "    \"pools\": [ { \"pool\": \"2001:db8:1::1 - 2001:db8:1::ffff\" } ],"
@@ -115,12 +120,7 @@ Dhcp6SrvD2Test::configureD2(bool enable_d2, const bool exp_result,
         "     \"sender-port\" : " << sender_port << ", "
         "     \"max-queue-size\" : " << max_queue_size << ", "
         "     \"ncr-protocol\" : \"UDP\", "
-        "     \"ncr-format\" : \"JSON\", "
-        "     \"override-no-update\" : true, "
-        "     \"override-client-update\" : true, "
-        "     \"replace-client-name\" : \"when-present\", "
-        "     \"generated-prefix\" : \"test.prefix\", "
-        "     \"qualifying-suffix\" : \"test.suffix.\" },"
+        "     \"ncr-format\" : \"JSON\"},"
         "\"valid-lifetime\": 4000 }";
 
     configure(config.str(), exp_result);

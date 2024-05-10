@@ -99,6 +99,11 @@ Dhcp4SrvD2Test::configureD2(bool enable_d2, const bool exp_result,
         "},"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
+        "\"ddns-override-no-update\" : true, "
+        "\"ddns-override-client-update\" : true, "
+        "\"ddns-replace-client-name\" : \"when-present\", "
+        "\"ddns-generated-prefix\" : \"test.prefix\", "
+        "\"ddns-qualifying-suffix\" : \"test.suffix.\", "
         "\"subnet4\": [ { "
         "    \"id\": 1,"
         "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
@@ -111,12 +116,7 @@ Dhcp4SrvD2Test::configureD2(bool enable_d2, const bool exp_result,
         "     \"sender-port\" : " << sender_port << ", "
         "     \"max-queue-size\" : " << max_queue_size << ", "
         "     \"ncr-protocol\" : \"UDP\", "
-        "     \"ncr-format\" : \"JSON\", "
-        "     \"override-no-update\" : true, "
-        "     \"override-client-update\" : true, "
-        "     \"replace-client-name\" : \"when-present\", "
-        "     \"generated-prefix\" : \"test.prefix\", "
-        "     \"qualifying-suffix\" : \"test.suffix.\" },"
+        "     \"ncr-format\" : \"JSON\"},"
         "\"valid-lifetime\": 4000 }";
 
     configure(config.str(), exp_result);
@@ -412,6 +412,11 @@ TEST_F(Dhcp4SrvD2Test, badTCP) {
         "},"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
+        "\"ddns-override-no-update\" : true, "
+        "\"ddns-override-client-update\" : true, "
+        "\"ddns-replace-client-name\" : \"when-present\", "
+        "\"ddns-generated-prefix\" : \"test.prefix\", "
+        "\"ddns-qualifying-suffix\" : \"test.suffix.\", "
         "\"subnet4\": [ { "
         "    \"id\": 1,"
         "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
@@ -424,12 +429,7 @@ TEST_F(Dhcp4SrvD2Test, badTCP) {
         "     \"sender-port\" : 0, "
         "     \"max-queue-size\" : 1024, "
         "     \"ncr-protocol\" : \"TCP\", "
-        "     \"ncr-format\" : \"JSON\", "
-        "     \"override-no-update\" : true, "
-        "     \"override-client-update\" : true, "
-        "     \"replace-client-name\" : \"when-present\", "
-        "     \"generated-prefix\" : \"test.prefix\", "
-        "     \"qualifying-suffix\" : \"test.suffix.\" },"
+        "     \"ncr-format\" : \"JSON\"},"
         "\"valid-lifetime\": 4000 }";
 
     ElementPtr json = Element::fromJSON(config);
@@ -452,6 +452,11 @@ TEST_F(Dhcp4SrvD2Test, badFamily) {
         "},"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
+        "\"ddns-override-no-update\" : true, "
+        "\"ddns-override-client-update\" : true, "
+        "\"ddns-replace-client-name\" : \"when-present\", "
+        "\"ddns-generated-prefix\" : \"test.prefix\", "
+        "\"ddns-qualifying-suffix\" : \"test.suffix.\", "
         "\"subnet4\": [ { "
         "    \"id\": 1,"
         "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
@@ -464,12 +469,7 @@ TEST_F(Dhcp4SrvD2Test, badFamily) {
         "     \"sender-port\" : 0, "
         "     \"max-queue-size\" : 1024, "
         "     \"ncr-protocol\" : \"UDP\", "
-        "     \"ncr-format\" : \"JSON\", "
-        "     \"override-no-update\" : true, "
-        "     \"override-client-update\" : true, "
-        "     \"replace-client-name\" : \"when-present\", "
-        "     \"generated-prefix\" : \"test.prefix\", "
-        "     \"qualifying-suffix\" : \"test.suffix.\" },"
+        "     \"ncr-format\" : \"JSON\"},"
         "\"valid-lifetime\": 4000 }";
 
     ElementPtr json = Element::fromJSON(config);
@@ -492,6 +492,11 @@ TEST_F(Dhcp4SrvD2Test, senderEqServer) {
         "},"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
+        "\"ddns-override-no-update\" : true, "
+        "\"ddns-override-client-update\" : true, "
+        "\"ddns-replace-client-name\" : \"when-present\", "
+        "\"ddns-generated-prefix\" : \"test.prefix\", "
+        "\"ddns-qualifying-suffix\" : \"test.suffix.\", "
         "\"subnet4\": [ { "
         "    \"id\": 1,"
         "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
@@ -504,12 +509,7 @@ TEST_F(Dhcp4SrvD2Test, senderEqServer) {
         "     \"sender-port\" : 53001, "
         "     \"max-queue-size\" : 1024, "
         "     \"ncr-protocol\" : \"UDP\", "
-        "     \"ncr-format\" : \"JSON\", "
-        "     \"override-no-update\" : true, "
-        "     \"override-client-update\" : true, "
-        "     \"replace-client-name\" : \"when-present\", "
-        "     \"generated-prefix\" : \"test.prefix\", "
-        "     \"qualifying-suffix\" : \"test.suffix.\" },"
+        "     \"ncr-format\" : \"JSON\"},"
         "\"valid-lifetime\": 4000 }";
 
     ElementPtr json = Element::fromJSON(config);

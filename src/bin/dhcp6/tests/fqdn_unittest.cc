@@ -407,10 +407,10 @@ public:
     }
 
     // Test that the server processes the FQDN option (or lack thereof)
-    // in a client request correctly, according to the replace-client-name
+    // in a client request correctly, according to the ddns-replace-client-name
     // mode configuration parameter.
     //
-    // @param mode - value to use for replace-client-name mode
+    // @param mode - value to use for ddns-replace-client-name mode
     //
     // @param client_name_flag - specifies whether or not the client request
     // should contain a hostname option
@@ -428,6 +428,8 @@ public:
             "\"preferred-lifetime\": 3000, \n"
             "\"rebind-timer\": 2000, \n"
             "\"renew-timer\": 1000, \n"
+            "\"ddns-replace-client-name\": \"%s\", \n"
+            "\"ddns-qualifying-suffix\": \"fake-suffix.isc.org.\", \n"
             "\"subnet6\": [ { \n"
             "    \"id\": 1, \n"
             "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ], \n"
@@ -435,9 +437,7 @@ public:
             "    \"interface\": \"eth0\" \n"
             " } ], \n"
             "\"dhcp-ddns\": { \n"
-            "\"enable-updates\": true, \n"
-            "\"qualifying-suffix\": \"fake-suffix.isc.org.\", \n"
-            "\"replace-client-name\": \"%s\" \n"
+            "\"enable-updates\": true \n"
             "}} \n";
 
         // Create the configuration and configure the server
@@ -726,7 +726,7 @@ TEST_F(FqdnDhcpv6SrvTest, noUpdate) {
 }
 
 // Test server's response when client requests no DNS update and
-// override-no-updates is true.
+// ddns-override-no-updates is true.
 TEST_F(FqdnDhcpv6SrvTest, overrideNoUpdate) {
     enableD2(OVERRIDE_NO_UPDATE);
     testFqdn(DHCPV6_SOLICIT, Option6ClientFqdn::FLAG_N,
@@ -1473,7 +1473,7 @@ TEST_F(FqdnDhcpv6SrvTest, hostnameReservationSuffix) {
         "    \"id\": 1, \n"
         "    \"subnet\": \"2001:db8:1::/48\", "
         "    \"pools\": [ { \"pool\": \"2001:db8:1:1::/64\" } ],"
-        "    \"interface\" : \"eth0\" , "
+        "    \"interface\": \"eth0\" , "
         "   \"reservations\": ["
         "    {"
         "        \"duid\": \"" + duid_->toText() + "\","
@@ -1482,9 +1482,9 @@ TEST_F(FqdnDhcpv6SrvTest, hostnameReservationSuffix) {
         "    }"
         "    ]"
         " } ],"
-        " \"dhcp-ddns\" : {"
-        "     \"enable-updates\" : true, "
-        "     \"qualifying-suffix\" : \"example.com\" }"
+        " \"ddns-qualifying-suffix\": \"example.com\", "
+        " \"dhcp-ddns\": {"
+        "     \"enable-updates\": true }"
         "}";
 
     configure(config_str);
@@ -1528,7 +1528,7 @@ TEST_F(FqdnDhcpv6SrvTest, hostnameReservationNoSuffix) {
         "    \"id\": 1, \n"
         "    \"subnet\": \"2001:db8:1::/48\", "
         "    \"pools\": [ { \"pool\": \"2001:db8:1:1::/64\" } ],"
-        "    \"interface\" : \"eth0\" , "
+        "    \"interface\": \"eth0\" , "
         "   \"reservations\": ["
         "    {"
         "        \"duid\": \"" + duid_->toText() + "\","
@@ -1537,9 +1537,9 @@ TEST_F(FqdnDhcpv6SrvTest, hostnameReservationNoSuffix) {
         "    }"
         "    ]"
         " } ],"
-        " \"dhcp-ddns\" : {"
-        "     \"enable-updates\" : true, "
-        "     \"qualifying-suffix\" : \"\" }"
+        " \"ddns-qualifying-suffix\": \"\", "
+        " \"dhcp-ddns\": {"
+        "     \"enable-updates\": true }"
         "}";
 
     configure(config_str);
@@ -1578,7 +1578,7 @@ TEST_F(FqdnDhcpv6SrvTest, hostnameReservationDdnsDisabled) {
         "    \"id\": 1, \n"
         "    \"subnet\": \"2001:db8:1::/48\", "
         "    \"pools\": [ { \"pool\": \"2001:db8:1:1::/64\" } ],"
-        "    \"interface\" : \"eth0\" , "
+        "    \"interface\": \"eth0\" , "
         "    \"reservations\": ["
         "    {"
         "        \"duid\": \"" + duid_->toText() + "\","
@@ -1587,9 +1587,9 @@ TEST_F(FqdnDhcpv6SrvTest, hostnameReservationDdnsDisabled) {
         "    }"
         "    ]"
         " } ],"
-        " \"dhcp-ddns\" : {"
-        "     \"enable-updates\" : false, "
-        "     \"qualifying-suffix\" : \"disabled.example.com\" }"
+        " \"ddns-qualifying-suffix\": \"disabled.example.com\", "
+        " \"dhcp-ddns\": {"
+        "     \"enable-updates\": false }"
         "}";
 
     configure(config_str);
@@ -1604,7 +1604,7 @@ TEST_F(FqdnDhcpv6SrvTest, hostnameReservationDdnsDisabled) {
                        IOAddress("2001:db8:1:1::babe"));
 }
 
-// Verifies that the replace-client-name behavior is correct for each of
+// Verifies that the ddns-replace-client-name behavior is correct for each of
 // the supported modes.
 TEST_F(FqdnDhcpv6SrvTest, replaceClientNameModeTest) {
     isc::dhcp::test::IfaceMgrTestConfig test_config(true);
@@ -1691,8 +1691,8 @@ TEST_F(FqdnDhcpv6SrvTest, ddnsScopeTest) {
         "    \"ddns-send-updates\": true\n"
         " } ],\n"
         "\"valid-lifetime\": 4000,\n"
-        " \"dhcp-ddns\" : {\n"
-        "     \"enable-updates\" : true\n"
+        " \"dhcp-ddns\": {\n"
+        "     \"enable-updates\": true\n"
         " }\n"
     "}";
 
@@ -1792,8 +1792,8 @@ TEST_F(FqdnDhcpv6SrvTest, ddnsSharedNetworkTest) {
             " } ] \n"
         "} ], \n"
         "\"ddns-send-updates\": true, \n"
-        "\"dhcp-ddns\" : { \n"
-        "     \"enable-updates\" : true \n"
+        "\"dhcp-ddns\": { \n"
+        "     \"enable-updates\": true \n"
         " } \n"
     "}";
 
@@ -1949,8 +1949,8 @@ TEST_F(FqdnDhcpv6SrvTest, ddnsSharedNetworkTest2) {
                 "\"ddns-send-updates\": false \n"
             " } ] \n"
         "} ], \n"
-        "\"dhcp-ddns\" : { \n"
-        "     \"enable-updates\" : true \n"
+        "\"dhcp-ddns\": { \n"
+        "     \"enable-updates\": true \n"
         " } \n"
     "}";
 

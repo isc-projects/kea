@@ -50,9 +50,9 @@ CONFIG="{
             \"id\": 1,
             \"pools\": [ { \"pool\": \"2001:db8:1::10-2001:db8:1::100\" } ]
         } ],
+        \"ddns-qualifying-suffix\": \"\",
         \"dhcp-ddns\": {
-            \"enable-updates\": true,
-            \"qualifying-suffix\": \"\"
+            \"enable-updates\": true
         },
         \"loggers\": [
         {
@@ -171,9 +171,9 @@ CONFIG_BAD_VALUES="{
             \"id\": 1,
             \"pools\": [ { \"pool\": \"3000::-3000::ffff\" } ]
         } ],
+        \"ddns-qualifying-suffix\": \"\",
         \"dhcp-ddns\": {
-            \"enable-updates\": true,
-            \"qualifying-suffix\": \"\"
+            \"enable-updates\": true
         }
     }
 }"
@@ -210,9 +210,9 @@ INVALID_CONFIG_HOOKS_LOAD="{
             \"id\": 1,
             \"pools\": [ { \"pool\": \"2001:db8:1::10-2001:db8:1::100\" } ]
         } ],
+        \"ddns-qualifying-suffix\": \"\",
         \"dhcp-ddns\": {
-            \"enable-updates\": true,
-            \"qualifying-suffix\": \"\"
+            \"enable-updates\": true
         },
         \"hooks-libraries\": [
         {
@@ -267,9 +267,9 @@ INVALID_CONFIG_HOOKS_CALLOUT_FAIL_ON_LOAD="{
             \"id\": 1,
             \"pools\": [ { \"pool\": \"2001:db8:1::10-2001:db8:1::100\" } ]
         } ],
+        \"ddns-qualifying-suffix\": \"\",
         \"dhcp-ddns\": {
-            \"enable-updates\": true,
-            \"qualifying-suffix\": \"\"
+            \"enable-updates\": true
         },
         \"hooks-libraries\": [
         {
@@ -324,9 +324,9 @@ INVALID_CONFIG_HOOKS_CALLOUT_FAIL_ON_POLL="{
             \"id\": 1,
             \"pools\": [ { \"pool\": \"2001:db8:1::10-2001:db8:1::100\" } ]
         } ],
+        \"ddns-qualifying-suffix\": \"\",
         \"dhcp-ddns\": {
-            \"enable-updates\": true,
-            \"qualifying-suffix\": \"\"
+            \"enable-updates\": true
         },
         \"hooks-libraries\": [
         {

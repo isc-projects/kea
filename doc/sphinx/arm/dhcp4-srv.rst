@@ -3429,7 +3429,7 @@ DDNS-related parameters are split into two groups:
     -  ``sender-port``
     -  ``max-queue-size``
     -  ``ncr-protocol``
-    -  ``ncr-format"``
+    -  ``ncr-format``
 
 2. Behavioral Parameters
 
@@ -3444,7 +3444,7 @@ DDNS-related parameters are split into two groups:
     -  ``ddns-send-updates``
     -  ``ddns-override-no-update``
     -  ``ddns-override-client-update``
-    -  ``ddns-replace-client-name"``
+    -  ``ddns-replace-client-name``
     -  ``ddns-generated-prefix``
     -  ``ddns-qualifying-suffix``
     -  ``ddns-update-on-renew``
@@ -3455,23 +3455,12 @@ DDNS-related parameters are split into two groups:
 
 .. note::
 
-    For backward compatibility, configuration parsing still recognizes
-    the original behavioral parameters specified in ``dhcp-ddns``,
-    by translating the parameter into its global equivalent. If a
-    parameter is specified both globally and in ``dhcp-ddns``, the latter
-    value is ignored. In either case, a log is emitted explaining
-    what has occurred. Specifying these values within ``dhcp-ddns`` is
-    deprecated and support for it will be removed.
-
-.. note::
-
     Behavioral parameters that affect the FQDN are in effect even
     if both ``enable-updates`` and ``ddns-send-updates`` are ``false``,
     to support environments in which clients are responsible
     for their own DNS updates. This applies to ``ddns-replace-client-name``,
     ``ddns-generated-prefix``, ``ddns-qualifying-suffix``, ``hostname-char-set``,
     and ``hostname-char-replacement``.
-
 
 The default configuration and values would appear as follows:
 
@@ -3975,10 +3964,7 @@ qualifying suffix (if one is defined and needed).
 .. note::
 
    It is possible to specify ``hostname-char-set``
-   and/or ``hostname-char-replacement`` at the global scope. This allows
-   host names to be sanitized without requiring a ``dhcp-ddns`` entry. When
-   a ``hostname-char`` parameter is defined at both the global scope and
-   in a ``dhcp-ddns`` entry, the second (local) value is used.
+   and/or ``hostname-char-replacement`` at the global scope.
 
    The Kea hook library :ischooklib:`libdhcp_ddns_tuning.so` provides the ability
    for both :iscman:`kea-dhcp4` and :iscman:`kea-dhcp6` to generate host names
@@ -8013,20 +7999,6 @@ Some scalar parameters contained by top-level global maps are supported by the c
    | dhcp-ddns.server-ip                                              | dhcp-ddns                    | server-ip                        |
    +------------------------------------------------------------------+------------------------------+----------------------------------+
    | dhcp-ddns.server-port                                            | dhcp-ddns                    | server-port                      |
-   +------------------------------------------------------------------+------------------------------+----------------------------------+
-   | dhcp-ddns.generated-prefix                                       | dhcp-ddns                    | generated-prefix                 |
-   +------------------------------------------------------------------+------------------------------+----------------------------------+
-   | dhcp-ddns.hostname-char-replacement                              | dhcp-ddns                    | hostname-char-replacement        |
-   +------------------------------------------------------------------+------------------------------+----------------------------------+
-   | dhcp-ddns.hostname-char-set                                      | dhcp-ddns                    | hostname-char-set                |
-   +------------------------------------------------------------------+------------------------------+----------------------------------+
-   | dhcp-ddns.override-client-update                                 | dhcp-ddns                    | override-client-update           |
-   +------------------------------------------------------------------+------------------------------+----------------------------------+
-   | dhcp-ddns.override-no-update                                     | dhcp-ddns                    | override-no-update               |
-   +------------------------------------------------------------------+------------------------------+----------------------------------+
-   | dhcp-ddns.qualifying-suffix                                      | dhcp-ddns                    | qualifying-suffix                |
-   +------------------------------------------------------------------+------------------------------+----------------------------------+
-   | dhcp-ddns.replace-client-name                                    | dhcp-ddns                    | replace-client-name              |
    +------------------------------------------------------------------+------------------------------+----------------------------------+
    | expired-leases-processing.flush-reclaimed-timer-wait-time        | expired-leases-processing    | flush-reclaimed-timer-wait-time  |
    +------------------------------------------------------------------+------------------------------+----------------------------------+

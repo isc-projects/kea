@@ -117,9 +117,9 @@ const char* CONFIGS[] = {
         "    \"rapid-commit\": false"
         " } ],"
         "\"valid-lifetime\": 4000,"
-        " \"dhcp-ddns\" : {"
-        "     \"enable-updates\" : true, "
-        "     \"qualifying-suffix\" : \"example.com\" }"
+        " \"ddns-qualifying-suffix\": \"example.com\", "
+        " \"dhcp-ddns\": {"
+        "     \"enable-updates\": true }"
     "}",
 
     // Configuration 2

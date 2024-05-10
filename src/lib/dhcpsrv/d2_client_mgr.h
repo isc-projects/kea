@@ -108,9 +108,9 @@ public:
     /// @brief Determines server flags based on configuration and  client flags.
     ///
     /// This method uses input values for the client's FQDN S and N flags, in
-    /// conjunction with the configuration parameters updates-enabled, override-
-    /// no-updates, and override-client-updates to determine the values that
-    /// should be used for the server's FQDN S and N flags.
+    /// conjunction with the configuration parameters updates-enabled,
+    /// ddns-override-no-updates, and ddns-override-client-updates to determine
+    /// the values that should be used for the server's FQDN S and N flags.
     /// The logic in this method is based upon RFCs 4702 and 4704, and is
     /// shown in the following truth table:
     ///
@@ -158,12 +158,13 @@ public:
 
     /// @brief Builds a FQDN based on the configuration and given IP address.
     ///
-    /// Using the current values for generated-prefix, qualifying-suffix and
-    /// an IP address, this method constructs a fully qualified domain name.
+    /// Using the current values for ddns-generated-prefix,
+    /// ddns-qualifying-suffix and an IP address, this method constructs a fully
+    /// qualified domain name.
     /// It supports both IPv4 and IPv6 addresses.  The format of the name
     /// is as follows:
     ///
-    ///     <generated-prefix>-<ip address>.<qualifying-suffix>.
+    ///     <ddns-generated-prefix>-<ip address>.<ddns-qualifying-suffix>.
     ///
     /// <ip-address> is the result of IOAddress.toText() with the delimiters
     /// ('.' for IPv4 or ':' for IPv6) replaced with a hyphen, '-'.
@@ -180,10 +181,10 @@ public:
 
     /// @brief Adds a qualifying suffix to a given domain name
     ///
-    /// Constructs a FQDN based on the configured qualifying-suffix and
+    /// Constructs a FQDN based on the configured ddns-qualifying-suffix and
     /// a partial domain name as follows:
     ///
-    ///     <partial_name>.<qualifying-suffix>.
+    ///     <partial_name>.<ddns-qualifying-suffix>.
     ///
     /// Note that the qualifying suffix will only be appended if the
     /// input name does not already end with that suffix.
@@ -202,7 +203,7 @@ public:
 
     /// @brief Set server FQDN flags based on configuration and a given FQDN
     ///
-    /// Templated wrapper around the analyzeFqdn() allowing that method to
+    /// Template wrapper around the analyzeFqdn() allowing that method to
     /// be used for either IPv4 or IPv6 processing.  This methods resets all
     /// of the flags in the response to zero and then sets the S,N, and O
     /// flags.  Any other flags are the responsibility of the invoking layer.
@@ -218,7 +219,7 @@ public:
 
     /// @brief Get directional update flags based on server FQDN flags
     ///
-    /// Templated convenience method which determines whether forward and
+    /// Template convenience method which determines whether forward and
     /// reverse updates should be performed based on a server response version
     /// of the FQDN flags. The logic is straight forward and currently not
     /// dependent upon configuration specific values:
@@ -238,18 +239,18 @@ public:
 
     /// @brief Set server FQDN name based on configuration and a given FQDN
     ///
-    /// Templated method which adjusts the domain name value and type in
+    /// Template method which adjusts the domain name value and type in
     /// a server FQDN from a client (inbound) FQDN and the current
     /// configuration.  The logic is as follows:
     ///
-    /// If replace-client-name is true or the supplied name is empty, the
+    /// If ddns-replace-client-name is true or the supplied name is empty, the
     /// server FQDN is set to ""/PARTIAL.
     ///
-    /// If replace-client-name is false and the supplied name is a partial
+    /// If ddns-replace-client-name is false and the supplied name is a partial
     /// name the server FQDN is set to the supplied name qualified by
-    /// appending the qualifying-suffix.
+    /// appending the ddns-qualifying-suffix.
     ///
-    /// If replace-client-name is false and the supplied name is a fully
+    /// If ddns-replace-client-name is false and the supplied name is a fully
     /// qualified name, set the server FQDN to the supplied name.
     ///
     /// If hostname-char-set is not empty, the inbound name will be

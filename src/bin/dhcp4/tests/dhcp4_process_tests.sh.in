@@ -45,9 +45,9 @@ CONFIG="{
             \"subnet\": \"10.0.0.0/8\",
             \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ]
         } ],
+        \"ddns-qualifying-suffix\": \"\",
         \"dhcp-ddns\": {
-            \"enable-updates\": true,
-            \"qualifying-suffix\": \"\"
+            \"enable-updates\": true
         },
         \"loggers\": [
         {
@@ -198,9 +198,9 @@ INVALID_CONFIG_HOOKS_LOAD="{
             \"subnet\": \"10.0.0.0/8\",
             \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ]
         } ],
+        \"ddns-qualifying-suffix\": \"\",
         \"dhcp-ddns\": {
-            \"enable-updates\": true,
-            \"qualifying-suffix\": \"\"
+            \"enable-updates\": true
         },
         \"hooks-libraries\": [
         {
@@ -250,9 +250,9 @@ INVALID_CONFIG_HOOKS_CALLOUT_FAIL_ON_LOAD="{
             \"subnet\": \"10.0.0.0/8\",
             \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ]
         } ],
+        \"ddns-qualifying-suffix\": \"\",
         \"dhcp-ddns\": {
-            \"enable-updates\": true,
-            \"qualifying-suffix\": \"\"
+            \"enable-updates\": true
         },
         \"hooks-libraries\": [
         {
@@ -302,9 +302,9 @@ INVALID_CONFIG_HOOKS_CALLOUT_FAIL_ON_POLL="{
             \"subnet\": \"10.0.0.0/8\",
             \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ]
         } ],
+        \"ddns-qualifying-suffix\": \"\",
         \"dhcp-ddns\": {
-            \"enable-updates\": true,
-            \"qualifying-suffix\": \"\"
+            \"enable-updates\": true
         },
         \"hooks-libraries\": [
         {

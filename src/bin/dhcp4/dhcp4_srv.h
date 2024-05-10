@@ -928,15 +928,15 @@ private:
     /// configuration. A reserved hostname takes precedence over a hostname
     /// supplied by the client or auto generated hostname.
     ///
-    /// If the 'qualifying-suffix' parameter is specified, its value is used
+    /// If the 'ddns-qualifying-suffix' parameter is specified, its value is used
     /// to qualify a hostname. For example, if the host reservation contains
     /// a hostname 'marcin-laptop', and the qualifying suffix is
     /// 'example.isc.org', the hostname returned to the client will be
-    /// 'marcin-laptop.example.isc.org'. If the 'qualifying-suffix' is not
+    /// 'marcin-laptop.example.isc.org'. If the 'ddns-qualifying-suffix' is not
     /// specified (empty), the reserved hostname is returned to the client
     /// unqualified.
     ///
-    /// The 'qualifying-suffix' value is also used to qualify the hostname
+    /// The 'ddns-qualifying-suffix' value is also used to qualify the hostname
     /// supplied by the client, when this hostname is unqualified,
     /// e.g. 'laptop-x'. If the supplied hostname is qualified, e.g.
     /// 'laptop-x.example.org', the qualifying suffix will not be appended

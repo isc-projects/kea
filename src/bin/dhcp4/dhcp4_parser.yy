@@ -236,7 +236,6 @@ using namespace std;
 
   DHCP_DDNS "dhcp-ddns"
   ENABLE_UPDATES "enable-updates"
-  QUALIFYING_SUFFIX "qualifying-suffix"
   SERVER_IP "server-ip"
   SERVER_PORT "server-port"
   SENDER_IP "sender-ip"
@@ -244,10 +243,6 @@ using namespace std;
   MAX_QUEUE_SIZE "max-queue-size"
   NCR_PROTOCOL "ncr-protocol"
   NCR_FORMAT "ncr-format"
-  OVERRIDE_NO_UPDATE "override-no-update"
-  OVERRIDE_CLIENT_UPDATE "override-client-update"
-  REPLACE_CLIENT_NAME "replace-client-name"
-  GENERATED_PREFIX "generated-prefix"
   TCP "tcp"
   JSON "JSON"
   WHEN_PRESENT "when-present"
@@ -724,7 +719,7 @@ ddns_replace_client_name_value:
       $$ = ElementPtr(new StringElement("when-not-present", ctx.loc2pos(@1)));
       }
   | BOOLEAN {
-      error(@1, "boolean values for the replace-client-name are "
+      error(@1, "boolean values for the ddns-replace-client-name are "
                 "no longer supported");
       }
   ;
@@ -2665,13 +2660,6 @@ dhcp_ddns_param: enable_updates
                | max_queue_size
                | ncr_protocol
                | ncr_format
-               | dep_override_no_update
-               | dep_override_client_update
-               | dep_replace_client_name
-               | dep_generated_prefix
-               | dep_qualifying_suffix
-               | dep_hostname_char_set
-               | dep_hostname_char_replacement
                | user_context
                | comment
                | unknown_map_entry
@@ -2740,70 +2728,6 @@ ncr_format: NCR_FORMAT {
     ctx.stack_.back()->set("ncr-format", json);
     ctx.leave();
 };
-
-// Deprecated, moved to global/network scopes. Eventually it should be removed.
-dep_qualifying_suffix: QUALIFYING_SUFFIX {
-    ctx.unique("qualifying-suffix", ctx.loc2pos(@1));
-    ctx.enter(ctx.NO_KEYWORD);
-} COLON STRING {
-    ElementPtr s(new StringElement($4, ctx.loc2pos(@4)));
-    ctx.stack_.back()->set("qualifying-suffix", s);
-    ctx.leave();
-};
-
-// Deprecated, moved to global/network scopes. Eventually it should be removed.
-dep_override_no_update: OVERRIDE_NO_UPDATE COLON BOOLEAN {
-    ctx.unique("override-no-update", ctx.loc2pos(@1));
-    ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
-    ctx.stack_.back()->set("override-no-update", b);
-};
-
-// Deprecated, moved to global/network scopes. Eventually it should be removed.
-dep_override_client_update: OVERRIDE_CLIENT_UPDATE COLON BOOLEAN {
-    ctx.unique("override-client-update", ctx.loc2pos(@1));
-    ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
-    ctx.stack_.back()->set("override-client-update", b);
-};
-
-// Deprecated, moved to global/network scopes. Eventually it should be removed.
-dep_replace_client_name: REPLACE_CLIENT_NAME {
-    ctx.unique("replace-client-name", ctx.loc2pos(@1));
-    ctx.enter(ctx.REPLACE_CLIENT_NAME);
-} COLON ddns_replace_client_name_value {
-    ctx.stack_.back()->set("replace-client-name", $4);
-    ctx.leave();
-};
-
-// Deprecated, moved to global/network scopes. Eventually it should be removed.
-dep_generated_prefix: GENERATED_PREFIX {
-    ctx.unique("generated-prefix", ctx.loc2pos(@1));
-    ctx.enter(ctx.NO_KEYWORD);
-} COLON STRING {
-    ElementPtr s(new StringElement($4, ctx.loc2pos(@4)));
-    ctx.stack_.back()->set("generated-prefix", s);
-    ctx.leave();
-};
-
-// Deprecated, moved to global/network scopes. Eventually it should be removed.
-dep_hostname_char_set: HOSTNAME_CHAR_SET {
-    ctx.unique("hostname-char-set", ctx.loc2pos(@1));
-    ctx.enter(ctx.NO_KEYWORD);
-} COLON STRING {
-    ElementPtr s(new StringElement($4, ctx.loc2pos(@4)));
-    ctx.stack_.back()->set("hostname-char-set", s);
-    ctx.leave();
-};
-
-// Deprecated, moved to global/network scopes. Eventually it should be removed.
-dep_hostname_char_replacement: HOSTNAME_CHAR_REPLACEMENT {
-    ctx.unique("hostname-char-replacement", ctx.loc2pos(@1));
-    ctx.enter(ctx.NO_KEYWORD);
-} COLON STRING {
-    ElementPtr s(new StringElement($4, ctx.loc2pos(@4)));
-    ctx.stack_.back()->set("hostname-char-replacement", s);
-    ctx.leave();
-};
-
 
 // Config control information element
 

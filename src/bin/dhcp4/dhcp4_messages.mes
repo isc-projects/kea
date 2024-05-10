@@ -971,7 +971,7 @@ lease lookup when multi-threading is enabled overwriting configured value.
 This debug message is issued when the server found a hostname reservation
 for a client and uses this reservation in a hostname option sent back
 to this client. The reserved hostname is qualified with a value
-of 'qualifying-suffix' parameter, if this parameter is specified.
+of 'ddns-qualifying-suffix' parameter, if this parameter is specified.
 
 % DHCP4_RESPONSE_DATA %1: responding with packet %2 (type %3), packet details: %4
 A debug message including the detailed data about the packet being sent

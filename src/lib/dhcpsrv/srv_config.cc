@@ -964,56 +964,6 @@ SrvConfig::getDdnsParams(const Subnet6Ptr& subnet) const {
 }
 
 void
-SrvConfig::moveDdnsParams(isc::data::ElementPtr srv_elem) {
-    if (!srv_elem || (srv_elem->getType() != Element::map)) {
-        isc_throw(BadValue, "moveDdnsParams server config must be given a map element");
-    }
-
-    if (!srv_elem->contains("dhcp-ddns")) {
-        /* nothing to do */
-        return;
-    }
-
-    ElementPtr d2_elem = boost::const_pointer_cast<Element>(srv_elem->get("dhcp-ddns"));
-    if (!d2_elem || (d2_elem->getType() != Element::map)) {
-        isc_throw(BadValue, "moveDdnsParams dhcp-ddns is not a map");
-    }
-
-    struct Param {
-        std::string from_name;
-        std::string to_name;
-    };
-
-    std::vector<Param> params {
-        { "override-no-update", "ddns-override-no-update" },
-        { "override-client-update", "ddns-override-client-update" },
-        { "replace-client-name", "ddns-replace-client-name" },
-        { "generated-prefix", "ddns-generated-prefix" },
-        { "qualifying-suffix", "ddns-qualifying-suffix" },
-        { "hostname-char-set", "hostname-char-set" },
-        { "hostname-char-replacement", "hostname-char-replacement" }
-    };
-
-    for (auto const& param : params) {
-        if (d2_elem->contains(param.from_name)) {
-            if (!srv_elem->contains(param.to_name)) {
-                // No global value for it already, so let's add it.
-                srv_elem->set(param.to_name, d2_elem->get(param.from_name));
-                LOG_INFO(dhcpsrv_logger, DHCPSRV_CFGMGR_DDNS_PARAMETER_MOVED)
-                        .arg(param.from_name).arg(param.to_name);
-            } else {
-                // Already a global value, we'll use it and ignore this one.
-                LOG_INFO(dhcpsrv_logger, DHCPSRV_CFGMGR_DDNS_PARAMETER_IGNORED)
-                        .arg(param.from_name).arg(param.to_name);
-            }
-
-            // Now remove it from d2_data, so D2ClientCfg won't complain.
-            d2_elem->remove(param.from_name);
-        }
-    }
-}
-
-void
 SrvConfig::setIPReservationsUnique(const bool unique) {
     if (!getCfgDbAccess()->getIPReservationsUnique() && unique) {
         LOG_WARN(dhcpsrv_logger, DHCPSRV_CFGMGR_IP_RESERVATIONS_UNIQUE_DUPLICATES_POSSIBLE);

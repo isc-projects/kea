@@ -208,7 +208,6 @@ D2ClientConfig::toElement() const {
     result->set("ncr-protocol", Element::create(dhcp_ddns::ncrProtocolToString(ncr_protocol_)));
     // Set ncr-format
     result->set("ncr-format", Element::create(dhcp_ddns::ncrFormatToString(ncr_format_)));
-    // Set override-no-update
     return (result);
 }
 

@@ -207,20 +207,7 @@
             "server-ip": "::1",
 
             // Port number on which D2 listens for NCRs.
-            "server-port": 53001,
-
-            // The following parameters are DEPRECATED. They have been
-            // replaced with parameters that may be set at the global,
-            // shared-network, and subnet6 scopes. They are listed here
-            // as configuration parsing still accepts them. Eventually
-            // support for them will be removed.
-            "generated-prefix": "myhost",
-            "hostname-char-replacement": "x",
-            "hostname-char-set": "[^A-Za-z0-9.-]",
-            "override-client-update": false,
-            "override-no-update": false,
-            "qualifying-suffix": "",
-            "replace-client-name": "never"
+            "server-port": 53001
         },
 
         // Specifies the first of the two consecutive ports of the UDP

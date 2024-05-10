@@ -56,9 +56,9 @@ const char* CONFIGS[] = {
         "       }"
         "    ]"
         " }],"
+        "\"ddns-qualifying-suffix\": \"\","
         "\"dhcp-ddns\": {"
-            "\"enable-updates\": true,"
-            "\"qualifying-suffix\": \"\""
+            "\"enable-updates\": true"
         "}"
     "}",
     // 1
@@ -81,9 +81,9 @@ const char* CONFIGS[] = {
         "       }"
         "    ]"
         " }],"
+        "\"ddns-qualifying-suffix\": \"fake-suffix.isc.org.\","
         "\"dhcp-ddns\": {"
-            "\"enable-updates\": true,"
-            "\"qualifying-suffix\": \"fake-suffix.isc.org.\""
+            "\"enable-updates\": true"
         "}"
     "}",
     // 2
@@ -98,9 +98,9 @@ const char* CONFIGS[] = {
         "    \"id\": 1,"
         "    \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.10\" } ]"
         " }],"
+        "\"ddns-qualifying-suffix\": \"fake-suffix.isc.org.\","
         "\"dhcp-ddns\": {"
-            "\"enable-updates\": false,"
-            "\"qualifying-suffix\": \"fake-suffix.isc.org.\""
+            "\"enable-updates\": false"
         "}"
     "}",
     // 3
@@ -115,9 +115,9 @@ const char* CONFIGS[] = {
         "    \"id\": 1,"
         "    \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.10\" } ]"
         " }],"
+        "\"ddns-qualifying-suffix\": \"fake-suffix.isc.org.\","
         "\"dhcp-ddns\": {"
-            "\"enable-updates\": true,"
-            "\"qualifying-suffix\": \"fake-suffix.isc.org.\""
+            "\"enable-updates\": true"
         "}"
     "}",
     // 4
@@ -143,14 +143,14 @@ const char* CONFIGS[] = {
         "       }"
         "    ]"
         " }],"
+        "\"ddns-qualifying-suffix\": \"\","
         "\"dhcp-ddns\": {"
-            "\"enable-updates\": false,"
-            "\"qualifying-suffix\": \"\""
+            "\"enable-updates\": false"
         "}"
     "}",
     // 5
     // Configuration which disables DNS updates but contains a reservation
-    // for a hostname and the qualifying-suffix which should be appended to
+    // for a hostname and the ddns-qualifying-suffix which should be appended to
     // the reserved hostname in the Hostname option returned to a client.
     "{ \"interfaces-config\": {"
         "      \"interfaces\": [ \"*\" ]"
@@ -171,9 +171,9 @@ const char* CONFIGS[] = {
         "       }"
         "    ]"
         " }],"
+        "\"ddns-qualifying-suffix\": \"example.isc.org\","
         "\"dhcp-ddns\": {"
-            "\"enable-updates\": false,"
-            "\"qualifying-suffix\": \"example.isc.org\""
+            "\"enable-updates\": false"
         "}"
     "}",
     // 6
@@ -197,11 +197,11 @@ const char* CONFIGS[] = {
         "       }"
         "    ]"
         " }],"
+        "\"hostname-char-set\" : \"[^A-Za-z0-9.-]\","
+        "\"hostname-char-replacement\" : \"x\","
+        "\"ddns-qualifying-suffix\": \"example.com\","
         "\"dhcp-ddns\": {"
-            "\"enable-updates\": true,"
-            "\"hostname-char-set\" : \"[^A-Za-z0-9.-]\","
-            "\"hostname-char-replacement\" : \"x\","
-            "\"qualifying-suffix\": \"example.com\""
+            "\"enable-updates\": true"
         "}"
     "}",
     // 7
@@ -268,9 +268,9 @@ const char* CONFIGS[] = {
         "    \"id\": 1,"
         "    \"pools\": [ { \"pool\": \"192.0.2.10-192.0.2.10\" } ]"
         " }],"
+        "\"ddns-qualifying-suffix\": \"fake-suffix.isc.org.\","
         "\"dhcp-ddns\": {"
-            "\"enable-updates\": true,"
-            "\"qualifying-suffix\": \"fake-suffix.isc.org.\""
+            "\"enable-updates\": true"
         "}"
     "}",
     // 10
@@ -318,9 +318,9 @@ const char* CONFIGS[] = {
         "    \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.10\" } ],\n"
         "    \"offer-lifetime\": 45,\n"
         "} ],\n"
+        "\"ddns-qualifying-suffix\": \"example.com.\",\n"
         "\"dhcp-ddns\": {\n"
-            "\"enable-updates\": true,\n"
-            "\"qualifying-suffix\": \"example.com.\"\n"
+            "\"enable-updates\": true\n"
         "}\n"
     "}",
     // 12
@@ -337,9 +337,9 @@ const char* CONFIGS[] = {
         "    \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.10\" } ],\n"
         "    \"ddns-ttl-percent\": .25\n"
         "} ],\n"
+        "\"ddns-qualifying-suffix\": \"example.com.\",\n"
         "\"dhcp-ddns\": {\n"
-            "\"enable-updates\": true,\n"
-            "\"qualifying-suffix\": \"example.com.\"\n"
+            "\"enable-updates\": true\n"
         "}\n"
     "}"
 };
@@ -644,11 +644,11 @@ public:
     }
 
     // Test that the server's processes the hostname (or lack thereof)
-    // in a client request correctly, according to the replace-client-name
+    // in a client request correctly, according to the ddns-replace-client-name
     // mode configuration parameter.  We include hostname sanitizer to ensure
     // it does not interfere with name replacement.
     //
-    // @param mode - value to use for replace-client-name
+    // @param mode - value to use for ddns-replace-client-name
     // @param client_name_flag - specifies whether or not the client request
     // should contain a hostname option
     // @param exp_replacement_flag - specifies whether or not the server is
@@ -667,12 +667,12 @@ public:
             "    \"id\": 1,"
             "    \"pools\": [ { \"pool\": \"192.0.2.10-192.0.2.10\" } ]"
             " }],"
+            "\"ddns-replace-client-name\": \"%s\","
+            "\"ddns-qualifying-suffix\": \"fake-suffix.isc.org.\","
+            "\"hostname-char-set\": \"[^A-Za-z0-9.-]\","
+            "\"hostname-char-replacement\": \"x\","
             "\"dhcp-ddns\": {"
-            "  \"enable-updates\": true,"
-            "  \"qualifying-suffix\": \"fake-suffix.isc.org.\","
-            "  \"hostname-char-set\": \"[^A-Za-z0-9.-]\","
-            "  \"hostname-char-replacement\": \"x\","
-            "  \"replace-client-name\": \"%s\""
+            "  \"enable-updates\": true"
             "}}";
 
         // Create the configuration and configure the server
@@ -960,7 +960,7 @@ TEST_F(NameDhcpv4SrvTest, respectNoUpdate) {
 
 // Tests the following scenario:
 //  - Updates are enabled
-//  - override-no-update is on
+//  - ddns-override-no-update is on
 //  - Client requests no updates  (N = 1, S = 0)
 //
 // Server should override "no update" request and perform updates:
@@ -992,14 +992,14 @@ TEST_F(NameDhcpv4SrvTest, respectClientDelegation) {
 
 // Tests the following scenario:
 //  - Updates are enabled
-//  - override-client-update is on.
+//  - ddns-override-client-update is on.
 //  - Client requests delegation  (N = 0, S = 0)
 //
 // Server should override client's delegation request and do updates:
 // - Response flags should be  N = 0, S = 1, O = 1
 // - Should queue an NCR
 TEST_F(NameDhcpv4SrvTest, overrideClientDelegation) {
-    // Turn on override-client-update.
+    // Turn on ddns-override-client-update.
     enableD2(OVERRIDE_CLIENT_UPDATE);
 
     flagVsConfigScenario(Option4ClientFqdn::FLAG_E,
@@ -1966,7 +1966,7 @@ TEST_F(NameDhcpv4SrvTest, hostnameReservationPRL) {
 }
 
 // This test verifies that the server sends the Hostname option to the client
-// with partial hostname reservation and with the global qualifying-suffix set.
+// with partial hostname reservation and with the global ddns-qualifying-suffix set.
 TEST_F(NameDhcpv4SrvTest, hostnameReservationNoDNSQualifyingSuffix) {
     Dhcp4Client client(Dhcp4Client::SELECTING);
     // Use HW address that matches the reservation entry in the configuration.
@@ -2092,7 +2092,7 @@ TEST_F(NameDhcpv4SrvTest, emptyFqdn) {
     EXPECT_EQ(expected_fqdn, lease->hostname_);
 }
 
-// Verifies that the replace-client-name behavior is correct for each of
+// Verifies that the ddns-replace-client-name behavior is correct for each of
 // the supported modes.
 TEST_F(NameDhcpv4SrvTest, replaceClientNameModeTest) {
 
