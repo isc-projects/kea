@@ -204,8 +204,8 @@ TEST_F(SimpleParser6Test, subnetDefaults6) {
     ConstElementPtr subnet = subnets->get(0);
     ASSERT_TRUE(subnet);
 
-    // we should have "id" parameter with the default value of 0 added for us.
-    checkIntegerValue(subnet, "id", 0);
+    // no "id" where added.
+    ASSERT_FALSE(subnet->get("id"));
 }
 
 // This test checks if the parameters in option-data are assigned default values

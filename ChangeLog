@@ -1,3 +1,9 @@
+2232.	[func]*		fdupont
+	Configurations which contain subnets without explicit
+	subnet identifiers (without "id" entry) are now rejected:
+	subnet identifiers are no longer auto-generated.
+	(Gitlab #2961)
+
 2231.	[func]		fdupont
 	The "ip-address" parameter in the "relay" element
 	is no longer supported: it was replaced by

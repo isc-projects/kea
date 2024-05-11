@@ -54,7 +54,6 @@ extern const isc::log::MessageID DHCPSRV_CFGMGR_USE_ADDRESS = "DHCPSRV_CFGMGR_US
 extern const isc::log::MessageID DHCPSRV_CFGMGR_USE_ALLOCATOR = "DHCPSRV_CFGMGR_USE_ALLOCATOR";
 extern const isc::log::MessageID DHCPSRV_CFGMGR_USE_UNICAST = "DHCPSRV_CFGMGR_USE_UNICAST";
 extern const isc::log::MessageID DHCPSRV_CLOSE_DB = "DHCPSRV_CLOSE_DB";
-extern const isc::log::MessageID DHCPSRV_CONFIGURED_SUBNET_WITHOUT_ID = "DHCPSRV_CONFIGURED_SUBNET_WITHOUT_ID";
 extern const isc::log::MessageID DHCPSRV_DDNS_TTL_PERCENT_TOO_SMALL = "DHCPSRV_DDNS_TTL_PERCENT_TOO_SMALL";
 extern const isc::log::MessageID DHCPSRV_DEPRECATED = "DHCPSRV_DEPRECATED";
 extern const isc::log::MessageID DHCPSRV_DHCP4O6_RECEIVED_BAD_PACKET = "DHCPSRV_DHCP4O6_RECEIVED_BAD_PACKET";
@@ -340,7 +339,6 @@ const char* values[] = {
     "DHCPSRV_CFGMGR_USE_ALLOCATOR", "using the %1 allocator for %2 leases in subnet %3",
     "DHCPSRV_CFGMGR_USE_UNICAST", "listening on unicast address %1, on interface %2",
     "DHCPSRV_CLOSE_DB", "closing currently open %1 database",
-    "DHCPSRV_CONFIGURED_SUBNET_WITHOUT_ID", "a subnet was configured without an id: %1",
     "DHCPSRV_DDNS_TTL_PERCENT_TOO_SMALL", "ddns-ttl-percent %1 of lease lifetime %2 is too small, ignoring it",
     "DHCPSRV_DEPRECATED", "This configuration is using a deprecated feature: %1",
     "DHCPSRV_DHCP4O6_RECEIVED_BAD_PACKET", "received bad DHCPv4o6 packet: %1",
