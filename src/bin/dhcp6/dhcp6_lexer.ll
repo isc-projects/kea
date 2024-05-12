@@ -1908,15 +1908,6 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     }
 }
 
-\"ip-address\" {
-    switch(driver.ctx_) {
-    case isc::dhcp::Parser6Context::RELAY:
-        return isc::dhcp::Dhcp6Parser::make_IP_ADDRESS(driver.loc_);
-    default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("ip-address", driver.loc_);
-    }
-}
-
 \"hooks-libraries\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP6:

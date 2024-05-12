@@ -195,6 +195,7 @@ using namespace std;
   POOL_ID "pool-id"
 
   RESERVATIONS "reservations"
+  IP_ADDRESS "ip-address"
   DUID "duid"
   HW_ADDRESS "hw-address"
   CIRCUIT_ID "circuit-id"
@@ -203,7 +204,6 @@ using namespace std;
   FLEX_ID "flex-id"
 
   RELAY "relay"
-  IP_ADDRESS "ip-address"
   IP_ADDRESSES "ip-addresses"
 
   HOOKS_LIBRARIES "hooks-libraries"
@@ -2333,17 +2333,6 @@ ip_address: IP_ADDRESS {
     ctx.leave();
 };
 
-ip_addresses: IP_ADDRESSES {
-    ctx.unique("ip-addresses", ctx.loc2pos(@1));
-    ElementPtr l(new ListElement(ctx.loc2pos(@1)));
-    ctx.stack_.back()->set("ip-addresses", l);
-    ctx.stack_.push_back(l);
-    ctx.enter(ctx.NO_KEYWORD);
-} COLON list_strings {
-    ctx.stack_.pop_back();
-    ctx.leave();
-};
-
 duid: DUID {
     ctx.unique("duid", ctx.loc2pos(@1));
     ctx.enter(ctx.NO_KEYWORD);
@@ -2423,9 +2412,19 @@ relay: RELAY {
     ctx.leave();
 };
 
-relay_map: ip_address
-         | ip_addresses
+relay_map: ip_addresses
          ;
+
+ip_addresses: IP_ADDRESSES {
+    ctx.unique("ip-addresses", ctx.loc2pos(@1));
+    ElementPtr l(new ListElement(ctx.loc2pos(@1)));
+    ctx.stack_.back()->set("ip-addresses", l);
+    ctx.stack_.push_back(l);
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON list_strings {
+    ctx.stack_.pop_back();
+    ctx.leave();
+};
 
 // --- end of relay definitions ------------------------------
 

@@ -200,7 +200,6 @@ using namespace std;
   FLEX_ID "flex-id"
 
   RELAY "relay"
-  IP_ADDRESS "ip-address"
 
   HOOKS_LIBRARIES "hooks-libraries"
   LIBRARY "library"
@@ -2480,18 +2479,8 @@ relay: RELAY {
     ctx.leave();
 };
 
-relay_map: ip_address
-         | ip_addresses
+relay_map: ip_addresses
          ;
-
-ip_address: IP_ADDRESS {
-    ctx.unique("ip-address", ctx.loc2pos(@1));
-    ctx.enter(ctx.NO_KEYWORD);
-} COLON STRING {
-    ElementPtr addr(new StringElement($4, ctx.loc2pos(@4)));
-    ctx.stack_.back()->set("ip-address", addr);
-    ctx.leave();
-};
 
 // --- end of relay definitions ------------------------------
 

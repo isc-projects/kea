@@ -1566,7 +1566,6 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
 
 \"ip-address\" {
     switch(driver.ctx_) {
-    case isc::dhcp::Parser4Context::RELAY:
     case isc::dhcp::Parser4Context::RESERVATIONS:
     return isc::dhcp::Dhcp4Parser::make_IP_ADDRESS(driver.loc_);
     default:
