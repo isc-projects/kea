@@ -636,14 +636,14 @@ namespace isc { namespace dhcp {
     TOKEN_CLIENT_CLASS = 391,      // "client-class"
     TOKEN_POOL_ID = 392,           // "pool-id"
     TOKEN_RESERVATIONS = 393,      // "reservations"
-    TOKEN_DUID = 394,              // "duid"
-    TOKEN_HW_ADDRESS = 395,        // "hw-address"
-    TOKEN_CIRCUIT_ID = 396,        // "circuit-id"
-    TOKEN_CLIENT_ID = 397,         // "client-id"
-    TOKEN_HOSTNAME = 398,          // "hostname"
-    TOKEN_FLEX_ID = 399,           // "flex-id"
-    TOKEN_RELAY = 400,             // "relay"
-    TOKEN_IP_ADDRESS = 401,        // "ip-address"
+    TOKEN_IP_ADDRESS = 394,        // "ip-address"
+    TOKEN_DUID = 395,              // "duid"
+    TOKEN_HW_ADDRESS = 396,        // "hw-address"
+    TOKEN_CIRCUIT_ID = 397,        // "circuit-id"
+    TOKEN_CLIENT_ID = 398,         // "client-id"
+    TOKEN_HOSTNAME = 399,          // "hostname"
+    TOKEN_FLEX_ID = 400,           // "flex-id"
+    TOKEN_RELAY = 401,             // "relay"
     TOKEN_IP_ADDRESSES = 402,      // "ip-addresses"
     TOKEN_HOOKS_LIBRARIES = 403,   // "hooks-libraries"
     TOKEN_LIBRARY = 404,           // "library"
@@ -880,14 +880,14 @@ namespace isc { namespace dhcp {
         S_CLIENT_CLASS = 136,                    // "client-class"
         S_POOL_ID = 137,                         // "pool-id"
         S_RESERVATIONS = 138,                    // "reservations"
-        S_DUID = 139,                            // "duid"
-        S_HW_ADDRESS = 140,                      // "hw-address"
-        S_CIRCUIT_ID = 141,                      // "circuit-id"
-        S_CLIENT_ID = 142,                       // "client-id"
-        S_HOSTNAME = 143,                        // "hostname"
-        S_FLEX_ID = 144,                         // "flex-id"
-        S_RELAY = 145,                           // "relay"
-        S_IP_ADDRESS = 146,                      // "ip-address"
+        S_IP_ADDRESS = 139,                      // "ip-address"
+        S_DUID = 140,                            // "duid"
+        S_HW_ADDRESS = 141,                      // "hw-address"
+        S_CIRCUIT_ID = 142,                      // "circuit-id"
+        S_CLIENT_ID = 143,                       // "client-id"
+        S_HOSTNAME = 144,                        // "hostname"
+        S_FLEX_ID = 145,                         // "flex-id"
+        S_RELAY = 146,                           // "relay"
         S_IP_ADDRESSES = 147,                    // "ip-addresses"
         S_HOOKS_LIBRARIES = 148,                 // "hooks-libraries"
         S_LIBRARY = 149,                         // "library"
@@ -1286,25 +1286,25 @@ namespace isc { namespace dhcp {
         S_542_94 = 542,                          // $@94
         S_ip_address = 543,                      // ip_address
         S_544_95 = 544,                          // $@95
-        S_ip_addresses = 545,                    // ip_addresses
+        S_duid = 545,                            // duid
         S_546_96 = 546,                          // $@96
-        S_duid = 547,                            // duid
+        S_hw_address = 547,                      // hw_address
         S_548_97 = 548,                          // $@97
-        S_hw_address = 549,                      // hw_address
+        S_client_id_value = 549,                 // client_id_value
         S_550_98 = 550,                          // $@98
-        S_client_id_value = 551,                 // client_id_value
+        S_circuit_id_value = 551,                // circuit_id_value
         S_552_99 = 552,                          // $@99
-        S_circuit_id_value = 553,                // circuit_id_value
+        S_flex_id_value = 553,                   // flex_id_value
         S_554_100 = 554,                         // $@100
-        S_flex_id_value = 555,                   // flex_id_value
+        S_hostname = 555,                        // hostname
         S_556_101 = 556,                         // $@101
-        S_hostname = 557,                        // hostname
+        S_reservation_client_classes = 557,      // reservation_client_classes
         S_558_102 = 558,                         // $@102
-        S_reservation_client_classes = 559,      // reservation_client_classes
+        S_relay = 559,                           // relay
         S_560_103 = 560,                         // $@103
-        S_relay = 561,                           // relay
-        S_562_104 = 562,                         // $@104
-        S_relay_map = 563,                       // relay_map
+        S_relay_map = 561,                       // relay_map
+        S_ip_addresses = 562,                    // ip_addresses
+        S_563_104 = 563,                         // $@104
         S_client_classes = 564,                  // client_classes
         S_565_105 = 565,                         // $@105
         S_client_classes_list = 566,             // client_classes_list
@@ -3906,6 +3906,21 @@ switch (yykind)
 #if 201103L <= YY_CPLUSPLUS
       static
       symbol_type
+      make_IP_ADDRESS (location_type l)
+      {
+        return symbol_type (token::TOKEN_IP_ADDRESS, std::move (l));
+      }
+#else
+      static
+      symbol_type
+      make_IP_ADDRESS (const location_type& l)
+      {
+        return symbol_type (token::TOKEN_IP_ADDRESS, l);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
       make_DUID (location_type l)
       {
         return symbol_type (token::TOKEN_DUID, std::move (l));
@@ -4006,21 +4021,6 @@ switch (yykind)
       make_RELAY (const location_type& l)
       {
         return symbol_type (token::TOKEN_RELAY, l);
-      }
-#endif
-#if 201103L <= YY_CPLUSPLUS
-      static
-      symbol_type
-      make_IP_ADDRESS (location_type l)
-      {
-        return symbol_type (token::TOKEN_IP_ADDRESS, std::move (l));
-      }
-#else
-      static
-      symbol_type
-      make_IP_ADDRESS (const location_type& l)
-      {
-        return symbol_type (token::TOKEN_IP_ADDRESS, l);
       }
 #endif
 #if 201103L <= YY_CPLUSPLUS
@@ -5538,7 +5538,7 @@ switch (yykind)
     /// Constants.
     enum
     {
-      yylast_ = 1356,     ///< Last index in yytable_.
+      yylast_ = 1548,     ///< Last index in yytable_.
       yynnts_ = 443,  ///< Number of nonterminal symbols.
       yyfinal_ = 28 ///< Termination state number.
     };
