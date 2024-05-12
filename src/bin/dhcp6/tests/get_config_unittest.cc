@@ -972,7 +972,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "                    }\n"
 "                ],\n"
 "                \"relay\": {\n"
-"                    \"ip-address\": \"2001:db8:1::abcd\"\n"
+"                    \"ip-addresses\": [ \"2001:db8:1::abcd\" ]\n"
 "                },\n"
 "                \"subnet\": \"2001:db8:1::/64\"\n"
 "            }\n"

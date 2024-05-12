@@ -2591,7 +2591,7 @@ TEST_F(ParseConfigTest, validRelayInfo4) {
     // Relay information structure. Very simple for now.
     std::string config_str =
         "    {"
-        "     \"ip-address\" : \"192.0.2.1\""
+        "     \"ip-addresses\" : [ \"192.0.2.1\" ]"
         "    }";
     ElementPtr json = Element::fromJSON(config_str);
 
@@ -2610,14 +2610,14 @@ TEST_F(ParseConfigTest, bogusRelayInfo4) {
     // Invalid config (wrong family type of the ip-address field)
     std::string config_str_bogus1 =
         "    {"
-        "     \"ip-address\" : \"2001:db8::1\""
+        "     \"ip-addresses\" : [ \"2001:db8::1\" ]"
         "    }";
     ElementPtr json_bogus1 = Element::fromJSON(config_str_bogus1);
 
     // Invalid config (that thing is not an IPv4 address)
     std::string config_str_bogus2 =
         "    {"
-        "     \"ip-address\" : \"256.345.123.456\""
+        "     \"ip-addresses\" : [ \"256.345.123.456\" ]"
         "    }";
     ElementPtr json_bogus2 = Element::fromJSON(config_str_bogus2);
 
@@ -2648,7 +2648,7 @@ TEST_F(ParseConfigTest, validRelayInfo6) {
     // Relay information structure. Very simple for now.
     std::string config_str =
         "    {"
-        "     \"ip-address\" : \"2001:db8::1\""
+        "     \"ip-addresses\" : [ \"2001:db8::1\" ]"
         "    }";
     ElementPtr json = Element::fromJSON(config_str);
 
@@ -2667,14 +2667,14 @@ TEST_F(ParseConfigTest, bogusRelayInfo6) {
     // Invalid config (wrong family type of the ip-address field
     std::string config_str_bogus1 =
         "    {"
-        "     \"ip-address\" : \"192.0.2.1\""
+        "     \"ip-addresses\" : [ \"192.0.2.1\" ]"
         "    }";
     ElementPtr json_bogus1 = Element::fromJSON(config_str_bogus1);
 
     // That IPv6 address doesn't look right
     std::string config_str_bogus2 =
         "    {"
-        "     \"ip-address\" : \"2001:db8:::4\""
+        "     \"ip-addresses\" : [ \"2001:db8:::4\" ]"
         "    }";
     ElementPtr json_bogus2 = Element::fromJSON(config_str_bogus2);
 

@@ -153,7 +153,7 @@
         // makes sense. One case is when the relay has only link-local address
         // and another is when there is a shared subnet scenario.
         "relay": {
-            "ip-address": "3000::1"
+            "ip-addresses": [ "3000::1" ]
         }
     }
     ],

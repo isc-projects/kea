@@ -164,7 +164,7 @@
             // valid cases when it makes sense. One case is when there
             // is a shared subnet.
             "relay": {
-                "ip-address": "192.168.1.1"
+                "ip-addresses": [ "192.168.1.1" ]
             }
         },
         {

@@ -1,3 +1,9 @@
+2231.	[func]		fdupont
+	The "ip-address" parameter in the "relay" element
+	is no longer supported: it was replaced by
+	"ip-addresses" taking a list of addresses in Kea 1.4.
+	(Gitlab #3378)
+
 2230.	[func]		tmark
 	Both kea-dhcp4 and kea-dhcp6 will now emit a INFO
 	level log statement for each packet received and

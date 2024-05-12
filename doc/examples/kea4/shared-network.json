@@ -59,7 +59,7 @@
             // It would be better to skip the relay scope altogether, but
             // it was left here for demonstration purposes.
             "relay": {
-                "ip-address": "0.0.0.0"
+                "ip-addresses": [ "0.0.0.0" ]
             },
 
             // Timer values can be overridden here.
@@ -99,7 +99,7 @@
                     // here if your relay uses different IP addresses for
                     // each subnet.
                     "relay": {
-                        "ip-address": "0.0.0.0"
+                        "ip-addresses": [ "0.0.0.0" ]
                     },
                     "renew-timer": 10,
                     // "reservation-mode": "all",

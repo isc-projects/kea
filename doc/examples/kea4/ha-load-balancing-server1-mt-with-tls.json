@@ -245,7 +245,7 @@
 
             // This subnet will be selected for queries coming from the following
             // IP address.
-            "relay": { "ip-address": "192.168.56.1" }
+            "relay": { "ip-addresses": [ "192.168.56.1" ] }
         }
     ],
 

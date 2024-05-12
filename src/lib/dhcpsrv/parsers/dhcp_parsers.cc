@@ -275,29 +275,13 @@ RelayInfoParser::parse(const isc::dhcp::Network::RelayInfoPtr& relay_info,
         isc_throw(DhcpConfigError, "relay must be a map");
     }
 
-    ConstElementPtr address = relay_elem->get("ip-address");
     ConstElementPtr addresses = relay_elem->get("ip-addresses");
-
-    if (address && addresses) {
-        isc_throw(DhcpConfigError,
-            "specify either ip-address or ip-addresses, not both");
-    }
-
-    if (!address && !addresses) {
+    if (!addresses) {
         isc_throw(DhcpConfigError, "ip-addresses is required");
     }
 
     // Create our resultant RelayInfo structure
     *relay_info = isc::dhcp::Network::RelayInfo();
-
-    if (address) {
-        addAddress("ip-address", getString(relay_elem, "ip-address"),
-                   relay_elem, relay_info);
-        LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-                  DHCPSRV_CFGMGR_RELAY_IP_ADDRESS_DEPRECATED)
-                  .arg(getPosition("ip-address", relay_elem));
-        return;
-    }
 
     if (addresses->getType() != Element::list) {
         isc_throw(DhcpConfigError, "ip-addresses must be a list "

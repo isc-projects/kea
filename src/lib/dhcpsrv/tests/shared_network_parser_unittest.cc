@@ -384,24 +384,6 @@ TEST_F(SharedNetwork4ParserTest, relayInfoTests) {
     // Create the vector of test scenarios.
     std::vector<RelayTest> tests = {
         {
-            "valid ip-address #1",
-            "{ \"ip-address\": \"192.168.2.1\" }",
-            true,
-            { asiolink::IOAddress("192.168.2.1") }
-        },
-        {
-            "invalid ip-address #1",
-            "{ \"ip-address\": \"not an address\" }",
-            false,
-            { }
-        },
-        {
-            "invalid ip-address #2",
-            "{ \"ip-address\": \"2001:db8::1\" }",
-            false,
-            { }
-        },
-        {
             "valid ip-addresses #1",
             "{ \"ip-addresses\": [ ] }",
             true,
@@ -432,16 +414,7 @@ TEST_F(SharedNetwork4ParserTest, relayInfoTests) {
             { }
         },
         {
-            "invalid both ip-address and ip-addresses",
-            "{"
-            " \"ip-address\": \"192.168.2.1\", "
-            " \"ip-addresses\": [ \"192.168.2.1\", \"192.168.2.2\" ]"
-            " }",
-            false,
-            { }
-        },
-        {
-            "invalid neither ip-address nor ip-addresses",
+            "invalid no ip-addresses",
             "{}",
             false,
             { }
@@ -961,24 +934,6 @@ TEST_F(SharedNetwork6ParserTest, relayInfoTests) {
     // Create the vector of test scenarios.
     std::vector<RelayTest> tests = {
         {
-            "valid ip-address #1",
-            "{ \"ip-address\": \"2001:db8::1\" }",
-            true,
-            { asiolink::IOAddress("2001:db8::1") }
-        },
-        {
-            "invalid ip-address #1",
-            "{ \"ip-address\": \"not an address\" }",
-            false,
-            { }
-        },
-        {
-            "invalid ip-address #2",
-            "{ \"ip-address\": \"192.168.2.1\" }",
-            false,
-            { }
-        },
-        {
             "valid ip-addresses #1",
             "{ \"ip-addresses\": [ ] }",
             true,
@@ -1009,16 +964,7 @@ TEST_F(SharedNetwork6ParserTest, relayInfoTests) {
             { }
         },
         {
-            "invalid both ip-address and ip-addresses",
-            "{"
-            " \"ip-address\": \"2001:db8::1\", "
-            " \"ip-addresses\": [ \"2001:db8::1\", \"2001:db8::2\" ]"
-            " }",
-            false,
-            { }
-        },
-        {
-            "invalid neither ip-address nor ip-addresses",
+            "invalid no ip-addresses",
             "{}",
             false,
             { }

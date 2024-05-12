@@ -67,7 +67,7 @@
             "rapid-commit": true,
             "rebind-timer": 150,
             "relay": {
-                "ip-address": "2001:db8::1"
+                "ip-addresses": [ "2001:db8::1" ]
             },
             "renew-timer": 100,
 
@@ -99,7 +99,7 @@
                     "rebind-timer": 20,
                     // It is possible to override some values here.
                     "relay": {
-                        "ip-address": "2001:db8:1::123"
+                        "ip-addresses": [ "2001:db8:1::123" ]
                     },
                     "renew-timer": 10,
                     // "reservation-mode": "all",
@@ -127,7 +127,7 @@
                     "rapid-commit": false,
                     "rebind-timer": 20,
                     "relay": {
-                        "ip-address": "3000::1"
+                        "ip-addresses": [ "3000::1" ]
                     },
                     "renew-timer": 10,
                     // "reservation-mode": "all",

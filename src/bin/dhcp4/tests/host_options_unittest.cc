@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -95,7 +95,7 @@ const char* HOST_CONFIGS[] = {
         "\"subnet4\": [ { "
         "    \"subnet\": \"10.0.0.0/24\", "
         "    \"id\": 1,"
-        "    \"relay\": { \"ip-address\": \"10.0.0.233\" },"
+        "    \"relay\": { \"ip-addresses\": [ \"10.0.0.233\" ] },"
         "    \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ],"
         "    \"option-data\": [ {"
         "        \"name\": \"routers\","
@@ -137,7 +137,7 @@ const char* HOST_CONFIGS[] = {
         "\"subnet4\": [ { "
         "    \"subnet\": \"10.0.0.0/24\", "
         "    \"id\": 1,"
-        "    \"relay\": { \"ip-address\": \"10.0.0.233\" },"
+        "    \"relay\": { \"ip-addresses\": [ \"10.0.0.233\" ] },"
         "    \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ],"
         "    \"option-data\": [ {"
         "        \"name\": \"routers\","
@@ -179,7 +179,7 @@ const char* HOST_CONFIGS[] = {
         "\"subnet4\": [ { "
         "    \"subnet\": \"10.0.0.0/24\", "
         "    \"id\": 1,"
-        "    \"relay\": { \"ip-address\": \"10.0.0.233\" },"
+        "    \"relay\": { \"ip-addresses\": [ \"10.0.0.233\" ] },"
         "    \"reservations\": [ "
         "    {"
         "        \"hw-address\": \"aa:bb:cc:dd:ee:ff\","
@@ -213,7 +213,7 @@ const char* HOST_CONFIGS[] = {
         "\"subnet4\": [ { "
         "    \"subnet\": \"10.0.0.0/24\", "
         "    \"id\": 1,"
-        "    \"relay\": { \"ip-address\": \"10.0.0.233\" },"
+        "    \"relay\": { \"ip-addresses\": [ \"10.0.0.233\" ] },"
         "    \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ],"
         "    \"reservations\": [ "
         "    {"

@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -1339,7 +1339,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "                ],\n"
 "                \"rebind-timer\": 2,\n"
 "                \"relay\": {\n"
-"                    \"ip-address\": \"192.0.2.123\"\n"
+"                    \"ip-addresses\": [ \"192.0.2.123\" ]\n"
 "                },\n"
 "                \"renew-timer\": 1,\n"
 "                \"subnet\": \"192.0.2.0/24\",\n"
