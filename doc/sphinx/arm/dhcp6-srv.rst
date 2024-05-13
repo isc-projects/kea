@@ -5039,10 +5039,6 @@ following can be used:
        "valid-lifetime": 600,
        "subnet4": [ {
            "subnet": "2001:db8:1::/64",
-           # It is replaced by the "reservations-global",
-           # "reservations-in-subnet", and "reservations-out-of-pool"
-           # parameters.
-           # "reservation-mode": "global",
            # Specify if the server should look up global reservations.
            "reservations-global": true,
            # Specify if the server should look up in-subnet reservations.
@@ -7775,8 +7771,6 @@ at which it is currently supported.
    | renew-timer                 | yes                        | n/a       | yes       | yes       | n/a       | n/a        |
    +-----------------------------+----------------------------+-----------+-----------+-----------+-----------+------------+
    | require-client-classes      | n/a                        | n/a       | yes       | yes       | yes       | yes        |
-   +-----------------------------+----------------------------+-----------+-----------+-----------+-----------+------------+
-   | reservation-mode            | yes                        | n/a       | yes       | yes       | n/a       | n/a        |
    +-----------------------------+----------------------------+-----------+-----------+-----------+-----------+------------+
    | reservations-global         | yes                        | n/a       | yes       | yes       | n/a       | n/a        |
    +-----------------------------+----------------------------+-----------+-----------+-----------+-----------+------------+

@@ -61,7 +61,6 @@ namespace yang {
 ///     <user-context>,
 ///     <comment>,
 ///     "sanity-checks": { <sanity checks> },
-///     "reservation-mode": <host reservation mode>,
 ///     "reservations": [ <list of host reservations> ],
 ///     <config-control>,
 ///     "server-tag": <server tag>,
@@ -105,7 +104,6 @@ namespace yang {
 /// +--rw authoritative?                    boolean
 /// +--rw user-context?                     user-context
 /// +--rw sanity-checks
-/// +--rw reservation-mode?                 host-reservation-mode
 /// +--rw host* [identifier-type identifier]
 /// +--rw config-control
 /// +--rw server-tag?                       string
@@ -122,6 +120,7 @@ namespace yang {
 /// +--rw ddns-send-updates?                boolean
 /// +--rw ddns-update-on-renew?             boolean
 /// +--rw ddns-use-conflict-resolution?     boolean
+/// +--rw ddns-conflict-resolution-mode?    conflict-resolution-mode
 /// +--rw ip-reservations-unique?           boolean
 /// +--rw early-global-reservations-lookup? boolean
 /// +--rw reservations-lookup-first?        boolean
@@ -227,7 +226,6 @@ namespace yang {
 ///     <user-context>,
 ///     <comment>
 ///     "sanity-checks": { <sanity checks> },
-///     "reservation-mode": <host reservation mode>,
 ///     "reservations": [ <list of host reservations> ],
 ///     <config-control>,
 ///     "server-tag": <server tag>,
@@ -272,7 +270,6 @@ namespace yang {
 /// +--rw dhcp-ddns
 /// +--rw user-context?                     user-context
 /// +--rw sanity-checks
-/// +--rw reservation-mode?                 host-reservation-mode
 /// +--rw host* [identifier-type identifier]
 /// +--rw config-control
 /// +--rw server-tag?                       string
@@ -289,6 +286,7 @@ namespace yang {
 /// +--rw ddns-send-updates?                boolean
 /// +--rw ddns-update-on-renew?             boolean
 /// +--rw ddns-use-conflict-resolution?     boolean
+/// +--rw ddns-conflict-resolution-mode?    conflict-resolution-mode
 /// +--rw ip-reservations-unique?           boolean
 /// +--rw early-global-reservations-lookup? boolean
 /// +--rw reservations-lookup-first?        boolean

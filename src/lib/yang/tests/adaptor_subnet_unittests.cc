@@ -173,42 +173,4 @@ TEST(AdaptorSubnetTest, updateRelayEmptyAddresses) {
     EXPECT_FALSE(json->get("relay"));
 }
 
-// Verifies how updateRelay handles a subnet entry with relay which
-// has addresses: no change.
-TEST(AdaptorSubnetTest, updateRelayAddresses) {
-    string config = "{\n"
-        " \"subnet\": \"192.0.2.0/24\",\n"
-        " \"relay\": {\n"
-        "     \"ip-addresses\": [ \"192.168.1.1\" ]\n"
-        " }\n"
-        "}";
-    ElementPtr json;
-    ASSERT_NO_THROW_LOG(json = Element::fromJSON(config));
-    ConstElementPtr copied = copy(json);
-    ASSERT_NO_THROW_LOG(AdaptorSubnet::updateRelay(json));
-    EXPECT_TRUE(copied->equals(*json));
-}
-
-// Verifies how updateRelay handles a subnet entry with relay which
-// has only address: the address is moved to a new list.
-TEST(AdaptorSubnetTest, updateRelayAddress) {
-    string config = "{\n"
-        " \"subnet\": \"192.0.2.0/24\",\n"
-        " \"relay\": {\n"
-        "     \"ip-address\": \"192.168.1.1\"\n"
-        " }\n"
-        "}";
-    ElementPtr json;
-    ASSERT_NO_THROW_LOG(json = Element::fromJSON(config));
-    ConstElementPtr copied = copy(json);
-    ASSERT_NO_THROW_LOG(AdaptorSubnet::updateRelay(json));
-    EXPECT_FALSE(copied->equals(*json));
-    ConstElementPtr relay = json->get("relay");
-    ASSERT_TRUE(relay);
-    string expected = "{ \"ip-addresses\": [ \"192.168.1.1\" ] }";
-    EXPECT_EQ(expected, relay->str());
-}
-
-// It does not make sense to have both ip-address and ip-addresses...
-
 }  // anonymous namespace

@@ -81,6 +81,7 @@ TranslatorSharedNetwork::getSharedNetworkKea(DataNode const& data_node,
     checkAndGetLeaf(result, data_node, "ddns-ttl-percent");
     checkAndGetLeaf(result, data_node, "ddns-update-on-renew");
     checkAndGetLeaf(result, data_node, "ddns-use-conflict-resolution");
+    checkAndGetLeaf(result, data_node, "ddns-conflict-resolution-mode");
     checkAndGetLeaf(result, data_node, "hostname-char-replacement");
     checkAndGetLeaf(result, data_node, "hostname-char-set");
     checkAndGetLeaf(result, data_node, "interface");
@@ -89,7 +90,6 @@ TranslatorSharedNetwork::getSharedNetworkKea(DataNode const& data_node,
     checkAndGetLeaf(result, data_node, "rebind-timer");
     checkAndGetLeaf(result, data_node, "renew-timer");
     checkAndGetLeaf(result, data_node, "require-client-classes");
-    checkAndGetLeaf(result, data_node, "reservation-mode");
     checkAndGetLeaf(result, data_node, "reservations-global");
     checkAndGetLeaf(result, data_node, "reservations-in-subnet");
     checkAndGetLeaf(result, data_node, "reservations-out-of-pool");
@@ -180,6 +180,7 @@ TranslatorSharedNetwork::setSharedNetworkKea(string const& xpath,
     checkAndSetLeaf(elem, xpath, "ddns-ttl-percent", LeafBaseType::Dec64);
     checkAndSetLeaf(elem, xpath, "ddns-update-on-renew", LeafBaseType::Bool);
     checkAndSetLeaf(elem, xpath, "ddns-use-conflict-resolution", LeafBaseType::Bool);
+    checkAndSetLeaf(elem, xpath, "ddns-conflict-resolution-mode", LeafBaseType::Enum);
     checkAndSetLeaf(elem, xpath, "hostname-char-replacement", LeafBaseType::String);
     checkAndSetLeaf(elem, xpath, "hostname-char-set", LeafBaseType::String);
     checkAndSetLeaf(elem, xpath, "interface", LeafBaseType::String);
@@ -187,7 +188,6 @@ TranslatorSharedNetwork::setSharedNetworkKea(string const& xpath,
     checkAndSetLeaf(elem, xpath, "min-valid-lifetime", LeafBaseType::Uint32);
     checkAndSetLeaf(elem, xpath, "rebind-timer", LeafBaseType::Uint32);
     checkAndSetLeaf(elem, xpath, "renew-timer", LeafBaseType::Uint32);
-    checkAndSetLeaf(elem, xpath, "reservation-mode", LeafBaseType::Enum);
     checkAndSetLeaf(elem, xpath, "reservations-global", LeafBaseType::Bool);
     checkAndSetLeaf(elem, xpath, "reservations-in-subnet", LeafBaseType::Bool);
     checkAndSetLeaf(elem, xpath, "reservations-out-of-pool", LeafBaseType::Bool);
@@ -202,11 +202,8 @@ TranslatorSharedNetwork::setSharedNetworkKea(string const& xpath,
 
     ConstElementPtr relay = elem->get("relay");
     if (relay) {
-        ConstElementPtr address = relay->get("ip-address");
         ConstElementPtr addresses = relay->get("ip-addresses");
-        if (address) {
-            setItem(xpath + "/relay/ip-addresses", address, LeafBaseType::String);
-        } else if (addresses && !addresses->empty()) {
+        if (addresses && !addresses->empty()) {
             for (ElementPtr const& addr : addresses->listValue()) {
                 setItem(xpath + "/relay/ip-addresses", addr, LeafBaseType::String);
             }

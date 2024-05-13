@@ -5748,10 +5748,6 @@ following can be used:
        {
            "id": 1,
            "subnet": "10.0.0.0/24",
-           # It is replaced by the "reservations-global",
-           # "reservations-in-subnet", and "reservations-out-of-pool"
-           # parameters.
-           # "reservation-mode": "global",
            # Specify if the server should look up global reservations.
            "reservations-global": true,
            # Specify if the server should look up in-subnet reservations.
@@ -7941,8 +7937,6 @@ at which it is currently supported.
    | relay                       | n/a                        | n/a          | yes         | yes         | n/a         |
    +-----------------------------+----------------------------+--------------+-------------+-------------+-------------+
    | require-client-classes      | no                         | n/a          | yes         | yes         | yes         |
-   +-----------------------------+----------------------------+--------------+-------------+-------------+-------------+
-   | reservation-mode            | yes                        | n/a          | yes         | yes         | n/a         |
    +-----------------------------+----------------------------+--------------+-------------+-------------+-------------+
    | reservations-global         | yes                        | n/a          | yes         | yes         | n/a         |
    +-----------------------------+----------------------------+--------------+-------------+-------------+-------------+

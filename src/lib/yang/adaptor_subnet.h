@@ -20,9 +20,8 @@ namespace yang {
 ///      so the caller can decide if the second pass is needed.
 ///  -2- For a subnet without an ID, assigned the next unused ID.
 ///
-/// For relays an old syntax ip-address is translated into a new syntax
-/// ip-addresses. Note as all canonization adaptor it is optional, i.e.,
-/// code should work without it.
+/// Note as all canonization adaptor it is optional, i.e., code should work
+/// without it.
 class AdaptorSubnet {
 public:
     /// @brief Destructor.
@@ -47,7 +46,6 @@ public:
 
     /// @brief Update relay.
     ///
-    /// Force the use of ip-addresses when it finds an ip-address entry.
     /// Can be used for shared networks too.
     ///
     /// @param subnet The subnet.

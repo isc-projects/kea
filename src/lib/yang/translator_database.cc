@@ -63,6 +63,7 @@ TranslatorDatabase::getDatabaseKea(DataNode const& data_node) {
     checkAndGetLeaf(result, data_node, "max-row-errors");
     checkAndGetLeaf(result, data_node, "name");
     checkAndGetLeaf(result, data_node, "on-fail");
+    checkAndGetLeaf(result, data_node, "retry-on-startup");
     checkAndGetLeaf(result, data_node, "password");
     checkAndGetLeaf(result, data_node, "persist");
     checkAndGetLeaf(result, data_node, "port");
@@ -117,6 +118,7 @@ TranslatorDatabase::setDatabaseKea(string const& xpath,
     checkAndSetLeaf(elem, xpath, "max-row-errors", LeafBaseType::Uint32);
     checkAndSetLeaf(elem, xpath, "name", LeafBaseType::String);
     checkAndSetLeaf(elem, xpath, "on-fail", LeafBaseType::String);
+    checkAndSetLeaf(elem, xpath, "retry-on-startup", LeafBaseType::Bool);
     checkAndSetLeaf(elem, xpath, "password", LeafBaseType::String);
     checkAndSetLeaf(elem, xpath, "persist", LeafBaseType::Bool);
     checkAndSetLeaf(elem, xpath, "port", LeafBaseType::Uint16);

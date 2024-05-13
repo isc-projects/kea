@@ -60,6 +60,7 @@ namespace yang {
 ///    +--rw reconnect-wait-time?   uint32
 ///    +--rw max-row-errors?        uint32
 ///    +--rw on-fail?               string
+///    +--rw retry-on-startup?      boolean
 ///    +--rw user-context?          user-context
 /// @endcode
 ///

@@ -16,6 +16,14 @@ module kea-dhcp-types {
   description "This file defines some commonly used Kea DHCP types and
                groupings.";
 
+  revision 2024-05-29 {
+    description "Removed qualifying-suffix, override-no-update,
+                 override-client-update, replace-client-name, generated-prefix,
+                 hostname-char-set and hostname-char-replacement from dhcp-ddns,
+                 removed reservation-mode and added retry-on-startup and
+                 ddns-conflict-resolution-mode.";
+  }
+
   revision 2023-06-28 {
     description "Added pool ID.";
   }
@@ -73,22 +81,25 @@ module kea-dhcp-types {
   /*
   * Typedef
   */
-  typedef host-reservation-mode {
+  typedef conflict-resolution-mode {
     type enumeration {
-      enum "disabled" {
-        description "Host reservation support is disabled.";
+      enum "check-with-dhcid" {
+        description "Existing DNS entries may be overwritten by matching client if
+                     they have a DHCID record and it matches the client's DHCID.";
       }
-      enum "out-of-pool" {
-        description "Allows only out of pool host reservations.";
+      enum "no-check-with-dhcid" {
+        description "Existing DNS entries may be overwritten by any client, whether
+                     or not those entries include a DHCID record.";
       }
-      enum "all" {
-        description "Allows both in pool and out of pool host reservations.";
+      enum "check-exists-with-dhcid" {
+        description "Existing DNS entries may be overwritten only if they have a
+                     DHCID record.";
       }
-      enum "global" {
-        description "Allows only global host reservations.";
+      enum "no-check-without-dhcid" {
+        description "Existing DNS entries may be overwritten by any client.";
       }
     }
-    description "Host reservation mode.";
+    description "Conflict Resolution mode.";
   }
 
   typedef lease-state {
@@ -320,8 +331,11 @@ module kea-dhcp-types {
     }
     leaf on-fail {
       type string;
-      description
-        "action to take when connection recovery fails";
+      description "action to take when connection recovery fails";
+    }
+    leaf retry-on-startup {
+      type boolean;
+      description "try connection recovery on startup.";
     }
     uses kea:user-context {
       refine user-context {
@@ -406,10 +420,6 @@ module kea-dhcp-types {
         type boolean;
         description "Enable DHCP-DDNS updates.";
       }
-      leaf qualifying-suffix {
-        type string;
-        description "DHCP-DDNS qualifying suffix.";
-      }
       leaf server-ip {
         type inet:ip-address;
         description "DHCP-DDNS server IP address.";
@@ -450,37 +460,6 @@ module kea-dhcp-types {
         }
         description "Packet format to use for DHCP-DDNS.";
       }
-      leaf override-no-update {
-        type boolean;
-        description "Ignore client request and send update.";
-      }
-      leaf override-client-update {
-        type boolean;
-        description "Ignore client delegation.";
-      }
-      leaf replace-client-name {
-        type enumeration {
-          enum "when-present" {
-            description "When the client sent a name.";
-          }
-          enum "never" {
-            description "Never replace or generate a name.";
-          }
-          enum "always" {
-            description "Always replace or generate a name.";
-          }
-          enum "when-not-present" {
-            description "When the client did not send a name.";
-          }
-        }
-        description "Replace the name provided by the client.";
-      }
-      leaf generated-prefix {
-        type string;
-        description "DHCP-DDNS generated prefix.";
-      }
-      uses hostname-char-set;
-      uses hostname-char-replacement;
       uses kea:user-context {
         refine user-context {
           description "DHCP-DDNS user context. Arbitrary JSON data can
@@ -707,14 +686,6 @@ module kea-dhcp-types {
       type uint32;
       mandatory true;
       description "Host subnet ID.";
-    }
-  }
-
-  grouping reservation-mode {
-    description "Reservation mode grouping.";
-    leaf reservation-mode {
-      type host-reservation-mode;
-      description "Reservation mode entry.";
     }
   }
 
@@ -1129,6 +1100,14 @@ module kea-dhcp-types {
       description
         "whether RFC 4703 DNS update conflict resolution should be
          employed";
+    }
+  }
+
+  grouping ddns-conflict-resolution-mode {
+    description "Conflict resolution mode grouping.";
+    leaf ddns-conflict-resolution-mode {
+      type conflict-resolution-mode;
+      description "Conflict resolution mode entry.";
     }
   }
 

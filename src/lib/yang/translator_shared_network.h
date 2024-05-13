@@ -32,7 +32,6 @@ namespace yang {
 ///     "interface": "<interface>",
 ///     "client-class": "<guard class name>",
 ///     "require-client-classes": [ <list of required class names> ],
-///     "reservation-mode": <host reservation mode>,
 ///     "relay": <relay ip address(es)>,
 ///     "match-client-id": <match client id flag>,
 ///     "next-server": "<next server>",
@@ -66,7 +65,6 @@ namespace yang {
 ///     "rapid-commit": <rapid commit flag>,
 ///     "client-class": "<guard class name>",
 ///     "require-client-classes": [ <list of required class names> ],
-///     "reservation-mode": <host reservation mode>,
 ///     "relay": <relay ip address(es)>,
 ///     "user-context": { <json map> },
 ///     "comment": "<comment>"
@@ -81,7 +79,6 @@ namespace yang {
 ///    +--rw renew-timer?                    uint32
 ///    +--rw rebind-timer?                   uint32
 ///    +--rw option-data* [code space]
-///    +--rw reservation-mode?               host-reservation-mode
 ///    +--rw client-class?                   string
 ///    +--rw require-client-classes*         string
 ///    +--rw valid-lifetime?                 uint32
@@ -100,6 +97,7 @@ namespace yang {
 ///    +--rw ddns-send-updates?              boolean
 ///    +--rw ddns-update-on-renew?           boolean
 ///    +--rw ddns-use-conflict-resolution?   boolean
+///    +--rw ddns-conflict-resolution-mode?  conflict-resolution-mode
 ///    +--rw store-extended-info?            boolean
 ///    +--rw hostname-char-replacement?      string
 ///    +--rw hostname-char-set?              string

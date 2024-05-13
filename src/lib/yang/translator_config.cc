@@ -131,16 +131,9 @@ TranslatorConfig::getDdnsKea(DataNode const& data_node) {
     ElementPtr result(Element::createMap());
 
     checkAndGetLeaf(result, data_node, "enable-updates");
-    checkAndGetLeaf(result, data_node, "generated-prefix");
-    checkAndGetLeaf(result, data_node, "hostname-char-replacement");
-    checkAndGetLeaf(result, data_node, "hostname-char-set");
     checkAndGetLeaf(result, data_node, "max-queue-size");
     checkAndGetLeaf(result, data_node, "ncr-format");
     checkAndGetLeaf(result, data_node, "ncr-protocol");
-    checkAndGetLeaf(result, data_node, "qualifying-suffix");
-    checkAndGetLeaf(result, data_node, "override-client-update");
-    checkAndGetLeaf(result, data_node, "override-no-update");
-    checkAndGetLeaf(result, data_node, "replace-client-name");
     checkAndGetLeaf(result, data_node, "sender-ip");
     checkAndGetLeaf(result, data_node, "sender-port");
     checkAndGetLeaf(result, data_node, "server-ip");
@@ -201,6 +194,7 @@ TranslatorConfig::getServerKeaDhcpCommon(DataNode const& data_node) {
     checkAndGetLeaf(result, data_node, "ddns-ttl-percent");
     checkAndGetLeaf(result, data_node, "ddns-update-on-renew");
     checkAndGetLeaf(result, data_node, "ddns-use-conflict-resolution");
+    checkAndGetLeaf(result, data_node, "ddns-conflict-resolution-mode");
     checkAndGetLeaf(result, data_node, "decline-probation-period");
     checkAndGetLeaf(result, data_node, "early-global-reservations-lookup");
     checkAndGetLeaf(result, data_node, "host-reservation-identifiers");
@@ -212,7 +206,6 @@ TranslatorConfig::getServerKeaDhcpCommon(DataNode const& data_node) {
     checkAndGetLeaf(result, data_node, "parked-packet-limit");
     checkAndGetLeaf(result, data_node, "rebind-timer");
     checkAndGetLeaf(result, data_node, "renew-timer");
-    checkAndGetLeaf(result, data_node, "reservation-mode");
     checkAndGetLeaf(result, data_node, "reservations-global");
     checkAndGetLeaf(result, data_node, "reservations-in-subnet");
     checkAndGetLeaf(result, data_node, "reservations-lookup-first");
@@ -341,6 +334,7 @@ TranslatorConfig::getServerKeaDhcp4() {
     checkAndGetLeaf(result, config, "next-server");
     checkAndGetLeaf(result, config, "offer-lifetime");
     checkAndGetLeaf(result, config, "server-hostname");
+    checkAndGetLeaf(result, config, "stash-agent-options");
 
     checkAndGet(result, config, "compatibility",
                 [&](DataNode const& node) -> ElementPtr const {
@@ -519,6 +513,7 @@ TranslatorConfig::setServerKeaDhcpCommon(string const& xpath,
     checkAndSetLeaf(elem, xpath, "ddns-ttl-percent", LeafBaseType::Dec64);
     checkAndSetLeaf(elem, xpath, "ddns-update-on-renew", LeafBaseType::Bool);
     checkAndSetLeaf(elem, xpath, "ddns-use-conflict-resolution", LeafBaseType::Bool);
+    checkAndSetLeaf(elem, xpath, "ddns-conflict-resolution-mode", LeafBaseType::Enum);
     checkAndSetLeaf(elem, xpath, "dhcp4o6-port", LeafBaseType::Uint16);
     checkAndSetLeaf(elem, xpath, "decline-probation-period", LeafBaseType::Uint32);
     checkAndSetLeaf(elem, xpath, "early-global-reservations-lookup", LeafBaseType::Bool);
@@ -530,7 +525,6 @@ TranslatorConfig::setServerKeaDhcpCommon(string const& xpath,
     checkAndSetLeaf(elem, xpath, "parked-packet-limit", LeafBaseType::Uint32);
     checkAndSetLeaf(elem, xpath, "rebind-timer", LeafBaseType::Uint32);
     checkAndSetLeaf(elem, xpath, "renew-timer", LeafBaseType::Uint32);
-    checkAndSetLeaf(elem, xpath, "reservation-mode", LeafBaseType::Enum);
     checkAndSetLeaf(elem, xpath, "reservations-global", LeafBaseType::Bool);
     checkAndSetLeaf(elem, xpath, "reservations-in-subnet", LeafBaseType::Bool);
     checkAndSetLeaf(elem, xpath, "reservations-lookup-first", LeafBaseType::Bool);
@@ -578,16 +572,9 @@ TranslatorConfig::setServerKeaDhcpCommon(string const& xpath,
     if (ddns) {
         string const ddns_xpath(xpath + "/dhcp-ddns");
         checkAndSetLeaf(ddns, ddns_xpath, "enable-updates", LeafBaseType::Bool);
-        checkAndSetLeaf(ddns, ddns_xpath, "generated-prefix", LeafBaseType::String);
-        checkAndSetLeaf(ddns, ddns_xpath, "hostname-char-replacement", LeafBaseType::String);
-        checkAndSetLeaf(ddns, ddns_xpath, "hostname-char-set", LeafBaseType::String);
         checkAndSetLeaf(ddns, ddns_xpath, "max-queue-size", LeafBaseType::Uint32);
         checkAndSetLeaf(ddns, ddns_xpath, "ncr-format", LeafBaseType::Enum);
         checkAndSetLeaf(ddns, ddns_xpath, "ncr-protocol", LeafBaseType::Enum);
-        checkAndSetLeaf(ddns, ddns_xpath, "override-client-update", LeafBaseType::Bool);
-        checkAndSetLeaf(ddns, ddns_xpath, "override-no-update", LeafBaseType::Bool);
-        checkAndSetLeaf(ddns, ddns_xpath, "qualifying-suffix", LeafBaseType::String);
-        checkAndSetLeaf(ddns, ddns_xpath, "replace-client-name", LeafBaseType::Enum);
         checkAndSetLeaf(ddns, ddns_xpath, "sender-ip", LeafBaseType::String);
         checkAndSetLeaf(ddns, ddns_xpath, "sender-port", LeafBaseType::Uint16);
         checkAndSetLeaf(ddns, ddns_xpath, "server-ip", LeafBaseType::String);
@@ -685,6 +672,7 @@ TranslatorConfig::setServerKeaDhcp4(ConstElementPtr elem) {
     checkAndSetLeaf(elem, xpath, "next-server", LeafBaseType::String);
     checkAndSetLeaf(elem, xpath, "offer-lifetime", LeafBaseType::Uint32);
     checkAndSetLeaf(elem, xpath, "server-hostname", LeafBaseType::String);
+    checkAndSetLeaf(elem, xpath, "stash-agent-options", LeafBaseType::Bool);
 
     ConstElementPtr compatibility(elem->get("compatibility"));
     if (compatibility) {

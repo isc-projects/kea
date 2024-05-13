@@ -47,19 +47,7 @@ AdaptorSubnet::updateRelay(ElementPtr subnet) {
         return;
     }
     ConstElementPtr addresses = relay->get("ip-addresses");
-    if (!addresses) {
-        ConstElementPtr address = relay->get("ip-address");
-        if (!address) {
-            subnet->remove("relay");
-            return;
-        }
-        ElementPtr addr = Element::create(address->stringValue());
-        ElementPtr addrs = Element::createList();
-        addrs->add(addr);
-        ElementPtr updated = Element::createMap();
-        updated->set("ip-addresses", addrs);
-        subnet->set("relay", updated);
-    } else if (addresses->size() == 0) {
+    if (!addresses || addresses->size() == 0) {
         subnet->remove("relay");
     }
 }
