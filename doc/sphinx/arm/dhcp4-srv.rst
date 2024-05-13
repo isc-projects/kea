@@ -7725,6 +7725,10 @@ The following standards are currently supported in Kea:
    <https://tools.ietf.org/html/rfc3993>`__: The Subscriber-ID option is
    supported.
 
+-  *Dynamic Host Configuration Protocol (DHCP) Leasequery*, `RFC 4388
+   <https://datatracker.ietf.org/doc/html/rfc4388>`__: The server functionality
+   is supported. This requires leasequery hook.
+
 -  *The Dynamic Host Configuration Protocol (DHCP) Client Fully
    Qualified Domain Name (FQDN) Option*, `RFC 4702
    <https://tools.ietf.org/html/rfc4702>`__: The Kea server is able to handle
@@ -7742,10 +7746,35 @@ The following standards are currently supported in Kea:
    RFC, because the server does not store the RAI, but the functionality handles
    expected use cases.
 
+-  *DHCP Options for Protocol for Carrying Authentication for Network Access
+   (PANA) Authentication Agents*: `RFC 5192 <https://tools.ietf.org/html/rfc5192>`__:
+   The PANA option is supported.
+
+-  *Discovering Location-to-Service Translation (LoST) Servers Using the
+   Dynamic Host Configuration Protocol (DHCP)*: `RFC 5223
+   <https://tools.ietf.org/html/rfc5223>`__: The LOST option is supported.
+
+-  *Control And Provisioning of Wireless Access Points (CAPWAP) Access Controller
+   DHCP Option*: `RFC 5417 <https://tools.ietf.org/html/rfc5417>`__: The CAPWAP
+   for IPv4 option is supported.
+
+-  *DHCPv4 Lease Query by Relay Agent Remote ID*, `RFC 6148
+   <https://tools.ietf.org/html/rfc6148>`__: The leasequery by remote-id is
+   supported. This requires leasequery hook.
+
 -  *Client Identifier Option in DHCP Server Replies*, `RFC 6842
    <https://tools.ietf.org/html/rfc6842>`__: The server by default sends back
    the ``client-id`` option. That capability can be disabled. See
    :ref:`dhcp4-echo-client-id` for details.
+
+-  *The DHCPv4 Relay Agent Identifier Sub-Option*, `RFC 6925
+   <https://tools.ietf.org/html/rfc6925>`__: The relay-id option is supported and
+   can be used in all features that are using expressions (client classification,
+   flex-id reservations, etc.).
+
+-  *DHCPv4 Bulk Leasequery*, `RFC 6926 <https://tools.ietf.org/html/rfc6926>`__: The
+   server functionality (TCP connections, new query types, multiple responses, etc.)
+   is supported. This requires leasequery hook.
 
 -  *Generalized UDP Source Port for the DHCP Relay Agent Option*, `RFC 8357
    <https://tools.ietf.org/html/rfc8357>`__: The Kea server handles the Relay

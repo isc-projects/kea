@@ -7563,6 +7563,33 @@ The following standards are currently supported in Kea:
    4704 <https://tools.ietf.org/html/rfc4704>`__: The supported option is
    CLIENT_FQDN.
 
+-  *DHCPv6 Leasequery*: `RFC 5007 <https://tools.ietf.org/html/rfc5007>`__: The
+   server functionality (message types, options) is supported. This requires
+   the leasequery hook.
+
+-  *DHCP Options for Protocol for Carrying Authentication for Network Access
+   (PANA) Authentication Agents*: `RFC 5192 <https://tools.ietf.org/html/rfc5192>`__:
+   The PANA option is supported.
+
+-  *Discovering Location-to-Service Translation (LoST) Servers Using the
+   Dynamic Host Configuration Protocol (DHCP)*: `RFC 5223
+   <https://tools.ietf.org/html/rfc5223>`__: The LOST option is supported.
+
+-  *Control And Provisioning of Wireless Access Points (CAPWAP) Access Controller
+   DHCP Option*: `RFC 5417 <https://tools.ietf.org/html/rfc5417>`__: The CAPWAP for IPv6
+   option is supported.
+
+-  *DHCPv6 Bulk Leasequery*: `RFC 5460 <https://tools.ietf.org/html/rfc5460>`__:
+   The server functionality (TCP connection, new message types and options, new
+   query types) is supported. This requires the leasequery hook.
+
+-  *DHCPv6 Options for Network Boot*: `RFC 5970 <https://tools.ietf.org/html/rfc5970>`__:
+   The network boot options are supported.
+
+-  *Lightweight DHCPv6 Relay Agent*, `RFC 6221
+   <https://tools.ietf.org/html/rfc6221>`__: Kea can handle lightweight relay
+   messages and use other methods than link address to perform subnet selection.
+
 -  *Dynamic Host Configuration Protocol for IPv6 (DHCPv6) Option for
    Dual-Stack Lite*, `RFC 6334 <https://tools.ietf.org/html/rfc6334>`__:
    The AFTR-Name DHCPv6 Option is supported.
@@ -7573,6 +7600,9 @@ The following standards are currently supported in Kea:
    options; verification of whether an option is RSOO-enabled; and the ability to mark
    additional options as RSOO-enabled.
 
+-  *The EAP Re-authentication Protocol (ERP) Local Domain Name DHCPv6 Option*,
+   `RFC 6440 <https://tools.ietf.org/html/rfc6440>`__: The option is supported.
+
 -  *Prefix Exclude Option for DHCPv6-based Prefix Delegation*, `RFC
    6603 <https://tools.ietf.org/html/rfc6603>`__: The Prefix Exclude option
    is supported.
@@ -7580,6 +7610,10 @@ The following standards are currently supported in Kea:
 -  *Client Link-Layer Address Option in DHCPv6*, `RFC
    6939 <https://tools.ietf.org/html/rfc6939>`__: The supported option is
    the client link-layer address option.
+
+-  *Modification to Default values of SOL_MAX_RT and INF_MAX_RT*, `RFC 7083
+    https://www.rfc-editor.org/rfc/rfc7083.html`__: The new options are
+    supported.
 
 -  *Issues and Recommendations with Multiple Stateful DHCPv6 Options*,
    `RFC 7550 <https://tools.ietf.org/html/rfc7550>`__: All

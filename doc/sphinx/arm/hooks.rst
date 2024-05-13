@@ -584,9 +584,9 @@ loaded by the correct process per the table below.
    |                                                           |              | belong. This library allows easy management of user contexts |
    |                                                           |              | associated with leases.                                      |
    +-----------------------------------------------------------+--------------+--------------------------------------------------------------+
-   | :ref:`Leasequery <hooks-lease-query>`                     | ISC support  | This library adds support for DHCPv4                         |
-   |                                                           | customers    | Leasequery as described in RFC 4388; and for DHCPv6          |
-   |                                                           |              | Leasequery as described in RFC 5007.                         |
+   | :ref:`Leasequery <hooks-lease-query>`                     | ISC support  | This library adds support for DHCPv4 Leasequery (RFC 4388),  |
+   |                                                           | customers    | DHCPv4 Bulk Leasequery (RFC6926); DHCPv6 Leasequery          |
+   |                                                           |              | (RFC 5007), and DHCPv6 Bulk Leasequery (RFC5460).            |
    +-----------------------------------------------------------+--------------+--------------------------------------------------------------+
    | :ref:`Limits <hooks-limits>`                              | ISC support  | With this hook library, :iscman:`kea-dhcp4` and              |
    |                                                           | customers    | :iscman:`kea-dhcp6` servers can apply a limit to the rate at |
