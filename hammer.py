@@ -86,6 +86,7 @@ SYSTEMS = {
         '20.10': False,
         '21.04': False,
         '22.04': True,
+        '24.04': True,
     },
     'debian': {
          '8': False,
