@@ -1,7 +1,7 @@
 2232.	[func]*		fdupont
-	Configurations which contain subnets without explicit
-	subnet identifiers (without "id" entry) are now rejected:
-	subnet identifiers are no longer auto-generated.
+	Auto-generated subnet identifiers are no longer supported.
+	Configurations that contain subnets without explicit subnet
+	identifiers (e.g without an "id" entry) will now be rejected.
 	(Gitlab #2961)
 
 2231.	[func]		fdupont
