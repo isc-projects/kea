@@ -7642,8 +7642,7 @@ The following standards are currently supported in Kea:
 
 -  *DHCP and Router Advertisement Options for the Discovery of Network-designated
    Resolvers (DNR)*, `RFC 9463 <https://tools.ietf.org/html/rfc9463>`__. The Kea server
-   supports the DNR option. Part of its value (SvcParams) must be configured in
-   hex.
+   supports the DNR option.
 
 .. _dhcp6-limit:
 
