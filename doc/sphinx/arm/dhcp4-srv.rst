@@ -7725,9 +7725,23 @@ The following standards are currently supported in Kea:
    <https://tools.ietf.org/html/rfc3993>`__: The Subscriber-ID option is
    supported.
 
+-  *Node-specific Client Identifiers for Dynamic Host Configuration Protocol
+   Version Four (DHCPv4)*, `RFC 4361 <https://datatracker.ietf.org/doc/html/rfc4361>`__:
+   The DUID in DHCPv4 is supported.
+
 -  *Dynamic Host Configuration Protocol (DHCP) Leasequery*, `RFC 4388
    <https://datatracker.ietf.org/doc/html/rfc4388>`__: The server functionality
    is supported. This requires leasequery hook.
+
+-  *Dynamic Host Configuration Protocol (DHCP) Options for the Intel Preboot
+   eXecution Environment (PXE)*, `RFC 4578
+   <https://datatracker.ietf.org/doc/html/rfc4578>`__: All three options defined
+   are supported.
+
+-  *A DNS Resource Record (RR) for Encoding Dynamic Host Configuration Protocol
+   (DHCP) Information (DHCID RR)*, `RFC 4701 <https://tools.ietf.org/html/rfc4701>`__:
+   The DHCPv4 server supports DHCID records. The DHCP-DDNS server must be running
+   to add, update, and/or delete DHCID records.
 
 -  *The Dynamic Host Configuration Protocol (DHCP) Client Fully
    Qualified Domain Name (FQDN) Option*, `RFC 4702
@@ -7739,6 +7753,13 @@ The following standards are currently supported in Kea:
    Host Configuration Protocol (DHCP) Clients*, `RFC 4703
    <https://tools.ietf.org/html/rfc4703>`__: The DHCPv6 server uses a DHCP-DDNS
    server to resolve conflicts.
+
+-  *Timezone Options for DHCP*: `RFC 4833 <https://tools.ietf.org/html/rfc4833>`__:
+   Both DHCPv4 options are supported.
+
+-  *The Dynamic Host Configuration Protocol Version 4 (DHCPv4) Relay Agent Flags
+   Suboption*: `RFC 5010 <https://tools.ietf.org/html/rfc5010>`__: The Relay Agent
+   Flags sub-option is understood by Kea and can be used in an expression.
 
 -  *Server Identifier Override sub-option for the Relay Agent Option*, `RFC 5107
    <https://tools.ietf.org/html/rfc5107>`__: The server identifier override

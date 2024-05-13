@@ -7548,10 +7548,23 @@ The following standards are currently supported in Kea:
    IPv6 (DHCPv6)*, `RFC 4242 <https://tools.ietf.org/html/rfc4242>`__: The
    sole defined option (``information-refresh-time``) is supported.
 
+-  *Dynamic Host Configuration Protocol (DHCP) Options for Broadcast and Multicast
+   Control Servers*, `RFC 4280 <https://tools.ietf.org/html/rfc4280>`__:
+   The DHCPv4 options are supported.
+
+-  *Dynamic Host Configuration Protocol for IPv6 (DHCPv6) Relay Agent Subscriber-ID
+   Option*, `RFC 4580 <https://tools.ietf.org/html/rfc4580>`__: The
+   subscribed-id option is supported and can be used in any expression.
+
 -  *The Dynamic Host Configuration Protocol for IPv6 (DHCPv6) Relay
    Agent Remote-ID Option*, `RFC
-   4649 <https://tools.ietf.org/html/rfc4649>`__: The REMOTE-ID option is
+   4649 <https://tools.ietf.org/html/rfc4649>`__: The Remote-ID option is
    supported.
+
+-  *A DNS Resource Record (RR) for Encoding Dynamic Host Configuration Protocol
+   (DHCP) Information (DHCID RR)*, `RFC 4701 <https://tools.ietf.org/html/rfc4701>`__:
+   The DHCPv6 server supports DHCID records. The DHCP-DDNS server must be running
+   to add, update, and/or delete DHCID records.
 
 -  *Resolution of Fully Qualified Domain Name (FQDN) Conflicts among Dynamic Host
    Configuration Protocol (DHCP) Clients*, `RFC 4703
@@ -7562,6 +7575,9 @@ The following standards are currently supported in Kea:
    Fully Qualified Domain Name (FQDN) Option*, `RFC
    4704 <https://tools.ietf.org/html/rfc4704>`__: The supported option is
    CLIENT_FQDN.
+
+-  *Timezone Options for DHCP*: `RFC 4833 <https://tools.ietf.org/html/rfc4833>`__:
+   Both DHCPv6 options are supported.
 
 -  *DHCPv6 Leasequery*: `RFC 5007 <https://tools.ietf.org/html/rfc5007>`__: The
    server functionality (message types, options) is supported. This requires
