@@ -63,6 +63,7 @@ SYSTEMS = {
         '37': False,
         '38': True,
         '39': True,
+        '40': True,
     },
     'centos': {
         '7': False,
@@ -1199,6 +1200,10 @@ def _install_libyang_cpp_from_sources(ignore_errors = False):
     try:
         execute('git clone https://github.com/CESNET/libyang-cpp.git ~/.hammer-tmp/libyang-cpp')
         execute(f'git checkout {version}', cwd='~/.hammer-tmp/libyang-cpp')
+        # New cpp compiler is more picky about missing headers. (ex. Fedora 40)
+        return_code = execute('sudo grep "#include <algorithm>" ~/.hammer-tmp/libyang-cpp/src/Context.cpp', raise_error=False)
+        if return_code == 1:
+            execute('sed -i "/#include <libyang\/libyang.h>/a #include <algorithm>" ~/.hammer-tmp/libyang-cpp/src/Context.cpp')
         execute('mkdir ~/.hammer-tmp/libyang-cpp/build')
         execute('cmake -DBUILD_TESTING=OFF .. ', cwd='~/.hammer-tmp/libyang-cpp/build')
         execute('make -j $(nproc || gnproc || echo 1)', cwd='~/.hammer-tmp/libyang-cpp/build')
