@@ -216,7 +216,8 @@ enum DHCPOptionType {
     // The Captive Portal option now uses code 114.
 //  DHO_MUD_URL_V4                   = 161, /* RFC8520 */
     DHO_V4_DNR                       = 162, /* RFC9463 */
-    // 163-209 are removed/unassigned
+    // 163-208 are removed/unassigned
+//  DHO_CONFIG_FILE                  = 209  /* RFC5071 */
 //  DHO_PATH_PREFIX                  = 210, /* RFC5071 */
 //  DHO_REBOOT_TIME                  = 211, /* RFC5071 */
     DHO_6RD                          = 212, /* RFC5969 */
