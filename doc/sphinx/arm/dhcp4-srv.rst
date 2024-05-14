@@ -7703,6 +7703,13 @@ The following standards are currently supported in Kea:
    END(255), Message Type(53), DHCP Server Identifier (54), Domain Name (15),
    DNS Servers (6), IP Address Lease Time (51), Subnet Mask (1), and Routers (3).
 
+-  *The Name Service Search Option for DHCP*, `RFC 2937
+   <https://tools.ietf.org/html/rfc2937>`__: The option is supported.
+
+-  *The User Class Option for DHCP*, `RFC 3004 <https://tools.ietf.org/html/rfc3004>`__:
+   The user class is supported and can be used in any expression. The option's
+   structure is not parsed and has to be referenced using hex.
+
 -  *The IPv4 Subnet Selection Option for DHCP*, `RFC 3011
    <https://tools.ietf.org/html/rfc3011>`__: The subnet-selection option is
    supported; if received in a packet, it is used in the subnet-selection
@@ -7712,18 +7719,48 @@ The following standards are currently supported in Kea:
    <https://tools.ietf.org/html/rfc3046>`__: Relay Agent Information,
    Circuit ID, and Remote ID options are supported.
 
+-  *The DOCSIS (Data-Over-Cable Service Interface Specifications) Device Class
+   DHCP (Dynamic Host Configuration Protocol) Relay Agent Information Sub-option*,
+   `RFC 3256 <https://tools.ietf.org/html/rfc3256>`__: The DOCSIS sub-option
+   is supported and can be used in any expression.
+
+-  *Encoding Long Options in the Dynamic Host Configuration Protocol (DHCPv4)*,
+   `RFC 3396 <https://tools.ietf.org/html/rfc3396>`__: The Kea server can both
+   receive and send long options. The long options can be configured and Kea
+   will send them as separate instances if the payload length is longer than
+   255 octects.
+
+-  *Dynamic Host Configuration Protocol (DHCP) Domain Search Option*, `RFC 3397
+   <https://tools.ietf.org/html/rfc3397>`__: The option is supported.
+
+-  *The Classless Static Route Option for Dynamic Host Configuration Protocol
+   (DHCP) version 4*, `RFC 3442 <https://tools.ietf.org/html/rfc3442>`__:
+   The option is supported.
+
 -  *Link Selection sub-option for the Relay Agent Option*, `RFC 3527
    <https://tools.ietf.org/html/rfc3527>`__: The link selection sub-option
    is supported.
+
+-  *Unused Dynamic Host Configuration Protocol (DHCP) Option Codes*, `RFC 3679
+   <https://tools.ietf.org/html/rfc3527>`__: Kea does not support any of the
+   old options that were obsoleted by this RFC.
 
 -  *Vendor-Identifying Vendor Options for Dynamic Host Configuration
    Protocol version 4*, `RFC 3925
    <https://tools.ietf.org/html/rfc3925>`__: The Vendor-Identifying Vendor Class
    and Vendor-Identifying Vendor-Specific Information options are supported.
 
+-  *Reclassifying Dynamic Host Configuration Protocol version 4 (DHCPv4) Options*,
+   `RFC 3942 <https://tools.ietf.org/html/rfc3942>`__: Kea supports options with
+   codes greater than 127.
+
 -  *Subscriber-ID Suboption for the DHCP Relay Agent Option*, `RFC 3993
    <https://tools.ietf.org/html/rfc3993>`__: The Subscriber-ID option is
    supported.
+
+-  *Dynamic Host Configuration Protocol (DHCP) Options for Broadcast and Multicast
+   Control Servers*, `RFC 4280 <https://tools.ietf.org/html/rfc4280>`__:
+   The DHCPv4 options are supported.
 
 -  *Node-specific Client Identifiers for Dynamic Host Configuration Protocol
    Version Four (DHCPv4)*, `RFC 4361 <https://datatracker.ietf.org/doc/html/rfc4361>`__:
