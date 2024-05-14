@@ -1866,10 +1866,14 @@ def install_packages_local(system, revision, features, check_times, ignore_error
                 packages.extend(['dh-python'])
 
         if 'mysql' in features:
-            if revision == '16.04':
-                packages.extend(['mysql-client', 'libmysqlclient-dev', 'mysql-server'])
+            if int(revision.split(".")[0]) < 24:
+                if revision == '16.04':
+                    packages.extend(['mysql-client', 'libmysqlclient-dev', 'mysql-server'])
+                else:
+                    packages.extend(['default-mysql-client-core', 'default-libmysqlclient-dev', 'mysql-server'])
             else:
-                packages.extend(['default-mysql-client-core', 'default-libmysqlclient-dev', 'mysql-server'])
+                packages.extend(['mariadb-client', 'mariadb-server', 'libmariadb-dev-compat'])
+
 
         if 'pgsql' in features:
             if revision == '16.04':
