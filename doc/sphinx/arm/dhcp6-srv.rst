@@ -7524,7 +7524,8 @@ The following standards are currently supported in Kea:
    3315 <https://tools.ietf.org/html/rfc3315>`__: Supported messages are
    SOLICIT, ADVERTISE, REQUEST, RELEASE, RENEW, REBIND,
    INFORMATION-REQUEST, CONFIRM, DECLINE and REPLY. The only
-   unsupported message is RECONFIGURE.
+   unsupported message is RECONFIGURE. Almost all options are supported,
+   except AUTHENTICATION and RECONFIGURE-ACCEPT.
 
 -  *Dynamic Host Configuration Protocol (DHCPv6) Options for
    Session Initiation Protocol (SIP) Servers*, `RFC 3319
@@ -7544,13 +7545,20 @@ The following standards are currently supported in Kea:
    stateless mode is supported. Kea is currently server-only, so the client side
    is not implemented.
 
+-  *Simple Network Time Protocol (SNTP) Configuration Option for DHCPv6*, `RFC
+   4075 <https://tools.ietf.org/html/rfc4075>`__: The SNTP option is supported.
+
+-  *Renumbering Requirements for Stateless Dynamic Host Configuration Protocol for
+   IPv6 (DHCPv6)*, `RFC 4076 <https://tools.ietf.org/html/rfc4076>`__: The server
+   supports all the stateless renumbering requirements.
+
 -  *Information Refresh Time Option for Dynamic Host Configuration Protocol for
    IPv6 (DHCPv6)*, `RFC 4242 <https://tools.ietf.org/html/rfc4242>`__: The
    sole defined option (``information-refresh-time``) is supported.
 
 -  *Dynamic Host Configuration Protocol (DHCP) Options for Broadcast and Multicast
    Control Servers*, `RFC 4280 <https://tools.ietf.org/html/rfc4280>`__:
-   The DHCPv4 options are supported.
+   The DHCPv6 options are supported.
 
 -  *Dynamic Host Configuration Protocol for IPv6 (DHCPv6) Relay Agent Subscriber-ID
    Option*, `RFC 4580 <https://tools.ietf.org/html/rfc4580>`__: The
@@ -7628,8 +7636,8 @@ The following standards are currently supported in Kea:
    the client link-layer address option.
 
 -  *Modification to Default values of SOL_MAX_RT and INF_MAX_RT*, `RFC 7083
-    https://www.rfc-editor.org/rfc/rfc7083.html`__: The new options are
-    supported.
+   <https://www.rfc-editor.org/rfc/rfc7083.html>`__: The new options are
+   supported.
 
 -  *Issues and Recommendations with Multiple Stateful DHCPv6 Options*,
    `RFC 7550 <https://tools.ietf.org/html/rfc7550>`__: All
