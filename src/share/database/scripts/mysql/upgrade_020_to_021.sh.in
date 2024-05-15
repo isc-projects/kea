@@ -59,6 +59,10 @@ mysql "$@" <<EOF
 -- Add subnet id and address index for lease6.
 CREATE INDEX lease6_by_subnet_id_address ON lease6 (subnet_id, address ASC);
 
+-- Turn off Mariadb default/on-update for expire column
+ALTER TABLE lease4 MODIFY expire timestamp NULL;
+ALTER TABLE lease6 MODIFY expire timestamp NULL;
+
 -- Update the schema version number.
 UPDATE schema_version
     SET version = '21', minor = '0';

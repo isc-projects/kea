@@ -5680,6 +5680,8 @@ UPDATE schema_version
 -- We have to play some games to make lease address
 -- binary, primary key and retain its place as first
 -- column.
+-- Turn off Mariadb default/on-update for expire column
+ALTER TABLE lease6 MODIFY expire timestamp NULL;
 -- Store binary values for address in binaddr column
 DROP INDEX lease6_by_binaddr ON lease6;
 UPDATE lease6 set binaddr = inet6_aton(address);
@@ -5854,6 +5856,10 @@ UPDATE schema_version
 
 -- Add subnet id and address index for lease6.
 CREATE INDEX lease6_by_subnet_id_address ON lease6 (subnet_id, address ASC);
+
+-- Turn off Mariadb default/on-update for expire column
+ALTER TABLE lease4 MODIFY expire timestamp NULL;
+ALTER TABLE lease6 MODIFY expire timestamp NULL;
 
 -- Update the schema version number.
 UPDATE schema_version

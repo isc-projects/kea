@@ -1,3 +1,12 @@
+2235.   [bug]       tmark
+	Remove defaulted on-update behavior from 'expire'
+	columns in lease4 and lease6 tables for MySQL/Mariadb
+	lease databases.  Corrects an issue when upgrading from
+	releases prior to Kea 2.4.0 to Kea 2.4.0 or later with
+	Mariadb version 10.10 or later that causes all existing
+	v6 leases to expire immediately.
+	(Gitlab #3396)
+
 2234.	[build]		andrei
 	Code migrated from mysql_ssl_set which was deprecated in MySQL
 	8.0.35 to mysql_options.
