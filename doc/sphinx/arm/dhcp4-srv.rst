@@ -7779,7 +7779,7 @@ The following standards are currently supported in Kea:
    is supported.
 
 -  *Unused Dynamic Host Configuration Protocol (DHCP) Option Codes*, `RFC 3679
-   <https://tools.ietf.org/html/rfc3527>`__: Kea does not support any of the
+   <https://tools.ietf.org/html/rfc3679>`__: Kea does not support any of the
    old options that were obsoleted by this RFC.
 
 -  *Vendor-Identifying Vendor Options for Dynamic Host Configuration
