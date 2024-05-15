@@ -7693,6 +7693,27 @@ The following standards are currently supported in Kea:
    <https://tools.ietf.org/html/rfc1497>`__: This requires the open source
    BOOTP hook to be loaded. See :ref:`hooks-bootp` for details.
 
+-  *Dynamic Host Configuration Protocol*, `RFC 1531
+   <https://tools.ietf.org/html/rfc1531>`__: This RFC is obsolete and
+   was replaced by RFC 1541, which in turn was replaced by RFC 2131.
+   Kea supports all three RFCs.
+
+-  *Clarifications and Extensions for the Bootstrap Protocol*, `RFC 1532
+   <https://tools.ietf.org/html/rfc1532>`__: This RFC has an editorial
+   error and was quickly superseeded by RFC 1542. Kea supports them both.
+
+-  *DHCP Options and BOOTP Vendor Extensions*, `RFC 1533
+   <https://tools.ietf.org/html/rfc1533>`__: This RFC is obsolete and
+   was replaced by RFC 2132. Nevertheless, Kea supports the options
+   defined in it.
+
+-  *Dynamic Host Configuration Protocol*, `RFC 1541
+   <https://tools.ietf.org/html/rfc1541>`__: This RFC is obsolete and
+   was replaced by RFC 2131. Kea supports both.
+
+-  *Clarifications and Extensions for the Bootstrap Protocol*, `RFC 1542
+   <https://tools.ietf.org/html/rfc1542>`__: This RFC is supported.
+
 -  *Dynamic Host Configuration Protocol*, `RFC 2131
    <https://tools.ietf.org/html/rfc2131>`__: Supported messages are
    DHCPDISCOVER (1), DHCPOFFER (2), DHCPREQUEST (3), DHCPRELEASE (7),
@@ -7702,6 +7723,22 @@ The following standards are currently supported in Kea:
    <https://tools.ietf.org/html/rfc2132>`__: Supported options are PAD (0),
    END(255), Message Type(53), DHCP Server Identifier (54), Domain Name (15),
    DNS Servers (6), IP Address Lease Time (51), Subnet Mask (1), and Routers (3).
+
+-  *DHCP Options for Novell Directory Services*, `RFC 2241
+   <https://tools.ietf.org/html/rfc2241>`__: All three options are supported.
+
+-  *Management of IP numbers by peg-dhcp*,
+   `RFC 2322 <https://tools.ietf.org/html/rfc2322>`__: This RFC is supported,
+   although additional hardware is required for full deployment.
+
+-  *DHCP Option for The Open Group's User Authentication Protocol*,
+   `RFC 2485 <https://tools.ietf.org/html/rfc2485>`__: The option is supported.
+
+-  *DHCP Option to Disable Stateless Auto-Configuration in IPv4 Clients*,
+   `RFC 2563 <https://tools.ietf.org/html/rfc2563>`__: The option is supported.
+
+-  *DHCP Options for Service Location Protocol*, `RFC 2610
+   <https://tools.ietf.org/html/rfc2610>`__: Both options are supported.
 
 -  *The Name Service Search Option for DHCP*, `RFC 2937
    <https://tools.ietf.org/html/rfc2937>`__: The option is supported.
