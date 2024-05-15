@@ -237,8 +237,12 @@ MySqlConnection::openDatabase() {
     // If TLS is enabled set it. If something should go wrong it will happen
     // later at the mysql_real_connect call.
     if (tls_) {
-        mysql_ssl_set(mysql_, key_file, cert_file, ca_file, ca_dir,
-                      cipher_list);
+        mysql_options(mysql_, MYSQL_OPT_SSL_KEY, key_file);
+        mysql_options(mysql_, MYSQL_OPT_SSL_CERT, cert_file);
+        mysql_options(mysql_, MYSQL_OPT_SSL_CA, ca_file);
+        mysql_options(mysql_, MYSQL_OPT_SSL_CAPATH, ca_dir);
+        mysql_options(mysql_, MYSQL_OPT_SSL_CIPHER, cipher_list);
+
     }
 
     // Open the database.

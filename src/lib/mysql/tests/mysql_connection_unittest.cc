@@ -1008,4 +1008,19 @@ TEST_F(MySqlConnectionTest, toKeaAdminParameters) {
                               "--ssl-ca " TEST_CA_DIR "/kea-ca.crt", "--user", "keatest_secure"}));
 }
 
+/// @brief Checks that the mysql_options call does not crash when passed a null option value.
+///
+/// An unconventional test, but the MySQL docs are not clear:
+/// > Any unused SSL arguments may be given as NULL.
+/// > Because of that equivalence, applications can, instead of calling mysql_ssl_set(), call
+///   mysql_options() directly, omitting calls for those options for which the option value is NULL.
+TEST_F(MySqlConnectionTest, mysqlOptions) {
+    MySqlHolder mysql;
+    mysql_options(mysql, MYSQL_OPT_SSL_KEY, nullptr);
+    mysql_options(mysql, MYSQL_OPT_SSL_CERT, nullptr);
+    mysql_options(mysql, MYSQL_OPT_SSL_CA, nullptr);
+    mysql_options(mysql, MYSQL_OPT_SSL_CAPATH, nullptr);
+    mysql_options(mysql, MYSQL_OPT_SSL_CIPHER, nullptr);
+}
+
 }  // namespace
