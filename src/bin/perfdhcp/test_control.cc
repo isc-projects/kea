@@ -113,7 +113,7 @@ TestControl::cleanCachedPackets() {
         // since we want to randomize leases to be renewed so leave 5
         // times more packets to randomize from.
         /// @todo The cache size might be controlled from the command line.
-        if (reply_storage_.size() > 5 * options_.getRenewRate()) {
+        if (reply_storage_.size() > 5 * size_t(options_.getRenewRate())) {
             reply_storage_.clear(reply_storage_.size() -
                                  5 * options_.getRenewRate());
         }
@@ -404,9 +404,11 @@ TestControl::generateMacAddress(uint8_t& randomized) {
 
 OptionPtr
 TestControl::generateClientId(const dhcp::HWAddrPtr& hwaddr) const {
-    std::vector<uint8_t> client_id(1, static_cast<uint8_t>(hwaddr->htype_));
-    client_id.insert(client_id.end(), hwaddr->hwaddr_.begin(),
-                     hwaddr->hwaddr_.end());
+    vector<uint8_t> client_id;
+    client_id.push_back(static_cast<uint8_t>(hwaddr->htype_));
+    for (uint8_t const& byte : hwaddr->hwaddr_) {
+        client_id.push_back(byte);
+    }
     return (OptionPtr(new Option(Option::V4, DHO_DHCP_CLIENT_IDENTIFIER,
                                  client_id)));
 }
@@ -486,7 +488,7 @@ int
 TestControl::getRandomOffset(const int arg_idx) const {
     int rand_offset = options_.getIpVersion() == 4 ?
         DHCPV4_RANDOMIZATION_OFFSET : DHCPV6_RANDOMIZATION_OFFSET;
-    if (options_.getRandomOffset().size() > arg_idx) {
+    if (options_.getRandomOffset().size() > size_t(arg_idx)) {
         rand_offset = options_.getRandomOffset()[arg_idx];
     }
     return (rand_offset);
@@ -524,7 +526,7 @@ int
 TestControl::getTransactionIdOffset(const int arg_idx) const {
     int xid_offset = options_.getIpVersion() == 4 ?
         DHCPV4_TRANSID_OFFSET : DHCPV6_TRANSID_OFFSET;
-    if (options_.getTransactionIdOffset().size() > arg_idx) {
+    if (options_.getTransactionIdOffset().size() > size_t(arg_idx)) {
         xid_offset = options_.getTransactionIdOffset()[arg_idx];
     }
     return (xid_offset);
