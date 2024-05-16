@@ -20,15 +20,6 @@
 using namespace isc::asiolink;
 namespace ph = std::placeholders;
 
-namespace {
-
-/// @brief Maximum size of a message that can be logged.
-///
-/// The part of the message beyond this value is truncated.
-const size_t MAX_LOGGED_MESSAGE_SIZE = 1024;
-
-}
-
 namespace isc {
 namespace tcp {
 

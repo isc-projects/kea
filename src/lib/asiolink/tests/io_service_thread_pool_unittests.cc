@@ -1,4 +1,4 @@
-// Copyright (C) 2021-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2021-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -19,9 +19,6 @@ using namespace isc;
 using namespace isc::asiolink;
 
 namespace {
-
-/// @brief Test timeout (ms).
-const long TEST_TIMEOUT = 10000;
 
 /// @brief Simple test fixture for testing IoServiceThreadPool.
 class IoServiceThreadPoolTest : public ::testing::Test {

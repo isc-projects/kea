@@ -168,7 +168,7 @@ public:
         columns_[AUTH_KEY_COL] = "auth_key";
 
         BOOST_STATIC_ASSERT(13 < HOST_COLUMNS);
-    };
+    }
 
     /// @brief Virtual destructor.
     virtual ~MySqlHostExchange() {
@@ -199,7 +199,7 @@ public:
     /// This method is used by derived classes.
     uint64_t getHostId() const {
         return (host_id_);
-    };
+    }
 
     /// @brief Set error indicators
     ///
@@ -217,7 +217,7 @@ public:
             error[i] = MLM_FALSE;
             bind[i].error = reinterpret_cast<my_bool*>(&error[i]);
         }
-    };
+    }
 
     /// @brief Return columns in error
     ///
@@ -251,7 +251,7 @@ public:
         }
 
         return (result);
-    };
+    }
 
     /// @brief Create MYSQL_BIND objects for Host Pointer
     ///
@@ -419,7 +419,7 @@ public:
             vec.push_back(bind_[3]); // subnet_id
         }
         return (vec);
-    };
+    }
 
     /// @brief Create BIND array to receive Host data.
     ///
@@ -551,7 +551,7 @@ public:
         // Add the data to the vector.  Note the end element is one after the
         // end of the array.
         return (bind_);
-    };
+    }
 
     /// @brief Copy received data into Host object
     ///
@@ -576,14 +576,14 @@ public:
         // set to 0.
         SubnetID ipv4_subnet_id(SUBNET_ID_UNUSED);
         if (dhcp4_subnet_id_null_ == MLM_FALSE) {
-            ipv4_subnet_id = static_cast<SubnetID>(dhcp4_subnet_id_);
+            ipv4_subnet_id = dhcp4_subnet_id_;
         }
 
         // Set DHCPv6 subnet ID to the value returned. If NULL returned,
         // set to 0.
         SubnetID ipv6_subnet_id(SUBNET_ID_UNUSED);
         if (dhcp6_subnet_id_null_ == MLM_FALSE) {
-            ipv6_subnet_id = static_cast<SubnetID>(dhcp6_subnet_id_);
+            ipv6_subnet_id = dhcp6_subnet_id_;
         }
 
         // Set IPv4 address reservation if it was given, if not, set IPv4 zero
@@ -671,7 +671,7 @@ public:
         }
 
         return (h);
-    };
+    }
 
     /// @brief Processes one row of data fetched from a database.
     ///
@@ -711,7 +711,7 @@ public:
     ///         "(None)".
     std::string getErrorColumns() {
         return (getColumnsInError(error_, columns_));
-    };
+    }
 
 protected:
 
@@ -1310,7 +1310,7 @@ public:
     /// detects duplicated information and discards such entries.
     ///
     /// @param [out] hosts Container holding parsed hosts and options.
-    virtual void processFetchedData(ConstHostCollection& hosts) {
+    virtual void processFetchedData(ConstHostCollection& hosts) override {
         // Holds pointer to the previously parsed host.
         HostPtr most_recent_host;
         if (!hosts.empty()) {
@@ -1350,7 +1350,7 @@ public:
     /// @brief Bind variables for receiving option data.
     ///
     /// @return Vector of MYSQL_BIND object representing data to be retrieved.
-    virtual std::vector<MYSQL_BIND> createBindForReceive() {
+    virtual std::vector<MYSQL_BIND> createBindForReceive() override {
         // The following call sets bind_ values between 0 and 8.
         static_cast<void>(MySqlHostExchange::createBindForReceive());
 
@@ -1368,7 +1368,7 @@ public:
         setErrorIndicators(bind_, error_);
 
         return (bind_);
-    };
+    }
 
 private:
 
@@ -1453,7 +1453,7 @@ public:
             return (reservation_id_);
         }
         return (0);
-    };
+    }
 
     /// @brief Creates IPv6 reservation from the data contained in the
     /// currently processed row.
@@ -1484,7 +1484,7 @@ public:
         IOAddress addr6 = IOAddress::fromBytes(AF_INET6, ipv6_address_buffer_);
         IPv6Resrv r(type, addr6, prefix_len_);
         return (r);
-    };
+    }
 
     /// @brief Processes one row of data fetched from a database.
     ///
@@ -1505,7 +1505,7 @@ public:
     ///
     /// @param [out] hosts Collection of hosts to which a new host created
     ///        from the processed data should be inserted.
-    virtual void processFetchedData(ConstHostCollection& hosts) {
+    virtual void processFetchedData(ConstHostCollection& hosts) override {
 
         // Call parent class to fetch host information and options.
         MySqlHostWithOptionsExchange::processFetchedData(hosts);
@@ -1539,7 +1539,7 @@ public:
     /// objects with associated IPv6 reservations.
     ///
     /// @return Vector of MYSQL_BIND objects representing data to be retrieved.
-    virtual std::vector<MYSQL_BIND> createBindForReceive() {
+    virtual std::vector<MYSQL_BIND> createBindForReceive() override {
         // Reset most recent reservation id value because we're now making
         // a new SELECT query.
         most_recent_reservation_id_ = 0;
@@ -1580,7 +1580,7 @@ public:
         setErrorIndicators(bind_, error_);
 
         return (bind_);
-    };
+    }
 
 private:
 
@@ -1798,18 +1798,6 @@ private:
 ///
 /// This class supports inserting both DHCPv4 and DHCPv6 options.
 class MySqlOptionExchange {
-private:
-
-    static const size_t OPTION_ID_COL = 0;
-    static const size_t CODE_COL = 1;
-    static const size_t VALUE_COL = 2;
-    static const size_t FORMATTED_VALUE_COL = 3;
-    static const size_t SPACE_COL = 4;
-    static const size_t PERSISTENT_COL = 5;
-    static const size_t CANCELLED_COL = 6;
-    static const size_t USER_CONTEXT_COL = 7;
-    static const size_t DHCP_SUBNET_ID_COL = 8;
-    static const size_t HOST_ID_COL = 9;
     /// @brief Number of columns in the option tables holding bindable values.
     static const size_t OPTION_COLUMNS = 10;
 
@@ -3231,7 +3219,7 @@ MySqlHostDataSourceImpl::getHost(MySqlHostContextPtr& ctx,
     // Identifier type.
     char identifier_type_copy = static_cast<char>(identifier_type);
     inbind[1].buffer_type = MYSQL_TYPE_TINY;
-    inbind[1].buffer = reinterpret_cast<char*>(&identifier_type_copy);
+    inbind[1].buffer = &identifier_type_copy;
     inbind[1].is_unsigned = MLM_TRUE;
 
     ConstHostCollection collection;
@@ -3394,7 +3382,7 @@ MySqlHostDataSource::del4(const SubnetID& subnet_id,
     // identifier type
     char identifier_type_copy = static_cast<char>(identifier_type);
     inbind[1].buffer_type = MYSQL_TYPE_TINY;
-    inbind[1].buffer = reinterpret_cast<char*>(&identifier_type_copy);
+    inbind[1].buffer = &identifier_type_copy;
     inbind[1].is_unsigned = MLM_TRUE;
 
     // identifier value
@@ -3435,7 +3423,7 @@ MySqlHostDataSource::del6(const SubnetID& subnet_id,
     // identifier type
     char identifier_type_copy = static_cast<char>(identifier_type);
     inbind[1].buffer_type = MYSQL_TYPE_TINY;
-    inbind[1].buffer = reinterpret_cast<char*>(&identifier_type_copy);
+    inbind[1].buffer = &identifier_type_copy;
     inbind[1].is_unsigned = MLM_TRUE;
 
     // identifier value

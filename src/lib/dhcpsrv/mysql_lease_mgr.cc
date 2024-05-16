@@ -23,12 +23,13 @@
 #include <boost/static_assert.hpp>
 #include <mysqld_error.h>
 
+#include <ctime>
 #include <iostream>
 #include <iomanip>
 #include <limits>
 #include <sstream>
 #include <string>
-#include <time.h>
+#include <vector>
 
 using namespace isc;
 using namespace isc::asiolink;
@@ -81,21 +82,6 @@ using namespace std;
 ///   lease object.
 
 namespace {
-
-/// @brief Maximum length of the hostname stored in DNS.
-///
-/// This length is restricted by the length of the domain-name carried
-/// in the Client FQDN %Option (see RFC4702 and RFC4704).
-const size_t HOSTNAME_MAX_LEN = 255;
-
-/// @brief Maximum size of an IPv6 address represented as a text string.
-///
-/// This is 32 hexadecimal characters written in 8 groups of four, plus seven
-/// colon separators.
-const size_t ADDRESS6_TEXT_MAX_LEN = 39;
-
-/// @brief Maximum length of user context.
-const size_t USER_CONTEXT_MAX_LEN = 8192;
 
 /// @brief Maximum length of the text returned by the limit checking functions.
 const size_t LIMITS_TEXT_MAX_LEN = 512;
@@ -555,7 +541,7 @@ public:
                                    size_t count) {
         for (size_t i = 0; i < count; ++i) {
             error[i] = MLM_FALSE;
-            bind[i].error = reinterpret_cast<my_bool*>(&error[i]);
+            bind[i].error = &error[i];
         }
     }
 
@@ -1926,7 +1912,7 @@ public:
     /// type (v6 only) per subnet id. This method binds the statement to
     /// the output bind array and then executes the statement, and fetches
     /// entire result set.
-    void start() {
+    void start() override {
         // Set up where clause inputs if needed.
         if (getSelectMode() != ALL_SUBNETS && getSelectMode() != ALL_SUBNET_POOLS) {
             MYSQL_BIND inbind[2];
@@ -2017,11 +2003,11 @@ public:
     ///
     /// @return True if the fetch succeeded, false if there are no more
     /// rows to fetch.
-    bool getNextRow(LeaseStatsRow& row) {
+    bool getNextRow(LeaseStatsRow& row) override {
         bool have_row = false;
         int status = mysql_stmt_fetch(statement_);
         if (status == MLM_MYSQL_FETCH_SUCCESS) {
-            row.subnet_id_ = static_cast<SubnetID>(subnet_id_);
+            row.subnet_id_ = subnet_id_;
             row.pool_id_ = pool_id_;
             row.lease_type_ = static_cast<Lease::Type>(lease_type_);
             row.lease_state_ = state_;
@@ -3438,7 +3424,7 @@ MySqlLeaseMgr::deleteLeaseCommon(MySqlLeaseContextPtr& ctx,
 
     // See how many rows were affected.  Note that the statement may delete
     // multiple rows.
-    return (static_cast<uint64_t>(mysql_stmt_affected_rows(ctx->conn_.getStatement(stindex))));
+    return (mysql_stmt_affected_rows(ctx->conn_.getStatement(stindex)));
 }
 
 bool
@@ -4111,8 +4097,9 @@ MySqlLeaseMgr::getLeases4ByRelayId(const OptionBuffer& relay_id,
     if (have_qet) {
         ++bindings;
     }
-    MYSQL_BIND inbind[bindings];
-    memset(inbind, 0, sizeof(inbind));
+    MYSQL_BIND zeroed_out;
+    memset(&zeroed_out, 0, sizeof(zeroed_out));
+    vector<MYSQL_BIND> inbind(bindings, zeroed_out);
 
     std::vector<uint8_t> relay_id_data = relay_id;
     unsigned long relay_id_length = relay_id.size();
@@ -4176,7 +4163,7 @@ MySqlLeaseMgr::getLeases4ByRelayId(const OptionBuffer& relay_id,
     MySqlLeaseContextAlloc get_context(*this);
     MySqlLeaseContextPtr ctx = get_context.ctx_;
 
-    getLeaseCollection(ctx, stindex, inbind, result);
+    getLeaseCollection(ctx, stindex, inbind.data(), result);
 
     return (result);
 }
@@ -4223,8 +4210,9 @@ MySqlLeaseMgr::getLeases4ByRemoteId(const OptionBuffer& remote_id,
     if (have_qet) {
         ++bindings;
     }
-    MYSQL_BIND inbind[bindings];
-    memset(inbind, 0, sizeof(inbind));
+    MYSQL_BIND zeroed_out;
+    memset(&zeroed_out, 0, sizeof(zeroed_out));
+    vector<MYSQL_BIND> inbind(bindings, zeroed_out);
 
     std::vector<uint8_t> remote_id_data = remote_id;
     unsigned long remote_id_length = remote_id.size();
@@ -4288,7 +4276,7 @@ MySqlLeaseMgr::getLeases4ByRemoteId(const OptionBuffer& remote_id,
     MySqlLeaseContextAlloc get_context(*this);
     MySqlLeaseContextPtr ctx = get_context.ctx_;
 
-    getLeaseCollection(ctx, stindex, inbind, result);
+    getLeaseCollection(ctx, stindex, inbind.data(), result);
 
     return (result);
 }

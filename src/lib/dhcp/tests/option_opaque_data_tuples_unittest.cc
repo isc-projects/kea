@@ -530,9 +530,9 @@ TEST(OptionOpaqueDataTuples, unpack6Truncated) {
 // data is parsed correctly.
 TEST(OptionOpaqueDataTuples, unpack4NoTuple) {
     // Prepare data to decode.
-    const uint8_t buf_data[] = {
-    };
-    OptionBuffer buf(buf_data, buf_data + sizeof(buf_data));
+    std::vector<uint8_t> buf_vector;
+    const uint8_t* buf_data = buf_vector.data();
+    OptionBuffer buf(buf_data, buf_data + buf_vector.size());
 
     OptionOpaqueDataTuplesPtr data_tuple;
     ASSERT_NO_THROW(
@@ -549,9 +549,9 @@ TEST(OptionOpaqueDataTuples, unpack4NoTuple) {
 // data is parsed correctly when tuple's length field is coded on 2 octets.
 TEST(OptionOpaqueDataTuples, unpack4NoTuple_with_ltf) {
     // Prepare data to decode.
-    const uint8_t buf_data[] = {
-    };
-    OptionBuffer buf(buf_data, buf_data + sizeof(buf_data));
+    std::vector<uint8_t> buf_vector;
+    const uint8_t* buf_data = buf_vector.data();
+    OptionBuffer buf(buf_data, buf_data + buf_vector.size());
 
     OptionOpaqueDataTuplesPtr data_tuple;
     ASSERT_NO_THROW(
@@ -569,9 +569,9 @@ TEST(OptionOpaqueDataTuples, unpack4NoTuple_with_ltf) {
 // data is parsed correctly.
 TEST(OptionOpaqueDataTuples, unpack6NoTuple) {
     // Prepare data to decode.
-    const uint8_t buf_data[] = {
-    };
-    OptionBuffer buf(buf_data, buf_data + sizeof(buf_data));
+    std::vector<uint8_t> buf_vector;
+    const uint8_t* buf_data = buf_vector.data();
+    OptionBuffer buf(buf_data, buf_data + buf_vector.size());
 
     OptionOpaqueDataTuplesPtr data_tuple;
     ASSERT_NO_THROW(

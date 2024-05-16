@@ -214,38 +214,38 @@ public:
         // returned row the lambda provided as 4th argument should be executed.
         ASSERT_NO_THROW_LOG(conn_.selectQuery(MySqlConnectionTest::GET_BY_INT_VALUE,
                                               bindings, out_bindings,
-                                              [&](MySqlBindingCollection& out_bindings) {
+                                              [&](MySqlBindingCollection& captured_out_bindings) {
 
             // Compare received data with input data assuming they are both non-null.
 
-            if (!out_bindings[0]->amNull() && !in_bindings[0]->amNull()) {
+            if (!captured_out_bindings[0]->amNull() && !in_bindings[0]->amNull()) {
                 EXPECT_EQ(static_cast<int>(in_bindings[0]->getInteger<uint8_t>()),
-                          static_cast<int>(out_bindings[0]->getInteger<uint8_t>()));
+                          static_cast<int>(captured_out_bindings[0]->getInteger<uint8_t>()));
             }
 
-            if (!out_bindings[1]->amNull() && !in_bindings[1]->amNull()) {
+            if (!captured_out_bindings[1]->amNull() && !in_bindings[1]->amNull()) {
                 EXPECT_EQ(in_bindings[1]->getInteger<uint32_t>(),
-                          out_bindings[1]->getInteger<uint32_t>());
+                          captured_out_bindings[1]->getInteger<uint32_t>());
             }
 
-            if (!out_bindings[2]->amNull() && !in_bindings[2]->amNull()) {
+            if (!captured_out_bindings[2]->amNull() && !in_bindings[2]->amNull()) {
                 EXPECT_EQ(in_bindings[2]->getInteger<int64_t>(),
-                          out_bindings[2]->getInteger<int64_t>());
+                          captured_out_bindings[2]->getInteger<int64_t>());
             }
 
-            if (!out_bindings[3]->amNull() && !in_bindings[3]->amNull()) {
+            if (!captured_out_bindings[3]->amNull() && !in_bindings[3]->amNull()) {
                 EXPECT_EQ(in_bindings[3]->getString(),
-                          out_bindings[3]->getString());
+                          captured_out_bindings[3]->getString());
             }
 
-            if (!out_bindings[4]->amNull() && !in_bindings[4]->amNull()) {
+            if (!captured_out_bindings[4]->amNull() && !in_bindings[4]->amNull()) {
                 EXPECT_EQ(in_bindings[4]->getBlob(),
-                          out_bindings[4]->getBlob());
+                          captured_out_bindings[4]->getBlob());
             }
 
-            if (!out_bindings[5]->amNull() && !in_bindings[5]->amNull()) {
+            if (!captured_out_bindings[5]->amNull() && !in_bindings[5]->amNull()) {
                 EXPECT_TRUE(in_bindings[5]->getTimestamp() ==
-                            out_bindings[5]->getTimestamp());
+                            captured_out_bindings[5]->getTimestamp());
             }
         }));
 

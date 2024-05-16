@@ -1823,11 +1823,11 @@ TestControl::setDefaults4(const Pkt4Ptr& pkt) {
     // The remote server's name or IP.
     pkt->setRemoteAddr(IOAddress(options_.getServerName()));
     // Set local address.
-    pkt->setLocalAddr(IOAddress(socket_.addr_));
+    pkt->setLocalAddr(socket_.addr_);
     // Set relay (GIADDR) address to local address if multiple
     // subnet mode is not enabled
     if (!options_.checkMultiSubnet()) {
-        pkt->setGiaddr(IOAddress(socket_.addr_));
+        pkt->setGiaddr(socket_.addr_);
     } else {
         pkt->setGiaddr(IOAddress(options_.getRandRelayAddr()));
     }
@@ -1868,9 +1868,9 @@ TestControl::setDefaults6(const Pkt6Ptr& pkt) {
       if (options_.checkMultiSubnet()) {
           relay_info.linkaddr_ = IOAddress(options_.getRandRelayAddr());
       } else {
-          relay_info.linkaddr_ = IOAddress(socket_.addr_);
+          relay_info.linkaddr_ = socket_.addr_;
       }
-      relay_info.peeraddr_ = IOAddress(socket_.addr_);
+      relay_info.peeraddr_ = socket_.addr_;
       relay_info.options_.insert(options_.getRelayOpts().begin(), options_.getRelayOpts().end());
       pkt->addRelayInfo(relay_info);
     }
