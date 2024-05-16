@@ -90,7 +90,7 @@ Role Configuration
 
 .. note::
 
-   The role assignment may fail, for instance with ``cert-subject`` when
+   The role assignment may fail with ``cert-subject`` when
    the client certificate was not required, or it may have no subject common
    name and instead have a DNS alternative subject name. In this case, the role
    assignment returns the empty role and the ``default-role`` entry is used.

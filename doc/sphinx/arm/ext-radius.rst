@@ -9,14 +9,14 @@ RADIUS Overview
 ---------------
 
 This hook library allows Kea to interact with two types of RADIUS
-services: access and accounting. Although the most common DHCP and RADIUS
-integration is done on the DHCP relay-agent level (DHCP clients send
+services: access and accounting. The most common DHCP and RADIUS
+integration is done on the DHCP relay-agent level: DHCP clients send
 DHCP packets to DHCP relays; those relays contact the RADIUS server and
-depending on the response either send the packet to the DHCP server or
-drop it), it does require DHCP relay hardware to support RADIUS
-communication. Also, even if the relay has the necessary support, it is
+either send the packet to the DHCP server or drop it, depending on the 
+response. It does require DHCP relay hardware to support RADIUS
+communication, though, and even if the relay has the necessary support, it is
 often not flexible enough to send and receive additional RADIUS
-attributes. As such, the alternative looks more appealing: to extend the
+attributes. There is a more appealing alternative: to extend the
 DHCP server to talk to RADIUS directly. That is the goal of this library.
 
 .. note::
@@ -30,9 +30,9 @@ Access-Request to the RADIUS server and waits for a response. The server
 then sends back either an Access-Accept with specific client attributes,
 or an Access-Reject. There are two cases supported here: first, the
 Access-Accept includes a Framed-IP-Address attribute (for DHCPv4) or a
-Framed-IPv6-Address attribute or a Delegated-IPv6-Prefix (for DHCPv6),
+Framed-IPv6-Address attribute/Delegated-IPv6-Prefix (for DHCPv6),
 which are interpreted by Kea as instructions to assign the specified IPv4
-or IPv6 address, or IPv6 prefix. This effectively means RADIUS can act
+or IPv6 address/IPv6 prefix. This effectively means RADIUS can act
 as an address-reservation database.
 
 The second supported case is the ability to assign clients to specific
@@ -60,7 +60,7 @@ takes many parameters. For example, this configuration can be used:
     {
       "Dhcp4": {
 
-        // Your regular DHCPv4 configuration parameters goes here.
+        // Your regular DHCPv4 configuration parameters go here.
 
         "hooks-libraries": [
           {
@@ -88,14 +88,14 @@ takes many parameters. For example, this configuration can be used:
 RADIUS is a complicated environment. As such, it is not feasible
 to provide a default configuration that works for everyone.
 However, we do have an example that showcases some of the more common
-features. Please see ``doc/examples/kea4/hooks-radius.json`` in the Kea
+features; please see ``doc/examples/kea4/hooks-radius.json`` in the Kea
 sources.
 
 The RADIUS hook library supports the following global configuration
 flags:
 
 -  ``bindaddr`` (default ``"*"``) - specifies the address to be used by the
-   hook library in communication with RADIUS servers. The ``"*"`` special
+   hook library in communication with the RADIUS servers. The ``"*"`` special
    value tells the kernel to choose the address at hook library load time.
 
 -  ``canonical-mac-address`` (default ``false``) - specifies whether MAC
@@ -103,49 +103,49 @@ flags:
    pairs of hexadecimal digits separated by ``-``).
 
 -  ``client-id-pop0`` (default ``false``) - is used with
-   :ischooklib:`libdhcp_flex_id.so`. Removes the leading zero (or pair of zeroes
-   in DHCPv6) type in the client id (duid in DHCPv6). See
+   :ischooklib:`libdhcp_flex_id.so`; it removes the leading zero (or pair of zeroes
+   in DHCPv6) type in the client ID (DUID in DHCPv6). See
    ``client-id-printable`` for any value implications when used in conjunction
    with it.
 
 -  ``client-id-printable`` (default ``false``) - checks whether the
    ``client-id``/``duid`` content is printable and uses it as is instead of in
-   hexadecimal. Implies ``client-id-pop0`` and ``extract-duid`` as 0 and 255 are
+   hexadecimal. It implies that ``client-id-pop0`` and ``extract-duid`` as 0 and 255 are
    not printable.
 
 -  ``deadtime`` (default ``0``) - is a mechanism that helps in sorting the
-   servers such that the servers that have proved responsive so far are inquired
-   first, and the servers that have proved unresponsive are left at the end. The
+   servers so those that have proved responsive so far are contacted
+   first, and the servers that have proved unresponsive are left to try later. The
    deadtime value specifies the number of seconds after which a server is
    considered unresponsive. 0 disables the mechanism.
 
 -  ``dictionary`` (default ``"/etc/kea/radius/dictionary"``) - is the
-   attribute and value dictionary. Note that it is a critical parameter.
+   attribute and value dictionary; note that it is a critical parameter.
    A dictionary is provided by Kea and is set by default.
 
--  ``extract-duid`` (default ``true``) - extracts the embedded duid from an
-   RFC-4361-compliant DHCPv4 client id. See ``client-id-printable`` for any
+-  ``extract-duid`` (default ``true``) - extracts the embedded DUID from an
+   RFC 4361-compliant DHCPv4 client ID. See ``client-id-printable`` for any
    value implications when used in conjunction with it.
 
 -  ``identifier-type4`` (default ``"client-id"``) - specifies the identifier
-   type to build the User-Name attribute. It should be the same as the
+   type to build the User-Name attribute for DHCPv4; it should be the same as the
    host identifier. When :ischooklib:`libdhcp_flex_id.so` is used, then
    ``replace-client-id`` must be set to ``true`` and ``client-id`` must be used
    with ``client-id-pop0`` enabled.
 
 -  ``identifier-type6`` (default ``"duid"``) - specifies the identifier type to
-   build the User-Name attribute. It should be the same as the host
+   build the User-Name attribute for DHCPv6; it should be the same as the host
    identifier. When :ischooklib:`libdhcp_flex_id.so` is used, then
    ``replace-client-id`` must be set to ``true`` and ``duid`` must be used with
    ``client-id-pop0`` enabled.
 
 -  ``nas-ports`` (default ``[]``), specifies the NAS port to use in place of
    a subnet ID (default behavior). It is an array of maps, each map having two
-   elements at most: the mandatory NAS port value, and, optionally, a selector
-   consisting of either a subnet id, a subnet prefix, or a shared-network name.
+   elements at most: the mandatory NAS port value, and optionally, a selector
+   consisting of either a subnet ID, a subnet prefix, or a shared-network name.
    If the selector is applied to the packet, the NAS port is used instead of the
-   subnet id. When the subnet id is 0 or missing, the specified NAS port acts as
-   a default. Its substition happens for all packets that did not match a
+   subnet ID. When the subnet ID is 0 or missing, the specified NAS port acts as
+   a default. The substitution happens for all packets that did not match a
    selector.
 
 -  ``realm`` (default ``""``) - is the default realm.
@@ -153,8 +153,8 @@ flags:
 -  ``reselect-subnet-address`` (default ``false``) - enables subnet reselection
    according to the value of the Framed-IP-Address or, respectively,
    the Framed-IPv6-Address attribute from the RADIUS access response. With this
-   flag enabled, if the IP address is not in range of the currently selected
-   subnet, but is in range of another subnet that is selectable with regards to
+   flag enabled, if the IP address is not in the range of the currently selected
+   subnet, but is in the range of another subnet that is selectable with regards to
    other criteria, the latter subnet is selected and used further in the lease
    assignment process.
 
@@ -165,7 +165,7 @@ flags:
    another selectable subnet that is guarded by it, the latter subnet is
    selected and used further in the lease assignment process.
    This reselection is attempted first, and if successful, it prevents the
-   function of reselect-subnet-address from coming into effect.
+   function of ``reselect-subnet-address`` from coming into effect.
 
 -  ``retries`` (default ``3``) - is the number of retries before trying the
    next server.
@@ -174,11 +174,11 @@ flags:
    persistent storage for accounting session history.
 
  - ``thread-pool-size`` (default ``0``) indicates the number of threads that
-   is used for sending RADIUS requests and processing RADIUS responses for both
-   access and accounting services before passing it to the core thread pool. A
+   are used for sending RADIUS requests and processing RADIUS responses for both
+   access and accounting services before passing them to the core thread pool. A
    value of ``0`` instructs the RADIUS hook library to use the same number of
-   threads used for core DHCP processing. This value is only relevant if Kea
-   core is configured as multi-threaded. Single-threaded Kea core results in
+   threads used for core DHCP processing. This value is only relevant if the Kea
+   core is configured as multi-threaded; a single-threaded Kea core results in
    single-threaded RADIUS processing.
 
 -  ``timeout`` (default ``10``) - is the number of seconds during which a
@@ -212,34 +212,34 @@ At the service level, three sections can be configured:
    defines the value in hex), or ``expr`` (which defines an expression
    that is evaluated for each incoming packet independently).
 
-   -  ``name`` - the name of the attribute.
+   -  ``name`` - is the name of the attribute.
 
-   -  ``type`` - the type of the attribute. Either the type or the name must be
+   -  ``type`` - is the type of the attribute. Either the type or the name must be
       provided, and the attribute must be defined in the dictionary.
 
-   -  ``data`` - the first of three ways to specify the attribute content.
+   -  ``data`` - is the first of three ways to specify the attribute content.
       It specifies the textual representation of the attribute content.
 
-   -  ``raw`` - the second of three ways to specify the attribute content.
+   -  ``raw`` - is the second of three ways to specify the attribute content.
       It specifies the content in hexadecimal.
 
-   -  ``expr`` - the last of the three ways to specify the attribute content.
+   -  ``expr`` - is the last of the three ways to specify the attribute content.
       It specifies an evaluation expression on the DHCP query packet.
-      Currently this is restricted to the access service.
+
 
     Attributes are supported only for the access service.
 
 - The ``peer-updates`` boolean flag (default ``true``) controls whether lease
   updates coming from an active High-Availability (HA) partner should result in
   an accounting request. This may be desirable to remove duplicates if HA
-  partners are configured to send request to the same RADIUS server. The flag is
+  partners are configured to send requests to the same RADIUS server. The flag is
   only supported by the accounting service. The lease synchronization process at
   the startup of an HA node does not trigger a RADIUS accounting request,
   regardless of the value of this flag.
 
 - The ``max-pending-requests`` positive integer (default ``0``) limits the
-  number of pending RADIUS requests. The value ``0`` means no limit. It is
-  supported only by the access service. ``64`` can be a good value to set it to.
+  number of pending RADIUS requests. It is supported only by the access service.
+  The value ``0`` means no limit; ``64`` is a recommended setting.
 
 For example, to specify a single access server available on localhost
 that uses ``"xyz123"`` as a secret, and tell Kea to send three additional
@@ -353,14 +353,14 @@ And here's how to specify period-separated hexadecimal notation (``dead.beef.caf
 
 For :ischooklib:`libdhcp_radius.so` to operate properly in DHCPv4,
 :ischooklib:`libdhcp_host_cache.so` must also be loaded. The reason for this
-is somewhat complex. In a typical deployment, the DHCP clients send
+is somewhat complex. In a typical deployment, DHCP clients send
 their packets via DHCP relay, which inserts certain Relay Agent
 Information options, such as ``circuit-id`` or ``remote-id``. The values of
 those options are then used by the Kea DHCP server to formulate the
 necessary attributes in the Access-Request message sent to the RADIUS
 server. However, once the DHCP client gets its address, it then renews
-by sending packets directly to the DHCP server. As a result, the relays
-are not able to insert their RAI options, and the DHCP server cannot send
+by sending packets directly to the DHCP server. The relays cannot
+insert their RAI options at that point, and the DHCP server cannot send
 the Access-Request queries to the RADIUS server by using just the
 information from incoming packets. Kea needs to keep the information
 received during the initial Discover/Offer exchanges and use it again
@@ -369,7 +369,7 @@ later when sending accounting messages.
 This mechanism is implemented based on user context in host
 reservations. (See :ref:`user-context` and :ref:`user-context-hooks` for
 details.) The host-cache mechanism allows the information retrieved by
-RADIUS to be stored and later used for sending access and accounting
+RADIUS to be stored and used later to send access and accounting
 queries to the RADIUS server. In other words, the host-cache mechanism
 is mandatory, unless administrators do not want RADIUS communication for messages
 other than Discover and the first Request from each client.
@@ -377,7 +377,7 @@ other than Discover and the first Request from each client.
 .. note::
 
    Currently the RADIUS hook library is incompatible with the
-   ``early-global-reservations-lookup`` global parameter i.e.
+   ``early-global-reservations-lookup`` global parameter, i.e.
    setting the parameter to ``true`` raises an error when the
    hook library is loaded.
 
@@ -394,8 +394,8 @@ RADIUS Server Setup Example
 ---------------------------
 
 The RADIUS hook library requires at least one RADIUS server to function. One
-popular open-source implementation is FreeRADIUS. This is how it can be
-set up to enable basic functionality in Kea.
+popular open source implementation is FreeRADIUS; here's how to
+set it up to enable basic functionality in Kea.
 
 1. Install FreeRADIUS through the package manager or from the tarballs available
    on [the freeradius.org download page](https://freeradius.org/releases/).
@@ -414,10 +414,10 @@ set up to enable basic functionality in Kea.
 
 5. If the Kea DHCP server and the RADIUS server are on different machines,
    edit ``/etc/freeradius/clients.conf`` with the proper address under
-   ``ipadddr``. This file is also where the secret is set, which needs to match
+   ``ipadddr``. This file is also where the secret is set; it needs to match
    the one set in the hook library's configuration.
 
-6. If RADIUS is used for the purpose of authorizing DHCP clients, each DHCP
+6. If RADIUS is used to authorize DHCP clients, each DHCP
    client needs to have an entry in the authorize file, which can be commonly
    found at:
 
@@ -425,14 +425,14 @@ set up to enable basic functionality in Kea.
    - ``/etc/freeradius/3.0/mods-config/files/authorize``
    - ``/etc/freeradius/users`` (for RADIUS 2.x series)
 
-   Entries need to have the password set which needs to match the password
-   configured in the configuration of the RADIUS hook library under the
-   ``User-Password`` attribute. Each entry can have zero, one or multiple
+   The passwords for entries must match the passwords
+   in the configuration of the RADIUS hook library under the
+   ``User-Password`` attribute. Each entry can have zero or more
    attributes.
 
-   In the following example, there are 6 entries with the password set to the
-   client ID, which would need to be dynamically set in the hook library's
-   configuration. Here's how the entries can look like:
+   In the following example, there are six entries with the password set to the
+   client ID, which needs to be dynamically set in the hook library's
+   configuration. Here's how the entries might look:
 
    ::
 
@@ -454,8 +454,8 @@ set up to enable basic functionality in Kea.
            Framed-IPv6-Address = "2001:db8::9",
            Framed-Pool = "classroom"
 
-7. Accounting should work out of the box with Kea, but customizations are
-   possible in the accounting file, which can be commonly found at:
+7. Accounting does not need to be modified to work with Kea, but customizations are
+   possible in the accounting file, which can commonly be found at:
 
    - ``/etc/radius-config/mods-config/files/accounting``
    - ``/etc/freeradius/3.0/mods-config/files/accounting``
@@ -465,7 +465,7 @@ set up to enable basic functionality in Kea.
 RADIUS Workflows for Lease Allocation
 -------------------------------------
 
-The following diagrams show a high level view of how RADIUS assists with the
+The following diagrams show a high-level view of how RADIUS assists with the
 lease allocation process in :iscman:`kea-dhcp4` and :iscman:`kea-dhcp6`.
 
 .. figure:: ../uml/radius.*
@@ -481,21 +481,21 @@ Parked-Packet Limit
 
 Refer to :ref:`parked-packet-limit` for a basic introduction to packet parking.
 
-The RADIUS hook library makes use of this mechanism. To allow for asynchronous
+The RADIUS hook library uses this mechanism. To allow for asynchronous
 communication between Kea and the RADIUS server and concurrent processing of
 DHCP packets by the Kea server, the DHCP request is parked, before the access
 request is sent on the subnet select callout. When the access response becomes
 available to the Kea DHCP server, the request is unparked, and the server
-continues processing on it.
+continues processing it.
 
 .. _radius-differences:
 
-Differences Between RADIUS Hook Libraries Prior To 2.4.0 and As Of 2.6.0
-------------------------------------------------------------------------
+Differences Between RADIUS Hook Libraries Prior To Kea 2.4.0 and As Of 2.6.0
+----------------------------------------------------------------------------
 
 The RADIUS hook library in 2.4.0 and prior versions relied on the FreeRADIUS
-client library to function. Starting with 2.6.0 and onwards, the RADIUS hook
-library is standalone with its own RADIUS client implementation and its own
+client library to function. Starting with 2.6.0 and onward, the RADIUS hook
+library is standalone, with its own RADIUS client implementation and its own
 RADIUS dictionary. There are differences:
 
 .. list-table::
@@ -517,7 +517,7 @@ RADIUS dictionary. There are differences:
 
       - Taken from the FreeRADIUS dictionary.
 
-      - Taken from the Kea RADIUS dictionary and the IANA registry. There is an aliasing mechanism built into the library that ensures backward compatibility e.g. ``Password`` translates to the standard name of the attribute ``User-Password``.
+      - Taken from the Kea RADIUS dictionary and the IANA registry. There is an aliasing mechanism built into the library that ensures backward compatibility, e.g. ``Password`` translates to the standard name of the attribute ``User-Password``.
 
     * - Resolution of RADIUS Server Domain Names
 

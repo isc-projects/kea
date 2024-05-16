@@ -25,8 +25,8 @@ If ``retry-on-startup`` is set to ``true``, the server will start reconnection
 attempts even at server startup or on reconfigure events, and will honor the
 action specified in the ``on-fail`` parameter.
 Database connection retries are not attempted on startup if the
-:ischooklib:`libdhcp_limits.so` is loaded because the hook library requires a
-valid connection to the database to check if JSON format is supported and to
+:ischooklib:`libdhcp_limits.so` is loaded, because the hook library requires a
+valid connection to the database to check whether JSON format is supported and to
 recount class limits.
 
 During dynamic reconfiguration, all backends are disconnected and then
@@ -61,16 +61,16 @@ If connectivity to all backends is restored, the server returns to normal
 operations. If the connection cannot be restored and the server is configured
 to exit, it issues a fatal error before shutdown.
 
-For Kea DHCP servers to work with database backends, the schema has to be
-created and has to have the version specific to the version of the running Kea
-server. If the version check fails on a database backend that is not configured
-as readonly, Kea attempts to initialize the schema.
+For Kea DHCP servers to work with database backends, the database schema must be
+created and must match the version of the Kea
+server. If the version check fails and the database backend is not configured
+as read-only, Kea attempts to initialize the schema.
 
 .. note::
 
-    Schema upgrades are not attempted to not accidentally remove the
-    opportunity for prior administrative actions that users may be interested in,
-    like, for example, backing up the database or temporarily shutting off running
+    Kea does not automatically attempt to upgrade an existing schema; doing so
+    might deprive users of the opportunity to take precautions, such as 
+    backing up the database or temporarily shutting off running
     Kea servers that are currently operating on the database.
 
 The connection to the database server can optionally be protected by TLS.

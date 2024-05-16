@@ -503,12 +503,12 @@ Notes:
    +-----------------------+-------------------------+-----------------------+
    | Lcase                 | lcase('LoWeR')          | Converts the value of |
    |                       |                         | a string expression   |
-   |                       |                         | to lower case e.g.    |
+   |                       |                         | to lower case, e.g.   |
    |                       |                         | 'lower'               |
    +-----------------------+-------------------------+-----------------------+
    | Ucase                 | ucase('uPpEr')          | Converts the value of |
    |                       |                         | a string expression   |
-   |                       |                         | to upper case e.g.    |
+   |                       |                         | to upper case, e.g.   |
    |                       |                         | 'UPPER'               |
    +-----------------------+-------------------------+-----------------------+
    | Split                 | split('foo.bar', '.', 2)| Return the second     |
@@ -759,11 +759,11 @@ domain name servers.
        ...
    }
 
-The next example shows a client class being defined for use by the DHCPv6
-server. In it the class named "Client_enterprise" is defined. It is
+The next example shows a client class named "Client_enterprise" being defined
+for use by the DHCPv6 server. It is
 comprised of all clients whose client identifiers start with the given
-hex string (which would indicate a DUID based on an enterprise ID of
-``0x0002AABBCCDD``). Members of this class will be given 2001:db8:0::1 and
+hex string, which would indicate a DUID based on an enterprise ID of
+``0x0002AABBCCDD``. Members of this class will be given 2001:db8:0::1 and
 2001:db8:2::1 as their domain name servers.
 
 ::
@@ -1138,17 +1138,17 @@ Client classes in Kea follow the order in which they are specified in the
 configuration (vs. alphabetical order). Required classes follow the order in
 which they are required.
 
-When determining which client-class information (comprising of
-options, lease lifetimes or DHCPv4 field values) that is part of class
-definitions, to include in the response, the server examines the union of
+When determining which client-class information (comprised of
+options, lease lifetimes, or DHCPv4 field values) is part of the class
+definitions to be included in the response, the server examines the union of
 options from all of the assigned classes. If two or more classes include the
 same class information, the value from the first assigned class is used.
-``ALL`` is always the first class, hence the class with the highest
+``ALL`` is always the first class, i.e. the class with the highest
 priority, and matching required classes are last, so they have the
 lowest priority.
 
-Optons defined in classes override any global options, and in turn will be
-overridden by options defined for an individual subnet, shared network, pool or
+Options defined in classes override any global options, and in turn are
+overridden by options defined for an individual subnet, shared network, pool, or
 reservation.
 
 On the other hand, lease lifetimes and DHCPv4 field values defined at class

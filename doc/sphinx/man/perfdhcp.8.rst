@@ -240,16 +240,15 @@ Options
 
 ``-o code,hexstring``
    Forces ``perfdhcp`` to insert the specified extra option (or options if
-   used several times) into packets being transmitted. The code
-   specifies the option code and the hexstring is a hexadecimal string that
-   defines the content of the option. Care should be taken as ``perfdhcp``
-   does not offer any kind of logic behind those options; they are simply
+   used multiple times) into packets being transmitted. The code
+   specifies the option code, and the hexstring is a hexadecimal string that
+   defines the content of the option. Care should be taken, as ``perfdhcp``
+   does not offer any kind of logic behind the options; they are simply
    inserted into packets and sent as is. Be careful not to duplicate
-   options that are already inserted. For example, to insert client
-   class identifier (option code 60) with a string "docsis", use
-   "-o 60,646f63736973". The ``-o`` may be used multiple times. It is
-   necessary to specify the protocol family (either ``-4`` or ``-6``) before
-   using ``-o``.
+   options that are already inserted. For example, to insert the
+   client-class identifier (option code 60) with the string "docsis", use
+   ``-o 60,646f63736973``. The ``-o`` may be used multiple times. The protocol
+   family (``-4`` or ``-6``) must be specified before using ``-o``.
 
 ``-P preload``
    Initiates preload exchanges back-to-back at startup. Must be 0
@@ -362,19 +361,19 @@ The following options only apply for DHCPv6 (i.e. when ``-6`` is given).
    traffic passing through a single relay agent.
 
 ``--or encapsulation-level:code,hexstring``
-   This option is very similar to ``-o``, only that it forces ``perfdhcp``
-   to insert the specified extra option (or options if used several times)
-   into relayed DHCPv6 message at given level of encapsulation (currently
-   the only supported encapsulation-level value is 1). The code
-   specifies the option code and the hexstring is a hexadecimal string that
-   defines the content of the option. Care should be taken as ``perfdhcp``
-   does not offer any kind of logic behind those options; they are simply
-   inserted into packets and sent as is. Please notice that ``encapsulation-level:``
-   is optional and if omitted, default encapsulation-level value 1 is used.
-   For example, to insert Subscriber identifier (option code 38) with a
-   value 1234 at first level of encapsulation, use ``--or 38,31323334``
-   or ``--or 1:38,31323334``. The ``--or`` may be used multiple times.
-   It must be used together with ``-A``.
+   Forces ``perfdhcp`` to insert the specified extra option (or options if
+   used multiple times) into a relayed DHCPv6 message at the given level of
+   encapsulation; currently, the only supported encapsulation-level value is 1.
+   This option is very similar to ``-o``: the code
+   specifies the option code, and the hexstring is a hexadecimal string that
+   defines the content of the option. Care should be taken, as ``perfdhcp``
+   does not offer any kind of logic behind the options; they are simply
+   inserted into packets and sent as is. ``encapsulation-level:``
+   is optional; if it is omitted, the default encapsulation-level value 1 is used.
+   For example, to insert the Subscriber identifier (option code 38) with a
+   value 1234 at the first level of encapsulation, use ``--or 38,31323334``
+   or ``--or 1:38,31323334``. The ``--or`` may be used multiple times, and
+   it must be used in conjunction with ``-A``.
 
 Template-Related Options
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -435,10 +434,10 @@ Options Controlling a Test
    Sets the delay (in seconds) between two successive reports.
 
 ``-C separator``
-    Suppresses the preliminary output and causes the interim data to
-    only contain the values delimited by ``separator``. Used in
-    conjunction with ``-t`` to produce easily parsable
-    reports at ``-t`` intervals.
+   Suppresses the preliminary output and causes the interim data to
+   only contain the values delimited by ``separator``. Used in
+   conjunction with ``-t`` to produce easily parsable
+   reports at ``-t`` intervals.
 
 Arguments
 ~~~~~~~~~

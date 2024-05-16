@@ -1320,7 +1320,7 @@ Controlling Lease-Page Size Limit
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 An HA-enabled server initiates synchronization of the lease database after
-downtime or upon receiving the :isccmd:`ha-sync` command. The server uses commands
+downtime or upon receiving the :isccmd:`ha-sync` command. The server uses the commands
 :isccmd:`lease4-get-page` and :isccmd:`lease6-get-page`
 to fetch leases from its partner server (lease queries). The size of the results
 page (the maximum number of leases to be returned in a single response to one of
@@ -1615,23 +1615,15 @@ Since Kea 1.9.0, basic HTTP authentication is supported.
 Multi-Threaded Configuration (HA+MT)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-HA peer communication consists of specialized API commands sent between HA peers.
-Prior to Kea 1.9.7, each peer had to be paired with a local instance of
-:iscman:`kea-ctrl-agent` in order to exchange commands. The agent received HA commands
-via HTTP, communicated via Linux socket with the local peer to carry out the
-command, and then sent the response back to the requesting peer via HTTP. To
-send HA commands, each peer opened its own HTTP client connection to the URL of
-each of its peers.
-
-In Kea 1.9.7 and newer, it is possible to configure HA to use direct
+It is possible to configure HA to use direct
 multi-threaded communication between peers. We refer to this mode as HA+MT.
 With HA+MT enabled, each peer runs its own dedicated, internal HTTP listener
 (i.e. server) which receives and responds to commands directly, thus eliminating
-the need for an agent to carry out HA protocol between peers. In addition, both
-the listener and client components use multi-threading to support multiple,
+the need for an agent to carry out the HA protocol between peers. In addition, both
+the listener and client components use multi-threading to support multiple
 concurrent connections between peers. By eliminating the agent and executing
-multiple command exchanges in parallel, HA throughput between peers should
-improve considerably in most situations.
+multiple command exchanges in parallel, HA throughput between peers
+improves considerably over earlier versions of Kea in most situations.
 
 The following parameters have been added to the HA configuration, to support
 HA+MT operation:
@@ -1748,11 +1740,11 @@ Parked-Packet Limit
 
 Refer to :ref:`parked-packet-limit` for a basic introduction to packet parking.
 
-The HA hook library makes use of this mechanism. When an HA server
+The HA hook library uses this mechanism. When an HA server
 needs to send a lease update to its peers to notify them of the change to the
-lease, it will park the client response until the peers acknowledge the lease
-update. At that point, the server will unpark the response and send it to the
-client. This applies to client queries which cause lease changes, such as
+lease, it parks the client response until the peers acknowledge the lease
+update. At that point, the server unparks the response and sends it to the
+client. This applies to client queries that cause lease changes, such as
 DHCPREQUEST for DHCPv4 and Request, Renew, and Rebind for DHCPv6. It does not
 apply to DHPCDISCOVERs (v4) or Solicits (v6).
 
@@ -1780,8 +1772,8 @@ to instantly start serving all DHCP clients, and the other server to instantly
 stop serving any DHCP clients, so it can be safely shut down.
 
 The maintenance feature of the High Availability hook library addresses this
-situation. The :isccmd:`ha-maintenance-start` command was introduced to allow the
-administrator to put the pairs of the active servers in a state in which one of
+situation. The :isccmd:`ha-maintenance-start` command allows the
+administrator to put the pairs of the active servers into a state in which one of
 them is responding to all DHCP queries and the other one is awaiting shutdown.
 
 Suppose that the HA setup includes two active servers, ``server1`` and
@@ -1826,10 +1818,10 @@ normal state negotiation process.
 
 If the server has many relationships with different partners, the ``ha-maintenance-start``
 command attempts to transition all of the relationships into the
-``partner-in-maintenance`` state by sending the ``ha-mainteance-notify`` to all
-partner servers. If this step fails for any server an error is returned.
-In that case, send the ``ha-maintenance-cancel`` command to resume normal
-operation and fix the issue.
+``partner-in-maintenance`` state by sending ``ha-maintenance-notify`` to all
+partner servers. If this step fails for any server, an error is returned.
+If that happens, the ``ha-maintenance-cancel`` command can be used to resume normal
+operations and fix the issue.
 
 
 Upgrading From Older HA Versions
@@ -1957,9 +1949,9 @@ and "HA_server2" scopes. To disable all scopes specify an empty list:
        }
    }
 
-The optional ``server-name`` parameter specifies a name of one of the partners belonging
-to the HA relationship this command pertains to. This parameter can be omitted if the
-server receiving this command has only one HA relationship in the configuration.
+The optional ``server-name`` parameter specifies the name of one of the partners in
+the HA relationship that this command pertains to. This parameter can be omitted if the
+server receiving this command has only one HA relationship in its configuration.
 
 .. isccmd:: ha-continue
 .. _command-ha-continue:
@@ -1982,9 +1974,9 @@ command structure is simply:
        }
    }
 
-The optional ``server-name`` parameter specifies a name of one of the partners belonging
-to the HA relationship this command pertains to. This parameter can be omitted if the
-server receiving this command has only one HA relationship in the configuration.
+The optional ``server-name`` parameter specifies the name of one of the partners in
+the HA relationship that this command pertains to. This parameter can be omitted if the
+server receiving this command has only one HA relationship in its configuration.
 
 .. isccmd:: ha-heartbeat
 .. _command-ha-heartbeat:
@@ -2011,9 +2003,9 @@ no arguments:
        }
    }
 
-The optional ``server-name`` parameter specifies a name of one of the partners belonging
-to the HA relationship this command pertains to. This parameter can be omitted if the
-server receiving this command has only one HA relationship in the configuration.
+The optional ``server-name`` parameter specifies the name of one of the partners in
+the HA relationship that this command pertains to. This parameter can be omitted if the
+server receiving this command has only one HA relationship in its configuration.
 
 Upon successful communication with the server, a response similar to this should
 be returned:
@@ -2238,9 +2230,9 @@ status of the backup servers.
 The ``ha-maintenance-start`` Command
 ------------------------------------
 
-This command is used to initiate the transition of the server's partners into the
-``in-maintenance`` state and the transition of the server receiving the command
-into the ``partner-in-maintenance`` state in each HA relationship. See the
+This command initiates the transition of the server's partners into the
+``in-maintenance`` state, and the transition of the server receiving the command
+into the ``partner-in-maintenance`` state, in each HA relationship. See the
 :ref:`ha-maintenance` section for details.
 
 ::
@@ -2257,8 +2249,8 @@ The ``ha-maintenance-cancel`` Command
 -------------------------------------
 
 This command is used to cancel the maintenance previously initiated using the
-:isccmd:`ha-maintenance-start` command. The server receiving this command will first
-send :isccmd:`ha-maintenance-notify`, with the ``cancel`` flag set to ``true``, to its
+:isccmd:`ha-maintenance-start` command. The server receiving this command first
+sends :isccmd:`ha-maintenance-notify`, with the ``cancel`` flag set to ``true``, to its
 partners. Next, the server reverts from the ``partner-in-maintenance`` state to
 its previous state. See the :ref:`ha-maintenance` section for details.
 
@@ -2291,9 +2283,9 @@ previous state. See the :ref:`ha-maintenance` section for details.
        }
    }
 
-The optional ``server-name`` parameter specifies a name of one of the partners belonging
-to the HA relationship this command pertains to. This parameter can be omitted if the
-server receiving this command has only one HA relationship in the configuration.
+The optional ``server-name`` parameter specifies the name of one of the partners in
+the HA relationship that this command pertains to. This parameter can be omitted if the
+server receiving this command has only one HA relationship in its configuration.
 
 .. warning::
 
@@ -2330,9 +2322,9 @@ machine.
        }
    }
 
-The optional ``server-name`` parameter specifies a name of one of the partners belonging
-to the HA relationship this command pertains to. This parameter can be omitted if the
-server receiving this command has only one HA relationship in the configuration.
+The optional ``server-name`` parameter specifies the name of one of the partners in
+the HA relationship that this command pertains to. This parameter can be omitted if the
+server receiving this command has only one HA relationship in its configuration.
 
 It elicits the response:
 
@@ -2371,9 +2363,9 @@ responding to clients.
        }
    }
 
-The optional ``server-name`` parameter specifies a name of one of the partners belonging
-to the HA relationship this command pertains to. This parameter can be omitted if the
-server receiving this command has only one HA relationship in the configuration.
+The optional ``server-name`` parameter specifies the name of one of the partners in
+the HA relationship that this command pertains to. This parameter can be omitted if the
+server receiving this command has only one HA relationship in its configuration.
 
 The ``origin-id`` parameter is used to select the HA service for which the receiving server should
 enable the DHCP service when it receives this notification. This is the same origin the
@@ -2403,19 +2395,19 @@ It elicits the response:
 Hub and Spoke Configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The hub-and-spoke is a common arrangement of the DHCP servers for resiliency. It contains
-one central server and multiple branch servers. The branch servers are the primary servers
+A hub-and-spoke arrangement, with one central server and multiple branch servers,
+is a common way to ensure resiliency of the DHCP servers. The branch servers are the primary servers
 in the ``hot-standby`` mode and respond to the local DHCP traffic in their respective
 locations. The central server acts as a standby server for each branch server.
 It maintains independent state machines with the branch servers, called relationships.
 If one of the branch servers experiences a failure, the central server can take over its
-DHCP traffic. In this case, we say that one of the central server's relationships is in
+DHCP traffic. In this case, one of the central server's relationships is in
 the ``partner-down`` state. The remaining relationships may still be in the ``hot-standby``
 state and not actively respond to DHCP traffic. When the branch server becomes active again,
-it synchronizes the lease database with the central server, and the central server becomes
-fully passive again. In rare cases, when multiple branch servers stop, the central server
-takes responsibility for all their traffic (possibly the entire DHCP traffic in the network
-when all branch servers are down). A simple hub-and-spoke arrangement consisting of two
+it synchronizes the lease database with the central server and the central server becomes
+fully passive again. In rare cases, if multiple branch servers stop, the central server
+takes responsibility for all their traffic, and potentially all DHCP traffic in the entire network
+if every branch server is down. A simple hub-and-spoke arrangement consisting of two
 branch servers and one central server is shown below.
 
 ::
@@ -2430,10 +2422,10 @@ branch servers and one central server is shown below.
                                 +---------------------------+
 
 Each branch server's configuration comprises a set of subnets appropriate for the branch
-server. Different branch servers serve different subnets. The central server's configuration
-comprises all subnets of the branch servers so that it can respond to the DHCP traffic
-directed to any of the failing branch servers. The subnets in the central server must be
-grouped into relationships like in the snippet below:
+server; different branch servers serve different subnets. The central server's configuration
+includes all subnets of the branch servers, so that it can respond to DHCP traffic
+directed to any branch servers that fail. The subnets in the central server must be
+grouped into relationships as in the snippet below:
 
 .. code-block:: json
 
@@ -2530,9 +2522,9 @@ grouped into relationships like in the snippet below:
 
 
 The peer names in the relationships must be unique. The user context for each subnet contains
-the ``ha-server-name`` parameter associating a subnet with a relationship. The ``ha-server-name``
-can be any of the peer names in the relationship. Suppose a relationship contains peer names
-``server1`` and ``server2``. It doesn't matter whether the ``ha-server-name`` is ``server1`` or
+the ``ha-server-name`` parameter, associating a subnet with a relationship. The ``ha-server-name``
+can be any of the peer names in the relationship. For example, if a relationship contains peer names
+``server1`` and ``server2``, it does not matter whether the ``ha-server-name`` is ``server1`` or
 ``server2``. In both cases, it associates a subnet with that relationship.
 
 It is not required to specify the ``ha-server-name`` in the branch servers, assuming that the
@@ -2603,15 +2595,15 @@ branch ``server3``:
 
 .. note::
 
-   Even though it is not required to include the ``ha-server-name`` user context parameters in the
+   Even though it is possible to omit the ``ha-server-name`` user context parameters in the
    branch servers, we recommend including them. The servers fetch all leases from the
-   partners during the database synchronization. If the subnets are not explicitly associated with
+   partners during the database synchronization; if the subnets are not explicitly associated with
    the relationship, the branch server inserts all fetched leases from the central server (including
-   those from other relationships) into its database. Specifying ``ha-server-name`` parameter for
+   those from other relationships) into its database. Specifying the ``ha-server-name`` parameter for
    each configured subnet in the branch server guarantees that only the leases belonging to its
    relationship are inserted into the branch server's database.
 
 .. note::
 
    The peer names in the branch servers must match the peer names in the respective central
-   server's relationships because these names are used for signaling between the HA partners.
+   server's relationships, because these names are used for signaling between the HA partners.

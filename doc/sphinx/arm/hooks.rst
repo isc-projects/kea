@@ -241,8 +241,8 @@ Notes:
 
       There is one case where this is not true: if Kea is running with a
       configuration that contains a ``hooks-libraries`` item, and that
-      item is removed and the configuration reloaded, the removal will
-      be ignored and the libraries remain loaded. As a workaround,
+      item is removed and the configuration reloaded, the removal is
+      ignored and the libraries remain loaded. As a workaround,
       instead of removing the ``hooks-libraries`` item, change it to an
       empty list.
 
@@ -256,14 +256,14 @@ Order of Configuration:
 
 It is important to recognize that the order in which hook libraries are
 configured determines the order in which their callouts will be executed,
-in cases where more than one hook library implements the same callout.  For
-example, if you wish to use the flex-id hook library to formulate the client
-IDs in conjunction with HA hook library for load-balanced HA, it is essential
-that the flex-id library be specified first in your server's ``hooks-libraries``
-section.  This ensures that the client ID is formulated by the flex-id library
-before the HA library uses it for load-balancing. Similarly it would be best to
-specify forensic logging last, to ensure any other install hooks have made
-their contributions to the packet processing.
+in cases where more than one hook library implements the same callout. For
+example, to use the Flexible Identifier (also called Flex ID) hook library to formulate the client
+IDs in conjunction with the High Availability (HA) hook library for load-balanced HA, it is essential
+that the Flex ID library be specified first in the server's ``hooks-libraries``
+section.  This ensures that the client ID is formulated by the Flex ID library
+before the HA library uses it for load-balancing. Similarly, it is best to
+specify the Forensic Logging library last, to ensure that any other installed hooks have already made
+their contributions to the packet processing before that one is loaded.
 
 .. _user-context-hooks:
 
@@ -295,7 +295,7 @@ User context can store configuration for multiple hooks and comments at once.
 Some hooks use user context for a configuration that can be easily edited
 without the need to restart the server.
 
-The DDNS-Tuning Hook uses user-context to configure per subnet behavior. Example:
+The DDNS Tuning Hook uses user context to configure per-subnet behavior. Here's an example:
 
 ::
 
@@ -370,9 +370,9 @@ Parked-Packet Limit
 ~~~~~~~~~~~~~~~~~~~
 
 Kea servers contain a mechanism by which the response to a client packet may
-be held, pending completion of hook library work. We refer to this as parking
-the packet. When work is ready to continue, the server will unpark the response
-and continue processing.
+be held, pending completion of hook library work. We refer to this as "parking
+the packet." When work is ready to continue, the server unparks the response
+and continues processing.
 
 There is a global parameter, ``parked-packet-limit``, that may be used to limit
 the number of responses that may be parked at any given time. This acts as a
@@ -382,7 +382,7 @@ limit is reached, the server emits a log and drops any new responses until
 parking spaces are available.
 
 In general, smaller values for the parking lot limit are likely to cause more
-drops but with shorter response times. Larger values are likely to result in
+drops but with shorter response times; larger values are likely to result in
 fewer drops but with longer response times. Currently, the default value for
 ``parked-packet-limit`` is 256.
 
@@ -396,7 +396,7 @@ fewer drops but with longer response times. Currently, the default value for
    recommend users initially leave it at the default value of 256 and observe
    how the system behaves over time with varying load conditions.
 
-Here is an example of the global parameter used with ischooklib:`libdhcp_ha.so`.
+Here is an example of the global parameter used with :ischooklib:`libdhcp_ha.so`.
 It lowers the number of concurrently parked packets to 128.
 
 .. code-block:: json
@@ -446,9 +446,9 @@ libraries, discussed in the following sections.
 
 .. note::
 
-   Some of these libraries are available with the base code, while others are
-   premium libraries available for purchase, or only shared with organizations
-   who contribute to Kea's development through paid ISC support contracts. Paid support
+   Some of these libraries are available at no cost with the open source base code; others are
+   premium libraries available for standalone purchase, while some are only available to organizations
+   that contribute to Kea's development through paid ISC support contracts. Paid support
    includes professional engineering assistance, advance security notifications, input
    into ISC's roadmap planning, and many other benefits, while helping
    keep Kea sustainable in the long term. ISC encourages companies and organizations
@@ -598,13 +598,13 @@ loaded by the correct process per the table below.
    |                                                           |              | a repository for the Kea configuration information. Kea      |
    |                                                           |              | servers use this library to fetch their configurations.      |
    +-----------------------------------------------------------+--------------+--------------------------------------------------------------+
-   | :ref:`PerfMon <hooks-perfmon>`                            | Kea open     | With this hook library, :iscman:`kea-dhcp4` server and       |
-   |                                                           | source       | :iscman:`kea-dhcp6` servers can track and report performance |
-   |                                                           |              | data. CURRENTLY UNDER DEVELOPMENT                            |
+   | :ref:`PerfMon <hooks-perfmon>`                            | Kea open     | With this hook library, :iscman:`kea-dhcp4` and              |
+   | CURRENTLY EXPERIMENTAL                                    | source       | :iscman:`kea-dhcp6` servers can track and report performance |
+   |                                                           |              | data.                                                        |
    +-----------------------------------------------------------+--------------+--------------------------------------------------------------+
-   | :ref:`Ping Check <hooks-ping-check>`                      | ISC support  | With this hook library, :iscman:`kea-dhcp4` server can       |
-   |                                                           | customers    | perform ping checks of candidate lease addresses before      |
-   |                                                           |              | offering them to clients.                                    |
+   | :ref:`Ping Check <hooks-ping-check>`                      | ISC support  | With this hook library, the :iscman:`kea-dhcp4` server can   |
+   |                                                           | source       | perform ping checks of candidate lease addresses before      |
+   |                                                           | customers    | offering them to clients.                                    |
    +-----------------------------------------------------------+--------------+--------------------------------------------------------------+
    | :ref:`PostgreSQL Configuration Backend <hooks-cb-pgsql>`  | Kea open     | This hook library is an implementation of the Kea            |
    |                                                           | source       | Configuration Backend for PostgreSQL. It uses a PostgreSQL   |

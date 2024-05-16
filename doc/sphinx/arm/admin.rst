@@ -48,11 +48,11 @@ upgrade, and dump lease data to a text file.
 ``backend``. Additional, non-mandatory options may be specified. The
 currently supported commands are:
 
--  ``db-init`` — initializes a new database schema. This is useful
-   during a new Kea installation. The database is initialized to the
-   latest version supported by the version of the software being installed.
-   Called automatically on startup or reconfiguration of Kea DHCP servers if
-   required.
+-  ``db-init`` — initializes a new database schema, which is useful
+   during a new Kea installation. The new database is updated to
+   match the Kea version being installed. :iscman:`kea-admin` is
+   automatically invoked with this command if a missing schema is
+   detected during startup or reconfiguration of Kea DHCP servers.
 
 -  ``db-version`` — reports the database backend version number. This
    is not necessarily equal to the Kea version number, as each backend

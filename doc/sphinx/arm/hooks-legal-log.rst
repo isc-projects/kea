@@ -432,9 +432,9 @@ Examples:
 
    2018-01-06 01:02:12 CET Administrator deleted a lease for a device identified by: hw-address of 1a:1b:1c:1d:1e:1f
 
-If High availability module is enabled, the partner will periodically send lease
-commands which have a similar format, the only difference is that the issuer of
-the command is 'HA partner' instead of 'Administrator'.
+If the High Availability hook library is enabled, the partner periodically sends lease
+commands in a similar format; the only difference is that the issuer of
+the command is "HA partner" instead of "Administrator."
 
 ::
 
@@ -757,9 +757,9 @@ Examples:
 
    2018-01-06 01:02:11 PST Administrator deleted a lease for a device identified by: duid of 1a:1b:1c:1d:1e:1f:20:21:22:23:24
 
-If High availability module is enabled, the partner will periodically send lease
-commands which have a similar format, the only difference is that the issuer of
-the command is 'HA partner' instead of 'Administrator'.
+If the High Availability hook library is enabled, the partner periodically sends lease
+commands in a similar format; the only difference is that the issuer of
+the command is "HA partner" instead of "Administrator."
 
 ::
 
@@ -1089,6 +1089,6 @@ backends is considered fatal only if ``retry-on-startup`` is set to ``false``
 (the default). A fatal error is logged and the server exits, based on the idea
 that the configuration should be valid at startup. Exiting to the operating
 system allows nanny scripts to detect the problem.
-If ``retry-on-startup`` is set to ``true``, the server will start reconnection
-attempts even at server startup or on reconfigure events, and will honor the
+If ``retry-on-startup`` is set to ``true``, the server starts reconnection
+attempts even at server startup or on reconfigure events, and honors the
 action specified in the ``on-fail`` parameter.

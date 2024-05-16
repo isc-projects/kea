@@ -26,7 +26,7 @@ There are four types of statistics:
    64-bit integer (int64_t in C++), so it can hold any value between
    -2^63 to 2^63-1.
 
--  *big integer* - this type is inteded for holding large numbers. It is
+-  *big integer* - this type is intended to hold large numbers. It is
    implemented as a 128-bit integer (boost::multiprecision::int128_t in C++), so
    it can hold any value between -2^127 to 2^127-1.
 

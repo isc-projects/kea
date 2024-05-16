@@ -931,8 +931,8 @@ As with other update commands, this command overwrites all the contents of the
 entry. If the lease previously had a resource assigned to it, and the
 :isccmd:`lease4-update` / :isccmd:`lease6-update` command is missing the resource, it is
 deleted from the lease database. If an incremental update of the lease is
-desired, then this can be achieved by doing a :isccmd:`lease4-get` / :isccmd:`lease6-get`
-command to get the current state of the lease, picking the lease out of the
+desired, then this can be achieved by issuing a :isccmd:`lease4-get` / :isccmd:`lease6-get`
+command to get the current state of the lease, selecting the lease from the
 response, modifying it to the required outcome, and then issuing the
 :isccmd:`lease4-update` / :isccmd:`lease6-update` command with the resulting lease attached.
 
@@ -1063,8 +1063,8 @@ backend and write the lease database into a CSV file. They take the path
 of the file as the ``filename`` argument. If the specified output file
 is the same as the configured memfile one, the backend closes and reopens
 the file in an attempt to synchronize both the files and the in-memory images
-of the lease database. The extension ``.bak`` with server PID number is added
-to the previous filename. For example ``.bak14326``.
+of the lease database. The extension ``.bak`` and the server PID number are added
+to the previous filename: for example, ``.bak14326``.
 
 .. note::
 

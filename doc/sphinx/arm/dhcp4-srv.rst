@@ -549,12 +549,12 @@ loss of connectivity.
 The possible values are:
 
 -  ``stop-retry-exit`` - disables the DHCP service while trying to automatically
-   recover lost connections. Shuts down the server on failure after exhausting
+   recover lost connections, and shuts down the server on failure after exhausting
    ``max-reconnect-tries``. This is the default value for the lease backend,
    the host backend, and the configuration backend.
 
 -  ``serve-retry-exit`` - continues the DHCP service while trying to
-   automatically recover lost connections. Shuts down the server on failure
+   automatically recover lost connections, and shuts down the server on failure
    after exhausting ``max-reconnect-tries``.
 
 -  ``serve-retry-continue`` - continues the DHCP service and does not shut down
@@ -587,8 +587,8 @@ backends is considered fatal only if ``retry-on-startup`` is set to ``false``
 (the default). A fatal error is logged and the server exits, based on the idea
 that the configuration should be valid at startup. Exiting to the operating
 system allows nanny scripts to detect the problem.
-If ``retry-on-startup`` is set to ``true``, the server will start reconnection
-attempts even at server startup or on reconfigure events, and will honor the
+If ``retry-on-startup`` is set to ``true``, the server starts reconnection
+attempts even at server startup or on reconfigure events, and honors the
 action specified in the ``on-fail`` parameter.
 
 The host parameter is used by the MySQL and PostgreSQL backends.
@@ -822,12 +822,12 @@ backends is considered fatal only if ``retry-on-startup`` is set to ``false``
 (the default). A fatal error is logged and the server exits, based on the idea
 that the configuration should be valid at startup. Exiting to the operating
 system allows nanny scripts to detect the problem.
-If ``retry-on-startup`` is set to ``true``, the server will start reconnection
-attempts even at server startup or on reconfigure events, and will honor the
+If ``retry-on-startup`` is set to ``true``, the server starts reconnection
+attempts even at server startup or on reconfigure events, and honors the
 action specified in the ``on-fail`` parameter.
 Database connection retries are not attempted on startup if the
-:ischooklib:`libdhcp_limits.so` is loaded because the hook library requires a
-valid connection to the database to check if JSON format is supported and to
+:ischooklib:`libdhcp_limits.so` is loaded, because the hook library requires a
+valid connection to the database to verify whether JSON format is supported and to
 recount class limits.
 
 Finally, the credentials of the account under which the server will
@@ -1365,7 +1365,7 @@ excluded according to RFC standards. The ``exclude-first-last-24`` configuration
 compatibility flag (:ref:`dhcp4-compatibility`) does this
 automatically, rather than requiring explicit configuration of many pools or
 reservations for fake hosts. When ``true``, it applies only to subnets of
-24 prefix length or smaller i.e. larger address space; the default is ``false``.
+prefix length 24 or smaller, i.e. larger address space; the default is ``false``.
 
 In this case, "exclude" means to skip these addresses in the free address pickup
 routine of the allocation engine; if a client explicitly requests or
@@ -2036,9 +2036,8 @@ types are given in :ref:`dhcp-types`.
 
   The ``default-url`` option was replaced with ``v4-captive-portal`` in Kea 2.1.2, as introduced by
   `RFC 8910 <https://tools.ietf.org/html/rfc8910>`_. The new option has exactly the same format as the
-  old one. The general perception is that ``default-url`` was seldom used. If you used it and migrating,
-  please replace ``default-url`` with ``v4-captive-portal`` and your configuration will continue to work
-  as before.
+  old one. The general perception is that ``default-url`` was seldom used. Migrating users should
+  replace ``default-url`` with ``v4-captive-portal`` in their configurations.
 
 Kea also supports other options than those listed above; the following options
 are returned by the Kea engine itself and in general should not be configured
@@ -2180,8 +2179,8 @@ Kea also supports the Relay Agent Information (RAI, defined in
 option, or simply option 82. The option itself is just a container and does not convey any information
 on its own. The following table contains a list of RAI sub-options that Kea can understand. The RAI
 and its sub-options are inserted by the relay agent and received by Kea; there is no need for Kea
-to be configured with those options. Kea's classification and flex-id in host reservations can be
-used to process those and other options no listed in the table below.
+to be configured with those options. Kea's classification and flexible ID features in host reservations can be
+used to process those and other options not listed in the table below.
 
 .. table:: List of RAI sub-options that Kea can understand
 
@@ -2204,12 +2203,12 @@ used to process those and other options no listed in the table below.
    +--------------------+------+----------------------------------------------------------------------+
 
 All other RAI sub-options (including those not listed here) can be used in client classification to
-classify incoming packets to specific classes and/or by :ischooklib:`libdhcp_flex_id.so` to
+classify incoming packets to specific classes, and/or by :ischooklib:`libdhcp_flex_id.so` to
 construct a unique device identifier. For more information about expressions used in client
-classification, and flex-id, see :ref:`classify`. The RAI sub-options can be
-referenced using ``relay4[option-code].hex``. For example, to classify packets based on the
+classification and flexible identifiers, see :ref:`classify`. The RAI sub-options can be
+referenced using ``relay4[option-code].hex``; for example, to classify packets based on the
 ``remote-id`` (sub-option code 2), one would use ``relay4[2].hex``. An example client class that
-would include all packets with a specific ``remote-id`` value would looks as follows:
+includes all packets with a specific ``remote-id`` value would look as follows:
 
 ::
 
@@ -2225,8 +2224,8 @@ would include all packets with a specific ``remote-id`` value would looks as fol
     }
 
 Classes may be used to segregate traffic into a relatively small number of groups, which then
-can be used to select specific subnets, pools and extra options and more. If per host behavior
-is necessary, using host reservations with flex-id is strongly recommended.
+can be used to select specific subnets, pools and extra options, and more. If per-host behavior
+is necessary, using host reservations with flexible identifiers is strongly recommended.
 
 .. _dhcp4-custom-options:
 
@@ -2270,8 +2269,8 @@ configuration statement only defines the format of an option and does
 not set its value(s).
 
 The ``name``, ``code``, and ``type`` parameters are required; all others
-are optional. The ``array`` parameter default value is ``false``. The
-``record-types`` and ``encapsulate`` parameters default values are blank
+are optional. The ``array`` parameter's default value is ``false``. The
+``record-types`` and ``encapsulate`` parameters' default values are blank
 (``""``). The default ``space`` is ``dhcp4``.
 
 Once the new option format is defined, its value is set in the same way
@@ -2743,7 +2742,7 @@ that in this particular case an option is defined in vendor space 25167. With
 with vendor space 25167.
 
 This is also how :iscman:`kea-dhcp4` can be configured to send multiple vendor options
-from different vendors, along with each of their specific vendor ID.
+from different vendors, along with each of their specific vendor IDs.
 If these options need to be sent by the server regardless of whether the client
 specified any enterprise number, ``"always-send": true`` must be configured
 for the suboptions that will be included in the ``vivso-suboptions`` option (code 125).
@@ -2756,7 +2755,7 @@ for the suboptions that will be included in the ``vivso-suboptions`` option (cod
            # vivso-suboptions (code 125), and that is enough for Kea to understand that it needs to
            # send the option. These options still need to be defined in the configuration, one per
            # each vendor, but they don't need "always-send" enabled in that case. For misbehaving
-           # clients that to do not explicitly request it, one may alternatively set "always-send"
+           # clients that do not explicitly request it, one may alternatively set "always-send"
            # to true for them as well. This is referring to the following two entries in option-data.
            {
                "name": "vivso-suboptions",
@@ -2806,7 +2805,7 @@ and ``doc/examples/kea4/vivso.json`` in the Kea sources.
 .. note::
 
    :iscman:`kea-dhcp4` is able to recognize multiple Vendor Class Identifier
-   options (code 60) with different vendor IDs in the client requests and to
+   options (code 60) with different vendor IDs in the client requests, and to
    send multiple vivso options (code 125) in the responses, one for each vendor.
 
    :iscman:`kea-dhcp4` honors DOCSIS sub-option 1 (ORO) and adds only requested options
@@ -2976,7 +2975,7 @@ specified:
 Support for Long Options
 ------------------------
 
-The :iscman:`kea-dhcp4` server partially supports long options (RFC3396).
+The :iscman:`kea-dhcp4` server partially supports long options (RFC 3396).
 Since Kea 2.1.6, the server accepts configuring long options and sub-options
 (longer than 255 bytes). The options and sub-options are stored internally
 in their unwrapped form and they can be processed as usual using the parser
@@ -3036,7 +3035,7 @@ into two options, each with the code 240.
 .. note::
 
    Currently the server does not support storing long options in databases,
-   either host reservations or the configuration backend.
+   either via host reservations or the configuration backend.
 
 The server is also able to receive packets with split options (options using
 the same option code) and to fuse the data chunks into one option. This is
@@ -3396,7 +3395,7 @@ subnet, and pool, i.e. in the reverse order from the way in which
         ...
     }
 
-The first ``option-data`` entry does not hide the second one, because
+The first ``option-data`` entry does not hide the second one, because the
 vendor identifiers (1234 and 5678) are different: the responses will carry
 two instances of the ``vivco-suboptions`` option, each for a different vendor.
 
@@ -3470,10 +3469,10 @@ DDNS-related parameters are split into two groups:
 
 .. note::
 
-    Behavioral parameters that affect the FQDN are in-effect even in
-    if both ``enable-updates`` and ``ddns-send-updates`` are false. They
-    behave this way to support environments in which clients are responsible
-    for their own DNS updates.  This applies to ``ddns-replace-client-name``,
+    Behavioral parameters that affect the FQDN are in effect even
+    if both ``enable-updates`` and ``ddns-send-updates`` are ``false``,
+    to support environments in which clients are responsible
+    for their own DNS updates. This applies to ``ddns-replace-client-name``,
     ``ddns-generated-prefix``, ``ddns-qualifying-suffix``, ``hostname-char-set``,
     and ``hostname-char-replacement``.
 
@@ -3509,7 +3508,7 @@ The default configuration and values would appear as follows:
         ...
    }
 
-There are two parameters which determine if :iscman:`kea-dhcp4`
+There are two parameters which determine whether :iscman:`kea-dhcp4`
 can generate DDNS requests to D2: the existing ``dhcp-ddns:enable-updates``
 parameter, which now only controls whether :iscman:`kea-dhcp4` connects to D2;
 and the new behavioral parameter, ``ddns-send-updates``, which determines
@@ -3552,41 +3551,41 @@ to add DNS entries or they were somehow lost by the DNS server.
 The second parameter added in Kea 1.9.1 is ``ddns-use-conflict-resolution``.  This
 boolean parameter was passed through to D2 and enabled or disabled conflict resolution
 as described in `RFC 4703 <https://tools.ietf.org/html/rfc4703>`__.  Beginning with
-Kea 2.5.0, it is deprecated and replaced by ``ddns-conflict-resolution-mode`` which
+Kea 2.5.0, it is deprecated and replaced by ``ddns-conflict-resolution-mode``, which
 offers four modes of conflict resolution-related behavior:
 
-    - ``check-with-dhcid`` - The default mode, it instructs D2 to carry out RFC
+    - ``check-with-dhcid`` - This mode, the default, instructs D2 to carry out RFC
       4703-compliant conflict resolution.  Existing DNS entries may only be
       overwritten if they have a DHCID record and it matches the client's DHCID.
-      This is equivalent to ``ddns-use-conflict-resolution``: true;
+      This is equivalent to ``ddns-use-conflict-resolution``: ``true``;
 
     - ``no-check-with-dhcid`` - Existing DNS entries may be overwritten by any
-      client, whether or not those entries include a DHCID record.  The new entries
+      client, whether those entries include a DHCID record or not. The new entries
       will include a DHCID record for the client to whom they belong.
-      This is equivalent to ``ddns-use-conflict-resolution``: false;
+      This is equivalent to ``ddns-use-conflict-resolution``: ``false``;
 
     - ``check-exists-with-dhcid`` - Existing DNS entries may only be overwritten
       if they have a DHCID record. The DHCID record need not match the client's DHCID.
       This mode provides a way to protect static DNS entries (those that do not have
       a DHCID record) while allowing dynamic entries (those that do have a DHCID
-      record) to be overwritten by any client.  This behavior was not supported
+      record) to be overwritten by any client. This behavior was not supported
       prior to Kea 2.4.0.
 
     - ``no-check-without-dhcid`` - Existing DNS entries may be overwritten by
-      any client. New entries will not include DHCID records.  This behavior was
+      any client; new entries will not include DHCID records. This behavior was
       not supported prior to Kea 2.4.0.
 
 .. note::
 
-    For backward compatibility, ddns-use-conflict-resolution is still accepted in
-    JSON configuration.  The server will replace the value internally, with the
-    ``ddns-conflict-resolution-mode`` and an appropriate value: `
-    `check-with-dhcid`` for ``true`` and ``no-check-with-dhcid`` for ``false``.
+    For backward compatibility, ``ddns-use-conflict-resolution`` is still accepted in
+    JSON configuration.  The server replaces the value internally with
+    ``ddns-conflict-resolution-mode`` and an appropriate value:
+    ``check-with-dhcid`` for ``true`` and ``no-check-with-dhcid`` for ``false``.
 
 .. note::
 
     Setting ``ddns-conflict-resolution-mode`` to any value other than
-    ``check-with-dhcid`` disables the one or more overwrite safeguards
+    ``check-with-dhcid`` disables the overwrite safeguards
     that the rules of conflict resolution (from
     `RFC 4703 <https://tools.ietf.org/html/rfc4703>`__) are intended to
     prevent. This means that existing entries for an FQDN or an
@@ -3596,13 +3595,13 @@ offers four modes of conflict resolution-related behavior:
 
     1. Client-B uses the same FQDN as Client-A but a different IP address.
     In this case, the forward DNS entries (A and DHCID RRs) for
-    Client-A will be deleted as they match the FQDN and new entries for
+    Client-A will be deleted as they match the FQDN, and new entries for
     Client-B will be added. The reverse DNS entries (PTR and DHCID RRs)
     for Client-A, however, will not be deleted as they belong to a different
     IP address, while new entries for Client-B will still be added.
 
     2. Client-B uses the same IP address as Client-A but a different FQDN.
-    In this case the reverse DNS entries (PTR and DHCID RRs) for Client-A
+    In this case, the reverse DNS entries (PTR and DHCID RRs) for Client-A
     will be deleted as they match the IP address, and new entries for
     Client-B will be added. The forward DNS entries (A and DHCID RRs)
     for Client-A, however, will not be deleted, as they belong to a different
@@ -3610,7 +3609,7 @@ offers four modes of conflict resolution-related behavior:
 
     Disabling conflict resolution should be done only after careful review of
     specific use cases. The best way to avoid unwanted DNS entries is to
-    always ensure lease changes are processed through Kea, whether they are
+    always ensure that lease changes are processed through Kea, whether they are
     released, expire, or are deleted via the :isccmd:`lease4-del` command, prior to
     reassigning either FQDNs or IP addresses. Doing so causes :iscman:`kea-dhcp4`
     to generate DNS removal requests to D2.
@@ -3718,7 +3717,7 @@ In general, :iscman:`kea-dhcp4` generates DDNS update requests when:
 In the second case, lease renewal, two DDNS requests are issued: one
 request to remove entries for the previous FQDN, and a second request to
 add entries for the new FQDN. In the third case, a lease release - a
-single DDNS request - to remove its entries will be made.
+single DDNS request - to remove its entries is made.
 
 As for the first case, the decisions involved when granting a new lease are
 more complex. When a new lease is granted, :iscman:`kea-dhcp4` generates a
@@ -3765,7 +3764,7 @@ respectively.
 
 (Note that the flag combination N=1, S=1 is prohibited according to `RFC
 4702 <https://tools.ietf.org/html/rfc4702>`__. If such a combination is
-received from the client, the packet will be dropped by :iscman:`kea-dhcp4`.)
+received from the client, the packet is dropped by :iscman:`kea-dhcp4`.)
 
 To override client delegation, set the following values in the
 configuration file:
@@ -3985,11 +3984,11 @@ qualifying suffix (if one is defined and needed).
    a ``hostname-char`` parameter is defined at both the global scope and
    in a ``dhcp-ddns`` entry, the second (local) value is used.
 
-   For the ability to generate host names procedurally, based on an expression, and
-   for the ability to skip DDNS updates on a per-client basis, or fine-tuning various
-   DNS update aspects, the :iscman:`kea-dhcp4` can load the premium hook library
-   `libdhcp_ddns_tuning.so` which is available from ISC. Please refer to
-   :ref:`hooks-ddns-tuning` documentation for the configuration options.
+   The Kea hook library :ischooklib:`libdhcp_ddns_tuning.so` provides the ability
+   for both :iscman:`kea-dhcp4` and :iscman:`kea-dhcp6` to generate host names
+   procedurally based on an expression, to skip DDNS updates on a per-client basis,
+   or to fine-tune various DNS update aspects. Please refer to the :ref:`hooks-ddns-tuning`
+   documentation for the configuration options.
 
 .. _dhcp4-next-server:
 
@@ -4212,7 +4211,7 @@ client, the lease will be assumed to belong to another client and a
 new lease will be allocated.
 
 For a more visual representation of how Kea recognizes the same client,
-check :ref:`uml-recognizing-same-client`.
+please refer to :ref:`uml-recognizing-same-client`.
 
 .. _dhcp4-authoritative:
 
@@ -4380,7 +4379,7 @@ There are five levels which are supported:
 
 This feature is currently implemented for the memfile backend. The
 sanity check applies to the lease database in memory, not to the lease file,
-i.e. inconsistent leases will stay in the lease file.
+i.e. inconsistent leases stay in the lease file.
 
 An example configuration that sets this parameter looks as follows:
 
@@ -4400,7 +4399,7 @@ Storing Extended Lease Information
 
 To support such features as DHCP Leasequery
 (`RFC 4388 <https://tools.ietf.org/html/rfc4388>`__) and
-stash agent options (:ref:`stash-agent-options`)
+stash agent options (:ref:`stash-agent-options`),
 additional information must be stored with each lease. Because the amount
 of information for each lease has ramifications in terms of
 performance and system resource consumption, storage of this additional
@@ -4416,14 +4415,14 @@ subnet levels.
    }
 
 When set to ``true``, information relevant to the DHCPREQUEST asking for the lease is
-added into the lease's user-context as a map element labeled "ISC". Since
-Kea version 2.3.2,  when the DHCPREQUEST received contains the option
+added into the lease's user context as a map element labeled "ISC".
+When the DHCPREQUEST received contains the option
 (DHCP Option 82), the map contains the ``relay-agent-info`` map
 with the content option (DHCP Option 82) in the ``sub-options`` entry and,
 when present, the ``remote-id`` and ``relay-id`` options.
 Since DHCPREQUESTs sent as renewals are not likely to contain this
 information, the values taken from the last DHCPREQUEST that did contain it are
-retained on the lease. The lease's user-context looks something like this:
+retained on the lease. The lease's user context looks something like this:
 
 ::
 
@@ -4483,33 +4482,17 @@ and supports these levels:
 Stash Agent Options
 -------------------
 
-Introduced in version 2.5.8 the ``stash-agent-options`` global parameter
-when set to ``true`` (defaults to ``false``) allows to solve a common
-problem with host reservations using an identifier based on the content
-of the dhcp-agent-options option inserted by relays. When a client tries
-to renew its reserved address the request is sent directly to the server
-so not through the relay: the server is not able to recognize the client
-as the host identifier can't be found in a direct request.
+This global parameter was added in version 2.5.8 to mirror a feature that was
+previously available in ISC DHCP. When the ``stash-agent-option`` parameter
+is ``true``, the server records the relay agent information options sent
+during the client's initial DHCPREQUEST message (when the client was in the
+SELECTING state) and behaves as if those options are included in all
+subsequent DHCPREQUEST messages sent in the RENEWING state. This works around
+a problem with relay agent information options, which do not usually appear
+in DHCPREQUEST messages sent by the client in the RENEWING state; such messages are
+unicast directly to the server and are not sent through a relay agent.
 
-Setting in flex-id (:ref:`hooks-flex-id`) the ``replace-client-id`` to ``true``
-allows the use of the same identifier for leases and host reservations.
-This solves some problems but not this one. In fact this configuration
-is incompatible with ``stash-agent-options``.
-
-When ``stash-agent-options`` is true for direct renewal requests the
-lease for the client address is fetched: if it exists, is not yet expired,
-belongs to the client and has additional information with the
-dhcp-agent-options option content. When all these conditions are met the
-server behaves as the option was included.
-
-.. note::
-
-   Belongs to the client here is implemented the same way as for Releases.
-   This guarantees the security of the feature but does not allow the use
-   the same identity for both leases and host reservations based on the
-   content of the dhcp-agent-options option, i.e. if the client changes
-   its identity (client id and/or hardware address) and there is an existing
-   not expired lease for the reserved address the lease will conflict.
+The default is ``false``.
 
 .. _dhcp4-multi-threading-settings:
 
@@ -4587,7 +4570,7 @@ We saw the best results in our benchmarks with the following settings:
 IPv6-Only Preferred Networks
 ----------------------------
 
-`RFC8925 <https://tools.ietf.org/html/rfc8925>`_, recently published by the IETF,
+`RFC 8925 <https://tools.ietf.org/html/rfc8925>`_, recently published by the IETF,
 specifies a DHCPv4 option to indicate that a host supports an IPv6-only mode and is willing to
 forgo obtaining an IPv4 address if the network provides IPv6 connectivity. The general idea is that
 a network administrator can enable this option to signal to compatible dual-stack devices that
@@ -4690,9 +4673,9 @@ Temporary Allocation on DHCPDISCOVER
 ------------------------------------
 
 By default, :iscman:`kea-dhcp4` does not allocate or store a lease when offering an address
-to a client in response to a DHCPDISCOVER.  In general, :iscman:`kea-dhcp4` can fulfill client
+to a client in response to a DHCPDISCOVER. In general, :iscman:`kea-dhcp4` can fulfill client
 demands faster by deferring lease allocation and storage until it receives DHCPREQUESTs
-for them. Release 2.3.6 added a new parameter to :iscman:`kea-dhcp4`, ``offer-lifetime``, which
+for them. The ``offer-lifetime`` parameter in :iscman:`kea-dhcp4`
 (when not zero) instructs the server to allocate and persist a lease when generating a
 DHCPOFFER. In addition:
 
@@ -4753,32 +4736,31 @@ point.
 DNR (Discovery of Network-designated Resolvers) Options for DHCPv4
 ------------------------------------------------------------------
 
-One of the more recently added options is the Discovery of
-Network-designated Resolvers or DNR option,
-introduced in `RFC 9463 <https://tools.ietf.org/html/rfc9463>`__. The goal of that RFC is
-to provide a way to communicate location of DNS resolvers available over means other than
-the classic DNS over UDP over port 53. At the time of this writing, the supported technologies
+The Discovery of Network-designated Resolvers, or DNR option, was
+introduced in `RFC 9463 <https://tools.ietf.org/html/rfc9463>`__ as
+a way to communicate location of DNS resolvers available over means other than
+the classic DNS over UDP over port 53. As of spring 2024, the supported technologies
 are DoT (DNS-over-TLS), DoH (DNS-over-HTTPS), and DoQ (DNS-over-QUIC), but the option was
 designed to be extensible to accommodate other protocols in the future.
 
 The DHCPv4 option and its corresponding DHCPv6 options are almost exactly the same,
-with the exception of cardinality. Only one DHCPv4 option is allowed, while for DHCPv6
-multiple options are allowed. To be able to convey multiple entries, the DHCPv4 is an
+with the exception of cardinality: only one DHCPv4 option is allowed, while multiple
+options are allowed for DHCPv6. To be able to convey multiple entries, the DHCPv4 DNR is an
 array that allows multiple DNS instances. Each instance is logically equal to one
-DHCPv6 option, except the minor difference of using IPv4 rather than IPv6 addresses.
+DHCPv6 option; the only difference is that it uses IPv4 rather than IPv6 addresses.
+DNR DHCPv4 options allow more than one DNR instance to be configured, and the DNR
+instances are separated with the "pipe" (``0x7C``) character.
 
-For detailed example how to configure DNR option, see :ref:`dnr6-options`.
-The only difference for DNR DHCPv4 options configuration is that it allows
-to configure more than one DNR instance and the DNR instances are separated
-with the "pipe" (``0x7C``) character.
-For each DNR Instance comma delimited fields must be provided in the following order:
+For a detailed example of how to configure the DNR option, see :ref:`dnr6-options`.
+
+For each DNR instance, comma-delimited fields must be provided in the following order:
 
 - Service Priority (mandatory),
 - ADN FQDN (mandatory),
-- IP address(es) (optional - if more than one - they must be space-separated)
-- SvcParams as a set of key=value pairs (optional - if more than one - they must be space-separated;
-  to provide more than one alpn-id separate them with double backslash escaped comma like in the
-  example below).
+- IP address(es) (optional; if more than one, they must be separated by spaces)
+- SvcParams as a set of key=value pairs (optional; if more than one - they must be separated by spaces)
+  To provide more than one ``alpn-id``, separate them with double backslash-escaped commas
+  as in the example below).
 
 Example usage:
 
@@ -4788,19 +4770,19 @@ Example usage:
         "name": "v4-dnr",
         // 2 DNR Instances:
         // - Service priority 2, ADN, resolver IPv4 address and Service Parameters
-        // - Service priority 3, ADN - this is ADN-only mode as per RFC9463 3.1.6
+        // - Service priority 3, ADN - this is ADN-only mode as per RFC 9463 3.1.6
         "data": "2, resolver.example., 10.0.5.6, alpn=dot\\,doq port=8530 | 3, fooexp.resolver.example."
       }
 
 
 .. note::
 
-   Note that whenever "comma" or "pipe" characters need to be used not as the delimiters, they must be escaped with
-   double backslash (``\\,`` or ``\\|``). E.g. one must use escaped commas when configuring more than one ``ALPN``
-   protocol to separate them. One might want to use "pipe" (``0x7C``) character in ``dohpath`` Service Parameter,
-   as it is allowed in URI. In that case it must be escaped with double backslash.
+   If "comma" or "pipe" characters are used as text rather than as field delimiters, they must be escaped with
+   double backslashes (``\\,`` or ``\\|``). Escaped commas must be used when configuring more than one ``ALPN``
+   protocol, to separate them. The "pipe" (``0x7C``) character can be used in the ``dohpath`` service parameter,
+   as it is allowed in a URI.
 
-Examples for DNR DHCPv4 options are provided in the Kea sources in
+Examples for DNR DHCPv4 options are provided in the Kea sources, in
 `all-options.json` in the `doc/examples/kea4` directory.
 
 
@@ -5287,7 +5269,7 @@ For example:
     }
 
 The ``only-if-required`` parameter is needed here to force evaluation
-of the class after the lease has been allocated and thus the reserved
+of the class after the lease has been allocated, and thus the reserved
 class has been also assigned.
 
 .. note::
@@ -5701,21 +5683,20 @@ If not specified, the default value is:
 
 .. note::
 
-   As soon as a host reservation is found the search is stopped so
+   As soon as a host reservation is found, the search is stopped;
    when a client has two host reservations using different enabled
-   identifier types the first is always returned and the second
-   ignored. In other words, this is usually a configuration mistake.
-   In rare cases when having two reservations for the same host makes sense,
-   you can control which of those will be used by ordering the list of
-   identifier types in `host-reservation-identifiers`.
-
+   identifier types, the first is always returned and the second
+   ignored. In other words, this is usually a configuration error.
+   In those rare cases when having two reservations for the same host makes sense,
+   the one to be used can be specified by ordering the list of
+   identifier types in ``host-reservation-identifiers``.
 
 .. _global-reservations4:
 
 Global Reservations in DHCPv4
 -----------------------------
 
-In some deployments, such as mobile, clients can roam within the network
+In some deployments, such as mobile networks, clients can roam within the network
 and certain parameters must be specified regardless of the client's
 current location. To meet such a need, Kea offers a global reservation
 mechanism. The idea behind it is that regular host
@@ -5989,17 +5970,17 @@ IP address within a subnet; this is supported since the Kea 1.9.1
 release as an optional mode of operation, enabled with the
 ``ip-reservations-unique`` global parameter.
 
-The ``ip-reservations-unique`` is a boolean parameter that defaults to
+``ip-reservations-unique`` is a boolean parameter that defaults to
 ``true``, which forbids the specification of more than one reservation
 for the same IP address within a given subnet. Setting this parameter to
 ``false`` allows such reservations to be created both in the Kea configuration
 file and in the host database backend, via :ischooklib:`libdhcp_host_cmds.so`.
 
-Setting ``ip-reservations-unique`` to ``false`` when using memfile, MySQL or PostgreSQL is supported.
-This setting is not supported when using Host Cache (see :ref:`hooks-host-cache`), and the RADIUS backend
-(see :ref:`hooks-radius`).  These reservation backends simply do not support multiple reservations for the
-same IP.  If either of these hooks are loaded and ``ip-reservations-unique`` is set to ``false``, then a
-configuration error will be emitted and the server will fail to start.
+Setting ``ip-reservations-unique`` to ``false`` when using memfile, MySQL, or PostgreSQL is supported.
+This setting is not supported when using Host Cache (see :ref:`hooks-host-cache`) or the RADIUS backend
+(see :ref:`hooks-radius`). These reservation backends do not support multiple reservations for the
+same IP; if either of these hooks is loaded and ``ip-reservations-unique`` is set to ``false``, then a
+configuration error is emitted and the server fails to start.
 
 .. note::
 
@@ -6057,7 +6038,7 @@ finds multiple reservations for the same IP address.
 
 .. note::
 
-   Currently the Kea server does not verify whether multiple reservations for
+   Currently, the Kea server does not verify whether multiple reservations for
    the same IP address exist in MySQL and/or PostgreSQL host databases when
    ``ip-reservations-unique`` is updated from ``false`` to ``true``. This may
    cause issues with lease allocations. The administrator must ensure that there
@@ -6076,7 +6057,7 @@ when multi-threading is disabled.
 Host Reservations as Basic Access Control
 -----------------------------------------
 
-Starting with Kea 2.3.5, it is possible to define a host reservation that
+It is possible to define a host reservation that
 contains just an identifier, without any address, options, or values. In some
 deployments this is useful, as the hosts that have a reservation belong to
 the KNOWN class while others do not. This can be used as a basic access control
@@ -6084,9 +6065,9 @@ mechanism.
 
 The following example demonstrates this concept. It indicates a single IPv4 subnet
 and all clients will get an address from it. However, only known clients (those that
-have reservations) will get their default router configured. Empty reservations
+have reservations) will get their default router configured. Empty reservations,
 i.e. reservations that only have the identification criterion, can be
-specifically useful in this regard of making the clients known.
+useful as a way of making the clients known.
 
 ::
 
@@ -7106,7 +7087,7 @@ The DHCPv4 server supports the following statistics:
    |                                                    |                | This statistic is expected to grow |
    |                                                    |                | every time the server transmits a  |
    |                                                    |                | packet. In general, it should      |
-   |                                                    |                | roughly match pkt4-received, as    |
+   |                                                    |                | roughly match ``pkt4-received``, as|
    |                                                    |                | most incoming packets cause the    |
    |                                                    |                | server to respond. There are       |
    |                                                    |                | exceptions (e.g. DHCPRELEASE), so  |
@@ -7117,30 +7098,30 @@ The DHCPv4 server supports the following statistics:
    |                                                    |                | This statistic is expected to grow |
    |                                                    |                | in most cases after a DHCPDISCOVER |
    |                                                    |                | is processed. There are certain    |
-   |                                                    |                | uncommon, but valid, cases where   |
+   |                                                    |                | uncommon but valid cases where     |
    |                                                    |                | incoming DHCPDISCOVER packets are  |
    |                                                    |                | dropped, but in general this       |
    |                                                    |                | statistic is expected to be close  |
-   |                                                    |                | to pkt4-discover-received.         |
+   |                                                    |                | to ``pkt4-discover-received``.     |
    +----------------------------------------------------+----------------+------------------------------------+
    | pkt4-ack-sent                                      | integer        | Number of DHCPACK packets sent.    |
    |                                                    |                | This statistic is expected to grow |
    |                                                    |                | in most cases after a DHCPREQUEST  |
-   |                                                    |                | is processed. There are certain    |
+   |                                                    |                | is processed; there are certain    |
    |                                                    |                | cases where DHCPNAK is sent        |
    |                                                    |                | instead. In general, the sum of    |
-   |                                                    |                | pkt4-ack-sent and pkt4-nak-sent    |
-   |                                                    |                | should be close to                 |
-   |                                                    |                | pkt4-request-received.             |
+   |                                                    |                | ``pkt4-ack-sent`` and              |
+   |                                                    |                | ``pkt4-nak-sent`` should be close  |
+   |                                                    |                | to ``pkt4-request-received``.      |
    +----------------------------------------------------+----------------+------------------------------------+
    | pkt4-nak-sent                                      | integer        | Number of DHCPNAK packets sent.    |
    |                                                    |                | This statistic is expected to grow |
    |                                                    |                | when the server chooses not to     |
    |                                                    |                | honor the address requested by a   |
    |                                                    |                | client. In general, the sum of     |
-   |                                                    |                | pkt4-ack-sent and pkt4-nak-sent    |
-   |                                                    |                | should be close to                 |
-   |                                                    |                | pkt4-request-received.             |
+   |                                                    |                | ``pkt4-ack-sent`` and              |
+   |                                                    |                | ``pkt4-nak-sent`` should be close  |
+   |                                                    |                | to ``pkt4-request-received``.      |
    +----------------------------------------------------+----------------+------------------------------------+
    | pkt4-parse-failed                                  | integer        | Number of incoming packets that    |
    |                                                    |                | could not be parsed. A non-zero    |
@@ -7154,12 +7135,12 @@ The DHCPv4 server supports the following statistics:
    | pkt4-receive-drop                                  | integer        | Number of incoming packets that    |
    |                                                    |                | were dropped. The exact reason for |
    |                                                    |                | dropping packets is logged, but    |
-   |                                                    |                | the most common reasons may be: an |
-   |                                                    |                | unacceptable packet type was       |
+   |                                                    |                | the most common reasons may be that|
+   |                                                    |                | an unacceptable packet type was    |
    |                                                    |                | received, direct responses are     |
-   |                                                    |                | forbidden, or the server-id sent   |
+   |                                                    |                | forbidden, or the server ID sent   |
    |                                                    |                | by the client does not match the   |
-   |                                                    |                | server's server-id.                |
+   |                                                    |                | server's server ID.                |
    +----------------------------------------------------+----------------+------------------------------------+
    | subnet[id].total-addresses                         | integer        | Total number of addresses          |
    |                                                    |                | available for DHCPv4 management    |
@@ -7171,7 +7152,7 @@ The DHCPv4 server supports the following statistics:
    |                                                    |                | take into account any addresses    |
    |                                                    |                | that may be reserved due to host   |
    |                                                    |                | reservation. The *id* is the       |
-   |                                                    |                | the subnet-id of a given subnet.   |
+   |                                                    |                | the subnet ID of a given subnet.   |
    |                                                    |                | This statistic is exposed for each |
    |                                                    |                | subnet separately, and is reset    |
    |                                                    |                | during a reconfiguration event.    |
@@ -7186,8 +7167,8 @@ The DHCPv4 server supports the following statistics:
    |                                                    |                | does not take into account any     |
    |                                                    |                | addresses that may be reserved due |
    |                                                    |                | to host reservation. The *id* is   |
-   |                                                    |                | the subnet-id of a given subnet.   |
-   |                                                    |                | The *pid* is the pool-id of a      |
+   |                                                    |                | the subnet ID of a given subnet.   |
+   |                                                    |                | The *pid* is the pool ID of a      |
    |                                                    |                | given pool. This statistic is      |
    |                                                    |                | exposed for each subnet pool       |
    |                                                    |                | separately, and is reset during a  |
@@ -7206,7 +7187,7 @@ The DHCPv4 server supports the following statistics:
    |                                                    |                | is allocated (as a result of       |
    |                                                    |                | receiving a DHCPREQUEST message)   |
    |                                                    |                | and never decreases. The *id* is   |
-   |                                                    |                | the subnet-id of the subnet. This  |
+   |                                                    |                | the subnet ID of the subnet. This  |
    |                                                    |                | statistic is exposed for each      |
    |                                                    |                | subnet separately, and is reset    |
    |                                                    |                | during a reconfiguration event.    |
@@ -7217,8 +7198,8 @@ The DHCPv4 server supports the following statistics:
    |                                                    |                | lease is allocated (as a result of |
    |                                                    |                | receiving a DHCPREQUEST message)   |
    |                                                    |                | and never decreases. The *id* is   |
-   |                                                    |                | the subnet-id of the subnet. The   |
-   |                                                    |                | *pid* is the pool-id of the pool.  |
+   |                                                    |                | the subnet ID of the subnet. The   |
+   |                                                    |                | *pid* is the pool ID of the pool.  |
    |                                                    |                | This statistic is exposed for each |
    |                                                    |                | subnet pool separately, and is     |
    |                                                    |                | reset during a reconfiguration     |
@@ -7232,7 +7213,7 @@ The DHCPv4 server supports the following statistics:
    |                                                    |                | every time a lease is released (a  |
    |                                                    |                | DHCPRELEASE message is received)   |
    |                                                    |                | or expires. The *id* is the        |
-   |                                                    |                | subnet-id of the subnet. This      |
+   |                                                    |                | subnet ID of the subnet. This      |
    |                                                    |                | statistic is exposed for each      |
    |                                                    |                | subnet separately, and is reset    |
    |                                                    |                | during a reconfiguration event.    |
@@ -7245,8 +7226,8 @@ The DHCPv4 server supports the following statistics:
    |                                                    |                | and decreases every time a lease   |
    |                                                    |                | is released (a DHCPRELEASE message |
    |                                                    |                | is received) or expires. The *id*  |
-   |                                                    |                | is the subnet-id of the subnet.    |
-   |                                                    |                | The *pid* is the pool-id of the    |
+   |                                                    |                | is the subnet ID of the subnet.    |
+   |                                                    |                | The *pid* is the pool ID of the    |
    |                                                    |                | pool. This statistic is exposed    |
    |                                                    |                | for each subnet pool separately,   |
    |                                                    |                | and is reset during a              |
@@ -7268,7 +7249,7 @@ The DHCPv4 server supports the following statistics:
    |                                                    |                | server startup. It is incremented  |
    |                                                    |                | each time an expired lease is      |
    |                                                    |                | reclaimed. The *id* is the         |
-   |                                                    |                | subnet-id of a given subnet. This  |
+   |                                                    |                | subnet ID of a given subnet. This  |
    |                                                    |                | statistic is exposed for each      |
    |                                                    |                | subnet separately.                 |
    +----------------------------------------------------+----------------+------------------------------------+
@@ -7278,8 +7259,8 @@ The DHCPv4 server supports the following statistics:
    |                                                    |                | since server startup. It is        |
    |                                                    |                | incremented each time an expired   |
    |                                                    |                | lease is reclaimed. The *id* is    |
-   |                                                    |                | the subnet-id of a given subnet.   |
-   |                                                    |                | The *pid* is the pool-id of the    |
+   |                                                    |                | the subnet ID of a given subnet.   |
+   |                                                    |                | The *pid* is the pool ID of the    |
    |                                                    |                | pool. This statistic is exposed    |
    |                                                    |                | for each subnet pool separately.   |
    +----------------------------------------------------+----------------+------------------------------------+
@@ -7309,7 +7290,7 @@ The DHCPv4 server supports the following statistics:
    |                                                    |                | administrator should investigate   |
    |                                                    |                | whether there is a misbehaving     |
    |                                                    |                | device in the network. The *id* is |
-   |                                                    |                | the subnet-id of a given subnet.   |
+   |                                                    |                | the subnet ID of a given subnet.   |
    |                                                    |                | This statistic is exposed for each |
    |                                                    |                | subnet separately.                 |
    +----------------------------------------------------+----------------+------------------------------------+
@@ -7325,18 +7306,18 @@ The DHCPv4 server supports the following statistics:
    |                                                    |                | administrator should investigate   |
    |                                                    |                | whether there is a misbehaving     |
    |                                                    |                | device in the network. The *id* is |
-   |                                                    |                | the subnet-id of a given subnet.   |
-   |                                                    |                | The *pid* is the pool-id of the    |
+   |                                                    |                | the subnet ID of a given subnet.   |
+   |                                                    |                | The *pid* is the pool ID of the    |
    |                                                    |                | pool. This statistic is exposed    |
    |                                                    |                | for each subnet pool separately.   |
    +----------------------------------------------------+----------------+------------------------------------+
    | reclaimed-declined-addresses                       | integer        | Number of IPv4 addresses that were |
    |                                                    |                | declined, but have now been        |
    |                                                    |                | recovered. Unlike                  |
-   |                                                    |                | declined-addresses, this statistic |
-   |                                                    |                | never decreases. It can be used as |
-   |                                                    |                | a long-term indicator of how many  |
-   |                                                    |                | actual valid declines were         |
+   |                                                    |                | ``declined-addresses``, this       |
+   |                                                    |                | statistic never decreases. It can  |
+   |                                                    |                | be used as a long-term indicator of|
+   |                                                    |                | how many actual valid declines were|
    |                                                    |                | processed and recovered from. This |
    |                                                    |                | is a global statistic that covers  |
    |                                                    |                | all subnets.                       |
@@ -7344,66 +7325,66 @@ The DHCPv4 server supports the following statistics:
    | subnet[id].reclaimed-declined-addresses            | integer        | Number of IPv4 addresses that were |
    |                                                    |                | declined, but have now been        |
    |                                                    |                | recovered. Unlike                  |
-   |                                                    |                | declined-addresses, this statistic |
-   |                                                    |                | never decreases. It can be used as |
-   |                                                    |                | a long-term indicator of how many  |
-   |                                                    |                | actual valid declines were         |
+   |                                                    |                | ``declined-addresses``, this       |
+   |                                                    |                | statistic never decreases. It can  |
+   |                                                    |                | be used as a long-term indicator of|
+   |                                                    |                | how many actual valid declines were|
    |                                                    |                | processed and recovered from. The  |
-   |                                                    |                | *id* is the subnet-id of a given   |
+   |                                                    |                | *id* is the subnet ID of a given   |
    |                                                    |                | subnet. This statistic is exposed  |
    |                                                    |                | for each subnet separately.        |
    +----------------------------------------------------+----------------+------------------------------------+
    | subnet[id].pool[pid].reclaimed-declined-addresses  | integer        | Number of IPv4 addresses that were |
    |                                                    |                | declined, but have now been        |
    |                                                    |                | recovered. Unlike                  |
-   |                                                    |                | declined-addresses, this statistic |
-   |                                                    |                | never decreases. It can be used as |
-   |                                                    |                | a long-term indicator of how many  |
-   |                                                    |                | actual valid declines were         |
+   |                                                    |                | ``declined-addresses``, this       |
+   |                                                    |                | statistic never decreases. It can  |
+   |                                                    |                | be used as a long-term indicator of|
+   |                                                    |                | how many actual valid declines were|
    |                                                    |                | processed and recovered from. The  |
-   |                                                    |                | *id* is the subnet-id of a given   |
-   |                                                    |                | subnet. The *pid* is the pool-id   |
+   |                                                    |                | *id* is the subnet ID of a given   |
+   |                                                    |                | subnet. The *pid* is the pool ID   |
    |                                                    |                | of the pool. This statistic is     |
    |                                                    |                | exposed for each subnet pool       |
    |                                                    |                | separately.                        |
    +----------------------------------------------------+----------------+------------------------------------+
    | pkt4-lease-query-received                          | integer        | Number of IPv4 DHCPLEASEQUERY      |
    |                                                    |                | packets received. (Only exists if  |
-   |                                                    |                | Leasequery hook library is         |
+   |                                                    |                | the Leasequery hook library is     |
    |                                                    |                | loaded.)                           |
    +----------------------------------------------------+----------------+------------------------------------+
    | pkt4-lease-query-response-unknown-sent             | integer        | Number of IPv4 DHCPLEASEUNKNOWN    |
    |                                                    |                | responses sent. (Only exists if    |
-   |                                                    |                | Leasequery hook library is         |
+   |                                                    |                | the Leasequery hook library is     |
    |                                                    |                | loaded.)                           |
    +----------------------------------------------------+----------------+------------------------------------+
    | pkt4-lease-query-response-unassigned-sent          | integer        | Number of IPv4 DHCPLEASEUNASSIGNED |
    |                                                    |                | responses sent. (Only exists if    |
-   |                                                    |                | Leasequery hook library is         |
+   |                                                    |                | the Leasequery hook library is     |
    |                                                    |                | loaded.)                           |
    +----------------------------------------------------+----------------+------------------------------------+
    | pkt4-lease-query-response-active-sent              | integer        | Number of IPv4 DHCPLEASEACTIVE     |
    |                                                    |                | responses sent. (Only exists if    |
-   |                                                    |                | Leasequery hook library is         |
+   |                                                    |                | the Leasequery hook library is     |
    |                                                    |                | loaded.)                           |
    +----------------------------------------------------+----------------+------------------------------------+
    | v4-allocation-fail                                 | integer        | Number of total address allocation |
    |                                                    |                | failures for a particular client.  |
-   |                                                    |                | This consists in the number of     |
+   |                                                    |                | This consists of the number of     |
    |                                                    |                | lease allocation attempts that the |
-   |                                                    |                | server made before giving up and   |
+   |                                                    |                | server made before giving up, if it|
    |                                                    |                | was unable to use any of the       |
    |                                                    |                | address pools. This is a global    |
    |                                                    |                | statistic that covers all subnets. |
    +----------------------------------------------------+----------------+------------------------------------+
    | subnet[id].v4-allocation-fail                      | integer        | Number of total address allocation |
    |                                                    |                | failures for a particular client.  |
-   |                                                    |                | This consists in the number of     |
+   |                                                    |                | This consists of the number of     |
    |                                                    |                | lease allocation attempts that the |
-   |                                                    |                | server made before giving up and   |
+   |                                                    |                | server made before giving up, if it|
    |                                                    |                | was unable to use any of the       |
    |                                                    |                | address pools. The *id* is the     |
-   |                                                    |                | subnet-id of a given subnet. This  |
+   |                                                    |                | subnet ID of a given subnet. This  |
    |                                                    |                | statistic is exposed for each      |
    |                                                    |                | subnet separately.                 |
    +----------------------------------------------------+----------------+------------------------------------+
@@ -7416,7 +7397,7 @@ The DHCPv4 server supports the following statistics:
    | subnet[id].v4-allocation-fail-shared-network       | integer        | Number of address allocation       |
    |                                                    |                | failures for a particular client   |
    |                                                    |                | connected to a shared network.     |
-   |                                                    |                | The *id* is the subnet-id of a     |
+   |                                                    |                | The *id* is the subnet ID of a     |
    |                                                    |                | given subnet. This statistic is    |
    |                                                    |                | exposed for each subnet            |
    |                                                    |                | separately.                        |
@@ -7432,7 +7413,7 @@ The DHCPv4 server supports the following statistics:
    |                                                    |                | failures for a particular client   |
    |                                                    |                | connected to a subnet that does    |
    |                                                    |                | not belong to a shared network.    |
-   |                                                    |                | The *id* is the subnet-id of a     |
+   |                                                    |                | The *id* is the subnet ID of a     |
    |                                                    |                | given subnet. This statistic is    |
    |                                                    |                | exposed for each subnet            |
    |                                                    |                | separately.                        |
@@ -7463,7 +7444,7 @@ The DHCPv4 server supports the following statistics:
    |                                                    |                | operator expects that some clients |
    |                                                    |                | should be assigned dynamic         |
    |                                                    |                | addresses. The *id* is the         |
-   |                                                    |                | subnet-id of a given subnet. This  |
+   |                                                    |                | subnet ID of a given subnet. This  |
    |                                                    |                | statistic is exposed for each      |
    |                                                    |                | subnet separately.                 |
    +----------------------------------------------------+----------------+------------------------------------+
@@ -7471,15 +7452,15 @@ The DHCPv4 server supports the following statistics:
    |                                                    |                | failures when the client's packet  |
    |                                                    |                | belongs to one or more classes.    |
    |                                                    |                | There may be several reasons why a |
-   |                                                    |                | lease was not assigned. One of     |
-   |                                                    |                | them may be a case when all pools  |
-   |                                                    |                | require packet to belong to        |
-   |                                                    |                | certain classes and the incoming   |
-   |                                                    |                | packet didn't belong to any of     |
-   |                                                    |                | them. Another case where this      |
+   |                                                    |                | lease was not assigned: for        |
+   |                                                    |                | example, if all pools              |
+   |                                                    |                | require packets to belong to       |
+   |                                                    |                | certain classes and an incoming    |
+   |                                                    |                | packet does not belong to any.     |
+   |                                                    |                | Another case where this            |
    |                                                    |                | information may be useful is to    |
-   |                                                    |                | point out that the pool reserved   |
-   |                                                    |                | to a given class has ran out of    |
+   |                                                    |                | indicate that the pool reserved    |
+   |                                                    |                | for a given class has run out of   |
    |                                                    |                | addresses. This is a global        |
    |                                                    |                | statistic that covers all subnets. |
    +----------------------------------------------------+----------------+------------------------------------+
@@ -7487,24 +7468,24 @@ The DHCPv4 server supports the following statistics:
    |                                                    |                | failures when the client's packet  |
    |                                                    |                | belongs to one or more classes.    |
    |                                                    |                | There may be several reasons why a |
-   |                                                    |                | lease was not assigned. One of     |
-   |                                                    |                | them may be a case when all pools  |
-   |                                                    |                | require packet to belong to        |
-   |                                                    |                | certain classes and the incoming   |
-   |                                                    |                | packet didn't belong to any of     |
-   |                                                    |                | them. Another case where this      |
+   |                                                    |                | lease was not assigned: for        |
+   |                                                    |                | example, if all pools              |
+   |                                                    |                | require packets to belong to       |
+   |                                                    |                | certain classes and an incoming    |
+   |                                                    |                | packet does not belong to any.     |
+   |                                                    |                | Another case where this            |
    |                                                    |                | information may be useful is to    |
-   |                                                    |                | point out that the pool reserved   |
-   |                                                    |                | to a given class has ran out of    |
+   |                                                    |                | indicate that the pool reserved    |
+   |                                                    |                | for a given class has run out of   |
    |                                                    |                | addresses. The *id* is the         |
-   |                                                    |                | subnet-id of a given subnet. This  |
+   |                                                    |                | subnet ID of a given subnet. This  |
    |                                                    |                | statistic is exposed for each      |
    |                                                    |                | subnet separately.                 |
    +----------------------------------------------------+----------------+------------------------------------+
    | v4-lease-reuses                                    | integer        | Number of times an IPv4 lease had  |
    |                                                    |                | its CLTT increased in memory and   |
    |                                                    |                | its expiration time left unchanged |
-   |                                                    |                | in persistent storage as part of   |
+   |                                                    |                | in persistent storage, as part of  |
    |                                                    |                | the lease caching feature. This is |
    |                                                    |                | referred to as a lease reuse.      |
    |                                                    |                | This statistic is global.          |
@@ -7512,11 +7493,11 @@ The DHCPv4 server supports the following statistics:
    | subnet[id].v4-lease-reuses                         | integer        | Number of times an IPv4 lease had  |
    |                                                    |                | its CLTT increased in memory and   |
    |                                                    |                | its expiration time left unchanged |
-   |                                                    |                | in persistent storage as part of   |
+   |                                                    |                | in persistent storage, as part of  |
    |                                                    |                | the lease caching feature. This is |
    |                                                    |                | referred to as a lease reuse.      |
    |                                                    |                | This statistic is on a per-subnet  |
-   |                                                    |                | basis. The *id* is the subnet-id   |
+   |                                                    |                | basis. The *id* is the subnet ID   |
    |                                                    |                | of a given subnet.                 |
    +----------------------------------------------------+----------------+------------------------------------+
    | v4-reservation-conflicts                           | integer        | Number of host reservation         |
@@ -7543,9 +7524,9 @@ The DHCPv4 server supports the following statistics:
    The pool ID can be configured on each pool by explicitly setting the ``pool-id``
    parameter in the pool parameter map. If not configured, ``pool-id`` defaults to 0.
    The statistics related to pool ID 0 refer to all the statistics of all the pools
-   that have unconfigured ``pool-id``.
+   that have an unconfigured ``pool-id``.
    The pool ID does not need to be unique within the subnet or across subnets.
-   The statistics regarding a specific pool ID within a subnet will be combined with the
+   The statistics regarding a specific pool ID within a subnet are combined with the
    other statistics of all other pools with the same pool ID in the respective subnet.
 
 .. note::
@@ -7557,11 +7538,11 @@ The DHCPv4 server provides two global parameters to control the default sample
 limits of statistics:
 
 - ``statistic-default-sample-count`` - determines the default maximum
-  number of samples which are kept. The special value of 0
+  number of samples to be kept. The special value of 0
   indicates that a default maximum age should be used.
 
 - ``statistic-default-sample-age`` - determines the default maximum
-  age in seconds of samples which are kept.
+  age, in seconds, of samples to be kept.
 
 For instance, to reduce the statistic-keeping overhead, set
 the default maximum sample count to 1 so only one sample is kept:
@@ -7811,7 +7792,7 @@ Known RFC Violations
 --------------------
 
 In principle, Kea aspires to be a reference implementation and aims to implement 100% of the RFC standards.
-However, in some cases there are practical aspects that prevent Kea from completely adhering to the text of the RFC documents.
+However, in some cases there are practical aspects that prevent Kea from completely adhering to the text of all RFC documents.
 
 - `RFC 2131 <https://tools.ietf.org/html/rfc2131>`__, page 30, says that if the incoming DHCPREQUEST packet has no
   "requested IP address" option and ``ciaddr`` is not set, the server is supposed to respond with NAK. However,
@@ -7830,7 +7811,7 @@ DHCPv4 Server Limitations
 
 These are the current known limitations of the Kea DHCPv4 server software. Most of
 them are reflections of the current stage of development and should be
-treated as “not implemented yet”, rather than as actual limitations.
+treated as “not yet implemented,” rather than as actual limitations.
 However, some of them are implications of the design choices made. Those
 are clearly marked as such.
 
@@ -7902,10 +7883,10 @@ element associated with ``all`` servers (using the ``all`` keyword as a server t
 used by all servers connecting to the configuration database.
 
 The following table lists DHCPv4-specific parameters supported by the
-Configuration Backend, with an indication of the level of the hierarchy
+configuration backend, with an indication of the level of the hierarchy
 at which it is currently supported.
 
-.. table:: List of DHCPv4 parameters supported by the Configuration Backend
+.. table:: List of DHCPv4 parameters supported by the configuration backend
 
    +-----------------------------+----------------------------+--------------+-------------+-------------+-------------+
    | Parameter                   | Global                     | Client       | Shared      | Subnet      | Pool        |
@@ -7993,18 +7974,18 @@ at which it is currently supported.
    +-----------------------------+----------------------------+--------------+-------------+-------------+-------------+
 
 -  ``yes`` - indicates that the parameter is supported at the given
-   level of the hierarchy and can be configured via the Configuration Backend.
+   level of the hierarchy and can be configured via the configuration backend.
 
 -  ``no`` - indicates that a parameter is supported at the given level
-   of the hierarchy but cannot be configured via the Configuration Backend.
+   of the hierarchy but cannot be configured via the configuration backend.
 
 -  ``n/a`` -  indicates that a given parameter is not applicable
    at the particular level of the hierarchy or that the
    server does not support the parameter at that level.
 
-Some scalar parameters contained by top level global maps are supported by the Configuration Backend.
+Some scalar parameters contained by top-level global maps are supported by the configuration backend.
 
-.. table:: List of DHCPv4 map parameters supported by the Configuration Backend
+.. table:: List of DHCPv4 map parameters supported by the configuration backend
 
    +------------------------------------------------------------------+------------------------------+----------------------------------+
    | Parameter name (flat naming format)                              | Global map                   | Parameter name                   |
@@ -8194,18 +8175,17 @@ immediately poll any configuration changes from the database and avoid
 waiting for the next fetch cycle.
 
 In the configuration examples above, two hook libraries are loaded. The first
-is a library which implements the Configuration Backend for a specific database
+is a library which implements the configuration backend for a specific database
 type: :ischooklib:`libdhcp_mysql_cb.so` provides support for MySQL and :ischooklib:`libdhcp_pgsql_cb.so`
-provides support for PostgreSQL.  The library loaded must match the database
-``type`` specified within the ``config-control`` parameter or an will error be
-logged when the server attempts to load its configuration and the load will
-fail.
+provides support for PostgreSQL. The library loaded must match the database
+``type`` specified within the ``config-control`` parameter; otherwise an error
+is logged when the server attempts to load its configuration, and the load
+fails.
 
 The second hook library, :ischooklib:`libdhcp_cb_cmds.so`, is optional. It should
 be loaded when the Kea server instance is to be used to manage the
 configuration in the database. See the :ref:`hooks-cb-cmds` section for
-details. This hook library is only available to ISC
-customers with a paid support contract.
+details.
 
 .. _dhcp4-compatibility:
 
@@ -8234,7 +8214,7 @@ Lenient Option Parsing
 By default, tuple fields defined in custom options are parsed as a set of
 length-value pairs.
 
-With ``"lenient-option-parsing": true``, if a length ever exceeds the rest of
+With ``"lenient-option-parsing": true``, if a length ever exceeded the rest of
 the option's buffer, previous versions of Kea returned a log message ``unable to
 parse the opaque data tuple, the buffer length is x, but the tuple length is y``
 with ``x < y``; this no longer occurs. Instead, the value is considered to be the rest of the buffer,
@@ -8250,8 +8230,8 @@ or in terms of the log message above, the tuple length ``y`` becomes ``x``.
       }
     }
 
-Starting with Kea version 2.5.8 this is extended to silently ignore
-fqdn (81) options with some invalid domain names.
+Starting with Kea version 2.5.8, this parsing is extended to silently ignore
+FQDN (81) options with some invalid domain names.
 
 Ignore DHCP Server Identifier
 -----------------------------
@@ -8348,8 +8328,8 @@ recommended uses.
 Allocators Comparison
 ---------------------
 
-In the table below, we briefly compare the supported allocators. The
-detailed allocators' descriptions are in later sections.
+In the table below, we briefly compare the supported allocators, all of which
+are described in detail in later sections.
 
 .. table:: Comparison of the lease allocators supported by Kea DHCPv4
 
@@ -8455,13 +8435,13 @@ before using this allocator. The FLQ allocator can heavily impact the server's
 startup and reconfiguration time, because the allocator has to populate the
 list of free leases for each subnet where it is used. These delays can be
 observed both during the configuration reload and when the subnets are
-created using :ischooklib:`libdhcp_subnet_cmds.so`. The allocator increases the
+created using :ischooklib:`libdhcp_subnet_cmds.so`. This allocator increases
 memory consumption to hold the list of free leases, proportional
-to the total size of the address pools for which this allocator is used.
+to the total size of the address pools for which the FLQ allocator is used.
 Finally, lease reclamation must be enabled with a low value of the
 ``reclaim-timer-wait-time`` parameter, to ensure that the server frequently
 collects expired leases and makes them available for allocation via the
-free lease queue. Expired leases are not considered free by
+free lease queue; expired leases are not considered free by
 the allocator until they are reclaimed by the server. See
 :ref:`lease-reclamation` for more details about the lease reclamation process.
 

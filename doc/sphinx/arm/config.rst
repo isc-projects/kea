@@ -174,17 +174,17 @@ syntax and its top-level element is a map (i.e. the data must be enclosed in
 curly brackets). However, some hook libraries may expect specific formatting;
 please consult the specific hook library documentation for details.
 
-In a sense the user-context mechanism has superseded the JSON comment
-capabilities; ISC encourages administrators to use user-context instead of
-the older mechanisms. To promote this way of storing comments, Kea compared
-converts JSON comments to user-context on the fly.
+The user-context mechanism has superseded the JSON comment
+capabilities; ISC encourages administrators to use user context instead of
+the older mechanisms. To promote this way of storing comments, Kea
+converts JSON comments to user context on the fly.
 
 However, if the configuration uses the old JSON
-comment, the :isccmd:`config-get` command returns a slightly modified
-configuration. It is not uncommon for a call for :isccmd:`config-set` followed by a
+comment method, the :isccmd:`config-get` command returns a slightly modified
+configuration. It is not uncommon for a call for :isccmd:`config-set` followed by
 :isccmd:`config-get` to receive a slightly different structure.
 The best way to avoid this problem is simply to abandon JSON comments and
-use user-context.
+use user context.
 
 Kea supports user contexts at the following levels: global scope,
 interfaces configuration, shared networks,

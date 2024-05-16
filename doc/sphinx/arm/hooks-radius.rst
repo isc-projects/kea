@@ -5,7 +5,7 @@
 ============================================
 
 This hook library allows the Kea DHCP servers to use the RADIUS protocol to
-authorize DHCP clients through the access service or for DHCP lease journaling
+authorize DHCP clients through the access service, or for DHCP lease journaling
 through the accounting service. For details on RADIUS in Kea, please see
 :ref:`radius`.
 

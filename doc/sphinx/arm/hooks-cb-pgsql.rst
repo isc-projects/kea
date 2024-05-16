@@ -12,7 +12,8 @@ for more details.
 .. note::
 
     :ischooklib:`libdhcp_pgsql_cb.so` is part of the open source code and is
-    available to every Kea user, but it requires :ischooklib:`libdhcp_cb_cmds.so`
-    which is available only to ISC customers with
-    a paid support contract. For more information on subscription options,
-    please complete the form at https://www.isc.org/contact.
+    available to every Kea user. However, this hook library only works
+    with :ischooklib:`libdhcp_cb_cmds.so`, which allows easy configuration
+    management with the use of API commands. :ischooklib:`libdhcp_cb_cmds.so`
+    is available only to ISC customers with a paid support contract; for more information
+    on subscription options, please complete the form at https://www.isc.org/contact.

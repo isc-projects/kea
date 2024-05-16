@@ -17,8 +17,8 @@ Quick Start Guide Using tarball
     :ref:`build-requirements` for details.
 
 2.  Download the Kea source tarball from
-    `the ISC.org downloads page <https://www.isc.org/download/>`__ or
-    `the ISC downloads site <https://downloads.isc.org/isc/kea/>`__ or
+    `the main isc.org downloads page <https://www.isc.org/download/>`__, 
+    `the ISC downloads site <https://downloads.isc.org/isc/kea/>`__, or
     `the ISC Cloudsmith page <https://cloudsmith.io/~isc/packages/?q=format%3Araw>`__.
 
 3.  Extract the tarball. For example:
@@ -53,17 +53,17 @@ Quick Start Guide Using Native Packages
 =======================================
 
 ISC provides native Alpine, deb, and RPM packages, which make Kea installation
-much easier. Unless specific compilation options are desired, it is usually
+much easier than building from source. Unless specific compilation options are desired, it is usually
 easier to install Kea using native packages.
 
 1. Go to `Kea on cloudsmith.io <https://cloudsmith.io/~isc/repos/>`__.
 
 2. Choose the Cloudsmith repository e.g. |cloudsmith_repo| for Kea |version|.
 
-3. Click on the arrow besides the ``Set Me Up`` button and select your OS flavor
-   out of: ``Alpine``, ``Debian``, ``RedHat``.
+3. Click on the arrow beside the "Set Me Up" button and select the desired OS flavor:
+   Alpine, Debian, or RedHat.
 
-4. Follow the instructions written there.
+4. Follow the onscreen instructions.
 
 .. note::
   For example, the Debian setup instructions for Kea 2.4 can be found here:
@@ -152,7 +152,7 @@ or specific packages:
 
             $ apk add isc-kea-dhcp6
 
-or every single Kea-related package, including development headers, debug
+or ALL Kea-related packages, including development headers, debug
 symbols, and premium hooks (if available):
 
 .. list-table::
@@ -207,9 +207,9 @@ or all packages with a specified version number:
 
             # apk search isc-kea | sed 's/-[0-9].*//g' | grep r20230921141113 | xargs apk add
 
-8. All installed packages should be now available directly.
+8. All installed packages should be now available.
 
-    You can start a server up manually:
+    You can start a server manually:
 
     .. code-block:: console
 
@@ -231,9 +231,9 @@ or all packages with a specified version number:
   :iscman:`keactrl` is not available in packages, as similar functionality is provided
   by the native systemctl scripts.
 
-9. On Debian/Ubuntu systems, the service is enabled at boot time automatically
+9. On Debian/Ubuntu systems, the service is automatically enabled at boot time
    when the package is installed. On Fedora/RHEL and Alpine, the service is not
-   enabled automatically, so, if desired, it must be enabled manually.
+   automatically enabled, so if desired, it must be enabled manually.
 
     With systemd on Fedora/RedHat:
 
@@ -253,7 +253,7 @@ or all packages with a specified version number:
 Quick Start Guide Using Docker Containers
 =========================================
 
-1. Go to `ISC docker repository on cloudsmith.io <https://cloudsmith.io/~isc/repos/docker/packages/>`__.
+1. Go to the `ISC docker repository on cloudsmith.io <https://cloudsmith.io/~isc/repos/docker/packages/>`__.
 
 2. Create an ipvlan network attached to the client-facing host interface and
    assigned to the subnet that is served by Kea.
@@ -268,8 +268,7 @@ Quick Start Guide Using Docker Containers
 
     $ docker pull docker.cloudsmith.io/isc/docker/kea-dhcp6
 
-
-4. Create a container out of the image. Mount the configuration volume and the
+4. Create a container from the image. Mount the configuration volume and the
    data volume if needed.
 
 .. code-block:: console
@@ -306,8 +305,8 @@ Quick Start Guide for DHCPv4 and DHCPv6 Services
 1.  Edit the Kea configuration files, which by default are installed in
     the ``[kea-install-dir]/etc/kea/`` directory. These are:
     ``kea-dhcp4.conf``, ``kea-dhcp6.conf``, ``kea-dhcp-ddns.conf`` and
-    ``kea-ctrl-agent.conf``, ``keactrl.conf`` for DHCPv4 server, DHCPv6 server,
-    D2, Control Agent, and the keactrl script, respectively.
+    ``kea-ctrl-agent.conf``, ``keactrl.conf`` for the DHCPv4 server, DHCPv6 server,
+    D2, Control Agent, and keactrl script, respectively.
 
 2.  To start the DHCPv4 server in the background, run the
     following command (as root):

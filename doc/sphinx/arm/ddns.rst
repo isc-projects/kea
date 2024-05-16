@@ -12,19 +12,18 @@ Overview
 The DHCP-DDNS Server (:iscman:`kea-dhcp-ddns`, known informally as D2) conducts
 the client side of the Dynamic DNS protocol (DDNS, defined in `RFC
 2136 <https://tools.ietf.org/html/rfc2136>`__) on behalf of the DHCPv4
-and DHCPv6 servers (:iscman:`kea-dhcp4` and :iscman:`kea-dhcp6` respectively).
+and DHCPv6 servers (:iscman:`kea-dhcp4` and :iscman:`kea-dhcp6`, respectively).
 The DHCP servers construct DDNS update requests, known as NameChangeRequests
 (NCRs), based on DHCP lease change events and then post them to D2. D2
 attempts to match each request to the appropriate DNS server(s) and
 carries out the necessary conversation with those servers to update the
 DNS data.
 
-For the ability to generate host names procedurally, based on an expression, and
-for the ability to skip DDNS updates on a per-client basis, or fine-tuning
-various DNS update aspects, the :iscman:`kea-dhcp4` and :iscman:`kea-dhcp6` can
-load the premium hook library `libdhcp_ddns_tuning.so` which is available from
-ISC. Please refer to :ref:`hooks-ddns-tuning` documentation for the
-configuration options.
+The Kea hook library :ischooklib:`libdhcp_ddns_tuning.so` provides the ability
+for both :iscman:`kea-dhcp4` and :iscman:`kea-dhcp6` to generate host names
+procedurally based on an expression, to skip DDNS updates on a per-client basis,
+or to fine-tune various DNS update aspects. Please refer to the :ref:`hooks-ddns-tuning`
+documentation for the configuration options.
 
 .. _dhcp-ddns-dns-server-selection:
 
@@ -410,8 +409,8 @@ Every entry in the list has three parameters:
    key. This value is case-sensitive and must exactly match the value
    specified on the DNS server(s). It is a base64-encoded text value.
 
-- ``secret-file`` - since Kea 2.5.8 a more secure alternative is supported:
-  specify a file name where the secret can be found, i.e. the base64-encoded
+- ``secret-file`` - since Kea 2.5.8, this more secure alternative is supported.
+  This value specifies the file name where the secret can be found, i.e. the base64-encoded
   secret is the content of the file.
 
 As an example, suppose that a domain D2 will be updating is maintained

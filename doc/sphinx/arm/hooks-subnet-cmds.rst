@@ -358,17 +358,18 @@ The response to this command has the following structure:
        }
    }
 
-It is recommended, but not mandatory, to specify the subnet ID. If not
-specified, Kea will try to assign the next ``subnet-id`` value. This
+As of Kea 2.6.0, Kea no longer automatically generates subnet IDS; they must
+be specified for :isccmd:`subnet4-add` and :isccmd:`subnet6-add`. If not
+specified, Kea tries to assign the next ``subnet-id`` value. This
 automatic ID value generator is simple; it returns the previous
 automatically assigned value, increased by 1. This works well, unless
 a subnet is manually created with a larger value than one previously used. For
 example, if :isccmd:`subnet4-add` is called five times, each without an ID, Kea will
-assign IDs 1, 2, 3, 4, and 5 and it will work just fine. However, if
+assign IDs 1, 2, 3, 4, and 5 and everything will work properly. However, if
 :isccmd:`subnet4-add` is called five times, with the first subnet having the
 ``subnet-id`` of value 3 and the remaining ones having no ``subnet-id``, the operation will
 fail. The first command (with the explicit value) will use ``subnet-id`` 3; the
-second command will create a subnet with and ID of 1; the third will use a
+second command will create a subnet with an ID of 1; the third will use a
 value of 2; and finally the fourth will have its ``subnet-id`` value
 auto-generated as 3. However, since there is already a subnet with that
 ID, the process will fail.
@@ -432,10 +433,10 @@ The response to this command has the following structure:
    }
 
 As with other update commands, this command overwrites all the contents of the
-entry. If the IPv4 subnet previously had a resource assigned to it, and the
+entry. If the IPv4 subnet previously had a resource assigned to it and the
 :isccmd:`subnet4-update` command is missing the resource, it is deleted from the
-server configuration. If an incremental update of the subnet is desired, then
-this can be achieved with :isccmd:`subnet4-delta-add`.
+server configuration. If an incremental update of the subnet is desired,
+use :isccmd:`subnet4-delta-add`.
 
 .. isccmd:: subnet6-update
 .. _command-subnet6-update:
@@ -486,10 +487,10 @@ The response to this command has the following structure:
    }
 
 As with other update commands, this command overwrites all the contents of the
-entry. If the IPv6 subnet previously had a resource assigned to it, and the
+entry. If the IPv6 subnet previously had a resource assigned to it and the
 :isccmd:`subnet6-update` command is missing the resource, it is deleted from the
-server configuration. If an incremental update of the subnet is desired, then
-this can be achieved with :isccmd:`subnet6-delta-add`.
+server configuration. If an incremental update of the subnet is desired,
+use :isccmd:`subnet6-delta-add`.
 
 .. isccmd:: subnet4-del
 .. _command-subnet4-del:
@@ -1172,7 +1173,7 @@ command looks as follows:
        }
    }
 
-Assuming there was such a network configured, the response will look
+Assuming such a network was configured, the response looks
 similar to the following:
 
 ::

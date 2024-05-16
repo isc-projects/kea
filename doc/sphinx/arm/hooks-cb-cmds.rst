@@ -13,10 +13,10 @@ configuration information in the respective databases. For example:
 :ischooklib:`libdhcp_pgsql_cb.so` implements this API for PostgreSQL.
 To manage the configuration information in a MySQL database, both
 :ischooklib:`libdhcp_mysql_cb.so` and :ischooklib:`libdhcp_cb_cmds.so`
-must be loaded by the server used for the configuration management.
+must be loaded by the server used for configuration management.
 To manage the configuration information in a PostgreSQL database, both
 :ischooklib:`libdhcp_pgsql_cb.so` and :ischooklib:`libdhcp_cb_cmds.so`
-must be loaded by the server used for the configuration management.
+must be loaded by the server used for configuration management.
 
 More information on how to configure the Configuration Backend hook library for
 use with a MySQL or PostgreSQL database can be found in the :ref:`dhcp4-cb`
@@ -892,7 +892,7 @@ database:
 
 
 This command includes the ``interface`` parameter, which sets the shared
-network-level interface name. Any remaining shared-network level parameters,
+network-level interface name. Any remaining shared-network-level parameters,
 which are not specified with the command, will be marked as
 "unspecified" in the database. The DHCP server uses the global
 values for unspecified parameters or, if the global values are not
@@ -1300,7 +1300,7 @@ be deleted. If the option is not explicitly specified for this
 shared network, no option is deleted. In particular, the given
 option may be present for a subnet belonging to the shared network.
 Such an option instance is not affected by this command as this
-command merely deletes the shared-network level option. To
+command merely deletes the shared-network-level option. To
 delete a subnet-level option, the :isccmd:`remote-option4-subnet-del`,
 :isccmd:`remote-option6-subnet-del` commands must be used instead.
 
@@ -1393,7 +1393,7 @@ option is not explicitly specified for this pool, no option is deleted.
 In particular, the given option may exist for a subnet containing
 the specified pool. Such an option instance is not affected by this
 command, as this command merely deletes a prefix delegation pool-level
-option. To delete a subnet level option, the
+option. To delete a subnet-level option, the
 :isccmd:`remote-option6-subnet-del` command must be used instead.
 
 .. code-block:: json
@@ -1486,8 +1486,8 @@ is not explicitly specified for this pool, no option is deleted.
 In particular, the given option may exist for a subnet containing
 the specified pool. Such an option instance is not affected by this
 command, as this command merely deletes a pool-level option. To
-delete a subnet-level option, the :isccmd:`remote-option4-subnet-del`,
-:isccmd:`remote-option6-subnet-del` commands must be used instead.
+delete a subnet-level option, the :isccmd:`remote-option4-subnet-del`
+or :isccmd:`remote-option6-subnet-del` command must be used instead.
 
 The following command attempts to delete an option having the
 option code 5 in the top-level option space from an IPv4 address
@@ -1858,8 +1858,8 @@ looks similar to this:
 The returned information about each subnet is limited to the subnet identifier,
 prefix, and associated shared network name. To retrieve full
 information about the selected subnet, use
-the :isccmd:`remote-subnet4-get-by-id`, :isccmd:`remote-subnet6-get-by-id` commands
-or the :isccmd:`remote-subnet4-get-by-prefix`, :isccmd:`remote-subnet6-get-by-prefix` commands.
+the :isccmd:`remote-subnet4-get-by-id` / :isccmd:`remote-subnet6-get-by-id` command
+or the :isccmd:`remote-subnet4-get-by-prefix` / :isccmd:`remote-subnet6-get-by-prefix` command.
 
 The example response above contains two subnets. One of the subnets is
 associated with both servers: "server1" and "server2". The second subnet is
@@ -1907,7 +1907,7 @@ or disassociates the subnet with a shared network.
 The structure of the subnet information is similar to the structure used
 in the configuration file (see :ref:`dhcp4-configuration` and
 :ref:`dhcp6-configuration`). The subnet information conveyed in the
-:isccmd:`remote-subnet4-set`, :isccmd:`remote-subnet6-set` commands
+:isccmd:`remote-subnet4-set` or :isccmd:`remote-subnet6-set` command
 must include the additional parameter
 ``shared-network-name``, which denotes whether the subnet belongs to a
 shared network.

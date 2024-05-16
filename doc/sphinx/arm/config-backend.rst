@@ -12,21 +12,21 @@ Kea Configuration Backend (CB or config backend) gives Kea servers the ability
 to manage and fetch their configuration from one or more databases. In
 this documentation, the term "Configuration Backend" may also refer to
 the particular Kea module providing support to manage and fetch the
-configuration information from the particular database type.  For
+configuration information from the particular database type. For
 example, the MySQL Configuration Backend is the logic implemented within
 :ischooklib:`libdhcp_mysql_cb.so`, which provides a complete set of functions to
 manage and fetch the configuration information from the MySQL database.
 The PostgreSQL Configuration Backend is the logic implemented within
 :ischooklib:`libdhcp_pgsql_cb.so`, which provides a complete set of functions to
 manage and fetch the configuration information from the PostgreSQL database.
-From herein, the term "database" is used to refer to either a MySQL or
+From here on, the term "database" is used to refer to either a MySQL or
 PostgreSQL database.
 
 In small deployments, e.g. those comprising a single DHCP server
 instance with limited and infrequently changing number of subnets, it
 may be impractical to use the CB as a configuration repository because
 it requires additional third-party software to be installed and
-configured - in particular the database server, client and libraries.
+configured - in particular the database server, client, and libraries.
 Once the number of DHCP servers and/or the number of managed subnets in the
 network grows, the usefulness of the CB becomes obvious.
 
@@ -56,7 +56,7 @@ entire configuration to the new server when a common database is used.
 Using the database as a configuration repository for Kea servers also
 brings other benefits, such as:
 
--  the ability to use database specific tools to access the configuration
+-  the ability to use database-specific tools to access the configuration
    information;
 
 -  the ability to create customized statistics based on the information
@@ -163,13 +163,13 @@ in two independent configuration sources.
 CB Components
 -------------
 
-To use a MySQL configuration backend you must compile
-:ischooklib:`libdhcp_mysql_cb.so` and configure the DHCP servers to load it.
+To use a MySQL configuration backend, :ischooklib:`libdhcp_mysql_cb.so`
+must be compiled and the DHCP servers must be configured to load it.
 It is compiled when the ``--with-mysql`` configuration switch is used during the Kea build.
 The MySQL C client libraries must be installed, as explained in :ref:`dhcp-install-configure`.
 
-To use a PostgreSQL configuration backend you must compile :ischooklib:`libdhcp_pgsql_cb.so`
-and configure the DHCP servers to load it.  It is compiled when
+To use a PostgreSQL configuration backend, :ischooklib:`libdhcp_pgsql_cb.so` must
+be compiled and the DHCP servers must be configured to load it. It is compiled when
 the ``--with-pgsql`` configuration switch is used during the Kea build. The PostgreSQL
 C client libraries must be installed, as explained in :ref:`dhcp-install-configure`.
 
@@ -183,8 +183,8 @@ C client libraries must be installed, as explained in :ref:`dhcp-install-configu
 servers' configuration information within the database. This library can
 be attached to both DHCPv4 and DHCPv6 server instances. While it is
 possible to manage the configuration information without :ischooklib:`libdhcp_cb_cmds.so`
-with commonly available tools, such as MySQL Workbench or
-the command-line MySQL client, or by directly working with the database;
+using commonly available tools, such as MySQL Workbench or
+the command-line MySQL client, or by directly working with the database,
 these avenues are neither recommended nor supported.
 
 The DHCPv4 and DHCPv6 server-specific configurations of the CB, as well as
@@ -220,7 +220,7 @@ servers in the database.
 Commands which contain the logical server `all` are applied to all servers
 connecting to the database. The `all` server cannot be
 deleted or modified, and it is not returned among other servers
-as a result of the :isccmd:`remote-server4-get-all`, :isccmd:`remote-server6-get-all` commands.
+as a result of the :isccmd:`remote-server4-get-all` and :isccmd:`remote-server6-get-all` commands.
 
 In most cases, there are no server tags defined in the configuration
 database; all connecting servers get the same configuration
@@ -242,7 +242,7 @@ servers.
 
 To differentiate between different Kea server configurations, a
 list of the server tags used by the servers must be stored in the
-database. For the DHCPv4 and DHCPv6 servers, it can be done using the
+database. For the DHCPv4 and DHCPv6 servers, this can be done using the
 :isccmd:`remote-server4-set` and :isccmd:`remote-server6-set` commands. The
 server tags can then be used to associate the configuration information with
 the servers. However, it is important to note that some DHCP

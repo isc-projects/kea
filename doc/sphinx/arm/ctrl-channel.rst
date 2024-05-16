@@ -352,9 +352,9 @@ returned is roughly equal to the configuration that was loaded using the
 :isccmd:`config-set` command. However, there may be certain differences, as
 comments are not retained. If the original configuration used file
 inclusion, the returned configuration includes all parameters from
-all included files. Starting with 2.4.0, the successful response also
-contains a SHA-256 digest that can be used to easily determine if a
-configuration has changed or not.
+all included files. In Kea 2.4.0 and later, the successful response also
+contains a SHA-256 digest that can be used to easily determine whether a
+configuration has changed.
 
 .. warning::
 
@@ -400,9 +400,9 @@ And the server's response:
         }
     }
 
-Starting with 2.4.0, also ``config-set`` and ``config-get`` return the SHA-256 hash
-of the new or current configuration. This may be used to later determine if a configuration
-has changed or not.
+In Kea 2.4.0 and later, ``config-set`` and ``config-get`` also return the SHA-256 hash
+of the new or current configuration. This may be used to determine whether a configuration
+has changed.
 
 .. isccmd:: config-reload
 .. _command-config-reload:
@@ -414,9 +414,9 @@ The :isccmd:`config-reload` command instructs Kea to load again the
 configuration file that was used previously. This operation is useful if
 the configuration file has been changed by some external source; for
 example, a system administrator can tweak the configuration file and use this
-command to force Kea pick up the changes.
+command to force Kea to pick up the changes.
 
-Caution should be taken when mixing this with the :isccmd:`config-set` command. Kea
+Care should be taken when using this in conjunction with the :isccmd:`config-set` command. Kea
 remembers the location of the configuration file it was started with,
 and this configuration can be significantly changed using the :isccmd:`config-set`
 command. When :isccmd:`config-reload` is issued after :isccmd:`config-set`, Kea attempts
@@ -550,7 +550,7 @@ loaded hook libraries. This is primarily intended to allow one or more
 hook libraries to be replaced with newer versions, without requiring Kea
 servers to be reconfigured or restarted. The hook libraries
 are passed the same parameter values (if any) that were passed when they
-originally loaded.
+were originally loaded.
 
 ::
 
@@ -643,9 +643,9 @@ string, ``text``, describing the outcome:
 
        {"result": 1, "text": "unsupported parameter: BOGUS (<string>:16:26)" }
 
-Starting with 2.4.0, the successful response from a DHCPv4, DHCPv6, or DHCP-DDNS daemons
-also contain a SHA-256 digest of the newly set configuration. The digest can be used to easily
-determine if a configuration has changed or not.
+In Kea 2.4.0 and later, the successful response from a DHCPv4, DHCPv6, or DHCP-DDNS daemon
+also contains a SHA-256 digest of the newly set configuration. The digest can be used to easily
+determine whether a configuration has changed.
 
 .. isccmd:: shutdown
 .. _command-shutdown:
@@ -654,7 +654,7 @@ The ``shutdown`` Command
 ------------------------
 
 The :isccmd:`shutdown` command instructs the server to initiate its shutdown
-procedure. It is the equivalent of sending a ``SIGTERM`` signal to the
+procedure; it is the equivalent of sending a ``SIGTERM`` signal to the
 process. This command does not take any arguments. An example command
 may look like this:
 
@@ -714,24 +714,24 @@ if the :isccmd:`dhcp-enable` command is not sent before this time elapses.
 Since Kea 1.9.4, there is an additional ``origin`` parameter that specifies the
 command source. A server administrator should typically omit this parameter
 because the default value "user" indicates that the administrator sent the
-command. In Kea 2.5.5 thru 2.5.7 this parameter was also used in communication
+command. In Kea 2.5.5 through 2.5.7, this parameter was also used in communication
 between the HA partners to specify the identifier of an HA service sending the command
-in a numeric format. However, due to the compatibility issues with the older
-Kea versions that did not properly parse the numeric values, it was necessary
+in a numeric format. However, due to compatibility issues with older
+Kea versions that did not properly parse numeric values, it was necessary
 to introduce the new parameter, ``origin-id``, in Kea 2.5.8.
 
 It holds a numeric value representing the origin of the command. The same value
 can still be passed using the ``origin`` parameter, but it can cause the
-aforementioned compatibility issues between the HA partners running different
-Kea versions. Therefore, new Kea versions favor using ``origin-id`` in communication
-between the HA partners. The ``origin`` parameter can still be used, but the
-``origin-id`` takes precedence. Overall, it is recommended that both parameters be
-omitted from the user commands.
+aforementioned compatibility issues between HA partners running different
+Kea versions; if both are used, ``origin-id`` takes precedence. New Kea versions
+favor using ``origin-id`` in communication between the HA partners, but
+overall, it is recommended that both parameters be
+omitted and the default value used.
 
 The following codes represent the supported origins in numeric format:
 
- -  ``1`` - a user command, same as specifying ``"origin": "user"``,
- -  ``2000``, ``2001``, ``2002`` etc. - origins specified by HA partners where
+ -  ``1`` - a user command; the same as specifying ``"origin": "user"``.
+ -  ``2000``, ``2001``, ``2002``, etc. - origins specified by HA partners where
     the increments above ``2000`` are distinct HA service identifiers used when
     the partners have many relationships.
 
@@ -748,7 +748,7 @@ In the following example:
        }
    }
 
-the effective origin will be ``2002`` which indicates it is an HA partner
+the effective origin is ``2002``, which indicates it is an HA partner
 sending the command for the service with ID of ``2``. The ``origin``
 parameter will be ignored in this case.
 
@@ -763,24 +763,23 @@ The :isccmd:`dhcp-enable` command globally enables the DHCP service.
 Since Kea 1.9.4, there is an additional ``origin`` parameter that specifies the
 command source. A server administrator should typically omit this parameter
 because the default value "user" indicates that the administrator sent the
-command. In Kea 2.5.5 thru 2.5.7 this parameter was also used in communication
+command. In Kea 2.5.5 through 2.5.7, this parameter was also used in communication
 between the HA partners to specify the identifier of an HA service sending the command
-in a numeric format. However, due to the compatibility issues with the older
-Kea versions that did not properly parse the numeric values, it was necessary
+in a numeric format. However, due to compatibility issues with older
+Kea versions that did not properly parse numeric values, it was necessary
 to introduce the new parameter, ``origin-id``, in Kea 2.5.8.
 
 It holds a numeric value representing the origin of the command. The same value
 can still be passed using the ``origin`` parameter, but it can cause the
-aforementioned compatibility issues between the HA partners running different
-Kea versions. Therefore, new Kea versions favor using ``origin-id`` in communication
-between the HA partners. The ``origin`` parameter can still be used, but the
-``origin-id`` takes precedence. Overall, it is recommended that both parameters be
-omitted from the user commands.
+aforementioned compatibility issues between HA partners running different
+Kea versions.; if both are used, ``origin-id`` takes precedence. New Kea versions
+favor using ``origin-id`` in communication between the HA partners, but
+overall, it is recommended that both
 
 The following codes represent the supported origins in numeric format:
 
- -  ``1`` - a user command, same as specifying ``"origin": "user"``,
- -  ``2000``, ``2001``, ``2002`` etc. - origins specified by HA partners where
+ -  ``1`` - a user command; the same as specifying ``"origin": "user"``.
+ -  ``2000``, ``2001``, ``2002``, etc. - origins specified by HA partners where
     the increments above ``2000`` are distinct HA service identifiers used when
     the partners have many relationships.
 
@@ -796,7 +795,7 @@ In the following example:
        }
    }
 
-the effective origin will be ``2002`` which indicates it is an HA partner
+the effective origin is ``2002``, which indicates it is an HA partner
 sending the command for the service with ID of ``2``. The ``origin``
 parameter will be ignored in this case.
 
@@ -880,7 +879,7 @@ The ``version-get`` Command
 ---------------------------
 
 The :isccmd:`version-get` command returns extended information about the Kea
-version. It is the same information available via the ``-V``
+version; it is the same information available via the ``-V``
 command-line argument. This command does not take any parameters.
 
 ::

@@ -127,7 +127,7 @@ during the installation of Kea. When building on Debian systems,
 
 .. note::
 
-   From Kea 2.4.0 version, the :iscman:`kea-shell` no longer supports Python 2.7.
+   Beginning with Kea 2.4.0, :iscman:`kea-shell` no longer supports Python 2.7.
 
 The Kea shell is intended to serve more as a demonstration of the
 RESTful interface's capabilities (and, perhaps, an illustration for
@@ -146,7 +146,7 @@ tool.
 TLS Support
 ===========
 
-Since Kea 1.9.6, :iscman:`kea-shell` supports HTTPS connections. The TLS/HTTPS
+:iscman:`kea-shell` supports HTTPS connections; the TLS/HTTPS
 support requires Python 3. The additional command-line arguments are:
 
 -  ``--ca`` specifies the file or directory name of the Certification

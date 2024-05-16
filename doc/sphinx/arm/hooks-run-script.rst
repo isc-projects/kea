@@ -12,9 +12,10 @@ packet-processing hook points.
     :ischooklib:`libdhcp_run_script.so` is part of the open source code and is
     available to every Kea user.
 
-The library, which was added in Kea 1.9.5, can be loaded in a
-similar way to other hook libraries by the :iscman:`kea-dhcp4` and
-:iscman:`kea-dhcp6` processes.
+.. note::
+
+    This library can only be loaded by the :iscman:`kea-dhcp4` or
+    :iscman:`kea-dhcp6` process.
 
 .. code-block:: json
 
