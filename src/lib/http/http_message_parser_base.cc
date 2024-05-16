@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -261,18 +261,18 @@ HttpMessageParserBase::popNextFromBuffer(std::string& next, const size_t limit) 
 }
 
 bool
-HttpMessageParserBase::isChar(const char c) const {
+HttpMessageParserBase::isChar(const signed char c) const {
     // was (c >= 0) && (c <= 127)
     return (c >= 0);
 }
 
 bool
-HttpMessageParserBase::isCtl(const char c) const {
+HttpMessageParserBase::isCtl(const signed char c) const {
     return (((c >= 0) && (c <= 31)) || (c == 127));
 }
 
 bool
-HttpMessageParserBase::isSpecial(const char c) const {
+HttpMessageParserBase::isSpecial(const signed char c) const {
     switch (c) {
     case '(':
     case ')':
