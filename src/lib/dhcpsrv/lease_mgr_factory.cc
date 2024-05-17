@@ -52,7 +52,6 @@ LeaseMgrFactory::create(const std::string& dbaccess) {
                   "contain the 'type' keyword");
     }
 
-
     // Yes, check what it is.
     if (parameters[type] == string("mysql")) {
 #ifdef HAVE_MYSQL

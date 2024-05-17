@@ -820,8 +820,8 @@ ControlledDhcpv6Srv::commandStatusGetHandler(const string&,
         status->set("multi-threading-enabled", Element::create(false));
     }
 
-    status->set("extended-info-tables",
-                Element::create(LeaseMgrFactory::instance().getExtendedInfoTablesEnabled()));
+    status->set("extended-info-tables", Element::create(
+                    CfgMgr::instance().getCurrentCfg()->getCfgDbAccess()->getExtendedInfoTablesEnabled()));
 
     // Iterate through the interfaces and get all the errors.
     ElementPtr socket_errors(Element::createList());

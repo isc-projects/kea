@@ -15,6 +15,7 @@
 #include <dhcp/libdhcp++.h>
 #include <dhcp/testutils/iface_mgr_test_config.h>
 #include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcp4/ctrl_dhcp4_srv.h>
@@ -1267,6 +1268,27 @@ TEST_F(CtrlChannelDhcpv4SrvTest, statusGet) {
     ASSERT_TRUE(found_queue_stats);
     ASSERT_EQ(Element::list, found_queue_stats->getType());
     EXPECT_EQ(3, found_queue_stats->size());
+}
+
+// Check that status is returned even if LeaseMgr and HostMgr are not created.
+TEST_F(CtrlChannelDhcpv4SrvTest, noManagers) {
+    // Send the status-get command.
+    createUnixChannelServer();
+    LeaseMgrFactory::destroy();
+    HostMgr::create();
+    string response_text;
+    sendUnixCommand(R"({ "command": "status-get" })", response_text);
+    ConstElementPtr response;
+    ASSERT_NO_THROW(response = Element::fromJSON(response_text));
+    ASSERT_TRUE(response);
+    ASSERT_EQ(Element::map, response->getType());
+    ConstElementPtr result(response->get("result"));
+    ASSERT_TRUE(result);
+    ASSERT_EQ(Element::integer, result->getType());
+    EXPECT_EQ(0, result->intValue());
+    ConstElementPtr arguments(response->get("arguments"));
+    ASSERT_TRUE(arguments);
+    ASSERT_EQ(Element::map, arguments->getType());
 }
 
 // Checks that socket status exists in status-get responses.
