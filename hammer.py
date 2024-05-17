@@ -1111,7 +1111,7 @@ def _install_libyang_from_sources(ignore_errors = False):
         execute('git clone https://github.com/CESNET/libyang.git ~/.hammer-tmp/libyang')
         execute(f'git checkout {version}', cwd='~/.hammer-tmp/libyang')
         execute('mkdir ~/.hammer-tmp/libyang/build')
-        execute('cmake  ..', cwd='~/.hammer-tmp/libyang/build')
+        execute('cmake -DBUILD_TESTING=OFF -DCMAKE_C_FLAGS="-Wno-incompatible-pointer-types" ..', cwd='~/.hammer-tmp/libyang/build')
         execute('make -j $(nproc || gnproc || echo 1)', cwd='~/.hammer-tmp/libyang/build')
         execute('sudo make install', cwd='~/.hammer-tmp/libyang/build')
         system, revision = get_system_revision()
@@ -1147,7 +1147,7 @@ def _install_sysrepo_from_sources(ignore_errors = False):
         execute('git clone https://github.com/sysrepo/sysrepo.git ~/.hammer-tmp/sysrepo')
         execute(f'git checkout {version}', cwd='~/.hammer-tmp/sysrepo')
         execute('mkdir ~/.hammer-tmp/sysrepo/build')
-        execute('cmake -DREPO_PATH=/etc/sysrepo ..', cwd='~/.hammer-tmp/sysrepo/build')
+        execute('cmake -DBUILD_TESTING=OFF -DREPO_PATH=/etc/sysrepo ..', cwd='~/.hammer-tmp/sysrepo/build')
         execute('make -j $(nproc || gnproc || echo 1)', cwd='~/.hammer-tmp/sysrepo/build')
         execute('sudo make install', cwd='~/.hammer-tmp/sysrepo/build')
         system, revision = get_system_revision()
@@ -1800,7 +1800,7 @@ def prepare_system_local(features, check_times, ignore_errors_for):
         _apt_update(system, revision, env=env, check_times=check_times, attempts=3, sleep_time_after_attempt=10)
 
         packages = ['gcc', 'g++', 'make', 'autoconf', 'automake', 'libtool', 'libssl-dev', 'liblog4cplus-dev',
-                    'libboost-system-dev', 'gnupg', 'libpcap-dev', 'python3-venv']
+                    'libboost-system-dev', 'gnupg', 'libpcap-dev', 'python3-venv', 'bison', 'flex']
 
         if 'unittest' in features:
             if revision.startswith('16.'):
