@@ -237,12 +237,30 @@ MySqlConnection::openDatabase() {
     // If TLS is enabled set it. If something should go wrong it will happen
     // later at the mysql_real_connect call.
     if (tls_) {
-        mysql_options(mysql_, MYSQL_OPT_SSL_KEY, key_file);
-        mysql_options(mysql_, MYSQL_OPT_SSL_CERT, cert_file);
-        mysql_options(mysql_, MYSQL_OPT_SSL_CA, ca_file);
-        mysql_options(mysql_, MYSQL_OPT_SSL_CAPATH, ca_dir);
-        mysql_options(mysql_, MYSQL_OPT_SSL_CIPHER, cipher_list);
+        result = mysql_options(mysql_, MYSQL_OPT_SSL_KEY, key_file);
+        if (result != 0) {
+            isc_throw(DbOpenError, "unable to set key: " << mysql_error(mysql_));
+        }
 
+        result = mysql_options(mysql_, MYSQL_OPT_SSL_CERT, cert_file);
+        if (result != 0) {
+            isc_throw(DbOpenError, "unable to set certificate: " << mysql_error(mysql_));
+        }
+
+        result = mysql_options(mysql_, MYSQL_OPT_SSL_CA, ca_file);
+        if (result != 0) {
+            isc_throw(DbOpenError, "unable to set CA: " << mysql_error(mysql_));
+        }
+
+        result = mysql_options(mysql_, MYSQL_OPT_SSL_CAPATH, ca_dir);
+        if (result != 0) {
+            isc_throw(DbOpenError, "unable to set CA path: " << mysql_error(mysql_));
+        }
+
+        result = mysql_options(mysql_, MYSQL_OPT_SSL_CIPHER, cipher_list);
+        if (result != 0) {
+            isc_throw(DbOpenError, "unable to set cipher: " << mysql_error(mysql_));
+        }
     }
 
     // Open the database.

@@ -609,8 +609,10 @@ TEST_F(MySqlConnectionTest, transactions) {
     EXPECT_EQ("4", result[0][0]);
 
     // Committing or rolling back a not started transaction is a coding error.
-    EXPECT_THROW(conn_.commit(), isc::Unexpected);
-    EXPECT_THROW(conn_.rollback(), isc::Unexpected);
+    EXPECT_THROW_MSG(conn_.commit(), isc::Unexpected,
+                     "commit called for not started transaction - coding error");
+    EXPECT_THROW_MSG(conn_.rollback(), isc::Unexpected,
+                     "rollback called for not started transaction - coding error");
 }
 
 // Tests that invalid port value causes an error.
@@ -619,7 +621,8 @@ TEST_F(MySqlConnectionTest, portInvalid) {
                                             VALID_HOST_TCP, VALID_USER,
                                             VALID_PASSWORD, INVALID_PORT_1);
     MySqlConnection conn(DatabaseConnection::parse(conn_str));
-    EXPECT_THROW(conn.openDatabase(), DbInvalidPort);
+    EXPECT_THROW_MSG(conn.openDatabase(), DbInvalidPort,
+                     "port parameter (65536) must be an integer between 0 and 65535");
 }
 
 // Tests that invalid timeout value type causes an error.
@@ -628,7 +631,8 @@ TEST_F(MySqlConnectionTest, connectionTimeoutInvalid) {
                                             VALID_HOST_TCP, VALID_USER,
                                             VALID_PASSWORD, INVALID_TIMEOUT_1);
     MySqlConnection conn(DatabaseConnection::parse(conn_str));
-    EXPECT_THROW(conn.openDatabase(), DbInvalidTimeout);
+    EXPECT_THROW_MSG(conn.openDatabase(), DbInvalidTimeout,
+                     "connect-timeout parameter (foo) must be an integer between 1 and 2147483647");
 }
 
 // Tests that a negative connection timeout value causes an error.
@@ -637,7 +641,8 @@ TEST_F(MySqlConnectionTest, connectionTimeoutInvalid2) {
                                             VALID_HOST_TCP, VALID_USER,
                                             VALID_PASSWORD, INVALID_TIMEOUT_2);
     MySqlConnection conn(DatabaseConnection::parse(conn_str));
-    EXPECT_THROW(conn.openDatabase(), DbInvalidTimeout);
+    EXPECT_THROW_MSG(conn.openDatabase(), DbInvalidTimeout,
+                     "connect-timeout parameter (-17) must be an integer between 1 and 2147483647");
 }
 
 // Tests that a zero connection timeout value causes an error.
@@ -646,7 +651,8 @@ TEST_F(MySqlConnectionTest, connectionTimeoutInvalid3) {
                                             VALID_HOST_TCP, VALID_USER,
                                             VALID_PASSWORD, INVALID_TIMEOUT_3);
     MySqlConnection conn(DatabaseConnection::parse(conn_str));
-    EXPECT_THROW(conn.openDatabase(), DbInvalidTimeout);
+    EXPECT_THROW_MSG(conn.openDatabase(), DbInvalidTimeout,
+                     "connect-timeout parameter (0) must be an integer between 1 and 2147483647");
 }
 
 // Tests that an invalid read timeout causes an error.
@@ -655,7 +661,8 @@ TEST_F(MySqlConnectionTest, readTimeoutInvalid) {
                                             VALID_HOST_TCP, VALID_USER,
                                             VALID_PASSWORD, INVALID_READ_TIMEOUT_1);
     MySqlConnection conn(DatabaseConnection::parse(conn_str));
-    EXPECT_THROW(conn.openDatabase(), DbInvalidTimeout);
+    EXPECT_THROW_MSG(conn.openDatabase(), DbInvalidTimeout,
+                     "read-timeout parameter (bar) must be an integer between 0 and 2147483647");
 }
 
 // Tests that an invalid write timeout causes an error.
@@ -664,7 +671,8 @@ TEST_F(MySqlConnectionTest, writeTimeoutInvalid) {
                                             VALID_HOST_TCP, VALID_USER,
                                             VALID_PASSWORD, INVALID_WRITE_TIMEOUT_1);
     MySqlConnection conn(DatabaseConnection::parse(conn_str));
-    EXPECT_THROW(conn.openDatabase(), DbInvalidTimeout);
+    EXPECT_THROW_MSG(conn.openDatabase(), DbInvalidTimeout,
+                     "write-timeout parameter (baz) must be an integer between 0 and 2147483647");
 }
 
 #ifdef HAVE_MYSQL_GET_OPTION
@@ -875,7 +883,24 @@ TEST_F(MySqlSecureConnectionTest, TlsInvalidPassword) {
                                             VALID_CERT, VALID_KEY, VALID_CA,
                                             VALID_CIPHER);
     MySqlConnection conn(DatabaseConnection::parse(conn_str));
-    EXPECT_THROW(conn.openDatabase(), DbOpenError);
+
+    try {
+        conn.openDatabase();
+    } catch (DbOpenError const& exception) {
+        string const message(exception.what());
+        vector<string> const expected{
+            "TLS/SSL error: No or insufficient priorities were set.",  // OpenSSL 1.1.1n
+            "Access denied for user 'keatest_secure'",
+        };
+        for (string const& i : expected) {
+            if (message.find(i) != string::npos) {
+                return;
+            }
+        }
+        ADD_FAILURE() << "Unexpected exception message '" << message << "'";
+    } catch (exception const& exception) {
+        ADD_FAILURE() << exception.what();
+    }
 }
 
 /// @brief Check the SSL/TLS protected connection requires crypto parameters.
@@ -885,7 +910,19 @@ TEST_F(MySqlSecureConnectionTest, TlsNoCrypto) {
                                             VALID_HOST_TCP, VALID_SECURE_USER,
                                             VALID_PASSWORD);
     MySqlConnection conn(DatabaseConnection::parse(conn_str));
-    EXPECT_THROW(conn.openDatabase(), DbOpenError);
+
+    try {
+        conn.openDatabase();
+    } catch (DbOpenError const& exception) {
+        string const message(exception.what());
+        string const expected("Access denied for user 'keatest_secure'");
+        if (message.find(expected) == string::npos) {
+            ADD_FAILURE()
+                << "Expected exception message '" << expected << ".*', got '" << message << "'";
+        }
+    } catch (exception const& exception) {
+        ADD_FAILURE() << exception.what();
+    }
 }
 
 /// @brief Check the SSL/TLS protected connection requires valid key.
@@ -897,7 +934,22 @@ TEST_F(MySqlSecureConnectionTest, TlsInvalidKey) {
                                             VALID_CERT, INVALID_KEY, VALID_CA,
                                             VALID_CIPHER);
     MySqlConnection conn(DatabaseConnection::parse(conn_str));
-    EXPECT_THROW(conn.openDatabase(), DbOpenError);
+
+    try {
+        conn.openDatabase();
+    } catch (DbOpenError const& exception) {
+        string const message(exception.what());
+        vector<string> const expected{
+            "TLS/SSL error: The certificate and the given key do not match.",  // OpenSSL 1.1.1n
+            "SSL connection error: Unable to get private key",  // OpenSSL 3.0.2
+            "TLS/SSL error: key values mismatch",  // OpenSSL 3.3.0
+        };
+        if (!std::count(expected.begin(), expected.end(), message)) {
+            ADD_FAILURE() << "Unexpected exception message '" << message << "'";
+        }
+    } catch (exception const& exception) {
+        ADD_FAILURE() << exception.what();
+    }
 }
 
 /// @brief Check the SSL/TLS protected connection requires a key.
@@ -909,7 +961,24 @@ TEST_F(MySqlSecureConnectionTest, TlsNoKey) {
                                             VALID_CERT, 0, VALID_CA,
                                             VALID_CIPHER);
     MySqlConnection conn(DatabaseConnection::parse(conn_str));
-    EXPECT_THROW(conn.openDatabase(), DbOpenError);
+
+    try {
+        conn.openDatabase();
+    } catch (DbOpenError const& exception) {
+        string const message(exception.what());
+        vector<string> const expected{
+            "TLS/SSL error: The requested data were not available.",  // OpenSSL 1.1.1n
+            "TLS/SSL error: no start line",  // OpenSSL 1.1.1w
+            "SSL connection error: Unable to get private key",  // OpenSSL 3.0.2
+            "TLS/SSL error: no certificate assigned",  // OpenSSL 3.0.9
+            "TLS/SSL error: unsupported",  // OpenSSL 3.3.0
+        };
+        if (!std::count(expected.begin(), expected.end(), message)) {
+            ADD_FAILURE() << "Unexpected exception message '" << message << "'";
+        }
+    } catch (exception const& exception) {
+        ADD_FAILURE() << exception.what();
+    }
 }
 
 /// @brief Check ensureSchemaVersion when schema is not created.
@@ -1016,11 +1085,17 @@ TEST_F(MySqlConnectionTest, toKeaAdminParameters) {
 ///   mysql_options() directly, omitting calls for those options for which the option value is NULL.
 TEST_F(MySqlConnectionTest, mysqlOptions) {
     MySqlHolder mysql;
-    mysql_options(mysql, MYSQL_OPT_SSL_KEY, nullptr);
-    mysql_options(mysql, MYSQL_OPT_SSL_CERT, nullptr);
-    mysql_options(mysql, MYSQL_OPT_SSL_CA, nullptr);
-    mysql_options(mysql, MYSQL_OPT_SSL_CAPATH, nullptr);
-    mysql_options(mysql, MYSQL_OPT_SSL_CIPHER, nullptr);
+    int result;
+    EXPECT_NO_THROW_LOG(result = mysql_options(mysql, MYSQL_OPT_SSL_KEY, nullptr));
+    EXPECT_EQ(0, result);
+    EXPECT_NO_THROW_LOG(result = mysql_options(mysql, MYSQL_OPT_SSL_CERT, nullptr));
+    EXPECT_EQ(0, result);
+    EXPECT_NO_THROW_LOG(result = mysql_options(mysql, MYSQL_OPT_SSL_CA, nullptr));
+    EXPECT_EQ(0, result);
+    EXPECT_NO_THROW_LOG(result = mysql_options(mysql, MYSQL_OPT_SSL_CAPATH, nullptr));
+    EXPECT_EQ(0, result);
+    EXPECT_NO_THROW_LOG(result = mysql_options(mysql, MYSQL_OPT_SSL_CIPHER, nullptr));
+    EXPECT_EQ(0, result);
 }
 
 }  // namespace
