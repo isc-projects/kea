@@ -24,10 +24,6 @@ system allows nanny scripts to detect the problem.
 If ``retry-on-startup`` is set to ``true``, the server will start reconnection
 attempts even at server startup or on reconfigure events, and will honor the
 action specified in the ``on-fail`` parameter.
-Database connection retries are not attempted on startup if the
-:ischooklib:`libdhcp_limits.so` is loaded, because the hook library requires a
-valid connection to the database to check whether JSON format is supported and to
-recount class limits.
 
 During dynamic reconfiguration, all backends are disconnected and then
 reconnected using the new configuration. If connectivity to any of the
@@ -69,7 +65,7 @@ as read-only, Kea attempts to initialize the schema.
 .. note::
 
     Kea does not automatically attempt to upgrade an existing schema; doing so
-    might deprive users of the opportunity to take precautions, such as 
+    might deprive users of the opportunity to take precautions, such as
     backing up the database or temporarily shutting off running
     Kea servers that are currently operating on the database.
 
