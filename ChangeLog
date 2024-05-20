@@ -1,3 +1,9 @@
+2233.	[bug]		razvan
+	Fixed a bug which was causing the status-get command to return
+	an error when the lease database connection has hot yet been
+	established.
+	(Gitlab #3223)
+
 2232.	[func]*		fdupont
 	Auto-generated subnet identifiers are no longer supported.
 	Configurations that contain subnets without explicit subnet
