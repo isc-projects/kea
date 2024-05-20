@@ -262,7 +262,6 @@ HttpMessageParserBase::popNextFromBuffer(std::string& next, const size_t limit) 
 
 bool
 HttpMessageParserBase::isChar(const signed char c) const {
-    // was (c >= 0) && (c <= 127)
     return (c >= 0);
 }
 

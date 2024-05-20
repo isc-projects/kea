@@ -902,7 +902,7 @@ StringElement::toJSON(std::ostream& ss) const {
             ss << '\\' << 't';
             break;
         default:
-            if (((c >= 0) && (c < 0x20)) || (c < 0) || (c >= 0x7f)) {
+            if (c < 0x20 || c == 0x7f) {
                 std::ostringstream esc;
                 esc << "\\u"
                     << hex
