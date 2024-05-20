@@ -1555,15 +1555,12 @@ def _configure_pgsql(system, revision, features):
     cmd += 'EOF\n"'
     execute(cmd, cwd='/tmp')
 
-    if system == 'fedora' and int(revision) >= 38 or \
-        system == 'debian' and int(revision) >= 12 or \
-        system == 'alpine' and float(revision) >= 3.17:
-        #TODO it needs detection of pgsql version, and apply this only for postgres >= 15
-        cmd = """bash -c \"cat <<EOF | sudo -u postgres psql postgres
-            GRANT ALL ON DATABASE keatest TO keatest;
-            ALTER DATABASE keatest OWNER TO keatest;\n"""
-        cmd += 'EOF\n"'
-        execute(cmd, cwd='/tmp')
+    # This is needed for postgres >= 15
+    cmd = """bash -c \"cat <<EOF | sudo -u postgres psql postgres
+        GRANT ALL ON DATABASE keatest TO keatest;
+        ALTER DATABASE keatest OWNER TO keatest;\n"""
+    cmd += 'EOF\n"'
+    execute(cmd, cwd='/tmp')
 
     cmd = """bash -c \"cat <<EOF | sudo -u postgres psql -U keatest keatest
         ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO keatest_readonly;\n"""
