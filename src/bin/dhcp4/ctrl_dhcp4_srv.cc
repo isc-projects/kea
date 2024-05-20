@@ -994,9 +994,6 @@ ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
 
         CfgDbAccessPtr cfg_db = CfgMgr::instance().getStagingCfg()->getCfgDbAccess();
         string params = "universe=4";
-        if (cfg_db->getExtendedInfoTablesEnabled()) {
-            params += " extended-info-tables=true";
-        }
         cfg_db->setAppendedParameters(params);
         cfg_db->createManagers();
         // Reset counters related to connections as all managers have been recreated.

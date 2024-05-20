@@ -408,7 +408,7 @@ public:
 /// parses parameters string properly.
 TEST_F(MemfileLeaseMgrTest, constructor) {
     DatabaseConnection::ParameterMap pmap;
-    pmap["universe"] = "4";
+    pmap["universe"] = "6";
     pmap["persist"] = "false";
     boost::scoped_ptr<Memfile_LeaseMgr> lease_mgr;
 
@@ -423,9 +423,9 @@ TEST_F(MemfileLeaseMgrTest, constructor) {
     // Expecting that persist parameter is yes or no. Everything other than
     // that is wrong.
     pmap["lfc-interval"] = "10";
-    pmap["name"] = getLeaseFilePath("leasefile4_1.csv");
+    pmap["name"] = getLeaseFilePath("leasefile6_1.csv");
     pmap["max-row-errors"] = "5";
-    pmap["name"] = getLeaseFilePath("leasefile4_1.csv");
+    pmap["name"] = getLeaseFilePath("leasefile6_1.csv");
     pmap["persist"] = "bogus";
     EXPECT_THROW(lease_mgr.reset(new Memfile_LeaseMgr(pmap)), isc::BadValue);
 

@@ -1007,7 +1007,7 @@ Memfile_LeaseMgr::Memfile_LeaseMgr(const DatabaseConnection::ParameterMap& param
     // operation.
     if (!persistLeases(V4) && !persistLeases(V6)) {
         LOG_WARN(dhcpsrv_logger, DHCPSRV_MEMFILE_NO_STORAGE);
-    } else  {
+    } else {
         if (conversion_needed) {
             auto const& version(getVersion());
             LOG_WARN(dhcpsrv_logger, DHCPSRV_MEMFILE_CONVERTING_LEASE_FILES)
@@ -2332,14 +2332,14 @@ Memfile_LeaseMgr::loadLeasesFromFiles(const std::string& filename,
         if (lease_file->exists()) {
             LeaseFileLoader::load<LeaseObjectType>(*lease_file, storage,
                                                    max_row_errors);
-            conversion_needed =  conversion_needed || lease_file->needsConversion();
+            conversion_needed = conversion_needed || lease_file->needsConversion();
         }
 
         lease_file.reset(new LeaseFileType(appendSuffix(filename, FILE_INPUT)));
         if (lease_file->exists()) {
             LeaseFileLoader::load<LeaseObjectType>(*lease_file, storage,
                                                    max_row_errors);
-            conversion_needed =  conversion_needed || lease_file->needsConversion();
+            conversion_needed = conversion_needed || lease_file->needsConversion();
         }
     }
 
@@ -2352,7 +2352,7 @@ Memfile_LeaseMgr::loadLeasesFromFiles(const std::string& filename,
     lease_file.reset(new LeaseFileType(filename));
     LeaseFileLoader::load<LeaseObjectType>(*lease_file, storage,
                                            max_row_errors, false);
-    conversion_needed =  conversion_needed || lease_file->needsConversion();
+    conversion_needed = conversion_needed || lease_file->needsConversion();
 
     return (conversion_needed);
 }

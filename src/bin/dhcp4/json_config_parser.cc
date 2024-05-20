@@ -746,9 +746,6 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
 
                     CfgDbAccessPtr cfg_db = CfgMgr::instance().getStagingCfg()->getCfgDbAccess();
                     string params = "universe=4 persist=false";
-                    if (cfg_db->getExtendedInfoTablesEnabled()) {
-                        params += " extended-info-tables=true";
-                    }
                     cfg_db->setAppendedParameters(params);
                     cfg_db->createManagers();
                 } catch (const std::exception& ex) {

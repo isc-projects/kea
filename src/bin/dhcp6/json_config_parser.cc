@@ -878,9 +878,11 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
 
                     CfgDbAccessPtr cfg_db = CfgMgr::instance().getStagingCfg()->getCfgDbAccess();
                     string params = "universe=6 persist=false";
-                    if (cfg_db->getExtendedInfoTablesEnabled()) {
-                        params += " extended-info-tables=true";
-                    }
+                    // The "extended-info-tables" has no effect on -T command
+                    // line parameter so it is omitted on purpose.
+                    // Note that in this case, the current code creates managers
+                    // before hooks are loaded, so it can not be activated by
+                    // the BLQ hook.
                     cfg_db->setAppendedParameters(params);
                     cfg_db->createManagers();
                 } catch (const std::exception& ex) {
