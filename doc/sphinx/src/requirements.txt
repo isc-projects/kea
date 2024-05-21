@@ -28,17 +28,17 @@ packaging==24.0
     # via sphinx
 pygments==2.17.2
     # via sphinx
-requests==2.31.0
+requests==2.32.0
     # via sphinx
 snowballstemmer==2.2.0
     # via sphinx
 sphinx==7.2.6
     # via
-    #   -r ./src/requirements.in
+    #   -r requirements.in
     #   sphinx-rtd-theme
     #   sphinxcontrib-jquery
 sphinx-rtd-theme==2.0.0
-    # via -r ./src/requirements.in
+    # via -r requirements.in
 sphinxcontrib-applehelp==1.0.8
     # via sphinx
 sphinxcontrib-devhelp==1.0.6
