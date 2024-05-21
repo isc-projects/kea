@@ -462,7 +462,7 @@ the files may be located in ``/var/lib/pgsql/data``.
 The first task is to create both the database and the user under
 which the servers will access it. A number of steps are required:
 
-1. Log into PostgreSQL as "root":
+1. Log into PostgreSQL as "postgres":
 
    .. code-block:: console
 
@@ -488,6 +488,10 @@ which the servers will access it. A number of steps are required:
       postgres=# CREATE USER user-name WITH PASSWORD 'password';
       CREATE ROLE
       postgres=# GRANT ALL PRIVILEGES ON DATABASE database-name TO user-name;
+      GRANT
+      postgres=# \c database-name
+      You are now connected to database "database-name" as user "postgres".
+      postgres=# GRANT ALL PRIVILEGES ON SCHEMA public TO user-name;
       GRANT
       postgres=#
 
@@ -586,6 +590,33 @@ Upgrading a PostgreSQL Database From an Earlier Version of Kea
 The PostgreSQL database schema can be upgraded using the same tool and
 commands as described in :ref:`mysql-upgrade`, with the exception that the "pgsql"
 database backend type must be used in the commands.
+
+If you upgraded your Postgres database from a version prior 15.0, you need to grant
+the additional privileges to the user:
+
+First, log into PostgreSQL as "postgres":
+
+   .. code-block:: console
+
+      $ sudo -u postgres psql -d database-name -U postgres
+      Enter password:
+      postgres=#
+
+Next, grant the access to the ``public`` schema.
+
+   .. code-block:: psql
+
+      postgres=# GRANT ALL PRIVILEGES ON SCHEMA public TO user-name;
+      GRANT
+      postgres=#
+
+Now, quit the PostgreSQL client:
+
+   .. code-block:: psql
+
+      postgres=# \q
+      Bye
+      $
 
 Use the following command to check the current schema version:
 
