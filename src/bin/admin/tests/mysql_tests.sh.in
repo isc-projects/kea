@@ -819,6 +819,12 @@ mysql_upgrade_19_to_21_test() {
     assert_str_eq "21.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
 }
 
+mysql_upgrade_21_to_22_test() {
+    # For now this function only verifies version number.
+    version=$("${kea_admin}" db-version mysql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}")
+    assert_str_eq "22.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
+}
+
 mysql_upgrade_test() {
 
     test_start "mysql.upgrade"
@@ -840,7 +846,7 @@ mysql_upgrade_test() {
 
     # Verify that the upgraded schema reports the latest version.
     version=$("${kea_admin}" db-version mysql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}")
-    assert_str_eq "21.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
+    assert_str_eq "22.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
 
     # Let's check that the new tables are indeed there.
 
@@ -1504,7 +1510,10 @@ SET @disable_audit = 0"
     mysql_upgrade_18_to_19_test
 
     # Check upgrade from 19.0 to 21.0.
-    mysql_upgrade_19_to_21_test
+    # mysql_upgrade_19_to_21_test - only checks version
+
+    # Check upgrade from 21.0 to 22.0.
+    mysql_upgrade_21_to_22_test
 
     # Let's wipe the whole database
     mysql_wipe

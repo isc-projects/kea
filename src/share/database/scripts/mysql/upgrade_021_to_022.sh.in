@@ -28,8 +28,8 @@ fi
 
 # Check version.
 version=$(mysql_version "${@}")
-if test "${version}" != "20.0"; then
-    printf 'This script upgrades 20.0 to 21.0. '
+if test "${version}" != "21.0"; then
+    printf 'This script upgrades 21.0 to 22.0. '
     printf 'Reported version is %s. Skipping upgrade.\n' "${version}"
     exit 0
 fi
@@ -54,14 +54,15 @@ fi
 
 mysql "$@" <<EOF
 
--- This line starts the schema upgrade to version 21.0.
+-- This line starts the schema upgrade to version 22.0.
 
--- Add subnet id and address index for lease6.
-CREATE INDEX lease6_by_subnet_id_address ON lease6 (subnet_id, address ASC);
+-- Turn off Mariadb default/on-update for expire column
+ALTER TABLE lease4 MODIFY expire timestamp NULL;
+ALTER TABLE lease6 MODIFY expire timestamp NULL;
 
 -- Update the schema version number.
 UPDATE schema_version
-    SET version = '21', minor = '0';
+    SET version = '22', minor = '0';
 
--- This line concludes the schema upgrade to version 21.0.
+-- This line concludes the schema upgrade to version 22.0.
 EOF
