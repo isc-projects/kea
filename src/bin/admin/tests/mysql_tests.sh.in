@@ -813,12 +813,6 @@ mysql_upgrade_18_to_19_test() {
     run_statement "ipv6_reservations_insert" "$qry" "3001::99"
 }
 
-mysql_upgrade_19_to_22_test() {
-    # For now this function only verifies version number.
-    version=$("${kea_admin}" db-version mysql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}")
-    assert_str_eq "22.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
-}
-
 mysql_upgrade_test() {
 
     test_start "mysql.upgrade"
@@ -1502,9 +1496,6 @@ SET @disable_audit = 0"
 
     # Check upgrade from 18.0 to 19.0.
     mysql_upgrade_18_to_19_test
-
-    # Check upgrade from 19.0 to 22.0.
-    mysql_upgrade_19_to_22_test
 
     # Let's wipe the whole database
     mysql_wipe
@@ -2936,6 +2927,77 @@ mysql_ddns_conflict_resolution_mode_update_test() {
     test_finish 0
 }
 
+# Verifies that deprecated dhcp-ddns global map parameters are removed.
+mysql_dhcp_ddns_global_parameters_test() {
+    test_start "mysql.dhcp_ddns_global_parameters_test"
+
+    # Let's wipe the whole database
+    mysql_wipe
+
+    # We need to create an older database.
+    # Initialize database to schema 1.0.
+    mysql -u"${db_user}" -p"${db_password}" "${db_name}" < "@abs_top_srcdir@/src/bin/admin/tests/dhcpdb_create_1.0.mysql"
+
+    # Now upgrade to schema 21.0.
+    mysql_upgrade_schema_to_version 21.0
+
+    # Now insert global parameter instances of dhcp-ddns.
+    sql=\
+"set @disable_audit = 1; \
+ insert into dhcp4_global_parameter (name,value, modification_ts,parameter_type)\
+    values ('dhcp-ddns.generated-prefix', 'my-host', current_time(),4);
+ insert into dhcp4_global_parameter (name,value, modification_ts,parameter_type)\
+    values ('dhcp-ddns.qualifying-suffix', '', current_time(),4);
+ insert into dhcp4_global_parameter (name,value, modification_ts,parameter_type)\
+    values ('dhcp-ddns.override-no-update', 'true', current_time(),2);
+ insert into dhcp4_global_parameter (name,value, modification_ts,parameter_type)\
+    values ('dhcp-ddns.override-client-update', 'true', current_time(),2);
+ insert into dhcp4_global_parameter (name,value, modification_ts,parameter_type)\
+    values ('dhcp-ddns.replace-client-name', 'never', current_time(),4);
+ insert into dhcp4_global_parameter (name,value, modification_ts,parameter_type)\
+    values ('dhcp-ddns.hostname-char-replacement', '', current_time(),4);
+ insert into dhcp4_global_parameter (name,value, modification_ts,parameter_type)\
+    values ('dhcp-ddns.hostname-char-set', '[^A-Za-z0-9.-]', current_time(),4);
+ insert into dhcp6_global_parameter (name,value, modification_ts,parameter_type)\
+    values ('dhcp-ddns.generated-prefix', 'my-host', current_time(),4);
+ insert into dhcp6_global_parameter (name,value, modification_ts,parameter_type)\
+    values ('dhcp-ddns.qualifying-suffix', '', current_time(),4);
+ insert into dhcp6_global_parameter (name,value, modification_ts,parameter_type)\
+    values ('dhcp-ddns.override-no-update', 'true', current_time(),2);
+ insert into dhcp6_global_parameter (name,value, modification_ts,parameter_type)\
+    values ('dhcp-ddns.override-client-update', 'true', current_time(),2);
+ insert into dhcp6_global_parameter (name,value, modification_ts,parameter_type)\
+    values ('dhcp-ddns.replace-client-name', 'never', current_time(),4);
+ insert into dhcp6_global_parameter (name,value, modification_ts,parameter_type)\
+    values ('dhcp-ddns.hostname-char-replacement', '', current_time(),4);
+ insert into dhcp6_global_parameter (name,value, modification_ts,parameter_type)\
+    values ('dhcp-ddns.hostname-char-set', '[^A-Za-z0-9.-]', current_time(),4);"
+
+    run_statement "insert dhcp-ddns map parameters" "$sql"
+
+    # Verify the inserted record counts.
+    qry="select count(*) from dhcp4_global_parameter where name like '%dhcp-ddns%';"
+    run_statement "#get 4_global parameter count before update" "$qry" 7
+
+    qry="select count(*) from dhcp6_global_parameter where name like '%dhcp-ddns%';"
+    run_statement "#get 6_global parameter count before update" "$qry" 7
+
+    # Upgrade to schema 22.0
+    mysql_upgrade_schema_to_version 22.0
+
+    # Verify the record have been removed.
+    qry="select count(*) from dhcp4_global_parameter where name like '%dhcp-ddns%';"
+    run_statement "#get 4_global parameter count before update" "$qry" 0
+
+    qry="select count(*) from dhcp6_global_parameter where name like '%dhcp-ddns%';"
+    run_statement "#get 6_global parameter count before update" "$qry" 0
+
+    # Let's wipe the whole database
+    mysql_wipe
+
+    test_finish 0
+}
+
 # Run tests.
 mysql_db_init_test
 mysql_host_reservation_init_test
@@ -2962,4 +3024,4 @@ mysql_shrink_server_tag_test
 mysql_update_empty_duid_test
 mysql_update_v6_addresses_to_binary
 mysql_ddns_conflict_resolution_mode_update_test
-
+mysql_dhcp_ddns_global_parameters_test

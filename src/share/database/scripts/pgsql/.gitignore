@@ -24,4 +24,5 @@
 /upgrade_018_to_019.sh
 /upgrade_019_to_020.sh
 /upgrade_020_to_021.sh
+/upgrade_021_to_022.sh
 /wipe_data.sh

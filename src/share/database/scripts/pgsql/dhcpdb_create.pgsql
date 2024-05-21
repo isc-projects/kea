@@ -6337,6 +6337,34 @@ UPDATE schema_version
 
 -- This line concludes the schema upgrade to version 21.0.
 
+-- This line starts the schema upgrade to version 22.0.
+
+SELECT set_config('kea.disable_audit', 'true', false);
+
+delete from dhcp4_global_parameter where name='dhcp-ddns.override-no-update';
+delete from dhcp4_global_parameter where name='dhcp-ddns.override-client-update';
+delete from dhcp4_global_parameter where name='dhcp-ddns.replace-client-name';
+delete from dhcp4_global_parameter where name='dhcp-ddns.generated-prefix';
+delete from dhcp4_global_parameter where name='dhcp-ddns.qualifying-suffix';
+delete from dhcp4_global_parameter where name='dhcp-ddns.hostname-char-set';
+delete from dhcp4_global_parameter where name='dhcp-ddns.hostname-char-replacement';
+
+delete from dhcp6_global_parameter where name='dhcp-ddns.override-no-update';
+delete from dhcp6_global_parameter where name='dhcp-ddns.override-client-update';
+delete from dhcp6_global_parameter where name='dhcp-ddns.replace-client-name';
+delete from dhcp6_global_parameter where name='dhcp-ddns.generated-prefix';
+delete from dhcp6_global_parameter where name='dhcp-ddns.qualifying-suffix';
+delete from dhcp6_global_parameter where name='dhcp-ddns.hostname-char-set';
+delete from dhcp6_global_parameter where name='dhcp-ddns.hostname-char-replacement';
+
+SELECT set_config('kea.disable_audit', 'false', false);
+
+-- Update the schema version number.
+UPDATE schema_version
+    SET version = '22', minor = '0';
+
+-- This line concludes the schema upgrade to version 22.0.
+
 -- Commit the script transaction.
 COMMIT;
 

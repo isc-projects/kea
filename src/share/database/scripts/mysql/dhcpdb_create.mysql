@@ -5865,6 +5865,26 @@ CREATE INDEX lease6_by_subnet_id_address ON lease6 (subnet_id, address ASC);
 ALTER TABLE lease4 MODIFY expire timestamp NULL;
 ALTER TABLE lease6 MODIFY expire timestamp NULL;
 
+SET @disable_audit = 1;
+
+delete from dhcp4_global_parameter where name='dhcp-ddns.override-no-update';
+delete from dhcp4_global_parameter where name='dhcp-ddns.override-client-update';
+delete from dhcp4_global_parameter where name='dhcp-ddns.replace-client-name';
+delete from dhcp4_global_parameter where name='dhcp-ddns.generated-prefix';
+delete from dhcp4_global_parameter where name='dhcp-ddns.qualifying-suffix';
+delete from dhcp4_global_parameter where name='dhcp-ddns.hostname-char-set';
+delete from dhcp4_global_parameter where name='dhcp-ddns.hostname-char-replacement';
+
+delete from dhcp6_global_parameter where name='dhcp-ddns.override-no-update';
+delete from dhcp6_global_parameter where name='dhcp-ddns.override-client-update';
+delete from dhcp6_global_parameter where name='dhcp-ddns.replace-client-name';
+delete from dhcp6_global_parameter where name='dhcp-ddns.generated-prefix';
+delete from dhcp6_global_parameter where name='dhcp-ddns.qualifying-suffix';
+delete from dhcp6_global_parameter where name='dhcp-ddns.hostname-char-set';
+delete from dhcp6_global_parameter where name='dhcp-ddns.hostname-char-replacement';
+
+SET @disable_audit = 0;
+
 -- Update the schema version number.
 UPDATE schema_version
     SET version = '22', minor = '0';
