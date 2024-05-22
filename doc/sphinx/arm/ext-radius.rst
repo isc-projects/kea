@@ -394,7 +394,7 @@ other than Discover and the first Request from each client.
     parameters are incompatible with the hub-and-spoke configuration of the
     :ischooklib:`libdhcp_ha.so`. This hook library uses an originally
     selected subnet for choosing an HA relationship to process a packet.
-    The subnet reslection may interefere with this choice. See the
+    The subnet reselection may interfere with this choice. See the
     :ref:`ha-hub-and-spoke` for details.
 
 .. _radius-server-example:
