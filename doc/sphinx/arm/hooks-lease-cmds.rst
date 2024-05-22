@@ -472,7 +472,7 @@ for an IPv6 lease is:
 ::
 
    {
-       "command": "lease4-get",
+       "command": "lease6-get",
        "arguments": {
            "identifier-type": "duid",
            "identifier": "08:08:08:08:08:08",
@@ -816,7 +816,7 @@ a pair of values: the type and the actual identifier. The currently
 supported identifiers are ``"hw-address"`` (IPv4 only), ``"client-id"`` (IPv4
 only), and ``"duid"`` (IPv6 only).
 
-An example command for deleting a lease by address is:
+An example command for deleting an IPv4 lease by address is:
 
 ::
 
@@ -840,6 +840,20 @@ An example IPv4 lease deletion by ``"hw-address"`` is:
      }
    }
 
+The IPv6 address leases are deleted the same way, but using :isccmd:`lease6-del`. The
+prefix IPv6 leases are also deleted using :isccmd:`lease6-del`, but with some extra
+steps. The prefix should be referenced by its address and prefix length should be ignored.
+For example, to delete 2001:db8:1::/48, the following command can be used:
+
+::
+    {
+        "command": "lease6-del",
+        "arguments": {
+            "ip-address": "2001:db8:1::",
+            "type": "IA_PD",
+            "subnet-id": 1
+        }
+    }
 
 Another parameter called ``update-ddns``, when ``true``, instructs the server to
 queue a request to :iscman:`kea-dhcp-ddns` to remove DNS entries after the lease is
