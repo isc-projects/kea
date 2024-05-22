@@ -216,6 +216,30 @@ Download Tar File
 The Kea release tarballs may be downloaded from:
 https://downloads.isc.org/isc/kea/.
 
+Verify The Tar File Signature
+-----------------------------
+
+The tar file with the source code is distributed together with its
+GPG signature. The signature is a file with the same name as the tar
+file appended by the ``.asc`` extension. You can find the signature
+file on our download page, FTP, or CloudSmith.
+
+The signature is created using the ISC code-signing key. The current
+set of ISC code-signing keys is available from the ISC website at
+https://www.isc.org/pgpkey (the ``isc-keyblock.asc`` file).
+
+The signature can be verified using the GnuPGP ``gpg`` tool. The
+following commands import the code-signing keys and verify the
+signature:
+
+.. code-block:: console
+
+   $ gpg --import isc-keyblock.asc
+   $ gpg --verify kea-X.Y.Z.tar.gz.asc kea-X.Y.Z.tar.gz
+
+The verification allows users to confirm that the tar file has not
+been tampered with and that it was created by ISC.
+
 Retrieve From Git
 -----------------
 
