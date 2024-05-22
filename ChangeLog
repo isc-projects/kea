@@ -1,3 +1,11 @@
+2238.	[func]*		razvan
+	Removed the following deprecated parameters from "dhcp-ddns"
+	global element: "generated-prefix", "qualifying-suffix",
+	"replace-client-name", "override-client-update",
+	"override-no-update", "hostname-char-replacement",
+	"hostname-char-set".
+	(Gitlab #2958)
+
 2237.	[doc]		slawek
 	Added an instruction on how to verify the PGP signature of the
 	tarball with source code.
