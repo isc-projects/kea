@@ -846,6 +846,7 @@ steps. The prefix should be referenced by its address and prefix length should b
 For example, to delete 2001:db8:1::/48, the following command can be used:
 
 ::
+
     {
         "command": "lease6-del",
         "arguments": {
