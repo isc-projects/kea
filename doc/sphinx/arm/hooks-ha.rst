@@ -2607,3 +2607,11 @@ branch ``server3``:
 
    The peer names in the branch servers must match the peer names in the respective central
    server's relationships, because these names are used for signaling between the HA partners.
+
+.. note::
+
+    The hub-and-spoke configuration is currently incompatible with the ``reselect-subnet-address``
+    and ``reselect-subnet-pool`` parameters of the :ischooklib:`libdhcp_radius.so`. The High
+    Availability hook library uses an originally selected subnet for choosing an HA relationship
+    to process a packet. The subnet reslection may interefere with this choice. See the
+    :ref:`radius-config` for details.

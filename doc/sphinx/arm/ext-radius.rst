@@ -388,6 +388,15 @@ other than Discover and the first Request from each client.
    than global. Loading the RADIUS hook library in a Kea DHCP server
    that has this configuration raises an error.
 
+.. note::
+
+    Currently the ``reselect-subnet-address`` and ``reselect-subnet-pool``
+    parameters are incompatible with the hub-and-spoke configuration of the
+    :ischooklib:`libdhcp_ha.so`. This hook library uses an originally
+    selected subnet for choosing an HA relationship to process a packet.
+    The subnet reslection may interefere with this choice. See the
+    :ref:`ha-hub-and-spoke` for details.
+
 .. _radius-server-example:
 
 RADIUS Server Setup Example
