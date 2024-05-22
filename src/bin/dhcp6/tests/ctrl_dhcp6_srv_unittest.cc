@@ -451,12 +451,12 @@ TEST_F(CtrlDhcpv6SrvTest, commands) {
     int rcode = -1;
 
     // Case 1: send bogus command
-    ConstElementPtr result = ControlledDhcpv6Srv::processCommand("blah", params);
+    ConstElementPtr result = CommandMgr::instance().processCommand(createCommand("blah", params));
     ConstElementPtr comment = parseAnswer(rcode, result);
-    EXPECT_EQ(1, rcode); // expect failure (no such command as blah)
+    EXPECT_EQ(2, rcode); // expect failure (no such command as blah)
 
     // Case 2: send shutdown command without any parameters
-    result = ControlledDhcpv6Srv::processCommand("shutdown", params);
+    result = CommandMgr::instance().processCommand(createCommand("shutdown", params));
     comment = parseAnswer(rcode, result);
     EXPECT_EQ(0, rcode); // expect success
 
@@ -464,7 +464,7 @@ TEST_F(CtrlDhcpv6SrvTest, commands) {
     ConstElementPtr x(new isc::data::IntElement(77));
     params->set("exit-value", x);
 
-    result = ControlledDhcpv6Srv::processCommand("shutdown", params);
+    result = CommandMgr::instance().processCommand(createCommand("shutdown", params));
     comment = parseAnswer(rcode, result);
     EXPECT_EQ(0, rcode); // expect success
 

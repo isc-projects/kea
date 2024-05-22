@@ -115,10 +115,6 @@ has no definition.
 This debug message informs that a class was listed for required evaluation but
 its definition does not include a test expression to evaluate.
 
-% DHCP6_COMMAND_RECEIVED received command %1, arguments: %2
-A debug message listing the command (and possible arguments) received
-from the Kea control system by the IPv6 DHCP server.
-
 % DHCP6_CONFIG_COMPLETE DHCPv6 server has completed configuration: %1
 This is an informational message announcing the successful processing of a
 new configuration. it is output during server startup, and when an updated

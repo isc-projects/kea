@@ -4128,7 +4128,7 @@ TEST_F(LoadUnloadDhcpv4SrvTest, startServiceFail) {
 
     // Configure the server.
     ConstElementPtr answer;
-    ASSERT_NO_THROW(answer = srv->processCommand("config-set", config));
+    ASSERT_NO_THROW(answer = CommandMgr::instance().processCommand(createCommand("config-set", config)));
 
     // Make sure there was an error with expected message.
     int status_code;

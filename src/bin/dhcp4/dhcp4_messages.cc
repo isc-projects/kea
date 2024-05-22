@@ -29,7 +29,6 @@ extern const isc::log::MessageID DHCP4_CLIENT_HOSTNAME_DATA = "DHCP4_CLIENT_HOST
 extern const isc::log::MessageID DHCP4_CLIENT_HOSTNAME_MALFORMED = "DHCP4_CLIENT_HOSTNAME_MALFORMED";
 extern const isc::log::MessageID DHCP4_CLIENT_HOSTNAME_PROCESS = "DHCP4_CLIENT_HOSTNAME_PROCESS";
 extern const isc::log::MessageID DHCP4_CLIENT_NAME_PROC_FAIL = "DHCP4_CLIENT_NAME_PROC_FAIL";
-extern const isc::log::MessageID DHCP4_COMMAND_RECEIVED = "DHCP4_COMMAND_RECEIVED";
 extern const isc::log::MessageID DHCP4_CONFIG_COMPLETE = "DHCP4_CONFIG_COMPLETE";
 extern const isc::log::MessageID DHCP4_CONFIG_FETCH = "DHCP4_CONFIG_FETCH";
 extern const isc::log::MessageID DHCP4_CONFIG_LOAD_FAIL = "DHCP4_CONFIG_LOAD_FAIL";
@@ -216,7 +215,6 @@ const char* values[] = {
     "DHCP4_CLIENT_HOSTNAME_MALFORMED", "%1: client hostname option malformed: %2",
     "DHCP4_CLIENT_HOSTNAME_PROCESS", "%1: processing client's Hostname option",
     "DHCP4_CLIENT_NAME_PROC_FAIL", "%1: failed to process the fqdn or hostname sent by a client: %2",
-    "DHCP4_COMMAND_RECEIVED", "received command %1, arguments: %2",
     "DHCP4_CONFIG_COMPLETE", "DHCPv4 server has completed configuration: %1",
     "DHCP4_CONFIG_FETCH", "Fetching configuration data from config backends.",
     "DHCP4_CONFIG_LOAD_FAIL", "configuration error using file: %1, reason: %2",

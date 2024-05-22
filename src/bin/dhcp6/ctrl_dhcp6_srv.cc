@@ -78,13 +78,14 @@ static const char* SERVER_DUID_FILE = "kea-dhcp6-serverid";
 ///
 /// @param signo Signal number received.
 void signalHandler(int signo) {
-    // SIGHUP signals a request to reconfigure the server.
-    if (signo == SIGHUP) {
-        ControlledDhcpv6Srv::processCommand("config-reload",
-                                            ConstElementPtr());
-    } else if ((signo == SIGTERM) || (signo == SIGINT)) {
-        ControlledDhcpv6Srv::processCommand("shutdown",
-                                            ConstElementPtr());
+    try {
+        // SIGHUP signals a request to reconfigure the server.
+        if (signo == SIGHUP) {
+            CommandMgr::instance().processCommand(createCommand("config-reload"));
+        } else if ((signo == SIGTERM) || (signo == SIGINT)) {
+            CommandMgr::instance().processCommand(createCommand("shutdown"));
+        }
+    } catch (const isc::Exception& ex) {
     }
 }
 
@@ -110,10 +111,6 @@ ControlledDhcpv6Srv::init(const std::string& file_name) {
             "no details available";
         isc_throw(isc::BadValue, reason);
     }
-
-    // We don't need to call openActiveSockets() or startD2() as these
-    // methods are called in processConfig() which is called by
-    // processCommand("config-set", ...)
 
     // Set signal handlers. When the SIGHUP is received by the process
     // the server reconfiguration will be triggered. When SIGTERM or
@@ -165,13 +162,19 @@ ControlledDhcpv6Srv::loadConfigFile(const std::string& file_name) {
         }
 
         // Use parsed JSON structures to configure the server
-        result = ControlledDhcpv6Srv::processCommand("config-set", json);
+        try {
+            result = CommandMgr::instance().processCommand(createCommand("config-set", json));
+        } catch (const isc::Exception& ex) {
+            result = isc::config::createAnswer(CONTROL_RESULT_ERROR, string("Error while processing command "
+                                               "'config-set': ") + ex.what() +
+                                               ", params: '" + json->str() + "'");
+        }
         if (!result) {
             // Undetermined status of the configuration. This should never
             // happen, but as the configureDhcp6Server returns a pointer, it is
             // theoretically possible that it will return NULL.
             isc_throw(isc::BadValue, "undefined result of "
-                      "processCommand(\"config-set\", json)");
+                      "process command \"config-set\"");
         }
 
         // Now check is the returned result is successful (rcode=0) or not
@@ -836,45 +839,6 @@ ControlledDhcpv6Srv::commandStatisticSetMaxSampleAgeAllHandler(const string&,
     CfgMgr::instance().getCurrentCfg()->addConfiguredGlobal(
         "statistic-default-sample-age", Element::create(max_age));
     return (answer);
-}
-
-ConstElementPtr
-ControlledDhcpv6Srv::processCommand(const string& command,
-                                    ConstElementPtr args) {
-    string txt = args ? args->str() : "(none)";
-
-    LOG_DEBUG(dhcp6_logger, DBG_DHCP6_COMMAND, DHCP6_COMMAND_RECEIVED)
-              .arg(command).arg(txt);
-
-    ControlledDhcpv6Srv* srv = ControlledDhcpv6Srv::getInstance();
-
-    if (!srv) {
-        ConstElementPtr no_srv = isc::config::createAnswer(CONTROL_RESULT_ERROR,
-            "Server object not initialized, so can't process command '" +
-            command + "', arguments: '" + txt + "'.");
-        return (no_srv);
-    }
-
-    try {
-        if (command == "shutdown") {
-            return (srv->commandShutdownHandler(command, args));
-
-        } else if (command == "config-reload") {
-            return (srv->commandConfigReloadHandler(command, args));
-
-        } else if (command == "config-set") {
-            return (srv->commandConfigSetHandler(command, args));
-
-        }
-
-        return (isc::config::createAnswer(CONTROL_RESULT_ERROR, "Unrecognized command:"
-                                          + command));
-
-    } catch (const isc::Exception& ex) {
-        return (isc::config::createAnswer(CONTROL_RESULT_ERROR, "Error while processing command '"
-                                          + command + "': " + ex.what() +
-                                          ", params: '" + txt + "'"));
-    }
 }
 
 isc::data::ConstElementPtr

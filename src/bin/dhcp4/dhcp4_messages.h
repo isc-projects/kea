@@ -30,7 +30,6 @@ extern const isc::log::MessageID DHCP4_CLIENT_HOSTNAME_DATA;
 extern const isc::log::MessageID DHCP4_CLIENT_HOSTNAME_MALFORMED;
 extern const isc::log::MessageID DHCP4_CLIENT_HOSTNAME_PROCESS;
 extern const isc::log::MessageID DHCP4_CLIENT_NAME_PROC_FAIL;
-extern const isc::log::MessageID DHCP4_COMMAND_RECEIVED;
 extern const isc::log::MessageID DHCP4_CONFIG_COMPLETE;
 extern const isc::log::MessageID DHCP4_CONFIG_FETCH;
 extern const isc::log::MessageID DHCP4_CONFIG_LOAD_FAIL;

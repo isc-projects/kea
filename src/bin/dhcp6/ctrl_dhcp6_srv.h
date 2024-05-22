@@ -72,22 +72,6 @@ public:
     /// @param exit_value integer value to the process should exit with.
     virtual void shutdownServer(int exit_value);
 
-    /// @brief Command processor
-    ///
-    /// Currently supported commands are:
-    /// - shutdown
-    /// - config-reload
-    /// - config-set
-    ///
-    /// @note It never throws.
-    ///
-    /// @param command Text representation of the command (e.g. "shutdown")
-    /// @param args Optional parameters
-    ///
-    /// @return status of the command
-    static isc::data::ConstElementPtr
-    processCommand(const std::string& command, isc::data::ConstElementPtr args);
-
     /// @brief Configuration processor
     ///
     /// This is a method for handling incoming configuration updates.

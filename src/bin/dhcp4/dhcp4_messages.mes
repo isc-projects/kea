@@ -149,10 +149,6 @@ name was malformed or due to internal server error. The first argument
 contains the client and transaction identification information. The
 second argument holds the detailed description of the error.
 
-% DHCP4_COMMAND_RECEIVED received command %1, arguments: %2
-A debug message listing the command (and possible arguments) received
-from the Kea control system by the DHCPv4 server.
-
 % DHCP4_CONFIG_COMPLETE DHCPv4 server has completed configuration: %1
 This is an informational message announcing the successful processing of a
 new configuration. It is output during server startup, and when an updated
