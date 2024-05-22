@@ -226,11 +226,12 @@ file on our download page, FTP, or CloudSmith.
 
 The signature is created using the ISC code-signing key. The current
 set of ISC code-signing keys is available from the ISC website at
-https://www.isc.org/pgpkey (the ``isc-keyblock.asc`` file).
+https://www.isc.org/pgpkey (the `Current Set of ISC Code-Signing Keys
+<https://www.isc.org/docs/isc-keyblock.asc>`_ link).
 
 The signature can be verified using the GnuPGP ``gpg`` tool. The
-following commands import the code-signing keys and verify the
-signature:
+following commands import the code-signing keys
+(``isc-keyblock.asc``) and verify the signature:
 
 .. code-block:: console
 
