@@ -4622,32 +4622,32 @@ allocating or renewing a lease for the client.
 
 Configuration flags are:
 
--  ``reservations-in-subnet`` - when set to true, it enables in-pool host
+-  ``reservations-in-subnet`` - when set to ``true``, it enables in-pool host
    reservation types. This setting is the default value, and is the safest and
    most flexible. However, as all checks are conducted, it is also the slowest.
-   It does not check against global reservations. This flag defaults to true.
+   It does not check against global reservations. This flag defaults to ``true``.
 
--  ``reservations-out-of-pool`` - when set to true, it allows only out-of-pool
+-  ``reservations-out-of-pool`` - when set to ``true``, it allows only out-of-pool
    host reservations. In this case the server assumes that all host reservations
    are for addresses that do not belong to the dynamic pool. Therefore, it can
    skip the reservation checks when dealing with in-pool addresses, thus
    improving performance. Do not use this mode if any reservations use in-pool
    addresses. Caution is advised when using this setting; Kea does not
    sanity-check the reservations against ``reservations-out-of-pool`` and
-   misconfiguration may cause problems. This flag defaults to false.
+   misconfiguration may cause problems. This flag defaults to ``false``.
 
 -  ``reservations-global`` - allows global host reservations. With this setting
    in place, the server searches for reservations for a client among the defined
    global reservations. If an address is specified, the server skips the
    reservation checks carried out in other modes, thus improving performance.
    Caution is advised when using this setting; Kea does not sanity-check the
-   reservations when ``reservations-global`` is set, and misconfiguration may
-   cause problems. This flag defaults to false.
+   reservations when ``reservations-global`` is set to ``true``, and
+   misconfiguration may cause problems. This flag defaults to ``false``.
 
-Note: disabling all flags disables host reservation support. As there are no
-   reservations, the server skips all checks. Any reservations defined are
-   completely ignored. As checks are skipped, the server may operate faster in
-   this mode.
+Note: setting all flags to ``false`` disables host reservation support.
+   As there are no reservations, the server skips all checks. Any reservations
+   defined are completely ignored. As checks are skipped, the server may operate
+   faster in this mode.
 
 Since Kea 1.9.1 the ``reservations-global``, ``reservations-in-subnet`` and
 ``reservations-out-of-pool`` flags are suported.
