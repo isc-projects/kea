@@ -1,3 +1,7 @@
+2242.	[func]		razvan
+	Removed deprecated command: "libreload".
+	(Gitlab #2960)
+
 2241.	[doc]		tomek
 	Several aspects of lease_cmds documentation were updated.
 	The examples and error messages were corrected.
