@@ -1064,37 +1064,37 @@ PdPoolParser::PdPoolParser() {
 }
 
 void
-PdPoolParser::parse(PoolStoragePtr pools, ConstElementPtr pd_pool_,
+PdPoolParser::parse(PoolStoragePtr pools, ConstElementPtr pd_pool,
                     bool encapsulate_options) {
-    checkKeywords(SimpleParser6::PD_POOL6_PARAMETERS, pd_pool_);
+    checkKeywords(SimpleParser6::PD_POOL6_PARAMETERS, pd_pool);
 
-    std::string addr_str = getString(pd_pool_, "prefix");
+    std::string addr_str = getString(pd_pool, "prefix");
 
-    uint8_t prefix_len = getUint8(pd_pool_, "prefix-len");
+    uint8_t prefix_len = getUint8(pd_pool, "prefix-len");
 
-    uint8_t delegated_len = getUint8(pd_pool_, "delegated-len");
+    uint8_t delegated_len = getUint8(pd_pool, "delegated-len");
 
     std::string excluded_prefix_str = "::";
-    if (pd_pool_->contains("excluded-prefix")) {
-        excluded_prefix_str = getString(pd_pool_, "excluded-prefix");
+    if (pd_pool->contains("excluded-prefix")) {
+        excluded_prefix_str = getString(pd_pool, "excluded-prefix");
     }
 
     uint8_t excluded_prefix_len = 0;
-    if (pd_pool_->contains("excluded-prefix-len")) {
-        excluded_prefix_len = getUint8(pd_pool_, "excluded-prefix-len");
+    if (pd_pool->contains("excluded-prefix-len")) {
+        excluded_prefix_len = getUint8(pd_pool, "excluded-prefix-len");
     }
 
-    ConstElementPtr user_context = pd_pool_->get("user-context");
+    ConstElementPtr user_context = pd_pool->get("user-context");
     if (user_context) {
         user_context_ = user_context;
     }
 
-    ConstElementPtr client_class = pd_pool_->get("client-class");
+    ConstElementPtr client_class = pd_pool->get("client-class");
     if (client_class) {
         client_class_ = client_class;
     }
 
-    ConstElementPtr class_list = pd_pool_->get("require-client-classes");
+    ConstElementPtr class_list = pd_pool->get("require-client-classes");
 
     // Check the pool parameters. It will throw an exception if any
     // of the required parameters are invalid.
@@ -1110,7 +1110,21 @@ PdPoolParser::parse(PoolStoragePtr pools, ConstElementPtr pd_pool_,
         // aware whether they don't exist or are invalid, let's append
         // the position of the pool map element.
         isc_throw(isc::dhcp::DhcpConfigError, ex.what()
-                  << " (" << pd_pool_->getPosition() << ")");
+                  << " (" << pd_pool->getPosition() << ")");
+    }
+
+    // If there is a pool-id, store it.
+    ConstElementPtr pool_id = pd_pool->get("pool-id");
+    if (pool_id) {
+        if (pool_id->intValue() <= 0) {
+            isc_throw(BadValue, "pool-id " << pool_id->intValue() << " is not"
+                      << " a positive integer greater than 0");
+        } else if (pool_id->intValue() > numeric_limits<uint32_t>::max()) {
+            isc_throw(BadValue, "pool-id " << pool_id->intValue() << " is not"
+                      << " a 32 bit unsigned integer");
+        }
+
+        pool_->setID(pool_id->intValue());
     }
 
     // We create subnet first and then parse the options straight into the subnet's
@@ -1119,7 +1133,7 @@ PdPoolParser::parse(PoolStoragePtr pools, ConstElementPtr pd_pool_,
     // it cost performance. Second, copying options reset the isEncapsulated() flag.
     // If the options have been encapsulated we want to preserve the flag to ensure
     // they are not encapsulated several times.
-    ConstElementPtr option_data = pd_pool_->get("option-data");
+    ConstElementPtr option_data = pd_pool->get("option-data");
     if (option_data) {
         auto opts_parser = createOptionDataListParser();
         opts_parser->parse(pool_->getCfgOption(), option_data, encapsulate_options);

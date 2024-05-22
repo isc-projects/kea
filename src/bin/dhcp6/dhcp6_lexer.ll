@@ -1301,6 +1301,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
 \"pool-id\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::POOLS:
+    case isc::dhcp::Parser6Context::PD_POOLS:
         return isc::dhcp::Dhcp6Parser::make_POOL_ID(driver.loc_);
     default:
         return isc::dhcp::Dhcp6Parser::make_STRING("pool-id", driver.loc_);

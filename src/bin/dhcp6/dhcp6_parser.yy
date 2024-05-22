@@ -2254,6 +2254,7 @@ pd_pool_params: pd_pool_param
 pd_pool_param: pd_prefix
              | pd_prefix_len
              | pd_delegated_len
+             | pool_id
              | option_data_list
              | client_class
              | require_client_classes

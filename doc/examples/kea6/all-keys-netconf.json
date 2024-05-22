@@ -927,7 +927,25 @@
 
                                 // List of client classes which must be evaluated
                                 // when this prefix pool is selected for client assignments.
-                                "require-client-classes": []
+                                "require-client-classes": [],
+
+                                // PD-pool identifier used to enable statistics for this pd-pool.
+                                // The pd-pool ID does not need to be unique within the subnet
+                                // or across subnets.
+                                // If not unconfigured, it defaults to 0. The statistics
+                                // regarding this pd-pool will be combined with the other statistics
+                                // of all other pd-pools with the same pd-pool ID in this subnet.
+                                "pool-id": 1
+                            },
+                            {
+                                // Length of prefixes delegated to clients.
+                                "delegated-len": 64,
+
+                                // Prefix range (address) used for client assignments.
+                                "prefix": "2001:db8:2::",
+
+                                // Prefix range (length) used for client assignments.
+                                "prefix-len": 48
                             }
                         ],
 
