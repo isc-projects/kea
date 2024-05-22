@@ -1,3 +1,8 @@
+2237.	[doc]		slawek
+	Added an instruction on how to verify the PGP signature of the
+	tarball with source code.
+	(Gitlab #3021)
+
 2236.	[doc]		marcin
 	Documented incompatibility of the subnet reselection by
 	RADIUS with the hub-and-spoke configurations in HA.
