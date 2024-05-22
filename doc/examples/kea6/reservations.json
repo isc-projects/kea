@@ -47,18 +47,20 @@
 
         // This directive tells Kea that reservations may be made both in-pool
         // and out-of-pool. For improved performance, you may move all reservations
-        // out of the dynamic pool and set "reservations-out-of-pool".
+        // out of the dynamic pool and set "reservations-out-of-pool" to true.
         // Kea will then be able to skip querying for host reservations when
         // assigning leases from dynamic pool.
 
         // Specify whether the server should look up global reservations.
+        // Defaults to false.
         "reservations-global": false,
 
         // Specify whether the server should look up in-subnet reservations.
+        // Defaults to true.
         "reservations-in-subnet": true,
 
         // Specify whether the server can assume that all reserved addresses
-        // are out-of-pool.
+        // are out-of-pool. Defaults to false.
         // Ignored when reservations-in-subnet is false.
         // If specified, it is inherited by "shared-networks" and
         // "subnet6" levels.

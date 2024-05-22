@@ -48,10 +48,10 @@
 // to the dynamic pool. Kea is able to handle this case, but it is not
 // recommended from a performance perspective, as Kea would not only need to
 // check if a given address is free, but also whether it is reserved.
-// To avoid this check, one can set "reservations-out-of-pool", beside
-// the "reservations-in-subnet". If a subnet does not have reservations at all,
-// the reservation lookup can be skipped altogether by disabling
-// "reservations-in-subnet".
+// To avoid this check, one can set "reservations-out-of-pool" to true, beside
+// the "reservations-in-subnet" which should be also set to true. If a subnet
+// does not have reservations at all, the reservation lookup can be skipped
+// altogether by setting "reservations-in-subnet" to false.
 
 // Note that the second reservation is for an address which is within the
 // range of the pool of the dynamically allocated address. The server will
@@ -65,18 +65,20 @@
         "interface": "eth0",
         // This directive tells Kea that reservations may be made both in-pool
         // and out-of-pool. For improved performance, you may move all reservations
-        // out of the dynamic pool and set "reservations-out-of-pool".
+        // out of the dynamic pool and set "reservations-out-of-pool" to true.
         // Kea will then be able to skip querying for host reservations when
         // assigning leases from dynamic pool.
 
         // Specify whether the server should look up global reservations.
+        // Defaults to false.
         "reservations-global": false,
 
         // Specify whether the server should look up in-subnet reservations.
+        // Defaults to true.
         "reservations-in-subnet": true,
 
         // Specify whether the server can assume that all reserved addresses
-        // are out-of-pool.
+        // are out-of-pool. Defaults to false.
         // Ignored when reservations-in-subnet is false.
         // If specified, it is inherited by "shared-networks" and
         // "subnet4" levels.

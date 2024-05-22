@@ -4622,19 +4622,19 @@ allocating or renewing a lease for the client.
 
 Configuration flags are:
 
--  ``reservations-in-subnet`` - enables in-pool host reservation types. This
-   setting is the default value, and is the safest and most flexible. However,
-   as all checks are conducted, it is also the slowest. It does not check
-   against global reservations.
+-  ``reservations-in-subnet`` - when set to true, it enables in-pool host
+   reservation types. This setting is the default value, and is the safest and
+   most flexible. However, as all checks are conducted, it is also the slowest.
+   It does not check against global reservations. This flag defaults to true.
 
--  ``reservations-out-of-pool`` - allows only out-of-pool host reservations.
-   With this setting in place, the server assumes that all host reservations are
-   for addresses that do not belong to the dynamic pool. Therefore, it can skip
-   the reservation checks when dealing with in-pool addresses, thus improving
-   performance. Do not use this mode if any reservations use in-pool addresses.
-   Caution is advised when using this setting; Kea does not sanity-check the
-   reservations against ``reservations-out-of-pool`` and misconfiguration may
-   cause problems.
+-  ``reservations-out-of-pool`` - when set to true, it allows only out-of-pool
+   host reservations. In this case the server assumes that all host reservations
+   are for addresses that do not belong to the dynamic pool. Therefore, it can
+   skip the reservation checks when dealing with in-pool addresses, thus
+   improving performance. Do not use this mode if any reservations use in-pool
+   addresses. Caution is advised when using this setting; Kea does not
+   sanity-check the reservations against ``reservations-out-of-pool`` and
+   misconfiguration may cause problems. This flag defaults to false.
 
 -  ``reservations-global`` - allows global host reservations. With this setting
    in place, the server searches for reservations for a client among the defined
@@ -4642,7 +4642,7 @@ Configuration flags are:
    reservation checks carried out in other modes, thus improving performance.
    Caution is advised when using this setting; Kea does not sanity-check the
    reservations when ``reservations-global`` is set, and misconfiguration may
-   cause problems.
+   cause problems. This flag defaults to false.
 
 Note: disabling all flags disables host reservation support. As there are no
    reservations, the server skips all checks. Any reservations defined are
