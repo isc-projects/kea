@@ -1,3 +1,8 @@
+2236.	[doc]		marcin
+	Documented incompatibility of the subnet reselection by
+	RADIUS with the hub-and-spoke configurations in HA.
+	(Gitlab #3252)
+
 2235.   [bug]       tmark
 	Remove defaulted on-update behavior from 'expire'
 	columns in lease4 and lease6 tables for MySQL/Mariadb
