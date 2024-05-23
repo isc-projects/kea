@@ -231,7 +231,7 @@ Lease6Parser::parse(ConstSrvConfigPtr& cfg,
             prefix_len = getUint8(lease_info, "prefix-len");
         } else {
             isc_throw(BadValue, "Incorrect lease type: " << txt << ", the only "
-                      "supported values are: IA_NA, and IA_PD");
+                      "supported values are: IA_NA and IA_PD");
         }
     }
 

@@ -841,9 +841,10 @@ An example IPv4 lease deletion by ``"hw-address"`` is:
    }
 
 The IPv6 address leases are deleted the same way, but using :isccmd:`lease6-del`. The
-prefix IPv6 leases are also deleted using :isccmd:`lease6-del`, but with some extra
+IPv6 prefix leases are also deleted using :isccmd:`lease6-del`, but with some extra
 steps. The prefix should be referenced by its address and prefix length should be ignored.
-For example, to delete 2001:db8:1::/48, the following command can be used:
+For example, to delete 2001:db8:1::/48, the following command can be used. The
+``subnet-id`` parameter is optional.
 
 ::
 
