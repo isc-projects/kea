@@ -591,8 +591,8 @@ The PostgreSQL database schema can be upgraded using the same tool and
 commands as described in :ref:`mysql-upgrade`, with the exception that the "pgsql"
 database backend type must be used in the commands.
 
-If you upgraded your Postgres database from a version prior 15.0, you need to grant
-the additional privileges to the user:
+If you upgraded your Postgres database from a version prior to 15.0, you need to
+grant additional privileges to the user:
 
 First, log into PostgreSQL as "postgres":
 

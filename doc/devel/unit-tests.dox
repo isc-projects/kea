@@ -299,7 +299,7 @@ postgres=# \q
   However, this only affects tables which exist when the privileges are granted.
   To ensure that the user has specific privileges to tables dynamically created
   by the unit tests, the default schema privileges must be altered.
-  In the Postgres 15.0+, you need to explicitly grant privileges to access to
+  In Postgres 15.0+, you need to explicitly grant privileges to access
   the ``public`` schema.
 
   The following example demonstrates how to create the user <i>keatest_readonly</i>,
