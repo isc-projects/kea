@@ -6270,19 +6270,19 @@ UPDATE schema_version
 SELECT set_config('kea.disable_audit', 'true', false);
 UPDATE dhcp4_global_parameter
 SET name = 'ddns-conflict-resolution-mode', value = 'check-with-dhcid', parameter_type = 4
-WHERE name = 'ddns-use-conflict-resolution' and value = 'true';
+WHERE name = 'ddns-use-conflict-resolution' and value = '1';
 
 UPDATE dhcp4_global_parameter
 SET name = 'ddns-conflict-resolution-mode', value = 'no-check-with-dhcid', parameter_type = 4
-WHERE name = 'ddns-use-conflict-resolution' and value = 'false';
+WHERE name = 'ddns-use-conflict-resolution' and value = '0';
 
 UPDATE dhcp6_global_parameter
 SET name = 'ddns-conflict-resolution-mode', value = 'check-with-dhcid', parameter_type = 4
-WHERE name = 'ddns-use-conflict-resolution' and value = 'true';
+WHERE name = 'ddns-use-conflict-resolution' and value = '1';
 
 UPDATE dhcp6_global_parameter
 SET name = 'ddns-conflict-resolution-mode', value = 'no-check-with-dhcid', parameter_type = 4
-WHERE name = 'ddns-use-conflict-resolution' and value = 'false';
+WHERE name = 'ddns-use-conflict-resolution' and value = '0';
 
 -- Clear lease6_relay_id table.
 DELETE FROM lease6_relay_id;
@@ -6357,17 +6357,17 @@ DELETE FROM dhcp6_global_parameter WHERE name='dhcp-ddns.qualifying-suffix';
 DELETE FROM dhcp6_global_parameter WHERE name='dhcp-ddns.hostname-char-set';
 DELETE FROM dhcp6_global_parameter WHERE name='dhcp-ddns.hostname-char-replacement';
 
-UPDATE dhcp4_global_parameter SET name='reservations-global', value='true', parameter_type=2 WHERE name='reservation-mode' AND value='global';
-UPDATE dhcp4_global_parameter SET name='reservations-in-subnet', value='true', parameter_type=2 WHERE name='reservation-mode' AND value='all';
-UPDATE dhcp4_global_parameter SET name='reservations-in-subnet', value='false', parameter_type=2 WHERE name='reservation-mode' AND value='disabled';
-UPDATE dhcp4_global_parameter SET name='reservations-in-subnet', value='false', parameter_type=2 WHERE name='reservation-mode' AND value='off';
-UPDATE dhcp4_global_parameter SET name='reservations-out-of-pool', value='true', parameter_type=2 WHERE name='reservation-mode' AND value='out-of-pool';
+UPDATE dhcp4_global_parameter SET name='reservations-global', value='1', parameter_type=2 WHERE name='reservation-mode' AND value='global';
+UPDATE dhcp4_global_parameter SET name='reservations-in-subnet', value='1', parameter_type=2 WHERE name='reservation-mode' AND value='all';
+UPDATE dhcp4_global_parameter SET name='reservations-in-subnet', value='0', parameter_type=2 WHERE name='reservation-mode' AND value='disabled';
+UPDATE dhcp4_global_parameter SET name='reservations-in-subnet', value='0', parameter_type=2 WHERE name='reservation-mode' AND value='off';
+UPDATE dhcp4_global_parameter SET name='reservations-out-of-pool', value='1', parameter_type=2 WHERE name='reservation-mode' AND value='out-of-pool';
 
-UPDATE dhcp6_global_parameter SET name='reservations-global', value='true', parameter_type=2 WHERE name='reservation-mode' AND value='global';
-UPDATE dhcp6_global_parameter SET name='reservations-in-subnet', value='true', parameter_type=2 WHERE name='reservation-mode' AND value='all';
-UPDATE dhcp6_global_parameter SET name='reservations-in-subnet', value='false', parameter_type=2 WHERE name='reservation-mode' AND value='disabled';
-UPDATE dhcp6_global_parameter SET name='reservations-in-subnet', value='false', parameter_type=2 WHERE name='reservation-mode' AND value='off';
-UPDATE dhcp6_global_parameter SET name='reservations-out-of-pool', value='true', parameter_type=2 WHERE name='reservation-mode' AND value='out-of-pool';
+UPDATE dhcp6_global_parameter SET name='reservations-global', value='1', parameter_type=2 WHERE name='reservation-mode' AND value='global';
+UPDATE dhcp6_global_parameter SET name='reservations-in-subnet', value='1', parameter_type=2 WHERE name='reservation-mode' AND value='all';
+UPDATE dhcp6_global_parameter SET name='reservations-in-subnet', value='0', parameter_type=2 WHERE name='reservation-mode' AND value='disabled';
+UPDATE dhcp6_global_parameter SET name='reservations-in-subnet', value='0', parameter_type=2 WHERE name='reservation-mode' AND value='off';
+UPDATE dhcp6_global_parameter SET name='reservations-out-of-pool', value='1', parameter_type=2 WHERE name='reservation-mode' AND value='out-of-pool';
 
 SELECT set_config('kea.disable_audit', 'false', false);
 

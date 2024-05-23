@@ -60,19 +60,19 @@ mysql "$@" <<EOF
 SET @disable_audit = 1;
 UPDATE dhcp4_global_parameter
 SET name = 'ddns-conflict-resolution-mode', value = 'check-with-dhcid', parameter_type = 4
-WHERE name = 'ddns-use-conflict-resolution' and value = 'true';
+WHERE name = 'ddns-use-conflict-resolution' and value = '1';
 
 UPDATE dhcp4_global_parameter
 SET name = 'ddns-conflict-resolution-mode', value = 'no-check-with-dhcid', parameter_type = 4
-WHERE name = 'ddns-use-conflict-resolution' and value = 'false';
+WHERE name = 'ddns-use-conflict-resolution' and value = '0';
 
 UPDATE dhcp6_global_parameter
 SET name = 'ddns-conflict-resolution-mode', value = 'check-with-dhcid', parameter_type = 4
-WHERE name = 'ddns-use-conflict-resolution' and value = 'true';
+WHERE name = 'ddns-use-conflict-resolution' and value = '1';
 
 UPDATE dhcp6_global_parameter
 SET name = 'ddns-conflict-resolution-mode', value = 'no-check-with-dhcid', parameter_type = 4
-WHERE name = 'ddns-use-conflict-resolution' and value = 'false';
+WHERE name = 'ddns-use-conflict-resolution' and value = '0';
 
 -- Add a constraint on lease6_relay_id that any lease_addr must map to
 -- a lease6 address.
