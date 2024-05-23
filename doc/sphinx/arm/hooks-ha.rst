@@ -1929,7 +1929,7 @@ learn which scopes are available for the different HA modes of operation.
    The :isccmd:`ha-scopes` command can put Kea servers into conflicting states,
    which can lead to unexpected behavior. Changing scopes does not automatically
    change the state of the server or its relationship with a partner.
-   
+
    For example, when we add primary scopes to the standby server it will start
    responding to DHCP traffic for those scopes. This can lead to a situation where
    both servers are responding to the same traffic, which can lead to IP address

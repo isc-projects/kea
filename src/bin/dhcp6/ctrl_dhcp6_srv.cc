@@ -78,14 +78,11 @@ static const char* SERVER_DUID_FILE = "kea-dhcp6-serverid";
 ///
 /// @param signo Signal number received.
 void signalHandler(int signo) {
-    try {
-        // SIGHUP signals a request to reconfigure the server.
-        if (signo == SIGHUP) {
-            CommandMgr::instance().processCommand(createCommand("config-reload"));
-        } else if ((signo == SIGTERM) || (signo == SIGINT)) {
-            CommandMgr::instance().processCommand(createCommand("shutdown"));
-        }
-    } catch (const isc::Exception& ex) {
+    // SIGHUP signals a request to reconfigure the server.
+    if (signo == SIGHUP) {
+        CommandMgr::instance().processCommand(createCommand("config-reload"));
+    } else if ((signo == SIGTERM) || (signo == SIGINT)) {
+        CommandMgr::instance().processCommand(createCommand("shutdown"));
     }
 }
 
@@ -162,13 +159,7 @@ ControlledDhcpv6Srv::loadConfigFile(const std::string& file_name) {
         }
 
         // Use parsed JSON structures to configure the server
-        try {
-            result = CommandMgr::instance().processCommand(createCommand("config-set", json));
-        } catch (const isc::Exception& ex) {
-            result = isc::config::createAnswer(CONTROL_RESULT_ERROR, string("Error while processing command "
-                                               "'config-set': ") + ex.what() +
-                                               ", params: '" + json->str() + "'");
-        }
+        result = CommandMgr::instance().processCommand(createCommand("config-set", json));
         if (!result) {
             // Undetermined status of the configuration. This should never
             // happen, but as the configureDhcp6Server returns a pointer, it is
