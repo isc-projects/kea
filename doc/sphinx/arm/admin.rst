@@ -582,16 +582,10 @@ that contains any existing tables. To start from scratch,
 all data must be removed manually. (This process is a manual operation
 on purpose, to avoid accidentally irretrievable mistakes by :iscman:`kea-admin`.)
 
-.. _pgsql-upgrade:
+Upgrading a PostgreSQL Engine From an Earlier Version
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Upgrading a PostgreSQL Database From an Earlier Version of Kea
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-The PostgreSQL database schema can be upgraded using the same tool and
-commands as described in :ref:`mysql-upgrade`, with the exception that the "pgsql"
-database backend type must be used in the commands.
-
-If you upgraded your Postgres database from a version prior to 15.0, you need to
+If you upgraded your PostgreSQL from a version prior to 15.0, you need to
 grant additional privileges to the user:
 
 First, log into PostgreSQL as "postgres":
@@ -617,6 +611,15 @@ Now, quit the PostgreSQL client:
       postgres=# \q
       Bye
       $
+
+.. _pgsql-upgrade:
+
+Upgrading a PostgreSQL Database From an Earlier Version of Kea
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The PostgreSQL database schema can be upgraded using the same tool and
+commands as described in :ref:`mysql-upgrade`, with the exception that the "pgsql"
+database backend type must be used in the commands.
 
 Use the following command to check the current schema version:
 
