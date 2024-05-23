@@ -2987,10 +2987,305 @@ mysql_dhcp_ddns_global_parameters_test() {
 
     # Verify the record have been removed.
     qry="select count(*) from dhcp4_global_parameter where name like '%dhcp-ddns%';"
-    run_statement "#get 4_global parameter count before update" "$qry" 0
+    run_statement "#get 4_global parameter count after update" "$qry" 0
 
     qry="select count(*) from dhcp6_global_parameter where name like '%dhcp-ddns%';"
-    run_statement "#get 6_global parameter count before update" "$qry" 0
+    run_statement "#get 6_global parameter count after update" "$qry" 0
+
+    # Let's wipe the whole database
+    mysql_wipe
+
+    test_finish 0
+}
+
+# Verifies that deprecated reservation_mode "disabled" is migrated.
+mysql_reservation_mode_disabled_parameters_test() {
+    test_start "mysql.reservation_mode_disabled_parameters_test"
+
+    # Let's wipe the whole database
+    mysql_wipe
+
+    # We need to create an older database.
+    # Initialize database to schema 1.0.
+    mysql -u"${db_user}" -p"${db_password}" "${db_name}" < "@abs_top_srcdir@/src/bin/admin/tests/dhcpdb_create_1.0.mysql"
+
+    # Now upgrade to schema 21.0.
+    mysql_upgrade_schema_to_version 21.0
+
+    # Now insert global parameter instances of reservation_mode.
+    sql=\
+"set @disable_audit = 1; \
+ insert into dhcp4_global_parameter (name,value, modification_ts,parameter_type)\
+    values ('reservation-mode', 'disabled', current_time(),4);
+ insert into dhcp6_global_parameter (name,value, modification_ts,parameter_type)\
+    values ('reservation-mode', 'disabled', current_time(),4);"
+
+    run_statement "insert reservation_mode parameters" "$sql"
+
+    # Verify the inserted record counts.
+    qry="select count(*) from dhcp4_global_parameter where name like '%reservation-mode%';"
+    run_statement "#get 4_global parameter count before update" "$qry" 1
+
+    qry="select count(*) from dhcp6_global_parameter where name like '%reservation-mode%';"
+    run_statement "#get 6_global parameter count before update" "$qry" 1
+
+    qry="select count(*) from dhcp4_global_parameter where name='reservations-in-subnet' AND value='false' AND parameter_type=2;"
+    run_statement "#get exact 4_global parameter count before update" "$qry" 0
+
+    qry="select count(*) from dhcp6_global_parameter where name='reservations-in-subnet' AND value='false' AND parameter_type=2;"
+    run_statement "#get exact 6_global parameter count before update" "$qry" 0
+
+    # Upgrade to schema 22.0
+    mysql_upgrade_schema_to_version 22.0
+
+    # Verify the record have been removed.
+    qry="select count(*) from dhcp4_global_parameter where name like '%reservation-mode%';"
+    run_statement "#get 4_global parameter count after update" "$qry" 0
+
+    qry="select count(*) from dhcp6_global_parameter where name like '%reservation-mode%';"
+    run_statement "#get 6_global parameter count after update" "$qry" 0
+
+    qry="select count(*) from dhcp4_global_parameter where name='reservations-in-subnet' AND value='false' AND parameter_type=2;"
+    run_statement "#get exact 4_global parameter count after update" "$qry" 1
+
+    qry="select count(*) from dhcp6_global_parameter where name='reservations-in-subnet' AND value='false' AND parameter_type=2;"
+    run_statement "#get exact 6_global parameter count after update" "$qry" 1
+
+    # Let's wipe the whole database
+    mysql_wipe
+
+    test_finish 0
+}
+
+# Verifies that deprecated reservation_mode "off" is migrated.
+mysql_reservation_mode_off_parameters_test() {
+    test_start "mysql.reservation_mode_off_parameters_test"
+
+    # Let's wipe the whole database
+    mysql_wipe
+
+    # We need to create an older database.
+    # Initialize database to schema 1.0.
+    mysql -u"${db_user}" -p"${db_password}" "${db_name}" < "@abs_top_srcdir@/src/bin/admin/tests/dhcpdb_create_1.0.mysql"
+
+    # Now upgrade to schema 21.0.
+    mysql_upgrade_schema_to_version 21.0
+
+    # Now insert global parameter instances of reservation_mode.
+    sql=\
+"set @disable_audit = 1; \
+ insert into dhcp4_global_parameter (name,value, modification_ts,parameter_type)\
+    values ('reservation-mode', 'off', current_time(),4);
+ insert into dhcp6_global_parameter (name,value, modification_ts,parameter_type)\
+    values ('reservation-mode', 'off', current_time(),4);"
+
+    run_statement "insert reservation_mode parameters" "$sql"
+
+    # Verify the inserted record counts.
+    qry="select count(*) from dhcp4_global_parameter where name like '%reservation-mode%';"
+    run_statement "#get 4_global parameter count before update" "$qry" 1
+
+    qry="select count(*) from dhcp6_global_parameter where name like '%reservation-mode%';"
+    run_statement "#get 6_global parameter count before update" "$qry" 1
+
+    qry="select count(*) from dhcp4_global_parameter where name='reservations-in-subnet' AND value='false' AND parameter_type=2;"
+    run_statement "#get exact 4_global parameter count before update" "$qry" 0
+
+    qry="select count(*) from dhcp6_global_parameter where name='reservations-in-subnet' AND value='false' AND parameter_type=2;"
+    run_statement "#get exact 6_global parameter count before update" "$qry" 0
+
+    # Upgrade to schema 22.0
+    mysql_upgrade_schema_to_version 22.0
+
+    # Verify the record have been removed.
+    qry="select count(*) from dhcp4_global_parameter where name like '%reservation-mode%';"
+    run_statement "#get 4_global parameter count after update" "$qry" 0
+
+    qry="select count(*) from dhcp6_global_parameter where name like '%reservation-mode%';"
+    run_statement "#get 6_global parameter count after update" "$qry" 0
+
+    qry="select count(*) from dhcp4_global_parameter where name='reservations-in-subnet' AND value='false' AND parameter_type=2;"
+    run_statement "#get exact 4_global parameter count after update" "$qry" 1
+
+    qry="select count(*) from dhcp6_global_parameter where name='reservations-in-subnet' AND value='false' AND parameter_type=2;"
+    run_statement "#get exact 6_global parameter count after update" "$qry" 1
+
+    # Let's wipe the whole database
+    mysql_wipe
+
+    test_finish 0
+}
+
+# Verifies that deprecated reservation_mode "all" is migrated.
+mysql_reservation_mode_all_parameters_test() {
+    test_start "mysql.reservation_mode_all_parameters_test"
+
+    # Let's wipe the whole database
+    mysql_wipe
+
+    # We need to create an older database.
+    # Initialize database to schema 1.0.
+    mysql -u"${db_user}" -p"${db_password}" "${db_name}" < "@abs_top_srcdir@/src/bin/admin/tests/dhcpdb_create_1.0.mysql"
+
+    # Now upgrade to schema 21.0.
+    mysql_upgrade_schema_to_version 21.0
+
+    # Now insert global parameter instances of reservation_mode.
+    sql=\
+"set @disable_audit = 1; \
+ insert into dhcp4_global_parameter (name,value, modification_ts,parameter_type)\
+    values ('reservation-mode', 'all', current_time(),4);
+ insert into dhcp6_global_parameter (name,value, modification_ts,parameter_type)\
+    values ('reservation-mode', 'all', current_time(),4);"
+
+    run_statement "insert reservation_mode parameters" "$sql"
+
+    # Verify the inserted record counts.
+    qry="select count(*) from dhcp4_global_parameter where name like '%reservation-mode%';"
+    run_statement "#get 4_global parameter count before update" "$qry" 1
+
+    qry="select count(*) from dhcp6_global_parameter where name like '%reservation-mode%';"
+    run_statement "#get 6_global parameter count before update" "$qry" 1
+
+    qry="select count(*) from dhcp4_global_parameter where name='reservations-in-subnet' AND value='true' AND parameter_type=2;"
+    run_statement "#get exact 4_global parameter count before update" "$qry" 0
+
+    qry="select count(*) from dhcp6_global_parameter where name='reservations-in-subnet' AND value='true' AND parameter_type=2;"
+    run_statement "#get exact 6_global parameter count before update" "$qry" 0
+
+    # Upgrade to schema 22.0
+    mysql_upgrade_schema_to_version 22.0
+
+    # Verify the record have been removed.
+    qry="select count(*) from dhcp4_global_parameter where name like '%reservation-mode%';"
+    run_statement "#get 4_global parameter count after update" "$qry" 0
+
+    qry="select count(*) from dhcp6_global_parameter where name like '%reservation-mode%';"
+    run_statement "#get 6_global parameter count after update" "$qry" 0
+
+    qry="select count(*) from dhcp4_global_parameter where name='reservations-in-subnet' AND value='true' AND parameter_type=2;"
+    run_statement "#get exact 4_global parameter count after update" "$qry" 1
+
+    qry="select count(*) from dhcp6_global_parameter where name='reservations-in-subnet' AND value='true' AND parameter_type=2;"
+    run_statement "#get exact 6_global parameter count after update" "$qry" 1
+
+    # Let's wipe the whole database
+    mysql_wipe
+
+    test_finish 0
+}
+
+# Verifies that deprecated reservation_mode "global" is migrated.
+mysql_reservation_mode_global_parameters_test() {
+    test_start "mysql.reservation_mode_global_parameters_test"
+
+    # Let's wipe the whole database
+    mysql_wipe
+
+    # We need to create an older database.
+    # Initialize database to schema 1.0.
+    mysql -u"${db_user}" -p"${db_password}" "${db_name}" < "@abs_top_srcdir@/src/bin/admin/tests/dhcpdb_create_1.0.mysql"
+
+    # Now upgrade to schema 21.0.
+    mysql_upgrade_schema_to_version 21.0
+
+    # Now insert global parameter instances of reservation_mode.
+    sql=\
+"set @disable_audit = 1; \
+ insert into dhcp4_global_parameter (name,value, modification_ts,parameter_type)\
+    values ('reservation-mode', 'global', current_time(),4);
+ insert into dhcp6_global_parameter (name,value, modification_ts,parameter_type)\
+    values ('reservation-mode', 'global', current_time(),4);"
+
+    run_statement "insert reservation_mode parameters" "$sql"
+
+    # Verify the inserted record counts.
+    qry="select count(*) from dhcp4_global_parameter where name like '%reservation-mode%';"
+    run_statement "#get 4_global parameter count before update" "$qry" 1
+
+    qry="select count(*) from dhcp6_global_parameter where name like '%reservation-mode%';"
+    run_statement "#get 6_global parameter count before update" "$qry" 1
+
+    qry="select count(*) from dhcp4_global_parameter where name='reservations-global' AND value='true' AND parameter_type=2;"
+    run_statement "#get exact 4_global parameter count before update" "$qry" 0
+
+    qry="select count(*) from dhcp6_global_parameter where name='reservations-global' AND value='true' AND parameter_type=2;"
+    run_statement "#get exact 6_global parameter count before update" "$qry" 0
+
+    # Upgrade to schema 22.0
+    mysql_upgrade_schema_to_version 22.0
+
+    # Verify the record have been removed.
+    qry="select count(*) from dhcp4_global_parameter where name like '%reservation-mode%';"
+    run_statement "#get 4_global parameter count after update" "$qry" 0
+
+    qry="select count(*) from dhcp6_global_parameter where name like '%reservation-mode%';"
+    run_statement "#get 6_global parameter count after update" "$qry" 0
+
+    qry="select count(*) from dhcp4_global_parameter where name='reservations-global' AND value='true' AND parameter_type=2;"
+    run_statement "#get exact 4_global parameter count after update" "$qry" 1
+
+    qry="select count(*) from dhcp6_global_parameter where name='reservations-global' AND value='true' AND parameter_type=2;"
+    run_statement "#get exact 6_global parameter count after update" "$qry" 1
+
+    # Let's wipe the whole database
+    mysql_wipe
+
+    test_finish 0
+}
+
+# Verifies that deprecated reservation_mode "out-of-pool" is migrated.
+mysql_reservation_mode_out_of_pool_parameters_test() {
+    test_start "mysql.reservation_mode_out_of_pool_parameters_test"
+
+    # Let's wipe the whole database
+    mysql_wipe
+
+    # We need to create an older database.
+    # Initialize database to schema 1.0.
+    mysql -u"${db_user}" -p"${db_password}" "${db_name}" < "@abs_top_srcdir@/src/bin/admin/tests/dhcpdb_create_1.0.mysql"
+
+    # Now upgrade to schema 21.0.
+    mysql_upgrade_schema_to_version 21.0
+
+    # Now insert global parameter instances of reservation_mode.
+    sql=\
+"set @disable_audit = 1; \
+ insert into dhcp4_global_parameter (name,value, modification_ts,parameter_type)\
+    values ('reservation-mode', 'out-of-pool', current_time(),4);
+ insert into dhcp6_global_parameter (name,value, modification_ts,parameter_type)\
+    values ('reservation-mode', 'out-of-pool', current_time(),4);"
+
+    run_statement "insert reservation_mode parameters" "$sql"
+
+    # Verify the inserted record counts.
+    qry="select count(*) from dhcp4_global_parameter where name like '%reservation-mode%';"
+    run_statement "#get 4_global parameter count before update" "$qry" 1
+
+    qry="select count(*) from dhcp6_global_parameter where name like '%reservation-mode%';"
+    run_statement "#get 6_global parameter count before update" "$qry" 1
+
+    qry="select count(*) from dhcp4_global_parameter where name='reservations-out-of-pool' AND value='true' AND parameter_type=2;"
+    run_statement "#get exact 4_global parameter count before update" "$qry" 0
+
+    qry="select count(*) from dhcp6_global_parameter where name='reservations-out-of-pool' AND value='true' AND parameter_type=2;"
+    run_statement "#get exact 6_global parameter count before update" "$qry" 0
+
+    # Upgrade to schema 22.0
+    mysql_upgrade_schema_to_version 22.0
+
+    # Verify the record have been removed.
+    qry="select count(*) from dhcp4_global_parameter where name like '%reservation-mode%';"
+    run_statement "#get 4_global parameter count after update" "$qry" 0
+
+    qry="select count(*) from dhcp6_global_parameter where name like '%reservation-mode%';"
+    run_statement "#get 6_global parameter count after update" "$qry" 0
+
+    qry="select count(*) from dhcp4_global_parameter where name='reservations-out-of-pool' AND value='true' AND parameter_type=2;"
+    run_statement "#get exact 4_global parameter count after update" "$qry" 1
+
+    qry="select count(*) from dhcp6_global_parameter where name='reservations-out-of-pool' AND value='true' AND parameter_type=2;"
+    run_statement "#get exact 6_global parameter count after update" "$qry" 1
 
     # Let's wipe the whole database
     mysql_wipe
@@ -3025,3 +3320,8 @@ mysql_update_empty_duid_test
 mysql_update_v6_addresses_to_binary
 mysql_ddns_conflict_resolution_mode_update_test
 mysql_dhcp_ddns_global_parameters_test
+mysql_reservation_mode_disabled_parameters_test
+mysql_reservation_mode_off_parameters_test
+mysql_reservation_mode_all_parameters_test
+mysql_reservation_mode_global_parameters_test
+mysql_reservation_mode_out_of_pool_parameters_test

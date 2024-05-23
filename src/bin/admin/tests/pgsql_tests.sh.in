@@ -2098,8 +2098,8 @@ insert into ipv6_reservations (address, prefix_len, type, dhcp6_iaid, host_id) \
 }
 
 # Verifies that you can upgrade from an earlier version and
-# that reservation_mode values in subnet and shared network tables are
-# converted to new reservations flags.
+# that CB global parameter entries for 'ddns-use-conflict-resolution'
+# will get translated to 'ddns-conflict-resolution-mode'.
 pgsql_ddns_conflict_resolution_mode_update_test() {
     test_start "pgsql.ddns_conflict_resolution_mode_update_test"
 
@@ -2228,10 +2228,325 @@ pgsql_dhcp_ddns_global_parameters_test() {
 
     # Verify the record have been removed.
     qry="select count(*) from dhcp4_global_parameter where name like '%dhcp-ddns%';"
-    run_statement "#get 4_global parameter count before update" "$qry" 0
+    run_statement "#get 4_global parameter count after update" "$qry" 0
 
     qry="select count(*) from dhcp6_global_parameter where name like '%dhcp-ddns%';"
-    run_statement "#get 6_global parameter count before update" "$qry" 0
+    run_statement "#get 6_global parameter count after update" "$qry" 0
+
+    # Let's wipe the whole database
+    pgsql_wipe
+
+    test_finish 0
+}
+
+# Verifies that deprecated reservation_mode "disabled" is migrated.
+pgsql_reservation_mode_disabled_parameters_test() {
+    test_start "pgsql.reservation_mode_disabled_parameters_test"
+
+    # Let's wipe the whole database
+    pgsql_wipe
+
+    # We need to create an older database with lease data so we can
+    # verify the upgrade mechanisms which prepopulate the lease stat
+    # tables.
+    #
+    # Initialize database to schema 1.0.
+    pgsql_execute_script "@abs_top_srcdir@/src/bin/admin/tests/dhcpdb_create_1.0.pgsql"
+    assert_eq 0 "${EXIT_CODE}" "cannot initialize 1.0 database, expected exit code: %d, actual: %d"
+
+    # Now upgrade to schema 21.0
+    pgsql_upgrade_schema_to_version 21.0
+
+    # Now insert global parameter instances of reservation_mode.
+    sql=\
+"select set_config('kea.disable_audit', 'true', false);\
+ insert into dhcp4_global_parameter (name,value, modification_ts,parameter_type)\
+    values ('reservation-mode', 'disabled', current_timestamp,4);
+ insert into dhcp6_global_parameter (name,value, modification_ts,parameter_type)\
+    values ('reservation-mode', 'disabled', current_timestamp,4);"
+
+    run_statement "insert reservation_mode parameters" "$sql"
+
+    # Verify the inserted record counts.
+    qry="select count(*) from dhcp4_global_parameter where name like '%reservation-mode%';"
+    run_statement "#get 4_global parameter count before update" "$qry" 1
+
+    qry="select count(*) from dhcp6_global_parameter where name like '%reservation-mode%';"
+    run_statement "#get 6_global parameter count before update" "$qry" 1
+
+    qry="select count(*) from dhcp4_global_parameter where name='reservations-in-subnet' AND value='false' AND parameter_type=2;"
+    run_statement "#get exact 4_global parameter count before update" "$qry" 0
+
+    qry="select count(*) from dhcp6_global_parameter where name='reservations-in-subnet' AND value='false' AND parameter_type=2;"
+    run_statement "#get exact 6_global parameter count before update" "$qry" 0
+
+    # Upgrade to schema 22.0
+    pgsql_upgrade_schema_to_version 22.0
+
+    # Verify the record have been removed.
+    qry="select count(*) from dhcp4_global_parameter where name like '%reservation-mode%';"
+    run_statement "#get 4_global parameter count after update" "$qry" 0
+
+    qry="select count(*) from dhcp6_global_parameter where name like '%reservation-mode%';"
+    run_statement "#get 6_global parameter count after update" "$qry" 0
+
+    qry="select count(*) from dhcp4_global_parameter where name='reservations-in-subnet' AND value='false' AND parameter_type=2;"
+    run_statement "#get exact 4_global parameter count after update" "$qry" 1
+
+    qry="select count(*) from dhcp6_global_parameter where name='reservations-in-subnet' AND value='false' AND parameter_type=2;"
+    run_statement "#get exact 6_global parameter count after update" "$qry" 1
+
+    # Let's wipe the whole database
+    pgsql_wipe
+
+    test_finish 0
+}
+
+# Verifies that deprecated reservation_mode "off" is migrated.
+pgsql_reservation_mode_off_parameters_test() {
+    test_start "pgsql.reservation_mode_off_parameters_test"
+
+    # Let's wipe the whole database
+    pgsql_wipe
+
+    # We need to create an older database with lease data so we can
+    # verify the upgrade mechanisms which prepopulate the lease stat
+    # tables.
+    #
+    # Initialize database to schema 1.0.
+    pgsql_execute_script "@abs_top_srcdir@/src/bin/admin/tests/dhcpdb_create_1.0.pgsql"
+    assert_eq 0 "${EXIT_CODE}" "cannot initialize 1.0 database, expected exit code: %d, actual: %d"
+
+    # Now upgrade to schema 21.0
+    pgsql_upgrade_schema_to_version 21.0
+
+    # Now insert global parameter instances of reservation_mode.
+    sql=\
+"select set_config('kea.disable_audit', 'true', false);\
+ insert into dhcp4_global_parameter (name,value, modification_ts,parameter_type)\
+    values ('reservation-mode', 'off', current_timestamp,4);
+ insert into dhcp6_global_parameter (name,value, modification_ts,parameter_type)\
+    values ('reservation-mode', 'off', current_timestamp,4);"
+
+    run_statement "insert reservation_mode parameters" "$sql"
+
+    # Verify the inserted record counts.
+    qry="select count(*) from dhcp4_global_parameter where name like '%reservation-mode%';"
+    run_statement "#get 4_global parameter count before update" "$qry" 1
+
+    qry="select count(*) from dhcp6_global_parameter where name like '%reservation-mode%';"
+    run_statement "#get 6_global parameter count before update" "$qry" 1
+
+    qry="select count(*) from dhcp4_global_parameter where name='reservations-in-subnet' AND value='false' AND parameter_type=2;"
+    run_statement "#get exact 4_global parameter count before update" "$qry" 0
+
+    qry="select count(*) from dhcp6_global_parameter where name='reservations-in-subnet' AND value='false' AND parameter_type=2;"
+    run_statement "#get exact 6_global parameter count before update" "$qry" 0
+
+    # Upgrade to schema 22.0
+    pgsql_upgrade_schema_to_version 22.0
+
+    # Verify the record have been removed.
+    qry="select count(*) from dhcp4_global_parameter where name like '%reservation-mode%';"
+    run_statement "#get 4_global parameter count after update" "$qry" 0
+
+    qry="select count(*) from dhcp6_global_parameter where name like '%reservation-mode%';"
+    run_statement "#get 6_global parameter count after update" "$qry" 0
+
+    qry="select count(*) from dhcp4_global_parameter where name='reservations-in-subnet' AND value='false' AND parameter_type=2;"
+    run_statement "#get exact 4_global parameter count after update" "$qry" 1
+
+    qry="select count(*) from dhcp6_global_parameter where name='reservations-in-subnet' AND value='false' AND parameter_type=2;"
+    run_statement "#get exact 6_global parameter count after update" "$qry" 1
+
+    # Let's wipe the whole database
+    pgsql_wipe
+
+    test_finish 0
+}
+
+# Verifies that deprecated reservation_mode "all" is migrated.
+pgsql_reservation_mode_all_parameters_test() {
+    test_start "pgsql.reservation_mode_all_parameters_test"
+
+    # Let's wipe the whole database
+    pgsql_wipe
+
+    # We need to create an older database with lease data so we can
+    # verify the upgrade mechanisms which prepopulate the lease stat
+    # tables.
+    #
+    # Initialize database to schema 1.0.
+    pgsql_execute_script "@abs_top_srcdir@/src/bin/admin/tests/dhcpdb_create_1.0.pgsql"
+    assert_eq 0 "${EXIT_CODE}" "cannot initialize 1.0 database, expected exit code: %d, actual: %d"
+
+    # Now upgrade to schema 21.0
+    pgsql_upgrade_schema_to_version 21.0
+
+    # Now insert global parameter instances of reservation_mode.
+    sql=\
+"select set_config('kea.disable_audit', 'true', false);\
+ insert into dhcp4_global_parameter (name,value, modification_ts,parameter_type)\
+    values ('reservation-mode', 'all', current_timestamp,4);
+ insert into dhcp6_global_parameter (name,value, modification_ts,parameter_type)\
+    values ('reservation-mode', 'all', current_timestamp,4);"
+
+    run_statement "insert reservation_mode parameters" "$sql"
+
+    # Verify the inserted record counts.
+    qry="select count(*) from dhcp4_global_parameter where name like '%reservation-mode%';"
+    run_statement "#get 4_global parameter count before update" "$qry" 1
+
+    qry="select count(*) from dhcp6_global_parameter where name like '%reservation-mode%';"
+    run_statement "#get 6_global parameter count before update" "$qry" 1
+
+    qry="select count(*) from dhcp4_global_parameter where name='reservations-in-subnet' AND value='true' AND parameter_type=2;"
+    run_statement "#get exact 4_global parameter count before update" "$qry" 0
+
+    qry="select count(*) from dhcp6_global_parameter where name='reservations-in-subnet' AND value='true' AND parameter_type=2;"
+    run_statement "#get exact 6_global parameter count before update" "$qry" 0
+
+    # Upgrade to schema 22.0
+    pgsql_upgrade_schema_to_version 22.0
+
+    # Verify the record have been removed.
+    qry="select count(*) from dhcp4_global_parameter where name like '%reservation-mode%';"
+    run_statement "#get 4_global parameter count after update" "$qry" 0
+
+    qry="select count(*) from dhcp6_global_parameter where name like '%reservation-mode%';"
+    run_statement "#get 6_global parameter count after update" "$qry" 0
+
+    qry="select count(*) from dhcp4_global_parameter where name='reservations-in-subnet' AND value='true' AND parameter_type=2;"
+    run_statement "#get exact 4_global parameter count after update" "$qry" 1
+
+    qry="select count(*) from dhcp6_global_parameter where name='reservations-in-subnet' AND value='true' AND parameter_type=2;"
+    run_statement "#get exact 6_global parameter count after update" "$qry" 1
+
+    # Let's wipe the whole database
+    pgsql_wipe
+
+    test_finish 0
+}
+
+# Verifies that deprecated reservation_mode "global" is migrated.
+pgsql_reservation_mode_global_parameters_test() {
+    test_start "pgsql.reservation_mode_global_parameters_test"
+
+    # Let's wipe the whole database
+    pgsql_wipe
+
+    # We need to create an older database with lease data so we can
+    # verify the upgrade mechanisms which prepopulate the lease stat
+    # tables.
+    #
+    # Initialize database to schema 1.0.
+    pgsql_execute_script "@abs_top_srcdir@/src/bin/admin/tests/dhcpdb_create_1.0.pgsql"
+    assert_eq 0 "${EXIT_CODE}" "cannot initialize 1.0 database, expected exit code: %d, actual: %d"
+
+    # Now upgrade to schema 21.0
+    pgsql_upgrade_schema_to_version 21.0
+
+    # Now insert global parameter instances of reservation_mode.
+    sql=\
+"select set_config('kea.disable_audit', 'true', false);\
+ insert into dhcp4_global_parameter (name,value, modification_ts,parameter_type)\
+    values ('reservation-mode', 'global', current_timestamp,4);
+ insert into dhcp6_global_parameter (name,value, modification_ts,parameter_type)\
+    values ('reservation-mode', 'global', current_timestamp,4);"
+
+    run_statement "insert reservation_mode parameters" "$sql"
+
+    # Verify the inserted record counts.
+    qry="select count(*) from dhcp4_global_parameter where name like '%reservation-mode%';"
+    run_statement "#get 4_global parameter count before update" "$qry" 1
+
+    qry="select count(*) from dhcp6_global_parameter where name like '%reservation-mode%';"
+    run_statement "#get 6_global parameter count before update" "$qry" 1
+
+    qry="select count(*) from dhcp4_global_parameter where name='reservations-global' AND value='true' AND parameter_type=2;"
+    run_statement "#get exact 4_global parameter count before update" "$qry" 0
+
+    qry="select count(*) from dhcp6_global_parameter where name='reservations-global' AND value='true' AND parameter_type=2;"
+    run_statement "#get exact 6_global parameter count before update" "$qry" 0
+
+    # Upgrade to schema 22.0
+    pgsql_upgrade_schema_to_version 22.0
+
+    # Verify the record have been removed.
+    qry="select count(*) from dhcp4_global_parameter where name like '%reservation-mode%';"
+    run_statement "#get 4_global parameter count after update" "$qry" 0
+
+    qry="select count(*) from dhcp6_global_parameter where name like '%reservation-mode%';"
+    run_statement "#get 6_global parameter count after update" "$qry" 0
+
+    qry="select count(*) from dhcp4_global_parameter where name='reservations-global' AND value='true' AND parameter_type=2;"
+    run_statement "#get exact 4_global parameter count after update" "$qry" 1
+
+    qry="select count(*) from dhcp6_global_parameter where name='reservations-global' AND value='true' AND parameter_type=2;"
+    run_statement "#get exact 6_global parameter count after update" "$qry" 1
+
+    # Let's wipe the whole database
+    pgsql_wipe
+
+    test_finish 0
+}
+
+# Verifies that deprecated reservation_mode "out-of-pool" is migrated.
+pgsql_reservation_mode_out_of_pool_parameters_test() {
+    test_start "pgsql.reservation_mode_out_of_pool_parameters_test"
+
+    # Let's wipe the whole database
+    pgsql_wipe
+
+    # We need to create an older database with lease data so we can
+    # verify the upgrade mechanisms which prepopulate the lease stat
+    # tables.
+    #
+    # Initialize database to schema 1.0.
+    pgsql_execute_script "@abs_top_srcdir@/src/bin/admin/tests/dhcpdb_create_1.0.pgsql"
+    assert_eq 0 "${EXIT_CODE}" "cannot initialize 1.0 database, expected exit code: %d, actual: %d"
+
+    # Now upgrade to schema 21.0
+    pgsql_upgrade_schema_to_version 21.0
+
+    # Now insert global parameter instances of reservation_mode.
+    sql=\
+"select set_config('kea.disable_audit', 'true', false);\
+ insert into dhcp4_global_parameter (name,value, modification_ts,parameter_type)\
+    values ('reservation-mode', 'out-of-pool', current_timestamp,4);
+ insert into dhcp6_global_parameter (name,value, modification_ts,parameter_type)\
+    values ('reservation-mode', 'out-of-pool', current_timestamp,4);"
+
+    run_statement "insert reservation_mode parameters" "$sql"
+
+    # Verify the inserted record counts.
+    qry="select count(*) from dhcp4_global_parameter where name like '%reservation-mode%';"
+    run_statement "#get 4_global parameter count before update" "$qry" 1
+
+    qry="select count(*) from dhcp6_global_parameter where name like '%reservation-mode%';"
+    run_statement "#get 6_global parameter count before update" "$qry" 1
+
+    qry="select count(*) from dhcp4_global_parameter where name='reservations-out-of-pool' AND value='true' AND parameter_type=2;"
+    run_statement "#get exact 4_global parameter count before update" "$qry" 0
+
+    qry="select count(*) from dhcp6_global_parameter where name='reservations-out-of-pool' AND value='true' AND parameter_type=2;"
+    run_statement "#get exact 6_global parameter count before update" "$qry" 0
+
+    # Upgrade to schema 22.0
+    pgsql_upgrade_schema_to_version 22.0
+
+    # Verify the record have been removed.
+    qry="select count(*) from dhcp4_global_parameter where name like '%reservation-mode%';"
+    run_statement "#get 4_global parameter count after update" "$qry" 0
+
+    qry="select count(*) from dhcp6_global_parameter where name like '%reservation-mode%';"
+    run_statement "#get 6_global parameter count after update" "$qry" 0
+
+    qry="select count(*) from dhcp4_global_parameter where name='reservations-out-of-pool' AND value='true' AND parameter_type=2;"
+    run_statement "#get exact 4_global parameter count after update" "$qry" 1
+
+    qry="select count(*) from dhcp6_global_parameter where name='reservations-out-of-pool' AND value='true' AND parameter_type=2;"
+    run_statement "#get exact 6_global parameter count after update" "$qry" 1
 
     # Let's wipe the whole database
     pgsql_wipe
@@ -2260,3 +2575,8 @@ pgsql_update_empty_duid_test
 pgsql_update_v6_addresses_to_binary
 pgsql_ddns_conflict_resolution_mode_update_test
 pgsql_dhcp_ddns_global_parameters_test
+pgsql_reservation_mode_disabled_parameters_test
+pgsql_reservation_mode_off_parameters_test
+pgsql_reservation_mode_all_parameters_test
+pgsql_reservation_mode_global_parameters_test
+pgsql_reservation_mode_out_of_pool_parameters_test

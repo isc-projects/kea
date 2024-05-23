@@ -5867,21 +5867,33 @@ ALTER TABLE lease6 MODIFY expire timestamp NULL;
 
 SET @disable_audit = 1;
 
-delete from dhcp4_global_parameter where name='dhcp-ddns.override-no-update';
-delete from dhcp4_global_parameter where name='dhcp-ddns.override-client-update';
-delete from dhcp4_global_parameter where name='dhcp-ddns.replace-client-name';
-delete from dhcp4_global_parameter where name='dhcp-ddns.generated-prefix';
-delete from dhcp4_global_parameter where name='dhcp-ddns.qualifying-suffix';
-delete from dhcp4_global_parameter where name='dhcp-ddns.hostname-char-set';
-delete from dhcp4_global_parameter where name='dhcp-ddns.hostname-char-replacement';
+DELETE FROM dhcp4_global_parameter WHERE name='dhcp-ddns.override-no-update';
+DELETE FROM dhcp4_global_parameter WHERE name='dhcp-ddns.override-client-update';
+DELETE FROM dhcp4_global_parameter WHERE name='dhcp-ddns.replace-client-name';
+DELETE FROM dhcp4_global_parameter WHERE name='dhcp-ddns.generated-prefix';
+DELETE FROM dhcp4_global_parameter WHERE name='dhcp-ddns.qualifying-suffix';
+DELETE FROM dhcp4_global_parameter WHERE name='dhcp-ddns.hostname-char-set';
+DELETE FROM dhcp4_global_parameter WHERE name='dhcp-ddns.hostname-char-replacement';
 
-delete from dhcp6_global_parameter where name='dhcp-ddns.override-no-update';
-delete from dhcp6_global_parameter where name='dhcp-ddns.override-client-update';
-delete from dhcp6_global_parameter where name='dhcp-ddns.replace-client-name';
-delete from dhcp6_global_parameter where name='dhcp-ddns.generated-prefix';
-delete from dhcp6_global_parameter where name='dhcp-ddns.qualifying-suffix';
-delete from dhcp6_global_parameter where name='dhcp-ddns.hostname-char-set';
-delete from dhcp6_global_parameter where name='dhcp-ddns.hostname-char-replacement';
+DELETE FROM dhcp6_global_parameter WHERE name='dhcp-ddns.override-no-update';
+DELETE FROM dhcp6_global_parameter WHERE name='dhcp-ddns.override-client-update';
+DELETE FROM dhcp6_global_parameter WHERE name='dhcp-ddns.replace-client-name';
+DELETE FROM dhcp6_global_parameter WHERE name='dhcp-ddns.generated-prefix';
+DELETE FROM dhcp6_global_parameter WHERE name='dhcp-ddns.qualifying-suffix';
+DELETE FROM dhcp6_global_parameter WHERE name='dhcp-ddns.hostname-char-set';
+DELETE FROM dhcp6_global_parameter WHERE name='dhcp-ddns.hostname-char-replacement';
+
+UPDATE dhcp4_global_parameter SET name='reservations-global', value='true', parameter_type=2 WHERE name='reservation-mode' AND value='global';
+UPDATE dhcp4_global_parameter SET name='reservations-in-subnet', value='true', parameter_type=2 WHERE name='reservation-mode' AND value='all';
+UPDATE dhcp4_global_parameter SET name='reservations-in-subnet', value='false', parameter_type=2 WHERE name='reservation-mode' AND value='disabled';
+UPDATE dhcp4_global_parameter SET name='reservations-in-subnet', value='false', parameter_type=2 WHERE name='reservation-mode' AND value='off';
+UPDATE dhcp4_global_parameter SET name='reservations-out-of-pool', value='true', parameter_type=2 WHERE name='reservation-mode' AND value='out-of-pool';
+
+UPDATE dhcp6_global_parameter SET name='reservations-global', value='true', parameter_type=2 WHERE name='reservation-mode' AND value='global';
+UPDATE dhcp6_global_parameter SET name='reservations-in-subnet', value='true', parameter_type=2 WHERE name='reservation-mode' AND value='all';
+UPDATE dhcp6_global_parameter SET name='reservations-in-subnet', value='false', parameter_type=2 WHERE name='reservation-mode' AND value='disabled';
+UPDATE dhcp6_global_parameter SET name='reservations-in-subnet', value='false', parameter_type=2 WHERE name='reservation-mode' AND value='off';
+UPDATE dhcp6_global_parameter SET name='reservations-out-of-pool', value='true', parameter_type=2 WHERE name='reservation-mode' AND value='out-of-pool';
 
 SET @disable_audit = 0;
 
