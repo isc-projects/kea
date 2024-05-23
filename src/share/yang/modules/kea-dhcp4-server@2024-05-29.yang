@@ -21,7 +21,8 @@ module kea-dhcp4-server {
                used to configure and manage a Kea DHCPv4 server.";
 
   revision 2024-05-29 {
-    description "Removed reservation-mode and added stash-agent-options.";
+    description "Removed reservation-mode and added
+                 ddns-conflict-resolution-mode and stash-agent-options.";
   }
 
   revision 2024-01-31 {

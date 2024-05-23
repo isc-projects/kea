@@ -128,7 +128,7 @@ Compiling With NETCONF
 
 .. code-block:: console
 
-    $ autoreconf -f -i
+    $ autoreconf -i
     $ ./configure --with-libyang --with-libyang-cpp --with-sysrepo --with-sysrepo-cpp
 
 .. note::

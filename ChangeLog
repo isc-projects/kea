@@ -1,3 +1,12 @@
+2243.	[func]		razvan
+	Updated yang modules: removed qualifying-suffix,
+	override-no-update, override-client-update,
+	replace-client-name, generated-prefix, hostname-char-set
+	and hostname-char-replacement from dhcp-ddns, removed
+	reservation-mode and added retry-on-startup,
+	stash-agent-options and ddns-conflict-resolution-mode.
+	(Gitlab #3301)
+
 2242.	[func]		razvan
 	Removed deprecated command: "libreload".
 	(Gitlab #2960)

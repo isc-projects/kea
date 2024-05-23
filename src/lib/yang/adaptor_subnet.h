@@ -20,7 +20,7 @@ namespace yang {
 ///      so the caller can decide if the second pass is needed.
 ///  -2- For a subnet without an ID, assigned the next unused ID.
 ///
-/// Note as all canonization adaptor it is optional, i.e., code should work
+/// Note as all canonization adaptors it is optional, i.e., code should work
 /// without it.
 class AdaptorSubnet {
 public:
