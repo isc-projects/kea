@@ -2883,14 +2883,14 @@ mysql_ddns_conflict_resolution_mode_update_test() {
     # Now insert global parameter instances of ddns-use-conflict-resolution.
     sql=\
 "set @disable_audit = 1; \
- insert into dhcp4_global_parameter (name,value, modification_ts,parameter_type)\
-    values ('ddns-use-conflict-resolution', 'false', current_time(),2);
- insert into dhcp4_global_parameter (name,value, modification_ts,parameter_type)\
-    values ('ddns-use-conflict-resolution', 'true', current_time(),2);
- insert into dhcp6_global_parameter (name,value, modification_ts,parameter_type)\
-    values ('ddns-use-conflict-resolution', 'false', current_time(),2);
- insert into dhcp6_global_parameter (name,value, modification_ts,parameter_type)\
-    values ('ddns-use-conflict-resolution', 'true', current_time(),2);"
+ insert into dhcp4_global_parameter (name,value,modification_ts,parameter_type)\
+    values ('ddns-use-conflict-resolution','0',current_time(),2);
+ insert into dhcp4_global_parameter (name,value,modification_ts,parameter_type)\
+    values ('ddns-use-conflict-resolution','1',current_time(),2);
+ insert into dhcp6_global_parameter (name,value,modification_ts,parameter_type)\
+    values ('ddns-use-conflict-resolution','0',current_time(),2);
+ insert into dhcp6_global_parameter (name,value,modification_ts,parameter_type)\
+    values ('ddns-use-conflict-resolution','1',current_time(),2);"
 
     run_statement "insert ddns_conflict_resolution_mode" "$sql"
 
@@ -2944,34 +2944,34 @@ mysql_dhcp_ddns_global_parameters_test() {
     # Now insert global parameter instances of dhcp-ddns.
     sql=\
 "set @disable_audit = 1; \
- insert into dhcp4_global_parameter (name,value, modification_ts,parameter_type)\
-    values ('dhcp-ddns.generated-prefix', 'my-host', current_time(),4);
- insert into dhcp4_global_parameter (name,value, modification_ts,parameter_type)\
-    values ('dhcp-ddns.qualifying-suffix', '', current_time(),4);
- insert into dhcp4_global_parameter (name,value, modification_ts,parameter_type)\
-    values ('dhcp-ddns.override-no-update', 'true', current_time(),2);
- insert into dhcp4_global_parameter (name,value, modification_ts,parameter_type)\
-    values ('dhcp-ddns.override-client-update', 'true', current_time(),2);
- insert into dhcp4_global_parameter (name,value, modification_ts,parameter_type)\
-    values ('dhcp-ddns.replace-client-name', 'never', current_time(),4);
- insert into dhcp4_global_parameter (name,value, modification_ts,parameter_type)\
-    values ('dhcp-ddns.hostname-char-replacement', '', current_time(),4);
- insert into dhcp4_global_parameter (name,value, modification_ts,parameter_type)\
-    values ('dhcp-ddns.hostname-char-set', '[^A-Za-z0-9.-]', current_time(),4);
- insert into dhcp6_global_parameter (name,value, modification_ts,parameter_type)\
-    values ('dhcp-ddns.generated-prefix', 'my-host', current_time(),4);
- insert into dhcp6_global_parameter (name,value, modification_ts,parameter_type)\
-    values ('dhcp-ddns.qualifying-suffix', '', current_time(),4);
- insert into dhcp6_global_parameter (name,value, modification_ts,parameter_type)\
-    values ('dhcp-ddns.override-no-update', 'true', current_time(),2);
- insert into dhcp6_global_parameter (name,value, modification_ts,parameter_type)\
-    values ('dhcp-ddns.override-client-update', 'true', current_time(),2);
- insert into dhcp6_global_parameter (name,value, modification_ts,parameter_type)\
-    values ('dhcp-ddns.replace-client-name', 'never', current_time(),4);
- insert into dhcp6_global_parameter (name,value, modification_ts,parameter_type)\
-    values ('dhcp-ddns.hostname-char-replacement', '', current_time(),4);
- insert into dhcp6_global_parameter (name,value, modification_ts,parameter_type)\
-    values ('dhcp-ddns.hostname-char-set', '[^A-Za-z0-9.-]', current_time(),4);"
+ insert into dhcp4_global_parameter (name,value,modification_ts,parameter_type)\
+    values ('dhcp-ddns.generated-prefix','my-host',current_time(),4);
+ insert into dhcp4_global_parameter (name,value,modification_ts,parameter_type)\
+    values ('dhcp-ddns.qualifying-suffix','',current_time(),4);
+ insert into dhcp4_global_parameter (name,value,modification_ts,parameter_type)\
+    values ('dhcp-ddns.override-no-update','1',current_time(),2);
+ insert into dhcp4_global_parameter (name,value,modification_ts,parameter_type)\
+    values ('dhcp-ddns.override-client-update','1',current_time(),2);
+ insert into dhcp4_global_parameter (name,value,modification_ts,parameter_type)\
+    values ('dhcp-ddns.replace-client-name','never',current_time(),4);
+ insert into dhcp4_global_parameter (name,value,modification_ts,parameter_type)\
+    values ('dhcp-ddns.hostname-char-replacement','',current_time(),4);
+ insert into dhcp4_global_parameter (name,value,modification_ts,parameter_type)\
+    values ('dhcp-ddns.hostname-char-set','[^A-Za-z0-9.-]',current_time(),4);
+ insert into dhcp6_global_parameter (name,value,modification_ts,parameter_type)\
+    values ('dhcp-ddns.generated-prefix','my-host',current_time(),4);
+ insert into dhcp6_global_parameter (name,value,modification_ts,parameter_type)\
+    values ('dhcp-ddns.qualifying-suffix','',current_time(),4);
+ insert into dhcp6_global_parameter (name,value,modification_ts,parameter_type)\
+    values ('dhcp-ddns.override-no-update','1',current_time(),2);
+ insert into dhcp6_global_parameter (name,value,modification_ts,parameter_type)\
+    values ('dhcp-ddns.override-client-update','1',current_time(),2);
+ insert into dhcp6_global_parameter (name,value,modification_ts,parameter_type)\
+    values ('dhcp-ddns.replace-client-name','never',current_time(),4);
+ insert into dhcp6_global_parameter (name,value,modification_ts,parameter_type)\
+    values ('dhcp-ddns.hostname-char-replacement','',current_time(),4);
+ insert into dhcp6_global_parameter (name,value,modification_ts,parameter_type)\
+    values ('dhcp-ddns.hostname-char-set','[^A-Za-z0-9.-]',current_time(),4);"
 
     run_statement "insert dhcp-ddns map parameters" "$sql"
 
@@ -3015,10 +3015,10 @@ mysql_reservation_mode_disabled_parameters_test() {
     # Now insert global parameter instances of reservation_mode.
     sql=\
 "set @disable_audit = 1; \
- insert into dhcp4_global_parameter (name,value, modification_ts,parameter_type)\
-    values ('reservation-mode', 'disabled', current_time(),4);
- insert into dhcp6_global_parameter (name,value, modification_ts,parameter_type)\
-    values ('reservation-mode', 'disabled', current_time(),4);"
+ insert into dhcp4_global_parameter (name,value,modification_ts,parameter_type)\
+    values ('reservation-mode','disabled',current_time(),4);
+ insert into dhcp6_global_parameter (name,value,modification_ts,parameter_type)\
+    values ('reservation-mode','disabled',current_time(),4);"
 
     run_statement "insert reservation_mode parameters" "$sql"
 
@@ -3029,10 +3029,10 @@ mysql_reservation_mode_disabled_parameters_test() {
     qry="select count(*) from dhcp6_global_parameter where name like '%reservation-mode%';"
     run_statement "#get 6_global parameter count before update" "$qry" 1
 
-    qry="select count(*) from dhcp4_global_parameter where name='reservations-in-subnet' AND value='false' AND parameter_type=2;"
+    qry="select count(*) from dhcp4_global_parameter where name='reservations-in-subnet' AND value='0' AND parameter_type=2;"
     run_statement "#get exact 4_global parameter count before update" "$qry" 0
 
-    qry="select count(*) from dhcp6_global_parameter where name='reservations-in-subnet' AND value='false' AND parameter_type=2;"
+    qry="select count(*) from dhcp6_global_parameter where name='reservations-in-subnet' AND value='0' AND parameter_type=2;"
     run_statement "#get exact 6_global parameter count before update" "$qry" 0
 
     # Upgrade to schema 22.0
@@ -3045,10 +3045,10 @@ mysql_reservation_mode_disabled_parameters_test() {
     qry="select count(*) from dhcp6_global_parameter where name like '%reservation-mode%';"
     run_statement "#get 6_global parameter count after update" "$qry" 0
 
-    qry="select count(*) from dhcp4_global_parameter where name='reservations-in-subnet' AND value='false' AND parameter_type=2;"
+    qry="select count(*) from dhcp4_global_parameter where name='reservations-in-subnet' AND value='0' AND parameter_type=2;"
     run_statement "#get exact 4_global parameter count after update" "$qry" 1
 
-    qry="select count(*) from dhcp6_global_parameter where name='reservations-in-subnet' AND value='false' AND parameter_type=2;"
+    qry="select count(*) from dhcp6_global_parameter where name='reservations-in-subnet' AND value='0' AND parameter_type=2;"
     run_statement "#get exact 6_global parameter count after update" "$qry" 1
 
     # Let's wipe the whole database
@@ -3074,10 +3074,10 @@ mysql_reservation_mode_off_parameters_test() {
     # Now insert global parameter instances of reservation_mode.
     sql=\
 "set @disable_audit = 1; \
- insert into dhcp4_global_parameter (name,value, modification_ts,parameter_type)\
-    values ('reservation-mode', 'off', current_time(),4);
- insert into dhcp6_global_parameter (name,value, modification_ts,parameter_type)\
-    values ('reservation-mode', 'off', current_time(),4);"
+ insert into dhcp4_global_parameter (name,value,modification_ts,parameter_type)\
+    values ('reservation-mode','off',current_time(),4);
+ insert into dhcp6_global_parameter (name,value,modification_ts,parameter_type)\
+    values ('reservation-mode','off',current_time(),4);"
 
     run_statement "insert reservation_mode parameters" "$sql"
 
@@ -3088,10 +3088,10 @@ mysql_reservation_mode_off_parameters_test() {
     qry="select count(*) from dhcp6_global_parameter where name like '%reservation-mode%';"
     run_statement "#get 6_global parameter count before update" "$qry" 1
 
-    qry="select count(*) from dhcp4_global_parameter where name='reservations-in-subnet' AND value='false' AND parameter_type=2;"
+    qry="select count(*) from dhcp4_global_parameter where name='reservations-in-subnet' AND value='0' AND parameter_type=2;"
     run_statement "#get exact 4_global parameter count before update" "$qry" 0
 
-    qry="select count(*) from dhcp6_global_parameter where name='reservations-in-subnet' AND value='false' AND parameter_type=2;"
+    qry="select count(*) from dhcp6_global_parameter where name='reservations-in-subnet' AND value='0' AND parameter_type=2;"
     run_statement "#get exact 6_global parameter count before update" "$qry" 0
 
     # Upgrade to schema 22.0
@@ -3104,10 +3104,10 @@ mysql_reservation_mode_off_parameters_test() {
     qry="select count(*) from dhcp6_global_parameter where name like '%reservation-mode%';"
     run_statement "#get 6_global parameter count after update" "$qry" 0
 
-    qry="select count(*) from dhcp4_global_parameter where name='reservations-in-subnet' AND value='false' AND parameter_type=2;"
+    qry="select count(*) from dhcp4_global_parameter where name='reservations-in-subnet' AND value='0' AND parameter_type=2;"
     run_statement "#get exact 4_global parameter count after update" "$qry" 1
 
-    qry="select count(*) from dhcp6_global_parameter where name='reservations-in-subnet' AND value='false' AND parameter_type=2;"
+    qry="select count(*) from dhcp6_global_parameter where name='reservations-in-subnet' AND value='0' AND parameter_type=2;"
     run_statement "#get exact 6_global parameter count after update" "$qry" 1
 
     # Let's wipe the whole database
@@ -3133,10 +3133,10 @@ mysql_reservation_mode_all_parameters_test() {
     # Now insert global parameter instances of reservation_mode.
     sql=\
 "set @disable_audit = 1; \
- insert into dhcp4_global_parameter (name,value, modification_ts,parameter_type)\
-    values ('reservation-mode', 'all', current_time(),4);
- insert into dhcp6_global_parameter (name,value, modification_ts,parameter_type)\
-    values ('reservation-mode', 'all', current_time(),4);"
+ insert into dhcp4_global_parameter (name,value,modification_ts,parameter_type)\
+    values ('reservation-mode','all',current_time(),4);
+ insert into dhcp6_global_parameter (name,value,modification_ts,parameter_type)\
+    values ('reservation-mode','all',current_time(),4);"
 
     run_statement "insert reservation_mode parameters" "$sql"
 
@@ -3147,10 +3147,10 @@ mysql_reservation_mode_all_parameters_test() {
     qry="select count(*) from dhcp6_global_parameter where name like '%reservation-mode%';"
     run_statement "#get 6_global parameter count before update" "$qry" 1
 
-    qry="select count(*) from dhcp4_global_parameter where name='reservations-in-subnet' AND value='true' AND parameter_type=2;"
+    qry="select count(*) from dhcp4_global_parameter where name='reservations-in-subnet' AND value='1' AND parameter_type=2;"
     run_statement "#get exact 4_global parameter count before update" "$qry" 0
 
-    qry="select count(*) from dhcp6_global_parameter where name='reservations-in-subnet' AND value='true' AND parameter_type=2;"
+    qry="select count(*) from dhcp6_global_parameter where name='reservations-in-subnet' AND value='1' AND parameter_type=2;"
     run_statement "#get exact 6_global parameter count before update" "$qry" 0
 
     # Upgrade to schema 22.0
@@ -3163,10 +3163,10 @@ mysql_reservation_mode_all_parameters_test() {
     qry="select count(*) from dhcp6_global_parameter where name like '%reservation-mode%';"
     run_statement "#get 6_global parameter count after update" "$qry" 0
 
-    qry="select count(*) from dhcp4_global_parameter where name='reservations-in-subnet' AND value='true' AND parameter_type=2;"
+    qry="select count(*) from dhcp4_global_parameter where name='reservations-in-subnet' AND value='1' AND parameter_type=2;"
     run_statement "#get exact 4_global parameter count after update" "$qry" 1
 
-    qry="select count(*) from dhcp6_global_parameter where name='reservations-in-subnet' AND value='true' AND parameter_type=2;"
+    qry="select count(*) from dhcp6_global_parameter where name='reservations-in-subnet' AND value='1' AND parameter_type=2;"
     run_statement "#get exact 6_global parameter count after update" "$qry" 1
 
     # Let's wipe the whole database
@@ -3192,10 +3192,10 @@ mysql_reservation_mode_global_parameters_test() {
     # Now insert global parameter instances of reservation_mode.
     sql=\
 "set @disable_audit = 1; \
- insert into dhcp4_global_parameter (name,value, modification_ts,parameter_type)\
-    values ('reservation-mode', 'global', current_time(),4);
- insert into dhcp6_global_parameter (name,value, modification_ts,parameter_type)\
-    values ('reservation-mode', 'global', current_time(),4);"
+ insert into dhcp4_global_parameter (name,value,modification_ts,parameter_type)\
+    values ('reservation-mode','global',current_time(),4);
+ insert into dhcp6_global_parameter (name,value,modification_ts,parameter_type)\
+    values ('reservation-mode','global',current_time(),4);"
 
     run_statement "insert reservation_mode parameters" "$sql"
 
@@ -3206,10 +3206,10 @@ mysql_reservation_mode_global_parameters_test() {
     qry="select count(*) from dhcp6_global_parameter where name like '%reservation-mode%';"
     run_statement "#get 6_global parameter count before update" "$qry" 1
 
-    qry="select count(*) from dhcp4_global_parameter where name='reservations-global' AND value='true' AND parameter_type=2;"
+    qry="select count(*) from dhcp4_global_parameter where name='reservations-global' AND value='1' AND parameter_type=2;"
     run_statement "#get exact 4_global parameter count before update" "$qry" 0
 
-    qry="select count(*) from dhcp6_global_parameter where name='reservations-global' AND value='true' AND parameter_type=2;"
+    qry="select count(*) from dhcp6_global_parameter where name='reservations-global' AND value='1' AND parameter_type=2;"
     run_statement "#get exact 6_global parameter count before update" "$qry" 0
 
     # Upgrade to schema 22.0
@@ -3222,10 +3222,10 @@ mysql_reservation_mode_global_parameters_test() {
     qry="select count(*) from dhcp6_global_parameter where name like '%reservation-mode%';"
     run_statement "#get 6_global parameter count after update" "$qry" 0
 
-    qry="select count(*) from dhcp4_global_parameter where name='reservations-global' AND value='true' AND parameter_type=2;"
+    qry="select count(*) from dhcp4_global_parameter where name='reservations-global' AND value='1' AND parameter_type=2;"
     run_statement "#get exact 4_global parameter count after update" "$qry" 1
 
-    qry="select count(*) from dhcp6_global_parameter where name='reservations-global' AND value='true' AND parameter_type=2;"
+    qry="select count(*) from dhcp6_global_parameter where name='reservations-global' AND value='1' AND parameter_type=2;"
     run_statement "#get exact 6_global parameter count after update" "$qry" 1
 
     # Let's wipe the whole database
@@ -3251,10 +3251,10 @@ mysql_reservation_mode_out_of_pool_parameters_test() {
     # Now insert global parameter instances of reservation_mode.
     sql=\
 "set @disable_audit = 1; \
- insert into dhcp4_global_parameter (name,value, modification_ts,parameter_type)\
-    values ('reservation-mode', 'out-of-pool', current_time(),4);
- insert into dhcp6_global_parameter (name,value, modification_ts,parameter_type)\
-    values ('reservation-mode', 'out-of-pool', current_time(),4);"
+ insert into dhcp4_global_parameter (name,value,modification_ts,parameter_type)\
+    values ('reservation-mode','out-of-pool',current_time(),4);
+ insert into dhcp6_global_parameter (name,value,modification_ts,parameter_type)\
+    values ('reservation-mode','out-of-pool',current_time(),4);"
 
     run_statement "insert reservation_mode parameters" "$sql"
 
@@ -3265,10 +3265,10 @@ mysql_reservation_mode_out_of_pool_parameters_test() {
     qry="select count(*) from dhcp6_global_parameter where name like '%reservation-mode%';"
     run_statement "#get 6_global parameter count before update" "$qry" 1
 
-    qry="select count(*) from dhcp4_global_parameter where name='reservations-out-of-pool' AND value='true' AND parameter_type=2;"
+    qry="select count(*) from dhcp4_global_parameter where name='reservations-out-of-pool' AND value='1' AND parameter_type=2;"
     run_statement "#get exact 4_global parameter count before update" "$qry" 0
 
-    qry="select count(*) from dhcp6_global_parameter where name='reservations-out-of-pool' AND value='true' AND parameter_type=2;"
+    qry="select count(*) from dhcp6_global_parameter where name='reservations-out-of-pool' AND value='1' AND parameter_type=2;"
     run_statement "#get exact 6_global parameter count before update" "$qry" 0
 
     # Upgrade to schema 22.0
@@ -3281,10 +3281,10 @@ mysql_reservation_mode_out_of_pool_parameters_test() {
     qry="select count(*) from dhcp6_global_parameter where name like '%reservation-mode%';"
     run_statement "#get 6_global parameter count after update" "$qry" 0
 
-    qry="select count(*) from dhcp4_global_parameter where name='reservations-out-of-pool' AND value='true' AND parameter_type=2;"
+    qry="select count(*) from dhcp4_global_parameter where name='reservations-out-of-pool' AND value='1' AND parameter_type=2;"
     run_statement "#get exact 4_global parameter count after update" "$qry" 1
 
-    qry="select count(*) from dhcp6_global_parameter where name='reservations-out-of-pool' AND value='true' AND parameter_type=2;"
+    qry="select count(*) from dhcp6_global_parameter where name='reservations-out-of-pool' AND value='1' AND parameter_type=2;"
     run_statement "#get exact 6_global parameter count after update" "$qry" 1
 
     # Let's wipe the whole database
