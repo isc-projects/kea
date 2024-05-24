@@ -121,7 +121,6 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
                  | reservations
                  | config_control
                  | server_tag
-                 | reservation_mode
                  | reservations_global
                  | reservations_in_subnet
                  | reservations_out_of_pool
@@ -510,7 +509,6 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
                   | client_class
                   | require_client_classes
                   | reservations
-                  | reservation_mode
                   | reservations_global
                   | reservations_in_subnet
                   | reservations_out_of_pool
@@ -567,13 +565,6 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
 
      reservations_out_of_pool ::= "reservations-out-of-pool" ":" BOOLEAN
 
-     reservation_mode ::= "reservation-mode" ":" hr_mode
-
-     hr_mode ::= "disabled"
-            | "out-of-pool"
-            | "global"
-            | "all"
-
      id ::= "id" ":" INTEGER
 
      shared_networks ::= "shared-networks" ":" "[" shared_networks_content "]"
@@ -603,7 +594,6 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
                          | server_hostname
                          | boot_file_name
                          | relay
-                         | reservation_mode
                          | reservations_global
                          | reservations_in_subnet
                          | reservations_out_of_pool
@@ -810,8 +800,6 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
 
      ip_address ::= "ip-address" ":" STRING
 
-     ip_addresses ::= "ip-addresses" ":" list_strings
-
      duid ::= "duid" ":" STRING
 
      hw_address ::= "hw-address" ":" STRING
@@ -828,8 +816,9 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
 
      relay ::= "relay" ":" "{" relay_map "}"
 
-     relay_map ::= ip_address
-              | ip_addresses
+     relay_map ::= ip_addresses
+
+     ip_addresses ::= "ip-addresses" ":" list_strings
 
      client_classes ::= "client-classes" ":" "[" client_classes_list "]"
 
@@ -926,13 +915,6 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
                     | max_queue_size
                     | ncr_protocol
                     | ncr_format
-                    | dep_override_no_update
-                    | dep_override_client_update
-                    | dep_replace_client_name
-                    | dep_generated_prefix
-                    | dep_qualifying_suffix
-                    | dep_hostname_char_set
-                    | dep_hostname_char_replacement
                     | user_context
                     | comment
                     | unknown_map_entry
@@ -955,20 +937,6 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
                        | "tcp"
 
      ncr_format ::= "ncr-format" ":" "JSON"
-
-     dep_qualifying_suffix ::= "qualifying-suffix" ":" STRING
-
-     dep_override_no_update ::= "override-no-update" ":" BOOLEAN
-
-     dep_override_client_update ::= "override-client-update" ":" BOOLEAN
-
-     dep_replace_client_name ::= "replace-client-name" ":" ddns_replace_client_name_value
-
-     dep_generated_prefix ::= "generated-prefix" ":" STRING
-
-     dep_hostname_char_set ::= "hostname-char-set" ":" STRING
-
-     dep_hostname_char_replacement ::= "hostname-char-replacement" ":" STRING
 
      config_control ::= "config-control" ":" "{" config_control_params "}"
 
