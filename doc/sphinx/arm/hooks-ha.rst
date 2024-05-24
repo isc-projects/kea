@@ -1823,31 +1823,6 @@ partner servers. If this step fails for any server, an error is returned.
 If that happens, the ``ha-maintenance-cancel`` command can be used to resume normal
 operations and fix the issue.
 
-
-Upgrading From Older HA Versions
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-To upgrade from an older HA hook library to the current version, the
-administrator must shut down one of the servers and rely on the failover
-mechanism to force the online server to transition to the ``partner-down`` state,
-where it starts serving all DHCP clients. Once the hook library on the first
-server is upgraded to a current version, the :isccmd:`ha-maintenance-start` command
-can be used to upgrade the second server.
-
-In such a case, shut down the server running the old version. Next, send the
-:isccmd:`ha-maintenance-start` command to the server that has been upgraded. This
-server should immediately transition to the ``partner-down`` state as it cannot
-communicate with its offline partner. In the ``partner-down`` state the first
-(upgraded) server will respond to all DHCP requests, allowing the administrator
-to perform the upgrade on the second server.
-
-.. note::
-
-   Do not send the :isccmd:`ha-maintenance-start` command while the server running the
-   old hook library is still online. The server receiving this command will
-   return an error.
-
-
 .. _ha-control-commands:
 
 Control Commands for High Availability
