@@ -1,3 +1,8 @@
+2247.	[build]		razvan
+	The library version numbers have been bumped up for the Kea 2.6.0
+	stable release.
+	(Gitlab #3430)
+
 2246.	[bug]		razvan
 	Permit configuring pool-id in pd-pools.
 	(Gitlab #3424)
