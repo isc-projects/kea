@@ -18,6 +18,17 @@ go to https://cloudsmith.io/~isc/repos, choose the desired Kea version,
 and then click the "Set Me Up" button. For detailed
 instructions, please refer to this `Knowledgebase article <https://kb.isc.org/docs/isc-kea-packages>`_.
 
+ISC maintains two types of repositories: stable and development.
+The stable repositories contain a single stable release (e.g.,
+kea-2-4 or kea-2-6) along with all its maintenance updates.
+Separate repositories were introduced to minimize the risk of
+unintentionally upgrading from one stable release to another.
+
+The development repository, kea-dev, includes current and
+future development releases, which ISC does not recommend
+for production use. Packages in the kea-dev repository are
+subject to cleanup, and older versions may be removed.
+
 Installation From Cloudsmith Packages
 -------------------------------------
 ISC provides Kea packages for Alpine, Debian, Fedora, RHEL, and Ubuntu.

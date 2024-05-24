@@ -58,7 +58,12 @@ easier to install Kea using native packages.
 
 1. Go to `Kea on cloudsmith.io <https://cloudsmith.io/~isc/repos/>`__.
 
-2. Choose the Cloudsmith repository e.g. |cloudsmith_repo| for Kea |version|.
+2. Choose the Cloudsmith repository e.g. |cloudsmith_repo| for Kea |version|. Or kea-2-4 for Kea 2.4.
+
+.. note::
+  All stable releases are stored in separate repositories, such as kea-2-4, kea-2-6, and so on.
+  All development releases, which are not recommended for production use,
+  are located in the kea-dev repository.
 
 3. Click on the arrow beside the "Set Me Up" button and select the desired OS flavor:
    Alpine, Debian, or RedHat.

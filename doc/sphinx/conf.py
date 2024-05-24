@@ -47,6 +47,10 @@ with open(config_ac_path) as f:
 version = release
 dashed_version_series='-'.join(version.split('.')[0:2])
 
+# now let's replace versions with odd minor number with dev
+if int(dashed_version_series[-1]) % 2 != 0:
+    dashed_version_series = 'dev'
+
 # -- General configuration ---------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
