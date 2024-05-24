@@ -19,10 +19,10 @@ systems. Kea-|release| builds have been tested on:
 
 * Alpine — 3.16, 3.17, 3.18, 3.19
 * Debian — 10, 11, 12
-* Fedora — 36, 38, 39
+* Fedora — 36, 38, 39, 40
 * FreeBSD — 13
 * RHEL — 8, 9
-* Ubuntu — 18.04, 20.04, 22.04
+* Ubuntu — 20.04, 22.04, 24.04
 
 There are currently no plans to port Kea to Windows systems.
 
@@ -56,7 +56,7 @@ These include platforms past their respective EOL dates, such as:
 * Fedora — 31, 32, 33, 34, 35, 37 (EOL 05 December 2023)
 * FreeBSD — 10, 11, 12
 * macOS — 10.13, 10.14, 10.15 (EOL 12 September 2022)
-* Ubuntu — 14.04, 18.10, 19.04, 19.10, 21.04 (EOL 20 January 2022)
+* Ubuntu — 14.04, 16.04, 18.04. 18.10, 19.04, 19.10, 21.04 (EOL 20 January 2022)
 
 Unsupported Platforms
 ---------------------

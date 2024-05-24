@@ -6,7 +6,9 @@ Kea 2.6.0 (stable) released on May 29, 2024
 	(Gitlab #3430)
 
 2246.	[bug]		razvan
-	Permit configuring pool-id in pd-pools.
+	Permit configuring pool-id in pd-pools which can be useful in
+	statistics. Previously, Kea would emit an error when configured
+	with PD pool ids.
 	(Gitlab #3424)
 
 2245.	[doc]		tomek
@@ -30,7 +32,7 @@ Kea 2.6.0 (stable) released on May 29, 2024
 	(Gitlab #3301)
 
 2242.	[func]		razvan
-	Removed deprecated command: "libreload".
+	Removed deprecated command "libreload".
 	(Gitlab #2960)
 
 2241.	[doc]		tomek
@@ -39,9 +41,8 @@ Kea 2.6.0 (stable) released on May 29, 2024
 	(Gitlab #3340)
 
 2240.	[doc]		slawek
-	Updated the documentation sections regarding creating a Postgres
-	database to consider the restricted default privileges provided
-	in Postgres 15.
+	Updated the documentation to consider the restricted default
+	privileges provided in Postgres 15 when creating a database.
 	(Gitlab #2773)
 
 2239.	[func]*		razvan
@@ -57,8 +58,8 @@ Kea 2.6.0 (stable) released on May 29, 2024
 	(Gitlab #2958)
 
 2237.	[doc]		slawek
-	Added an instruction on how to verify the PGP signature of the
-	tarball with source code.
+	Added an instruction to the ARM on how to verify the PGP
+	signature of the tarball with the source code.
 	(Gitlab #3021)
 
 2236.	[doc]		marcin
@@ -76,8 +77,9 @@ Kea 2.6.0 (stable) released on May 29, 2024
 	(Gitlab #3396)
 
 2234.	[build]		andrei
-	Code migrated from mysql_ssl_set which was deprecated in MySQL
-	8.0.35 to mysql_options.
+	Kea now builds with MySQL client libraries that have removed the
+	mysql_ssl_set function which was deprecated in MySQL 8.0.35.
+	The mysql_options function is used instead.
 	(Gitlab #3256)
 
 2233.	[bug]		razvan
@@ -89,27 +91,27 @@ Kea 2.6.0 (stable) released on May 29, 2024
 2232.	[func]*		fdupont
 	Auto-generated subnet identifiers are no longer supported.
 	Configurations that contain subnets without explicit subnet
-	identifiers (e.g without an "id" entry) will now be rejected.
+	identifiers (i.e. without an "id" entry) will now be rejected.
 	(Gitlab #2961)
 
 2231.	[func]		fdupont
-	The "ip-address" parameter in the "relay" element
-	is no longer supported: it was replaced by
-	"ip-addresses" taking a list of addresses in Kea 1.4.
+	The "ip-address" configuration parameter in the "relay" map has
+	been removed. In its place, use "ip-addresses" introduced in
+	Kea 1.4.
 	(Gitlab #3378)
 
 2230.	[func]		tmark
-	Both kea-dhcp4 and kea-dhcp6 will now emit a INFO
+	Both kea-dhcp4 and kea-dhcp6 will now emit an INFO
 	level log statement for each packet received and
 	sent by the server. Formerly these logs were only
 	emitted at DEBUG level.
 	(Gitlab #3203)
 
 2229.	[bug]		tmark
-	Modified configure.ac to detect versions of MySQL
-	client libary for which MYSQL_OPT_RECONNECT is
-	deprecated and exclude from Kea core, code attempts
-	to set it false.
+	Kea now builds with MySQL client libraries that have removed the
+	the MYSQL_OPT_RECONNECT feature and, in those cases, no longer
+	explicitly disables the reconnect feature, but relies on its
+	default disabled state.
 	(Gitlab #3311)
 
 Kea 2.5.8 (development) released on April 30, 2024
