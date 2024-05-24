@@ -7589,7 +7589,7 @@ The following standards are currently supported in Kea:
 
 -  *DHCPv6 Leasequery*: `RFC 5007 <https://tools.ietf.org/html/rfc5007>`__: The
    server functionality (message types, options) is supported. This requires
-   the leasequery hook.
+   the leasequery hook. See :ref:`hooks-lease-query` for details.
 
 -  *DHCP Options for Protocol for Carrying Authentication for Network Access
    (PANA) Authentication Agents*: `RFC 5192 <https://tools.ietf.org/html/rfc5192>`__:
@@ -7605,7 +7605,8 @@ The following standards are currently supported in Kea:
 
 -  *DHCPv6 Bulk Leasequery*: `RFC 5460 <https://tools.ietf.org/html/rfc5460>`__:
    The server functionality (TCP connection, new message types and options, new
-   query types) is supported. This requires the leasequery hook.
+   query types) is supported. This requires the leasequery hook. See
+   :ref:`hooks-lease-query` for details.
 
 -  *DHCPv6 Options for Network Boot*: `RFC 5970 <https://tools.ietf.org/html/rfc5970>`__:
    The network boot options are supported.
@@ -7636,7 +7637,7 @@ The following standards are currently supported in Kea:
    the client link-layer address option.
 
 -  *Modification to Default values of SOL_MAX_RT and INF_MAX_RT*, `RFC 7083
-   <https://www.rfc-editor.org/rfc/rfc7083.html>`__: The new options are
+   <https://tools.ietf.org/html/rfc7083>`__: The new options are
    supported.
 
 -  *Issues and Recommendations with Multiple Stateful DHCPv6 Options*,

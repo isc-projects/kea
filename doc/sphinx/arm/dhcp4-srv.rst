@@ -7765,7 +7765,7 @@ The following standards are currently supported in Kea:
    `RFC 3396 <https://tools.ietf.org/html/rfc3396>`__: The Kea server can both
    receive and send long options. The long options can be configured and Kea
    will send them as separate instances if the payload length is longer than
-   255 octects.
+   255 octets.
 
 -  *Dynamic Host Configuration Protocol (DHCP) Domain Search Option*, `RFC 3397
    <https://tools.ietf.org/html/rfc3397>`__: The option is supported.
@@ -7805,7 +7805,7 @@ The following standards are currently supported in Kea:
 
 -  *Dynamic Host Configuration Protocol (DHCP) Leasequery*, `RFC 4388
    <https://datatracker.ietf.org/doc/html/rfc4388>`__: The server functionality
-   is supported. This requires leasequery hook.
+   is supported. This requires leasequery hook. See :ref:`hooks-lease-query` for details.
 
 -  *Dynamic Host Configuration Protocol (DHCP) Options for the Intel Preboot
    eXecution Environment (PXE)*, `RFC 4578
@@ -7855,7 +7855,7 @@ The following standards are currently supported in Kea:
 
 -  *DHCPv4 Lease Query by Relay Agent Remote ID*, `RFC 6148
    <https://tools.ietf.org/html/rfc6148>`__: The leasequery by remote-id is
-   supported. This requires leasequery hook.
+   supported. This requires leasequery hook. See :ref:`hooks-lease-query` for details.
 
 -  *Client Identifier Option in DHCP Server Replies*, `RFC 6842
    <https://tools.ietf.org/html/rfc6842>`__: The server by default sends back
@@ -7869,7 +7869,7 @@ The following standards are currently supported in Kea:
 
 -  *DHCPv4 Bulk Leasequery*, `RFC 6926 <https://tools.ietf.org/html/rfc6926>`__: The
    server functionality (TCP connections, new query types, multiple responses, etc.)
-   is supported. This requires leasequery hook.
+   is supported. This requires leasequery hook. See :ref:`hooks-lease-query` for details.
 
 -  *Generalized UDP Source Port for the DHCP Relay Agent Option*, `RFC 8357
    <https://tools.ietf.org/html/rfc8357>`__: The Kea server handles the Relay

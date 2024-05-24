@@ -176,7 +176,6 @@ enum DHCPOptionType {
     // URL option was replaced with captive portal.
     // DHO_URL                       = 114, /* RFC3679 */
     DHO_V4_CAPTIVE_PORTAL            = 114, /* RFC8910 */
-
     // 115 is removed/unassigned
     DHO_AUTO_CONFIG                  = 116, /* RFC2563 */
     DHO_NAME_SERVICE_SEARCH          = 117, /* RFC2937 */
@@ -227,7 +226,6 @@ enum DHCPOptionType {
 //  DHO_VSS                          = 221, /* RFC6607 */
     // 222-223 are removed/unassigned
     // 224-254 are reserved for private use
-
     DHO_END                          = 255 /* RFC2132 */
 };
 
@@ -249,7 +247,7 @@ enum DHCPMessageType {
     DHCPLEASEACTIVE     =  13,
     DHCPBULKLEASEQUERY  =  14,
     DHCPLEASEQUERYDONE  =  15,
-// DHCPACTIVELEASEQUERY =  16,
+//  DHCPACTIVELEASEQUERY =  16,
     DHCPLEASEQUERYSTATUS =  17,
     DHCPTLS              =  18,
     DHCP_TYPES_EOF

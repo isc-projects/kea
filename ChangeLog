@@ -1,6 +1,7 @@
 2245.	[doc]		tomek
-	Many already support RFCs are now listed in the	Supported
-	DHCP standards and Supported DHCPv6 standards in the ARM.
+	Many already supported RFCs are now listed in the Supported
+	DHCP standards and Supported DHCPv6 standards in the Kea
+	Administrator Reference Manual (ARM).
 	(Gitlab #3346)
 
 2244.	[func]		mgodzina
