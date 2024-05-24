@@ -1,3 +1,7 @@
+2246.	[bug]		razvan
+	Permit configuring pool-id in pd-pools.
+	(Gitlab #3424)
+
 2245.	[doc]		tomek
 	Many already supported RFCs are now listed in the Supported
 	DHCP standards and Supported DHCPv6 standards in the Kea
