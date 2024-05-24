@@ -613,6 +613,12 @@ backends, leases created prior to the server being configured for bulk lease
 query do not contain the new data required. In order to populate this data,
 it is necessary to run these API commands:
 
+.. note::
+
+   Existing leases must have been created by Kea with ``store-extended-info``
+   enabled, in order for the new data from extended info to be extracted
+   and stored.
+
 .. isccmd:: extended-info4-upgrade
 .. _command-extended-info4-upgrade:
 
@@ -651,7 +657,8 @@ and includes either the count of leases updated or the nature of the failure:
 
 This ``extended-info6-upgrade`` command must be called when:
 
-- the database schema was upgraded from a previous version.
+- the database schema was upgraded from 2.4.1 or older version. 
+  ``extended-info4-upgrade`` can be used when upgrading from 2.3.8 or older version.
 
 - Bulk Leasequery was not enabled; tables are maintained only when v6 BLQ is
   enabled.
@@ -668,7 +675,7 @@ For large numbers of leases, this command may take some time to complete.
 
 .. note::
 
-   Existing leases must have been created by Kea with ``store-extended-info``
-   enabled, in order for the new data from extended info to be extracted
-   and stored.
-
+    Both the ``extended-info4-upgrade`` and ``extended-info6-upgrade`` commands
+    are intended for one-time use after upgrading to a version of Kea that fully
+    supports Bulk Leasequery in database backends. These commands are not meant
+    for regular use and will be removed in future Kea versions.
