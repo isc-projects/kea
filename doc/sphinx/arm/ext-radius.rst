@@ -12,7 +12,7 @@ This hook library allows Kea to interact with two types of RADIUS
 services: access and accounting. The most common DHCP and RADIUS
 integration is done on the DHCP relay-agent level: DHCP clients send
 DHCP packets to DHCP relays; those relays contact the RADIUS server and
-either send the packet to the DHCP server or drop it, depending on the 
+either send the packet to the DHCP server or drop it, depending on the
 response. It does require DHCP relay hardware to support RADIUS
 communication, though, and even if the relay has the necessary support, it is
 often not flexible enough to send and receive additional RADIUS
@@ -64,8 +64,8 @@ takes many parameters. For example, this configuration can be used:
 
         "hooks-libraries": [
           {
-            // Note that RADIUS requires host-cache for proper operation,
-            // so that library is loaded as well.
+            // Note that the RADIUS access service requires host-cache for
+            // proper operation, so this library is loaded as well.
             "library": "/usr/local/lib/kea/hooks/libdhcp_host_cache.so"
           },
           {
@@ -351,7 +351,7 @@ And here's how to specify period-separated hexadecimal notation (``dead.beef.caf
    }
 
 
-For :ischooklib:`libdhcp_radius.so` to operate properly in DHCPv4,
+For the access service of :ischooklib:`libdhcp_radius.so` to operate properly,
 :ischooklib:`libdhcp_host_cache.so` must also be loaded. The reason for this
 is somewhat complex. In a typical deployment, DHCP clients send
 their packets via DHCP relay, which inserts certain Relay Agent
@@ -369,10 +369,10 @@ later when sending accounting messages.
 This mechanism is implemented based on user context in host
 reservations. (See :ref:`user-context` and :ref:`user-context-hooks` for
 details.) The host-cache mechanism allows the information retrieved by
-RADIUS to be stored and used later to send access and accounting
-queries to the RADIUS server. In other words, the host-cache mechanism
-is mandatory, unless administrators do not want RADIUS communication for messages
-other than Discover and the first Request from each client.
+RADIUS to be stored and used later instead of doing another authorization
+round-trip to the RADIUS server. In other words, the host-cache mechanism
+is mandatory for the access service. The Kea configuration is rejected if
+:ischooklib:`libdhcp_host_cache.so` is not loaded alongside :ischooklib:`libdhcp_radius.so`.
 
 .. note::
 
