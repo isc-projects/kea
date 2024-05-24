@@ -2969,7 +2969,8 @@ void Lease6CmdsTest::testLease6Wipe() {
         "        \"subnet-id\": 66\n"
         "    }\n"
         "}";
-    string exp_rsp = "Deleted 2 IPv6 lease(s) from subnet(s) 66";
+    string exp_rsp = "Deleted 2 IPv6 lease(s) from subnet(s) 66"
+                     " WARNING: lease6-wipe is deprecated!";
 
     // The status expected is success. The lease should be deleted.
     testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
@@ -3003,7 +3004,8 @@ void Lease6CmdsTest::testLease6WipeAll() {
         "        \"subnet-id\": 0\n"
         "    }\n"
         "}";
-    string exp_rsp = "Deleted 4 IPv6 lease(s) from subnet(s) 66 99";
+    string exp_rsp = "Deleted 4 IPv6 lease(s) from subnet(s) 66 99"
+                     " WARNING: lease6-wipe is deprecated!";
 
     // The status expected is success. The lease should be deleted.
     testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
@@ -3034,7 +3036,8 @@ void Lease6CmdsTest::testLease6WipeAllNoArgs() {
         "{\n"
         "    \"command\": \"lease6-wipe\"\n"
         "}";
-    string exp_rsp = "Deleted 4 IPv6 lease(s) from subnet(s) 66 99";
+    string exp_rsp = "Deleted 4 IPv6 lease(s) from subnet(s) 66 99"
+                     " WARNING: lease6-wipe is deprecated!";
 
     // The status expected is success. The lease should be deleted.
     testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
@@ -3068,7 +3071,8 @@ void Lease6CmdsTest::testLease6WipeNoLeases() {
         "        \"subnet-id\": 66"
         "    }\n"
         "}";
-    string exp_rsp = "Deleted 0 IPv6 lease(s) from subnet(s) 66";
+    string exp_rsp = "Deleted 0 IPv6 lease(s) from subnet(s) 66"
+                     " WARNING: lease6-wipe is deprecated!";
     testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
 
     checkLease6Stats(66, 0, 0, 0);
@@ -3092,7 +3096,8 @@ void Lease6CmdsTest::testLease6WipeNoLeasesAll() {
         "        \"subnet-id\": 0"
         "    }\n"
         "}";
-    string exp_rsp = "Deleted 0 IPv6 lease(s) from subnet(s) 66 99";
+    string exp_rsp = "Deleted 0 IPv6 lease(s) from subnet(s) 66 99"
+                     " WARNING: lease6-wipe is deprecated!";
     testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
 
     checkLease6Stats(66, 0, 0, 0);

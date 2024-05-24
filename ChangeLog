@@ -1,3 +1,7 @@
+2244.	[func]		mgodzina
+	lease4-wipe and lease6-wipe now log a deprecation warning.
+	(Gitlab #3427)
+
 2243.	[func]		razvan
 	Updated yang modules: removed qualifying-suffix,
 	override-no-update, override-client-update,

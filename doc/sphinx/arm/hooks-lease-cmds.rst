@@ -87,10 +87,12 @@ This library provides the following commands:
 -  :isccmd:`lease6-update` - updates (replaces) an existing IPv6 lease.
 
 -  :isccmd:`lease4-wipe` - removes all leases from a specific IPv4 subnet or
-   from all subnets.
+   from all subnets. This command is deprecated and it will be removed
+   in the future.
 
 -  :isccmd:`lease6-wipe` - removes all leases from a specific IPv6 subnet or
-   from all subnets.
+   from all subnets. This command is deprecated and it will be removed
+   in the future.
 
 -  :isccmd:`lease4-resend-ddns` - resends a request to update DNS entries for
    an existing lease.
@@ -960,6 +962,11 @@ response, modifying it to the required outcome, and then issuing the
 
 The ``lease4-wipe``, ``lease6-wipe`` Commands
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. warning::
+
+   The :isccmd:`lease4-wipe` and :isccmd:`lease6-wipe` commands are deprecated
+   and they will be removed in the future.
 
 :isccmd:`lease4-wipe` and :isccmd:`lease6-wipe` are designed to remove all leases
 associated with a given subnet. This administrative task is expected to

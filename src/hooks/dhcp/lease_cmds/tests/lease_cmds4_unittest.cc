@@ -2806,7 +2806,8 @@ void Lease4CmdsTest::testLease4Wipe() {
         "        \"subnet-id\": 44"
         "    }\n"
         "}";
-    string exp_rsp = "Deleted 2 IPv4 lease(s) from subnet(s) 44";
+    string exp_rsp = "Deleted 2 IPv4 lease(s) from subnet(s) 44"
+                     " WARNING: lease4-wipe is deprecated!";
 
     // The status expected is success. The lease should be deleted.
     testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
@@ -2840,7 +2841,8 @@ void Lease4CmdsTest::testLease4WipeAll() {
         "        \"subnet-id\": 0"
         "    }\n"
         "}";
-    string exp_rsp = "Deleted 4 IPv4 lease(s) from subnet(s) 44 88";
+    string exp_rsp = "Deleted 4 IPv4 lease(s) from subnet(s) 44 88"
+                     " WARNING: lease4-wipe is deprecated!";
 
     // The status expected is success. The lease should be deleted.
     testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
@@ -2871,7 +2873,8 @@ void Lease4CmdsTest::testLease4WipeAllNoArgs() {
         "{\n"
         "    \"command\": \"lease4-wipe\"\n"
         "}";
-    string exp_rsp = "Deleted 4 IPv4 lease(s) from subnet(s) 44 88";
+    string exp_rsp = "Deleted 4 IPv4 lease(s) from subnet(s) 44 88"
+                     " WARNING: lease4-wipe is deprecated!";
 
     // The status expected is success. The lease should be deleted.
     testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
@@ -2905,7 +2908,8 @@ void Lease4CmdsTest::testLease4WipeNoLeases() {
         "        \"subnet-id\": 44"
         "    }\n"
         "}";
-    string exp_rsp = "Deleted 0 IPv4 lease(s) from subnet(s) 44";
+    string exp_rsp = "Deleted 0 IPv4 lease(s) from subnet(s) 44"
+                     " WARNING: lease4-wipe is deprecated!";
     testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
 
     checkLease4Stats(44, 0, 0);
@@ -2929,7 +2933,8 @@ void Lease4CmdsTest::testLease4WipeNoLeasesAll() {
         "        \"subnet-id\": 0"
         "    }\n"
         "}";
-    string exp_rsp = "Deleted 0 IPv4 lease(s) from subnet(s) 44 88";
+    string exp_rsp = "Deleted 0 IPv4 lease(s) from subnet(s) 44 88"
+                     " WARNING: lease4-wipe is deprecated!";
     testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
 
     checkLease4Stats(44, 0, 0);
