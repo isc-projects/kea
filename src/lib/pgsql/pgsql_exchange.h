@@ -386,7 +386,7 @@ struct PsqlBindArray {
         if (value.unspecified()) {
             addNull();
         } else {
-            add(value);
+            add(value.get());
         }
     }
 

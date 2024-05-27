@@ -216,8 +216,8 @@ TEST(PsqlBindArray, addOptionalBool) {
     // Verify contents are correct.
     std::string expected =
         "0 : empty\n"
-        "1 : \"0\"\n"
-        "2 : \"1\"\n";
+        "1 : \"FALSE\"\n"
+        "2 : \"TRUE\"\n";
 
     EXPECT_EQ(expected, b.toText());
 }
