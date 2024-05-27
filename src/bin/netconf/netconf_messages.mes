@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2023 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -55,6 +55,11 @@ configuration from a Kea server.
 % NETCONF_LOG_CHANGE_FAIL NETCONF configuration change logging failed: %1
 The warning message indicates that the configuration change logging
 encountered an unexpected condition. Details of it will be logged.
+
+% NETCONF_MODULE_CHANGE_INTERNAL_ERROR an internal error occurred while processing changes for module %1: %2
+The error message indicates that kea-netconf got an error while sysrepo was processing modules changes.
+This usually follows a config validation failure, and can be recovered from.
+The name of the module and the internal error message are printed.
 
 % NETCONF_MODULE_MISSING_ERR Missing essential module %1 in sysrepo
 This fatal error message indicates that a module required by Netconf

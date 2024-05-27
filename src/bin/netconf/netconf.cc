@@ -440,15 +440,21 @@ NetconfAgent::subscribeToDataChanges(const CfgServersMapPair& service_pair) {
                         Event event,
                         uint32_t request_id) {
         NetconfAgentCallback agent(service_pair);
-        return agent.module_change(session, subscription_id, module_name, sub_xpath, event, request_id);
+        return agent.module_change(session, subscription_id, module_name, sub_xpath, event,
+                                   request_id);
     };
     try {
         SubscribeOptions options(SubscribeOptions::Default);
         if (!configuration->getValidateChanges()) {
             options = options | SubscribeOptions::DoneOnly;
         }
+        auto exception_handler = [model](std::exception& ex) {
+            LOG_ERROR(netconf_logger, NETCONF_MODULE_CHANGE_INTERNAL_ERROR)
+                .arg(model)
+                .arg(ex.what());
+        };
         Subscription subscription(
-            running_sess_->onModuleChange(model, callback, nullopt, 0, options));
+            running_sess_->onModuleChange(model, callback, nullopt, 0, options, exception_handler));
         subscriptions_.emplace(server, std::forward<Subscription>(subscription));
     } catch (exception const& ex) {
         ostringstream msg;
@@ -484,7 +490,8 @@ NetconfAgent::subscribeToNotifications(const CfgServersMapPair& service_pair) {
                         optional<DataNode> const notification_tree,
                         NotificationTimeStamp const timestamp) {
         NetconfAgentCallback agent(service_pair);
-        return agent.event_notif(session, subscription_id, notification_type, notification_tree, timestamp);
+        return agent.event_notif(session, subscription_id, notification_type, notification_tree,
+                                 timestamp);
     };
     try {
         Subscription subscription(running_sess_->onNotification(model, callback));
