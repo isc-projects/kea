@@ -4580,12 +4580,14 @@ Dhcpv6Srv::generateFqdn(const Pkt6Ptr& answer,
         return;
     }
 
-    // If it has any IAAddr, use the first one to generate unique FQDN.
+    // If it has any IAAddr with a valid lifetime > 0, use it to
+    // generate unique FQDN.
     Option6IAAddrPtr iaaddr = boost::dynamic_pointer_cast<
         Option6IAAddr>(ia->getOption(D6O_IAADDR));
-    if (!iaaddr) {
+    if (!iaaddr || iaaddr->getValid() == 0) {
         return;
     }
+
     // Get the IPv6 address acquired by the client.
     IOAddress addr = iaaddr->getAddress();
     std::string generated_name =

@@ -194,7 +194,25 @@ const char* CONFIGS[] = {
     "       \"subnet\": \"2001:db8:1::/48\","
     "       \"user-context\": { \"secure\": false }"
     "    } ] "
-    "}"
+    "}",
+
+    // Configuration 5:
+    // - used in advertiseOptions
+    "{ \"interfaces-config\": { \n"
+    "  \"interfaces\": [ \"*\" ] \n"
+    "}, \n"
+    "\"preferred-lifetime\": 3000, \n"
+    "\"rebind-timer\": 2000,  \n"
+    "\"renew-timer\": 1000,  \n"
+    "\"ddns-replace-client-name\": \"always\", "
+    "\"ddns-qualifying-suffix\": \"example.com\", "
+    "\"subnet6\": [ {  \n"
+    "    \"id\": 1,  \n"
+    "    \"pools\": [ { \"pool\": \"2001:db8:1::1-2001:db8:1::1\" } ], \n"
+    "    \"subnet\": \"2001:db8:1::/64\",  \n"
+    "    \"interface\": \"eth0\"  \n"
+    "    } ], \n"
+    "\"valid-lifetime\": 4000 }",
 };
 
 } // namespace
@@ -3929,6 +3947,137 @@ TEST_F(Dhcpv6SrvTest, calculateTeeTimers) {
             checkIA_NA(reply, 234, test.t1_exp_value_, test.t2_exp_value_);
         }
     }
+}
+
+// This test verifies that generateFdqn() updates the lease's FQDN when
+// the lease is active.
+TEST_F(Dhcpv6SrvTest, generateFqdnUpdate) {
+    IfaceMgrTestConfig test_config(true);
+
+    NakedDhcpv6Srv srv(0);
+
+    // Configure with a pool of 1 and ddns-replace-client-name = "always"
+    ASSERT_NO_THROW(configure(CONFIGS[5], srv));
+
+    // Lease the only address in the pool to a client 1.
+    OptionPtr clientid = generateClientId();
+    const IOAddress addr("2001:db8:1::1");
+    const uint32_t iaid = 234;
+    Lease6Ptr used(new Lease6(Lease::TYPE_NA, addr, duid_, iaid, 3000, 4000, 1));
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(used));
+
+    // Let's create a RENEW of the leased address for client 2.
+    Pkt6Ptr req = Pkt6Ptr(new Pkt6(DHCPV6_RENEW, 1234));
+    req->setRemoteAddr(IOAddress("fe80::abcd"));
+    req->setIface("eth0");
+    req->setIndex(ETH0_INDEX);
+    req->addOption(createIA(Lease::TYPE_NA, addr, 128, iaid));
+    req->addOption(
+        Option6ClientFqdnPtr(
+            new Option6ClientFqdn(Option6ClientFqdn::FLAG_S,
+                                  "replace_me.com",
+                                  Option6ClientFqdn::FULL))
+    );
+
+    req->addOption(clientid);
+    req->addOption(srv.getServerID());
+
+    // Pass it to the server and get a reply
+    AllocEngine::ClientContext6 ctx;
+    bool drop = !srv.earlyGHRLookup(req, ctx);
+    ASSERT_FALSE(drop);
+    ctx.subnet_ = srv.selectSubnet(req, drop);
+    ASSERT_FALSE(drop);
+    srv.initContext(ctx, drop);
+    ASSERT_FALSE(drop);
+    Pkt6Ptr reply = srv.processRenew(ctx);
+
+    // Check if we get response at all
+    checkResponse(reply, DHCPV6_REPLY, 1234);
+
+    // check that an IA_NA with an iaaddr was returned for the requeted
+    // address with lifetime so 0.
+    boost::shared_ptr<Option6IAAddr> iaaddr = checkIA_NA(reply, 234, 1000, 2000); 
+    ASSERT_TRUE(iaaddr);
+    EXPECT_EQ(addr, iaaddr->getAddress());
+    EXPECT_EQ(3000, iaaddr->getPreferred());
+    EXPECT_EQ(4000, iaaddr->getValid());
+
+    // Fetch the lease in the database and verify hostname has been updated
+    // with generated FQDN.
+    Lease6Ptr l = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA, addr);
+    ASSERT_TRUE(l);
+    EXPECT_EQ("myhost-2001-db8-1--1.example.com.", l->hostname_);
+
+    // Should see follow log message ids in the log file.
+    EXPECT_EQ(1, countFile("DHCP6_DDNS_FQDN_GENERATED")); 
+    EXPECT_EQ(0, countFile("DHCP6_DDNS_GENERATED_FQDN_UPDATE_FAIL"));
+}
+
+
+// This test verifies that generateFqdn() does not attempt to
+// update the lease's FQDN if lease lifetime is zero.
+TEST_F(Dhcpv6SrvTest, generateFqdnNoUpdate) {
+    IfaceMgrTestConfig test_config(true);
+
+    NakedDhcpv6Srv srv(0);
+
+    // Configure with a pool of 1 and ddns-replace-client-name = "always"
+    ASSERT_NO_THROW(configure(CONFIGS[5], srv));
+
+    // Lease the only address in the pool to client 1.
+    OptionPtr clientid = generateClientId();
+    const IOAddress addr("2001:db8:1::1");
+    const uint32_t iaid = 234;
+    Lease6Ptr used(new Lease6(Lease::TYPE_NA, addr, duid_, iaid, 3000, 4000, 1));
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(used));
+
+    // Create a RENEW of the leased address for client 2.
+    Pkt6Ptr req = Pkt6Ptr(new Pkt6(DHCPV6_RENEW, 1234));
+    req->setRemoteAddr(IOAddress("fe80::abcd"));
+    req->setIface("eth0");
+    req->setIndex(ETH0_INDEX);
+    req->addOption(createIA(Lease::TYPE_NA, addr, 128, iaid));
+    req->addOption(
+        Option6ClientFqdnPtr(
+            new Option6ClientFqdn(Option6ClientFqdn::FLAG_S,
+                                  "replace_me.com",
+                                  Option6ClientFqdn::FULL))
+    );
+
+    OptionPtr clientid2 = generateClientId(40);
+    req->addOption(clientid2);
+    req->addOption(srv.getServerID());
+
+    // Pass it to the server and get a reply
+    AllocEngine::ClientContext6 ctx;
+    bool drop = !srv.earlyGHRLookup(req, ctx);
+    ASSERT_FALSE(drop);
+    ctx.subnet_ = srv.selectSubnet(req, drop);
+    ASSERT_FALSE(drop);
+    srv.initContext(ctx, drop);
+    ASSERT_FALSE(drop);
+    Pkt6Ptr reply = srv.processRenew(ctx);
+
+    // Check if we get response at all
+    checkResponse(reply, DHCPV6_REPLY, 1234);
+
+    // Check that an IA_NA with an iaaddr was returned for the requeted
+    // address with lifetimes of 0.
+    boost::shared_ptr<Option6IAAddr> iaaddr = checkIA_NA(reply, 234, 0, 0); 
+    ASSERT_TRUE(iaaddr);
+    EXPECT_EQ(addr, iaaddr->getAddress());
+    EXPECT_EQ(0, iaaddr->getPreferred());
+    EXPECT_EQ(0, iaaddr->getValid());
+
+    // Should not see either of the follow log message ids in the log file.
+    EXPECT_EQ(0, countFile("DHCP6_DDNS_FQDN_GENERATED"));
+    EXPECT_EQ(0, countFile("DHCP6_DDNS_GENERATED_FQDN_UPDATE_FAIL"));
+
+    // Fetch the lease in the database and verify hostname has not been updated.
+    Lease6Ptr l = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA, addr);
+    ASSERT_TRUE(l);
+    EXPECT_TRUE(l->hostname_.empty());
 }
 
 /// @brief Check that example files from documentation are valid (can be parsed

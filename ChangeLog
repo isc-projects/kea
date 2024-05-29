@@ -1,3 +1,10 @@
+2248.	[bug]		tmark
+	Fixed a corner-case isssue in kea-dhcp6 that was 
+	causing it to attempt to update a lease for an address
+	with a generated FQDN even though the address was not
+	available to be leased.
+	(Gitlab #3356)
+
 Kea 2.6.0 (stable) released on May 29, 2024
 
 2247.	[build]		razvan
