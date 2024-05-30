@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -14,7 +14,10 @@
 #include <dhcpsrv/host_container.h>
 #include <dhcpsrv/subnet_id.h>
 #include <dhcpsrv/writable_host_data_source.h>
+#include <boost/scoped_ptr.hpp>
 #include <boost/shared_ptr.hpp>
+#include <set>
+#include <mutex>
 #include <vector>
 
 namespace isc {
@@ -37,6 +40,9 @@ namespace dhcp {
 class CfgHosts : public BaseHostDataSource, public WritableHostDataSource,
                  public isc::data::CfgToElement {
 public:
+
+    /// @brief Constructor.
+    CfgHosts();
 
     /// @brief Destructor.
     virtual ~CfgHosts() { }
@@ -536,13 +542,13 @@ public:
     /// has already been added to the IPv4 or IPv6 subnet.
     virtual void add(const HostPtr& host);
 
-    /// @brief Attempts to delete a hosts by address.
+    /// @brief Attempts to delete hosts by address.
     ///
     /// This method supports both v4 and v6.
-    /// @todo: Not implemented.
     ///
     /// @param subnet_id subnet identifier.
     /// @param addr specified address.
+    /// @return true if deletion was successful, false otherwise.
     virtual bool del(const SubnetID& subnet_id, const asiolink::IOAddress& addr);
 
     /// @brief Attempts to delete all hosts for a given IPv4 subnet.
@@ -555,7 +561,6 @@ public:
     /// @brief Attempts to delete a host by (subnet4-id, identifier, identifier-type)
     ///
     /// This method supports v4 only.
-    /// @todo: Not implemented.
     ///
     /// @param subnet_id IPv4 Subnet identifier.
     /// @param identifier_type Identifier type.
@@ -577,7 +582,6 @@ public:
     /// @brief Attempts to delete a host by (subnet6-id, identifier, identifier-type)
     ///
     /// This method supports v6 only.
-    /// @todo: Not implemented.
     ///
     /// @param subnet_id IPv6 Subnet identifier.
     /// @param identifier_type Identifier type.
@@ -634,6 +638,9 @@ public:
     isc::data::ElementPtr toElement() const;
 
 private:
+
+    /// @note: all private/internal methods suppose the caller takes
+    /// the mutex at the exception of toElement[46].
 
     /// @brief Returns @c Host objects for the specific identifier and type.
     ///
@@ -812,6 +819,19 @@ private:
     void getAllInternal6(const asiolink::IOAddress& address,
                          Storage& storage) const;
 
+    /// @brief Returns @c Host objects for the specified (Subnet-id,IPv6 address) tuple.
+    ///
+    /// This private method is called by the @c CfgHosts::getAll4 methods
+    /// to retrieve the @c Host for which the specified IPv4 address is
+    /// reserved and is in specified subnet-id. The retrieved objects are
+    /// appended to the returned container.
+    ///
+    /// @param subnet_id Subnet identifier.
+    /// @param address IPv4 address.
+    /// @return Collection of const @c Host objects.
+    ConstHostCollection
+    getAllInternal4(const SubnetID& subnet_id,
+		    const asiolink::IOAddress& address) const;
 
     /// @brief Returns @c Host objects for the specified (Subnet-id,IPv6 address) tuple.
     ///
@@ -923,6 +943,9 @@ private:
     /// @brief Holds the setting whether the IP reservations must be unique or
     /// may be non-unique.
     bool ip_reservations_unique_ = true;
+
+    /// @brief The mutex used to protect host containers.
+    const boost::scoped_ptr<std::mutex> mutex_;
 
     /// @brief Unparse a configuration object (DHCPv4 reservations)
     ///

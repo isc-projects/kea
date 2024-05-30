@@ -13,6 +13,7 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <exceptions/exceptions.h>
 #include <util/encode/encode.h>
+#include <util/multi_threading_mgr.h>
 #include <boost/foreach.hpp>
 #include <ostream>
 #include <string>
@@ -20,10 +21,14 @@
 
 using namespace isc::asiolink;
 using namespace isc::data;
+using namespace isc::util;
 using namespace std;
 
 namespace isc {
 namespace dhcp {
+
+CfgHosts::CfgHosts() : mutex_(new mutex()) {
+}
 
 ConstHostCollection
 CfgHosts::getAll(const Host::IdentifierType& identifier_type,
@@ -32,6 +37,7 @@ CfgHosts::getAll(const Host::IdentifierType& identifier_type,
     // Do not issue logging message here because it will be logged by
     // the getAllInternal method.
     ConstHostCollection collection;
+    MultiThreadingLock lock(*mutex_);
     getAllInternal<ConstHostCollection>(identifier_type, identifier_begin,
                                         identifier_len, collection);
     return (collection);
@@ -43,6 +49,7 @@ CfgHosts::getAll(const Host::IdentifierType& identifier_type,
     // Do not issue logging message here because it will be logged by
     // the getAllInternal method.
     HostCollection collection;
+    MultiThreadingLock lock(*mutex_);
     getAllInternal<HostCollection>(identifier_type, identifier_begin,
                                    identifier_len, collection);
     return (collection);
@@ -53,6 +60,7 @@ CfgHosts::getAll4(const SubnetID& subnet_id) const {
     // Do not issue logging message here because it will be logged by
     // the getAllInternal4 method.
     ConstHostCollection collection;
+    MultiThreadingLock lock(*mutex_);
     getAllInternal4<ConstHostCollection>(subnet_id, collection);
     return (collection);
 }
@@ -62,6 +70,7 @@ CfgHosts::getAll4(const SubnetID& subnet_id) {
     // Do not issue logging message here because it will be logged by
     // the getAllInternal4 method.
     HostCollection collection;
+    MultiThreadingLock lock(*mutex_);
     getAllInternal4<HostCollection>(subnet_id, collection);
     return (collection);
 }
@@ -71,6 +80,7 @@ CfgHosts::getAll6(const SubnetID& subnet_id) const {
     // Do not issue logging message here because it will be logged by
     // the getAllInternal6 method.
     ConstHostCollection collection;
+    MultiThreadingLock lock(*mutex_);
     getAllInternal6<ConstHostCollection>(subnet_id, collection);
     return (collection);
 }
@@ -80,6 +90,7 @@ CfgHosts::getAll6(const SubnetID& subnet_id) {
     // Do not issue logging message here because it will be logged by
     // the getAllInternal6 method.
     HostCollection collection;
+    MultiThreadingLock lock(*mutex_);
     getAllInternal6<HostCollection>(subnet_id, collection);
     return (collection);
 }
@@ -89,6 +100,7 @@ CfgHosts::getAllbyHostname(const std::string& hostname) const {
     // Do not issue logging message here because it will be logged by
     // the getAllbyHostnameInternal method.
     ConstHostCollection collection;
+    MultiThreadingLock lock(*mutex_);
     getAllbyHostnameInternal<ConstHostCollection>(hostname, collection);
     return (collection);
 }
@@ -98,6 +110,7 @@ CfgHosts::getAllbyHostname(const std::string& hostname) {
     // Do not issue logging message here because it will be logged by
     // the getAllbyHostnameInternal method.
     HostCollection collection;
+    MultiThreadingLock lock(*mutex_);
     getAllbyHostnameInternal<HostCollection>(hostname, collection);
     return (collection);
 }
@@ -108,6 +121,7 @@ CfgHosts::getAllbyHostname4(const std::string& hostname,
     // Do not issue logging message here because it will be logged by
     // the getAllbyHostnameInternal4 method.
     ConstHostCollection collection;
+    MultiThreadingLock lock(*mutex_);
     getAllbyHostnameInternal4<ConstHostCollection>(hostname, subnet_id, collection);
     return (collection);
 }
@@ -118,6 +132,7 @@ CfgHosts::getAllbyHostname4(const std::string& hostname,
     // Do not issue logging message here because it will be logged by
     // the getAllbyHostnameInternal4 method.
     HostCollection collection;
+    MultiThreadingLock lock(*mutex_);
     getAllbyHostnameInternal4<HostCollection>(hostname, subnet_id, collection);
     return (collection);
 }
@@ -128,6 +143,7 @@ CfgHosts::getAllbyHostname6(const std::string& hostname,
     // Do not issue logging message here because it will be logged by
     // the getAllbyHostnameInternal6 method.
     ConstHostCollection collection;
+    MultiThreadingLock lock(*mutex_);
     getAllbyHostnameInternal6<ConstHostCollection>(hostname, subnet_id, collection);
     return (collection);
 }
@@ -138,6 +154,7 @@ CfgHosts::getAllbyHostname6(const std::string& hostname,
     // Do not issue logging message here because it will be logged by
     // the getAllbyHostnameInternal6 method.
     HostCollection collection;
+    MultiThreadingLock lock(*mutex_);
     getAllbyHostnameInternal6<HostCollection>(hostname, subnet_id, collection);
     return (collection);
 }
@@ -150,6 +167,7 @@ CfgHosts::getPage4(const SubnetID& subnet_id,
     // Do not issue logging message here because it will be logged by
     // the getPageInternal4 method.
     ConstHostCollection collection;
+    MultiThreadingLock lock(*mutex_);
     getPageInternal4<ConstHostCollection>(subnet_id,
                                           lower_host_id,
                                           page_size,
@@ -165,6 +183,7 @@ CfgHosts::getPage4(const SubnetID& subnet_id,
     // Do not issue logging message here because it will be logged by
     // the getPageInternal4 method.
     HostCollection collection;
+    MultiThreadingLock lock(*mutex_);
     getPageInternal4<HostCollection>(subnet_id,
                                      lower_host_id,
                                      page_size,
@@ -180,6 +199,7 @@ CfgHosts::getPage6(const SubnetID& subnet_id,
     // Do not issue logging message here because it will be logged by
     // the getPageInternal6 method.
     ConstHostCollection collection;
+    MultiThreadingLock lock(*mutex_);
     getPageInternal6<ConstHostCollection>(subnet_id,
                                           lower_host_id,
                                           page_size,
@@ -195,6 +215,7 @@ CfgHosts::getPage6(const SubnetID& subnet_id,
     // Do not issue logging message here because it will be logged by
     // the getPageInternal6 method.
     HostCollection collection;
+    MultiThreadingLock lock(*mutex_);
     getPageInternal6<HostCollection>(subnet_id,
                                      lower_host_id,
                                      page_size,
@@ -209,6 +230,7 @@ CfgHosts::getPage4(size_t& /*source_index*/,
     // Do not issue logging message here because it will be logged by
     // the getPageInternal method.
     ConstHostCollection collection;
+    MultiThreadingLock lock(*mutex_);
     getPageInternal<ConstHostCollection>(lower_host_id,
                                          page_size,
                                          collection);
@@ -222,6 +244,7 @@ CfgHosts::getPage4(size_t& /*source_index*/,
     // Do not issue logging message here because it will be logged by
     // the getPageInternal method.
     HostCollection collection;
+    MultiThreadingLock lock(*mutex_);
     getPageInternal<HostCollection>(lower_host_id,
                                     page_size,
                                     collection);
@@ -235,6 +258,7 @@ CfgHosts::getPage6(size_t& /*source_index*/,
     // Do not issue logging message here because it will be logged by
     // the getPageInternal method.
     ConstHostCollection collection;
+    MultiThreadingLock lock(*mutex_);
     getPageInternal<ConstHostCollection>(lower_host_id,
                                          page_size,
                                          collection);
@@ -248,6 +272,7 @@ CfgHosts::getPage6(size_t& /*source_index*/,
     // Do not issue logging message here because it will be logged by
     // the getPageInternal method.
     HostCollection collection;
+    MultiThreadingLock lock(*mutex_);
     getPageInternal<HostCollection>(lower_host_id,
                                     page_size,
                                     collection);
@@ -259,6 +284,7 @@ CfgHosts::getAll4(const IOAddress& address) const {
     // Do not issue logging message here because it will be logged by
     // the getAllInternal4 method.
     ConstHostCollection collection;
+    MultiThreadingLock lock(*mutex_);
     getAllInternal4<ConstHostCollection>(address, collection);
     return (collection);
 }
@@ -268,6 +294,7 @@ CfgHosts::getAll4(const IOAddress& address) {
     // Do not issue logging message here because it will be logged by
     // the getAllInternal4 method.
     HostCollection collection;
+    MultiThreadingLock lock(*mutex_);
     getAllInternal4<HostCollection>(address, collection);
     return (collection);
 }
@@ -277,6 +304,7 @@ CfgHosts::getAll6(const IOAddress& address) const {
     // Do not issue logging message here because it will be logged by
     // the getAllInternal6 method.
     ConstHostCollection collection;
+    MultiThreadingLock lock(*mutex_);
     getAllInternal6<ConstHostCollection>(address, collection);
     return (collection);
 }
@@ -286,6 +314,7 @@ CfgHosts::getAll6(const IOAddress& address) {
     // Do not issue logging message here because it will be logged by
     // the getAllInternal6 method.
     HostCollection collection;
+    MultiThreadingLock lock(*mutex_);
     getAllInternal6<HostCollection>(address, collection);
     return (collection);
 }
@@ -632,6 +661,42 @@ CfgHosts::getAllInternal4(const IOAddress& address, Storage& storage) const {
         .arg(storage.size());
 }
 
+ConstHostCollection
+CfgHosts::getAllInternal4(const SubnetID& subnet_id,
+                          const IOAddress& address) const {
+    LOG_DEBUG(hosts_logger, HOSTS_DBG_TRACE, HOSTS_CFG_GET_ALL_SUBNET_ID_ADDRESS4)
+        .arg(subnet_id)
+        .arg(address.toText());
+
+    // Must not specify address other than IPv4.
+    if (!address.isV4()) {
+        isc_throw(BadHostAddress, "must specify an IPv4 address when searching"
+                  " for a host, specified address was " << address);
+    }
+    // Search for the Host using the reserved IPv4 address as a key.
+    ConstHostCollection hosts;
+    const HostContainerIndex1& idx = hosts_.get<1>();
+    HostContainerIndex1Range r = idx.equal_range(address);
+    // Append each Host object to the storage.
+    BOOST_FOREACH(auto const& host, r) {
+        if (host->getIPv4SubnetID() == subnet_id) {
+            LOG_DEBUG(hosts_logger, HOSTS_DBG_TRACE_DETAIL_DATA,
+                      HOSTS_CFG_GET_ALL_SUBNET_ID_ADDRESS4_HOST)
+                .arg(subnet_id)
+                .arg(address.toText())
+                .arg(host->toText());
+            hosts.push_back(host);
+        }
+    }
+
+    LOG_DEBUG(hosts_logger, HOSTS_DBG_RESULTS,
+              HOSTS_CFG_GET_ALL_SUBNET_ID_ADDRESS4_COUNT)
+        .arg(subnet_id)
+        .arg(address.toText())
+        .arg(hosts.size());
+    return (hosts);
+}
+
 template<typename Storage>
 void
 CfgHosts::getAllInternal6(const IOAddress& address, Storage& storage) const {
@@ -665,6 +730,7 @@ CfgHosts::get4(const SubnetID& subnet_id,
                const Host::IdentifierType& identifier_type,
                const uint8_t* identifier_begin,
                const size_t identifier_len) const {
+    MultiThreadingLock lock(*mutex_);
     return (getHostInternal(subnet_id, false, identifier_type, identifier_begin,
                             identifier_len));
 }
@@ -674,6 +740,7 @@ CfgHosts::get4(const SubnetID& subnet_id,
                const Host::IdentifierType& identifier_type,
                const uint8_t* identifier_begin,
                const size_t identifier_len) {
+    MultiThreadingLock lock(*mutex_);
     return (getHostInternal(subnet_id, false, identifier_type, identifier_begin,
                             identifier_len));
 }
@@ -683,46 +750,29 @@ CfgHosts::get4(const SubnetID& subnet_id, const IOAddress& address) const {
     LOG_DEBUG(hosts_logger, HOSTS_DBG_TRACE, HOSTS_CFG_GET_ONE_SUBNET_ID_ADDRESS4)
         .arg(subnet_id).arg(address.toText());
 
-    ConstHostCollection hosts = getAll4(address);
-    for (auto const& host : hosts) {
-        if (host->getIPv4SubnetID() == subnet_id) {
-            LOG_DEBUG(hosts_logger, HOSTS_DBG_RESULTS,
-                      HOSTS_CFG_GET_ONE_SUBNET_ID_ADDRESS4_HOST)
-                .arg(subnet_id)
-                .arg(address.toText())
-                .arg(host->toText());
-            return (host);
-        }
+    ConstHostCollection hosts = getAllInternal4(subnet_id, address);
+    if (hosts.empty()) {
+        LOG_DEBUG(hosts_logger, HOSTS_DBG_RESULTS,
+                  HOSTS_CFG_GET_ONE_SUBNET_ID_ADDRESS4_NULL)
+            .arg(subnet_id)
+            .arg(address.toText());
+        return (ConstHostPtr());
+    } else {
+        ConstHostPtr host = *hosts.begin();
+        LOG_DEBUG(hosts_logger, HOSTS_DBG_RESULTS,
+                  HOSTS_CFG_GET_ONE_SUBNET_ID_ADDRESS4_HOST)
+            .arg(subnet_id)
+            .arg(address.toText())
+            .arg(host->toText());
+        return (host);
     }
-
-    LOG_DEBUG(hosts_logger, HOSTS_DBG_RESULTS, HOSTS_CFG_GET_ONE_SUBNET_ID_ADDRESS4_NULL)
-        .arg(subnet_id).arg(address.toText());
-    return (ConstHostPtr());
 }
 
 ConstHostCollection
 CfgHosts::getAll4(const SubnetID& subnet_id,
                   const asiolink::IOAddress& address) const {
-    LOG_DEBUG(hosts_logger, HOSTS_DBG_TRACE, HOSTS_CFG_GET_ALL_SUBNET_ID_ADDRESS4)
-        .arg(subnet_id).arg(address.toText());
-
-    ConstHostCollection hosts;
-    for (auto const& host : getAll4(address)) {
-        if (host->getIPv4SubnetID() == subnet_id) {
-            LOG_DEBUG(hosts_logger, HOSTS_DBG_TRACE_DETAIL_DATA,
-                      HOSTS_CFG_GET_ALL_SUBNET_ID_ADDRESS4_HOST)
-                .arg(subnet_id)
-                .arg(address.toText())
-                .arg(host->toText());
-            hosts.push_back(host);
-        }
-    }
-    LOG_DEBUG(hosts_logger, HOSTS_DBG_RESULTS, HOSTS_CFG_GET_ALL_SUBNET_ID_ADDRESS4_COUNT)
-        .arg(subnet_id)
-        .arg(address.toText())
-        .arg(hosts.size());
-
-    return (hosts);
+    MultiThreadingLock lock(*mutex_);
+    return (getAllInternal4(subnet_id, address));
 }
 
 ConstHostPtr
@@ -730,6 +780,7 @@ CfgHosts::get6(const SubnetID& subnet_id,
                const Host::IdentifierType& identifier_type,
                const uint8_t* identifier_begin,
                const size_t identifier_len) const {
+    MultiThreadingLock lock(*mutex_);
     return (getHostInternal(subnet_id, true, identifier_type, identifier_begin,
                             identifier_len));
 }
@@ -739,17 +790,20 @@ CfgHosts::get6(const SubnetID& subnet_id,
                const Host::IdentifierType& identifier_type,
                const uint8_t* identifier_begin,
                const size_t identifier_len) {
+    MultiThreadingLock lock(*mutex_);
     return (getHostInternal(subnet_id, true, identifier_type, identifier_begin,
                             identifier_len));
 }
 
 ConstHostPtr
 CfgHosts::get6(const IOAddress& prefix, const uint8_t prefix_len) const {
+    MultiThreadingLock lock(*mutex_);
     return (getHostInternal6<ConstHostPtr>(prefix, prefix_len));
 }
 
 HostPtr
 CfgHosts::get6(const IOAddress& prefix, const uint8_t prefix_len) {
+    MultiThreadingLock lock(*mutex_);
     return (getHostInternal6<HostPtr>(prefix, prefix_len));
 }
 
@@ -757,6 +811,7 @@ ConstHostPtr
 CfgHosts::get6(const SubnetID& subnet_id,
                const asiolink::IOAddress& address) const {
     // Do not log here because getHostInternal6 logs.
+    MultiThreadingLock lock(*mutex_);
     return (getHostInternal6<ConstHostPtr, ConstHostCollection>(subnet_id, address));
 }
 
@@ -764,6 +819,7 @@ HostPtr
 CfgHosts::get6(const SubnetID& subnet_id,
                const asiolink::IOAddress& address) {
     // Do not log here because getHostInternal6 logs.
+    MultiThreadingLock lock(*mutex_);
     return (getHostInternal6<HostPtr, HostCollection>(subnet_id, address));
 }
 
@@ -771,6 +827,7 @@ ConstHostCollection
 CfgHosts::getAll6(const SubnetID& subnet_id,
                   const asiolink::IOAddress& address) const {
     ConstHostCollection hosts;
+    MultiThreadingLock lock(*mutex_);
     getAllInternal6(subnet_id, address, hosts);
     return (hosts);
 }
@@ -963,6 +1020,8 @@ CfgHosts::add(const HostPtr& host) {
                   " 0 when adding new host reservation");
     }
 
+    MultiThreadingLock lock(*mutex_);
+
     add4(host);
 
     add6(host);
@@ -977,16 +1036,16 @@ CfgHosts::add4(const HostPtr& host) {
     // Check for duplicates for the specified IPv4 subnet.
     if (host->getIPv4SubnetID() != SUBNET_ID_UNUSED) {
         if (hwaddr && !hwaddr->hwaddr_.empty() &&
-            get4(host->getIPv4SubnetID(), Host::IDENT_HWADDR,
-                 &hwaddr->hwaddr_[0], hwaddr->hwaddr_.size())) {
+            getHostInternal(host->getIPv4SubnetID(), false, Host::IDENT_HWADDR,
+                            &hwaddr->hwaddr_[0], hwaddr->hwaddr_.size())) {
             isc_throw(DuplicateHost, "failed to add new host using the HW"
                       << " address '" << hwaddr->toText(false)
                       << "' to the IPv4 subnet id '" << host->getIPv4SubnetID()
                       << "' as this host has already been added");
         }
         if (duid && !duid->getDuid().empty() &&
-            get4(host->getIPv4SubnetID(), Host::IDENT_DUID,
-                 &duid->getDuid()[0], duid->getDuid().size())) {
+            getHostInternal(host->getIPv4SubnetID(), false, Host::IDENT_DUID,
+                            &duid->getDuid()[0], duid->getDuid().size())) {
             isc_throw(DuplicateHost, "failed to add new host using the "
                       << "DUID '" << duid->toText()
                       << "' to the IPv4 subnet id '" << host->getIPv4SubnetID()
@@ -995,16 +1054,16 @@ CfgHosts::add4(const HostPtr& host) {
     // Check for duplicates for the specified IPv6 subnet.
     } else if (host->getIPv6SubnetID() != SUBNET_ID_UNUSED) {
         if (duid && !duid->getDuid().empty() &&
-            get6(host->getIPv6SubnetID(), Host::IDENT_DUID,
-                 &duid->getDuid()[0], duid->getDuid().size())) {
+            getHostInternal(host->getIPv6SubnetID(), true, Host::IDENT_DUID,
+                            &duid->getDuid()[0], duid->getDuid().size())) {
             isc_throw(DuplicateHost, "failed to add new host using the "
                       << "DUID '" << duid->toText()
                       << "' to the IPv6 subnet id '" << host->getIPv6SubnetID()
                       << "' as this host has already been added");
         }
         if (hwaddr && !hwaddr->hwaddr_.empty() &&
-            get6(host->getIPv6SubnetID(), Host::IDENT_HWADDR,
-                 &hwaddr->hwaddr_[0], hwaddr->hwaddr_.size())) {
+            getHostInternal(host->getIPv6SubnetID(), true, Host::IDENT_HWADDR,
+                            &hwaddr->hwaddr_[0], hwaddr->hwaddr_.size())) {
             isc_throw(DuplicateHost, "failed to add new host using the HW"
                       << " address '" << hwaddr->toText(false)
                       << "' to the IPv6 subnet id '" << host->getIPv6SubnetID()
@@ -1015,7 +1074,8 @@ CfgHosts::add4(const HostPtr& host) {
     // Check if the address is already reserved for the specified IPv4 subnet.
     if (ip_reservations_unique_ && !host->getIPv4Reservation().isV4Zero() &&
         (host->getIPv4SubnetID() != SUBNET_ID_UNUSED) &&
-        get4(host->getIPv4SubnetID(), host->getIPv4Reservation())) {
+        !getAllInternal4(host->getIPv4SubnetID(),
+                         host->getIPv4Reservation()).empty()) {
         isc_throw(ReservedAddress, "failed to add new host using the HW"
                   " address '" << (hwaddr ? hwaddr->toText(false) : "(null)")
                   << " and DUID '" << (duid ? duid->toText() : "(null)")
@@ -1027,8 +1087,8 @@ CfgHosts::add4(const HostPtr& host) {
     // Check if the (identifier type, identifier) tuple is already used.
     const std::vector<uint8_t>& id = host->getIdentifier();
     if ((host->getIPv4SubnetID() != SUBNET_ID_UNUSED) && !id.empty()) {
-        if (get4(host->getIPv4SubnetID(), host->getIdentifierType(), &id[0],
-                 id.size())) {
+        if (getHostInternal(host->getIPv4SubnetID(), false,
+                            host->getIdentifierType(), &id[0], id.size())) {
             isc_throw(DuplicateHost, "failed to add duplicate IPv4 host using identifier: "
                       << Host::getIdentifierAsText(host->getIdentifierType(),
                                                    &id[0], id.size()));
@@ -1066,7 +1126,8 @@ CfgHosts::add6(const HostPtr& host) {
 
         if (ip_reservations_unique_) {
             // If there's an entry for this (subnet-id, address), reject it.
-            if (get6(host->getIPv6SubnetID(), it.second.getPrefix())) {
+            if (getHostInternal6<ConstHostPtr, ConstHostCollection>
+                (host->getIPv6SubnetID(), it.second.getPrefix())) {
                 isc_throw(DuplicateHost, "failed to add address reservation for "
                           << "host using the HW address '"
                           << (hwaddr ? hwaddr->toText(false) : "(null)")
@@ -1084,10 +1145,16 @@ bool
 CfgHosts::del(const SubnetID& subnet_id, const asiolink::IOAddress& addr) {
     size_t erased_hosts = 0;
     size_t erased_addresses = 0;
+    MultiThreadingLock lock(*mutex_);
     if (addr.isV4()) {
         HostContainerIndex4& idx = hosts_.get<4>();
+        ConstHostCollection hosts;
+        getAllInternal4<ConstHostCollection>(addr, hosts);
         // Delete IPv4 reservation and host.
-        for (auto const& host : getAll4(subnet_id, addr)) {
+        for (auto const& host : hosts) {
+            if (host->getIPv4SubnetID() != subnet_id) {
+                continue;
+            }
             erased_hosts += idx.erase(host->getHostId());
         }
         erased_addresses = erased_hosts;
@@ -1116,6 +1183,7 @@ CfgHosts::del(const SubnetID& subnet_id, const asiolink::IOAddress& addr) {
 size_t
 CfgHosts::delAll4(const SubnetID& subnet_id) {
     HostContainerIndex2& idx = hosts_.get<2>();
+    MultiThreadingLock lock(*mutex_);
     size_t erased = idx.erase(subnet_id);
 
     LOG_DEBUG(hosts_logger, HOSTS_DBG_TRACE, HOSTS_CFG_DEL_ALL_SUBNET4)
@@ -1131,6 +1199,7 @@ CfgHosts::del4(const SubnetID& subnet_id,
                const uint8_t* identifier_begin,
                const size_t identifier_len) {
     HostContainerIndex0& idx = hosts_.get<0>();
+    MultiThreadingLock lock(*mutex_);
     auto const t = boost::make_tuple(std::vector<uint8_t>(identifier_begin,
                                                           identifier_begin + identifier_len),
                                                           identifier_type);
@@ -1159,6 +1228,7 @@ size_t
 CfgHosts::delAll6(const SubnetID& subnet_id) {
     // Delete IPv6 reservations.
     HostContainer6Index2& idx6 = hosts6_.get<2>();
+    MultiThreadingLock lock(*mutex_);
     size_t erased_addresses = idx6.erase(subnet_id);
 
     // Delete hosts.
@@ -1184,6 +1254,7 @@ CfgHosts::del6(const SubnetID& subnet_id,
     auto const t = boost::make_tuple(std::vector<uint8_t>(identifier_begin,
                                                           identifier_begin + identifier_len),
                                                           identifier_type);
+    MultiThreadingLock lock(*mutex_);
     auto const& range = idx.equal_range(t);
     size_t erased_hosts = 0;
     size_t erased_reservations = 0;
@@ -1213,6 +1284,7 @@ CfgHosts::del6(const SubnetID& subnet_id,
 
 bool
 CfgHosts::setIPReservationsUnique(const bool unique) {
+    MultiThreadingLock lock(*mutex_);
     ip_reservations_unique_ = unique;
     return (true);
 }
@@ -1236,6 +1308,7 @@ CfgHosts::toElement4() const {
     CfgHostsList result;
     // Iterate using arbitrary the index 0
     const HostContainerIndex0& idx = hosts_.get<0>();
+    MultiThreadingLock lock(*mutex_);
     for (auto const& host : idx) {
 
         // Convert host to element representation
@@ -1253,6 +1326,7 @@ CfgHosts::toElement6() const {
     CfgHostsList result;
     // Iterate using arbitrary the index 0
     const HostContainerIndex0& idx = hosts_.get<0>();
+    MultiThreadingLock lock(*mutex_);
     for (auto const& host : idx) {
 
         // Convert host to Element representation
