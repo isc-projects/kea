@@ -1161,14 +1161,21 @@ CfgHosts::del(const SubnetID& subnet_id, const asiolink::IOAddress& addr) {
     } else {
         HostContainer6Index1& idx6 = hosts6_.get<1>();
         HostContainerIndex4& idx = hosts_.get<4>();
-        // Delete IPv6 reservations.
+        HostContainer6Index3& idx3 = hosts6_.get<3>();
+
+        // Delete hosts and IPv6 reservations.
         auto const& range = idx6.equal_range(boost::make_tuple(subnet_id, addr));
-        erased_addresses = boost::distance(range);
-        // Delete hosts.
+        // Find hosts to delete: we can't delete them now because a host
+        // can have more than one reservation for the address.
+        set<HostID> ids;
         BOOST_FOREACH(auto const& key, range) {
-            erased_hosts += idx.erase(key.host_->getHostId());
+            static_cast<void>(ids.insert(key.host_->getHostId()));
         }
-        idx6.erase(range.first, range.second);
+        // Delete them.
+        for(auto const& id : ids) {
+            erased_hosts += idx.erase(id);
+            erased_addresses += idx3.erase(id);
+        }
     }
 
     LOG_DEBUG(hosts_logger, HOSTS_DBG_TRACE, HOSTS_CFG_DEL)
