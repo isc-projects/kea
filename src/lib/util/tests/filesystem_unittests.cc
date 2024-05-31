@@ -69,6 +69,18 @@ TEST_F(FileUtilTest, isFile) {
     EXPECT_FALSE(isFile(TEST_DATA_BUILDDIR));
 }
 
+/// @brief Check Umask.
+TEST_F(FileUtilTest, umask) {
+    // Protect the test itself assuming that Umask does what we expect...
+    Umask m0(0);
+    mode_t orig = umask(0);
+    {
+        Umask m(S_IROTH);
+        EXPECT_EQ(S_IROTH, umask(S_IRWXO));
+    }
+    EXPECT_EQ(0, umask(orig));
+}
+
 /// @brief Check that the components are split correctly.
 TEST(PathTest, components) {
     // Complete name

@@ -19,7 +19,6 @@
 #include <string>
 
 #include <fcntl.h>
-#include <sys/stat.h>
 
 using namespace isc::util::str;
 using namespace std;
@@ -67,6 +66,14 @@ isFile(string const& path) {
         return (false);
     }
     return ((statbuf.st_mode & S_IFMT) == S_IFREG);
+}
+
+Umask::Umask(mode_t mask) : orig_umask_(umask(S_IWGRP | S_IWOTH)) {
+    umask(orig_umask_ | mask);
+}
+
+Umask::~Umask() {
+    umask(orig_umask_);
 }
 
 Path::Path(string const& full_name) {
