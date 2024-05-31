@@ -1289,6 +1289,61 @@ CfgHosts::del6(const SubnetID& subnet_id,
     return (erased_hosts != 0);
 }
 
+void
+CfgHosts::update(HostPtr const& host) {
+    bool deleted(false);
+    HostContainerIndex0& idx = hosts_.get<0>();
+    std::vector<uint8_t> const& identifier(host->getIdentifier());
+    auto const t = boost::make_tuple(identifier, host->getIdentifierType());
+    MultiThreadingLock lock(*mutex_);
+    auto const& range = idx.equal_range(t);
+    if (host->getIPv4SubnetID() != SUBNET_ID_UNUSED) {
+        // inline del4.
+        for (auto key = range.first; key != range.second;) {
+            if ((*key)->getIPv4SubnetID() != host->getIPv4SubnetID()) {
+                ++key;
+                // Skip hosts from other subnets.
+                continue;
+            }
+
+            key = idx.erase(key);
+            deleted = true;
+            LOG_DEBUG(hosts_logger, HOSTS_DBG_TRACE, HOSTS_CFG_UPDATE_DEL4)
+                .arg(1)
+                .arg(host->getIPv4SubnetID())
+                .arg(host->getIdentifierAsText());
+        }
+    } else if (host->getIPv6SubnetID() != SUBNET_ID_UNUSED) {
+        // inline del6.
+        HostContainer6Index3& idx6 = hosts6_.get<3>();
+        for (auto key = range.first; key != range.second;) {
+            if ((*key)->getIPv6SubnetID() != host->getIPv6SubnetID()) {
+                ++key;
+                // Skip hosts from other subnets.
+            }
+
+            auto host_id = (*key)->getHostId();
+            key = idx.erase(key);
+            deleted = true;
+            size_t erased_reservations = idx6.erase(host_id);
+            LOG_DEBUG(hosts_logger, HOSTS_DBG_TRACE, HOSTS_CFG_UPDATE_DEL6)
+                .arg(1)
+                .arg(erased_reservations)
+                .arg(host->getIPv6SubnetID())
+                .arg(host->getIdentifierAsText());
+        }
+    } else {
+        isc_throw(HostNotFound, "Mandatory 'subnet-id' parameter missing.");
+    }
+    if (!deleted) {
+        isc_throw(HostNotFound, "Host not updated (not found).");
+    }
+    LOG_DEBUG(hosts_logger, HOSTS_DBG_TRACE, HOSTS_CFG_UPDATE_ADD)
+        .arg(host->toText());
+    add4(host);
+    add6(host);
+}
+
 bool
 CfgHosts::setIPReservationsUnique(const bool unique) {
     MultiThreadingLock lock(*mutex_);

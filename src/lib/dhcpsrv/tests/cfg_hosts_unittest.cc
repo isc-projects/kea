@@ -71,6 +71,7 @@ public:
     void testGetAll4ByAddress();
     void testDeleteForIPv4();
     void testDeleteForIPv6();
+    void testDelete2ForIPv6();
     void testDel4();
     void testDel6();
     void testDeleteAll4();
@@ -711,6 +712,41 @@ TEST_F(CfgHostsTest, deleteForIPv6) {
 TEST_F(CfgHostsTest, deleteForIPv6MultiThreading) {
     MultiThreadingTest mt(true);
     testDeleteForIPv6();
+}
+
+// This test checks that two IPv6 reservations for the specified subnet ID and
+// IPv6 address can be deleted.
+void
+CfgHostsTest::testDelete2ForIPv6() {
+    CfgHosts cfg;
+    // Add host with two addresses.
+    IOAddress address1("2001:db8:1::1");
+    IOAddress address2("2001:db8:2::2");
+    size_t host_count = 10;
+    SubnetID subnet_id(42);
+
+    HostPtr host = HostPtr(new Host(duids_[0]->toText(), "duid",
+                                    SUBNET_ID_UNUSED, subnet_id,
+                                    IOAddress::IPV4_ZERO_ADDRESS()));
+    host->addReservation(IPv6Resrv(IPv6Resrv::TYPE_NA, address1));
+    host->addReservation(IPv6Resrv(IPv6Resrv::TYPE_NA, address2));
+    cfg.add(host);
+
+    // Delete one host using first address.
+    EXPECT_TRUE(cfg.del(subnet_id, address1));
+
+    // Check if all addresses were removed.
+    EXPECT_FALSE(cfg.get6(subnet_id, address2));
+    EXPECT_FALSE(cfg.del(subnet_id, address2));
+}
+
+TEST_F(CfgHostsTest, delete2ForIPv6) {
+    testDelete2ForIPv6();
+}
+
+TEST_F(CfgHostsTest, delete2ForIPv6MultiThreading) {
+    MultiThreadingTest mt(true);
+    testDelete2ForIPv6();
 }
 
 // This test checks that false is returned for deleting the IPv4 reservation
@@ -1808,7 +1844,7 @@ TEST_F(CfgHostsTest, duplicatesSubnet6DUIDMultiThreading) {
     testDuplicatesSubnet6DUID();
 }
 
-// Checks that updates work correctly. Note it is not really MT safe.
+// Checks that updates work correctly.
 void
 CfgHostsTest::testUpdate() {
     CfgHosts cfg;

@@ -1,4 +1,4 @@
-# Copyright (C) 2015-2023 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2015-2024 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -276,6 +276,26 @@ subnet id and specific host identifier.
 % HOSTS_CFG_GET_ONE_SUBNET_ID_IDENTIFIER_NULL host not found using subnet id %1 and identifier %2
 This debug message is issued when no host was found using the specified
 subnet id and host identifier.
+
+% HOSTS_CFG_UPDATE_ADD add the host for reservations: %1
+This debug message is issued when new host (with reservations) is
+added to the server's configuration during an update. The argument
+describes the host and its reservations in detail.
+
+% HOSTS_CFG_UPDATE_DEL4 deleted %1 host(s) for subnet id %2 and identifier %3
+This debug message is issued when IPv4 reservations are deleted for
+the specified subnet and identifier during an update. The first
+argument specifies how many hosts have been deleted. The second
+argument is the subnet identifier. The third argument is the
+identifier.
+
+% HOSTS_CFG_UPDATE_DEL6 deleted %1 host(s) having %2 IPv6 reservation(s) for subnet id %3 and identifier %4
+This debug message is issued when IPv6 reservations are deleted for
+the specified subnet and identifier during an update. The first
+argument specifies how many hosts have been deleted. The second
+argument specifies how many reservations have been deleted. The third
+argument is the subnet identifier. The fourth argument is the
+identifier.
 
 % HOSTS_MGR_ALTERNATE_GET4_SUBNET_ID_ADDRESS4 trying alternate sources for host using subnet id %1 and address %2
 This debug message is issued when the Host Manager doesn't find the

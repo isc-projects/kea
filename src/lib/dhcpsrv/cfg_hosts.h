@@ -593,6 +593,15 @@ public:
                       const Host::IdentifierType& identifier_type,
                       const uint8_t* identifier_begin, const size_t identifier_len);
 
+    /// @brief Attempts to update an existing host entry.
+    ///
+    /// The implementation is common to multiple host data sources, so let's
+    /// provide it in the base host data source. In some instances, it may
+    /// require synchronization e.g. with transactions in case of databases.
+    ///
+    /// @param host the host up to date with the requested changes
+    virtual void update(HostPtr const& host);
+
     /// @brief Return backend type
     ///
     /// Returns the type of the backend (e.g. "mysql", "memfile" etc.)
