@@ -941,7 +941,7 @@ Dhcpv4SrvTest::configureWithStatus(const std::string& config, NakedDhcpv4Srv& sr
 Dhcpv4Exchange
 Dhcpv4SrvTest::createExchange(const Pkt4Ptr& query) {
     bool drop = false;
-    Subnet4Ptr subnet = srv_.selectSubnet(query, drop);
+    ConstSubnet4Ptr subnet = srv_.selectSubnet(query, drop);
     EXPECT_FALSE(drop);
     AllocEngine::ClientContext4Ptr context(new AllocEngine::ClientContext4());
     EXPECT_TRUE(srv_.earlyGHRLookup(query, context));

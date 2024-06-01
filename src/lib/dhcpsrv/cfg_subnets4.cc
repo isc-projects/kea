@@ -258,7 +258,7 @@ CfgSubnets4::initSelector(const Pkt4Ptr& query) {
     return (selector);
 }
 
-Subnet4Ptr
+ConstSubnet4Ptr
 CfgSubnets4::selectSubnet4o6(const SubnetSelector& selector) const {
     for (auto const& subnet : subnets_) {
         Cfg4o6& cfg4o6 = subnet->get4o6();
@@ -297,10 +297,10 @@ CfgSubnets4::selectSubnet4o6(const SubnetSelector& selector) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE, DHCPSRV_SUBNET4O6_SELECT_FAILED);
 
     // Ok, wasn't able to find any matching subnet.
-    return (Subnet4Ptr());
+    return (ConstSubnet4Ptr());
 }
 
-Subnet4Ptr
+ConstSubnet4Ptr
 CfgSubnets4::selectSubnet(const SubnetSelector& selector) const {
     // First use RAI link select sub-option or subnet select option
     if (!selector.option_select_.isV4Zero()) {
@@ -385,8 +385,8 @@ CfgSubnets4::selectSubnet(const SubnetSelector& selector) const {
         }
 
         // Attempt to select subnet based on the interface name.
-        Subnet4Ptr subnet = selectSubnet(selector.iface_name_,
-                                         selector.client_classes_);
+        ConstSubnet4Ptr subnet = selectSubnet(selector.iface_name_,
+                                              selector.client_classes_);
 
         // If it matches - great. If not, we'll try to use a different
         // selection criteria below.
@@ -404,7 +404,7 @@ CfgSubnets4::selectSubnet(const SubnetSelector& selector) const {
         LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
                   DHCPSRV_SUBNET4_SELECT_NO_USABLE_ADDRESS);
 
-        return (Subnet4Ptr());
+        return (ConstSubnet4Ptr());
     }
 
     // We have identified an address in the client's packet that can be
@@ -412,11 +412,11 @@ CfgSubnets4::selectSubnet(const SubnetSelector& selector) const {
     return (selectSubnet(address, selector.client_classes_));
 }
 
-Subnet4Ptr
+ConstSubnet4Ptr
 CfgSubnets4::selectSubnet(const std::string& iface,
                           const ClientClasses& client_classes) const {
     for (auto const& subnet : subnets_) {
-        Subnet4Ptr subnet_selected;
+        ConstSubnet4Ptr subnet_selected;
 
         // First, try subnet specific interface name.
         if (!subnet->getIface(Network4::Inheritance::NONE).empty()) {
@@ -453,7 +453,7 @@ CfgSubnets4::selectSubnet(const std::string& iface,
         .arg(iface);
 
     // Failed to find a subnet.
-    return (Subnet4Ptr());
+    return (ConstSubnet4Ptr());
 }
 
 Subnet4Ptr
@@ -463,7 +463,7 @@ CfgSubnets4::getSubnet(const SubnetID subnet_id) const {
     return ((subnet_it != index.cend()) ? (*subnet_it) : Subnet4Ptr());
 }
 
-Subnet4Ptr
+ConstSubnet4Ptr
 CfgSubnets4::selectSubnet(const IOAddress& address,
                           const ClientClasses& client_classes) const {
     for (auto const& subnet : subnets_) {
@@ -487,7 +487,7 @@ CfgSubnets4::selectSubnet(const IOAddress& address,
         .arg(address.toText());
 
     // Failed to find a subnet.
-    return (Subnet4Ptr());
+    return (ConstSubnet4Ptr());
 }
 
 SubnetIDSet

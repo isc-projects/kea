@@ -942,15 +942,15 @@ SrvConfig::toElement() const {
 }
 
 DdnsParamsPtr
-SrvConfig::getDdnsParams(const Subnet4Ptr& subnet) const {
+SrvConfig::getDdnsParams(const ConstSubnet4Ptr& subnet) const {
     return (DdnsParamsPtr(new DdnsParams(subnet,
                                          getD2ClientConfig()->getEnableUpdates())));
 }
 
 DdnsParamsPtr
-SrvConfig::getDdnsParams(const Subnet6Ptr& subnet) const {
-   return(DdnsParamsPtr(new DdnsParams(subnet,
-                                       getD2ClientConfig()->getEnableUpdates())));
+SrvConfig::getDdnsParams(const ConstSubnet6Ptr& subnet) const {
+    return (DdnsParamsPtr(new DdnsParams(subnet,
+                                         getD2ClientConfig()->getEnableUpdates())));
 }
 
 void

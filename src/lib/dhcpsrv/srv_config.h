@@ -58,8 +58,8 @@ public:
     /// @param d2_client_enabled flag which indicates whether or not
     /// D2Client is enabled (typically the value should come from
     /// global D2Client configuration).
-    DdnsParams(const Subnet4Ptr& subnet, bool d2_client_enabled)
-        : subnet_(boost::dynamic_pointer_cast<Subnet>(subnet)),
+    DdnsParams(const ConstSubnet4Ptr& subnet, bool d2_client_enabled)
+        : subnet_(boost::dynamic_pointer_cast<const Subnet>(subnet)),
           d2_client_enabled_(d2_client_enabled) {}
 
     /// @brief Constructor for DHCPv6 subnets
@@ -69,8 +69,8 @@ public:
     /// @param d2_client_enabled flag which indicates whether or not
     /// D2Client is enabled (typically the value should come from
     /// global D2Client configuration).
-    DdnsParams(const Subnet6Ptr& subnet, bool d2_client_enabled)
-        : subnet_(boost::dynamic_pointer_cast<Subnet>(subnet)),
+    DdnsParams(const ConstSubnet6Ptr& subnet, bool d2_client_enabled)
+        : subnet_(boost::dynamic_pointer_cast<const Subnet>(subnet)),
           d2_client_enabled_(d2_client_enabled) {}
 
     /// @brief Returns whether or not DHCP DDNS updating is enabled.
@@ -170,7 +170,7 @@ public:
 
 private:
     /// @brief Subnet from which values should be fetched.
-    SubnetPtr subnet_;
+    ConstSubnetPtr subnet_;
 
     /// @brief Flag indicating whether or not the D2Client is enabled.
     bool d2_client_enabled_;
@@ -633,7 +633,7 @@ public:
     ///
     /// @param subnet DHCPv4 Subnet for which DDNS parameters are desired.
     /// @return pointer to DddnParams instance
-    DdnsParamsPtr getDdnsParams(const Subnet4Ptr& subnet) const;
+    DdnsParamsPtr getDdnsParams(const ConstSubnet4Ptr& subnet) const;
 
     /// @brief Fetches the DDNS parameters for a given DHCPv6 subnet.
     ///
@@ -644,7 +644,7 @@ public:
     ///
     /// @param subnet DHCPv6 Subnet for which DDNS parameters are desired.
     /// @return pointer to DddnParams instance
-    DdnsParamsPtr getDdnsParams(const Subnet6Ptr& subnet) const;
+    DdnsParamsPtr getDdnsParams(const ConstSubnet6Ptr& subnet) const;
 
     /// @brief Copies the current configuration to a new configuration.
     ///

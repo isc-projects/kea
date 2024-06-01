@@ -142,7 +142,7 @@ HAImpl::subnet4Select(hooks::CalloutHandle& callout_handle) {
     Pkt4Ptr query4;
     callout_handle.getArgument("query4", query4);
 
-    Subnet4Ptr subnet4;
+    ConstSubnet4Ptr subnet4;
     callout_handle.getArgument("subnet4", subnet4);
 
     // If the server failed to select the subnet this pointer is null.
@@ -406,7 +406,7 @@ HAImpl::subnet6Select(hooks::CalloutHandle& callout_handle) {
     Pkt6Ptr query6;
     callout_handle.getArgument("query6", query6);
 
-    Subnet6Ptr subnet6;
+    ConstSubnet6Ptr subnet6;
     callout_handle.getArgument("subnet6", subnet6);
 
     // If the server failed to select the subnet this pointer is null.

@@ -224,9 +224,9 @@ CfgSubnets6::initSelector(const Pkt6Ptr& query) {
     return (selector);
 }
 
-Subnet6Ptr
+ConstSubnet6Ptr
 CfgSubnets6::selectSubnet(const SubnetSelector& selector) const {
-    Subnet6Ptr subnet;
+    ConstSubnet6Ptr subnet;
 
     // If relay agent link address is set to zero it means that we're dealing
     // with a directly connected client.
@@ -262,7 +262,7 @@ CfgSubnets6::selectSubnet(const SubnetSelector& selector) const {
     return (subnet);
 }
 
-Subnet6Ptr
+ConstSubnet6Ptr
 CfgSubnets6::selectSubnet(const asiolink::IOAddress& address,
                           const ClientClasses& client_classes,
                           const bool is_relay_address) const {
@@ -312,10 +312,10 @@ CfgSubnets6::selectSubnet(const asiolink::IOAddress& address,
         .arg(address.toText());
 
     // Nothing found.
-    return (Subnet6Ptr());
+    return (ConstSubnet6Ptr());
 }
 
-Subnet6Ptr
+ConstSubnet6Ptr
 CfgSubnets6::selectSubnet(const std::string& iface_name,
                           const ClientClasses& client_classes) const {
     // If empty interface specified, we can't select subnet by interface.
@@ -340,10 +340,10 @@ CfgSubnets6::selectSubnet(const std::string& iface_name,
         .arg(iface_name);
 
     // No subnet found for this interface name.
-    return (Subnet6Ptr());
+    return (ConstSubnet6Ptr());
 }
 
-Subnet6Ptr
+ConstSubnet6Ptr
 CfgSubnets6::selectSubnet(const OptionPtr& interface_id,
                           const ClientClasses& client_classes) const {
     // We can only select subnet using an interface id, if the interface
@@ -370,7 +370,7 @@ CfgSubnets6::selectSubnet(const OptionPtr& interface_id,
     }
 
     // No subnet found.
-    return (Subnet6Ptr());
+    return (ConstSubnet6Ptr());
 }
 
 Subnet6Ptr

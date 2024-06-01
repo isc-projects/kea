@@ -1849,8 +1849,8 @@ DORATest::reservation() {
     // Make sure that the server has responded with DHCPACK.
     ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
     // Obtain the subnet to which the returned address belongs.
-    Subnet4Ptr subnet = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->
-        selectSubnet(clientB.config_.lease_.addr_);
+    ConstSubnet4Ptr subnet = CfgMgr::instance().getCurrentCfg()->
+        getCfgSubnets4()->selectSubnet(clientB.config_.lease_.addr_);
     ASSERT_TRUE(subnet);
     // Make sure that the address has been allocated from the dynamic pool.
     ASSERT_TRUE(subnet->inPool(Lease::TYPE_V4, clientB.config_.lease_.addr_));
@@ -2276,8 +2276,8 @@ DORATest::reservationsWithConflicts() {
     // Make sure that the server has responded with DHCPACK.
     ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
     // Obtain the subnet to which the returned address belongs.
-    Subnet4Ptr subnet = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->
-        selectSubnet(client.config_.lease_.addr_);
+    ConstSubnet4Ptr subnet = CfgMgr::instance().getCurrentCfg()->
+        getCfgSubnets4()->selectSubnet(client.config_.lease_.addr_);
     ASSERT_TRUE(subnet);
     // Make sure that the address has been allocated from the dynamic pool.
     ASSERT_TRUE(subnet->inPool(Lease::TYPE_V4, client.config_.lease_.addr_));
@@ -2710,8 +2710,8 @@ DORATest::testMultiStageBoot(const unsigned int config_index) {
     // Make sure that the client has got the lease which belongs
     // to a pool.
     IOAddress leased_address1 = client.config_.lease_.addr_;
-    Subnet4Ptr subnet = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->
-        selectSubnet(leased_address1);
+    ConstSubnet4Ptr subnet = CfgMgr::instance().getCurrentCfg()->
+        getCfgSubnets4()->selectSubnet(leased_address1);
     ASSERT_TRUE(subnet);
     // Make sure that the address has been allocated from the dynamic pool.
     ASSERT_TRUE(subnet->inPool(Lease::TYPE_V4, leased_address1));

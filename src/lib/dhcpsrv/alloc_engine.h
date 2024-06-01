@@ -238,12 +238,12 @@ public:
         bool early_global_reservations_lookup_;
 
         /// @brief Subnet selected for the client by the server.
-        Subnet6Ptr subnet_;
+        ConstSubnet6Ptr subnet_;
 
         /// @brief Subnet from which host reservations should be retrieved.
         ///
         /// It can be NULL, in which case @c subnet_ value is used.
-        Subnet6Ptr host_subnet_;
+        ConstSubnet6Ptr host_subnet_;
 
         /// @brief Client identifier
         DuidPtr duid_;
@@ -481,7 +481,7 @@ public:
         /// @param query Pointer to the DHCPv6 message being processed.
         /// @param callout_handle Callout handle associated with a client's
         ///        message
-        ClientContext6(const Subnet6Ptr& subnet, const DuidPtr& duid,
+        ClientContext6(const ConstSubnet6Ptr& subnet, const DuidPtr& duid,
                        const bool fwd_dns, const bool rev_dns,
                        const std::string& hostname, const bool fake_allocation,
                        const Pkt6Ptr& query,
@@ -916,7 +916,7 @@ private:
                                 bool& search_hint_lease,
                                 const isc::asiolink::IOAddress& hint,
                                 uint8_t hint_prefix_length,
-                                Subnet6Ptr original_subnet,
+                                ConstSubnet6Ptr original_subnet,
                                 SharedNetwork6Ptr& network,
                                 uint64_t& total_attempts,
                                 uint64_t& subnets_with_unavail_leases,
@@ -1230,7 +1230,7 @@ public:
         bool early_global_reservations_lookup_;
 
         /// @brief Subnet selected for the client by the server.
-        Subnet4Ptr subnet_;
+        ConstSubnet4Ptr subnet_;
 
         /// @brief Client identifier from the DHCP message.
         ClientIdPtr clientid_;
@@ -1361,7 +1361,8 @@ public:
         ///      allocated (true)
         /// @param offer_lft When not zero, leases ARE allocated on DISCOVER and use
         /// this value as lease lifetime.
-        ClientContext4(const Subnet4Ptr& subnet, const ClientIdPtr& clientid,
+        ClientContext4(const ConstSubnet4Ptr& subnet,
+                       const ClientIdPtr& clientid,
                        const HWAddrPtr& hwaddr,
                        const asiolink::IOAddress& requested_addr,
                        const bool fwd_dns_update, const bool rev_dns_update,
@@ -1865,7 +1866,7 @@ public:
     ///
     /// @param subnet pointer to the source subnet
     /// @return string containing the generated label
-    static std::string labelNetworkOrSubnet(SubnetPtr subnet);
+    static std::string labelNetworkOrSubnet(ConstSubnetPtr subnet);
 };
 
 /// @brief A pointer to the @c AllocEngine object.

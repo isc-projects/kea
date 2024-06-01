@@ -172,7 +172,8 @@ public:
     /// @param rsp A pointer to the response.
     /// @param subnet A pointer to the selected subnet.
     void sendResponseNoThrow(hooks::CalloutHandlePtr& callout_handle,
-                             Pkt6Ptr query, Pkt6Ptr& rsp, Subnet6Ptr& subnet);
+                             Pkt6Ptr query, Pkt6Ptr& rsp,
+                             ConstSubnet6Ptr& subnet);
 
     /// @brief Process a single incoming DHCPv6 packet.
     ///
@@ -484,7 +485,7 @@ protected:
     /// @param question client's message
     /// @param drop if it is true the packet will be dropped
     /// @return selected subnet (or NULL if no suitable subnet was found)
-    isc::dhcp::Subnet6Ptr selectSubnet(const Pkt6Ptr& question, bool& drop);
+    isc::dhcp::ConstSubnet6Ptr selectSubnet(const Pkt6Ptr& question, bool& drop);
 
     /// @brief Processes IA_NA option (and assigns addresses if necessary).
     ///
@@ -815,7 +816,9 @@ protected:
     /// @param preferred_lft preferred lease time of the lease being assigned to the client
     /// @param subnet the subnet to which the lease belongs
     /// @param resp outbound IA option in which the timers are set.
-    void setTeeTimes(uint32_t preferred_lft, const Subnet6Ptr& subnet, Option6IAPtr& resp);
+    void setTeeTimes(uint32_t preferred_lft,
+                     const ConstSubnet6Ptr& subnet,
+                     Option6IAPtr& resp);
 
     /// @brief Attempts to release received addresses
     ///
@@ -1225,7 +1228,8 @@ protected:
     /// @param rsp Pointer to a response.
     /// @param subnet A pointer to the selected subnet.
     void processPacketPktSend(hooks::CalloutHandlePtr& callout_handle,
-                              Pkt6Ptr& query, Pkt6Ptr& rsp, Subnet6Ptr& subnet);
+                              Pkt6Ptr& query, Pkt6Ptr& rsp,
+                              ConstSubnet6Ptr& subnet);
 
     /// @brief Allocation Engine.
     /// Pointer to the allocation engine that we are currently using

@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -275,7 +275,7 @@ DirectClientTest::twoSubnets() {
     ASSERT_TRUE(ack);
 
     // Check that the offered address belongs to the suitable subnet.
-    Subnet4Ptr subnet = CfgMgr::instance().getCurrentCfg()->
+    ConstSubnet4Ptr subnet = CfgMgr::instance().getCurrentCfg()->
         getCfgSubnets4()->selectSubnet(offer->getYiaddr());
     ASSERT_TRUE(subnet);
     EXPECT_EQ("10.0.0.0", subnet->get().first.toText());
@@ -333,7 +333,7 @@ DirectClientTest::oneSubnet() {
     // an Offer message.
     ASSERT_EQ(DHCPOFFER, response->getType());
     // Check that the offered address belongs to the suitable subnet.
-    Subnet4Ptr subnet = CfgMgr::instance().getCurrentCfg()->
+    ConstSubnet4Ptr subnet = CfgMgr::instance().getCurrentCfg()->
         getCfgSubnets4()->selectSubnet(response->getYiaddr());
     ASSERT_TRUE(subnet);
     EXPECT_EQ("10.0.0.0", subnet->get().first.toText());

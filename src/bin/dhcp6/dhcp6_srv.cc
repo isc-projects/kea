@@ -1313,7 +1313,7 @@ Dhcpv6Srv::processLocalizedQuery6(AllocEngine::ClientContext6& ctx) {
         // the callback (i.e. drop) unless the callout status is set to
         // NEXT_STEP_PARK.  Otherwise the callback we bind here will be
         // executed when the hook library unparks the packet.
-        Subnet6Ptr subnet = ctx.subnet_;
+        ConstSubnet6Ptr subnet = ctx.subnet_;
         HooksManager::park("leases6_committed", query,
         [this, callout_handle, query, rsp, callout_handle_state, subnet]() mutable {
             if (MultiThreadingMgr::instance().getMode()) {
@@ -1369,7 +1369,8 @@ Dhcpv6Srv::processLocalizedQuery6(AllocEngine::ClientContext6& ctx) {
 
 void
 Dhcpv6Srv::sendResponseNoThrow(hooks::CalloutHandlePtr& callout_handle,
-                               Pkt6Ptr query, Pkt6Ptr& rsp, Subnet6Ptr& subnet) {
+                               Pkt6Ptr query, Pkt6Ptr& rsp,
+                               ConstSubnet6Ptr& subnet) {
     try {
             processPacketPktSend(callout_handle, query, rsp, subnet);
             processPacketBufferSend(callout_handle, rsp);
@@ -1385,7 +1386,8 @@ Dhcpv6Srv::sendResponseNoThrow(hooks::CalloutHandlePtr& callout_handle,
 
 void
 Dhcpv6Srv::processPacketPktSend(hooks::CalloutHandlePtr& callout_handle,
-                                Pkt6Ptr& query, Pkt6Ptr& rsp, Subnet6Ptr& subnet) {
+                                Pkt6Ptr& query, Pkt6Ptr& rsp,
+                                ConstSubnet6Ptr& subnet) {
     query->addPktEvent("process_completed");
     if (!rsp) {
         return;
@@ -2080,11 +2082,11 @@ void Dhcpv6Srv::sanityCheckDUID(const OptionPtr& opt, const std::string& opt_nam
     }
 }
 
-Subnet6Ptr
+ConstSubnet6Ptr
 Dhcpv6Srv::selectSubnet(const Pkt6Ptr& question, bool& drop) {
     const SubnetSelector& selector = CfgSubnets6::initSelector(question);
 
-    Subnet6Ptr subnet = CfgMgr::instance().getCurrentCfg()->
+    ConstSubnet6Ptr subnet = CfgMgr::instance().getCurrentCfg()->
         getCfgSubnets6()->selectSubnet(selector);
 
     // Let's execute all callouts registered for subnet6_receive
@@ -2121,7 +2123,7 @@ Dhcpv6Srv::selectSubnet(const Pkt6Ptr& question, bool& drop) {
                       DHCP4_HOOK_SUBNET6_SELECT_PARKING_LOT_FULL)
                 .arg(limit)
                 .arg(question->getLabel());
-            return (Subnet6Ptr());
+            return (ConstSubnet6Ptr());
         }
 
         // We proactively park the packet.
@@ -2157,7 +2159,7 @@ Dhcpv6Srv::selectSubnet(const Pkt6Ptr& question, bool& drop) {
             LOG_DEBUG(hooks_logger, DBG_DHCP6_HOOKS, DHCP6_HOOK_SUBNET6_SELECT_PARK)
                 .arg(question->getLabel());
             drop = true;
-            return (Subnet6Ptr());
+            return (ConstSubnet6Ptr());
         } else {
             HooksManager::drop("subnet6_select", question);
         }
@@ -2169,7 +2171,7 @@ Dhcpv6Srv::selectSubnet(const Pkt6Ptr& question, bool& drop) {
         if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) {
             LOG_DEBUG(hooks_logger, DBG_DHCP6_HOOKS, DHCP6_HOOK_SUBNET6_SELECT_SKIP)
                 .arg(question->getLabel());
-            return (Subnet6Ptr());
+            return (ConstSubnet6Ptr());
         }
 
         // Callouts decided to drop the packet. It is a superset of the
@@ -2178,7 +2180,7 @@ Dhcpv6Srv::selectSubnet(const Pkt6Ptr& question, bool& drop) {
             LOG_DEBUG(hooks_logger, DBG_DHCP6_HOOKS, DHCP6_HOOK_SUBNET6_SELECT_DROP)
                 .arg(question->getLabel());
             drop = true;
-            return (Subnet6Ptr());
+            return (ConstSubnet6Ptr());
         }
 
         // Use whatever subnet was specified by the callout
@@ -2208,7 +2210,7 @@ void
 Dhcpv6Srv::assignLeases(const Pkt6Ptr& question, Pkt6Ptr& answer,
                         AllocEngine::ClientContext6& ctx) {
     // Save the originally selected subnet.
-    Subnet6Ptr orig_subnet = ctx.subnet_;
+    ConstSubnet6Ptr orig_subnet = ctx.subnet_;
 
     // We need to allocate addresses for all IA_NA options in the client's
     // question (i.e. SOLICIT or REQUEST) message.
@@ -2340,7 +2342,7 @@ Dhcpv6Srv::processClientFqdn(const Pkt6Ptr& question, const Pkt6Ptr& answer,
         ScopedCalloutHandleState callout_handle_state(callout_handle);
 
         // Setup the callout arguments.
-        Subnet6Ptr subnet = ctx.subnet_;
+        ConstSubnet6Ptr subnet = ctx.subnet_;
         callout_handle->setArgument("query6", question);
         callout_handle->setArgument("response6", answer);
         callout_handle->setArgument("subnet6", subnet);
@@ -2581,7 +2583,7 @@ Dhcpv6Srv::assignIA_NA(const Pkt6Ptr& query,
     }
 
     // convenience values
-    const Subnet6Ptr& subnet = ctx.subnet_;
+    const ConstSubnet6Ptr& subnet = ctx.subnet_;
 
     // If there is no subnet selected for handling this IA_NA, the only thing left to do is
     // to say that we are sorry, but the user won't get an address. As a convenience, we
@@ -2721,7 +2723,7 @@ Dhcpv6Srv::assignIA_PD(const Pkt6Ptr& query,
             .arg(hint_opt ? hint.toText() : "(no hint)");
     }
 
-    const Subnet6Ptr& subnet = ctx.subnet_;
+    const ConstSubnet6Ptr& subnet = ctx.subnet_;
 
     // Create IA_PD that we will put in the response.
     // Do not use OptionDefinition to create option's instance so
@@ -2851,7 +2853,7 @@ Dhcpv6Srv::extendIA_NA(const Pkt6Ptr& query,
         .arg(ia->getIAID());
 
     // convenience values
-    const Subnet6Ptr& subnet = ctx.subnet_;
+    const ConstSubnet6Ptr& subnet = ctx.subnet_;
 
     // Create empty IA_NA option with IAID matching the request.
     Option6IAPtr ia_rsp(new Option6IA(D6O_IA_NA, ia->getIAID()));
@@ -3014,7 +3016,7 @@ Dhcpv6Srv::extendIA_PD(const Pkt6Ptr& query,
         .arg(query->getLabel())
         .arg(ia->getIAID());
 
-    const Subnet6Ptr& subnet = ctx.subnet_;
+    const ConstSubnet6Ptr& subnet = ctx.subnet_;
     const DuidPtr& duid = ctx.duid_;
 
     // Let's create a IA_PD response and fill it in later
@@ -3213,7 +3215,7 @@ Dhcpv6Srv::extendLeases(const Pkt6Ptr& query, Pkt6Ptr& reply,
     // because we have already checked it in the sanityCheck().
 
     // Save the originally selected subnet.
-    Subnet6Ptr orig_subnet = ctx.subnet_;
+    ConstSubnet6Ptr orig_subnet = ctx.subnet_;
 
     for (auto const& opt : query->options_) {
         switch (opt.second->getType()) {
@@ -3958,7 +3960,7 @@ Dhcpv6Srv::processConfirm(AllocEngine::ClientContext6& ctx) {
     bool verified = false;
     // Check if subnet was selected for the message. If no subnet
     // has been selected, the client is not on link.
-    SubnetPtr subnet = ctx.subnet_;
+    ConstSubnetPtr subnet = ctx.subnet_;
 
     // Regardless if the subnet has been selected or not, we will iterate
     // over the IA_NA options to check if they hold any addresses. If there
@@ -4530,7 +4532,7 @@ void
 Dhcpv6Srv::evaluateAdditionalClasses(const Pkt6Ptr& pkt, AllocEngine::ClientContext6& ctx) {
     // Get additional classes to evaluate added elsewhere, posssibly by hooks.
     ClientClasses classes = pkt->getAdditionalClasses();
-    Subnet6Ptr subnet = ctx.subnet_;
+    ConstSubnet6Ptr subnet = ctx.subnet_;
 
     if (subnet) {
         // host reservation???
@@ -5006,7 +5008,9 @@ uint16_t Dhcpv6Srv::getServerPort() const {
 
 /// @todo This logic to be modified if we decide to support infinite lease times.
 void
-Dhcpv6Srv::setTeeTimes(uint32_t preferred_lft, const Subnet6Ptr& subnet, Option6IAPtr& resp) {
+Dhcpv6Srv::setTeeTimes(uint32_t preferred_lft,
+                       const ConstSubnet6Ptr& subnet,
+                       Option6IAPtr& resp) {
     // Default T2 time to zero.
     uint32_t t2_time = 0;
 
@@ -5044,7 +5048,7 @@ Dhcpv6Srv::setTeeTimes(uint32_t preferred_lft, const Subnet6Ptr& subnet, Option6
 void
 Dhcpv6Srv::checkDynamicSubnetChange(const Pkt6Ptr& question, Pkt6Ptr& answer,
                                     AllocEngine::ClientContext6& ctx,
-                                    const Subnet6Ptr orig_subnet) {
+                                    const ConstSubnet6Ptr orig_subnet) {
     // If the subnet's are the same there's nothing to do.
     if ((!ctx.subnet_) || (!orig_subnet) || (orig_subnet->getID() == ctx.subnet_->getID())) {
         return;

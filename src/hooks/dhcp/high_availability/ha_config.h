@@ -814,7 +814,7 @@ public:
     /// @return ha-server-name parameter value or an empty string if it was
     /// not found.
     /// @throw BadValue if the parameter is not a string or is empty.
-    static std::string getSubnetServerName(const dhcp::SubnetPtr& subnet);
+    static std::string getSubnetServerName(const dhcp::ConstSubnetPtr& subnet);
 
     std::string this_server_name_;            ///< This server name.
     HAMode ha_mode_;                          ///< Mode of operation.

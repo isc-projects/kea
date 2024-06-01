@@ -345,8 +345,9 @@ TEST_F(HAImplTest, subnet4Select) {
     // Create the subnet and include the server name in the context.
     auto context = Element::createMap();
     context->set("ha-server-name", Element::create("server3"));
-    auto subnet4 = Subnet4::create(IOAddress("192.0.2.0"), 24, 30, 40, 50, 1);
-    subnet4->setContext(context);
+    auto s = Subnet4::create(IOAddress("192.0.2.0"), 24, 30, 40, 50, 1);
+    s->setContext(context);
+    ConstSubnet4Ptr subnet4 = s;
     callout_handle->setArgument("subnet4", subnet4);
 
     // Invoke the subnet4_select callout.
@@ -404,10 +405,11 @@ TEST_F(HAImplTest, subnet4SelectSharedNetwork) {
     // the shared network level.
     auto context = Element::createMap();
     context->set("ha-server-name", Element::create("server3"));
-    auto subnet4 = Subnet4::create(IOAddress("192.0.2.0"), 24, 30, 40, 50, 1);
+    auto s = Subnet4::create(IOAddress("192.0.2.0"), 24, 30, 40, 50, 1);
     auto shared_network4 = SharedNetwork4::create("foo");
     shared_network4->setContext(context);
-    shared_network4->add(subnet4);
+    shared_network4->add(s);
+    ConstSubnet4Ptr subnet4 = s;
     callout_handle->setArgument("subnet4", subnet4);
 
     // Invoke the subnet4_select callout.
@@ -457,7 +459,8 @@ TEST_F(HAImplTest, subnet4SelectSingleRelationship) {
 
     // Create the subnet. Don't bother specifying server name. The callout should
     // return immediately regardless.
-    auto subnet4 = Subnet4::create(IOAddress("192.0.2.0"), 24, 30, 40, 50, 1);
+    ConstSubnet4Ptr subnet4 =
+        Subnet4::create(IOAddress("192.0.2.0"), 24, 30, 40, 50, 1);
     callout_handle->setArgument("subnet4", subnet4);
 
     // Invoke the subnet4_select callout.
@@ -504,7 +507,8 @@ TEST_F(HAImplTest, subnet4SelectDropNoServerName) {
     callout_handle->setArgument("query4", query4);
 
     // Create the subnet without a server name setting.
-    auto subnet4 = Subnet4::create(IOAddress("192.0.2.0"), 24, 30, 40, 50, 1);
+    ConstSubnet4Ptr subnet4 =
+        Subnet4::create(IOAddress("192.0.2.0"), 24, 30, 40, 50, 1);
     callout_handle->setArgument("subnet4", subnet4);
 
     // Invoke the subnet4_select callout.
@@ -553,8 +557,9 @@ TEST_F(HAImplTest, subnet4SelectDropInvalidServerNameType) {
     // be a string, though.
     auto context = Element::createMap();
     context->set("ha-server-name", Element::create(25));
-    auto subnet4 = Subnet4::create(IOAddress("192.0.2.0"), 24, 30, 40, 50, 1);
-    subnet4->setContext(context);
+    auto s = Subnet4::create(IOAddress("192.0.2.0"), 24, 30, 40, 50, 1);
+    s->setContext(context);
+    ConstSubnet4Ptr subnet4 = s;
     callout_handle->setArgument("subnet4", subnet4);
 
     // Invoke the subnet4_select callout.
@@ -602,8 +607,9 @@ TEST_F(HAImplTest, subnet4SelectDropNotInScope) {
     // relationship.
     auto context = Element::createMap();
     context->set("ha-server-name", Element::create("server3"));
-    auto subnet4 = Subnet4::create(IOAddress("192.0.2.0"), 24, 30, 40, 50, 1);
-    subnet4->setContext(context);
+    auto s = Subnet4::create(IOAddress("192.0.2.0"), 24, 30, 40, 50, 1);
+    s->setContext(context);
+    ConstSubnet4Ptr subnet4 = s;
     callout_handle->setArgument("subnet4", subnet4);
 
     // Invoke the subnet4_select callout.
@@ -650,7 +656,7 @@ TEST_F(HAImplTest, subnet4SelectNoSubnet) {
     callout_handle->setArgument("query4", query4);
 
     // Create null subnet.
-    Subnet4Ptr subnet4;
+    ConstSubnet4Ptr subnet4;
     callout_handle->setArgument("subnet4", subnet4);
 
     // Invoke the subnet4_select callout.
@@ -793,8 +799,9 @@ TEST_F(HAImplTest, subnet6Select) {
     // Create the subnet and include the server name in the context.
     auto context = Element::createMap();
     context->set("ha-server-name", Element::create("server3"));
-    auto subnet6 = Subnet6::create(IOAddress("2001:db8:1::"), 64, 30, 40, 50, 60, 1);
-    subnet6->setContext(context);
+    auto s = Subnet6::create(IOAddress("2001:db8:1::"), 64, 30, 40, 50, 60, 1);
+    s->setContext(context);
+    ConstSubnet6Ptr subnet6 = s;
     callout_handle->setArgument("subnet6", subnet6);
 
     // Invoke the subnet6_select callout.
@@ -849,10 +856,11 @@ TEST_F(HAImplTest, subnet6SelectSharedNetwork) {
     // the shared network level.
     auto context = Element::createMap();
     context->set("ha-server-name", Element::create("server3"));
-    auto subnet6 = Subnet6::create(IOAddress("2001:db8:1::"), 64, 30, 40, 50, 60, 1);
+    auto s = Subnet6::create(IOAddress("2001:db8:1::"), 64, 30, 40, 50, 60, 1);
     auto shared_network6 = SharedNetwork6::create("foo");
     shared_network6->setContext(context);
-    shared_network6->add(subnet6);
+    shared_network6->add(s);
+    ConstSubnet6Ptr subnet6 = s;
     callout_handle->setArgument("subnet6", subnet6);
 
     // Invoke the subnet6_select callout.
@@ -902,7 +910,8 @@ TEST_F(HAImplTest, subnet6SelectSingleRelationship) {
 
     // Create the subnet. Don't bother specifying server name. The callout should
     // return immediately regardless.
-    auto subnet6 = Subnet6::create(IOAddress("2001:db8:1::"), 64, 30, 40, 50, 60, 1);
+    ConstSubnet6Ptr subnet6 =
+        Subnet6::create(IOAddress("2001:db8:1::"), 64, 30, 40, 50, 60, 1);
     callout_handle->setArgument("subnet6", subnet6);
 
     // Invoke the subnet6_select callout.
@@ -949,7 +958,8 @@ TEST_F(HAImplTest, subnet6SelectDropNoServerName) {
     callout_handle->setArgument("query6", query6);
 
     // Create the subnet without a server name setting.
-    auto subnet6 = Subnet6::create(IOAddress("2001:db8:1::"), 64, 30, 40, 50, 60, 1);
+    ConstSubnet6Ptr subnet6 =
+        Subnet6::create(IOAddress("2001:db8:1::"), 64, 30, 40, 50, 60, 1);
     callout_handle->setArgument("subnet6", subnet6);
 
     // Invoke the subnet6_select callout.
@@ -998,8 +1008,9 @@ TEST_F(HAImplTest, subnet6SelectDropInvalidServerNameType) {
     // be a string, though.
     auto context = Element::createMap();
     context->set("ha-server-name", Element::create(25));
-    auto subnet6 = Subnet6::create(IOAddress("2001:db8:1::"), 64, 30, 40, 50, 60, 1);
-    subnet6->setContext(context);
+    auto s = Subnet6::create(IOAddress("2001:db8:1::"), 64, 30, 40, 50, 60, 1);
+    s->setContext(context);
+    ConstSubnet6Ptr subnet6 = s;
     callout_handle->setArgument("subnet6", subnet6);
 
     // Invoke the subnet6_select callout.
@@ -1047,8 +1058,9 @@ TEST_F(HAImplTest, subnet6SelectDropNotInScope) {
     // relationship.
     auto context = Element::createMap();
     context->set("ha-server-name", Element::create("server3"));
-    auto subnet6 = Subnet6::create(IOAddress("2001:db8:1::"), 64, 30, 40, 50, 60, 1);
-    subnet6->setContext(context);
+    auto s = Subnet6::create(IOAddress("2001:db8:1::"), 64, 30, 40, 50, 60, 1);
+    s->setContext(context);
+    ConstSubnet6Ptr subnet6 = s;
     callout_handle->setArgument("subnet6", subnet6);
 
     // Invoke the subnet6_select callout.
@@ -1095,7 +1107,7 @@ TEST_F(HAImplTest, subnet6SelectNoSubnet) {
     callout_handle->setArgument("query6", query6);
 
     // Create null subnet.
-    Subnet6Ptr subnet6;
+    ConstSubnet6Ptr subnet6;
     callout_handle->setArgument("subnet6", subnet6);
 
     // Invoke the subnet6_select callout.

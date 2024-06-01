@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -155,8 +155,8 @@ public:
     ///
     /// @throw isc::BadValue if invalid arguments specified, e.g. unable to
     /// find first or current subnet within shared network.
-    Subnet4Ptr getNextSubnet(const Subnet4Ptr& first_subnet,
-                             const SubnetID& current_subnet) const;
+    ConstSubnet4Ptr getNextSubnet(const ConstSubnet4Ptr& first_subnet,
+                                  const SubnetID& current_subnet) const;
 
     /// @brief Attempts to find a subnet which is more likely to include available
     /// leases than selected subnet.
@@ -181,7 +181,7 @@ public:
     ///
     /// @return Pointer to a preferred subnet. It may be the same as @c selected_subnet
     /// if no better subnet was found.
-    Subnet4Ptr getPreferredSubnet(const Subnet4Ptr& selected_subnet) const;
+    ConstSubnet4Ptr getPreferredSubnet(const ConstSubnet4Ptr& selected_subnet) const;
 
     /// @brief Checks if the shared network includes a subnet with
     /// the match client ID flag set to true.
@@ -192,7 +192,7 @@ public:
     /// guarded by a given class with the match client ID flag set to true.
     /// False otherwise.
     static
-    bool subnetsIncludeMatchClientId(const Subnet4Ptr& first_subnet,
+    bool subnetsIncludeMatchClientId(const ConstSubnet4Ptr& first_subnet,
                                      const ClientClasses& client_classes);
 
     /// @brief Unparses shared network object.
@@ -374,8 +374,8 @@ public:
     ///
     /// @throw isc::BadValue if invalid arguments specified, e.g. unable to
     /// find first or current subnet within shared network.
-    Subnet6Ptr getNextSubnet(const Subnet6Ptr& first_subnet,
-                             const SubnetID& current_subnet) const;
+    ConstSubnet6Ptr getNextSubnet(const ConstSubnet6Ptr& first_subnet,
+                                  const SubnetID& current_subnet) const;
 
     /// @brief Attempts to find a subnet which is more likely to include available
     /// leases than selected subnet.
@@ -399,8 +399,8 @@ public:
     ///
     /// @return Pointer to a preferred subnet. It may be the same as @c selected_subnet
     /// if no better subnet was found.
-    Subnet6Ptr getPreferredSubnet(const Subnet6Ptr& selected_subnet,
-                                  const Lease::Type& lease_type) const;
+    ConstSubnet6Ptr getPreferredSubnet(const ConstSubnet6Ptr& selected_subnet,
+                                       const Lease::Type& lease_type) const;
 
     /// @brief Unparses shared network object.
     ///

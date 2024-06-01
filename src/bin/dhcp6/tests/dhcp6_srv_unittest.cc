@@ -2553,7 +2553,7 @@ TEST_F(Dhcpv6SrvTest, selectSubnetAddr) {
     CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->add(subnet1); // just a single subnet
     CfgMgr::instance().commit();
     pkt->setRemoteAddr(IOAddress("2001:db8:abcd::2345"));
-    Subnet6Ptr selected = srv.selectSubnet(pkt, drop);
+    ConstSubnet6Ptr selected = srv.selectSubnet(pkt, drop);
     EXPECT_FALSE(selected);
     EXPECT_FALSE(drop);
 
@@ -2619,7 +2619,7 @@ TEST_F(Dhcpv6SrvTest, selectSubnetIface) {
     pkt->setIndex(ETH0_INDEX);
 
     bool drop = false;
-    Subnet6Ptr selected = srv.selectSubnet(pkt, drop);
+    ConstSubnet6Ptr selected = srv.selectSubnet(pkt, drop);
     EXPECT_EQ(selected, subnet1);
     EXPECT_FALSE(drop);
 
@@ -2687,7 +2687,7 @@ TEST_F(Dhcpv6SrvTest, selectSubnetRelayLinkaddr) {
     pkt->relay_info_.push_back(relay);
 
     bool drop = false;
-    Subnet6Ptr selected = srv.selectSubnet(pkt, drop);
+    ConstSubnet6Ptr selected = srv.selectSubnet(pkt, drop);
     EXPECT_FALSE(selected);
     EXPECT_FALSE(drop);
 
@@ -2818,7 +2818,7 @@ TEST_F(Dhcpv6SrvTest, selectSubnetRelayInterfaceId) {
 
     // There is only one subnet configured and we are outside of that subnet
     bool drop = false;
-    Subnet6Ptr selected = srv.selectSubnet(pkt, drop);
+    ConstSubnet6Ptr selected = srv.selectSubnet(pkt, drop);
     EXPECT_FALSE(selected);
     EXPECT_FALSE(drop);
 

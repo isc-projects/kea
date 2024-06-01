@@ -623,7 +623,7 @@ public:
         subnet4_select_callout(callout_handle);
 
         const Subnet4Collection* subnets;
-        Subnet4Ptr subnet;
+        ConstSubnet4Ptr subnet;
         callout_handle.getArgument("subnet4", subnet);
         callout_handle.getArgument("subnet4collection", subnets);
 
@@ -1134,7 +1134,7 @@ public:
     static ClientIdPtr callback_clientid_;
 
     /// Pointer to a subnet received by callout
-    static Subnet4Ptr callback_subnet4_;
+    static ConstSubnet4Ptr callback_subnet4_;
 
     /// A list of all available subnets (received by callout)
     static const Subnet4Collection* callback_subnet4collection_;
@@ -1175,7 +1175,7 @@ IOServicePtr HooksDhcpv4SrvTest::io_service_;
 string HooksDhcpv4SrvTest::callback_name_;
 Pkt4Ptr HooksDhcpv4SrvTest::callback_qry_pkt4_;
 Pkt4Ptr HooksDhcpv4SrvTest::callback_resp_pkt4_;
-Subnet4Ptr HooksDhcpv4SrvTest::callback_subnet4_;
+ConstSubnet4Ptr HooksDhcpv4SrvTest::callback_subnet4_;
 const Subnet4Collection* HooksDhcpv4SrvTest::callback_subnet4collection_;
 HWAddrPtr HooksDhcpv4SrvTest::callback_hwaddr_;
 ClientIdPtr HooksDhcpv4SrvTest::callback_clientid_;

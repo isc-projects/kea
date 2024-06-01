@@ -614,7 +614,7 @@ public:
     getOptionFromSubnet(const IOAddress& subnet_address,
                         const uint16_t option_code,
                         const uint16_t expected_options_count = 1) {
-        Subnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->
+        ConstSubnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->
             getCfgSubnets6()->selectSubnet(subnet_address, classify_);
         if (!subnet) {
             ADD_FAILURE() << "A subnet for the specified address "
@@ -794,8 +794,8 @@ public:
         checkResult(status, 0);
 
         // Get the subnet.
-        Subnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->
-            selectSubnet(IOAddress("2001:db8:1::5"), classify_);
+        ConstSubnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->
+            getCfgSubnets6()->selectSubnet(IOAddress("2001:db8:1::5"), classify_);
         ASSERT_TRUE(subnet);
 
         // Check the Rapid Commit flag for the subnet.
@@ -1488,7 +1488,7 @@ TEST_F(Dhcp6ParserTest, subnetGlobalDefaults) {
 
     // Now check if the configuration was indeed handled and we have
     // expected pool configured.
-    Subnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->
+    ConstSubnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->
         getCfgSubnets6()->selectSubnet(IOAddress("2001:db8:1::5"), classify_);
     ASSERT_TRUE(subnet);
     EXPECT_EQ(1000, subnet->getT1().get());
@@ -1863,7 +1863,7 @@ TEST_F(Dhcp6ParserTest, subnetLocal) {
     // returned value should be 0 (configuration success)
     checkResult(status, 0);
 
-    Subnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->
+    ConstSubnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->
         getCfgSubnets6()->selectSubnet(IOAddress("2001:db8:1::5"), classify_);
     ASSERT_TRUE(subnet);
     EXPECT_EQ(1, subnet->getT1().get());
@@ -1906,8 +1906,8 @@ TEST_F(Dhcp6ParserTest, subnetInterface) {
     // returned value should be 0 (configuration success)
     checkResult(status, 0);
 
-    Subnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->
-        selectSubnet(IOAddress("2001:db8:1::5"), classify_);
+    ConstSubnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->
+        getCfgSubnets6()->selectSubnet(IOAddress("2001:db8:1::5"), classify_);
     ASSERT_TRUE(subnet);
     EXPECT_EQ(valid_iface_, subnet->getIface().get());
 }
@@ -1940,8 +1940,8 @@ TEST_F(Dhcp6ParserTest, subnetInterfaceBogus) {
     checkResult(status, 1);
     EXPECT_TRUE(errorContainsPosition(status, "<string>"));
 
-    Subnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->
-        selectSubnet(IOAddress("2001:db8:1::5"), classify_);
+    ConstSubnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->
+        getCfgSubnets6()->selectSubnet(IOAddress("2001:db8:1::5"), classify_);
     EXPECT_FALSE(subnet);
 }
 
@@ -2008,8 +2008,8 @@ TEST_F(Dhcp6ParserTest, subnetInterfaceId) {
     SubnetSelector selector;
     selector.first_relay_linkaddr_ = IOAddress("5000::1");
     selector.interface_id_.reset(new Option(Option::V6, D6O_INTERFACE_ID, tmp));
-    Subnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->
-        selectSubnet(selector);
+    ConstSubnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->
+        getCfgSubnets6()->selectSubnet(selector);
     EXPECT_FALSE(subnet);
 
     // Now try to get subnet for valid interface-id value
@@ -2310,7 +2310,7 @@ TEST_F(Dhcp6ParserTest, poolPrefixLen) {
     // returned value must be 0 (configuration accepted)
     checkResult(status, 0);
 
-    Subnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->
+    ConstSubnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->
         getCfgSubnets6()->selectSubnet(IOAddress("2001:db8:1::5"), classify_);
     ASSERT_TRUE(subnet);
     EXPECT_EQ(1000, subnet->getT1().get());
@@ -2512,8 +2512,8 @@ TEST_F(Dhcp6ParserTest, pdPoolBasics) {
     checkResult(x, 0);
 
     // Test that we can retrieve the subnet.
-    Subnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->
-        selectSubnet(IOAddress("2001:db8:1::5"), classify_);
+    ConstSubnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->
+        getCfgSubnets6()->selectSubnet(IOAddress("2001:db8:1::5"), classify_);
     ASSERT_TRUE(subnet);
 
     // Fetch the collection of PD pools.  It should have 1 entry.
@@ -2572,8 +2572,8 @@ TEST_F(Dhcp6ParserTest, pdPoolPrefixExclude) {
     checkResult(x, 0);
 
     // Test that we can retrieve the subnet.
-    Subnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->
-        selectSubnet(IOAddress("2001:db8:1::5"), classify_);
+    ConstSubnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->
+        getCfgSubnets6()->selectSubnet(IOAddress("2001:db8:1::5"), classify_);
     ASSERT_TRUE(subnet);
 
     // Fetch the collection of PD pools.  It should have 1 entry.
@@ -2654,8 +2654,8 @@ TEST_F(Dhcp6ParserTest, pdPoolList) {
     checkResult(x, 0);
 
     // Test that we can retrieve the subnet.
-    Subnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->
-        selectSubnet(IOAddress("2001:db8:1::5"), classify_);
+    ConstSubnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->
+        getCfgSubnets6()->selectSubnet(IOAddress("2001:db8:1::5"), classify_);
     ASSERT_TRUE(subnet);
 
     // Fetch the collection of NA pools.  It should have 1 entry.
@@ -2712,8 +2712,8 @@ TEST_F(Dhcp6ParserTest, subnetAndPrefixDelegated) {
     checkResult(x, 0);
 
     // Test that we can retrieve the subnet.
-    Subnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->
-        selectSubnet(IOAddress("2001:db8:1::5"), classify_);
+    ConstSubnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->
+        getCfgSubnets6()->selectSubnet(IOAddress("2001:db8:1::5"), classify_);
 
     ASSERT_TRUE(subnet);
 
@@ -3479,7 +3479,7 @@ TEST_F(Dhcp6ParserTest, optionDataDefaultsGlobal) {
     checkResult(x, 0);
 
     // These options are global
-    Subnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->
+    ConstSubnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->
         getCfgSubnets6()->selectSubnet(IOAddress("2001:db8:1::5"), classify_);
     ASSERT_TRUE(subnet);
     OptionContainerPtr options = subnet->getCfgOption()->getAll(DHCP6_OPTION_SPACE);
@@ -3557,7 +3557,7 @@ TEST_F(Dhcp6ParserTest, optionDataDefaultsSubnet) {
         CfgMgr::instance().getStagingCfg()->getCfgOption()->getAll(DHCP6_OPTION_SPACE);
     ASSERT_EQ(0, options->size());
 
-    Subnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->
+    ConstSubnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->
         getCfgSubnets6()->selectSubnet(IOAddress("2001:db8:1::5"), classify_);
     ASSERT_TRUE(subnet);
     options = subnet->getCfgOption()->getAll(DHCP6_OPTION_SPACE);
@@ -3995,7 +3995,7 @@ TEST_F(Dhcp6ParserTest, optionDataInMultipleSubnets) {
     EXPECT_NO_THROW(x = Dhcpv6SrvTest::configure(srv_, json));
     checkResult(x, 0);
 
-    Subnet6Ptr subnet1 = CfgMgr::instance().getStagingCfg()->
+    ConstSubnet6Ptr subnet1 = CfgMgr::instance().getStagingCfg()->
         getCfgSubnets6()->selectSubnet(IOAddress("2001:db8:1::5"), classify_);
     ASSERT_TRUE(subnet1);
     OptionContainerPtr options1 = subnet1->getCfgOption()->getAll(DHCP6_OPTION_SPACE);
@@ -4021,7 +4021,7 @@ TEST_F(Dhcp6ParserTest, optionDataInMultipleSubnets) {
                sizeof(subid_expected));
 
     // Test another subnet in the same way.
-    Subnet6Ptr subnet2 = CfgMgr::instance().getStagingCfg()->
+    ConstSubnet6Ptr subnet2 = CfgMgr::instance().getStagingCfg()->
         getCfgSubnets6()->selectSubnet(IOAddress("2001:db8:2::4"), classify_);
     ASSERT_TRUE(subnet2);
     OptionContainerPtr options2 = subnet2->getCfgOption()->getAll(DHCP6_OPTION_SPACE);
@@ -4173,8 +4173,8 @@ TEST_F(Dhcp6ParserTest, optionDataMultiplePools) {
     EXPECT_NO_THROW(x = Dhcpv6SrvTest::configure(srv_, json));
     checkResult(x, 0);
 
-    Subnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->
-        selectSubnet(IOAddress("2001:db8:1::5"), classify_);
+    ConstSubnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->
+        getCfgSubnets6()->selectSubnet(IOAddress("2001:db8:1::5"), classify_);
     ASSERT_TRUE(subnet);
 
     PoolPtr pool = subnet->getPool(Lease::TYPE_PD, IOAddress("3000::"), false);
@@ -4341,8 +4341,9 @@ TEST_F(Dhcp6ParserTest, optionDataValidHexLiterals) {
         EXPECT_NO_THROW(x = Dhcpv6SrvTest::configure(srv_, json));
         checkResult(x, 0);
 
-        Subnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->
-            getCfgSubnets6()->selectSubnet(IOAddress("2001:db8:1::5"), classify_);
+        ConstSubnet6Ptr subnet =
+            CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->
+            selectSubnet(IOAddress("2001:db8:1::5"), classify_);
         ASSERT_TRUE(subnet);
         OptionContainerPtr options = subnet->getCfgOption()->getAll(DHCP6_OPTION_SPACE);
         ASSERT_EQ(1, options->size());
@@ -4389,7 +4390,7 @@ TEST_F(Dhcp6ParserTest, stdOptionData) {
     EXPECT_NO_THROW(x = Dhcpv6SrvTest::configure(srv_, json));
     checkResult(x, 0);
 
-    Subnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->
+    ConstSubnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->
         getCfgSubnets6()->selectSubnet(IOAddress("2001:db8:1::5"), classify_);
     ASSERT_TRUE(subnet);
     OptionContainerPtr options = subnet->getCfgOption()->getAll(DHCP6_OPTION_SPACE);
@@ -4445,8 +4446,8 @@ TEST_F(Dhcp6ParserTest, rdnssOption) {
     EXPECT_NO_THROW(x = Dhcpv6SrvTest::configure(srv_, json));
     checkResult(x, 0);
 
-    Subnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->
-        selectSubnet(IOAddress("2001:db8:1::5"), classify_);
+    ConstSubnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->
+        getCfgSubnets6()->selectSubnet(IOAddress("2001:db8:1::5"), classify_);
     ASSERT_TRUE(subnet);
     OptionContainerPtr options = subnet->getCfgOption()->getAll(DHCP6_OPTION_SPACE);
     ASSERT_EQ(1, options->size());
@@ -4593,8 +4594,8 @@ TEST_F(Dhcp6ParserTest, DISABLED_stdOptionDataEncapsulate) {
     checkResult(status, 0);
 
     // Get the subnet.
-    Subnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->
-        selectSubnet(IOAddress("2001:db8:1::5"), classify_);
+    ConstSubnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->
+        getCfgSubnets6()->selectSubnet(IOAddress("2001:db8:1::5"), classify_);
     ASSERT_TRUE(subnet);
 
     // We should have one option available.
@@ -5100,7 +5101,7 @@ TEST_F(Dhcp6ParserTest, subnetRelayInfo) {
     // returned value should be 0 (configuration success)
     checkResult(status, 0);
 
-    Subnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->
+    ConstSubnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->
         getCfgSubnets6()->selectSubnet(IOAddress("2001:db8:1::1"), classify_);
     ASSERT_TRUE(subnet);
 
@@ -5137,8 +5138,9 @@ TEST_F(Dhcp6ParserTest, subnetRelayInfoList) {
     // returned value should be 0 (configuration success)
     checkResult(status, 0);
 
-    Subnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->
-        getCfgSubnets6()->selectSubnet(IOAddress("2001:db9::abcd"), classify_, true);
+    ConstSubnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->
+        getCfgSubnets6()->selectSubnet(IOAddress("2001:db9::abcd"),
+                                       classify_, true);
     ASSERT_TRUE(subnet);
 
     EXPECT_TRUE(subnet->hasRelays());
@@ -6131,7 +6133,7 @@ TEST_F(Dhcp6ParserTest, hostReservationPerSubnet) {
     // Let's check if the parsed subnets have correct HR modes.
 
     // Subnet 1
-    Subnet6Ptr subnet;
+    ConstSubnet6Ptr subnet;
     subnet = subnets->selectSubnet(IOAddress("2001:db8:1::1"));
     ASSERT_TRUE(subnet);
     EXPECT_FALSE(subnet->getReservationsGlobal());
@@ -6233,7 +6235,7 @@ TEST_F(Dhcp6ParserTest, hostReservationGlobal) {
     // Let's check if the parsed subnets have correct HR modes.
 
     // Subnet 1
-    Subnet6Ptr subnet;
+    ConstSubnet6Ptr subnet;
     subnet = subnets->selectSubnet(IOAddress("2001:db8:1::1"));
     ASSERT_TRUE(subnet);
     // Reset the fetch global function to staging (vs current) config.
@@ -8635,19 +8637,69 @@ TEST_F(Dhcp6ParserTest, storeExtendedInfoGlobal) {
 
     // First subnet should override the global value.
     CfgSubnets6Ptr cfg = CfgMgr::instance().getStagingCfg()->getCfgSubnets6();
-    Subnet6Ptr subnet1 = cfg->selectSubnet(IOAddress("2001:db8:1::"));
+    ConstSubnet6Ptr subnet1 = cfg->selectSubnet(IOAddress("2001:db8:1::"));
     ASSERT_TRUE(subnet1);
     // Reset the fetch global function to staging (vs current) config.
-    subnet1->setFetchGlobalsFn([]() -> ConstCfgGlobalsPtr {
+    Subnet6Ptr mutable_subnet1 = boost::const_pointer_cast<Subnet6>(subnet1);
+    mutable_subnet1->setFetchGlobalsFn([]() -> ConstCfgGlobalsPtr {
         return (CfgMgr::instance().getStagingCfg()->getConfiguredGlobals());
     });
     EXPECT_FALSE(subnet1->getStoreExtendedInfo());
 
     // Second subnet should use the global value.
-    Subnet6Ptr subnet2 = cfg->selectSubnet(IOAddress("2001:db8:2::"));
+    ConstSubnet6Ptr subnet2 = cfg->selectSubnet(IOAddress("2001:db8:2::"));
     ASSERT_TRUE(subnet2);
     // Reset the fetch global function to staging (vs current) config.
-    subnet2->setFetchGlobalsFn([]() -> ConstCfgGlobalsPtr {
+    Subnet6Ptr mutable_subnet2 = boost::const_pointer_cast<Subnet6>(subnet2);
+    mutable_subnet2->setFetchGlobalsFn([]() -> ConstCfgGlobalsPtr {
+        return (CfgMgr::instance().getStagingCfg()->getConfiguredGlobals());
+    });
+    EXPECT_TRUE(subnet2->getStoreExtendedInfo());
+}
+
+// Verifies the value of store-extended-info for subnets when there
+// is no global value defined.
+TEST_F(Dhcp6ParserTest, storeExtendedInfoNoGlobal) {
+    const string config = "{ " + genIfaceConfig() + ","
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ "
+        "{ "
+        "    \"id\": 1, "
+        "    \"pools\": [ { \"pool\": \"2001:db8:1::1 - 2001:db8:1::ffff\" } ],"
+        "    \"subnet\": \"2001:db8:1::/64\""
+        "},"
+        "{"
+        "    \"id\": 2, "
+        "    \"pools\": [ { \"pool\": \"2001:db8:2::1 - 2001:db8:2::ffff\" } ],"
+        "    \"subnet\": \"2001:db8:2::/64\","
+        "    \"store-extended-info\": true"
+        "} ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ConstElementPtr json = parseJSON(config);
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
+    checkResult(status, 0);
+
+    // First subnet should use global default.
+    CfgSubnets6Ptr cfg = CfgMgr::instance().getStagingCfg()->getCfgSubnets6();
+    ConstSubnet6Ptr subnet1 = cfg->selectSubnet(IOAddress("2001:db8:1::"));
+    ASSERT_TRUE(subnet1);
+    // Reset the fetch global function to staging (vs current) config.
+    Subnet6Ptr mutable_subnet1 = boost::const_pointer_cast<Subnet6>(subnet1);
+    mutable_subnet1->setFetchGlobalsFn([]() -> ConstCfgGlobalsPtr {
+        return (CfgMgr::instance().getStagingCfg()->getConfiguredGlobals());
+    });
+    EXPECT_FALSE(subnet1->getStoreExtendedInfo());
+
+    // Second subnet should use its own value.
+    ConstSubnet6Ptr subnet2 = cfg->selectSubnet(IOAddress("2001:db8:2::"));
+    ASSERT_TRUE(subnet2);
+    // Reset the fetch global function to staging (vs current) config.
+    Subnet6Ptr mutable_subnet2 = boost::const_pointer_cast<Subnet6>(subnet2);
+    mutable_subnet2->setFetchGlobalsFn([]() -> ConstCfgGlobalsPtr {
         return (CfgMgr::instance().getStagingCfg()->getConfiguredGlobals());
     });
     EXPECT_TRUE(subnet2->getStoreExtendedInfo());
@@ -8974,13 +9026,14 @@ TEST_F(Dhcp6ParserTest, storeDdnsConflictResolutionMode) {
     };
     CfgSubnets6Ptr cfg = CfgMgr::instance().getStagingCfg()->getCfgSubnets6();
     char addr[20];
-    Subnet6Ptr subnet1;
+    ConstSubnet6Ptr subnet1;
     for (int i = 0; i < 5; i++) {
         snprintf(addr, sizeof(addr), "2001:db8:%d::1", i+1);
         subnet1 = cfg->selectSubnet(IOAddress(addr));
         ASSERT_TRUE(subnet1);
         // Reset the fetch global function to staging (vs current) config.
-        subnet1->setFetchGlobalsFn([]() -> ConstCfgGlobalsPtr {
+        Subnet6Ptr mutable_subnet1 = boost::const_pointer_cast<Subnet6>(subnet1);
+        mutable_subnet1->setFetchGlobalsFn([]() -> ConstCfgGlobalsPtr {
             return (CfgMgr::instance().getStagingCfg()->getConfiguredGlobals());
         });
         EXPECT_EQ(expectedValues[i], subnet1->getDdnsConflictResolutionMode().get());

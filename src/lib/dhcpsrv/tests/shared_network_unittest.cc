@@ -392,7 +392,7 @@ TEST(SharedNetwork4Test, getNextSubnet) {
     // Perform the test 3 times where each subnet belonging to the shared
     // network is treated as a "first" subnet in the call to getNextSubnet.
     for (auto i = 0; i < subnets.size(); ++i) {
-        Subnet4Ptr s = subnets[i];
+        ConstSubnet4Ptr s = subnets[i];
 
         // Iterate over the subnets starting from the subnet with index i.
         for (auto j = 0; j < subnets.size(); ++j) {
@@ -464,7 +464,7 @@ TEST(SharedNetwork4Test, getPreferredSubnet) {
             << " to shared network";
     }
 
-    Subnet4Ptr preferred;
+    ConstSubnet4Ptr preferred;
 
     // Initially, for every subnet we should get the same subnet as the preferred
     // one, because none of them have been used.
@@ -563,7 +563,7 @@ TEST(SharedNetwork4Test, getPreferredSubnetMultiThreading) {
             << " to shared network";
     }
 
-    Subnet4Ptr preferred;
+    ConstSubnet4Ptr preferred;
 
     // Initially, for every subnet we should get the same subnet as the preferred
     // one, because none of them have been used.
@@ -1142,7 +1142,7 @@ TEST(SharedNetwork6Test, getNextSubnet) {
     // Perform the test 3 times where each subnet belonging to the shared
     // network is treated as a "first" subnet in the call to getNextSubnet.
     for (auto i = 0; i < subnets.size(); ++i) {
-        Subnet6Ptr s = subnets[i];
+        ConstSubnet6Ptr s = subnets[i];
 
         // Iterate over the subnets starting from the subnet with index i.
         for (auto j = 0; j < subnets.size(); ++j) {
@@ -1199,7 +1199,7 @@ TEST(SharedNetwork6Test, getPreferredSubnet) {
             << " to shared network";
     }
 
-    Subnet6Ptr preferred;
+    ConstSubnet6Ptr preferred;
 
     // Initially, for every subnet we should get the same subnet as the preferred
     // one, because none of them have been used.
@@ -1303,7 +1303,7 @@ TEST(SharedNetwork6Test, getPreferredSubnetMultiThreading) {
             << " to shared network";
     }
 
-    Subnet6Ptr preferred;
+    ConstSubnet6Ptr preferred;
 
     // Initially, for every subnet we should get the same subnet as the preferred
     // one, because none of them have been used.

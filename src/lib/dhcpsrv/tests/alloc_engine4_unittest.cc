@@ -3888,7 +3888,7 @@ TEST_F(AllocEngine4Test, updateExtendedInfo4) {
                                     false, false, "", true);
 
     // All scenarios require storage to be enabled.
-    ctx.subnet_->setStoreExtendedInfo(true);
+    subnet_->setStoreExtendedInfo(true);
 
     ctx.query_.reset(new Pkt4(DHCPREQUEST, 1234));
     Lease4Ptr lease = engine.allocateLease4(ctx);
@@ -3974,7 +3974,7 @@ TEST_F(AllocEngine4Test, stashAgentOptions) {
     AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_,
                                     IOAddress::IPV4_ZERO_ADDRESS(),
                                     false, false, "", true);
-    ctx.subnet_->setStoreExtendedInfo(true);
+    subnet_->setStoreExtendedInfo(true);
     ctx.query_.reset(new Pkt4(DHCPREQUEST, 1234));
     Lease4Ptr lease = engine.allocateLease4(ctx);
     ASSERT_TRUE(lease);

@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -67,13 +67,13 @@ int subnet4_select(CalloutHandle& handle) {
 
         if (registered_user) {
             // User is in the registry, so leave the pre-selected subnet alone.
-            Subnet4Ptr subnet;
+            ConstSubnet4Ptr subnet;
             handle.getArgument("subnet4", subnet);
         } else {
             // User is not in the registry, so assign them to the last subnet
             // in the collection.  By convention we are assuming this is the
             // restricted subnet.
-            Subnet4Ptr subnet = *subnets->rbegin();
+            ConstSubnet4Ptr subnet = *subnets->rbegin();
             handle.setArgument("subnet4", subnet);
         }
     } catch (const std::exception& ex) {
@@ -127,13 +127,13 @@ int subnet6_select(CalloutHandle& handle) {
 
         if (registered_user) {
             // User is in the registry, so leave the pre-selected subnet alone.
-            Subnet6Ptr subnet;
+            ConstSubnet6Ptr subnet;
             handle.getArgument("subnet6", subnet);
         } else {
             // User is not in the registry, so assign them to the last subnet
             // in the collection.  By convention we are assuming this is the
             // restricted subnet.
-            Subnet6Ptr subnet = *subnets->rbegin();
+            ConstSubnet6Ptr subnet = *subnets->rbegin();
             handle.setArgument("subnet6", subnet);
         }
     } catch (const std::exception& ex) {

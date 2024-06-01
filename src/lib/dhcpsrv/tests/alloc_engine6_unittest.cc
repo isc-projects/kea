@@ -4378,7 +4378,7 @@ TEST_F(AllocEngine6ExtendedInfoTest, updateExtendedInfo6) {
     ASSERT_TRUE(lease);
 
     // All scenarios require storage to be enabled.
-    ctx.subnet_->setStoreExtendedInfo(true);
+    subnet_->setStoreExtendedInfo(true);
 
     // Verify that the lease begins with no user context.
     ConstElementPtr user_context = lease->getContext();

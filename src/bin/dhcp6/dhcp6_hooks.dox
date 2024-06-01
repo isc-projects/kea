@@ -141,7 +141,7 @@ to the end of this list.
 
  - @b Arguments:
    - name: @b query6, type: isc::dhcp::Pkt6Ptr, direction: <b>in/out</b>
-   - name: @b subnet6, type: isc::dhcp::Subnet6Ptr, direction: <b>in/out</b>
+   - name: @b subnet6, type: isc::dhcp::ConstSubnet6Ptr, direction: <b>in/out</b>
    - name: @b subnet6collection, type: const isc::dhcp::Subnet6Collection *, direction: <b>in</b>
 
  - @b Description: This callout is executed when a subnet is being
@@ -180,7 +180,7 @@ called before "subnet6_select".
 
  - @b Arguments:
    - name: @b query6, type: isc::dhcp::Pkt6Ptr, direction: <b>in</b>
-   - name: @b subnet6, type: isc::dhcp::Subnet6Ptr, direction: <b>in</b>
+   - name: @b subnet6, type: isc::dhcp::ConstSubnet6Ptr, direction: <b>in</b>
    - name: @b fake_allocation, type: bool, direction: <b>in</b>
    - name: @b lease6, type: isc::dhcp::Lease6Ptr, direction: <b>in/out</b>
 
@@ -316,7 +316,7 @@ called before "subnet6_select".
  - @b Arguments:
    - name: @b query6, type: isc::dhcp::Pkt6Ptr, direction: <b>in</b>
    - name: @b response6, type: isc::dhcp::Pkt6Ptr, direction: <b>in</b>
-   - name: @b subnet6, type: isc::dhcp::Subnet6Ptr, direction: <b>in</b>
+   - name: @b subnet6, type: isc::dhcp::ConstSubnet6Ptr, direction: <b>in</b>
    - name: @b hostname, type: std::string, direction: <b>in/out</b>
    - name: @b fwd-update, type: bool, direction: <b>in/out</b>
    - name: @b rev-update, type: bool, direction: <b>in/out</b>
@@ -384,7 +384,7 @@ called before "subnet6_select".
  - @b Arguments:
    - name: @b query6, type: isc::dhcp::Pkt6Ptr, direction: <b>in</b>
    - name: @b response6, type: isc::dhcp::Pkt6Ptr, direction: <b>in/out</b>
-   - name: @b subnet6, type: isc::dhcp::Subnet6Ptr, direction: <b>in</b>
+   - name: @b subnet6, type: isc::dhcp::ConstSubnet6Ptr, direction: <b>in</b>
 
  - @b Description: This callout is executed when server's response
    is about to be send back to the client. The argument "response6"

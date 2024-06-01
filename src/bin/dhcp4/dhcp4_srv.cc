@@ -205,7 +205,7 @@ namespace dhcp {
 Dhcpv4Exchange::Dhcpv4Exchange(const AllocEnginePtr& alloc_engine,
                                const Pkt4Ptr& query,
                                AllocEngine::ClientContext4Ptr& context,
-                               const Subnet4Ptr& subnet,
+                               const ConstSubnet4Ptr& subnet,
                                bool& drop)
     : alloc_engine_(alloc_engine), query_(query), resp_(),
       context_(context), ipv6_only_preferred_(false) {
@@ -771,7 +771,7 @@ Dhcpv4Srv::shutdown() {
     shutdown_ = true;
 }
 
-isc::dhcp::Subnet4Ptr
+isc::dhcp::ConstSubnet4Ptr
 Dhcpv4Srv::selectSubnet(const Pkt4Ptr& query, bool& drop,
                         bool sanity_only, bool allow_answer_park) {
 
@@ -780,7 +780,7 @@ Dhcpv4Srv::selectSubnet(const Pkt4Ptr& query, bool& drop,
         return (selectSubnet4o6(query, drop, sanity_only, allow_answer_park));
     }
 
-    Subnet4Ptr subnet;
+    ConstSubnet4Ptr subnet;
 
     const SubnetSelector& selector = CfgSubnets4::initSelector(query);
 
@@ -819,7 +819,7 @@ Dhcpv4Srv::selectSubnet(const Pkt4Ptr& query, bool& drop,
                       DHCP4_HOOK_SUBNET4_SELECT_PARKING_LOT_FULL)
                 .arg(limit)
                 .arg(query->getLabel());
-            return (Subnet4Ptr());
+            return (ConstSubnet4Ptr());
         }
 
         // We proactively park the packet.
@@ -856,7 +856,7 @@ Dhcpv4Srv::selectSubnet(const Pkt4Ptr& query, bool& drop,
                       DHCP4_HOOK_SUBNET4_SELECT_PARK)
                 .arg(query->getLabel());
             drop = true;
-            return (Subnet4Ptr());
+            return (ConstSubnet4Ptr());
         } else {
             HooksManager::drop("subnet4_select", query);
         }
@@ -868,7 +868,7 @@ Dhcpv4Srv::selectSubnet(const Pkt4Ptr& query, bool& drop,
             LOG_DEBUG(hooks_logger, DBG_DHCP4_HOOKS,
                       DHCP4_HOOK_SUBNET4_SELECT_SKIP)
                 .arg(query->getLabel());
-            return (Subnet4Ptr());
+            return (ConstSubnet4Ptr());
         }
 
         // Callouts decided to drop the packet. It is a superset of the
@@ -878,7 +878,7 @@ Dhcpv4Srv::selectSubnet(const Pkt4Ptr& query, bool& drop,
                       DHCP4_HOOK_SUBNET4_SELECT_DROP)
                 .arg(query->getLabel());
             drop = true;
-            return (Subnet4Ptr());
+            return (ConstSubnet4Ptr());
         }
 
         // Use whatever subnet was specified by the callout
@@ -905,10 +905,10 @@ Dhcpv4Srv::selectSubnet(const Pkt4Ptr& query, bool& drop,
     return (subnet);
 }
 
-isc::dhcp::Subnet4Ptr
+isc::dhcp::ConstSubnet4Ptr
 Dhcpv4Srv::selectSubnet4o6(const Pkt4Ptr& query, bool& drop,
                            bool sanity_only, bool allow_answer_park) {
-    Subnet4Ptr subnet;
+    ConstSubnet4Ptr subnet;
 
     SubnetSelector selector;
     selector.ciaddr_ = query->getCiaddr();
@@ -987,7 +987,7 @@ Dhcpv4Srv::selectSubnet4o6(const Pkt4Ptr& query, bool& drop,
                       DHCP4_HOOK_SUBNET4_SELECT_4O6_PARKING_LOT_FULL)
                 .arg(limit)
                 .arg(query->getLabel());
-            return (Subnet4Ptr());
+            return (ConstSubnet4Ptr());
         }
 
         // We proactively park the packet.
@@ -1024,7 +1024,7 @@ Dhcpv4Srv::selectSubnet4o6(const Pkt4Ptr& query, bool& drop,
                       DHCP4_HOOK_SUBNET4_SELECT_PARK)
                 .arg(query->getLabel());
             drop = true;
-            return (Subnet4Ptr());
+            return (ConstSubnet4Ptr());
         } else {
             HooksManager::drop("subnet4_select", query);
         }
@@ -1036,7 +1036,7 @@ Dhcpv4Srv::selectSubnet4o6(const Pkt4Ptr& query, bool& drop,
             LOG_DEBUG(hooks_logger, DBG_DHCP4_HOOKS,
                       DHCP4_DHCP4O6_HOOK_SUBNET4_SELECT_SKIP)
                 .arg(query->getLabel());
-            return (Subnet4Ptr());
+            return (ConstSubnet4Ptr());
         }
 
         // Callouts decided to drop the packet. It is a superset of the
@@ -1046,7 +1046,7 @@ Dhcpv4Srv::selectSubnet4o6(const Pkt4Ptr& query, bool& drop,
                       DHCP4_DHCP4O6_HOOK_SUBNET4_SELECT_DROP)
                 .arg(query->getLabel());
             drop = true;
-            return (Subnet4Ptr());
+            return (ConstSubnet4Ptr());
         }
 
         // Use whatever subnet was specified by the callout
@@ -1863,7 +1863,7 @@ Dhcpv4Srv::processLocalizedQuery4(AllocEngine::ClientContext4Ptr& ctx,
 
     // If we have a response prep it for shipment.
     if (rsp) {
-        Subnet4Ptr subnet = (ctx ? ctx->subnet_ : Subnet4Ptr());
+        ConstSubnet4Ptr subnet = (ctx ? ctx->subnet_ : ConstSubnet4Ptr());
         processPacketPktSend(callout_handle, query, rsp, subnet);
     }
     return (rsp);
@@ -1871,7 +1871,8 @@ Dhcpv4Srv::processLocalizedQuery4(AllocEngine::ClientContext4Ptr& ctx,
 
 void
 Dhcpv4Srv::sendResponseNoThrow(hooks::CalloutHandlePtr& callout_handle,
-                               Pkt4Ptr& query, Pkt4Ptr& rsp, Subnet4Ptr& subnet) {
+                               Pkt4Ptr& query, Pkt4Ptr& rsp,
+                               ConstSubnet4Ptr& subnet) {
     try {
             processPacketPktSend(callout_handle, query, rsp, subnet);
             processPacketBufferSend(callout_handle, rsp);
@@ -1886,7 +1887,8 @@ Dhcpv4Srv::sendResponseNoThrow(hooks::CalloutHandlePtr& callout_handle,
 
 void
 Dhcpv4Srv::processPacketPktSend(hooks::CalloutHandlePtr& callout_handle,
-                                Pkt4Ptr& query, Pkt4Ptr& rsp, Subnet4Ptr& subnet) {
+                                Pkt4Ptr& query, Pkt4Ptr& rsp,
+                                ConstSubnet4Ptr& subnet) {
     query->addPktEvent("process_completed");
     if (!rsp) {
         return;
@@ -2077,7 +2079,7 @@ Dhcpv4Srv::buildCfgOptionList(Dhcpv4Exchange& ex) {
     CfgOptionList& co_list = ex.getCfgOptionList();
 
     // Retrieve subnet.
-    Subnet4Ptr subnet = ex.getContext()->subnet_;
+    ConstSubnet4Ptr subnet = ex.getContext()->subnet_;
     if (!subnet) {
         // All methods using the CfgOptionList object return soon when
         // there is no subnet so do the same
@@ -2150,7 +2152,7 @@ void
 Dhcpv4Srv::appendRequestedOptions(Dhcpv4Exchange& ex) {
     // Get the subnet relevant for the client. We will need it
     // to get the options associated with it.
-    Subnet4Ptr subnet = ex.getContext()->subnet_;
+    ConstSubnet4Ptr subnet = ex.getContext()->subnet_;
     // If we can't find the subnet for the client there is no way
     // to get the options to be sent to a client. We don't log an
     // error because it will be logged by the assignLease method
@@ -2321,7 +2323,7 @@ Dhcpv4Srv::appendRequestedOptions(Dhcpv4Exchange& ex) {
 void
 Dhcpv4Srv::appendRequestedVendorOptions(Dhcpv4Exchange& ex) {
     // Get the configured subnet suitable for the incoming packet.
-    Subnet4Ptr subnet = ex.getContext()->subnet_;
+    ConstSubnet4Ptr subnet = ex.getContext()->subnet_;
 
     const CfgOptionList& co_list = ex.getCfgOptionList();
 
@@ -2501,7 +2503,7 @@ Dhcpv4Srv::appendBasicOptions(Dhcpv4Exchange& ex) {
         DHO_DHCP_SERVER_IDENTIFIER };
 
     // Get the subnet.
-    Subnet4Ptr subnet = ex.getContext()->subnet_;
+    ConstSubnet4Ptr subnet = ex.getContext()->subnet_;
     if (!subnet) {
         return;
     }
@@ -2601,7 +2603,7 @@ Dhcpv4Srv::processClientName(Dhcpv4Exchange& ex) {
             ScopedCalloutHandleState callout_handle_state(callout_handle);
 
             // Setup the callout arguments.
-            Subnet4Ptr subnet = ex.getContext()->subnet_;
+            ConstSubnet4Ptr subnet = ex.getContext()->subnet_;
             callout_handle->setArgument("query4", query);
             callout_handle->setArgument("response4", resp);
             callout_handle->setArgument("subnet4", subnet);
@@ -3049,7 +3051,7 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
 
     HWAddrPtr hwaddr = query->getHWAddr();
 
-    Subnet4Ptr original_subnet = subnet;
+    ConstSubnet4Ptr original_subnet = subnet;
 
     // Get client-id. It is not mandatory in DHCPv4.
     ClientIdPtr client_id = ex.getContext()->clientid_;
@@ -3074,7 +3076,7 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
             // Get all the leases for this client-id
             Lease4Collection leases_client_id = LeaseMgrFactory::instance().getLease4(*client_id);
             if (!leases_client_id.empty()) {
-                Subnet4Ptr s = original_subnet;
+                ConstSubnet4Ptr s = original_subnet;
 
                 // Among those returned try to find a lease that belongs to
                 // current shared network.
@@ -3103,7 +3105,7 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
             // Get all leases for this particular hw-address.
             Lease4Collection leases_hwaddr = LeaseMgrFactory::instance().getLease4(*hwaddr);
             if (!leases_hwaddr.empty()) {
-                Subnet4Ptr s = original_subnet;
+                ConstSubnet4Ptr s = original_subnet;
 
                 // Pick one that belongs to a subnet in this shared network.
                 while (s) {
@@ -3312,7 +3314,7 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
         // Allocation engine did not allocate a lease. The engine logged
         // cause of that failure.
         if (ctx->unknown_requested_addr_) {
-            Subnet4Ptr s = original_subnet;
+            ConstSubnet4Ptr s = original_subnet;
             // Address might have been rejected via class guard (i.e. not
             // allowed for this client). We need to determine if we truly
             // do not know about the address or whether this client just
@@ -3424,7 +3426,7 @@ Dhcpv4Srv::postAllocateNameUpdate(const AllocEngine::ClientContext4Ptr& ctx, con
 
 /// @todo This logic to be modified if we decide to support infinite lease times.
 void
-Dhcpv4Srv::setTeeTimes(const Lease4Ptr& lease, const Subnet4Ptr& subnet, Pkt4Ptr resp) {
+Dhcpv4Srv::setTeeTimes(const Lease4Ptr& lease, const ConstSubnet4Ptr& subnet, Pkt4Ptr resp) {
 
     uint32_t t2_time = 0;
     // If T2 is explicitly configured we'll use try value.
@@ -3670,7 +3672,7 @@ Dhcpv4Srv::setFixedFields(Dhcpv4Exchange& ex) {
     Pkt4Ptr response = ex.getResponse();
 
     // Step 1: Start with fixed fields defined on subnet level.
-    Subnet4Ptr subnet = ex.getContext()->subnet_;
+    ConstSubnet4Ptr subnet = ex.getContext()->subnet_;
     if (subnet) {
         IOAddress subnet_next_server = subnet->getSiaddr();
         if (!subnet_next_server.isV4Zero()) {
@@ -3776,7 +3778,7 @@ Dhcpv4Srv::setFixedFields(Dhcpv4Exchange& ex) {
 }
 
 OptionPtr
-Dhcpv4Srv::getNetmaskOption(const Subnet4Ptr& subnet) {
+Dhcpv4Srv::getNetmaskOption(const ConstSubnet4Ptr& subnet) {
     uint32_t netmask = getNetmask4(subnet->get().second).toUint32();
 
     OptionPtr opt(new OptionInt<uint32_t>(Option::V4,
@@ -4892,7 +4894,7 @@ void Dhcpv4Srv::evaluateAdditionalClasses(Dhcpv4Exchange& ex) {
     // First collect required classes
     Pkt4Ptr query = ex.getQuery();
     ClientClasses classes = query->getAdditionalClasses();
-    Subnet4Ptr subnet = ex.getContext()->subnet_;
+    ConstSubnet4Ptr subnet = ex.getContext()->subnet_;
 
     if (subnet) {
         // host reservation???

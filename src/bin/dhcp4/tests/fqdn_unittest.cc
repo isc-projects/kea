@@ -2747,8 +2747,8 @@ TEST_F(NameDhcpv4SrvTest, withOfferLifetime) {
     configure(CONFIGS[11], *client.getServer());
 
     // Fetch the subnet.
-    Subnet4Ptr subnet = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->
-                        selectSubnet(IOAddress("10.0.0.10"));
+    ConstSubnet4Ptr subnet = CfgMgr::instance().getCurrentCfg()->
+        getCfgSubnets4()->selectSubnet(IOAddress("10.0.0.10"));
     ASSERT_TRUE(subnet);
 
     // Make sure that DDNS is enabled.

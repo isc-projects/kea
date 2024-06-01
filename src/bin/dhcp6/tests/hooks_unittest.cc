@@ -568,7 +568,7 @@ public:
         subnet6_select_callout(callout_handle);
 
         const Subnet6Collection* subnets;
-        Subnet6Ptr subnet;
+        ConstSubnet6Ptr subnet;
         callout_handle.getArgument("subnet6", subnet);
         callout_handle.getArgument("subnet6collection", subnets);
 
@@ -1036,7 +1036,7 @@ public:
     static boost::shared_ptr<Option6IA> callback_ia_na_;
 
     /// Pointer to a subnet received by callout
-    static Subnet6Ptr callback_subnet6_;
+    static ConstSubnet6Ptr callback_subnet6_;
 
     /// A list of all available subnets (received by callout)
     static const Subnet6Collection* callback_subnet6collection_;
@@ -1077,7 +1077,7 @@ IOServicePtr HooksDhcpv6SrvTest::io_service_;
 string HooksDhcpv6SrvTest::callback_name_;
 Pkt6Ptr HooksDhcpv6SrvTest::callback_qry_pkt6_;
 Pkt6Ptr HooksDhcpv6SrvTest::callback_resp_pkt6_;
-Subnet6Ptr HooksDhcpv6SrvTest::callback_subnet6_;
+ConstSubnet6Ptr HooksDhcpv6SrvTest::callback_subnet6_;
 const Subnet6Collection* HooksDhcpv6SrvTest::callback_subnet6collection_;
 Lease6Ptr HooksDhcpv6SrvTest::callback_lease6_;
 Lease6CollectionPtr HooksDhcpv6SrvTest::callback_new_leases6_;

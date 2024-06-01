@@ -224,7 +224,7 @@ public:
     /// to be found.
     ///
     /// @tparam SubnetPtrType Type of the pointer to a subnet, i.e.
-    /// @ref Subnet4Ptr or @ref Subnet6Ptr.
+    /// @ref ConstSubnet4Ptr or @ref ConstSubnet6Ptr.
     /// @tparam SubnetCollectionType Type of the container holding subnets, i.e.
     /// @ref Subnet4SimpleCollection or @ref Subnet6SimpleCollection.
     ///
@@ -286,7 +286,7 @@ public:
     /// with the @c selected_subnet.
     ///
     /// @tparam SubnetPtrType Type of the pointer to a subnet, i.e.
-    /// @ref Subnet4Ptr or @ref Subnet6Ptr.
+    /// @ref ConstSubnet4Ptr or @ref ConstSubnet6Ptr.
     /// @tparam SubnetCollectionType Type of the container holding subnets, i.e.
     /// @ref Subnet4SimpleCollection or @ref Subnet6SimpleCollection.
     /// @param subnets Container holding subnets belonging to this shared
@@ -395,22 +395,21 @@ SharedNetwork4::getSubnet(const std::string& subnet_prefix) const {
     return (Impl::getSubnet<Subnet4Ptr>(subnets_, subnet_prefix));
 }
 
-Subnet4Ptr
-SharedNetwork4::getNextSubnet(const Subnet4Ptr& first_subnet,
+ConstSubnet4Ptr
+SharedNetwork4::getNextSubnet(const ConstSubnet4Ptr& first_subnet,
                               const SubnetID& current_subnet) const {
     return (Impl::getNextSubnet(subnets_, first_subnet, current_subnet));
 }
 
-Subnet4Ptr
-SharedNetwork4::getPreferredSubnet(const Subnet4Ptr& selected_subnet) const {
-    return (Impl::getPreferredSubnet<Subnet4Ptr>(subnets_, selected_subnet,
-                                                 Lease::TYPE_V4));
+ConstSubnet4Ptr
+SharedNetwork4::getPreferredSubnet(const ConstSubnet4Ptr& selected_subnet) const {
+    return (Impl::getPreferredSubnet(subnets_, selected_subnet, Lease::TYPE_V4));
 }
 
 bool
-SharedNetwork4::subnetsIncludeMatchClientId(const Subnet4Ptr& first_subnet,
+SharedNetwork4::subnetsIncludeMatchClientId(const ConstSubnet4Ptr& first_subnet,
                                             const ClientClasses& client_classes) {
-    for (Subnet4Ptr subnet = first_subnet; subnet;
+    for (ConstSubnet4Ptr subnet = first_subnet; subnet;
          subnet = subnet->getNextSubnet(first_subnet, client_classes)) {
         if (subnet->getMatchClientId()) {
             return (true);
@@ -496,14 +495,14 @@ SharedNetwork6::getSubnet(const std::string& subnet_prefix) const {
     return (Impl::getSubnet<Subnet6Ptr>(subnets_, subnet_prefix));
 }
 
-Subnet6Ptr
-SharedNetwork6::getNextSubnet(const Subnet6Ptr& first_subnet,
+ConstSubnet6Ptr
+SharedNetwork6::getNextSubnet(const ConstSubnet6Ptr& first_subnet,
                               const SubnetID& current_subnet) const {
     return (Impl::getNextSubnet(subnets_, first_subnet, current_subnet));
 }
 
-Subnet6Ptr
-SharedNetwork6::getPreferredSubnet(const Subnet6Ptr& selected_subnet,
+ConstSubnet6Ptr
+SharedNetwork6::getPreferredSubnet(const ConstSubnet6Ptr& selected_subnet,
                                    const Lease::Type& lease_type) const {
     return (Impl::getPreferredSubnet(subnets_, selected_subnet, lease_type));
 }

@@ -497,7 +497,7 @@ TEST(CfgSubnets4Test, selectSubnetByIface) {
     // Now select an interface name that matches. Selection should succeed
     // and return subnet3.
     selector.iface_name_ = "eth1";
-    Subnet4Ptr selected = cfg.selectSubnet(selector);
+    ConstSubnet4Ptr selected = cfg.selectSubnet(selector);
     ASSERT_TRUE(selected);
     EXPECT_EQ(subnet3, selected);
 }
@@ -540,7 +540,7 @@ TEST(CfgSubnets4Test, selectSharedNetworkByIface) {
     // Now select an interface name that matches. Selection should succeed
     // and return subnet3.
     selector.iface_name_ = "eth1";
-    Subnet4Ptr selected = cfg.selectSubnet(selector);
+    ConstSubnet4Ptr selected = cfg.selectSubnet(selector);
     ASSERT_TRUE(selected);
     SharedNetwork4Ptr network_returned;
     selected->getSharedNetwork(network_returned);
@@ -704,7 +704,7 @@ TEST(CfgSubnets4Test, selectSharedNetworkByClasses) {
     client_classes.insert("device-type1");
     selector.client_classes_ = client_classes;
 
-    Subnet4Ptr subnet = cfg.selectSubnet(selector);
+    ConstSubnet4Ptr subnet = cfg.selectSubnet(selector);
     ASSERT_TRUE(subnet);
     SharedNetwork4Ptr network;
     subnet->getSharedNetwork(network);
@@ -943,7 +943,7 @@ TEST(CfgSubnets4Test, selectSubnetInterface) {
 
     // The address on eth0 should match the existing subnet.
     selector.iface_name_ = "eth0";
-    Subnet4Ptr subnet1_ret = cfg.selectSubnet(selector);
+    ConstSubnet4Ptr subnet1_ret = cfg.selectSubnet(selector);
     ASSERT_TRUE(subnet1_ret);
     EXPECT_EQ(subnet1->get().first, subnet1_ret->get().first);
     // There should still be no match for eth1.
@@ -962,7 +962,7 @@ TEST(CfgSubnets4Test, selectSubnetInterface) {
     ASSERT_TRUE(subnet1_ret);
     EXPECT_EQ(subnet1->get().first, subnet1_ret->get().first);
     selector.iface_name_ = "eth1";
-    Subnet4Ptr subnet2_ret = cfg.selectSubnet(selector);
+    ConstSubnet4Ptr subnet2_ret = cfg.selectSubnet(selector);
     ASSERT_TRUE(subnet2_ret);
     EXPECT_EQ(subnet2->get().first, subnet2_ret->get().first);
 

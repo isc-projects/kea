@@ -138,7 +138,7 @@ public:
 
     // Buffers (callback will store received values here)
     static string callback_name_;
-    static Subnet6Ptr callback_subnet6_;
+    static ConstSubnet6Ptr callback_subnet6_;
     static Lease6Ptr callback_lease6_;
     static bool callback_fake_allocation_;
     static vector<string> callback_argument_names_;
@@ -160,7 +160,7 @@ IOAddress HookAllocEngine6Test::callback_addr_original_("::");
 IOAddress HookAllocEngine6Test::callback_addr_updated_("::");
 
 string HookAllocEngine6Test::callback_name_;
-Subnet6Ptr HookAllocEngine6Test::callback_subnet6_;
+ConstSubnet6Ptr HookAllocEngine6Test::callback_subnet6_;
 Lease6Ptr HookAllocEngine6Test::callback_lease6_;
 bool HookAllocEngine6Test::callback_fake_allocation_;
 vector<string> HookAllocEngine6Test::callback_argument_names_;
@@ -454,7 +454,7 @@ public:
 
     // Buffers (callback will store received values here)
     static string callback_name_;
-    static Subnet4Ptr callback_subnet4_;
+    static ConstSubnet4Ptr callback_subnet4_;
     static Lease4Ptr callback_lease4_;
     static bool callback_fake_allocation_;
     static vector<string> callback_argument_names_;
@@ -475,7 +475,7 @@ IOAddress HookAllocEngine4Test::callback_addr_original_("::");
 IOAddress HookAllocEngine4Test::callback_addr_updated_("::");
 
 string HookAllocEngine4Test::callback_name_;
-Subnet4Ptr HookAllocEngine4Test::callback_subnet4_;
+ConstSubnet4Ptr HookAllocEngine4Test::callback_subnet4_;
 Lease4Ptr HookAllocEngine4Test::callback_lease4_;
 bool HookAllocEngine4Test::callback_fake_allocation_;
 vector<string> HookAllocEngine4Test::callback_argument_names_;

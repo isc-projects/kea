@@ -132,13 +132,13 @@ public:
     ///
     /// With anypool set to true, this means give me a pool, preferably
     /// the one that addr belongs to. With anypool set to false, it means
-    /// give me a pool that addr belongs to (or NULL if here is no such pool)
+    /// give me a pool that addr belongs to (or null if here is no such pool)
     ///
     /// @param type pool type that the pool is looked for
     /// @param addr address that the returned pool should cover (optional)
     /// @param anypool other pool may be returned as well, not only the one
     ///        that addr belongs to
-    /// @return found pool (or NULL)
+    /// @return found pool (or null)
     const PoolPtr getPool(Lease::Type type, const isc::asiolink::IOAddress& addr,
                           bool anypool = true) const;
 
@@ -448,6 +448,9 @@ protected:
 /// @brief A generic pointer to either Subnet4 or Subnet6 object
 typedef boost::shared_ptr<Subnet> SubnetPtr;
 
+/// @brief A generic pointer to either const Subnet4 or const Subnet6 object
+typedef boost::shared_ptr<const Subnet> ConstSubnetPtr;
+
 
 class Subnet4;
 
@@ -511,15 +514,15 @@ public:
     ///
     /// If the current subnet doesn't belong to any shared network or if
     /// the next subnet is the same as first subnet (specified in the
-    /// argument) a NULL pointer is returned.
+    /// argument) a null pointer is returned.
     ///
     /// @param first_subnet Pointer to the subnet from which iterations have
     /// started.
     ///
-    /// @return Pointer to the next subnet or NULL pointer if the next subnet
+    /// @return Pointer to the next subnet or null pointer if the next subnet
     /// is the first subnet or if the current subnet doesn't belong to a
     /// shared network.
-    Subnet4Ptr getNextSubnet(const Subnet4Ptr& first_subnet) const;
+    ConstSubnet4Ptr getNextSubnet(const ConstSubnet4Ptr& first_subnet) const;
 
     /// @brief Returns next subnet within shared network that matches
     /// client classes.
@@ -530,11 +533,11 @@ public:
     /// The subnets not matching the classes aren't returned by this
     /// method.
     ///
-    /// @return Pointer to the next subnet or NULL pointer if the next subnet
+    /// @return Pointer to the next subnet or null pointer if the next subnet
     /// is the first subnet or if the current subnet doesn't belong to a
     /// shared network.
-    Subnet4Ptr getNextSubnet(const Subnet4Ptr& first_subnet,
-                             const ClientClasses& client_classes) const;
+    ConstSubnet4Ptr getNextSubnet(const ConstSubnet4Ptr& first_subnet,
+                                  const ClientClasses& client_classes) const;
 
     /// @brief Checks whether this subnet and parent shared network supports
     /// the client that belongs to specified classes.
@@ -681,15 +684,15 @@ public:
     ///
     /// If the current subnet doesn't belong to any shared network or if
     /// the next subnet is the same as first subnet (specified in the
-    /// arguments) a NULL pointer is returned.
+    /// arguments) a null pointer is returned.
     ///
     /// @param first_subnet Pointer to the subnet from which iterations have
     /// started.
     ///
-    /// @return Pointer to the next subnet or NULL pointer if the next subnet
+    /// @return Pointer to the next subnet or null pointer if the next subnet
     /// is the first subnet or if the current subnet doesn't belong to a
     /// shared network.
-    Subnet6Ptr getNextSubnet(const Subnet6Ptr& first_subnet) const;
+    ConstSubnet6Ptr getNextSubnet(const ConstSubnet6Ptr& first_subnet) const;
 
     /// @brief Returns next subnet within shared network that matches
     /// client classes.
@@ -700,11 +703,11 @@ public:
     /// The subnets not matching the classes aren't returned by this
     /// method.
     ///
-    /// @return Pointer to the next subnet or NULL pointer if the next subnet
+    /// @return Pointer to the next subnet or null pointer if the next subnet
     /// is the first subnet or if the current subnet doesn't belong to a
     /// shared network.
-    Subnet6Ptr getNextSubnet(const Subnet6Ptr& first_subnet,
-                             const ClientClasses& client_classes) const;
+    ConstSubnet6Ptr getNextSubnet(const ConstSubnet6Ptr& first_subnet,
+                                  const ClientClasses& client_classes) const;
 
     /// @brief Checks whether this subnet and parent shared network supports
     /// the client that belongs to specified classes.
@@ -994,6 +997,9 @@ using SubnetT = typename AdapterSubnet<D>::type;
 
 template <isc::util::DhcpSpace D>
 using SubnetTPtr = boost::shared_ptr<SubnetT<D>>;
+
+template <isc::util::DhcpSpace D>
+using ConstSubnetTPtr = boost::shared_ptr<const SubnetT<D>>;
 /// @}
 
 } // end of isc::dhcp namespace
