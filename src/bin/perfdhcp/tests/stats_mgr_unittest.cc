@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -232,14 +232,14 @@ public:
             // with transaction ids of already sent packets.
             Pkt4ModifiablePtr sent_packet(createPacket4(DHCPDISCOVER,
                                                     transid[i] + 1));
-            Pkt4ModifiablePtr rcvd_packet(createPacket4(DHCPOFFER,
-                                                        transid[i] + 1));
+            Pkt4ModifiablePtr rcvd_packet2(createPacket4(DHCPOFFER,
+                                                         transid[i] + 1));
             ASSERT_NO_THROW(
                 stats_mgr->passSentPacket(ExchangeType::DO, sent_packet)
             ) << "failure for transaction id " << transid[i];
 
             ASSERT_NO_THROW(
-                stats_mgr->passRcvdPacket(ExchangeType::DO, rcvd_packet);
+                stats_mgr->passRcvdPacket(ExchangeType::DO, rcvd_packet2);
             ) << "failure for transaction id " << transid[i];
         }
 

@@ -47,7 +47,7 @@ TEST(IPRangePermutationTest, ipv4) {
         bool done = false;
         // Call the next() function 95 times. The first 91 calls should return non-zero
         // IP addresses.
-        for (auto i = 0; i < 95; ++i) {
+        for (auto j = 0; j < 95; ++j) {
             auto next = perm.next(done);
             if (!next.isV4Zero()) {
                 // Make sure the returned address is within the range.
@@ -56,7 +56,7 @@ TEST(IPRangePermutationTest, ipv4) {
             }
             // If we went over all addresses in the range, the flags indicating that
             // the permutation is exhausted should be set to true.
-            if (i >= 90) {
+            if (j >= 90) {
                 EXPECT_TRUE(done);
                 EXPECT_TRUE(perm.exhausted());
             } else {
@@ -110,7 +110,7 @@ TEST(IPRangePermutationTest, ipv6) {
         std::set<IOAddress> addrs;
         std::vector<IOAddress> ordered_addrs;
         bool done = false;
-        for (auto i = 0; i < 44335; ++i) {
+        for (auto j = 0; j < 44335; ++j) {
             auto next = perm.next(done);
             if (!next.isV6Zero()) {
                 // Make sure that the address is within the range.
@@ -119,7 +119,7 @@ TEST(IPRangePermutationTest, ipv6) {
             }
             // If we went over all addresses in the range, the flags indicating that
             // the permutation is exhausted should be set to true.
-            if (i >= 44333) {
+            if (j >= 44333) {
                 EXPECT_TRUE(done);
                 EXPECT_TRUE(perm.exhausted());
             } else {
@@ -171,7 +171,7 @@ TEST(IPRangePermutationTest, pd) {
         std::set<IOAddress> addrs;
         std::vector<IOAddress> ordered_addrs;
         bool done = false;
-        for (auto i = 0; i < 257; ++i) {
+        for (auto j = 0; j < 257; ++j) {
             auto next = perm.next(done);
             if (!next.isV6Zero()) {
                 // Make sure the prefix is within the range.
@@ -180,7 +180,7 @@ TEST(IPRangePermutationTest, pd) {
             }
             // If we went over all delegated prefixes in the range, the flags indicating
             // that the permutation is exhausted should be set to true.
-            if (i >= 255) {
+            if (j >= 255) {
                 EXPECT_TRUE(done);
                 EXPECT_TRUE(perm.exhausted());
             } else {

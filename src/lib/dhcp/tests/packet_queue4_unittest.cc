@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2019,2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -109,7 +109,7 @@ TEST(PacketQueueRing4, enqueueDequeueTest) {
     // Enqueue five packets.  The first two should be pushed off.
     SocketInfo sock1(isc::asiolink::IOAddress("127.0.0.1"), 777, 10);
 
-    for (int i = 1; i < 6; ++i) {
+    for (unsigned i = 1; i < 6; ++i) {
         Pkt4Ptr pkt(new Pkt4(DHCPDISCOVER, 1000+i));
         ASSERT_NO_THROW(q->enqueuePacket(pkt, sock1));
     }
@@ -120,7 +120,7 @@ TEST(PacketQueueRing4, enqueueDequeueTest) {
 
     // We should have transids 1003,1004,1005
     Pkt4Ptr pkt;
-    for (int i = 3; i < 6; ++i) {
+    for (unsigned i = 3; i < 6; ++i) {
         ASSERT_NO_THROW(pkt = q->dequeuePacket());
         ASSERT_TRUE(pkt);
         EXPECT_EQ(1000 + i, pkt->getTransid());
@@ -134,9 +134,9 @@ TEST(PacketQueueRing4, enqueueDequeueTest) {
     ASSERT_FALSE(pkt);
 
     // Enqueue three more packets.
-    for (int i = 0; i < 3; ++i) {
-        Pkt4Ptr pkt(new Pkt4(DHCPDISCOVER, 1000+i));
-        ASSERT_NO_THROW(q->enqueuePacket(pkt, sock1));
+    for (unsigned i = 0; i < 3; ++i) {
+        Pkt4Ptr dis(new Pkt4(DHCPDISCOVER, 1000+i));
+        ASSERT_NO_THROW(q->enqueuePacket(dis, sock1));
     }
 
     checkIntStat(q, "size", 3);
@@ -153,7 +153,7 @@ TEST(PacketQueueRing4, peekPushPopTest) {
     PacketQueueRing4 q("kea-ring4", 3);
 
     // Push five packets onto the end. The first two should get pushed off.
-    for (int i = 1; i < 6; ++i) {
+    for (unsigned i = 1; i < 6; ++i) {
         Pkt4Ptr pkt(new Pkt4(DHCPDISCOVER, 1000+i));
         ASSERT_NO_THROW(q.pushPacket(pkt));
     }
@@ -276,7 +276,7 @@ TEST(TestQueue4, eatPacketsTest) {
 
     Pkt4Ptr pkt;
     // Let's add five packets.
-    for (int i = 1; i < 6; ++i) {
+    for (unsigned i = 1; i < 6; ++i) {
         pkt.reset(new Pkt4(DHCPDISCOVER, 1000 + i));
         ASSERT_NO_THROW(q.enqueuePacket(pkt, sock));
         ASSERT_EQ(i, q.getSize());

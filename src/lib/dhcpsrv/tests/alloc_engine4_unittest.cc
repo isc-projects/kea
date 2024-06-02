@@ -4037,7 +4037,6 @@ TEST_F(AllocEngine4Test, storeExtendedInfoEnabled4) {
                                     false, false, "", false);
 
     // Iterate over the test scenarios.
-    Lease4Ptr lease;
     for (auto const& scenario : scenarios) {
         SCOPED_TRACE(scenario.description_);
 
@@ -4140,8 +4139,6 @@ TEST_F(AllocEngine4Test, storeExtendedInfoDisabled4) {
     AllocEngine::ClientContext4 ctx(subnet_, ClientIdPtr(), hwaddr_,
                                     IOAddress::IPV4_ZERO_ADDRESS(),
                                     false, false, "", false);
-
-    Lease4Ptr lease;
 
     // Iterate over the test scenarios.
     for (auto const& scenario : scenarios) {

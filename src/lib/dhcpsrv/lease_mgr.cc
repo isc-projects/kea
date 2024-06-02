@@ -143,18 +143,18 @@ LeaseMgr::recountLeaseStats4() {
                 stats_mgr.setValue(name_da, zero);
             }
 
-            const std::string& name_rec_dec(StatsMgr::generateName("subnet", subnet_id,
-                                                                   StatsMgr::generateName("pool", pool->getID(),
+            const std::string& pname_rec_dec(StatsMgr::generateName("subnet", subnet_id,
+                                                                    StatsMgr::generateName("pool", pool->getID(),
                                                                                           "reclaimed-declined-addresses")));
-            if (!stats_mgr.getObservation(name_rec_dec)) {
-                stats_mgr.setValue(name_rec_dec, zero);
+            if (!stats_mgr.getObservation(pname_rec_dec)) {
+                stats_mgr.setValue(pname_rec_dec, zero);
             }
 
-            const std::string& name_rec(StatsMgr::generateName("subnet", subnet_id,
-                                                               StatsMgr::generateName("pool", pool->getID(),
+            const std::string& pname_rec(StatsMgr::generateName("subnet", subnet_id,
+                                                                StatsMgr::generateName("pool", pool->getID(),
                                                                                       "reclaimed-leases")));
-            if (!stats_mgr.getObservation(name_rec)) {
-                stats_mgr.setValue(name_rec, zero);
+            if (!stats_mgr.getObservation(pname_rec)) {
+                stats_mgr.setValue(pname_rec, zero);
             }
         }
     }

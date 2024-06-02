@@ -966,8 +966,8 @@ HostMgr::setIPReservationsUnique(const bool unique) {
             ip_reservations_unique_ = true;
             LOG_WARN(hosts_logger, HOSTS_MGR_NON_UNIQUE_IP_UNSUPPORTED)
                 .arg(source->getType());
-            for (auto const& source : alternate_sources_) {
-                source->setIPReservationsUnique(true);
+            for (auto const& src : alternate_sources_) {
+                src->setIPReservationsUnique(true);
             }
             return (false);
         }

@@ -241,7 +241,7 @@ CBControlDHCPv6::databaseConfigApply(const db::BackendSelector& backend_selector
     // We're only affected by the allocator change if this is the update from
     // the configuration backend.
     if (cb_update) {
-        auto allocator = CfgMgr::instance().getCurrentCfg()->getConfiguredGlobal(CfgGlobals::ALLOCATOR);
+        allocator = CfgMgr::instance().getCurrentCfg()->getConfiguredGlobal(CfgGlobals::ALLOCATOR);
         if (allocator && (allocator->getType() == Element::string)) {
             allocator_changed = (global_allocator != allocator->stringValue());
         }
@@ -249,7 +249,7 @@ CBControlDHCPv6::databaseConfigApply(const db::BackendSelector& backend_selector
         // The address allocator hasn't changed. So, let's check if the PD allocator
         // has changed.
         if (!allocator_changed) {
-            auto allocator = CfgMgr::instance().getCurrentCfg()->getConfiguredGlobal(CfgGlobals::PD_ALLOCATOR);
+            allocator = CfgMgr::instance().getCurrentCfg()->getConfiguredGlobal(CfgGlobals::PD_ALLOCATOR);
             if (allocator && (allocator->getType() == Element::string)) {
                 allocator_changed = (global_pd_allocator != allocator->stringValue());
             }

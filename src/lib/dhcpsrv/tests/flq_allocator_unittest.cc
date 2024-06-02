@@ -132,11 +132,11 @@ TEST_F(FreeLeaseQueueAllocatorTest4, singlePoolWithAllocations) {
         ++i;
     }
 
-    for (auto i = 0; i < 5; ++i) {
-        IOAddress candidate = alloc.pickAddress(cc_, clientid_, IOAddress("0.0.0.0"));
+    for (auto j = 0; j < 5; ++j) {
+        candidate = alloc.pickAddress(cc_, clientid_, IOAddress("0.0.0.0"));
         EXPECT_TRUE(subnet_->inPool(Lease::TYPE_V4, candidate));
         EXPECT_TRUE(subnet_->inPool(Lease::TYPE_V4, candidate, cc_));
-        auto lease = createLease4(candidate, i);
+        auto lease = createLease4(candidate, j);
         EXPECT_TRUE(lease_mgr.addLease(lease));
     }
 
@@ -179,8 +179,8 @@ TEST_F(FreeLeaseQueueAllocatorTest4, singlePoolWithReclamations) {
         }
         ++i;
     }
-    for (auto i = 0; i < 5; ++i) {
-        IOAddress candidate = alloc.pickAddress(cc_, clientid_, IOAddress("0.0.0.0"));
+    for (auto j = 0; j < 5; ++j) {
+        candidate = alloc.pickAddress(cc_, clientid_, IOAddress("0.0.0.0"));
         EXPECT_TRUE(subnet_->inPool(Lease::TYPE_V4, candidate));
         EXPECT_TRUE(subnet_->inPool(Lease::TYPE_V4, candidate, cc_));
         auto lease = lease_mgr.getLease4(candidate);
@@ -460,8 +460,8 @@ TEST_F(FreeLeaseQueueAllocatorTest6, singlePoolWithAllocations) {
         ++i;
     }
 
-    for (auto i = 0; i < 8; ++i) {
-        IOAddress candidate = alloc.pickAddress(cc_, duid_, IOAddress("::"));
+    for (auto j = 0; j < 8; ++j) {
+	candidate = alloc.pickAddress(cc_, duid_, IOAddress("::"));
         EXPECT_TRUE(subnet_->inPool(Lease::TYPE_NA, candidate));
         EXPECT_TRUE(subnet_->inPool(Lease::TYPE_NA, candidate, cc_));
         auto lease = createLease6(Lease::TYPE_NA, candidate, i);
@@ -508,8 +508,8 @@ TEST_F(FreeLeaseQueueAllocatorTest6, singlePoolWithReclamations) {
         ++i;
     }
 
-    for (auto i = 0; i < 8; ++i) {
-        IOAddress candidate = alloc.pickAddress(cc_, duid_, IOAddress("::"));
+    for (auto j = 0; j < 8; ++j) {
+	candidate = alloc.pickAddress(cc_, duid_, IOAddress("::"));
         EXPECT_TRUE(subnet_->inPool(Lease::TYPE_NA, candidate));
         EXPECT_TRUE(subnet_->inPool(Lease::TYPE_NA, candidate, cc_));
         auto lease = lease_mgr.getLease6(Lease::TYPE_NA, candidate);
@@ -643,7 +643,7 @@ TEST_F(FreeLeaseQueueAllocatorTest6, clientClasses) {
    for (auto i = 0; i < 20; ++i) {
        // Allocate random addresses and make sure they belong to the
        // pools associated with the class bar.
-       IOAddress candidate = alloc.pickAddress(cc_, duid_, IOAddress("::"));
+       candidate = alloc.pickAddress(cc_, duid_, IOAddress("::"));
        EXPECT_FALSE(candidate.isV6Zero());
        EXPECT_TRUE(lease_mgr.addLease(createLease6(Lease::TYPE_NA, candidate, i+50)));
        addresses_set.insert(candidate);
@@ -655,7 +655,7 @@ TEST_F(FreeLeaseQueueAllocatorTest6, clientClasses) {
    // All pools should now be available.
    cc_.insert("foo");
    for (auto i = 0; i < 27; ++i) {
-       IOAddress candidate = alloc.pickAddress(cc_, duid_, IOAddress("::"));
+       candidate = alloc.pickAddress(cc_, duid_, IOAddress("::"));
        addresses_set.insert(candidate);
        EXPECT_TRUE(lease_mgr.addLease(createLease6(Lease::TYPE_NA, candidate, i+100)));
        EXPECT_TRUE(subnet_->inRange(candidate));
@@ -766,11 +766,11 @@ TEST_F(FreeLeaseQueueAllocatorTest6, singlePdPoolWithAllocations) {
         ++i;
     }
 
-    for (auto i = 0; i < 128; ++i) {
+    for (auto j = 0; j < 128; ++j) {
         candidate = alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_HIGHER, IOAddress("::"), 0);
         EXPECT_TRUE(subnet_->inPool(Lease::TYPE_PD, candidate));
         EXPECT_TRUE(subnet_->inPool(Lease::TYPE_PD, candidate, cc_));
-        auto lease = createLease6(Lease::TYPE_PD, candidate, i);
+        auto lease = createLease6(Lease::TYPE_PD, candidate, j);
         EXPECT_TRUE(lease_mgr.addLease(lease));
     }
 
@@ -823,7 +823,7 @@ TEST_F(FreeLeaseQueueAllocatorTest6, singlePdPoolWithReclamations) {
         ++i;
     }
 
-    for (auto i = 0; i < 128; ++i) {
+    for (auto j = 0; j < 128; ++j) {
         candidate = alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_HIGHER, IOAddress("::"), 0);
         EXPECT_TRUE(subnet_->inPool(Lease::TYPE_PD, candidate));
         EXPECT_TRUE(subnet_->inPool(Lease::TYPE_PD, candidate, cc_));

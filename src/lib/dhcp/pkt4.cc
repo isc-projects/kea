@@ -123,7 +123,7 @@ Pkt4::pack() {
 
         /// Create a ManagedScopedOptionsCopyContainer to handle storing and
         /// restoration of copied options.
-        ManagedScopedOptionsCopyContainer scoped_options;
+        ManagedScopedOptionsCopyContainer m_scoped_options;
 
         // The RFC3396 adds support for long options split over multiple options
         // using the same code.
@@ -132,7 +132,7 @@ Pkt4::pack() {
         // options will differ from the ones instantiated by the
         // @ref OptionDefinition::optionFactory. At this stage the server should
         // not do anything useful with the options beside packing.
-        LibDHCP::splitOptions4(options_, scoped_options.scoped_options_);
+        LibDHCP::splitOptions4(options_, m_scoped_options.scoped_options_);
 
         // Call packOptions4() with parameter,"top", true. This invokes
         // logic to emit the message type option first.

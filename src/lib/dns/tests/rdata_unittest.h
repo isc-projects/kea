@@ -55,13 +55,13 @@ protected:
         }
 
         std::stringstream ss(rdata_txt);
-        MasterLexer lexer;
-        lexer.pushSource(ss);
+        MasterLexer llexer;
+        llexer.pushSource(ss);
         if (throw_lexer_version) {
-            EXPECT_THROW(RdataType rdata(lexer, origin, MasterLoader::DEFAULT,
+            EXPECT_THROW(RdataType rdata(llexer, origin, MasterLoader::DEFAULT,
                                          loader_cb), ExForLexer);
         } else {
-            EXPECT_EQ(0, RdataType(lexer, origin, MasterLoader::DEFAULT,
+            EXPECT_EQ(0, RdataType(llexer, origin, MasterLoader::DEFAULT,
                                    loader_cb).compare(rdata_expected));
         }
     }

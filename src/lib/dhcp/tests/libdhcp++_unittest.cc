@@ -1746,21 +1746,21 @@ TEST_F(LibDhcpTest, extendVivso) {
     for (auto const& option : options) {
         ASSERT_EQ(option.second->getType(), DHO_VIVSO_SUBOPTIONS);
         OptionCollection suboptions = option.second->getOptions();
-        OptionPtr suboption;
+        OptionPtr subopt;
         OptionVendorPtr vendor = boost::dynamic_pointer_cast<OptionVendor>(option.second);
         ASSERT_TRUE(vendor);
         if (vendor->getVendorId() == 1) {
             ASSERT_EQ(suboptions.size(), 3);
-            suboption = option.second->getOption(16);
-            ASSERT_TRUE(suboption);
-            suboption = option.second->getOption(32);
-            ASSERT_TRUE(suboption);
-            suboption = option.second->getOption(64);
-            ASSERT_TRUE(suboption);
+            subopt = option.second->getOption(16);
+            ASSERT_TRUE(subopt);
+            subopt = option.second->getOption(32);
+            ASSERT_TRUE(subopt);
+            subopt = option.second->getOption(64);
+            ASSERT_TRUE(subopt);
         } else if (vendor->getVendorId() == 2) {
             ASSERT_EQ(suboptions.size(), 1);
-            suboption = option.second->getOption(128);
-            ASSERT_TRUE(suboption);
+            subopt = option.second->getOption(128);
+            ASSERT_TRUE(subopt);
         } else {
             FAIL() << "unexpected vendor type: " << vendor->getVendorId();
         }

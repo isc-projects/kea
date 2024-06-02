@@ -551,9 +551,9 @@ TEST_F(InformTest, messageFieldsLongOptions) {
     // then restored.
     uint32_t count = 0;
     uint8_t index = 0;
-    for (auto const& option : client.getContext().query_->options_) {
-        if (option.first == 231) {
-            for (auto const& value : option.second->getData()) {
+    for (auto const& opt : client.getContext().query_->options_) {
+        if (opt.first == 231) {
+            for (auto const& value : opt.second->getData()) {
                 ASSERT_EQ(value, index);
                 index++;
             }
@@ -563,11 +563,11 @@ TEST_F(InformTest, messageFieldsLongOptions) {
     ASSERT_EQ(1, count);
 
     count = 0;
-    for (auto const& option : resp->options_) {
-        if (option.first == DHO_DHCP_AGENT_OPTIONS) {
-            for (auto const& suboption: option.second->getOptions()) {
+    for (auto const& opt : resp->options_) {
+        if (opt.first == DHO_DHCP_AGENT_OPTIONS) {
+            for (auto const& suboption: opt.second->getOptions()) {
                 if (suboption.first == RAI_OPTION_AGENT_CIRCUIT_ID) {
-                    uint8_t index = 0;
+                    index = 0;
                     for (auto const& value : suboption.second->getData()) {
                         ASSERT_EQ(value, index);
                         index++;
@@ -588,10 +588,10 @@ TEST_F(InformTest, messageFieldsLongOptions) {
 
     count = 0;
     string value = "";
-    for (auto const& option : resp->options_) {
-        if (option.second->getType() == 240) {
-            value += string(reinterpret_cast<const char*>(&option.second->getData()[0]),
-                            option.second->getData().size());
+    for (auto const& opt : resp->options_) {
+        if (opt.second->getType() == 240) {
+            value += string(reinterpret_cast<const char*>(&opt.second->getData()[0]),
+                            opt.second->getData().size());
             count++;
         }
     }

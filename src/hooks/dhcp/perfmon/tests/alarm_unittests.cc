@@ -290,7 +290,6 @@ TEST(Alarm, checkSample) {
         usleep(50);
 
         // Invoke checkSample() with the scenario sample duration.  It should not throw.
-        bool should_report;
         ASSERT_NO_THROW_LOG(should_report = alarm->checkSample(scenario.sample_, report_interval));
 
         //  Verify that we returned the expected value for a reportable event (or not).

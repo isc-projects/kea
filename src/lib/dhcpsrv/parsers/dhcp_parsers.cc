@@ -896,7 +896,7 @@ Subnet4ConfigParser::initSubnet(data::ConstElementPtr params,
             string prefix = subnet4o6.substr(0, slash);
             string lenstr = subnet4o6.substr(slash + 1);
 
-            uint8_t len = 128;
+            len = 128;
             try {
                 len = boost::lexical_cast<unsigned int>(lenstr.c_str());
             } catch (const boost::bad_lexical_cast &) {

@@ -95,7 +95,7 @@ protected:
     }
 
     template <typename Output>
-    void toWireCommonChecks(Output& output) const;
+    void toWireCommonChecks(Output& output);
 
     const string valid_text1;
     const string valid_text2;
@@ -328,9 +328,7 @@ TEST_F(Rdata_TSIG_Test, assignment) {
 
 template <typename Output>
 void
-Rdata_TSIG_Test::toWireCommonChecks(Output& output) const {
-    vector<uint8_t> expect_data;
-
+Rdata_TSIG_Test::toWireCommonChecks(Output& output) {
     output.clear();
     expect_data.clear();
     rdata_tsig.toWire(output);

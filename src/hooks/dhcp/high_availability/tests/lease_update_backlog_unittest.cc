@@ -1,4 +1,4 @@
-// Copyright (C) 2020-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2020-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -49,8 +49,8 @@ TEST(LeaseUpdateBacklogTest, pushAndPop) {
     // Try to pop all lease updates.
     LeaseUpdateBacklog::OpType op_type;
     for (auto i = 0; i < 5; ++i) {
-        auto lease = backlog.pop(op_type);
-        ASSERT_TRUE(lease);
+        auto l = backlog.pop(op_type);
+        ASSERT_TRUE(l);
         ASSERT_EQ(i % 2 ? LeaseUpdateBacklog::ADD : LeaseUpdateBacklog::DELETE, op_type);
     }
 

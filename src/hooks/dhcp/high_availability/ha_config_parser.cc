@@ -104,8 +104,8 @@ HAConfigParser::parseAll(const HAConfigMapperPtr& config_storage,
     if (config_vec.empty()) {
         isc_throw(ConfigError, "a list of HA configurations must not be empty");
     }
-    for (auto const& config : config_vec) {
-        parseOne(config_storage, config);
+    for (auto const& cfg : config_vec) {
+        parseOne(config_storage, cfg);
     }
 }
 

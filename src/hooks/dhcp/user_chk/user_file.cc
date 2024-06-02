@@ -85,7 +85,6 @@ UserFile::makeUser(const std::string& user_string) {
     // Iterate over the elements, saving of "type" and "id" to their
     // respective locals.  Anything else is assumed to be an option so
     // add it to the local property map.
-    std::pair<std::string, isc::data::ConstElementPtr> element_pair;
     for (auto const& element_pair : elements->mapValue()) {
         // Get the element's label.
         std::string label = element_pair.first;

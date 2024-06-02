@@ -248,7 +248,7 @@ SharedNetwork6Parser::parse(const data::ConstElementPtr& shared_network_data,
 
         // Make sure that the network name has been specified. The name is required
         // to create a SharedNetwork6 object.
-        std::string name = getString(shared_network_data, "name");
+        name = getString(shared_network_data, "name");
         shared_network.reset(new SharedNetwork6(name));
 
         ElementPtr mutable_params;

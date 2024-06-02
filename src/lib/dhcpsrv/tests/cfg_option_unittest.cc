@@ -744,14 +744,14 @@ TEST_F(CfgOptionTest, encapsulate) {
                 OptionUint8Ptr second_level_uint8 = boost::dynamic_pointer_cast<
                     OptionUint8>(second_level_opt.second);
                 ASSERT_TRUE(second_level_uint8);
-                const unsigned value = static_cast<
+                const unsigned value2 = static_cast<
                     unsigned>(second_level_uint8->getValue());
                 // Certain sub-options should have a value of 3, other the values
                 // of 4.
                 if (second_level_uint8->getType() < 20) {
-                    EXPECT_EQ(3, value);
+                    EXPECT_EQ(3, value2);
                 } else {
-                    EXPECT_EQ(4, value);
+                    EXPECT_EQ(4, value2);
                 }
             }
         }

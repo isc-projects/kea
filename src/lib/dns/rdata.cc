@@ -239,17 +239,17 @@ Generic::constructFromLexer(MasterLexer& lexer) {
         string hex_part;
         // Whitespace is allowed within hex data, so read to the end of input.
         while (true) {
-            const MasterToken& token =
+            const MasterToken& rdtoken =
                 lexer.getNextToken(MasterToken::STRING, true);
-            if ((token.getType() == MasterToken::END_OF_FILE) ||
-                (token.getType() == MasterToken::END_OF_LINE)) {
+            if ((rdtoken.getType() == MasterToken::END_OF_FILE) ||
+                (rdtoken.getType() == MasterToken::END_OF_LINE)) {
                 // Unget the last read token as createRdata() expects us
                 // to leave it at the end-of-line or end-of-file when we
                 // return.
                 lexer.ungetToken();
                 break;
             }
-            token.getString(hex_part);
+            rdtoken.getString(hex_part);
             hex_txt.append(hex_part);
         }
 

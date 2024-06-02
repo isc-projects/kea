@@ -377,11 +377,11 @@ TEST(SharedNetwork4Test, getNextSubnet) {
     // Collect networks associated with our subnets in the vector.
     std::vector<SharedNetwork4Ptr> networks;
     for (auto i = 0; i < subnets.size(); ++i) {
-        SharedNetwork4Ptr network;
-        subnets[i]->getSharedNetwork(network);
-        ASSERT_TRUE(network) << "failed to retrieve shared network for a"
+        SharedNetwork4Ptr net;
+        subnets[i]->getSharedNetwork(net);
+        ASSERT_TRUE(net) << "failed to retrieve shared network for a"
             << " subnet id " << subnets[i]->getID();
-        networks.push_back(network);
+        networks.push_back(net);
     }
 
     // All subnets should be associated with the same network.
@@ -1127,11 +1127,11 @@ TEST(SharedNetwork6Test, getNextSubnet) {
     // Collect networks associated with our subnets in the vector.
     std::vector<SharedNetwork6Ptr> networks;
     for (auto i = 0; i < subnets.size(); ++i) {
-        SharedNetwork6Ptr network;
-        subnets[i]->getSharedNetwork(network);
-        ASSERT_TRUE(network) << "failed to retrieve shared network for a"
+        SharedNetwork6Ptr net;
+        subnets[i]->getSharedNetwork(net);
+        ASSERT_TRUE(net) << "failed to retrieve shared network for a"
             << " subnet id " << subnets[i]->getID();
-        networks.push_back(network);
+        networks.push_back(net);
     }
 
     // All subnets should be associated with the same network.

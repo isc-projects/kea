@@ -110,7 +110,7 @@ TEST(PacketQueueRing6, enqueueDequeueTest) {
     // Enqueue five packets.  The first two should be pushed off.
     SocketInfo sock1(isc::asiolink::IOAddress("127.0.0.1"), 777, 10);
 
-    for (int i = 1; i < 6; ++i) {
+    for (unsigned i = 1; i < 6; ++i) {
         Pkt6Ptr pkt(new Pkt6(DHCPV6_SOLICIT, 1000+i));
         ASSERT_NO_THROW(q->enqueuePacket(pkt, sock1));
     }
@@ -121,7 +121,7 @@ TEST(PacketQueueRing6, enqueueDequeueTest) {
 
     // We should have transids 1003,1004,1005
     Pkt6Ptr pkt;
-    for (int i = 3; i < 6; ++i) {
+    for (unsigned i = 3; i < 6; ++i) {
         ASSERT_NO_THROW(pkt = q->dequeuePacket());
         ASSERT_TRUE(pkt);
         EXPECT_EQ(1000 + i, pkt->getTransid());
@@ -135,9 +135,9 @@ TEST(PacketQueueRing6, enqueueDequeueTest) {
     ASSERT_FALSE(pkt);
 
     // Enqueue three more packets.
-    for (int i = 0; i < 3; ++i) {
-        Pkt6Ptr pkt(new Pkt6(DHCPV6_SOLICIT, 1000+i));
-        ASSERT_NO_THROW(q->enqueuePacket(pkt, sock1));
+    for (unsigned i = 0; i < 3; ++i) {
+        Pkt6Ptr sol(new Pkt6(DHCPV6_SOLICIT, 1000+i));
+        ASSERT_NO_THROW(q->enqueuePacket(sol, sock1));
     }
 
     checkIntStat(q, "size", 3);
@@ -154,7 +154,7 @@ TEST(PacketQueueRing6, peekPushPopTest) {
     PacketQueueRing6 q("kea-ring6", 3);
 
     // Push five packets onto the end. The first two should get pushed off.
-    for (int i = 1; i < 6; ++i) {
+    for (unsigned i = 1; i < 6; ++i) {
         Pkt6Ptr pkt(new Pkt6(DHCPV6_SOLICIT, 1000+i));
         ASSERT_NO_THROW(q.pushPacket(pkt));
     }
@@ -277,7 +277,7 @@ TEST(TestQueue6, eatPacketsTest) {
 
     Pkt6Ptr pkt;
     // Let's add five packets.
-    for (int i = 1; i < 6; ++i) {
+    for (unsigned i = 1; i < 6; ++i) {
         pkt.reset(new Pkt6(DHCPV6_SOLICIT, 1000 + i));
         ASSERT_NO_THROW(q.enqueuePacket(pkt, sock));
         ASSERT_EQ(i, q.getSize());

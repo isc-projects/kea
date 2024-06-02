@@ -5716,8 +5716,7 @@ TEST_F(LoadUnloadDhcpv6SrvTest, Dhcpv6SrvConfigured) {
         if (parameters.empty()) {
             EXPECT_EQ(0, status_code);
             string expected = "{ \"arguments\": { \"hash\": \"";
-            ConstElementPtr config =
-                CfgMgr::instance().getStagingCfg()->toElement();
+            config = CfgMgr::instance().getStagingCfg()->toElement();
             expected += BaseCommandMgr::getHash(config);
             expected += "\" }, \"result\": 0, \"text\": ";
             expected += "\"Configuration successful.\" }";

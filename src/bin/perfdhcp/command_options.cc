@@ -503,9 +503,9 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
             }
 
             // Create and remember the option.
-            OptionPtr opt(new Option(ipversion_ == 4 ? Option::V4 : Option::V6,
-                                     code, bin));
-            extra_opts_.insert(make_pair(code, opt));
+            OptionPtr option(new Option(ipversion_ == 4 ? Option::V4 : Option::V6,
+                                        code, bin));
+            extra_opts_.insert(make_pair(code, option));
             break;
         }
         case 'p':

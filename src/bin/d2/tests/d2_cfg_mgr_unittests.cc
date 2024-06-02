@@ -929,7 +929,6 @@ TEST_F(D2CfgMgrTest, configPermutations) {
     //  3. data - configuration text to parse
     //  4. convert data into JSON text
     //  5. submit JSON for parsing
-    isc::data::ConstElementPtr test;
     ASSERT_TRUE(tests->get("test-list"));
     for (auto const& test : tests->get("test-list")->listValue()) {
         // Grab the description.

@@ -2584,12 +2584,12 @@ Memfile_LeaseMgr::wipeLeases4(const SubnetID& subnet_id) {
 
     // Try to get the lease using the DUID, IAID and lease type.
     std::pair<Lease4StorageSubnetIdIndex::const_iterator,
-              Lease4StorageSubnetIdIndex::const_iterator> l =
+              Lease4StorageSubnetIdIndex::const_iterator> r =
         idx.equal_range(subnet_id);
 
     // Let's collect all leases.
     Lease4Collection leases;
-    BOOST_FOREACH(auto const& lease, l) {
+    BOOST_FOREACH(auto const& lease, r) {
         leases.push_back(lease);
     }
 
@@ -2613,12 +2613,12 @@ Memfile_LeaseMgr::wipeLeases6(const SubnetID& subnet_id) {
 
     // Try to get the lease using the DUID, IAID and lease type.
     std::pair<Lease6StorageSubnetIdIndex::const_iterator,
-              Lease6StorageSubnetIdIndex::const_iterator> l =
+              Lease6StorageSubnetIdIndex::const_iterator> r =
         idx.equal_range(subnet_id);
 
     // Let's collect all leases.
     Lease6Collection leases;
-    BOOST_FOREACH(auto const& lease, l) {
+    BOOST_FOREACH(auto const& lease, r) {
         leases.push_back(lease);
     }
 

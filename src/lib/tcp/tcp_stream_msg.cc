@@ -74,7 +74,7 @@ TcpStreamRequest::logFormatRequest(const size_t limit) const {
                << ", data: "
                << isc::util::str::dumpAsHex(wire_data_.data(), max);
     } catch (const std::exception& ex) {
-        std::stringstream output;
+        output = std::stringstream();
         output << "logFormatRequest error: " << ex.what();
     }
 
