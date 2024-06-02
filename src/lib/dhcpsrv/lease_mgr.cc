@@ -534,7 +534,7 @@ LeaseMgr::setExtendedInfoTablesEnabled(const DatabaseConnection::ParameterMap& p
 bool
 LeaseMgr::upgradeLease4ExtendedInfo(const Lease4Ptr& lease,
                                     CfgConsistency::ExtendedInfoSanity check) {
-    static OptionDefinitionPtr rai_def;
+    const OptionDefinition& rai_def = LibDHCP::DHO_DHCP_AGENT_OPTIONS_DEF();
 
     bool changed = false;
     if (!lease) {
@@ -548,17 +548,6 @@ LeaseMgr::upgradeLease4ExtendedInfo(const Lease4Ptr& lease,
     ConstElementPtr user_context = lease->getContext();
     if (!user_context) {
         return (changed);
-    }
-
-    if (!rai_def) {
-        rai_def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE,
-                                        DHO_DHCP_AGENT_OPTIONS);
-    }
-
-    if (!rai_def) {
-        // The definition is set when libdhcp++ is loaded so it is impossible
-        // to not be able to get it... so should not happen!
-        isc_throw(Unexpected, "can't find RAI option definition?!");
     }
 
     ConstElementPtr isc;
@@ -628,7 +617,7 @@ LeaseMgr::upgradeLease4ExtendedInfo(const Lease4Ptr& lease,
             string rai_hex = extended_info->stringValue();
             vector<uint8_t> rai_data;
             str::decodeFormattedHexString(rai_hex, rai_data);
-            OptionCustomPtr rai(new OptionCustom(*rai_def, Option::V4, rai_data));
+            OptionCustomPtr rai(new OptionCustom(rai_def, Option::V4, rai_data));
             if (!rai) {
                 isc_throw(BadValue, "can't create RAI option");
             }

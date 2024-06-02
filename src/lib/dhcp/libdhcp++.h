@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -425,6 +425,42 @@ public:
     /// @param option_space Option space name.
     /// @return vendor id.
     static uint32_t optionSpaceToVendorId(const std::string& option_space);
+
+    /// @brief Get definition of DHO_DHCP_REQUESTED_ADDRESS option.
+    static const OptionDefinition& DHO_DHCP_REQUESTED_ADDRESS_DEF();
+
+    /// @brief Get definition of DHO_DHCP_SERVER_IDENTIFIER option.
+    static const OptionDefinition& DHO_DHCP_SERVER_IDENTIFIER_DEF();
+
+    /// @brief Get definition of DHO_DHCP_AGENT_OPTIONS option.
+    static const OptionDefinition& DHO_DHCP_AGENT_OPTIONS_DEF();
+
+    /// @brief Get definition of DHO_SUBNET_SELECTION option.
+    static const OptionDefinition& DHO_SUBNET_SELECTION_DEF();
+
+    /// @brief Get definition of DHO_DOMAIN_SEARCH option.
+    static const OptionDefinition& DHO_DOMAIN_SEARCH_DEF();
+
+    /// @brief Get definition of DHO_STATUS_CODE option.
+    static const OptionDefinition& DHO_STATUS_CODE_DEF();
+
+    /// @brief Get definition of D6O_CLIENT_FQDN option.
+    static const OptionDefinition& D6O_CLIENT_FQDN_DEF();
+
+    /// @brief Get definition of D6O_LQ_QUERY option.
+    static const OptionDefinition& D6O_LQ_QUERY_DEF();
+
+    /// @brief Get definition of D6O_CLIENT_DATA option.
+    static const OptionDefinition& D6O_CLIENT_DATA_DEF();
+
+    /// @brief Get definition of D6O_LQ_RELAY_DATA option.
+    static const OptionDefinition& D6O_LQ_RELAY_DATA_DEF();
+
+    /// @brief Get definition of D6O_BOOTFILE_URL option.
+    static const OptionDefinition& D6O_BOOTFILE_URL_DEF();
+
+    /// @brief Get definition of D6O_RSOO option.
+    static const OptionDefinition& D6O_RSOO_DEF();
 
 private:
 

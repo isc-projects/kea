@@ -1354,11 +1354,9 @@ TEST_F(LibDhcpTest, splitLongOptionMultiThreading) {
 // every suboption is smaller than 255 bytes, but the parent option still
 // overflows.
 TEST_F(LibDhcpTest, splitOptionWithSuboptionWhichOverflow) {
-    OptionDefinitionPtr rai_def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE,
-                                                        DHO_DHCP_AGENT_OPTIONS);
-    ASSERT_TRUE(rai_def);
+    const OptionDefinition& rai_def = LibDHCP::DHO_DHCP_AGENT_OPTIONS_DEF();
     // Create RAI options which should be fused by the server.
-    OptionCustomPtr rai(new OptionCustom(*rai_def, Option::V4));
+    OptionCustomPtr rai(new OptionCustom(rai_def, Option::V4));
 
     // Create a buffer holding some binary data. This data will be
     // used as reference when we read back the data from a created
@@ -1390,11 +1388,9 @@ TEST_F(LibDhcpTest, splitOptionWithSuboptionWhichOverflow) {
 // every suboption is smaller than 255 bytes, but the parent option still
 // overflows.
 TEST_F(LibDhcpTest, splitOptionWithSuboptionWhichOverflowMultiThreading) {
-    OptionDefinitionPtr rai_def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE,
-                                                        DHO_DHCP_AGENT_OPTIONS);
-    ASSERT_TRUE(rai_def);
+    const OptionDefinition& rai_def = LibDHCP::DHO_DHCP_AGENT_OPTIONS_DEF();
     // Create RAI options which should be fused by the server.
-    OptionCustomPtr rai(new OptionCustom(*rai_def, Option::V4));
+    OptionCustomPtr rai(new OptionCustom(rai_def, Option::V4));
 
     // Create a buffer holding some binary data. This data will be
     // used as reference when we read back the data from a created
@@ -1438,11 +1434,9 @@ TEST_F(LibDhcpTest, splitOptionWithSuboptionWhichOverflowMultiThreading) {
 
 // This test verifies that split options for v4 is working correctly.
 TEST_F(LibDhcpTest, splitLongOptionWithLongSuboption) {
-    OptionDefinitionPtr rai_def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE,
-                                                        DHO_DHCP_AGENT_OPTIONS);
-    ASSERT_TRUE(rai_def);
+    const OptionDefinition& rai_def = LibDHCP::DHO_DHCP_AGENT_OPTIONS_DEF();
     // Create RAI options which should be fused by the server.
-    OptionCustomPtr rai(new OptionCustom(*rai_def, Option::V4));
+    OptionCustomPtr rai(new OptionCustom(rai_def, Option::V4));
 
     // Create a buffer holding some binary data. This data will be
     // used as reference when we read back the data from a created
@@ -1480,11 +1474,9 @@ TEST_F(LibDhcpTest, splitLongOptionWithLongSuboption) {
 
 // This test verifies that split options for v4 is working correctly.
 TEST_F(LibDhcpTest, splitLongOptionWithLongSuboptionMultiThreading) {
-    OptionDefinitionPtr rai_def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE,
-                                                        DHO_DHCP_AGENT_OPTIONS);
-    ASSERT_TRUE(rai_def);
+    const OptionDefinition& rai_def = LibDHCP::DHO_DHCP_AGENT_OPTIONS_DEF();
     // Create RAI options which should be fused by the server.
-    OptionCustomPtr rai(new OptionCustom(*rai_def, Option::V4));
+    OptionCustomPtr rai(new OptionCustom(rai_def, Option::V4));
 
     // Create a buffer holding some binary data. This data will be
     // used as reference when we read back the data from a created
@@ -1575,11 +1567,9 @@ TEST_F(LibDhcpTest, fuseLongOption) {
 TEST_F(LibDhcpTest, fuseLongOptionWithLongSuboption) {
     OptionCollection col;
 
-    OptionDefinitionPtr rai_def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE,
-                                                         DHO_DHCP_AGENT_OPTIONS);
-    ASSERT_TRUE(rai_def);
+    const OptionDefinition& rai_def = LibDHCP::DHO_DHCP_AGENT_OPTIONS_DEF();
     // Create RAI options which should be fused by the server.
-    OptionCustomPtr rai(new OptionCustom(*rai_def, Option::V4));
+    OptionCustomPtr rai(new OptionCustom(rai_def, Option::V4));
 
     for (uint32_t i = 0; i < 256; ++i) {
         // Create a buffer holding some binary data. This data will be
@@ -1797,11 +1787,9 @@ TEST_F(LibDhcpTest, packOptions4) {
     // Get the option definition for RAI option. This option is represented
     // by OptionCustom which requires a definition to be passed to
     // the constructor.
-    OptionDefinitionPtr rai_def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE,
-                                                        DHO_DHCP_AGENT_OPTIONS);
-    ASSERT_TRUE(rai_def);
+    const OptionDefinition& rai_def = LibDHCP::DHO_DHCP_AGENT_OPTIONS_DEF();
     // Create RAI option.
-    OptionCustomPtr rai(new OptionCustom(*rai_def, Option::V4));
+    OptionCustomPtr rai(new OptionCustom(rai_def, Option::V4));
 
     // The sub-options are created using the bits of v4_opts buffer because
     // we want to use this buffer as a reference to verify that produced
@@ -3272,10 +3260,7 @@ TEST_F(LibDhcpTest, getVendorOptionDefByName4) {
 
 // This test checks handling of uncompressed FQDN list.
 TEST_F(LibDhcpTest, fqdnList) {
-    OptionDefinitionPtr def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE,
-                                                    DHO_DOMAIN_SEARCH);
-    ASSERT_TRUE(def);
-
+    const OptionDefinition& def = LibDHCP::DHO_DOMAIN_SEARCH_DEF();
     // Prepare buffer holding an array of FQDNs.
     const uint8_t fqdn[] = {
         8, 109, 121, 100, 111, 109, 97, 105, 110, // "mydomain"
@@ -3295,10 +3280,10 @@ TEST_F(LibDhcpTest, fqdnList) {
     std::vector<uint8_t> fqdn_buf(fqdn, fqdn + sizeof(fqdn));
 
     OptionPtr option;
-    ASSERT_NO_THROW(option = def->optionFactory(Option::V4,
-                                                DHO_DOMAIN_SEARCH,
-                                                fqdn_buf.begin(),
-                                                fqdn_buf.end()));
+    ASSERT_NO_THROW(option = def.optionFactory(Option::V4,
+                                               DHO_DOMAIN_SEARCH,
+                                               fqdn_buf.begin(),
+                                               fqdn_buf.end()));
     ASSERT_TRUE(option);
     OptionCustomPtr names = boost::dynamic_pointer_cast<OptionCustom>(option);
     ASSERT_TRUE(names);
@@ -3316,10 +3301,7 @@ TEST_F(LibDhcpTest, fqdnList) {
 // See RFC3397, section 2 (and 4.1.4 of RFC1035 for the actual
 // compression algorithm).
 TEST_F(LibDhcpTest, fqdnListCompressed) {
-    OptionDefinitionPtr def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE,
-                                                    DHO_DOMAIN_SEARCH);
-    ASSERT_TRUE(def);
-
+    const OptionDefinition& def = LibDHCP::DHO_DOMAIN_SEARCH_DEF();
     const uint8_t compressed[] = {
         8, 109, 121, 100, 111, 109, 97, 105, 110, // "mydomain"
         7, 101, 120, 97, 109, 112, 108, 101,      // "example"
@@ -3331,10 +3313,10 @@ TEST_F(LibDhcpTest, fqdnListCompressed) {
     std::vector<uint8_t> compressed_buf(compressed,
                                         compressed + sizeof(compressed));
     OptionPtr option;
-    ASSERT_NO_THROW(option = def->optionFactory(Option::V4,
-                                                DHO_DOMAIN_SEARCH,
-                                                compressed_buf.begin(),
-                                                compressed_buf.end()));
+    ASSERT_NO_THROW(option = def.optionFactory(Option::V4,
+                                               DHO_DOMAIN_SEARCH,
+                                               compressed_buf.begin(),
+                                               compressed_buf.end()));
     ASSERT_TRUE(option);
     OptionCustomPtr names = boost::dynamic_pointer_cast<OptionCustom>(option);
     ASSERT_TRUE(names);
@@ -3350,10 +3332,7 @@ TEST_F(LibDhcpTest, fqdnListCompressed) {
 // See RFC3397, section 2 (and 4.1.4 of RFC1035 for the actual
 // compression algorithm).
 TEST_F(LibDhcpTest, fqdnListBad) {
-    OptionDefinitionPtr def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE,
-                                                    DHO_DOMAIN_SEARCH);
-    ASSERT_TRUE(def);
-
+    const OptionDefinition& def = LibDHCP::DHO_DOMAIN_SEARCH_DEF();
     const uint8_t bad[] = {
         8, 109, 121, 100, 111, 109, 97, 105, 110, // "mydomain"
         7, 101, 120, 97, 109, 112, 108, 101,      // "example"
@@ -3365,26 +3344,24 @@ TEST_F(LibDhcpTest, fqdnListBad) {
     std::vector<uint8_t> bad_buf(bad, bad + sizeof(bad));
 
     OptionPtr option;
-    EXPECT_THROW(option = def->optionFactory(Option::V4,
-                                             DHO_DOMAIN_SEARCH,
-                                             bad_buf.begin(),
-                                             bad_buf.end()),
+    EXPECT_THROW(option = def.optionFactory(Option::V4,
+                                            DHO_DOMAIN_SEARCH,
+                                            bad_buf.begin(),
+                                            bad_buf.end()),
                  InvalidOptionValue);
 }
 
 // Check that empty (truncated) option is rejected.
 TEST_F(LibDhcpTest, fqdnListTrunc) {
-    OptionDefinitionPtr def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE,
-                                                    DHO_DOMAIN_SEARCH);
-    ASSERT_TRUE(def);
+    const OptionDefinition& def = LibDHCP::DHO_DOMAIN_SEARCH_DEF();
 
     std::vector<uint8_t> empty;
 
     OptionPtr option;
-    EXPECT_THROW(option = def->optionFactory(Option::V4,
-                                             DHO_DOMAIN_SEARCH,
-                                             empty.begin(),
-                                             empty.end()),
+    EXPECT_THROW(option = def.optionFactory(Option::V4,
+                                            DHO_DOMAIN_SEARCH,
+                                            empty.begin(),
+                                            empty.end()),
                  InvalidOptionValue);
 }
 

@@ -407,17 +407,15 @@ Dhcpv4SrvTest::generateHWAddr(size_t size /*= 6*/) {
 
 OptionCustomPtr
 Dhcpv4SrvTest::makeServerIdOption(const IOAddress& address) {
-    OptionDefinitionPtr option_def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE,
-                                                           DHO_DHCP_SERVER_IDENTIFIER);
-    OptionCustomPtr server_id(new OptionCustom(*option_def, Option::V4));
+    const OptionDefinition& option_def = LibDHCP::DHO_DHCP_SERVER_IDENTIFIER_DEF();
+    OptionCustomPtr server_id(new OptionCustom(option_def, Option::V4));
     server_id->writeAddress(address);
     return (server_id);
 }
 
 OptionPtr
 Dhcpv4SrvTest::makeFqdnListOption() {
-    OptionDefinitionPtr def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE,
-                                                    DHO_DOMAIN_SEARCH);
+    const OptionDefinition& def = LibDHCP::DHO_DOMAIN_SEARCH_DEF();
 
     // Prepare buffer holding an array of FQDNs.
     const uint8_t fqdn[] = {
@@ -430,8 +428,8 @@ Dhcpv4SrvTest::makeFqdnListOption() {
     // Initialize a vector with the FQDN data.
     std::vector<uint8_t> fqdn_buf(fqdn, fqdn + sizeof(fqdn));
 
-    OptionPtr option = def->optionFactory(Option::V4, DHO_DOMAIN_SEARCH,
-                                          fqdn_buf.begin(), fqdn_buf.end());
+    OptionPtr option = def.optionFactory(Option::V4, DHO_DOMAIN_SEARCH,
+                                         fqdn_buf.begin(), fqdn_buf.end());
 
     return (option);
 }
@@ -784,18 +782,12 @@ Dhcpv4SrvTest::buildCfgOptionTest(IOAddress expected_server_id,
                                   Pkt4Ptr& query,
                                   IOAddress requested,
                                   IOAddress server_id) {
-    OptionDefinitionPtr req_addr_def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE,
-                                                             DHO_DHCP_REQUESTED_ADDRESS);
-    ASSERT_TRUE(req_addr_def);
-
-    OptionDefinitionPtr sbnsel_def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE,
-                                                           DHO_SUBNET_SELECTION);
-    ASSERT_TRUE(sbnsel_def);
-
-    OptionCustomPtr req_addr(new OptionCustom(*req_addr_def, Option::V4));
+    const OptionDefinition& req_addr_def = LibDHCP::DHO_DHCP_REQUESTED_ADDRESS_DEF();
+    OptionCustomPtr req_addr(new OptionCustom(req_addr_def, Option::V4));
     req_addr->writeAddress(requested);
 
-    OptionCustomPtr sbnsel(new OptionCustom(*sbnsel_def, Option::V4));
+    const OptionDefinition& sbnsel_def = LibDHCP::DHO_SUBNET_SELECTION_DEF();
+    OptionCustomPtr sbnsel(new OptionCustom(sbnsel_def, Option::V4));
     sbnsel->writeAddress(requested);
 
     query->addOption(req_addr);

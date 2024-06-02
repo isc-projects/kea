@@ -3879,17 +3879,14 @@ TEST_F(AllocEngine4Test, updateExtendedInfo4) {
             std::vector<uint8_t> opt_data;
             ASSERT_NO_THROW(util::str::decodeFormattedHexString(scenario.rai_data_, opt_data))
                             << "scenario.rai_data_ is invalid, test is broken";
-            OptionDefinitionPtr rai_def =
-                LibDHCP::getOptionDef(DHCP4_OPTION_SPACE,
-                                      DHO_DHCP_AGENT_OPTIONS);
-            ASSERT_TRUE(rai_def) <<  "could not get RAI definition, test is broken";
+            const OptionDefinition& rai_def = LibDHCP::DHO_DHCP_AGENT_OPTIONS_DEF();
             ASSERT_GT(opt_data.size(), 2);
             ASSERT_EQ(DHO_DHCP_AGENT_OPTIONS, opt_data[0]);
             ASSERT_EQ(opt_data[1] + 2, opt_data.size());
             std::vector<uint8_t> rai_data(opt_data.cbegin() + 2,
                                           opt_data.cend());
             OptionCustomPtr rai;
-            ASSERT_NO_THROW(rai.reset(new OptionCustom(*rai_def, Option::V4,
+            ASSERT_NO_THROW(rai.reset(new OptionCustom(rai_def, Option::V4,
                                                        rai_data)))
                 << "could not create rai option, test is broken";
             ctx.query_->addOption(rai);
@@ -3934,11 +3931,9 @@ TEST_F(AllocEngine4Test, stashAgentOptions) {
     std::string rai_str = "0104aabbccdd";
     std::vector<uint8_t> rai_data;
     ASSERT_NO_THROW(util::str::decodeFormattedHexString(rai_str, rai_data));
-    OptionDefinitionPtr rai_def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE,
-                                                        DHO_DHCP_AGENT_OPTIONS);
-    ASSERT_TRUE(rai_def);
+    const OptionDefinition& rai_def = LibDHCP::DHO_DHCP_AGENT_OPTIONS_DEF();
     OptionCustomPtr rai;
-    ASSERT_NO_THROW(rai.reset(new OptionCustom(*rai_def, Option::V4, rai_data)));
+    ASSERT_NO_THROW(rai.reset(new OptionCustom(rai_def, Option::V4, rai_data)));
     ctx.query_->addOption(rai);
 
     // Verifies that the RAI is saved into lease extended info.

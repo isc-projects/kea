@@ -1291,6 +1291,19 @@ LibDHCP::initOptionDefs() {
                         OPTION_DEF_PARAMS[i].size);
     }
 
+    static_cast<void>(LibDHCP::DHO_DHCP_REQUESTED_ADDRESS_DEF());
+    static_cast<void>(LibDHCP::DHO_DHCP_SERVER_IDENTIFIER_DEF());
+    static_cast<void>(LibDHCP::DHO_DHCP_AGENT_OPTIONS_DEF());
+    static_cast<void>(LibDHCP::DHO_SUBNET_SELECTION_DEF());
+    static_cast<void>(LibDHCP::DHO_DOMAIN_SEARCH_DEF());
+    static_cast<void>(LibDHCP::DHO_STATUS_CODE_DEF());
+    static_cast<void>(LibDHCP::D6O_CLIENT_FQDN_DEF());
+    static_cast<void>(LibDHCP::D6O_LQ_QUERY_DEF());
+    static_cast<void>(LibDHCP::D6O_CLIENT_DATA_DEF());
+    static_cast<void>(LibDHCP::D6O_LQ_RELAY_DATA_DEF());
+    static_cast<void>(LibDHCP::D6O_BOOTFILE_URL_DEF());
+    static_cast<void>(LibDHCP::D6O_RSOO_DEF());
+
     return (true);
 }
 
@@ -1382,4 +1395,220 @@ initOptionSpace(OptionDefContainerPtr& defs, const OptionDefParams* params,
         // so push_back can't fail).
         static_cast<void>(defs->push_back(definition));
     }
+}
+
+const OptionDefinition&
+LibDHCP::DHO_DHCP_REQUESTED_ADDRESS_DEF() {
+    static OptionDefinitionPtr def =
+        LibDHCP::getOptionDef(DHCP4_OPTION_SPACE, DHO_DHCP_REQUESTED_ADDRESS);
+    static bool check_once(true);
+    if (check_once) {
+        isc_throw_assert(def);
+        isc_throw_assert(def->getName() == "dhcp-requested-address");
+        isc_throw_assert(def->getCode() == DHO_DHCP_REQUESTED_ADDRESS);
+        isc_throw_assert(def->getType() == OPT_IPV4_ADDRESS_TYPE);
+        isc_throw_assert(!def->getArrayType());
+        isc_throw_assert(def->getEncapsulatedSpace().empty());
+        isc_throw_assert(def->getOptionSpaceName() == DHCP4_OPTION_SPACE);
+        check_once = false;
+    }
+    return (*def);
+}
+
+const OptionDefinition&
+LibDHCP::DHO_DHCP_SERVER_IDENTIFIER_DEF() {
+    static OptionDefinitionPtr def =
+        LibDHCP::getOptionDef(DHCP4_OPTION_SPACE, DHO_DHCP_SERVER_IDENTIFIER);
+    static bool check_once(true);
+    if (check_once) {
+        isc_throw_assert(def);
+        isc_throw_assert(def->getName() == "dhcp-server-identifier");
+        isc_throw_assert(def->getCode() == DHO_DHCP_SERVER_IDENTIFIER);
+        isc_throw_assert(def->getType() == OPT_IPV4_ADDRESS_TYPE);
+        isc_throw_assert(!def->getArrayType());
+        isc_throw_assert(def->getEncapsulatedSpace().empty());
+        isc_throw_assert(def->getOptionSpaceName() == DHCP4_OPTION_SPACE);
+        check_once = false;
+    }
+    return (*def);
+}
+
+const OptionDefinition&
+LibDHCP::DHO_DHCP_AGENT_OPTIONS_DEF() {
+    static OptionDefinitionPtr def =
+        LibDHCP::getOptionDef(DHCP4_OPTION_SPACE, DHO_DHCP_AGENT_OPTIONS);
+    static bool check_once(true);
+    if (check_once) {
+        isc_throw_assert(def);
+        isc_throw_assert(def->getName() == "dhcp-agent-options");
+        isc_throw_assert(def->getCode() == DHO_DHCP_AGENT_OPTIONS);
+        isc_throw_assert(def->getType() == OPT_EMPTY_TYPE);
+        isc_throw_assert(!def->getArrayType());
+        isc_throw_assert(def->getEncapsulatedSpace() == DHCP_AGENT_OPTION_SPACE);
+        isc_throw_assert(def->getOptionSpaceName() == DHCP4_OPTION_SPACE);
+        check_once = false;
+    }
+    return (*def);
+}
+
+const OptionDefinition&
+LibDHCP::DHO_SUBNET_SELECTION_DEF() {
+    static OptionDefinitionPtr def =
+        LibDHCP::getOptionDef(DHCP4_OPTION_SPACE, DHO_SUBNET_SELECTION);
+    static bool check_once(true);
+    if (check_once) {
+        isc_throw_assert(def);
+        isc_throw_assert(def->getName() == "subnet-selection");
+        isc_throw_assert(def->getCode() == DHO_SUBNET_SELECTION);
+        isc_throw_assert(def->getType() == OPT_IPV4_ADDRESS_TYPE);
+        isc_throw_assert(!def->getArrayType());
+        isc_throw_assert(def->getEncapsulatedSpace().empty());
+        isc_throw_assert(def->getOptionSpaceName() == DHCP4_OPTION_SPACE);
+        check_once = false;
+    }
+    return (*def);
+}
+
+const OptionDefinition&
+LibDHCP::DHO_DOMAIN_SEARCH_DEF() {
+    static OptionDefinitionPtr def =
+        LibDHCP::getOptionDef(DHCP4_OPTION_SPACE, DHO_DOMAIN_SEARCH);
+    static bool check_once(true);
+    if (check_once) {
+        isc_throw_assert(def);
+        isc_throw_assert(def->getName() == "domain-search");
+        isc_throw_assert(def->getCode() == DHO_DOMAIN_SEARCH);
+        isc_throw_assert(def->getType() == OPT_FQDN_TYPE);
+        isc_throw_assert(def->getArrayType());
+        isc_throw_assert(def->getEncapsulatedSpace().empty());
+        isc_throw_assert(def->getOptionSpaceName() == DHCP4_OPTION_SPACE);
+        check_once = false;
+    }
+    return (*def);
+}
+
+const OptionDefinition&
+LibDHCP::DHO_STATUS_CODE_DEF() {
+    static OptionDefinitionPtr def =
+        LibDHCP::getOptionDef(DHCP4_OPTION_SPACE, DHO_STATUS_CODE);
+    static bool check_once(true);
+    if (check_once) {
+        isc_throw_assert(def);
+        isc_throw_assert(def->getName() == "status-code");
+        isc_throw_assert(def->getCode() == DHO_STATUS_CODE);
+        isc_throw_assert(def->getType() == OPT_RECORD_TYPE);
+        isc_throw_assert(!def->getArrayType());
+        isc_throw_assert(def->getEncapsulatedSpace().empty());
+        isc_throw_assert(def->getOptionSpaceName() == DHCP4_OPTION_SPACE);
+        check_once = false;
+    }
+    return (*def);
+}
+
+const OptionDefinition&
+LibDHCP::D6O_CLIENT_FQDN_DEF() {
+    static OptionDefinitionPtr def =
+        LibDHCP::getOptionDef(DHCP6_OPTION_SPACE, D6O_CLIENT_FQDN);
+    static bool check_once(true);
+    if (check_once) {
+        isc_throw_assert(def);
+        isc_throw_assert(def->getName() == "client-fqdn");
+        isc_throw_assert(def->getCode() == D6O_CLIENT_FQDN);
+        isc_throw_assert(def->getType() == OPT_RECORD_TYPE);
+        isc_throw_assert(!def->getArrayType());
+        isc_throw_assert(def->getEncapsulatedSpace().empty());
+        isc_throw_assert(def->getOptionSpaceName() == DHCP6_OPTION_SPACE);
+        check_once = false;
+    }
+    return (*def);
+}
+
+const OptionDefinition&
+LibDHCP::D6O_LQ_QUERY_DEF() {
+    static OptionDefinitionPtr def =
+        LibDHCP::getOptionDef(DHCP6_OPTION_SPACE, D6O_LQ_QUERY);
+    static bool check_once(true);
+    if (check_once) {
+        isc_throw_assert(def);
+        isc_throw_assert(def->getName() == "lq-query");
+        isc_throw_assert(def->getCode() == D6O_LQ_QUERY);
+        isc_throw_assert(def->getType() == OPT_RECORD_TYPE);
+        isc_throw_assert(!def->getArrayType());
+        isc_throw_assert(def->getEncapsulatedSpace() == DHCP6_OPTION_SPACE);
+        isc_throw_assert(def->getOptionSpaceName() == DHCP6_OPTION_SPACE);
+        check_once = false;
+    }
+    return (*def);
+}
+
+const OptionDefinition&
+LibDHCP::D6O_CLIENT_DATA_DEF() {
+    static OptionDefinitionPtr def =
+        LibDHCP::getOptionDef(DHCP6_OPTION_SPACE, D6O_CLIENT_DATA);
+    static bool check_once(true);
+    if (check_once) {
+        isc_throw_assert(def);
+        isc_throw_assert(def->getName() == "client-data");
+        isc_throw_assert(def->getCode() == D6O_CLIENT_DATA);
+        isc_throw_assert(def->getType() == OPT_EMPTY_TYPE);
+        isc_throw_assert(!def->getArrayType());
+        isc_throw_assert(def->getEncapsulatedSpace() == DHCP6_OPTION_SPACE);
+        isc_throw_assert(def->getOptionSpaceName() == DHCP6_OPTION_SPACE);
+        check_once = false;
+    }
+    return (*def);
+}
+
+const OptionDefinition&
+LibDHCP::D6O_LQ_RELAY_DATA_DEF() {
+    static OptionDefinitionPtr def =
+        LibDHCP::getOptionDef(DHCP6_OPTION_SPACE, D6O_LQ_RELAY_DATA);
+    static bool check_once(true);
+    if (check_once) {
+        isc_throw_assert(def);
+        isc_throw_assert(def->getName() == "lq-relay-data");
+        isc_throw_assert(def->getCode() == D6O_LQ_RELAY_DATA);
+        isc_throw_assert(def->getType() == OPT_RECORD_TYPE);
+        isc_throw_assert(!def->getArrayType());
+        isc_throw_assert(def->getEncapsulatedSpace().empty());
+        isc_throw_assert(def->getOptionSpaceName() == DHCP6_OPTION_SPACE);
+        check_once = false;
+    }
+    return (*def);
+}
+
+const OptionDefinition&
+LibDHCP::D6O_BOOTFILE_URL_DEF() {
+    static OptionDefinitionPtr def =
+        LibDHCP::getOptionDef(DHCP6_OPTION_SPACE, D6O_BOOTFILE_URL);
+    static bool check_once(true);
+    if (check_once) {
+        isc_throw_assert(def);
+        isc_throw_assert(def->getName() == "bootfile-url");
+        isc_throw_assert(def->getCode() == D6O_BOOTFILE_URL);
+        isc_throw_assert(def->getType() == OPT_STRING_TYPE);
+        isc_throw_assert(!def->getArrayType());
+        isc_throw_assert(def->getEncapsulatedSpace().empty());
+        isc_throw_assert(def->getOptionSpaceName() == DHCP6_OPTION_SPACE);
+        check_once = false;
+    }
+    return (*def);
+}
+
+const OptionDefinition&
+LibDHCP::D6O_RSOO_DEF() {
+    static OptionDefinitionPtr def =
+        LibDHCP::getOptionDef(DHCP6_OPTION_SPACE, D6O_RSOO);
+    static bool check_once(true);
+    if (check_once) {
+        isc_throw_assert(def);
+        isc_throw_assert(def->getName() == "rsoo");
+        isc_throw_assert(def->getCode() == D6O_RSOO);
+        isc_throw_assert(def->getType() == OPT_EMPTY_TYPE);
+        isc_throw_assert(!def->getArrayType());
+        isc_throw_assert(def->getEncapsulatedSpace() == "rsoo-opts");
+        isc_throw_assert(def->getOptionSpaceName() == DHCP6_OPTION_SPACE);
+        check_once = false;
+    }
+    return (*def);
 }

@@ -1,4 +1,4 @@
-// Copyright (C) 2019-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2019-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -1437,8 +1437,8 @@ TEST_F(FlexOptionTest, processFullAddWithComplexString) {
 
     Pkt6Ptr query(new Pkt6(DHCPV6_SOLICIT, 12345));
     Pkt6Ptr response(new Pkt6(DHCPV6_ADVERTISE, 12345));
-    OptionDefinitionPtr def = isc::dhcp::LibDHCP::getOptionDef(DHCP6_OPTION_SPACE, D6O_CLIENT_FQDN);
-    OptionCustomPtr str(new OptionCustom(*def, Option::V6));
+    const OptionDefinition& def = LibDHCP::D6O_CLIENT_FQDN_DEF();
+    OptionCustomPtr str(new OptionCustom(def, Option::V6));
     query->addOption(str);
     EXPECT_FALSE(response->getOption(D6O_NEW_POSIX_TIMEZONE));
 
@@ -1472,8 +1472,8 @@ TEST_F(FlexOptionTest, processFullSupersedeWithComplexString) {
 
     Pkt6Ptr query(new Pkt6(DHCPV6_SOLICIT, 12345));
     Pkt6Ptr response(new Pkt6(DHCPV6_ADVERTISE, 12345));
-    OptionDefinitionPtr def = isc::dhcp::LibDHCP::getOptionDef(DHCP6_OPTION_SPACE, D6O_CLIENT_FQDN);
-    OptionCustomPtr str(new OptionCustom(*def, Option::V6));
+    const OptionDefinition& def = LibDHCP::D6O_CLIENT_FQDN_DEF();
+    OptionCustomPtr str(new OptionCustom(def, Option::V6));
     query->addOption(str);
     EXPECT_FALSE(response->getOption(D6O_NEW_POSIX_TIMEZONE));
 

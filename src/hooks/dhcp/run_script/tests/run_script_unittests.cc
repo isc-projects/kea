@@ -247,10 +247,8 @@ generatePkt4() {
     pkt4->setLocalHWAddr(generateHWAddr());
     pkt4->setRemoteHWAddr(generateHWAddr());
 
-    OptionDefinitionPtr rai_def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE,
-                                                        DHO_DHCP_AGENT_OPTIONS);
-
-    OptionCustomPtr rai(new OptionCustom(*rai_def, Option::V4));
+    const OptionDefinition& rai_def = LibDHCP::DHO_DHCP_AGENT_OPTIONS_DEF();
+    OptionCustomPtr rai(new OptionCustom(rai_def, Option::V4));
 
     uint8_t circuit_id[] = { 0x68, 0x6f, 0x77, 0x64, 0x79 };
     OptionPtr circuit_id_opt(new Option(Option::V4, RAI_OPTION_AGENT_CIRCUIT_ID,

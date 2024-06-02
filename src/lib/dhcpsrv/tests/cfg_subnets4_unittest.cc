@@ -1285,9 +1285,8 @@ TEST(CfgSubnets4Test, hasSubnetWithServerId) {
     // Initially, there is no server identifier option present.
     EXPECT_FALSE(cfg.hasSubnetWithServerId(IOAddress("1.2.3.4")));
 
-    OptionDefinitionPtr def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE,
-                                                    DHO_DHCP_SERVER_IDENTIFIER);
-    OptionCustomPtr opt_server_id(new OptionCustom(*def, Option::V4));
+    const OptionDefinition& def = LibDHCP::DHO_DHCP_SERVER_IDENTIFIER_DEF();
+    OptionCustomPtr opt_server_id(new OptionCustom(def, Option::V4));
     opt_server_id->writeAddress(IOAddress("1.2.3.4"));
     Subnet4Ptr subnet(new Subnet4(IOAddress("192.0.2.0"), 26, 1, 2, 3, 100));
     subnet->getCfgOption()->add(opt_server_id, false, false,

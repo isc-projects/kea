@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -503,11 +503,9 @@ TEST_F(InformTest, messageFieldsLongOptions) {
     // Client requests big option.
     client.requestOption(240);
     // Client also sends multiple options with the same code.
-    OptionDefinitionPtr rai_def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE,
-                                                        DHO_DHCP_AGENT_OPTIONS);
-    ASSERT_TRUE(rai_def);
+    const OptionDefinition& rai_def = LibDHCP::DHO_DHCP_AGENT_OPTIONS_DEF();
     // Create RAI options which should be fused by the server.
-    OptionCustomPtr rai(new OptionCustom(*rai_def, Option::V4));
+    OptionCustomPtr rai(new OptionCustom(rai_def, Option::V4));
     for (uint8_t i = 0; i < 4; ++i) {
         // Create a buffer holding some binary data. This data will be
         // used as reference when we read back the data from a created

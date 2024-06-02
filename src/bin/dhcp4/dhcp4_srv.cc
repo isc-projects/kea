@@ -4392,16 +4392,8 @@ Dhcpv4Srv::recoverStashedAgentOption(const Pkt4Ptr& query) {
     }
     vector<uint8_t> rai_data;
     str::decodeFormattedHexString(rai_hex, rai_data);
-    static OptionDefinitionPtr rai_def;
-    if (!rai_def) {
-        rai_def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE,
-                                        DHO_DHCP_AGENT_OPTIONS);
-    }
-    if (!rai_def) {
-        // Should not happen.
-        return;
-    }
-    OptionCustomPtr rai(new OptionCustom(*rai_def, Option::V4, rai_data));
+    static const OptionDefinition& rai_def = LibDHCP::DHO_DHCP_AGENT_OPTIONS_DEF();
+    OptionCustomPtr rai(new OptionCustom(rai_def, Option::V4, rai_data));
     // unpackOptions is a bit too flexible so check if it got something...
     if (!rai || rai->getOptions().empty()) {
         return;

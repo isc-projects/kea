@@ -746,9 +746,8 @@ TEST(Subnet4Test, getServerId) {
     EXPECT_TRUE(subnet.getServerId().isV4Zero());
 
     // Add server identifier.
-    OptionDefinitionPtr option_def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE,
-                                                           DHO_DHCP_SERVER_IDENTIFIER);
-    OptionCustomPtr option_server_id(new OptionCustom(*option_def, Option::V4));
+    const OptionDefinition& option_def = LibDHCP::DHO_DHCP_SERVER_IDENTIFIER_DEF();
+    OptionCustomPtr option_server_id(new OptionCustom(option_def, Option::V4));
     option_server_id->writeAddress(IOAddress("1.2.3.4"));
 
     CfgOptionPtr cfg_option = subnet.getCfgOption();

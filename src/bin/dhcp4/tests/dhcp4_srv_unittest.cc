@@ -304,10 +304,8 @@ TEST_F(Dhcpv4SrvTest, adjustIfaceDataRelayPort) {
     req->setRemotePort(1234);
 
     // Add a RAI relay-port sub-option (the only difference with the previous test).
-    OptionDefinitionPtr rai_def =
-        LibDHCP::getOptionDef(DHCP4_OPTION_SPACE, DHO_DHCP_AGENT_OPTIONS);
-    ASSERT_TRUE(rai_def);
-    OptionCustomPtr rai(new OptionCustom(*rai_def, Option::V4));
+    const OptionDefinition& rai_def = LibDHCP::DHO_DHCP_AGENT_OPTIONS_DEF();
+    OptionCustomPtr rai(new OptionCustom(rai_def, Option::V4));
     ASSERT_TRUE(rai);
     req->addOption(rai);
     OptionPtr relay_port(new Option(Option::V4, RAI_OPTION_RELAY_PORT));
@@ -880,10 +878,8 @@ TEST_F(Dhcpv4SrvTest, initResponse) {
     // client-id echo is optional
     // rai echo is done in relayAgentInfoEcho
     // Do subnet selection option
-    OptionDefinitionPtr sbnsel_def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE,
-                                                           DHO_SUBNET_SELECTION);
-    ASSERT_TRUE(sbnsel_def);
-    OptionCustomPtr sbnsel(new OptionCustom(*sbnsel_def, Option::V4));
+    const OptionDefinition& sbnsel_def = LibDHCP::DHO_SUBNET_SELECTION_DEF();
+    OptionCustomPtr sbnsel(new OptionCustom(sbnsel_def, Option::V4));
     ASSERT_TRUE(sbnsel);
     sbnsel->writeAddress(IOAddress("192.0.2.3"));
     query->addOption(sbnsel);
@@ -1081,11 +1077,9 @@ TEST_F(Dhcpv4SrvTest, sanityCheckDiscover) {
     ASSERT_NO_THROW(srv.processDiscover(pkt));
 
     // Now let's add a server-id. This should throw.
-    OptionDefinitionPtr server_id_def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE,
-                                                              DHO_DHCP_SERVER_IDENTIFIER);
-    ASSERT_TRUE(server_id_def);
+    const OptionDefinition& server_id_def = LibDHCP::DHO_DHCP_SERVER_IDENTIFIER_DEF();
 
-    OptionCustomPtr server_id(new OptionCustom(*server_id_def, Option::V4));
+    OptionCustomPtr server_id(new OptionCustom(server_id_def, Option::V4));
     server_id->writeAddress(IOAddress("192.0.2.3"));
     pkt->addOption(server_id);
     EXPECT_THROW_MSG(srv.processDiscover(pkt), RFCViolation,
@@ -1113,10 +1107,8 @@ TEST_F(Dhcpv4SrvTest, sanityCheckRequest) {
     EXPECT_NO_THROW(srv.processRequest(pkt));
 
     // Now let's add a requested address. This should not throw.
-    OptionDefinitionPtr req_addr_def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE,
-                                                             DHO_DHCP_REQUESTED_ADDRESS);
-    ASSERT_TRUE(req_addr_def);
-    OptionCustomPtr req_addr(new OptionCustom(*req_addr_def, Option::V4));
+    const OptionDefinition& req_addr_def = LibDHCP::DHO_DHCP_REQUESTED_ADDRESS_DEF();
+    OptionCustomPtr req_addr(new OptionCustom(req_addr_def, Option::V4));
     req_addr->writeAddress(IOAddress("192.0.2.3"));
     pkt->addOption(req_addr);
     ASSERT_NO_THROW(srv.processRequest(pkt));
@@ -1128,11 +1120,9 @@ TEST_F(Dhcpv4SrvTest, sanityCheckRequest) {
     ASSERT_NO_THROW(srv.processRequest(pkt));
 
     // Now let's add a server-id. This should not throw.
-    OptionDefinitionPtr server_id_def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE,
-                                                              DHO_DHCP_SERVER_IDENTIFIER);
-    ASSERT_TRUE(server_id_def);
+    const OptionDefinition& server_id_def = LibDHCP::DHO_DHCP_SERVER_IDENTIFIER_DEF();
 
-    OptionCustomPtr server_id(new OptionCustom(*server_id_def, Option::V4));
+    OptionCustomPtr server_id(new OptionCustom(server_id_def, Option::V4));
     server_id->writeAddress(IOAddress("192.0.2.3"));
     pkt->addOption(server_id);
     EXPECT_NO_THROW(srv.processRequest(pkt));
@@ -1160,10 +1150,8 @@ TEST_F(Dhcpv4SrvTest, sanityCheckDecline) {
                     " sent from [hwtype=1 00:fe:fe:fe:fe:fe], cid=[no info], tid=0x4d2");
 
     // Now let's add a requested address. This should not throw.
-    OptionDefinitionPtr req_addr_def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE,
-                                                             DHO_DHCP_REQUESTED_ADDRESS);
-    ASSERT_TRUE(req_addr_def);
-    OptionCustomPtr req_addr(new OptionCustom(*req_addr_def, Option::V4));
+    const OptionDefinition& req_addr_def = LibDHCP::DHO_DHCP_REQUESTED_ADDRESS_DEF();
+    OptionCustomPtr req_addr(new OptionCustom(req_addr_def, Option::V4));
     req_addr->writeAddress(IOAddress("192.0.2.3"));
     pkt->addOption(req_addr);
     ASSERT_NO_THROW(srv.processDecline(pkt));
@@ -1175,11 +1163,9 @@ TEST_F(Dhcpv4SrvTest, sanityCheckDecline) {
     ASSERT_NO_THROW(srv.processDecline(pkt));
 
     // Now let's add a server-id. This should not throw.
-    OptionDefinitionPtr server_id_def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE,
-                                                              DHO_DHCP_SERVER_IDENTIFIER);
-    ASSERT_TRUE(server_id_def);
+    const OptionDefinition& server_id_def = LibDHCP::DHO_DHCP_SERVER_IDENTIFIER_DEF();
 
-    OptionCustomPtr server_id(new OptionCustom(*server_id_def, Option::V4));
+    OptionCustomPtr server_id(new OptionCustom(server_id_def, Option::V4));
     server_id->writeAddress(IOAddress("192.0.2.3"));
     pkt->addOption(server_id);
     EXPECT_NO_THROW(srv.processDecline(pkt));
@@ -1209,11 +1195,9 @@ TEST_F(Dhcpv4SrvTest, sanityCheckRelease) {
     ASSERT_NO_THROW(srv.processRelease(pkt));
 
     // Now let's add a server-id. This should not throw.
-    OptionDefinitionPtr server_id_def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE,
-                                                              DHO_DHCP_SERVER_IDENTIFIER);
-    ASSERT_TRUE(server_id_def);
+    const OptionDefinition& server_id_def = LibDHCP::DHO_DHCP_SERVER_IDENTIFIER_DEF();
 
-    OptionCustomPtr server_id(new OptionCustom(*server_id_def, Option::V4));
+    OptionCustomPtr server_id(new OptionCustom(server_id_def, Option::V4));
     server_id->writeAddress(IOAddress("192.0.2.3"));
     pkt->addOption(server_id);
     EXPECT_NO_THROW(srv.processRelease(pkt));
@@ -1239,10 +1223,8 @@ TEST_F(Dhcpv4SrvTest, sanityCheckInform) {
     ASSERT_NO_THROW(srv.processInform(pkt));
 
     // Now let's add a requested address. This should not throw.
-    OptionDefinitionPtr req_addr_def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE,
-                                                             DHO_DHCP_REQUESTED_ADDRESS);
-    ASSERT_TRUE(req_addr_def);
-    OptionCustomPtr req_addr(new OptionCustom(*req_addr_def, Option::V4));
+    const OptionDefinition& req_addr_def = LibDHCP::DHO_DHCP_REQUESTED_ADDRESS_DEF();
+    OptionCustomPtr req_addr(new OptionCustom(req_addr_def, Option::V4));
     req_addr->writeAddress(IOAddress("192.0.2.3"));
     pkt->addOption(req_addr);
     ASSERT_NO_THROW(srv.processInform(pkt));
@@ -1254,11 +1236,9 @@ TEST_F(Dhcpv4SrvTest, sanityCheckInform) {
     ASSERT_NO_THROW(srv.processInform(pkt));
 
     // Now let's add a server-id. This should not throw.
-    OptionDefinitionPtr server_id_def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE,
-                                                              DHO_DHCP_SERVER_IDENTIFIER);
-    ASSERT_TRUE(server_id_def);
+    const OptionDefinition& server_id_def = LibDHCP::DHO_DHCP_SERVER_IDENTIFIER_DEF();
 
-    OptionCustomPtr server_id(new OptionCustom(*server_id_def, Option::V4));
+    OptionCustomPtr server_id(new OptionCustom(server_id_def, Option::V4));
     server_id->writeAddress(IOAddress("192.0.2.3"));
     pkt->addOption(server_id);
     EXPECT_NO_THROW(srv.processInform(pkt));
@@ -2643,13 +2623,11 @@ TEST_F(Dhcpv4SrvTest, acceptServerId) {
     // Remove the server identifier.
     ASSERT_NO_THROW(pkt->delOption(DHO_DHCP_SERVER_IDENTIFIER));
 
-    OptionDefinitionPtr rai_def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE,
-                                                        DHO_DHCP_AGENT_OPTIONS);
-
+    const OptionDefinition& rai_def = LibDHCP::DHO_DHCP_AGENT_OPTIONS_DEF();
     OptionBuffer override_server_id_buf(IOAddress("10.0.0.128").toBytes());
 
     // Create RAI option.
-    OptionCustomPtr rai(new OptionCustom(*rai_def, Option::V4));
+    OptionCustomPtr rai(new OptionCustom(rai_def, Option::V4));
     OptionPtr rai_override_server_id(new Option(Option::V4,
                                                 RAI_OPTION_SERVER_ID_OVERRIDE,
                                                 override_server_id_buf));
@@ -4487,10 +4465,8 @@ TEST_F(Dhcpv4SrvTest, relayLinkSelect) {
     dis->addOption(clientid);
 
     // Let's create a Relay Agent Information option
-    OptionDefinitionPtr rai_def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE,
-                                                        DHO_DHCP_AGENT_OPTIONS);
-    ASSERT_TRUE(rai_def);
-    OptionCustomPtr rai(new OptionCustom(*rai_def, Option::V4));
+    const OptionDefinition& rai_def = LibDHCP::DHO_DHCP_AGENT_OPTIONS_DEF();
+    OptionCustomPtr rai(new OptionCustom(rai_def, Option::V4));
     ASSERT_TRUE(rai);
     IOAddress addr("192.0.3.2");
     OptionPtr ols(new Option(Option::V4,
@@ -4518,10 +4494,8 @@ TEST_F(Dhcpv4SrvTest, relayLinkSelect) {
     EXPECT_FALSE(drop);
 
     // Subnet select option has a lower precedence
-    OptionDefinitionPtr sbnsel_def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE,
-                                                           DHO_SUBNET_SELECTION);
-    ASSERT_TRUE(sbnsel_def);
-    OptionCustomPtr sbnsel(new OptionCustom(*sbnsel_def, Option::V4));
+    const OptionDefinition& sbnsel_def = LibDHCP::DHO_SUBNET_SELECTION_DEF();
+    OptionCustomPtr sbnsel(new OptionCustom(sbnsel_def, Option::V4));
     ASSERT_TRUE(sbnsel);
     sbnsel->writeAddress(IOAddress("192.0.2.3"));
     dis->addOption(sbnsel);
@@ -4622,10 +4596,8 @@ TEST_F(Dhcpv4SrvTest, relayIgnoreLinkSelect) {
     dis->addOption(clientid);
 
     // Let's create a Relay Agent Information option
-    OptionDefinitionPtr rai_def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE,
-                                                        DHO_DHCP_AGENT_OPTIONS);
-    ASSERT_TRUE(rai_def);
-    OptionCustomPtr rai(new OptionCustom(*rai_def, Option::V4));
+    const OptionDefinition& rai_def = LibDHCP::DHO_DHCP_AGENT_OPTIONS_DEF();
+    OptionCustomPtr rai(new OptionCustom(rai_def, Option::V4));
     ASSERT_TRUE(rai);
     IOAddress addr("192.0.3.2");
     OptionPtr ols(new Option(Option::V4,
@@ -4655,10 +4627,8 @@ TEST_F(Dhcpv4SrvTest, relayIgnoreLinkSelect) {
 
     // Subnet select option has a lower precedence, but will succeed
     // because RAI link selection suboptions are being ignored
-    OptionDefinitionPtr sbnsel_def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE,
-                                                           DHO_SUBNET_SELECTION);
-    ASSERT_TRUE(sbnsel_def);
-    OptionCustomPtr sbnsel(new OptionCustom(*sbnsel_def, Option::V4));
+    const OptionDefinition& sbnsel_def = LibDHCP::DHO_SUBNET_SELECTION_DEF();
+    OptionCustomPtr sbnsel(new OptionCustom(sbnsel_def, Option::V4));
     ASSERT_TRUE(sbnsel);
     sbnsel->writeAddress(IOAddress("192.0.2.3"));
     dis->addOption(sbnsel);
@@ -4758,10 +4728,8 @@ TEST_F(Dhcpv4SrvTest, subnetSelect) {
     dis->addOption(clientid);
 
     // Let's create a Subnet Selection option
-    OptionDefinitionPtr sbnsel_def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE,
-                                                           DHO_SUBNET_SELECTION);
-    ASSERT_TRUE(sbnsel_def);
-    OptionCustomPtr sbnsel(new OptionCustom(*sbnsel_def, Option::V4));
+    const OptionDefinition& sbnsel_def = LibDHCP::DHO_SUBNET_SELECTION_DEF();
+    OptionCustomPtr sbnsel(new OptionCustom(sbnsel_def, Option::V4));
     ASSERT_TRUE(sbnsel);
     sbnsel->writeAddress(IOAddress("192.0.3.2"));
 
@@ -5258,10 +5226,8 @@ public:
         query_->setHWAddr(hwaddr_);
         query_->setCiaddr(addr_);
 
-        if (!rai_def_) {
-            isc_throw(Unexpected, "RAI definition can't be found");
-        }
-        rai_.reset(new OptionCustom(*rai_def_, Option::V4));
+        rai_.reset(new OptionCustom(LibDHCP::DHO_DHCP_AGENT_OPTIONS_DEF(),
+                                    Option::V4));
         rai_sub_.reset(new Option(Option::V4, RAI_OPTION_LINK_SELECTION,
                                   addr_.toBytes()));
         rai_->addOption(rai_sub_);
@@ -5289,9 +5255,6 @@ public:
         CfgMgr::instance().clear();
         LeaseMgrFactory::destroy();
     }
-
-    /// @brief RAI definition.
-    static OptionDefinitionPtr rai_def_;
 
     /// @brief Client address.
     IOAddress addr_;
@@ -5323,15 +5286,6 @@ public:
     /// @brief Sub-options i.e. RAI content (hexstring).
     ElementPtr sub_options_;
 };
-
-OptionDefinitionPtr
-StashAgentOptionTest::rai_def_ = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE,
-                                                       DHO_DHCP_AGENT_OPTIONS);
-
-// Verify that RAI has a definition and can be built.
-TEST(StashAgentOptionTestTest, checkRAI) {
-    ASSERT_TRUE(StashAgentOptionTest::rai_def_);
-}
 
 // Verify the basic positive case.
 TEST_F(StashAgentOptionTest, basic) {
@@ -5398,7 +5352,7 @@ TEST_F(StashAgentOptionTest, oldExtendedInfo) {
 // Verify that empty RAI is supported.
 TEST_F(StashAgentOptionTest, emptyRelayAgentInfo) {
     // Add an empty RAI.
-    OptionPtr empty_rai(new OptionCustom(*StashAgentOptionTest::rai_def_,
+    OptionPtr empty_rai(new OptionCustom(LibDHCP::DHO_DHCP_AGENT_OPTIONS_DEF(),
                                          Option::V4));
     query_->addOption(empty_rai);
 

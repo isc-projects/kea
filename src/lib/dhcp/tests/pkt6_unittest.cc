@@ -2131,10 +2131,8 @@ TEST_F(Pkt6Test, testSkipThisOptionError) {
 // and unpacked correctly.
 TEST_F(Pkt6Test, lqQueryOption) {
 
-    OptionDefinitionPtr def = LibDHCP::getOptionDef(DHCP6_OPTION_SPACE, D6O_LQ_QUERY);
-    ASSERT_TRUE(def) << "D6O_LQ_QUERY is not undefined";
-
-    OptionCustomPtr lq_option(new OptionCustom(*def, Option::V6));
+    const OptionDefinition& def = LibDHCP::D6O_LQ_QUERY_DEF();
+    OptionCustomPtr lq_option(new OptionCustom(def, Option::V6));
     ASSERT_TRUE(lq_option);
 
     // Add query type (77 is technically not valid but better visually).
@@ -2223,10 +2221,9 @@ TEST_F(Pkt6Test, lqQueryOption) {
 // and unpacked correctly.
 TEST_F(Pkt6Test, clientDataOption) {
 
-    OptionDefinitionPtr def = LibDHCP::getOptionDef(DHCP6_OPTION_SPACE, D6O_CLIENT_DATA);
-    ASSERT_TRUE(def) << "D6O_CLIENT_DATA is not undefined";
+    const OptionDefinition& def = LibDHCP::D6O_CLIENT_DATA_DEF();
 
-    OptionCustomPtr cd_option(new OptionCustom(*def, Option::V6));
+    OptionCustomPtr cd_option(new OptionCustom(def, Option::V6));
     ASSERT_TRUE(cd_option);
 
     // Now add supported sub-options: D6O_CLIENTID, D6O_IAADR, D6O_IAAPREFIX,
@@ -2327,10 +2324,9 @@ TEST_F(Pkt6Test, clientDataOption) {
 // This test verifies that D6O_LQ_RELAY_DATA options can be created, packed,
 // and unpacked correctly.
 TEST_F(Pkt6Test, relayDataOption) {
-    OptionDefinitionPtr def = LibDHCP::getOptionDef(DHCP6_OPTION_SPACE, D6O_LQ_RELAY_DATA);
-    ASSERT_TRUE(def) << "D6O_LQ_RELAY_DATA is not undefined";
+    const OptionDefinition& def = LibDHCP::D6O_LQ_RELAY_DATA_DEF();
 
-    OptionCustomPtr rd_option(new OptionCustom(*def, Option::V6));
+    OptionCustomPtr rd_option(new OptionCustom(def, Option::V6));
     ASSERT_TRUE(rd_option);
 
     // Write out the peer address.

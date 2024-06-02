@@ -3478,10 +3478,6 @@ TEST_F(ParseConfigTest, invalidSubnetPdAllocator6) {
 // Verifies that parsing an option which encapsulates its own option space
 // is detected.
 TEST_F(ParseConfigTest, selfEncapsulationTest) {
-    // Verify that the option definition can be retrieved.
-    OptionDefinitionPtr def = LibDHCP::getOptionDef(DHCP6_OPTION_SPACE, D6O_CLIENT_DATA);
-    ASSERT_TRUE(def);
-
     // Configuration string.
     std::string config =
         "{"
