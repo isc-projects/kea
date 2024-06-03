@@ -1661,7 +1661,7 @@ def install_packages_local(system, revision, features, check_times, ignore_error
     # prepare fedora
     if system == 'fedora':
         packages = ['make', 'autoconf', 'automake', 'libtool', 'gcc-c++', 'openssl-devel',
-                    'log4cplus-devel', 'boost-devel', 'libpcap-devel']
+                    'log4cplus-devel', 'boost-devel', 'libpcap-devel', 'bison', 'flex']
 
         if 'native-pkg' in features:
             packages.extend(['rpm-build', 'python3-devel'])
@@ -1703,7 +1703,7 @@ def install_packages_local(system, revision, features, check_times, ignore_error
 
         packages = ['autoconf', 'automake', 'boost-devel', 'gcc-c++',
                     'libtool', 'log4cplus-devel', 'make',
-                    'openssl-devel']
+                    'openssl-devel', 'bison', 'flex']
 
         if revision in ['7', '8']:
             # Install newer version of Boost in case users want to opt-in with:
@@ -1714,7 +1714,7 @@ def install_packages_local(system, revision, features, check_times, ignore_error
             packages.extend(['python3-sphinx', 'python3-sphinx_rtd_theme'])
 
         if 'native-pkg' in features:
-            packages.extend(['bison', 'flex', 'python3-devel', 'rpm-build'])
+            packages.extend(['python3-devel', 'rpm-build'])
 
         if 'mysql' in features:
             packages.extend(['mariadb', 'mariadb-server'])
@@ -1752,7 +1752,7 @@ def install_packages_local(system, revision, features, check_times, ignore_error
     elif system == 'rhel':
         packages = ['autoconf', 'automake', 'boost-devel', 'gcc-c++',
                     'libtool', 'log4cplus-devel', 'make',
-                    'openssl-devel']
+                    'openssl-devel', 'bison', 'flex']
 
         if revision in ['7', '8']:
             # Install newer version of Boost in case users want to opt-in with:
@@ -1769,7 +1769,7 @@ def install_packages_local(system, revision, features, check_times, ignore_error
                     env=env, timeout=120, check_times=check_times)
 
         if 'native-pkg' in features:
-            packages.extend(['bison', 'flex', 'python3-devel', 'rpm-build'])
+            packages.extend(['python3-devel', 'rpm-build'])
 
         if 'mysql' in features:
             packages.extend(['mariadb', 'mariadb-server'])
@@ -1815,7 +1815,7 @@ def install_packages_local(system, revision, features, check_times, ignore_error
             packages.extend(['python3-sphinx', 'python3-sphinx_rtd_theme'])
 
         if 'native-pkg' in features:
-            packages.extend(['bison', 'flex', 'python3-devel', 'rpm-build'])
+            packages.extend(['python3-devel', 'rpm-build'])
 
         if 'mysql' in features:
             packages.extend(['mariadb', 'mariadb-server', 'mariadb-connector-c-devel'])
@@ -1854,7 +1854,7 @@ def install_packages_local(system, revision, features, check_times, ignore_error
 
         if 'native-pkg' in features:
             packages.extend(['build-essential', 'fakeroot', 'devscripts'])
-            packages.extend(['bison', 'debhelper', 'flex', 'libboost-dev', 'python3-dev'])
+            packages.extend(['debhelper', 'libboost-dev', 'python3-dev'])
             if 20.04 <= float(revision):
                 packages.extend(['dh-python'])
 
@@ -1890,7 +1890,7 @@ def install_packages_local(system, revision, features, check_times, ignore_error
         _apt_update(system, revision, env=env, check_times=check_times, attempts=3, sleep_time_after_attempt=10)
 
         packages = ['gcc', 'g++', 'make', 'autoconf', 'automake', 'libtool', 'libssl-dev',
-                    'liblog4cplus-dev', 'libboost-system-dev', 'gnupg']
+                    'liblog4cplus-dev', 'libboost-system-dev', 'gnupg', 'bison', 'flex']
 
         if 'docs' in features:
             packages.extend(['python3-sphinx', 'python3-sphinx-rtd-theme',
@@ -1906,7 +1906,7 @@ def install_packages_local(system, revision, features, check_times, ignore_error
 
         if 'native-pkg' in features:
             packages.extend(['build-essential', 'fakeroot', 'devscripts'])
-            packages.extend(['bison', 'debhelper', 'flex', 'libboost-dev', 'python3-dev'])
+            packages.extend(['debhelper', 'libboost-dev', 'python3-dev'])
             if int(revision) >= 11:
                 packages.extend(['dh-python'])
 
@@ -1944,7 +1944,7 @@ def install_packages_local(system, revision, features, check_times, ignore_error
         execute('sudo pkg clean -a -y')
         execute('sudo pkg install -y pkg')
 
-        packages = ['autoconf', 'automake', 'libtool', 'openssl', 'log4cplus', 'boost-libs', 'wget']
+        packages = ['autoconf', 'automake', 'bison', 'flex', 'libtool', 'openssl', 'log4cplus', 'boost-libs', 'wget']
 
         if revision.startswith('14'):
             packages.extend(['bash', 'pkgconf'])
@@ -1998,7 +1998,7 @@ def install_packages_local(system, revision, features, check_times, ignore_error
 
         packages = ['gcc', 'g++', 'make', 'autoconf', 'automake', 'libtool', 'openssl-dev',
                     'boost-libs', 'boost-dev', 'procps', 'tar', 'log4cplus', 'log4cplus-dev',
-                    'gzip']
+                    'gzip', 'bison', 'flex']
 
         if 'docs' in features:
             packages.extend(['py3-sphinx py3-sphinx_rtd_theme'])
@@ -2014,13 +2014,12 @@ def install_packages_local(system, revision, features, check_times, ignore_error
 
         if 'pgsql' in features:
             packages.extend(['postgresql-dev', 'postgresql'])
-            packages.extend(['bison', 'flex', 'boost-dev', 'python3-dev'])
 
         if 'gssapi' in features:
             packages.extend(['krb5-dev'])
 
         if 'native-pkg' in features:
-            packages.extend(['alpine-sdk'])
+            packages.extend(['alpine-sdk', 'python3-dev'])
 
         if 'ccache' in features:
             packages.extend(['ccache'])
