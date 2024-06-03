@@ -775,7 +775,7 @@ class VagrantEnv(object):
             lxc_container_path = os.path.join('/var/lib/lxc', self.name)
 
             # add vagrant universal key to accepted keys
-            execute('sudo bash -c \'echo "ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEA6NF8ia'
+            execute('sudo sh -c \'echo "ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEA6NF8ia'
                     'llvQVp22WDkTkyrtvp9eWW6A8YVr+kz4TjGYe7gHzIw+niNltGEFHzD8+v1I2YJ'
                     '6oXevct1YeS0o9HZyN1Q9qgCgzUFtdOKLv6IedplqoPkcmF0aYet2PkEDo3MlTB'
                     'ckFXPITAMzF8dJSIFo9D8HfdOV0IAdx4O7PtixWKn5y2hMNG0zQPyUecp4pzC6k'
@@ -790,7 +790,7 @@ class VagrantEnv(object):
             execute('sudo rm -f %s/rootfs/etc/machine-id' % lxc_container_path)
 
             # pack rootfs
-            cmd = 'sudo bash -c "'
+            cmd = 'sudo sh -c "'
             cmd += 'cd %s '
             cmd += '&& tar --numeric-owner --anchored --exclude=./rootfs/dev/log -czf %s/rootfs.tar.gz ./rootfs/*'
             cmd += '"'
@@ -1072,7 +1072,7 @@ class VagrantEnv(object):
     def prepare_for_boxing(self):
         if self.system in ['debian', 'ubuntu', 'fedora', 'centos', 'rhel', 'rocky']:
             # setup a script that on first boot will set machine-id
-            cmd = 'bash -c \'cat <<EOF | sudo tee /usr/lib/systemd/system/systemd-firstboot.service\n'
+            cmd = 'sh -c \'cat <<EOF | sudo tee /usr/lib/systemd/system/systemd-firstboot.service\n'
             cmd += '[Unit]\n'
             cmd += 'Description=Generate New Machine ID\n'
             cmd += 'Documentation=man:systemd-firstboot(1)\n'
@@ -1386,7 +1386,7 @@ ssl_key = {cert_dir}/kea-client.key
     execute(cmd, raise_error=False)
     cmd = "echo 'DROP USER 'keatest_secure'@'localhost';' | sudo mysql -u root"
     execute(cmd, raise_error=False)
-    cmd = "bash -c \"cat <<EOF | sudo mysql -u root\n"
+    cmd = "sh -c \"cat <<EOF | sudo mysql -u root\n"
     cmd += "CREATE DATABASE keatest;\n"
     cmd += "CREATE USER 'keatest'@'localhost' IDENTIFIED BY 'keatest';\n"
     cmd += "CREATE USER 'keatest_readonly'@'localhost' IDENTIFIED BY 'keatest';\n"
@@ -1412,7 +1412,7 @@ ssl_key = {cert_dir}/kea-client.key
         execute(cmd)
         cmd = "echo 'DROP USER 'keauser'@'localhost';' | sudo mysql -u root"
         execute(cmd, raise_error=False)
-        cmd = "bash -c \"cat <<EOF | sudo mysql -u root\n"
+        cmd = "sh -c \"cat <<EOF | sudo mysql -u root\n"
         cmd += "CREATE DATABASE keadb;\n"
         cmd += "CREATE USER 'keauser'@'localhost' IDENTIFIED BY 'keapass';\n"
         cmd += "GRANT ALL ON keadb.* TO 'keauser'@'localhost';\n"
@@ -1421,7 +1421,7 @@ ssl_key = {cert_dir}/kea-client.key
 
     if system == 'debian' and revision == '9':
         log.info('FIX FOR ISSUE kea#389: {} {}'.format(system, revision))
-        cmd = "bash -c \"cat <<EOF | sudo mysql -u root\n"
+        cmd = "sh -c \"cat <<EOF | sudo mysql -u root\n"
         cmd += "use keatest;\n"
         cmd += "set global innodb_large_prefix=on;\n"
         cmd += "set global innodb_file_format=Barracuda;\n"
@@ -1544,7 +1544,7 @@ def _configure_pgsql(system, revision, features):
 
     _restart_postgresql(system, revision)
 
-    cmd = """bash -c \"cat <<EOF | sudo -u postgres psql postgres
+    cmd = """sh -c \"cat <<EOF | sudo -u postgres psql postgres
         DROP DATABASE IF EXISTS keatest;
         DROP USER IF EXISTS keatest;
         DROP USER IF EXISTS keatest_readonly;
@@ -1557,12 +1557,12 @@ def _configure_pgsql(system, revision, features):
     execute(cmd, cwd='/tmp')
 
     # This is needed for postgres >= 15
-    cmd = """bash -c \"cat <<EOF | sudo -u postgres psql -U postgres -d keatest
+    cmd = """sh -c \"cat <<EOF | sudo -u postgres psql -U postgres -d keatest
         GRANT ALL PRIVILEGES ON SCHEMA public TO keatest;\n"""
     cmd += 'EOF\n"'
     execute(cmd, cwd='/tmp')
 
-    cmd = """bash -c \"cat <<EOF | sudo -u postgres psql -U keatest keatest
+    cmd = """sh -c \"cat <<EOF | sudo -u postgres psql -U keatest keatest
         ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO keatest_readonly;\n"""
     cmd += 'EOF\n"'
     env = os.environ.copy()
@@ -1570,7 +1570,7 @@ def _configure_pgsql(system, revision, features):
     execute(cmd, cwd='/tmp', env=env)
 
     if 'forge' in features:
-        cmd = "bash -c \"cat <<EOF | sudo -u postgres psql postgres\n"
+        cmd = "sh -c \"cat <<EOF | sudo -u postgres psql postgres\n"
         cmd += "DROP DATABASE IF EXISTS keadb;\n"
         cmd += "DROP USER IF EXISTS keauser;\n"
         cmd += "CREATE USER keauser WITH PASSWORD 'keapass';\n"
@@ -1688,7 +1688,7 @@ def install_packages_local(system, revision, features, check_times, ignore_error
             packages.extend(['ccache'])
 
         if 'netconf' in features:
-            packages.extend(['cmake', 'pcre2-devel'])
+            packages.extend(['cmake', 'git', 'pcre2-devel'])
 
         install_pkgs(packages, timeout=300, env=env, check_times=check_times)
 
@@ -1743,7 +1743,7 @@ def install_packages_local(system, revision, features, check_times, ignore_error
             packages.extend(['ccache'])
 
         if 'netconf' in features:
-            packages.extend(['cmake', 'pcre2-devel'])
+            packages.extend(['cmake', 'git', 'pcre2-devel'])
 
         if 'unittest' in features:
             packages.append('wget')
@@ -1795,7 +1795,7 @@ def install_packages_local(system, revision, features, check_times, ignore_error
             packages.extend(['ccache'])
 
         if 'netconf' in features:
-            packages.extend(['cmake', 'pcre2-devel'])
+            packages.extend(['cmake', 'git', 'pcre2-devel'])
 
         if 'unittest' in features:
             packages.append('wget')
@@ -1885,7 +1885,7 @@ def install_packages_local(system, revision, features, check_times, ignore_error
             packages.extend(['ccache'])
 
         if 'netconf' in features:
-            packages.extend(['cmake', 'libpcre2-dev'])
+            packages.extend(['cmake', 'git', 'libpcre2-dev'])
 
         install_pkgs(packages, env=env, timeout=240, check_times=check_times)
 
@@ -1908,7 +1908,7 @@ def install_packages_local(system, revision, features, check_times, ignore_error
                 packages.append('googletest')
 
         if 'netconf' in features:
-            packages.extend(['cmake', 'libpcre2-dev'])
+            packages.extend(['cmake', 'git', 'libpcre2-dev'])
             if revision == '12':
                 packages.extend(['doxygen', 'graphviz', 'pkg-config'])
 
@@ -1986,7 +1986,7 @@ def install_packages_local(system, revision, features, check_times, ignore_error
             packages.extend(['ccache'])
 
         if 'netconf' in features:
-            packages.extend(['cmake', 'pcre2'])
+            packages.extend(['cmake', 'git', 'pcre2'])
 
         install_pkgs(packages, env=env, timeout=6 * 60, check_times=check_times)
 
@@ -2015,7 +2015,7 @@ def install_packages_local(system, revision, features, check_times, ignore_error
             _install_gtest_sources()
 
         if 'netconf' in features:
-            packages.extend(['cmake', 'pcre2-dev'])
+            packages.extend(['cmake', 'git', 'pcre2-dev'])
 
         if 'mysql' in features:
             packages.extend(['mariadb-dev', 'mariadb', 'mariadb-client'])
