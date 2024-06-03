@@ -1675,11 +1675,9 @@ def install_packages_local(system, revision, features, check_times, ignore_error
             packages.extend(['mariadb', 'mariadb-server', 'mariadb-connector-c-devel'])
 
         if 'pgsql' in features:
-            if int(revision) >= 30:
-                packages.extend(['postgresql-server-devel'])
             if int(revision) <= 34:
                 packages.extend(['postgresql-devel'])
-            packages.extend(['postgresql-server'])
+            packages.extend(['postgresql-server', 'postgresql-server-devel'])
 
         if 'gssapi' in features:
             packages.extend(['krb5-devel'])
@@ -1893,16 +1891,14 @@ def install_packages_local(system, revision, features, check_times, ignore_error
                     'liblog4cplus-dev', 'libboost-system-dev', 'gnupg', 'bison', 'flex']
 
         if 'docs' in features:
-            packages.extend(['python3-sphinx', 'python3-sphinx-rtd-theme',
+            packages.extend(['python3-sphinx', 'python3-sphinx-rtd-theme', 'doxygen', 'graphviz',
                              'tex-gyre', 'texlive', 'texlive-latex-extra'])
 
         if 'unittest' in features:
             packages.append('googletest')
 
         if 'netconf' in features:
-            packages.extend(['cmake', 'git', 'libpcre2-dev'])
-            if revision == '12':
-                packages.extend(['doxygen', 'graphviz', 'pkg-config'])
+            packages.extend(['cmake', 'git', 'libpcre2-dev', 'pkg-config'])
 
         if 'native-pkg' in features:
             packages.extend(['build-essential', 'fakeroot', 'devscripts'])
@@ -1911,18 +1907,17 @@ def install_packages_local(system, revision, features, check_times, ignore_error
                 packages.extend(['dh-python'])
 
         if 'mysql' in features:
-            if revision == '8':
-                packages.extend(['mysql-client', 'libmysqlclient-dev'])
-            else:
-                packages.extend(['default-mysql-client-core', 'default-libmysqlclient-dev'])
-            if revision in ['8', '9']:
+            packages.extend(['default-mysql-client-core', 'default-libmysqlclient-dev'])
+            if int(revision) <= 8:
+                packages.extend(['mysql-client', 'libmysqlclient-dev', 'mysql-server'])
+            elif int(revision) <= 9:
                 packages.append('mysql-server')
             else:
                 packages.append('mariadb-server')
 
         if 'pgsql' in features:
             packages.extend(['postgresql-client', 'libpq-dev'])
-            if revision == '8':
+            if int(revision) <= 8:
                 packages.extend(['postgresql', 'postgresql-client'])
             else:
                 packages.append('postgresql-all')
@@ -2113,22 +2108,7 @@ def _build_binaries_and_run_ut(system, revision, features, tarball_path, env, ch
     if 'pgsql' in features:
         cmd += ' --with-pgsql'
     if 'unittest' in features:
-        # prepare gtest switch - use downloaded gtest sources only if it is not present as native package
-        if system in ['centos', 'fedora', 'rhel', 'freebsd', 'alpine', 'rocky']:
-            cmd += ' --with-gtest-source=/usr/src/googletest-release-1.10.0/googletest/'
-        elif system == 'debian' and revision == '8':
-            cmd += ' --with-gtest-source=/usr/src/googletest-release-1.10.0/googletest/'
-        elif system == 'debian':
-            cmd += ' --with-gtest-source=/usr/src/googletest/googletest'
-        elif system == 'ubuntu':
-            if revision.startswith('16.'):
-                cmd += ' --with-gtest-source=/usr/src/googletest-release-1.10.0/googletest/'
-            else:
-                cmd += ' --with-gtest-source=/usr/src/googletest/googletest'
-        elif system == 'arch':
-            pass
-        else:
-            raise NotImplementedError('no implementation for %s' % system)
+        cmd += ' --with-gtest-source=/usr/src/googletest'
     if 'docs' in features and not system == 'rhel':
         cmd += ' --enable-generate-docs'
     if 'gssapi' in features:
