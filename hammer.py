@@ -1763,6 +1763,8 @@ def install_packages_local(system, revision, features, check_times, ignore_error
             # kea-packaging points Kea to the venv using --with-sphinx.
             execute('python3 -m venv ~/venv',
                     env=env, timeout=60, check_times=check_times)
+            execute('~/venv/bin/pip install --upgrade pip',
+                    env=env, timeout=120, check_times=check_times)
             execute('~/venv/bin/pip install sphinx sphinx-rtd-theme',
                     env=env, timeout=120, check_times=check_times)
 
