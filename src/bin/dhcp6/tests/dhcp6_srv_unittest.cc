@@ -3995,8 +3995,8 @@ TEST_F(Dhcpv6SrvTest, generateFqdnUpdate) {
     // Check if we get response at all
     checkResponse(reply, DHCPV6_REPLY, 1234);
 
-    // check that an IA_NA with an iaaddr was returned for the requeted
-    // address with lifetime so 0.
+    // check that an IA_NA with an iaaddr was returned for the requested
+    // address with lifetimes > 0.
     boost::shared_ptr<Option6IAAddr> iaaddr = checkIA_NA(reply, 234, 1000, 2000); 
     ASSERT_TRUE(iaaddr);
     EXPECT_EQ(addr, iaaddr->getAddress());
@@ -4062,7 +4062,7 @@ TEST_F(Dhcpv6SrvTest, generateFqdnNoUpdate) {
     // Check if we get response at all
     checkResponse(reply, DHCPV6_REPLY, 1234);
 
-    // Check that an IA_NA with an iaaddr was returned for the requeted
+    // Check that an IA_NA with an iaaddr was returned for the requested
     // address with lifetimes of 0.
     boost::shared_ptr<Option6IAAddr> iaaddr = checkIA_NA(reply, 234, 0, 0); 
     ASSERT_TRUE(iaaddr);
