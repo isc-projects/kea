@@ -2850,8 +2850,7 @@ checkIfAddrs(const Iface & iface, struct ifaddrs *& ifptr) {
             isc_throw(Unexpected, "Cannot set SIOCGIFHWADDR flag");
         }
 
-        const uint8_t * p =
-            reinterpret_cast<uint8_t *>(ifr.ifr_ifru.ifru_hwaddr.sa_data);
+        p = reinterpret_cast<uint8_t *>(ifr.ifr_ifru.ifru_hwaddr.sa_data);
 
         close(s);
 
