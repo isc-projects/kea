@@ -115,6 +115,7 @@ SYSTEMS = {
         '3.17': True,
         '3.18': True,
         '3.19': True,
+        '3.20': True,
     },
     'arch': {}
 }
