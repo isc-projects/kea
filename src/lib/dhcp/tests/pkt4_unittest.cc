@@ -1284,6 +1284,15 @@ TEST_F(Pkt4Test, toText) {
     pkt.addOption(OptionPtr(new Option4AddrLst(123, IOAddress("192.0.2.3"))));
     pkt.addOption(OptionPtr(new OptionUint32(Option::V4, 156, 123456)));
     pkt.addOption(OptionPtr(new OptionString(Option::V4, 87, "lorem ipsum")));
+    OptionBuffer data = { 'a', 'b', 'c', 'd', 'e', 'f' };
+    OptionPtr opt(new Option(Option::V4, 231, data));
+    pkt.addOption(opt);
+    OptionBuffer data_sub = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0' };
+    OptionPtr sub_opt(new Option(Option::V4, 1, data_sub));
+    opt->addOption(sub_opt);
+    data_sub.clear();
+    sub_opt.reset(new Option(Option::V4, 2, data_sub));
+    opt->addOption(sub_opt);
 
     EXPECT_EQ("local_address=192.0.2.34:67, remote_address=192.10.33.4:68,\n"
               "msg_type=DHCPDISCOVER (1), trans_id=0x9ef,\n"
@@ -1291,7 +1300,11 @@ TEST_F(Pkt4Test, toText) {
               "  type=053, len=001: 1 (uint8)\n"
               "  type=087, len=011: \"lorem ipsum\" (string)\n"
               "  type=123, len=004: 192.0.2.3\n"
-              "  type=156, len=004: 123456 (uint32)",
+              "  type=156, len=004: 123456 (uint32)\n"
+              "  type=231, len=021: 61:62:63:64:65:66 (abcdef),\n"
+              "options:\n"
+              "    type=001, len=011: 30:31:32:33:34:35:36:37:38:39:30 (01234567890)\n"
+              "    type=002, len=000: (no data)",
               pkt.toText());
 
     // Now remove all options, including Message Type and check if the
@@ -1300,6 +1313,7 @@ TEST_F(Pkt4Test, toText) {
     pkt.delOption(156);
     pkt.delOption(87);
     pkt.delOption(53);
+    pkt.delOption(231);
 
     EXPECT_EQ("local_address=192.0.2.34:67, remote_address=192.10.33.4:68,\n"
               "msg_type=(missing), trans_id=0x9ef,\n"

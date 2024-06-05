@@ -9,9 +9,11 @@
 #include <dhcp/option_data_types.h>
 #include <dhcp/option_custom.h>
 #include <exceptions/isc_assert.h>
+#include <util/str.h>
 #include <util/encode/encode.h>
 
 using namespace isc::asiolink;
+using namespace isc::util;
 
 namespace isc {
 namespace dhcp {
@@ -398,8 +400,19 @@ OptionCustom::dataFieldToText(const OptionDataType data_type,
     // Get the value of the data field.
     switch (data_type) {
     case OPT_BINARY_TYPE:
-        text << util::encode::encodeHex(readBinary(index));
+    {
+        auto data = readBinary(index);
+        if (data.empty()) {
+            text << "(no data)";
+        } else {
+            text << util::encode::encodeHex(data);
+            if (str::isPrintable(data)) {
+                std::string printable(data.cbegin(), data.cend());
+                text << " (" << printable << ") ";
+            }
+        }
         break;
+    }
     case OPT_BOOLEAN_TYPE:
         text << (readBoolean(index) ? "true" : "false");
         break;
@@ -438,6 +451,7 @@ OptionCustom::dataFieldToText(const OptionDataType data_type,
     {
         PSIDTuple t = readPsid(index);
         text << "len=" << t.first.asUnsigned() << ",psid=" << t.second.asUint16();
+        break;
     }
     default:
         ;

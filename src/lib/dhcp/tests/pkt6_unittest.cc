@@ -1297,12 +1297,12 @@ TEST_F(Pkt6Test, toText) {
         "2 relay(s):\n"
         "relay[0]: msg-type=12(RELAY_FORWARD), hop-count=1,\n"
         "link-address=2001:888:db8:1::, peer-address=fe80::200:21ff:fe5c:18a9, 2 option(s)\n"
-        "type=00018, len=00028: 49:53:41:4d:31:34:34:7c:32:39:39:7c:69:70:76:36:7c:6e:74:3a:76:70:3a:31:3a:31:31:30\n"
+        "type=00018, len=00028: 49:53:41:4d:31:34:34:7c:32:39:39:7c:69:70:76:36:7c:6e:74:3a:76:70:3a:31:3a:31:31:30 (ISAM144|299|ipv6|nt:vp:1:110)\n"
         "type=00037, len=00018: 6527 (uint32) 0001000118B033410000215C18A9 (binary)\n"
         "relay[1]: msg-type=12(RELAY_FORWARD), hop-count=0,\n"
         "link-address=::, peer-address=fe80::200:21ff:fe5c:18a9, 2 option(s)\n"
-        "type=00018, len=00021: 49:53:41:4d:31:34:34:20:65:74:68:20:31:2f:31:2f:30:35:2f:30:31\n"
-        "type=00037, len=00004: 3561 (uint32)  (binary)\n";
+        "type=00018, len=00021: 49:53:41:4d:31:34:34:20:65:74:68:20:31:2f:31:2f:30:35:2f:30:31 (ISAM144 eth 1/1/05/01)\n"
+        "type=00037, len=00004: 3561 (uint32) (no data) (binary)\n";
 
     EXPECT_EQ(expected, msg->toText());
 }
