@@ -1689,7 +1689,8 @@ def install_packages_local(system, revision, features, check_times, ignore_error
             packages.extend(['cmake', 'git', 'pcre2-devel'])
 
         if 'unittest' in features:
-            packages.append('gtest')
+            packages.append('wget')
+            deferred_functions.append(_install_gtest_sources)
 
         install_pkgs(packages, timeout=300, env=env, check_times=check_times)
 
@@ -1742,7 +1743,8 @@ def install_packages_local(system, revision, features, check_times, ignore_error
             packages.extend(['cmake', 'git', 'pcre2-devel'])
 
         if 'unittest' in features:
-            packages.append('gtest')
+            packages.append('wget')
+            deferred_functions.append(_install_gtest_sources)
 
         install_pkgs(packages, env=env, check_times=check_times)
 
@@ -1795,11 +1797,8 @@ def install_packages_local(system, revision, features, check_times, ignore_error
             packages.extend(['cmake', 'git', 'pcre2-devel'])
 
         if 'unittest' in features:
-            if revision == '8':
-                packages.append('wget')
-                deferred_functions.append(_install_gtest_sources)
-            else:
-                packages.append('gtest')
+            packages.append('wget')
+            deferred_functions.append(_install_gtest_sources)
 
         install_pkgs(packages, env=env, timeout=120, check_times=check_times)
 
@@ -1833,7 +1832,8 @@ def install_packages_local(system, revision, features, check_times, ignore_error
             packages.extend(['cmake', 'git', 'pcre2-devel'])
 
         if 'unittest' in features:
-            packages.append('gtest')
+            packages.append('wget')
+            deferred_functions.append(_install_gtest_sources)
 
         execute('sudo dnf config-manager --set-enabled crb')
         install_pkgs(packages, env=env, timeout=120, check_times=check_times)
@@ -1977,10 +1977,10 @@ def install_packages_local(system, revision, features, check_times, ignore_error
         if 'netconf' in features:
             packages.extend(['cmake', 'git', 'pcre2'])
 
-        install_pkgs(packages, env=env, timeout=6 * 60, check_times=check_times)
-
         if 'unittest' in features:
-            packages.append(['googletest'])
+            packages.append('googletest')
+
+        install_pkgs(packages, env=env, timeout=6 * 60, check_times=check_times)
 
         if 'mysql' in features:
             execute('sudo sysrc mysql_enable="yes"', env=env, check_times=check_times)
@@ -2000,9 +2000,6 @@ def install_packages_local(system, revision, features, check_times, ignore_error
         if 'docs' in features:
             packages.extend(['py3-sphinx py3-sphinx_rtd_theme'])
 
-        if 'unittest' in features:
-            packages.append('gtest')
-
         if 'netconf' in features:
             packages.extend(['cmake', 'git', 'pcre2-dev'])
 
@@ -2020,6 +2017,10 @@ def install_packages_local(system, revision, features, check_times, ignore_error
 
         if 'ccache' in features:
             packages.extend(['ccache'])
+
+        if 'unittest' in features:
+            packages.append('wget')
+            deferred_functions.append(_install_gtest_sources)
 
         install_pkgs(packages, env=env, timeout=6 * 60, check_times=check_times)
 
