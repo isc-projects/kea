@@ -324,6 +324,40 @@ generatePkt6() {
     pkt6->addOption(OptionPtr(new Option(Option::V6, D6O_CLIENTID,
                               generateDUID()->getDuid())));
 
+    Pkt6::RelayInfo relay;
+    relay.msg_type_ = DHCPV6_RELAY_FORW;
+    relay.hop_count_ = 1;
+    relay.linkaddr_ = isc::asiolink::IOAddress("3001::1");
+    relay.peeraddr_ = isc::asiolink::IOAddress("fe80::abcd");
+
+    const uint8_t rem_data[] = {
+        1, 2, 3, 4,  // enterprise-number
+        0xa, 0xb, 0xc, 0xd, 0xe, 0xf // MAC
+    };
+
+    OptionPtr relay_opt(new Option(Option::V6, D6O_REMOTE_ID,
+                        OptionBuffer(rem_data, rem_data + sizeof(rem_data))));
+
+    relay.options_.insert(make_pair(relay_opt->getType(), relay_opt));
+
+    const uint8_t sub_data[] = {
+        0x1a, 0x2b, 0x3c, 0x4d, 0x5e, 0x6f
+    };
+
+    relay_opt.reset(new Option(Option::V6, D6O_SUBSCRIBER_ID,
+                        OptionBuffer(sub_data, sub_data + sizeof(sub_data))));
+
+    relay.options_.insert(make_pair(relay_opt->getType(), relay_opt));
+
+    const string iface_id("relay1:eth0");
+
+    relay_opt.reset(new Option(Option::V6, D6O_INTERFACE_ID,
+                               OptionBuffer(iface_id.begin(), iface_id.end())));
+
+    relay.options_.insert(make_pair(relay_opt->getType(), relay_opt));
+
+    pkt6->addRelayInfo(relay);
+
     return (pkt6);
 }
 
@@ -766,7 +800,7 @@ TEST(RunScript, extractPkt6) {
     vars.clear();
     pkt6 = generatePkt6();
     RunScriptImpl::extractPkt6(vars, pkt6, "PKT6_PREFIX", "_PKT6_SUFFIX");
-    ASSERT_EQ(12, vars.size());
+    ASSERT_EQ(15, vars.size());
     expected = "PKT6_PREFIX_TYPE_PKT6_SUFFIX=UNKNOWN\n"
                "PKT6_PREFIX_TXID_PKT6_SUFFIX=0\n"
                "PKT6_PREFIX_LOCAL_ADDR_PKT6_SUFFIX=ff02::1:2\n"
@@ -778,7 +812,10 @@ TEST(RunScript, extractPkt6) {
                "PKT6_PREFIX_REMOTE_HWADDR_PKT6_SUFFIX=00:01:02:03\n"
                "PKT6_PREFIX_REMOTE_HWADDR_TYPE_PKT6_SUFFIX=1\n"
                "PKT6_PREFIX_PROTO_PKT6_SUFFIX=UDP\n"
-               "PKT6_PREFIX_CLIENT_ID_PKT6_SUFFIX=00:01:02:03:04:05:06\n";
+               "PKT6_PREFIX_CLIENT_ID_PKT6_SUFFIX=00:01:02:03:04:05:06\n"
+               "PKT6_PREFIX_OPTION_18_PKT6_SUFFIX=0x72656C6179313A65746830\n"
+               "PKT6_PREFIX_OPTION_37_PKT6_SUFFIX=0x010203040A0B0C0D0E0F\n"
+               "PKT6_PREFIX_OPTION_38_PKT6_SUFFIX=0x1A2B3C4D5E6F\n";
     EXPECT_EQ(expected, join(vars));
 }
 

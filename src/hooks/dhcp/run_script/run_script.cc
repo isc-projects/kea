@@ -447,6 +447,15 @@ RunScriptImpl::extractPkt6(ProcessEnvVars& vars,
                                      prefix + "_PROTO", suffix);
         RunScriptImpl::extractDUID(vars, pkt6->getClientId(),
                                    prefix + "_CLIENT_ID", suffix);
+        RunScriptImpl::extractOption(vars,
+                                     pkt6->getAnyRelayOption(D6O_INTERFACE_ID, Pkt6::RELAY_SEARCH_FROM_CLIENT),
+                                     prefix, suffix);
+        RunScriptImpl::extractOption(vars,
+                                     pkt6->getAnyRelayOption(D6O_REMOTE_ID, Pkt6::RELAY_SEARCH_FROM_CLIENT),
+                                     prefix, suffix);
+        RunScriptImpl::extractOption(vars,
+                                     pkt6->getAnyRelayOption(D6O_SUBSCRIBER_ID, Pkt6::RELAY_SEARCH_FROM_CLIENT),
+                                     prefix, suffix);
     } else {
         RunScriptImpl::extractString(vars, "", prefix + "_TYPE", suffix);
         RunScriptImpl::extractString(vars, "", prefix + "_TXID", suffix);

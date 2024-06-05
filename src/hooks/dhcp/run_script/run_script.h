@@ -8,6 +8,8 @@
 #define RUN_SCRIPT_H
 
 #include <asiolink/process_spawn.h>
+#include <dhcp/dhcp4.h>
+#include <dhcp/dhcp6.h>
 #include <dhcp/duid.h>
 #include <dhcp/hwaddr.h>
 #include <dhcp/option6_ia.h>
