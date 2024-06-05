@@ -1,3 +1,10 @@
+2251.	[func]		tmark
+	A new global statistic, "queue-mgr-queue-full", has been
+	added to kea-dhcp-ddns.  It tracks the number of times
+	then receive queue for DNS update requests (NCRs) has
+	reached maxium capacity.
+	(Gitlab #2611)
+
 2250.	[func]		razvan
 	Kea now pretty prints options with binary data whenever possible.
 	(Gitlab #2844)

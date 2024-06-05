@@ -970,6 +970,7 @@ The NameChangeRequest statistics are:
 -  ``ncr-received`` - the number of received valid NCRs
 -  ``ncr-invalid`` - the number of received invalid NCRs
 -  ``ncr-error`` - the number of errors in NCR receptions other than an I/O cancel on shutdown
+-  ``queue-mgr-queue-full`` - the number of times the NCR receive queue reached maxium capacity
 
 DNS Update Statistics
 ---------------------
