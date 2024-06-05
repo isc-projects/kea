@@ -21,6 +21,7 @@ public:
     /// - ncr-received
     /// - ncr-invalid
     /// - ncr-error
+    /// - queue-mgr-queue-full
     static const std::list<std::string> ncr;
 
     /// @brief Global DNS update statistics names.

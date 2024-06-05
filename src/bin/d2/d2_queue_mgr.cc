@@ -8,6 +8,9 @@
 #include <d2/d2_queue_mgr.h>
 #include <d2srv/d2_log.h>
 #include <dhcp_ddns/ncr_udp.h>
+#include <stats/stats_mgr.h>
+
+using namespace isc::stats;
 
 namespace isc {
 namespace d2 {
@@ -60,6 +63,7 @@ D2QueueMgr::operator()(const dhcp_ddns::NameChangeListener::Result result,
             // is no receive in progress.
             LOG_ERROR(dhcp_to_d2_logger, DHCP_DDNS_QUEUE_MGR_QUEUE_FULL)
                       .arg(max_queue_size_);
+            StatsMgr::instance().addValue("queue-mgr-queue-full", static_cast<int64_t>(1));
             stopListening(STOPPED_QUEUE_FULL);
             break;
 

@@ -21,7 +21,8 @@ const list<string>
 D2Stats::ncr = {
     "ncr-received",
     "ncr-invalid",
-    "ncr-error"
+    "ncr-error",
+    "queue-mgr-queue-full"
 };
 
 const list<string>

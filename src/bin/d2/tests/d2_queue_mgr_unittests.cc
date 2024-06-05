@@ -403,7 +403,8 @@ TEST_F (QueueMgrUDPTest, liveFeed) {
     StatMap stats_ncr = {
         { "ncr-received", 3},
         { "ncr-invalid", 0},
-        { "ncr-error", 0}
+        { "ncr-error", 0},
+        { "queue-mgr-queue-full", 0}
     };
     checkStats(stats_ncr);
 
@@ -423,7 +424,8 @@ TEST_F (QueueMgrUDPTest, liveFeed) {
     StatMap stats_ncr_new = {
         { "ncr-received", 6},
         { "ncr-invalid", 0},
-        { "ncr-error", 0}
+        { "ncr-error", 0},
+        { "queue-mgr-queue-full", 0}
     };
     checkStats(stats_ncr_new);
 
@@ -438,6 +440,14 @@ TEST_F (QueueMgrUDPTest, liveFeed) {
     // to STOPPED_QUEUE_FULL state.
     EXPECT_NO_THROW(io_service_->runOne());
     EXPECT_EQ(D2QueueMgr::STOPPED_QUEUE_FULL, queue_mgr_->getMgrState());
+
+    StatMap stats_ncr_full = {
+        { "ncr-received", 7},
+        { "ncr-invalid", 0},
+        { "ncr-error", 0},
+        { "queue-mgr-queue-full", 1}
+    };
+    checkStats(stats_ncr_full);
 
     // Verify queue size did not increase beyond max.
     EXPECT_EQ(VALID_MSG_CNT, queue_mgr_->getQueueSize());
