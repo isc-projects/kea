@@ -1,3 +1,7 @@
+2250.	[func]		razvan
+	Kea now pretty prints options with binary data whenever possible.
+	(Gitlab #2844)
+
 2249.	[func]		razvan
 	Made v6 relay options 18 (interface-id), 37 (remote-id) and
 	38 (subscriber-id) available to the run script hook library.
