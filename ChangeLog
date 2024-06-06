@@ -1,3 +1,8 @@
+2249.	[func]		razvan
+	Made v6 relay options 18 (interface-id), 37 (remote-id) and
+	38 (subscriber-id) available to the run script hook library.
+	(Gitlab #3035)
+
 2248.	[bug]		tmark
 	Fixed a corner-case isssue in kea-dhcp6 that was
 	causing it to attempt to update a lease for an address
