@@ -7,7 +7,9 @@ AM_CXXFLAGS = $(KEA_CXXFLAGS)
 
 CLEANFILES = *.gcno *.gcda
 
-EXTRA_DIST = asiodns_messages.mes
+EXTRA_DIST  =
+EXTRA_DIST += asiodns.dox
+EXTRA_DIST += asiodns_messages.mes
 
 lib_LTLIBRARIES = libkea-asiodns.la
 
