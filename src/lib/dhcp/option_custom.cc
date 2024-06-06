@@ -403,12 +403,12 @@ OptionCustom::dataFieldToText(const OptionDataType data_type,
     {
         auto data = readBinary(index);
         if (data.empty()) {
-            text << "(no data)";
+            text << "''";
         } else {
             text << util::encode::encodeHex(data);
             if (str::isPrintable(data)) {
                 std::string printable(data.cbegin(), data.cend());
-                text << " (" << printable << ") ";
+                text << " '" << printable << "'";
             }
         }
         break;

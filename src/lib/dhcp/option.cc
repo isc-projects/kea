@@ -236,11 +236,11 @@ std::string Option::toText(int indent) const {
         output << setfill('0') << setw(2) << hex
                << static_cast<unsigned short>(data_[i]);
     }
-    if (!data_.size()) {
-        output << "(no data)";
+    if (data_.empty()) {
+        output << "''";
     } else if (str::isPrintable(data_)) {
         std::string printable(data_.cbegin(), data_.cend());
-        output << " (" << printable << ")";
+        output << " '" << printable << "'";
     }
 
     // Append suboptions.

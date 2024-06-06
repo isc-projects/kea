@@ -1301,10 +1301,10 @@ TEST_F(Pkt4Test, toText) {
               "  type=087, len=011: \"lorem ipsum\" (string)\n"
               "  type=123, len=004: 192.0.2.3\n"
               "  type=156, len=004: 123456 (uint32)\n"
-              "  type=231, len=021: 61:62:63:64:65:66 (abcdef),\n"
+              "  type=231, len=020: 61:62:63:64:65:66 'abcdef',\n"
               "options:\n"
-              "    type=001, len=011: 30:31:32:33:34:35:36:37:38:39 (0123456789)\n"
-              "    type=002, len=000: (no data)",
+              "    type=001, len=010: 30:31:32:33:34:35:36:37:38:39 '0123456789'\n"
+              "    type=002, len=000: ''",
               pkt.toText());
 
     // Now remove all options, including Message Type and check if the
