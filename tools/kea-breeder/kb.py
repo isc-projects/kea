@@ -10,6 +10,7 @@ import sqlalchemy as db
 from sqlalchemy.sql import select
 import sys
 
+
 def convert_to_db(entity_name, make_singular=True):
     sql_name = entity_name.replace('-', '_').lower()
     if not make_singular:
@@ -30,8 +31,9 @@ def convert_to_db(entity_name, make_singular=True):
 
     return sql_name
 
+
 class State:
-    def __init__(self, config, database, path = None, token_name = None):
+    def __init__(self, config, database, path=None, token_name=None):
         self.config = config
         self.database = database
         if path is not None:
@@ -42,7 +44,7 @@ class State:
         if token_name is not None:
             self._path += [token_name]
 
-    def copy(self, token_name = None):
+    def copy(self, token_name=None):
         return State(self.config, self.database, self._path.copy(), token_name)
 
     def sql_prefix(self):
@@ -64,7 +66,8 @@ class State:
         return self.config.get_mapped_table_name('{0}_{1}'.format(self.sql_prefix(), self.sql_parent_name()))
 
     def sql_table_name(self):
-        return self.config.get_mapped_table_name('{0}_{1}'.format(self.sql_prefix(), convert_to_db(self.get_current_name(), True)))
+        return self.config.get_mapped_table_name('{0}_{1}'.format(self.sql_prefix(),
+                                                                  convert_to_db(self.get_current_name(), True)))
 
     def get_parent_name(self):
         return self._path[-2]
@@ -79,6 +82,7 @@ class State:
 
     def get_path_len(self):
         return len(self._path)
+
 
 class ConfigFile:
     def __init__(self, filename):
@@ -104,6 +108,7 @@ class ConfigFile:
         ignored_parameters = self.config['ignored_parameters']
         return name in ignored_parameters
 
+
 class KeaDatabase:
     def __init__(self):
         engine = db.create_engine('mysql+mysqldb://root@localhost/keatest')
@@ -117,11 +122,11 @@ class KeaDatabase:
         return result[0] > 0
 
     def has_column(self, table_name, column_name):
-        sql = db.text(
-            "SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = :table_name AND COLUMN_NAME = :column_name"
-        )
+        sql = db.text("SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS "
+                      "WHERE TABLE_NAME = :table_name AND COLUMN_NAME = :column_name")
         result = self.connection.execute(sql, {"table_name": table_name, "column_name": column_name}).fetchone()
         return result[0] > 0
+
 
 def traverse(state, parents, json_object):
     if state.config.is_ignored_parameter(state.get_current_name()):
@@ -138,7 +143,9 @@ def traverse(state, parents, json_object):
 
     elif state.get_path_len() == 2 and not isinstance(json_object, list) and not isinstance(json_object, dict):
         # Global primitive value, e.g. boolean. Kea has a dedicated table for them.
-        comment = cprint(text='Set primitive value {0} in {1} table'.format(state.sql_current_name(), state.sql_global_table_name()), color='green')
+        comment = cprint(text='Set primitive value {0} in {1} table'.format(state.sql_current_name(),
+                                                                            state.sql_global_table_name()),
+                         color='green')
 
     else:
         # Handle primitives at lower levels.
@@ -148,20 +155,26 @@ def traverse(state, parents, json_object):
                     # If the primitive belongs to a hierarchy of two maps, the structure of
                     # the lower level map must be flattened and the respective parameters
                     # must be moved to the upper level map.
-                    comment = cprint(text='Create column {0} in the parent table'.format(state.sql_current_name()), color='red')
+                    comment = cprint(text='Create column {0} in the parent table'.format(state.sql_current_name()),
+                                     color='red')
                 else:
                     # An exception is the parameter belonging to the top level maps, e.g.
                     # Dhcp4/map/primitive. This primitive goes to the dhcp4_global_parameter
                     # table.
-                    comment = cprint(text='Use global parameter {0}'.format(state.sql_current_global_name()), color='yellow')
+                    comment = cprint(text='Use global parameter {0}'.format(state.sql_current_global_name()),
+                                     color='yellow')
 
             elif isinstance(parents[-1], dict) and isinstance(parents[-2], list):
                 # A list of maps deserves its own table. For example: subnet4 or
                 # shared_networks, option_def etc.
                 if state.database.has_column(state.sql_parent_table_name(), state.sql_current_name()):
-                    comment = cprint(text='Column {0} in {1} table exists'.format(state.sql_current_name(), state.sql_parent_table_name()), color='green')
+                    comment = cprint(text='Column {0} in {1} table exists'.format(state.sql_current_name(),
+                                                                                  state.sql_parent_table_name()),
+                                     color='green')
                 else:
-                    comment = cprint(text='Create column {0} in {1} table'.format(state.sql_current_name(), state.sql_parent_table_name()), color='red')
+                    comment = cprint(text='Create column {0} in {1} table'.format(state.sql_current_name(),
+                                                                                  state.sql_parent_table_name()),
+                                     color='red')
 
         elif isinstance(json_object, list):
             if json_object and isinstance(json_object[0], dict):
@@ -170,12 +183,14 @@ def traverse(state, parents, json_object):
                 else:
                     comment = cprint(text='Create table {0}'.format(state.sql_table_name()), color='red')
             else:
-                comment = cprint(text='Unable to determine children types because all-keys file contains no children for this object', color='red')
+                comment = cprint(text=('Unable to determine children types because all-keys file contains no children '
+                                       'for this object'), color='red')
 
         elif isinstance(json_object, dict):
             if len(parents) > 1 and isinstance(parents[-2], dict):
                 if state.get_path_len() == 2:
-                    comment = cprint(text='Parameters belonging to this map should be in {0}'.format(state.sql_global_table_name()), color='yellow')
+                    comment = cprint(text='Parameters belonging to this map should be in {0}'.format(
+                        state.sql_global_table_name()), color='yellow')
 
     # Format printing the current object depending on its type.
     if isinstance(json_object, dict):
@@ -199,6 +214,7 @@ def traverse(state, parents, json_object):
         # It is neither a list nor a map, so it must be a primitive. Print it
         # along with a comment.
         print('{0}/{1}: {2}'.format(state.get_path(), type(json_object).__name__, comment))
+
 
 def main():
     parser = argparse.ArgumentParser(description='Kea Developer Tools')
@@ -236,6 +252,7 @@ def main():
     database = KeaDatabase()
 
     traverse(State(config, database), [], parsed)
+
 
 if __name__ == '__main__':
     main()

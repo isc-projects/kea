@@ -90,8 +90,8 @@ SYSTEMS = {
         '24.04': True,
     },
     'debian': {
-         '8': False,
-         '9': False,
+        '8': False,
+        '9': False,
         '10': True,
         '11': True,
         '12': True,
@@ -245,7 +245,7 @@ Vagrant.configure("2") do |config|
 end
 """
 
-RECOMMENDED_VAGRANT_VERSION='2.2.16'
+RECOMMENDED_VAGRANT_VERSION = '2.2.16'
 
 log = logging.getLogger()
 
@@ -256,11 +256,13 @@ def red(txt):
         return '\033[1;31m%s\033[0;0m' % txt
     return txt
 
+
 def green(txt):
     """Return colorized (if the terminal supports it) or plain text."""
     if sys.stdout.isatty():
         return '\033[0;32m%s\033[0;0m' % txt
     return txt
+
 
 def blue(txt):
     """Return colorized (if the terminal supports it) or plain text."""
@@ -287,24 +289,24 @@ def get_system_revision():
                 revision = revision[0]
             if not system or not revision:
                 raise Exception('fallback to /etc/os-release')
-        except:
+        except Exception:
             if os.path.exists('/etc/os-release'):
                 vals = {}
                 with open('/etc/os-release') as f:
-                    for l in f.readlines():
-                        if '=' in l:
-                            key, val = l.split('=', 1)
+                    for line in f.readlines():
+                        if '=' in line:
+                            key, val = line.split('=', 1)
                             vals[key.strip()] = val.strip().replace('"', '')
 
                 for i in ['ID', 'ID_LIKE']:
                     if i in vals:
-                        system_candidates=vals[i].strip('"').split()
+                        system_candidates = vals[i].strip('"').split()
                         for system_candidate in system_candidates:
                             if system_candidate in SYSTEMS:
                                 system = system_candidate
                                 break
                         else:
-                           continue
+                            continue
                         break
                 if system is None:
                     raise Exception('cannot determine system')
@@ -381,13 +383,16 @@ def execute(cmd, timeout=60, cwd=None, env=None, raise_error=True, dry_run=False
 
     for attempt in range(attempts):
         if interactive:
-            # Issue: [B602:subprocess_popen_with_shell_equals_true] subprocess call with shell=True identified, security issue.
+            # Issue: [B602:subprocess_popen_with_shell_equals_true] subprocess call with shell=True identified,
+            #        security issue.
             p = subprocess.Popen(cmd, cwd=cwd, env=env, shell=True)  # nosec B602
             exitcode = p.wait()
 
         else:
-            # Issue: [B602:subprocess_popen_with_shell_equals_true] subprocess call with shell=True identified, security issue.
-            p = subprocess.Popen(cmd, cwd=cwd, env=env, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)  # nosec B602
+            # Issue: [B602:subprocess_popen_with_shell_equals_true] subprocess call with shell=True identified,
+            #        security issue.
+            p = subprocess.Popen(cmd, cwd=cwd, env=env, shell=True,  # nosec B602
+                                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
             if capture:
                 output = ''
@@ -458,7 +463,7 @@ def _prepare_installed_packages_cache_for_debs():
 
     for line in out.splitlines():
         line = line.strip()
-        m = re.search('^([^\s]+)\s+([^\s]+)\s+([^\s]+)\s+([^\s]+)\s+(.+)', line)
+        m = re.search(r'^([^\s]+)\s+([^\s]+)\s+([^\s]+)\s+([^\s]+)\s+(.+)', line)
         if not m:
             continue
         status, name, version, arch, descr = m.groups()
@@ -510,7 +515,8 @@ def install_pkgs(pkgs, timeout=60, env=None, check_times=False, pkg_cache=None):
         pkg_cache = {}
 
     # prepare cache if needed
-    if not pkg_cache and system in ['centos', 'rhel', 'fedora', 'debian', 'ubuntu', 'rocky']:#, 'alpine']: # TODO: complete caching support for alpine
+    if not pkg_cache and system in ['centos', 'rhel', 'fedora', 'debian', 'ubuntu',
+                                    'rocky']:  # , 'alpine']:  # TODO: complete caching support for alpine
         if system in ['centos', 'rhel', 'fedora', 'rocky']:
             pkg_cache.update(_prepare_installed_packages_cache_for_rpms())
         elif system in ['debian', 'ubuntu']:
@@ -676,7 +682,7 @@ class VagrantEnv(object):
                                 capture=True, raise_error=False)
         if exitcode != 0:
             if 'There is container on your system' in out and 'lxc-destroy' in out:
-                m = re.search('`lxc-destroy.*?`', out)
+                m = re.search(r'`lxc-destroy.*?`', out)
                 if m:
                     # destroy some old container
                     cmd = m.group(0)[1:-1]
@@ -699,8 +705,8 @@ class VagrantEnv(object):
             # Reason for nosec: it is clearly a https link.
             with urllib.request.urlopen(url) as response:  # nosec B310
                 data = response.read()
-        except:
-            log.exception('ignored exception')
+        except Exception as e:
+            log.exception(f'ignored exception: {e}')
             return {}
         data = json.loads(data)
         return data
@@ -728,7 +734,7 @@ class VagrantEnv(object):
             if provider_found:
                 try:
                     v = int(ver['number'])
-                except:
+                except ValueError:
                     return ver['number']
                 if v > latest_version:
                     latest_version = v
@@ -743,7 +749,7 @@ class VagrantEnv(object):
             return "not created"
 
         _, out = execute("vagrant status", cwd=self.vagrant_dir, timeout=15, capture=True, quiet=True)
-        m = re.search('default\s+(.+)\(', out)
+        m = re.search(r'default\s+(.+)\(', out)
         if not m:
             raise Exception('cannot get status in:\n%s' % out)
         return m.group(1).strip()
@@ -758,7 +764,6 @@ class VagrantEnv(object):
         """Do Vagrant reload."""
         execute("vagrant reload --no-provision --force",
                 cwd=self.vagrant_dir, timeout=15 * 60, dry_run=self.dry_run)
-
 
     def package(self):
         """Package Vagrant system into Vagrant box."""
@@ -791,7 +796,7 @@ class VagrantEnv(object):
 
             # reset machine-id
             execute('sudo rm -f %s/rootfs/var/lib/dbus/machine-id' % lxc_container_path)
-            #execute('sudo truncate -s 0 %s/rootfs/etc/machine-id' % lxc_container_path)
+            # execute('sudo truncate -s 0 %s/rootfs/etc/machine-id' % lxc_container_path)
             execute('sudo rm -f %s/rootfs/etc/machine-id' % lxc_container_path)
 
             # pack rootfs
@@ -908,7 +913,7 @@ class VagrantEnv(object):
 
                 if self.system in ['ubuntu', 'debian']:
                     upload_cmd += ' -X POST -H "Content-Type: multipart/form-data" --data-binary "@%s" '
-                    file_ext = 'deb' # include both '.deb' and '.ddeb' files
+                    file_ext = 'deb'  # include both '.deb' and '.ddeb' files
 
                 elif self.system in ['fedora', 'centos', 'rhel', 'rocky']:
                     upload_cmd += ' --upload-file %s '
@@ -960,8 +965,8 @@ class VagrantEnv(object):
 
                 cmd = 'scp -F %s -r default:/home/vagrant/aggregated_tests.xml .' % ssh_cfg_path
                 execute(cmd, cwd=self.vagrant_dir)
-        except:  # pylint: disable=bare-except
-            log.exception('ignored issue with parsing unit test results')
+        except Exception as e:
+            log.exception(f'ignored issue with parsing unit test results: {e}')
 
         return total, passed
 
@@ -1109,8 +1114,8 @@ def _install_gtest_sources():
     gtest_version = '1.14.0'
     gtest_path = f'/usr/src/googletest-release-{gtest_version}/googletest'
     if os.path.exists(gtest_path):
-            log.info(f'gtest is already installed in {gtest_path}.')
-            return
+        log.info(f'gtest is already installed in {gtest_path}.')
+        return
 
     execute('mkdir -p ~/.hammer-tmp')
     cmd = 'wget --no-verbose -O ~/.hammer-tmp/gtest.tar.gz '
@@ -1122,17 +1127,17 @@ def _install_gtest_sources():
     execute('rm -rf ~/.hammer-tmp')
 
 
-def _install_libyang_from_sources(ignore_errors = False):
+def _install_libyang_from_sources(ignore_errors=False):
     """Install libyang from sources."""
     for prefix in ['/usr', '/usr/local']:
         libyang_so_candidates = [f'{prefix}/lib/libyang.so', f'{prefix}/lib64/libyang.so']
         libyang_header = f'{prefix}/include/libyang/version.h'
         if (any(os.path.exists(i) for i in libyang_so_candidates) and os.path.exists(libyang_header) and
-            execute(f"grep -F '#define LY_VERSION_MAJOR 2' '{libyang_header}'", raise_error=False) == 0):
+                execute(f"grep -F '#define LY_VERSION_MAJOR 2' '{libyang_header}'", raise_error=False) == 0):
             log.info(f'libyang is already installed at {libyang_header}.')
             return
 
-    version='v2.1.4'
+    version = 'v2.1.4'
 
     execute('rm -rf ~/.hammer-tmp')
     execute('mkdir -p ~/.hammer-tmp')
@@ -1140,7 +1145,8 @@ def _install_libyang_from_sources(ignore_errors = False):
         execute('git clone https://github.com/CESNET/libyang.git ~/.hammer-tmp/libyang')
         execute(f'git checkout {version}', cwd='~/.hammer-tmp/libyang')
         execute('mkdir ~/.hammer-tmp/libyang/build')
-        execute('cmake -DBUILD_TESTING=OFF -DCMAKE_C_FLAGS="-Wno-incompatible-pointer-types" ..', cwd='~/.hammer-tmp/libyang/build')
+        execute('cmake -DBUILD_TESTING=OFF -DCMAKE_C_FLAGS="-Wno-incompatible-pointer-types" ..',
+                cwd='~/.hammer-tmp/libyang/build')
         execute('make -j $(nproc || gnproc || echo 1)', cwd='~/.hammer-tmp/libyang/build')
         execute('sudo make install', cwd='~/.hammer-tmp/libyang/build')
         system, revision = get_system_revision()
@@ -1154,17 +1160,17 @@ def _install_libyang_from_sources(ignore_errors = False):
         execute('rm -rf ~/.hammer-tmp')
 
 
-def _install_sysrepo_from_sources(ignore_errors = False):
+def _install_sysrepo_from_sources(ignore_errors=False):
     """Install sysrepo from sources."""
     for prefix in ['/usr', '/usr/local']:
         sysrepo_so_candidates = [f'{prefix}/lib/libsysrepo.so', f'{prefix}/lib64/libsysrepo.so']
         sysrepo_header = f'{prefix}/include/sysrepo/version.h'
         if (any(os.path.exists(i) for i in sysrepo_so_candidates) and os.path.exists(sysrepo_header) and
-            execute(f"grep -F '#define SR_VERSION_MAJOR 7' '{sysrepo_header}'", raise_error=False) == 0):
+                execute(f"grep -F '#define SR_VERSION_MAJOR 7' '{sysrepo_header}'", raise_error=False) == 0):
             log.info(f'sysrepo is already installed at {sysrepo_header}.')
             return
 
-    version='v2.2.12'
+    version = 'v2.2.12'
 
     # Create repository for YANG modules and change ownership to current user.
     execute('sudo mkdir -p /etc/sysrepo')
@@ -1190,17 +1196,17 @@ def _install_sysrepo_from_sources(ignore_errors = False):
         execute('rm -rf ~/.hammer-tmp')
 
 
-def _install_libyang_cpp_from_sources(ignore_errors = False):
+def _install_libyang_cpp_from_sources(ignore_errors=False):
     """Install libyang-cpp from sources."""
     for prefix_lib in ['/usr/lib', '/usr/lib64', '/usr/local/lib', '/usr/local/lib64']:
         libyang_cpp_so = f'{prefix_lib}/libyang-cpp.so'
         libyang_cpp_pc = f'{prefix_lib}/pkgconfig/libyang-cpp.pc'
         if (os.path.exists(libyang_cpp_so) and os.path.exists(libyang_cpp_pc) and
-            execute(f"grep -F 'Version: 1.1.0' '{libyang_cpp_pc}'", raise_error=False) == 0):
+                execute(f"grep -F 'Version: 1.1.0' '{libyang_cpp_pc}'", raise_error=False) == 0):
             log.info(f'libyang-cpp is already installed at {libyang_cpp_so}.')
             return
 
-    version='ae7d649ea75da081725c119dd553b2ef3121a6f8'
+    version = 'ae7d649ea75da081725c119dd553b2ef3121a6f8'
 
     execute('rm -rf ~/.hammer-tmp')
     execute('mkdir -p ~/.hammer-tmp')
@@ -1208,9 +1214,11 @@ def _install_libyang_cpp_from_sources(ignore_errors = False):
         execute('git clone https://github.com/CESNET/libyang-cpp.git ~/.hammer-tmp/libyang-cpp')
         execute(f'git checkout {version}', cwd='~/.hammer-tmp/libyang-cpp')
         # New cpp compiler is more picky about missing headers. (ex. Fedora 40)
-        return_code = execute('sudo grep "#include <algorithm>" ~/.hammer-tmp/libyang-cpp/src/Context.cpp', raise_error=False)
+        return_code = execute('sudo grep "#include <algorithm>" ~/.hammer-tmp/libyang-cpp/src/Context.cpp',
+                              raise_error=False)
         if return_code == 1:
-            execute('sed -i "/#include <libyang\/libyang.h>/a #include <algorithm>" ~/.hammer-tmp/libyang-cpp/src/Context.cpp')
+            execute(r'sed -i "/#include <libyang\/libyang.h>/a #include <algorithm>" '
+                    '~/.hammer-tmp/libyang-cpp/src/Context.cpp')
         execute('mkdir ~/.hammer-tmp/libyang-cpp/build')
         execute('cmake -DBUILD_TESTING=OFF .. ', cwd='~/.hammer-tmp/libyang-cpp/build')
         execute('make -j $(nproc || gnproc || echo 1)', cwd='~/.hammer-tmp/libyang-cpp/build')
@@ -1226,17 +1234,17 @@ def _install_libyang_cpp_from_sources(ignore_errors = False):
         execute('rm -rf ~/.hammer-tmp')
 
 
-def _install_sysrepo_cpp_from_sources(ignore_errors = False):
+def _install_sysrepo_cpp_from_sources(ignore_errors=False):
     """Install sysrepo-cpp from sources."""
     for prefix_lib in ['/usr/lib', '/usr/lib64', '/usr/local/lib', '/usr/local/lib64']:
         sysrepo_cpp_so = f'{prefix_lib}/libsysrepo-cpp.so'
         sysrepo_cpp_pc = f'{prefix_lib}/pkgconfig/sysrepo-cpp.pc'
         if (os.path.exists(sysrepo_cpp_so) and os.path.exists(sysrepo_cpp_pc) and
-            execute(f"grep -F 'Version: 1.1.0' '{sysrepo_cpp_pc}'", raise_error=False) == 0):
+                execute(f"grep -F 'Version: 1.1.0' '{sysrepo_cpp_pc}'", raise_error=False) == 0):
             log.info(f'sysrepo-cpp is already installed at {sysrepo_cpp_so}.')
             return
 
-    version='02634174ffc60568301c3d9b9b7cf710cff6a586'
+    version = '02634174ffc60568301c3d9b9b7cf710cff6a586'
 
     execute('rm -rf ~/.hammer-tmp')
     execute('mkdir -p ~/.hammer-tmp')
@@ -1258,7 +1266,7 @@ def _install_sysrepo_cpp_from_sources(ignore_errors = False):
         execute('rm -rf ~/.hammer-tmp')
 
 
-def _install_netconf_libraries_from_sources(ignore_errors = False):
+def _install_netconf_libraries_from_sources(ignore_errors=False):
     _install_libyang_from_sources(ignore_errors)
     _install_sysrepo_from_sources(ignore_errors)
     _install_libyang_cpp_from_sources(ignore_errors)
@@ -1321,8 +1329,8 @@ def _configure_mysql(system, revision, features):
         # Some systems, usually old ones, might require a cerain PKCS format
         # of the key. Try to regenerate it here, but don't stop if it fails.
         # If the key is wrong, it will fail later anyway.
-        exit_code = execute('openssl rsa -in src/lib/asiolink/testutils/ca/kea-server.key ' \
-                                       '-out src/lib/asiolink/testutils/ca/kea-server.key', raise_error=False)
+        exit_code = execute('openssl rsa -in src/lib/asiolink/testutils/ca/kea-server.key '
+                            '-out src/lib/asiolink/testutils/ca/kea-server.key', raise_error=False)
         if exit_code != 0:
             log.warning(f'openssl command failed with exit code {exit_code}, but continuing...')
         for file in [
@@ -1375,7 +1383,8 @@ ssl_key = {cert_dir}/kea-client.key
 
     elif system == 'freebsd':
         cmd = "echo 'SET PASSWORD = \"\";' "
-        cmd += "| sudo mysql -u root --password=\"$(sudo cat /root/.mysql_secret | grep -v '^#')\" --connect-expired-password"
+        cmd += ("| sudo mysql -u root --password=\"$(sudo cat /root/.mysql_secret | grep -v '^#')\""
+                " --connect-expired-password")
         execute(cmd, raise_error=False)
 
     elif system == 'alpine':
@@ -1405,7 +1414,8 @@ ssl_key = {cert_dir}/kea-client.key
     if 'tls' in features:
         # ALTER USER is the best place to put the REQUIRE but, if it is not
         # supported, then downgrade to GRANT.
-        exit_code = execute('''sudo mysql -u root -e "ALTER USER 'keatest_secure'@'localhost' REQUIRE X509;"''', raise_error=False)
+        exit_code = execute('''sudo mysql -u root -e "ALTER USER 'keatest_secure'@'localhost' REQUIRE X509;"''',
+                            raise_error=False)
         if exit_code == 0:
             # If ALTER succeeds, then we still have to GRANT without REQUIRE.
             execute('''sudo mysql -u root -e "GRANT ALL ON keatest.* TO 'keatest_secure'@'localhost';"''')
@@ -1473,9 +1483,10 @@ def _restart_postgresql(system, revision):
             log.error('Command "sudo systemctl restart postgresql.service" failed. Here is the journal:')
             _, output = execute('sudo journalctl -xu postgresql.service', raise_error=False)
             log.error('And here are the logs:')
-            _, output = execute("sudo -u postgres psql -A -t -c 'SELECT pg_current_logfile()'", capture=True, quiet=True)
+            _, output = execute("sudo -u postgres psql -A -t -c 'SELECT pg_current_logfile()'",
+                                capture=True, quiet=True)
             logfile = os.path.basename(output.strip())
-            _, output = execute(f'sudo find /var -type f -name "{logfile}" -exec cat {{}} \;', raise_error=False)
+            _, output = execute(fr'sudo find /var -type f -name "{logfile}" -exec cat {{}} \;', raise_error=False)
             sys.exit(exit_code)
 
 
@@ -1484,7 +1495,7 @@ def _restart_postgresql(system, revision):
 # and user both set to 'all'. This is to not affect authentication of
 # `postgres` user which should have a separate entry.
 def _change_postgresql_auth_method(connection_type, auth_method, hba_file):
-    execute("sudo sed -i.bak 's/^{}\(.*\)all\(.*\)all\(.*\) [a-z0-9]*$/{}\\1all\\2all\\3 {}/g' '{}'".format(
+    execute(r"sudo sed -i.bak 's/^{}\(.*\)all\(.*\)all\(.*\) [a-z0-9]*$/{}\1all\2all\3 {}/g' '{}'".format(
         connection_type, connection_type, auth_method, hba_file), cwd='/tmp')
 
 
@@ -1520,12 +1531,13 @@ def _configure_pgsql(system, revision, features):
         var_db_postgres_data = output.rstrip()
 
         # Create postgres internals.
-        execute('sudo test ! -d {} && sudo /usr/local/etc/rc.d/postgresql oneinitdb || true'.format(var_db_postgres_data))
+        execute(f'sudo test ! -d {var_db_postgres_data} && sudo /usr/local/etc/rc.d/postgresql oneinitdb || true')
 
-        # if the file '/var/db/postgres/data*/postmaster.opts' does not exist the 'restart' of postgresql will fail with error:
+        # if the file '/var/db/postgres/data*/postmaster.opts' does not exist the 'restart' of postgresql will fail
+        # with error:
         #    pg_ctl: could not read file "/var/db/postgres/data*/postmaster.opts"
         # the initial start of the postgresql will create the 'postmaster.opts' file
-        execute('sudo test ! -f {}/postmaster.opts && sudo service postgresql onestart || true'.format(var_db_postgres_data))
+        execute(f'sudo test ! -f {var_db_postgres_data}/postmaster.opts && sudo service postgresql onestart || true')
 
     _enable_postgresql(system, revision)
     _restart_postgresql(system, revision)
@@ -1541,8 +1553,8 @@ def _configure_pgsql(system, revision, features):
     # before any other local auth method for higher priority. Let's simulate
     # that by putting it just after the auth header.
     if 0 != execute("sudo cat {} | grep -E '^local.*all.*postgres'".format(hba_file), raise_error=False):
-        auth_header='# TYPE  DATABASE        USER            ADDRESS                 METHOD'
-        postgres_auth_line='local   all             postgres                                ident'
+        auth_header = '# TYPE  DATABASE        USER            ADDRESS                 METHOD'
+        postgres_auth_line = 'local   all             postgres                                ident'
         # The "\\" followed by newline is for BSD support.
         execute("""sudo sed -i.bak '/{}/a\\
 {}
@@ -1610,7 +1622,7 @@ def _get_package_version(package: str):
     elif system in ['centos', 'fedora', 'rhel', 'rocky']:
         cmd = "dnf list {} -y | tr -s ' ' | cut -d ' ' -f 2 | tail -n 1"
     elif system == 'freebsd':
-        cmd = "pkg search {0} | grep -Eo '^{0}-[0-9_,\.]+' | sed 's/{0}-//g'"
+        cmd = r"pkg search {0} | grep -Eo '^{0}-[0-9_,\.]+' | sed 's/{0}-//g'"
     elif system == 'arch':
         cmd = "pacman -Qi {} | tr -s ' ' | grep -F 'Version :' | cut -d ' ' -f 3"
     else:
@@ -1732,9 +1744,11 @@ def install_packages_local(system, revision, features, check_times, ignore_error
             packages.extend(['postgresql', 'postgresql-server'])
             if revision == '9':
                 packages.append('postgresql13-devel')
+
                 def link_pg_config():
                     if not os.path.exists('/usr/bin/pg_config'):
                         execute('sudo ln -s /usr/pgsql-13/bin/pg_config /usr/bin/pg_config')
+
                 deferred_functions.append(link_pg_config)
             else:
                 packages.append('postgresql-devel')
@@ -1872,7 +1886,6 @@ def install_packages_local(system, revision, features, check_times, ignore_error
                     packages.extend(['default-mysql-client-core', 'default-libmysqlclient-dev', 'mysql-server'])
             else:
                 packages.extend(['mariadb-client', 'mariadb-server', 'libmariadb-dev-compat'])
-
 
         if 'pgsql' in features:
             if revision == '16.04':
@@ -2268,8 +2281,10 @@ def _build_rpm(system, revision, features, tarball_path, env, check_times, dry_r
     for f in os.listdir(rpm_dir):
         if f == 'kea.spec':
             continue
-        execute('cp %s %s/SOURCES' % (os.path.join(rpm_dir, f), rpm_root_path), check_times=check_times, dry_run=dry_run)
-    execute('cp %s %s/SPECS' % (os.path.join(rpm_dir, 'kea.spec'), rpm_root_path), check_times=check_times, dry_run=dry_run)
+        execute('cp %s %s/SOURCES' % (os.path.join(rpm_dir, f), rpm_root_path), check_times=check_times,
+                dry_run=dry_run)
+    execute('cp %s %s/SPECS' % (os.path.join(rpm_dir, 'kea.spec'), rpm_root_path), check_times=check_times,
+            dry_run=dry_run)
     execute('cp %s %s/SOURCES' % (tarball_path, rpm_root_path), check_times=check_times, dry_run=dry_run)
 
     services_list = ['kea-dhcp4.service', 'kea-dhcp6.service', 'kea-dhcp-ddns.service', 'kea-ctrl-agent.service']
@@ -2277,10 +2292,10 @@ def _build_rpm(system, revision, features, tarball_path, env, check_times, dry_r
     # centos/rhel 7 does not support some fields in systemd unit files so they need to be commented out
     if system == 'centos' and revision == '7':
         for f in services_list:
-            for k in ['RuntimeDirectory', 'RuntimeDirectoryPreserve', 'LogsDirectory', 'LogsDirectoryMode', 'StateDirectory', 'ConfigurationDirectory']:
-                cmd = "sed -i -E 's/^(%s=.*)/#\\1/' %s" % (k, f)
+            for k in ['RuntimeDirectory', 'RuntimeDirectoryPreserve', 'LogsDirectory', 'LogsDirectoryMode',
+                      'StateDirectory', 'ConfigurationDirectory']:
+                cmd = r"sed -i -E 's/^(%s=.*)/#\1/' %s" % (k, f)
                 execute(cmd, cwd=rpm_dir, check_times=check_times, dry_run=dry_run)
-
 
     # do rpm build
     cmd = "rpmbuild --define 'kea_version %s' --define 'isc_version %s' -ba %s/SPECS/kea.spec"
@@ -2291,7 +2306,8 @@ def _build_rpm(system, revision, features, tarball_path, env, check_times, dry_r
 
     if 'install' in features:
         # install packages
-        execute('rpm -qa | grep isc-kea | xargs sudo rpm -e', check_times=check_times, dry_run=dry_run, raise_error=False)
+        execute('rpm -qa | grep isc-kea | xargs sudo rpm -e', check_times=check_times, dry_run=dry_run,
+                raise_error=False)
         execute(f'sudo rpm -i {rpm_root_path}/RPMS/{arch.strip()}/*rpm', check_times=check_times, dry_run=dry_run)
 
         # check if kea services can be started
@@ -2310,7 +2326,8 @@ def _build_deb(system, revision, features, tarball_path, env, check_times, dry_r
         install_pkgs('apt-transport-https', env=env, check_times=check_times)
 
     # See if a .deb package had been previously uploaded.
-    _, output = execute("curl -o /dev/null -s -w '%{{http_code}}' {}/dists/kea/Release 2>/dev/null".format(repo_url), capture=True)
+    _, output = execute("curl -o /dev/null -s -w '%{{http_code}}' {}/dists/kea/Release 2>/dev/null".format(repo_url),
+                        capture=True)
     http_code = output.rstrip()
     release_file_exists = (http_code == '200')
     if release_file_exists:
@@ -2318,9 +2335,9 @@ def _build_deb(system, revision, features, tarball_path, env, check_times, dry_r
     else:
         repo_name = 'kea-%s-%s-%s' % (pkg_version.rsplit('.', 1)[0], system, revision)
         log.error(f'{repo_url}/dists/kea/Release does not exist. '
-             f'This is usually caused by no package existing in {repo_name}. '
-             'You can solve this by uploading any package.'
-             'Continuing, but the build will likely fail.')
+                  f'This is usually caused by no package existing in {repo_name}. '
+                  'You can solve this by uploading any package.'
+                  'Continuing, but the build will likely fail.')
 
     # try apt update for up to 10 times if there is an error
     for _ in range(10):
@@ -2336,30 +2353,37 @@ def _build_deb(system, revision, features, tarball_path, env, check_times, dry_r
     src_path = glob.glob('kea-src/*')[0]
 
     # update version, etc
-    execute('sed -i -e s/{VERSION}/%s/ changelog' % pkg_version, cwd='kea-src/kea-%s/debian' % pkg_version, check_times=check_times, dry_run=dry_run)
-    execute('sed -i -e s/{ISC_VERSION}/%s/ changelog' % pkg_isc_version, cwd='kea-src/kea-%s/debian' % pkg_version, check_times=check_times, dry_run=dry_run)
-    execute('sed -i -e s/{ISC_VERSION}/%s/ rules' % pkg_isc_version, cwd='kea-src/kea-%s/debian' % pkg_version, check_times=check_times, dry_run=dry_run)
+    execute('sed -i -e s/{VERSION}/%s/ changelog' % pkg_version, cwd='kea-src/kea-%s/debian' % pkg_version,
+            check_times=check_times, dry_run=dry_run)
+    execute('sed -i -e s/{ISC_VERSION}/%s/ changelog' % pkg_isc_version, cwd='kea-src/kea-%s/debian' % pkg_version,
+            check_times=check_times, dry_run=dry_run)
+    execute('sed -i -e s/{ISC_VERSION}/%s/ rules' % pkg_isc_version, cwd='kea-src/kea-%s/debian' % pkg_version,
+            check_times=check_times, dry_run=dry_run)
 
-    services_list = ['isc-kea-dhcp4.isc-kea-dhcp4-server.service', 'isc-kea-dhcp6.isc-kea-dhcp6-server.service', 'isc-kea-dhcp-ddns.isc-kea-dhcp-ddns-server.service', 'isc-kea-ctrl-agent.service']
+    services_list = ['isc-kea-dhcp4.isc-kea-dhcp4-server.service', 'isc-kea-dhcp6.isc-kea-dhcp6-server.service',
+                     'isc-kea-dhcp-ddns.isc-kea-dhcp-ddns-server.service', 'isc-kea-ctrl-agent.service']
 
     # debian 9 does not support some fields in systemd unit files so they need to be commented out
     if system == 'debian' and revision == '9':
         for f in services_list:
-            for k in ['RuntimeDirectory', 'RuntimeDirectoryPreserve', 'LogsDirectory', 'LogsDirectoryMode', 'StateDirectory', 'ConfigurationDirectory']:
+            for k in ['RuntimeDirectory', 'RuntimeDirectoryPreserve', 'LogsDirectory', 'LogsDirectoryMode',
+                      'StateDirectory', 'ConfigurationDirectory']:
                 cmd = "sed -i -E 's/^(%s=.*)/#\\1/' %s" % (k, f)
                 execute(cmd, cwd='kea-src/kea-%s/debian' % pkg_version, check_times=check_times, dry_run=dry_run)
 
     # do deb build
     env['LIBRARY_PATH'] = f'/usr/lib/{arch.strip()}-linux-gnu'
     env['LD_LIBRARY_PATH'] = f'/usr/lib/{arch.strip()}-linux-gnu'
-    cmd = 'debuild --preserve-envvar=LD_LIBRARY_PATH --preserve-envvar=LIBRARY_PATH --preserve-envvar=CCACHE_DIR --prepend-path=/usr/lib/ccache -i -us -uc -b'
+    cmd = ('debuild --preserve-envvar=LD_LIBRARY_PATH --preserve-envvar=LIBRARY_PATH --preserve-envvar=CCACHE_DIR '
+           '--prepend-path=/usr/lib/ccache -i -us -uc -b')
     execute(cmd, env=env, cwd=src_path, timeout=60 * 40, check_times=check_times, dry_run=dry_run)
 
     if 'install' in features:
         # install packages
         execute('sudo dpkg -i kea-src/*deb', check_times=check_times, dry_run=dry_run)
         # check if kea services can be started
-        services_list = ['isc-kea-dhcp4-server.service', 'isc-kea-dhcp6-server.service', 'isc-kea-dhcp-ddns-server.service', 'isc-kea-ctrl-agent.service']
+        services_list = ['isc-kea-dhcp4-server.service', 'isc-kea-dhcp6-server.service',
+                         'isc-kea-dhcp-ddns-server.service', 'isc-kea-ctrl-agent.service']
         _check_installed_rpm_or_debs(services_list)
 
 
@@ -2379,7 +2403,8 @@ def _build_alpine_apk(system, revision, features, tarball_path, env, check_times
     tardir = os.path.dirname(tarball_path)
     if not tardir:
         tardir = '.'
-    cmd = 'cd %s; export kea_chks=`sha512sum kea-%s.tar.gz`; cd -; sed -i -e "s/KEA_CHECKSUM/${kea_chks}/" kea-src/APKBUILD' % (tardir, pkg_version)
+    cmd = ('cd %s; export kea_chks=`sha512sum kea-%s.tar.gz`; cd -; '
+           'sed -i -e "s/KEA_CHECKSUM/${kea_chks}/" kea-src/APKBUILD' % (tardir, pkg_version))
     execute(cmd, check_times=check_times, dry_run=dry_run)
     cmd = 'sed -i -e s/KEA_VERSION/%s/ kea-src/APKBUILD' % pkg_version
     execute(cmd, check_times=check_times, dry_run=dry_run)
@@ -2595,12 +2620,12 @@ def ensure_hammer_deps():
     if exitcode != 0:
         _install_vagrant()
     else:
-        m = re.search('Installed Version: ([\d\.]+)', out, re.I)
+        m = re.search(r'Installed Version: ([\d\.]+)', out, re.I)
         ver = m.group(1)
         vagrant = [int(v) for v in ver.split('.')]
         recommended_vagrant = [int(v) for v in RECOMMENDED_VAGRANT_VERSION.split('.')]
         if vagrant < recommended_vagrant:
-            m = re.search('Latest Version: ([\d\.]+)', out, re.I)
+            m = re.search(r'Latest Version: ([\d\.]+)', out, re.I)
             if m is None:
                 # Vagrant was unable to check for the latest version of Vagrant.
                 # Attempt to upgrade to the recommended version to fix it.
@@ -2608,7 +2633,6 @@ def ensure_hammer_deps():
                 return
             ver = m.group(1)
             _install_vagrant(ver, upgrade=True)
-
 
     exitcode = execute('vagrant plugin list | grep vagrant-lxc', raise_error=False)
     if exitcode != 0:
@@ -2727,7 +2751,6 @@ def parse_args():
                                 help='Do not allow executing commands infinitely.')
     parent_parser2.add_argument('-n', '--dry-run', action='store_true', help='Print only what would be done.')
 
-
     parser = subparsers.add_parser('ensure-hammer-deps',
                                    help="Install Hammer dependencies on current, host system.")
     parser = subparsers.add_parser('supported-systems',
@@ -2776,16 +2799,16 @@ def parse_args():
                                    "To get the list of created systems run: ./hammer.py created-systems.")
     parser.add_argument('-d', '--directory', help='Path to directory with Vagrantfile.')
     parser = subparsers.add_parser('package-box',
-                                   help="Prepare system from scratch and package it into Vagrant Box. Prepared box can be "
-                                   "later deployed to Vagrant Cloud.",
+                                   help="Prepare system from scratch and package it into Vagrant Box. "
+                                   "Prepared box can be later deployed to Vagrant Cloud.",
                                    parents=[parent_parser1, parent_parser2])
     parser.add_argument('--repository-url', default=None,
                         help='Repository for 3rd party dependencies and for uploading built packages.')
     parser.add_argument('-u', '--reuse', action='store_true',
-                        help='Reuse existing system image, otherwise (default case) if there is any existing then destroy it first.')
+                        help='Reuse existing system image, otherwise (default case) if there is any existing then '
+                        'destroy it first.')
     parser.add_argument('-k', '--skip-upload', action='store_true',
                         help='Skip uploading prepared box to cloud, otherwise (default case) upload it.')
-
 
     args = main_parser.parse_args()
 
@@ -2796,7 +2819,7 @@ def list_supported_systems():
     """List systems hammer can support (with supported providers)."""
     for system in SYSTEMS:
         print('%s:' % system)
-        for release,supported in SYSTEMS[system].items():
+        for release, supported in SYSTEMS[system].items():
             if not supported:
                 continue
             providers = []
@@ -2806,6 +2829,7 @@ def list_supported_systems():
                     providers.append(p)
             providers = ', '.join(providers)
             print('  - %s: %s' % (release, providers))
+
 
 def list_created_systems():
     """List VMs that are created on this host by Hammer."""
@@ -2943,8 +2967,8 @@ def _check_system_revision(system, revision):
         log.error(msg)
         sys.exit(1)
     if not SYSTEMS[system][revision]:
-        log.warning(f'{system} ${revision} is no longer officially supported. ' \
-                     'The script will continue in a best-effort manner.')
+        log.warning(f'{system} ${revision} is no longer officially supported. '
+                    'The script will continue in a best-effort manner.')
 
 
 def _prepare_ccache_dir(ccache_dir, system, revision):
@@ -2995,7 +3019,7 @@ def upload_to_repo(args, pkgs_dir):
     file_ext = ''
     if system in ['ubuntu', 'debian']:
         upload_cmd += ' -X POST -H "Content-Type: multipart/form-data" --data-binary "@%s" '
-        file_ext = 'deb' # include both '.deb' and '.ddeb' files
+        file_ext = 'deb'  # include both '.deb' and '.ddeb' files
 
     elif system in ['fedora', 'centos', 'rhel', 'rocky']:
         upload_cmd += ' --upload-file %s '
@@ -3020,7 +3044,7 @@ def upload_to_repo(args, pkgs_dir):
         log.info("file path: %s", fp)
         cmd = upload_cmd % fp
 
-        attempts=4
+        attempts = 4
         while attempts > 0:
             exitcode, output = execute(cmd, capture=True, raise_error=False)
             if exitcode != 0 and '504 Gateway Time-out' in output:
@@ -3051,7 +3075,7 @@ def build_cmd(args):
                     args.ccache_dir, args.pkg_version, args.pkg_isc_version, args.repository_url, pkgs_dir)
         # NOTE: upload the locally build packages and leave; the rest of the code is vagrant specific
         if args.upload:
-            upload_to_repo(args,pkgs_dir)
+            upload_to_repo(args, pkgs_dir)
 
         return
 
@@ -3147,7 +3171,8 @@ def main():
         features = set(['docs', 'perfdhcp', 'shell', 'mysql', 'pgsql', 'gssapi', 'native-pkg'])
 
         log.info('Enabled features: %s', ' '.join(features))
-        package_box(args.provider, args.system, args.revision, features, args.dry_run, args.check_times, args.reuse, args.skip_upload)
+        package_box(args.provider, args.system, args.revision, features, args.dry_run, args.check_times, args.reuse,
+                    args.skip_upload)
 
     elif args.command == "prepare-system":
         prepare_system_cmd(args)

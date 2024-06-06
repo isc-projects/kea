@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# Copyright (C) 2019-2021 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2019-2024 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -58,7 +58,7 @@ def read_input_files(files):
                         messages[msg_id] = (section, msg_id, msg_text, msg_descr)
 
                     # start next message
-                    m = re.search('^%\s?([A-Z0-9_]+)\s+(.*)', line);
+                    m = re.search(r'^%\s?([A-Z0-9_]+)\s+(.*)', line)
                     msg_id, msg_text = m.groups()
                     msg_descr = []
 
@@ -107,11 +107,11 @@ used to indicate a placeholder for data that is provided by the Kea code during 
 
         rst += msg_text + '\n\n'
 
-        rst += ''.join(['  ' + l + '\n' for l in msg_descr])
+        rst += ''.join(['  ' + line + '\n' for line in msg_descr])
         rst += '\n'
 
-
     return rst
+
 
 def generate(in_files, out_file):
     messages = read_input_files(in_files)

@@ -38,8 +38,8 @@ def read_input_files(files):
             # use OrderedDict to preserve order of fields in cmd-syntax
             try:
                 descr = json.load(fp, object_pairs_hook=collections.OrderedDict)
-            except:
-                print('\nError while processing %s\n\n' % f)
+            except Exception as e:
+                print(f'\nError while processing {f}: {e}\n\n')
                 raise
             if name != descr['name']:
                 exit("Expected name == descr['name'], but name is {name} and descr['name'] is {descr['name']}")
@@ -78,14 +78,14 @@ API Reference
     for dm, funcs in sorted(daemons.items()):
         rst += '.. _commands-%s:\n\n' % dm
         rst += 'Commands supported by `%s` daemon: ' % dm
-        funcs = sorted([ ':ref:`%s <ref-%s>`' % (f['name'], f['name']) for f in funcs])
+        funcs = sorted([':ref:`%s <ref-%s>`' % (f['name'], f['name']) for f in funcs])
         rst += ', '.join(funcs)
         rst += '.\n\n'
 
     for h, funcs in sorted(hooks.items()):
         rst += '.. _commands-%s:\n\n' % h
         rst += 'Commands supported by `%s` hook library: ' % h
-        funcs = sorted([ ':ref:`%s <ref-%s>`' % (f['name'], f['name']) for f in funcs])
+        funcs = sorted([':ref:`%s <ref-%s>`' % (f['name'], f['name']) for f in funcs])
         rst += ', '.join(funcs)
         rst += '.\n\n'
 
@@ -112,16 +112,16 @@ API Reference
 
         # availability
         rst += 'Availability: %s ' % func['avail']
-        rst += '(:ref:`%s <commands-%s>` hook library)' % (func['hook'], func['hook']) if 'hook' in func else '(built-in)'
+        rst += f'(:ref:`{func["hook"]} <commands-{func["hook"]}>` hook library)' if 'hook' in func else '(built-in)'
         rst += '\n\n'
 
         # access
         try:
             access = func['access']
-        except:
-            print('\naccess missing in %s\n\n' % name)
+        except Exception as e:
+            print(f'\naccess missing in {name}: {e}\n\n')
             raise
-        if not access in ['read', 'write']:
+        if access not in ['read', 'write']:
             print('\nUnknown access %s in %s\n\n' % (access, name))
             raise ValueError('access must be read or write')
         rst += 'Access: %s *(parameter ignored in this Kea version)* \n\n' % access
@@ -151,8 +151,8 @@ API Reference
         rst += '\n\n'
 
         if 'cmd-comment' in func:
-            for l in func['cmd-comment']:
-                rst += "%s\n" % l
+            for line in func['cmd-comment']:
+                rst += "%s\n" % line
             rst += '\n'
 
         # response syntax
@@ -184,7 +184,8 @@ API Reference
             rst += '- 1 - error\n'
             rst += '- 2 - unsupported\n'
             rst += '- 3 - empty (command was completed successfully, but no data was affected or returned)\n'
-            rst += '- 4 - conflict (command could not apply requested configuration changes because they were in conflict with the server state)\n\n'
+            rst += '- 4 - conflict (command could not apply requested configuration changes because they were '
+            rst += 'in conflict with the server state)\n\n'
 
     return rst
 

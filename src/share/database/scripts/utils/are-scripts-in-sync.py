@@ -60,12 +60,14 @@ def filter_the_noise(file, text, is_upgrade_script):
         if m is not None:
             version = max(version, int(m[0]) if len(m) else 0)
     if version == 0:
-        print(f"ERROR: expected schema version upgrade statement of format \"SET version = '\\d+', minor = '\\d+';\" in file \"{file}\", but not found.", file=sys.stderr)
+        print("ERROR: expected schema version upgrade statement of format "
+              f"\"SET version = '\\d+', minor = '\\d+';\" in file \"{file}\", but not found.", file=sys.stderr)
         sys.exit(2)
 
     append = False
     result = []
-    first_delimiter = r'<<EOF$' if is_upgrade_script else fr'^-- This line starts the schema upgrade to version {version}'
+    first_delimiter = (r'<<EOF$' if is_upgrade_script else
+                       fr'^-- This line starts the schema upgrade to version {version}')
     second_delimiter = r'^EOF$' if is_upgrade_script else r' Notes:$'
     first_delimiter_found = False
     second_delimiter_found = False

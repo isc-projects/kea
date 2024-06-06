@@ -16,7 +16,7 @@ import os
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
 
-# to avoid "sphinx.errors.SphinxParallelError: RecursionError: maximum recursion depth exceeded while pickling an object"
+# to avoid sphinx.errors.SphinxParallelError: RecursionError: maximum recursion depth exceeded while pickling an object
 import sys
 sys.setrecursionlimit(5000)
 
@@ -45,7 +45,7 @@ with open(config_ac_path) as f:
                     release = candidate_release
             break
 version = release
-dashed_version_series='-'.join(version.split('.')[0:2])
+dashed_version_series = '-'.join(version.split('.')[0:2])
 
 # now let's replace versions with odd minor number with dev
 if int(dashed_version_series[-1]) % 2 != 0:
@@ -146,7 +146,7 @@ pygments_style = None
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-#html_theme = 'alabaster'
+# html_theme = 'alabaster'
 html_theme = 'sphinx_rtd_theme'
 html_logo = 'static/kea-imageonly-100bw.png'
 
@@ -154,9 +154,9 @@ html_logo = 'static/kea-imageonly-100bw.png'
 # further.  For a list of options available for each theme, see the
 # documentation.
 #
-#html_theme_options = {
-#    "logo": "kea-logo-100x70.png",
-#}
+# html_theme_options = {
+#     "logo": "kea-logo-100x70.png",
+# }
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -177,7 +177,7 @@ html_static_path = ['static']
 # -- Options for HTMLHelp output ---------------------------------------------
 
 # Output file base name for HTML help builder.
-#htmlhelp_basename = 'KeaAdministratorReferenceManualdoc'
+# htmlhelp_basename = 'KeaAdministratorReferenceManualdoc'
 
 
 # -- Options for LaTeX output ------------------------------------------------
@@ -241,9 +241,10 @@ todo_include_todos = True
 
 # -- Substitutions -----------------------------------------------------------
 
-rst_prolog="""
+rst_prolog = """
 .. |cloudsmith_repo| replace:: kea-{dashed_version_series}
 """.format(dashed_version_series=dashed_version_series)
+
 
 # -- Functions ---------------------------------------------------------------
 
@@ -278,17 +279,17 @@ def run_generate_docs(_):
     # The first entry on this list is the actual file to copy, the second is a unique name
     # that will be used when copied over to arm/ directory.
     FILES_TO_COPY = [
-        [ '../../platforms.rst', 'platforms.rst' ],
-        [ '../examples/template-power-user-home/info.md', 'template-power-user-home.md' ],
-        [ '../examples/template-power-user-home/kea-ca-1.conf', 'template-power-user-home-ca-1.conf' ],
-        [ '../examples/template-power-user-home/kea-ca-2.conf', 'template-power-user-home-ca-2.conf' ],
-        [ '../examples/template-power-user-home/kea-dhcp4-1.conf', 'template-power-user-home-dhcp4-1.conf' ],
-        [ '../examples/template-power-user-home/kea-dhcp4-2.conf', 'template-power-user-home-dhcp4-2.conf' ],
-        [ '../examples/template-ha-mt-tls/info.md', 'template-ha-mt-tls.md' ],
-        [ '../examples/template-ha-mt-tls/kea-ca-1.conf', 'template-ha-mt-tls-ca-1.conf' ],
-        [ '../examples/template-ha-mt-tls/kea-ca-2.conf', 'template-ha-mt-tls-ca-2.conf' ],
-        [ '../examples/template-ha-mt-tls/kea-dhcp4-1.conf', 'template-ha-mt-tls-dhcp4-1.conf' ],
-        [ '../examples/template-ha-mt-tls/kea-dhcp4-2.conf', 'template-ha-mt-tls-dhcp4-2.conf' ]
+        ['../../platforms.rst', 'platforms.rst'],
+        ['../examples/template-power-user-home/info.md', 'template-power-user-home.md'],
+        ['../examples/template-power-user-home/kea-ca-1.conf', 'template-power-user-home-ca-1.conf'],
+        ['../examples/template-power-user-home/kea-ca-2.conf', 'template-power-user-home-ca-2.conf'],
+        ['../examples/template-power-user-home/kea-dhcp4-1.conf', 'template-power-user-home-dhcp4-1.conf'],
+        ['../examples/template-power-user-home/kea-dhcp4-2.conf', 'template-power-user-home-dhcp4-2.conf'],
+        ['../examples/template-ha-mt-tls/info.md', 'template-ha-mt-tls.md'],
+        ['../examples/template-ha-mt-tls/kea-ca-1.conf', 'template-ha-mt-tls-ca-1.conf'],
+        ['../examples/template-ha-mt-tls/kea-ca-2.conf', 'template-ha-mt-tls-ca-2.conf'],
+        ['../examples/template-ha-mt-tls/kea-dhcp4-1.conf', 'template-ha-mt-tls-dhcp4-1.conf'],
+        ['../examples/template-ha-mt-tls/kea-dhcp4-2.conf', 'template-ha-mt-tls-dhcp4-2.conf']
     ]
 
     from shutil import copyfile
@@ -297,6 +298,7 @@ def run_generate_docs(_):
         dst = os.path.join(src_dir, 'arm', b)
         print("Copying %s to %s" % (src, dst))
         copyfile(src, dst)
+
 
 # custom setup hook
 def setup(app):

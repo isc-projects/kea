@@ -1,4 +1,4 @@
-# Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -17,6 +17,7 @@
 # Output is written to stdout.
 
 import sys
+
 
 def remove_empty_leading_trailing(lines):
     """
@@ -112,7 +113,7 @@ def make_dict(lines):
 
     message_key = canonicalise_message_line(lines[0])
     message_lines = [message_key]
-    index = 1;
+    index = 1
     while index < len(lines):
         if lines[index].startswith("%"):
             # Start of new message
@@ -145,8 +146,8 @@ def print_dict(dictionary):
         count = count + 1
 
         # ... and the entry itself.
-        for l in dictionary[msgid]:
-            print(l.strip())
+        for line in dictionary[msgid]:
+            print(line.strip())
 
 
 def process_file(filename):

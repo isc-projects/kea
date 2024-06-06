@@ -77,7 +77,7 @@ def branch_list_get(verbose):
         # get a diff with changes that are on that branch only
         # i.e. all unmerged code.
         # Issue: [B603:subprocess_without_shell_equals_true] subprocess call - check for execution of untrusted input.
-        cmd = ["git", "diff", "master..." + branch_info.name ]
+        cmd = ["git", "diff", "master..." + branch_info.name]
         diff = check_output(cmd)
         if len(diff) == 0:
             # No diff? Then all changes from that branch are on master as well.
@@ -86,9 +86,9 @@ def branch_list_get(verbose):
             # let's get the last contributor with extra formatting
             # see man git-log and search for PRETTY FORMATS.
             # %ai = date, %ae = author e-mail, %an = author name
-            cmd = [ "git" , "log", "-n", "1", "--pretty=\"%ai,%ae,%an\"",
-                    branch_info.name ]
-            # Issue: [B603:subprocess_without_shell_equals_true] subprocess call - check for execution of untrusted input.
+            cmd = ["git", "log", "-n", "1", "--pretty=\"%ai,%ae,%an\"", branch_info.name]
+            # Issue: [B603:subprocess_without_shell_equals_true] subprocess call - check for execution of untrusted
+            #        input.
             offender = check_output(cmd)
             offender = offender.strip(b"\n\"")
 
@@ -96,7 +96,7 @@ def branch_list_get(verbose):
             offender = offender.replace(b"@", b"(at)")
             # Obfuscating a dot does not work too well for folks that use
             # initials
-            #offender = offender.replace(b".", b"(dot)")
+            # offender = offender.replace(b".", b"(dot)")
 
             branch_info.last_commit = offender.decode("utf-8")
 
@@ -106,6 +106,7 @@ def branch_list_get(verbose):
 
         out.append(branch_info)
     return out
+
 
 def branch_print(branches, csv, print_merged, print_notmerged, print_stats):
     """ prints out list of branches with specified details (using
@@ -126,7 +127,7 @@ def branch_print(branches, csv, print_merged, print_notmerged, print_stats):
             if not print_merged:
                 continue
             if csv:
-                print("%s,merged,%s" % (branch.name, branch.last_commit) )
+                print("%s,merged,%s" % (branch.name, branch.last_commit))
             else:
                 merged_str = merged_str + " " + branch.name
         else:
@@ -135,7 +136,7 @@ def branch_print(branches, csv, print_merged, print_notmerged, print_stats):
             if not print_notmerged:
                 continue
             if csv:
-                print("%s,notmerged,%s" % (branch.name, branch.last_commit) )
+                print("%s,notmerged,%s" % (branch.name, branch.last_commit))
             else:
                 notmerged_str = notmerged_str + " " + branch.name
 
@@ -178,6 +179,7 @@ def parse_args(args=sys.argv[1:], Parser=OptionParser):
 
     return options
 
+
 def main():
     usage = """%prog
     Lists all obsolete (fully merged into master) branches.
@@ -196,5 +198,6 @@ def main():
 
     branch_print(branch_list, csv, merged, unmerged, stats)
 
+
 if __name__ == '__main__':
-   main()
+    main()
