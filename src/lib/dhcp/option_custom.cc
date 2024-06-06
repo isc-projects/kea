@@ -454,7 +454,7 @@ OptionCustom::dataFieldToText(const OptionDataType data_type,
         break;
     }
     default:
-        ;
+        break;
     }
 
     // Append data field type in brackets.

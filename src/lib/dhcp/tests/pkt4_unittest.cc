@@ -1284,10 +1284,10 @@ TEST_F(Pkt4Test, toText) {
     pkt.addOption(OptionPtr(new Option4AddrLst(123, IOAddress("192.0.2.3"))));
     pkt.addOption(OptionPtr(new OptionUint32(Option::V4, 156, 123456)));
     pkt.addOption(OptionPtr(new OptionString(Option::V4, 87, "lorem ipsum")));
-    OptionBuffer data = { 'a', 'b', 'c', 'd', 'e', 'f' };
+    OptionBuffer data = { 0x61, 0x62, 0x63, 0x64, 0x65, 0x66 };
     OptionPtr opt(new Option(Option::V4, 231, data));
     pkt.addOption(opt);
-    OptionBuffer data_sub = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0' };
+    OptionBuffer data_sub = { 0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39 };
     OptionPtr sub_opt(new Option(Option::V4, 1, data_sub));
     opt->addOption(sub_opt);
     data_sub.clear();
@@ -1303,7 +1303,7 @@ TEST_F(Pkt4Test, toText) {
               "  type=156, len=004: 123456 (uint32)\n"
               "  type=231, len=021: 61:62:63:64:65:66 (abcdef),\n"
               "options:\n"
-              "    type=001, len=011: 30:31:32:33:34:35:36:37:38:39:30 (01234567890)\n"
+              "    type=001, len=011: 30:31:32:33:34:35:36:37:38:39 (0123456789)\n"
               "    type=002, len=000: (no data)",
               pkt.toText());
 
