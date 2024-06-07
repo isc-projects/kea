@@ -84,7 +84,17 @@ address.
 This debug message indicates that the given string representation is being
 converted to lower case and pushed onto the value stack.
 
-# For use with TokenUpperCase
+# For use with TokenMatch
+
+% EVAL_DEBUG_MATCH Matching '%1' on %2, result %3
+This debug message indicates that the given regular expression was matched
+with the popped value. The result was pushed onto the value stack.
+
+% EVAL_DEBUG_MATCH_ERROR Matching '%1' on %2 raised an error: %3
+This error message indicates that the given regular expression was matched
+with the popped value. An error was raised.
+
+# For use with TokenMember
 
 % EVAL_DEBUG_MEMBER %1: Checking membership of '%2', pushing result %3
 This debug message indicates that the membership of the packet for

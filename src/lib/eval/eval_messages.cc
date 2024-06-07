@@ -19,6 +19,8 @@ extern const isc::log::MessageID EVAL_DEBUG_INT8TOTEXT = "EVAL_DEBUG_INT8TOTEXT"
 extern const isc::log::MessageID EVAL_DEBUG_IPADDRESS = "EVAL_DEBUG_IPADDRESS";
 extern const isc::log::MessageID EVAL_DEBUG_IPADDRESSTOTEXT = "EVAL_DEBUG_IPADDRESSTOTEXT";
 extern const isc::log::MessageID EVAL_DEBUG_LCASE = "EVAL_DEBUG_LCASE";
+extern const isc::log::MessageID EVAL_DEBUG_MATCH = "EVAL_DEBUG_MATCH";
+extern const isc::log::MessageID EVAL_DEBUG_MATCH_ERROR = "EVAL_DEBUG_MATCH_ERROR";
 extern const isc::log::MessageID EVAL_DEBUG_MEMBER = "EVAL_DEBUG_MEMBER";
 extern const isc::log::MessageID EVAL_DEBUG_NOT = "EVAL_DEBUG_NOT";
 extern const isc::log::MessageID EVAL_DEBUG_OPTION = "EVAL_DEBUG_OPTION";
@@ -73,6 +75,8 @@ const char* values[] = {
     "EVAL_DEBUG_IPADDRESS", "%1: Pushing IPAddress %2",
     "EVAL_DEBUG_IPADDRESSTOTEXT", "%1: Pushing IPAddress %2",
     "EVAL_DEBUG_LCASE", "%1: Popping string %2 and pushing converted value to lower case %3",
+    "EVAL_DEBUG_MATCH", "Matching '%1' on %2, result %3",
+    "EVAL_DEBUG_MATCH_ERROR", "Matching '%1' on %2 raised an error: %3",
     "EVAL_DEBUG_MEMBER", "%1: Checking membership of '%2', pushing result %3",
     "EVAL_DEBUG_NOT", "%1: Popping %2 pushing %3",
     "EVAL_DEBUG_OPTION", "%1: Pushing option %2 with value %3",

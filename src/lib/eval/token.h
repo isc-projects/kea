@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,6 +9,7 @@
 
 #include <exceptions/exceptions.h>
 #include <dhcp/pkt.h>
+#include <regex>
 #include <stack>
 
 namespace isc {
@@ -1321,6 +1322,35 @@ protected:
     virtual OptionPtr getSubOption(const OptionPtr& parent);
 
     uint16_t sub_option_code_; ///< Code of the sub-option to be extracted
+};
+
+/// @brief Token that represents regular expression (regex) matching
+///
+/// For example "match('foo', '_foobar_')" is true
+class TokenMatch : public Token {
+public:
+    /// @brief Constructor
+    ///
+    /// @param reg_exp regular expression string
+    /// @throw EvalParseError when the regular expression is not valid
+    TokenMatch(const std::string& reg_exp);
+
+    /// @brief Match regular expression
+    ///
+    /// Evaluation uses only the last parameter (top of stack) which is popped.
+    /// "true" when the regular expression or "false" otherwise is pushed.
+    ///
+    /// @param pkt (unused)
+    /// @param values - stack of values (1 popped, 1 pushed)
+    /// @throw EvalBadStack if there is no value on the stack
+    void evaluate(Pkt& pkt, ValueStack& values);
+
+private:
+    /// @brief The regular expression as a string.
+    std::string reg_exp_str_;
+
+    /// @brief The regular expression
+    std::regex reg_exp_;
 };
 
 } // end of isc::dhcp namespace

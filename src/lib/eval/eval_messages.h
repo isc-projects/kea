@@ -20,6 +20,8 @@ extern const isc::log::MessageID EVAL_DEBUG_INT8TOTEXT;
 extern const isc::log::MessageID EVAL_DEBUG_IPADDRESS;
 extern const isc::log::MessageID EVAL_DEBUG_IPADDRESSTOTEXT;
 extern const isc::log::MessageID EVAL_DEBUG_LCASE;
+extern const isc::log::MessageID EVAL_DEBUG_MATCH;
+extern const isc::log::MessageID EVAL_DEBUG_MATCH_ERROR;
 extern const isc::log::MessageID EVAL_DEBUG_MEMBER;
 extern const isc::log::MessageID EVAL_DEBUG_NOT;
 extern const isc::log::MessageID EVAL_DEBUG_OPTION;

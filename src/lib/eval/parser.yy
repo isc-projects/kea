@@ -99,6 +99,7 @@ using namespace isc::eval;
   ANY "*"
   DATA "data"
   ENTERPRISE "enterprise"
+  MATCH "match"
 
   TOPLEVEL_BOOL "top-level bool"
   TOPLEVEL_STRING "top-level string"
@@ -251,6 +252,15 @@ bool_expr : "(" bool_expr ")"
                   }
                   TokenPtr member(new TokenMember(cc));
                   ctx.expression.push_back(member);
+              }
+          | MATCH "(" STRING "," string_expr ")"
+              {
+                  // Expression match('<regex>', <string_expr>)
+                  //
+                  // This token will check if the regular expression matches
+                  // the string expression.
+                  TokenPtr match(new TokenMatch($3));
+                  ctx.expression.push_back(match);
               }
           ;
 

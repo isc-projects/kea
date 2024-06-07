@@ -548,6 +548,23 @@ public:
 
         clearStack(true);
     }
+
+    /// @brief Tests if TokenMatch works as expected.
+    ///
+    /// @param reg_exp regular expression
+    /// @param value value to match
+    /// @param matched true or false
+    void testMatch(const std::string& reg_exp, const std::string& value,
+                   bool matched) {
+        clearStack();
+
+        ASSERT_NO_THROW(t_.reset(new TokenMatch(reg_exp)));
+        values_.push(value);
+        // BTW not known easy way to get a runtime error with C++ regex.
+        ASSERT_NO_THROW(evaluate(Option::V4, matched ? "true" : "false"));
+
+        clearStack();
+    }
 };
 
 // This tests the toBool() conversions
@@ -3766,4 +3783,51 @@ TEST_F(TokenTest, splitMultipleDelims) {
     EXPECT_TRUE(checkFile());
 }
 
-};
+// Verify TokenMatch raises an error on invalid regular expression.
+TEST_F(TokenTest, invalidRegEx) {
+    try {
+        TokenMatch t("[bad");
+        ADD_FAILURE() << "expected exception, got none";
+    } catch (const EvalParseError& ex) {
+        string msg(ex.what());
+        string expected = "invalid regular expression '[bad': ";
+        EXPECT_EQ(expected, msg.substr(0, expected.size()))
+            << "expected to start with " << expected
+            << "\nbut got: " << msg;
+    } catch (const exception& ex) {
+        ADD_FAILURE() << "unexpected expection: " << ex.what();
+    }
+}
+
+// Verify TokenMatch works as expected.
+TEST_F(TokenTest, match) {
+    testMatch("foo", "foo", true);
+    // Full match is required.
+    testMatch("foo", "foobar", false);
+    testMatch("^foo", "foo", true);
+    testMatch("foo$", "foo", true);
+    testMatch("^foo$", "foo", true);
+    testMatch("foo.*", "foo", true);
+    testMatch("foo.*", "foobar", true);
+    // Case sensitive.
+    testMatch("foo", "Foo", false);
+    testMatch("Foo", "foo", false);
+    // Contain is a subcase.
+    testMatch(".*foo.*", "foo", true);
+    testMatch(".*foo.*", "foobar", true);
+    testMatch(".*foo.*", "barfoo", true);
+    testMatch(".*foo.*", "foofoofoo", true);
+    // Character range.
+    testMatch("[fo]{3}", "foo", true);
+    testMatch("[abfor]{6}", "foobar", true);
+    testMatch("[abfo]{6}", "foobar", false);
+    testMatch("[^xyz]+", "foobar", true);
+    // Group.
+    testMatch("f(.)\\1bar", "foobar", true);
+    // Classes.
+    testMatch("[[:alpha:]]{1,9}", "Foobar", true);
+    testMatch("[[:alpha:]]{1,9}", "FoObar", true);
+    testMatch("[[:alpha:]]{1,9}", "Fo0bar", false);
+}
+
+}

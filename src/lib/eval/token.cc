@@ -1401,3 +1401,38 @@ TokenSubOption::evaluate(Pkt& pkt, ValueStack& values) {
             .arg('\'' + txt + '\'');
     }
 }
+
+TokenMatch::TokenMatch(const std::string& reg_exp) : reg_exp_str_(reg_exp) {
+    try {
+        reg_exp_ = regex(reg_exp);
+    } catch (const exception& ex) {
+        isc_throw(EvalParseError, "invalid regular expression '" << reg_exp
+                  << "': " << ex.what());
+    }
+}
+
+void
+TokenMatch::evaluate(Pkt& pkt, ValueStack& values) {
+    if (values.size() == 0) {
+        isc_throw(EvalBadStack, "Incorrect empty stack.");
+    }
+
+    string val = values.top();
+    values.pop();
+    string txt = "false";
+    try {
+        if (regex_match(val, reg_exp_)) {
+            txt = "true";
+        }
+        LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_MATCH)
+            .arg(reg_exp_str_)
+            .arg(val)
+            .arg(txt);
+    } catch (const exception& ex) {
+        LOG_ERROR(eval_logger, EVAL_DEBUG_MATCH_ERROR)
+            .arg(reg_exp_str_)
+            .arg(val)
+            .arg(ex.what());
+    }
+    values.push(txt);   
+}

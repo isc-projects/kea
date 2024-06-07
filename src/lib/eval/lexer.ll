@@ -1,4 +1,4 @@
-/* Copyright (C) 2015-2023 Internet Systems Consortium, Inc. ("ISC")
+/* Copyright (C) 2015-2024 Internet Systems Consortium, Inc. ("ISC")
 
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -233,6 +233,7 @@ addr6 [0-9a-fA-F]*\:[0-9a-fA-F]*\:[0-9a-fA-F:.]*
 "and"          return isc::eval::EvalParser::make_AND(loc);
 "or"           return isc::eval::EvalParser::make_OR(loc);
 "member"       return isc::eval::EvalParser::make_MEMBER(loc);
+"match"        return isc::eval::EvalParser::make_MATCH(loc);
 "."            return isc::eval::EvalParser::make_DOT(loc);
 "("            return isc::eval::EvalParser::make_LPAREN(loc);
 ")"            return isc::eval::EvalParser::make_RPAREN(loc);
