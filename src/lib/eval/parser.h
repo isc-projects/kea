@@ -564,13 +564,14 @@ namespace isc { namespace eval {
     TOKEN_ANY = 311,               // "*"
     TOKEN_DATA = 312,              // "data"
     TOKEN_ENTERPRISE = 313,        // "enterprise"
-    TOKEN_TOPLEVEL_BOOL = 314,     // "top-level bool"
-    TOKEN_TOPLEVEL_STRING = 315,   // "top-level string"
-    TOKEN_STRING = 316,            // "constant string"
-    TOKEN_INTEGER = 317,           // "integer"
-    TOKEN_HEXSTRING = 318,         // "constant hexstring"
-    TOKEN_OPTION_NAME = 319,       // "option name"
-    TOKEN_IP_ADDRESS = 320         // "ip address"
+    TOKEN_MATCH = 314,             // "match"
+    TOKEN_TOPLEVEL_BOOL = 315,     // "top-level bool"
+    TOKEN_TOPLEVEL_STRING = 316,   // "top-level string"
+    TOKEN_STRING = 317,            // "constant string"
+    TOKEN_INTEGER = 318,           // "integer"
+    TOKEN_HEXSTRING = 319,         // "constant hexstring"
+    TOKEN_OPTION_NAME = 320,       // "option name"
+    TOKEN_IP_ADDRESS = 321         // "ip address"
       };
       /// Backward compatibility alias (Bison 3.6).
       typedef token_kind_type yytokentype;
@@ -587,7 +588,7 @@ namespace isc { namespace eval {
     {
       enum symbol_kind_type
       {
-        YYNTOKENS = 66, ///< Number of tokens.
+        YYNTOKENS = 67, ///< Number of tokens.
         S_YYEMPTY = -2,
         S_YYEOF = 0,                             // "end of file"
         S_YYerror = 1,                           // error
@@ -648,31 +649,32 @@ namespace isc { namespace eval {
         S_ANY = 56,                              // "*"
         S_DATA = 57,                             // "data"
         S_ENTERPRISE = 58,                       // "enterprise"
-        S_TOPLEVEL_BOOL = 59,                    // "top-level bool"
-        S_TOPLEVEL_STRING = 60,                  // "top-level string"
-        S_STRING = 61,                           // "constant string"
-        S_INTEGER = 62,                          // "integer"
-        S_HEXSTRING = 63,                        // "constant hexstring"
-        S_OPTION_NAME = 64,                      // "option name"
-        S_IP_ADDRESS = 65,                       // "ip address"
-        S_YYACCEPT = 66,                         // $accept
-        S_start = 67,                            // start
-        S_expression = 68,                       // expression
-        S_bool_expr = 69,                        // bool_expr
-        S_string_expr = 70,                      // string_expr
-        S_integer_expr = 71,                     // integer_expr
-        S_option_code = 72,                      // option_code
-        S_sub_option_code = 73,                  // sub_option_code
-        S_option_repr_type = 74,                 // option_repr_type
-        S_nest_level = 75,                       // nest_level
-        S_pkt_metadata = 76,                     // pkt_metadata
-        S_enterprise_id = 77,                    // enterprise_id
-        S_pkt4_field = 78,                       // pkt4_field
-        S_pkt6_field = 79,                       // pkt6_field
-        S_relay6_field = 80,                     // relay6_field
-        S_start_expr = 81,                       // start_expr
-        S_length_expr = 82,                      // length_expr
-        S_int_expr = 83                          // int_expr
+        S_MATCH = 59,                            // "match"
+        S_TOPLEVEL_BOOL = 60,                    // "top-level bool"
+        S_TOPLEVEL_STRING = 61,                  // "top-level string"
+        S_STRING = 62,                           // "constant string"
+        S_INTEGER = 63,                          // "integer"
+        S_HEXSTRING = 64,                        // "constant hexstring"
+        S_OPTION_NAME = 65,                      // "option name"
+        S_IP_ADDRESS = 66,                       // "ip address"
+        S_YYACCEPT = 67,                         // $accept
+        S_start = 68,                            // start
+        S_expression = 69,                       // expression
+        S_bool_expr = 70,                        // bool_expr
+        S_string_expr = 71,                      // string_expr
+        S_integer_expr = 72,                     // integer_expr
+        S_option_code = 73,                      // option_code
+        S_sub_option_code = 74,                  // sub_option_code
+        S_option_repr_type = 75,                 // option_repr_type
+        S_nest_level = 76,                       // nest_level
+        S_pkt_metadata = 77,                     // pkt_metadata
+        S_enterprise_id = 78,                    // enterprise_id
+        S_pkt4_field = 79,                       // pkt4_field
+        S_pkt6_field = 80,                       // pkt6_field
+        S_relay6_field = 81,                     // relay6_field
+        S_start_expr = 82,                       // start_expr
+        S_length_expr = 83,                      // length_expr
+        S_int_expr = 84                          // int_expr
       };
     };
 
@@ -2015,6 +2017,21 @@ switch (yykind)
 #if 201103L <= YY_CPLUSPLUS
       static
       symbol_type
+      make_MATCH (location_type l)
+      {
+        return symbol_type (token::TOKEN_MATCH, std::move (l));
+      }
+#else
+      static
+      symbol_type
+      make_MATCH (const location_type& l)
+      {
+        return symbol_type (token::TOKEN_MATCH, l);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
       make_TOPLEVEL_BOOL (location_type l)
       {
         return symbol_type (token::TOKEN_TOPLEVEL_BOOL, std::move (l));
@@ -2447,9 +2464,9 @@ switch (yykind)
     /// Constants.
     enum
     {
-      yylast_ = 299,     ///< Last index in yytable_.
+      yylast_ = 309,     ///< Last index in yytable_.
       yynnts_ = 18,  ///< Number of nonterminal symbols.
-      yyfinal_ = 44 ///< Termination state number.
+      yyfinal_ = 45 ///< Termination state number.
     };
 
 
@@ -2500,10 +2517,10 @@ switch (yykind)
       35,    36,    37,    38,    39,    40,    41,    42,    43,    44,
       45,    46,    47,    48,    49,    50,    51,    52,    53,    54,
       55,    56,    57,    58,    59,    60,    61,    62,    63,    64,
-      65
+      65,    66
     };
     // Last valid token kind.
-    const int code_max = 320;
+    const int code_max = 321;
 
     if (t <= 0)
       return symbol_kind::S_YYEOF;
@@ -2704,7 +2721,7 @@ switch (yykind)
 
 #line 14 "parser.yy"
 } } // isc::eval
-#line 2708 "parser.h"
+#line 2725 "parser.h"
 
 
 
