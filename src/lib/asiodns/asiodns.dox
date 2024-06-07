@@ -1,3 +1,12 @@
+// Copyright (C) 2024 Internet Systems Consortium, Inc. ("ISC")
+//
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+/**
+ @page libasiodns libkea-asiodns - Kea I/O Library
+
 The asiodns library is intended to provide an abstraction layer between Kea
 modules and asiolink library.
 
@@ -148,3 +157,4 @@ the message is preceded by a count field as several reads may be required to
 read all the data. The fetch loops until all the data is read.
 
 Finally, the socket is closed and the server called to resume operation.
+*/

@@ -125,6 +125,7 @@
  *   - @subpage libdhcpPktFilter6
  *   - @subpage libdhcpErrorLogging
  * - @subpage libstats
+ * - @subpage libasiodns
  * - @subpage libdhcp_ddns
  * - @subpage libdhcpsrv
  *   - @subpage leasemgr
