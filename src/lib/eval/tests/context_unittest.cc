@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -791,6 +791,20 @@ public:
         EXPECT_EQ(expected_code, sub->getCode());
         EXPECT_EQ(expected_sub_code, sub->getSubCode());
         EXPECT_EQ(expected_repr, sub->getRepresentation());
+    }
+
+    /// @brief checks if the given token is a match with the expected
+    /// regular expression.
+    /// @param token token to be checked
+    /// @param expected_reg_exp expected regular expression.
+    void checkTokenMatch(const TokenPtr& token,
+                         const std::string& expected_reg_exp) {
+        ASSERT_TRUE(token);
+        boost::shared_ptr<TokenMatch> match =
+            boost::dynamic_pointer_cast<TokenMatch>(token);
+        ASSERT_TRUE(match);
+
+        EXPECT_EQ(expected_reg_exp, match->getRegExp());
     }
 
     Option::Universe universe_; ///< Universe (V4 or V6)
@@ -2263,6 +2277,35 @@ TEST_F(EvalContextTest, integer1) {
 
     ASSERT_TRUE(tmp);
     checkTokenInteger(tmp, 2);
+}
+
+// Checks the parsing of a regular expression matching.
+TEST_F(EvalContextTest, match) {
+    EvalContext eval(Option::V4);
+
+    EXPECT_NO_THROW(parsed_ = eval.parseString("match('foo.*', 'foobar')"));
+    EXPECT_TRUE(parsed_);
+
+    ASSERT_EQ(2, eval.expression.size());
+
+    TokenPtr tmp = eval.expression.at(0);
+    ASSERT_TRUE(tmp);
+    checkTokenString(tmp, "foobar");
+
+    tmp = eval.expression.at(1);
+    checkTokenMatch(tmp, "foo.*");
+
+    Pkt4Ptr pkt4(new Pkt4(DHCPDISCOVER, 12345));
+    ValueStack values;
+    values.push("foobar");
+
+    EXPECT_NO_THROW(tmp->evaluate(*pkt4, values));
+
+    ASSERT_EQ(1, values.size());
+    EXPECT_EQ("true", values.top());
+
+    // Invalid regular expressions are syntax errors.
+    EXPECT_THROW(eval.parseString("match('[bad', 'foobar')"), EvalParseError);
 }
 
 }

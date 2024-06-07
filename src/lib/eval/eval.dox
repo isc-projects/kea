@@ -194,6 +194,7 @@ instantiated with the appropriate value and put onto the expression vector.
    existence, enterprise-id and included data chunks. (e.g.
    vendor-class[1234].exists,
    vendor-class[*].enterprise-id, vendor-class[*].data[3])
+ - isc::dhcp::TokenMatch -- represents a regular expression matching.
 
 More operators are expected to be implemented in upcoming releases.
 

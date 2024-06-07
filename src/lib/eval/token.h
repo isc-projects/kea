@@ -1345,6 +1345,16 @@ public:
     /// @throw EvalBadStack if there is no value on the stack
     void evaluate(Pkt& pkt, ValueStack& values);
 
+    /// @brief Returns regular expression.
+    ///
+    /// This method is used in testing to determine if the parser had
+    /// instantiated TokenMatch with correct parameters.
+    ///
+    /// @return regular expression as a string.
+    const std::string& getRegExp() const {
+        return (reg_exp_str_);
+    }
+
 private:
     /// @brief The regular expression as a string.
     std::string reg_exp_str_;
