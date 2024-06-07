@@ -166,8 +166,8 @@ class CARequestUnitTest(unittest.TestCase):
             user = 'libert\xe9'
             password = '\xe9galit\xe9'
         else:
-            user = u'libert\xe9'
-            password = u'\xe9galit\xe9'
+            user = 'libert\xe9'
+            password = '\xe9galit\xe9'
         buser = user.encode('utf-8')
         bpassword = password.encode('utf-8')
         secret = b':'.join((buser, bpassword))

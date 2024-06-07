@@ -33,7 +33,7 @@ def read_input_files(files):
         if name.startswith('_'):
             print("Skipping %s (starts with underscore)" % f)
             continue
-        with open(f) as fp:
+        with open(f, encoding='utf-8') as fp:
             print("Processing %s" % f)
             # use OrderedDict to preserve order of fields in cmd-syntax
             try:
@@ -42,7 +42,7 @@ def read_input_files(files):
                 print(f'\nError while processing {f}: {e}\n\n')
                 raise
             if name != descr['name']:
-                exit("Expected name == descr['name'], but name is {name} and descr['name'] is {descr['name']}")
+                raise ValueError("Expected name == descr['name']. Name is {name} and descr['name'] is {descr['name']}.")
 
         apis[name] = descr
 
@@ -196,7 +196,7 @@ def generate(in_files, out_file):
     rst = generate_rst(apis)
 
     if out_file:
-        with open(out_file, 'w') as f:
+        with open(out_file, 'w', encoding='utf-8') as f:
             f.write(rst)
         print('Wrote generated RST content to: %s' % out_file)
     else:

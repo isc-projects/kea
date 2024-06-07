@@ -160,7 +160,8 @@ def process_file(filename):
     Parameters:
     filename     Name of the message file to process
     """
-    lines = open(filename).read().splitlines()
+    with open(filename, encoding='utf-8') as f:
+        lines = f.read().splitlines()
 
     # Search for the first line starting with the percent character.  Everything
     # before it is considered the file header and is copied to the output with

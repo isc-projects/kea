@@ -15,7 +15,7 @@
 # git pull
 # git remote prune origin
 #
-# This script requires python 2.7 or 3.
+# This script requires python 3.
 #
 # I have limited experience in Python. If things are done in a strange or
 # uncommon way, there are no obscure reasons to do it that way, just plain
@@ -23,9 +23,7 @@
 #
 #                                                                        tomek
 
-import string
-import sys
-from optparse import OptionParser
+import argparse
 
 # [B404:blacklist] Consider possible security implications associated with subprocess module.
 import subprocess  # nosec B404
@@ -157,39 +155,31 @@ def check_output(cmd):
     return subprocess.check_output(cmd)  # nosec B603
 
 
-def parse_args(args=sys.argv[1:], Parser=OptionParser):
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description="This script prints out merged and/or unmerged branches of a GIT tree.",
+        usage="""%prog
+    Lists all obsolete (fully merged into master) branches.
+""")
 
-    parser = Parser(description="This script prints out merged and/or unmerged"
-                    " branches of a GIT tree.")
+    parser.add_argument("-c", "--csv", action="store_true",
+                        default=False, help="generates CSV output")
+    parser.add_argument("-u", "--unmerged", action="store_true",
+                        default=False, help="lists unmerged branches")
+    parser.add_argument("-m", "--skip-merged", action="store_true",
+                        default=False, help="omits listing merged branches")
+    parser.add_argument("-s", "--stats", action="store_true",
+                        default=False, help="prints also statistics")
 
-    parser.add_option("-c", "--csv", action="store_true",
-                      default=False, help="generates CSV output")
-    parser.add_option("-u", "--unmerged", action="store_true",
-                      default=False, help="lists unmerged branches")
-    parser.add_option("-m", "--skip-merged", action="store_true",
-                      default=False, help="omits listing merged branches")
-    parser.add_option("-s", "--stats", action="store_true",
-                      default=False, help="prints also statistics")
-
-    (options, args) = parser.parse_args(args)
-
-    if args:
-        parser.print_help()
-        sys.exit(1)
-
-    return options
+    return parser.parse_args()
 
 
 def main():
-    usage = """%prog
-    Lists all obsolete (fully merged into master) branches.
-    """
-
-    options = parse_args()
-    csv = options.csv
-    merged = not options.skip_merged
-    unmerged = options.unmerged
-    stats = options.stats
+    args = parse_args()
+    csv = args.csv
+    merged = not args.skip_merged
+    unmerged = args.unmerged
+    stats = args.stats
 
     if csv:
         print("branch name,status,date,last commit(mail),last commit(name)")

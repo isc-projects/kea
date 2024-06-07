@@ -47,10 +47,10 @@ def send_to_control_agent(params):
     # Issue: [B310:blacklist] Audit url open for permitted schemes.
     #        Allowing use of file:/ or custom schemes is often unexpected.
     # Reason for nosec: url is checked to be http further above.
-    resp = urllib.request.urlopen(req, context=ssl_ctx)  # nosec B310
+    with urllib.request.urlopen(req, context=ssl_ctx) as resp:  # nosec B310
+        # Now get the response details, put it in CAResponse and return it
+        result = CAResponse(resp.getcode(), resp.reason,
+                            resp.read().decode("utf-8"))
 
-    # Now get the response details, put it in CAResponse and return it
-    result = CAResponse(resp.getcode(), resp.reason,
-                        resp.read().decode("utf-8"))
-
-    return result
+        return result
+    return None

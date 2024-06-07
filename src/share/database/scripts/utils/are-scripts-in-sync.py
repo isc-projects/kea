@@ -305,9 +305,9 @@ def main(parameters):
     # Only print if we have something to print to avoid a newline.
     # Also don't clutter output with lines that doesn't cause CI failure if
     # there are lines that cause CI failure.
-    if len(output_for_latest):
+    if len(output_for_latest) > 0:
         print(output_for_latest)
-    elif len(output_for_other_than_latest):
+    elif len(output_for_other_than_latest) > 0:
         print(output_for_other_than_latest)
 
     # Only report errors on the latest upgrade script. For all other upgrade

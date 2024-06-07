@@ -36,9 +36,8 @@ def parse_args():
 def read_input_files(files):
     messages = {}
     for f in files:
-        with open(f) as fp:
+        with open(f, encoding='utf-8') as fp:
             print("Processing %s" % f)
-            namespace = None
             msg_descr = None
             msg_id = None
             msg_text = None
@@ -119,7 +118,7 @@ def generate(in_files, out_file):
     rst = generate_rst(messages)
 
     if out_file:
-        with open(out_file, 'w') as f:
+        with open(out_file, 'w', encoding='utf-8') as f:
             f.write(rst)
         print('Wrote generated RST content to: %s' % out_file)
     else:

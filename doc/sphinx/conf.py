@@ -6,31 +6,35 @@
 # full list see the documentation:
 # http://www.sphinx-doc.org/en/master/config
 
+import os
+import sys
+from shutil import copyfile
+
 # -- Path setup --------------------------------------------------------------
+
+# to avoid sphinx.errors.SphinxParallelError: RecursionError: maximum recursion depth exceeded while pickling an object
+sys.setrecursionlimit(5000)
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-#
-import os
-# import sys
-# sys.path.insert(0, os.path.abspath('.'))
+SRC_DIR = os.path.abspath(os.path.dirname(__file__))
+sys.path.append(SRC_DIR)
 
-# to avoid sphinx.errors.SphinxParallelError: RecursionError: maximum recursion depth exceeded while pickling an object
-import sys
-sys.setrecursionlimit(5000)
+import api2doc  # noqa  # pylint: disable=wrong-import-position
+import mes2doc  # noqa  # pylint: disable=wrong-import-position
 
 # -- Project information -----------------------------------------------------
 
 project = 'Kea'
-copyright = '2019-2024, Internet Systems Consortium'
+copyright = '2019-2024, Internet Systems Consortium'  # pylint: disable=redefined-builtin
 author = 'Internet Systems Consortium'
 
 # get current kea version
 config_ac_path = '../../configure.ac'
 changelog_path = '../../ChangeLog'
 release = 'UNRELEASED'
-with open(config_ac_path) as f:
+with open(config_ac_path, encoding='utf-8') as f:
     for line in f.readlines():
         if line.startswith('AC_INIT(kea'):
             parts = line.split(',')
@@ -39,7 +43,7 @@ with open(config_ac_path) as f:
             # that this is the final release.
             dash_parts = release.split('-')
             candidate_release = dash_parts[0]
-            with open(changelog_path) as changelog_file:
+            with open(changelog_path, encoding='utf-8') as changelog_file:
                 first_line = changelog_file.readline()
                 if candidate_release in first_line and "released" in first_line:
                     release = candidate_release
@@ -251,23 +255,15 @@ rst_prolog = """
 # Do generation of api.rst and kea-messages.rst here in conf.py instead of Makefile.am
 # so they are available on ReadTheDocs as there makefiles are not used for building docs.
 def run_generate_docs(_):
-    import os
-    import sys
-    src_dir = os.path.abspath(os.path.dirname(__file__))
-    print(src_dir)
-    sys.path.append(src_dir)
-
-    import api2doc
-    with open(os.path.join(src_dir, 'api-files.txt')) as af:
+    with open(os.path.join(SRC_DIR, 'api-files.txt'), encoding='utf-8') as af:
         api_files = af.read().split()
-    api_files = [os.path.abspath(os.path.join(src_dir, '../..', af)) for af in api_files]
-    api2doc.generate(api_files, os.path.join(src_dir, 'api.rst'))
+    api_files = [os.path.abspath(os.path.join(SRC_DIR, '../..', af)) for af in api_files]
+    api2doc.generate(api_files, os.path.join(SRC_DIR, 'api.rst'))
 
-    import mes2doc
-    with open(os.path.join(src_dir, 'mes-files.txt')) as mf:
+    with open(os.path.join(SRC_DIR, 'mes-files.txt'), encoding='utf-8') as mf:
         mes_files = mf.read().split()
-    mes_files = [os.path.abspath(os.path.join(src_dir, '../..', mf)) for mf in mes_files]
-    mes2doc.generate(mes_files, os.path.join(src_dir, 'kea-messages.rst'))
+    mes_files = [os.path.abspath(os.path.join(SRC_DIR, '../..', mf)) for mf in mes_files]
+    mes2doc.generate(mes_files, os.path.join(SRC_DIR, 'kea-messages.rst'))
 
     # Sphinx has some limitations. It can't import files from outside its directory, which
     # in our case is src/sphinx. On the other hand, we need to have platforms.rst file
@@ -292,10 +288,9 @@ def run_generate_docs(_):
         ['../examples/template-ha-mt-tls/kea-dhcp4-2.conf', 'template-ha-mt-tls-dhcp4-2.conf']
     ]
 
-    from shutil import copyfile
     for [a, b] in FILES_TO_COPY:
-        src = os.path.join(src_dir, a)
-        dst = os.path.join(src_dir, 'arm', b)
+        src = os.path.join(SRC_DIR, a)
+        dst = os.path.join(SRC_DIR, 'arm', b)
         print("Copying %s to %s" % (src, dst))
         copyfile(src, dst)
 

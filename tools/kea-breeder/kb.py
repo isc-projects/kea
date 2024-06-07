@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 
 import argparse
-from termcolor import colored, cprint
-from io import StringIO
 import json
 import os
 import re
-import sqlalchemy as db
-from sqlalchemy.sql import select
 import sys
+from io import StringIO
+
+import sqlalchemy as db  # pylint: disable=import-error
+from termcolor import cprint  # pylint: disable=import-error
 
 
 def convert_to_db(entity_name, make_singular=True):
@@ -86,6 +86,7 @@ class State:
 
 class ConfigFile:
     def __init__(self, filename):
+        self.config = {}
         self.filename = filename
 
     def load(self):
@@ -93,7 +94,7 @@ class ConfigFile:
             print('The all keys file %s does not exist.' % self.filename)
             sys.exit(1)
 
-        with open(self.filename) as f:
+        with open(self.filename, encoding='utf-8') as f:
             self.config = json.load(f)
             f.close()
 
@@ -232,17 +233,17 @@ def main():
         sys.exit(1)
 
     sanitized_contents = ''
-    f = open(args.all_keys_file)
-    for line in f:
-        sanitized_line = line.strip()
-        if not sanitized_line:
-            continue
+    with open(args.all_keys_file, encoding='utf-8') as f:
+        for line in f:
+            sanitized_line = line.strip()
+            if not sanitized_line:
+                continue
 
-        if sanitized_line.find('//') != -1 or sanitized_line.find('#') != -1:
-            continue
+            if sanitized_line.find('//') != -1 or sanitized_line.find('#') != -1:
+                continue
 
-        sanitized_line = sanitized_line.replace(': .', ': 0.')
-        sanitized_contents = sanitized_contents + sanitized_line
+            sanitized_line = sanitized_line.replace(': .', ': 0.')
+            sanitized_contents = sanitized_contents + sanitized_line
 
     f.close()
 

@@ -316,14 +316,14 @@ What you are expected to do is as follows:
   examples.
 """
 
+import argparse
+import base64
 import configparser
 import re
-import time
 import socket
 import sys
-import base64
+import time
 from datetime import datetime
-from optparse import OptionParser
 
 re_hex = re.compile(r'^0x[0-9a-fA-F]+')
 re_decimal = re.compile(r'^\d+$')
@@ -334,11 +334,9 @@ dnssec_timefmt = '%Y%m%d%H%M%S'
 dict_qr = {'query': 0, 'response': 1}
 dict_opcode = {'query': 0, 'iquery': 1, 'status': 2, 'notify': 4,
                'update': 5}
-rdict_opcode = dict([(dict_opcode[k], k.upper()) for k in dict_opcode.keys()])
 dict_rcode = {'noerror': 0, 'formerr': 1, 'servfail': 2, 'nxdomain': 3,
               'notimp': 4, 'refused': 5, 'yxdomain': 6, 'yxrrset': 7,
               'nxrrset': 8, 'notauth': 9, 'notzone': 10}
-rdict_rcode = dict([(dict_rcode[k], k.upper()) for k in dict_rcode.keys()])
 dict_rrtype = {'none': 0, 'a': 1, 'ns': 2, 'md': 3, 'mf': 4, 'cname': 5,
                'soa': 6, 'mb': 7, 'mg': 8, 'mr': 9, 'null': 10,
                'wks': 11, 'ptr': 12, 'hinfo': 13, 'minfo': 14, 'mx': 15,
@@ -352,21 +350,25 @@ dict_rrtype = {'none': 0, 'a': 1, 'ns': 2, 'md': 3, 'mf': 4, 'cname': 5,
                'spf': 99, 'unspec': 103, 'tkey': 249, 'tsig': 250,
                'dlv': 32769, 'ixfr': 251, 'axfr': 252, 'mailb': 253,
                'maila': 254, 'any': 255, 'caa': 257}
-rdict_rrtype = dict([(dict_rrtype[k], k.upper()) for k in dict_rrtype.keys()])
 dict_rrclass = {'in': 1, 'ch': 3, 'hs': 4, 'any': 255}
-rdict_rrclass = dict([(dict_rrclass[k], k.upper()) for k in dict_rrclass.keys()])
-dict_algorithm = {'rsamd5': 1, 'dh': 2, 'dsa': 3, 'ecc': 4,
-                  'rsasha1': 5}
+dict_algorithm = {'rsamd5': 1, 'dh': 2, 'dsa': 3, 'ecc': 4, 'rsasha1': 5}
 dict_nsec3_algorithm = {'reserved': 0, 'sha1': 1}
-rdict_algorithm = dict([(dict_algorithm[k], k.upper()) for k in dict_algorithm.keys()])
-rdict_nsec3_algorithm = dict([(dict_nsec3_algorithm[k], k.upper()) for k in dict_nsec3_algorithm.keys()])
+
+rdict_opcode = {k.upper(): v for k, v in dict_opcode.items()}
+rdict_rcode = {k.upper(): v for k, v in dict_rcode.items()}
+rdict_rrtype = {k.upper(): v for k, v in dict_rrtype.items()}
+rdict_rrclass = {k.upper(): v for k, v in dict_rrclass.items()}
+rdict_algorithm = {k.upper(): v for k, v in dict_algorithm.items()}
+rdict_nsec3_algorithm = {k.upper(): v for k, v in dict_nsec3_algorithm.items()}
 
 header_xtables = {'qr': dict_qr, 'opcode': dict_opcode,
                   'rcode': dict_rcode}
 question_xtables = {'rrtype': dict_rrtype, 'rrclass': dict_rrclass}
 
 
-def parse_value(value, xtable={}):
+def parse_value(value, xtable=None):
+    if xtable is None:
+        xtable = {}
     if re.search(re_hex, value):
         return int(value, 16)
     if re.search(re_decimal, value):
@@ -380,9 +382,9 @@ def parse_value(value, xtable={}):
     return value
 
 
-def code_totext(code, dict):
-    if code in dict.keys():
-        return dict[code] + '(' + str(code) + ')'
+def code_totext(code, dictionary):
+    if code in dictionary:
+        return dictionary[code] + '(' + str(code) + ')'
     return str(code)
 
 
@@ -395,7 +397,7 @@ def encode_name(name, absolute=True):
     for label in labels:
         if len(label) > 4 and label[0:4] == 'ptr=':
             # special meta-syntax for compression pointer
-            wire += '%04x' % (0xc000 | int(l[4:]))
+            wire += '%04x' % (0xc000 | int(label[4:]))
             break
         if absolute or len(label) > 0:
             wire += '%02x' % len(label)
@@ -405,15 +407,15 @@ def encode_name(name, absolute=True):
     return wire
 
 
-def encode_string(name, len=None):
-    if type(name) is int and len is not None:
-        return '%0.*x' % (len * 2, name)
+def encode_string(name, length=None):
+    if isinstance(name, int) and length is not None:
+        return '%0.*x' % (length * 2, name)
     return ''.join(['%02x' % ord(ch) for ch in name])
 
 
-def encode_bytes(name, len=None):
-    if type(name) is int and len is not None:
-        return '%0.*x' % (len * 2, name)
+def encode_bytes(name, length=None):
+    if isinstance(name, int) and length is not None:
+        return '%0.*x' % (length * 2, name)
     return ''.join(['%02x' % ch for ch in name])
 
 
@@ -426,11 +428,13 @@ def count_namelabels(name):
     return len(name.split('.'))
 
 
-def get_config(config, section, configobj, xtables={}):
+def get_config(config, section, configobj, xtables=None):
+    if xtables is None:
+        xtables = {}
     try:
         for field in config.options(section):
             value = config.get(section, field)
-            if field in xtables.keys():
+            if field in xtables:
                 xtable = xtables[field]
             else:
                 xtable = {}
@@ -704,7 +708,8 @@ class AAAA(RR):
         self.dump_header(f, self.rdlen)
         f.write('# Address=%s\n' % (self.address))
         bin_address = socket.inet_pton(socket.AF_INET6, self.address)
-        [f.write('%02x' % x) for x in bin_address]
+        for x in bin_address:
+            f.write('%02x' % x)
         f.write('\n')
 
 
@@ -959,6 +964,7 @@ class NSECBASE(RR):
     block = 0
     maplen = None               # default bitmap length, auto-calculate
     bitmap = '040000000003'     # an arbitrarily chosen bitmap sample
+    nextname = None
 
     def dump(self, f):
         # first, construct the bitmap data
@@ -994,6 +1000,17 @@ class NSECBASE(RR):
             f.write('%02x %02x %s\n' %
                     (block_list[i], maplen_list[i], bitmap_list[i]))
 
+    def dump_fixedpart(self, f, bitmap_totallen):
+        name_wire = encode_name(self.nextname)
+        if self.rdlen is None:
+            # if rdlen needs to be calculated, it must be based on the bitmap
+            # length, because the configured maplen can be fake.
+            self.rdlen = int(len(name_wire) / 2) + bitmap_totallen
+        self.dump_header(f, self.rdlen)
+        f.write('# Next Name=%s (%d bytes)\n' % (self.nextname,
+                                                 int(len(name_wire) / 2)))
+        f.write('%s\n' % name_wire)
+
 
 class NSEC(NSECBASE):
     '''Implements rendering NSEC RDATA in the test data format.
@@ -1006,17 +1023,6 @@ class NSEC(NSECBASE):
     '''
 
     nextname = 'next.example.com'
-
-    def dump_fixedpart(self, f, bitmap_totallen):
-        name_wire = encode_name(self.nextname)
-        if self.rdlen is None:
-            # if rdlen needs to be calculated, it must be based on the bitmap
-            # length, because the configured maplen can be fake.
-            self.rdlen = int(len(name_wire) / 2) + bitmap_totallen
-        self.dump_header(f, self.rdlen)
-        f.write('# Next Name=%s (%d bytes)\n' % (self.nextname,
-                                                 int(len(name_wire) / 2)))
-        f.write('%s\n' % name_wire)
 
 
 class NSEC3PARAM(RR):
@@ -1146,9 +1152,9 @@ class RRSIG(RR):
             self.rdlen = int(18 + len(name_wire) / 2 + len(str(sig_wire)) / 2)
         self.dump_header(f, self.rdlen)
 
-        if type(self.covered) is str:
+        if isinstance(self.covered, str):
             self.covered = dict_rrtype[self.covered.lower()]
-        if type(self.algorithm) is str:
+        if isinstance(self.algorithm, str):
             self.algorithm = dict_algorithm[self.algorithm.lower()]
         if self.labels is None:
             self.labels = count_namelabels(self.signer)
@@ -1345,7 +1351,7 @@ class TSIG(RR):
             name_wire = encode_name(self.algorithm)
         mac_size = self.mac_size
         if mac_size is None:
-            if self.algorithm in self.dict_macsize.keys():
+            if self.algorithm in self.dict_macsize:
                 mac_size = self.dict_macsize[self.algorithm]
             else:
                 raise RuntimeError('TSIG Mac Size cannot be determined')
@@ -1426,7 +1432,7 @@ config_param = {'name': (Name, {}),
                 'header': (DNSHeader, header_xtables),
                 'question': (DNSQuestion, question_xtables),
                 'edns': (EDNS, {})}
-for rrtype in dict_rrtype.keys():
+for rrtype in dict_rrtype:
     # For any supported RR types add the tuple of (RR_CLASS, {}).
     # We expect KeyError as not all the types are supported, and simply
     # ignore them.
@@ -1448,18 +1454,18 @@ def get_config_param(section):
 usage = 'usage: %prog [options] input_file'
 
 
-if __name__ == "__main__":
-    parser = OptionParser(usage=usage)
-    parser.add_option('-o', '--output', action='store', dest='output',
-                      default=None, metavar='FILE',
-                      help='output file name [default: prefix of input_file]')
-    (options, args) = parser.parse_args()
+def main():
+    parser = argparse.ArgumentParser(usage=usage)
+    parser.add_argument('-o', '--output', action='store', dest='output',
+                        default=None, metavar='FILE',
+                        help='output file name [default: prefix of input_file]')
+    args = parser.parse_args()
 
     if len(args) == 0:
         parser.error('input file is missing')
     configfile = args[0]
 
-    outputfile = options.output
+    outputfile = args.output
     if not outputfile:
         m = re.match(r'(.*)\.[^.]+$', configfile)
         if m:
@@ -1468,12 +1474,12 @@ if __name__ == "__main__":
             raise ValueError('output file is not specified and input file is not in the form of "output_file.suffix"')
 
     # DeprecationWarning: use ConfigParser directly
-    config = configparser.SafeConfigParser()
+    config = configparser.SafeConfigParser()  # pylint: disable=deprecated-class
     config.read(configfile)
 
-    output = open(outputfile, 'w')
+    output = open(outputfile, 'w', encoding='utf-8')  # pylint: disable=consider-using-with
 
-    print_header(output, configfile)
+    print_header(outputfile, configfile)
 
     # First try the 'custom' mode; if it fails assume the query mode.
     try:
@@ -1488,3 +1494,7 @@ if __name__ == "__main__":
             obj.dump(output)
 
     output.close()
+
+
+if __name__ == "__main__":
+    main()

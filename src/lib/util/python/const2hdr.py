@@ -28,7 +28,7 @@ if len(sys.argv) != 3:
 preproc = re.compile('^#')
 constant = re.compile('^([a-zA-Z].*?[a-zA-Z_0-9]+)\\s*=.*;')
 
-with open(filename_in) as file_in, open(filename_out, "w") as file_out:
+with open(filename_in, encoding='utf-8') as file_in, open(filename_out, "w", encoding='utf-8') as file_out:
     file_out.write("// This file is generated from " + filename_in + "\n" +
                    "// by the const2hdr.py script.\n" +
                    "// Do not edit, all changes will be lost.\n\n")
