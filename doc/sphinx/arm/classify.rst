@@ -474,6 +474,10 @@ Notes:
    |                       |                         | values and return     |
    |                       |                         | ``true`` or ``false`` |
    +-----------------------+-------------------------+-----------------------+
+   | Match                 | match('foo.*', 'foobar')| Match a regular       |
+   |                       |                         | expression with a     |
+   |                       |                         | value.                |
+   +-----------------------+-------------------------+-----------------------+
    | Not                   | not ('foo' == 'bar')    | Logical negation      |
    +-----------------------+-------------------------+-----------------------+
    | And                   | ('foo' == 'bar') and    | Logical and           |
@@ -562,6 +566,27 @@ The ``AddressToText`` token expects 4 bytes for IPv4 addresses or 16 bytes for I
 addresses. The ``Int8ToText`` and ``UInt8ToText`` tokens expect 1 byte, the ``Int16ToText`` and
 ``UInt16ToText`` tokens expect 2 bytes, and ``Int32ToText`` and ``UInt32ToText`` expect 4 bytes.
 For all conversion tokens, if the data length is 0, the result string is empty.
+
+Predicates
+----------
+
+The two predicates are Equal and Match. They can be used to build other
+common predicates, for instance:
+::
+           not (substring('foobar', 3, 3) == 'bar')
+           match('foo.*', lcase('FooBar'))
+           match('.*foo.*', 'is it foo or bar')
+           match('^.*foo.*$', 'is it foo or bar')
+
+So inequality, case insensitive pattern matching or pattern search.
+
+.. note::
+
+   Detected invalid regular expressions are considered as syntax errors,
+   runtime exceptions during match are handled as no match.
+   Be careful with the match operator as it can show extremely bad
+   performance leading to regular expression denial of service (ReDoS).
+
 
 Logical Operators
 -----------------

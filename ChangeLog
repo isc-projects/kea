@@ -1,3 +1,8 @@
+2253.	[func]		fdupont
+	Added the predicate token "match" which evaluates regular
+	expression matching.
+	(Gitlab #3170)
+
 2252.	[bug]		fdupont
 	Corrected an issue in kea-dhcp6 which caused reserved prefixes
 	to not be removed when their host reservation was deleted by
