@@ -573,6 +573,7 @@ Predicates
 The two predicates are Equal and Match. They can be used to build other
 common predicates, for instance:
 ::
+
            not (substring('foobar', 3, 3) == 'bar')
            match('foo.*', lcase('FooBar'))
            match('.*foo.*', 'is it foo or bar')
