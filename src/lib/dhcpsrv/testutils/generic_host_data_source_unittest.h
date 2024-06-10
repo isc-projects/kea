@@ -508,6 +508,14 @@ public:
     /// Uses gtest macros to report failures.
     void testDeleteById6Options();
 
+    /// @brief Tests that two IPv6 reservations for the specified subnet ID
+    /// and IPv6 address can be deleted.
+    void testDelete2ForIPv6();
+
+    /// @brief Tests that IPv6 address and prefix reservations for the specified
+    /// subnet ID and IPv6 address can be deleted.
+    void testDeleteBothForIPv6();
+
     /// @brief Tests that multiple reservations without IPv4 addresses can be
     /// specified within a subnet.
     ///

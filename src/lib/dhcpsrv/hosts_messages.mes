@@ -278,7 +278,7 @@ This debug message is issued when no host was found using the specified
 subnet id and host identifier.
 
 % HOSTS_CFG_UPDATE_ADD add the host for reservations: %1
-This debug message is issued when new host (with reservations) is
+This debug message is issued when a new host (with reservations) is
 added to the server's configuration during an update. The argument
 describes the host and its reservations in detail.
 

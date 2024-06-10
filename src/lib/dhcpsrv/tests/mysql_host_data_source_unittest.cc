@@ -1443,6 +1443,32 @@ TEST_F(MySqlHostDataSourceTest, deleteById6OptionsMultiThreading) {
     testDeleteById6Options();
 }
 
+// This test verifies that all reservations can be deleted from database
+// by providing subnet ID and one address.
+TEST_F(MySqlHostDataSourceTest, del2) {
+    testDelete2ForIPv6();
+}
+
+// This test verifies that all reservations can be deleted from database
+// by providing subnet ID and one address.
+TEST_F(MySqlHostDataSourceTest, del2MultiThreading) {
+    MultiThreadingTest mt(true);
+    testDelete2ForIPv6();
+}
+
+// This test verifies that address and PD reservations can be deleted from database
+// by providing subnet ID and the address.
+TEST_F(MySqlHostDataSourceTest, delBoth) {
+    testDelete2ForIPv6();
+}
+
+// This test verifies that address and PD reservations can be deleted from database
+// by providing subnet ID and the address.
+TEST_F(MySqlHostDataSourceTest, delBothMultiThreading) {
+    MultiThreadingTest mt(true);
+    testDelete2ForIPv6();
+}
+
 /// @brief Tests that multiple reservations without IPv4 addresses can be
 /// specified within a subnet.
 TEST_F(MySqlHostDataSourceTest, testMultipleHostsNoAddress4) {

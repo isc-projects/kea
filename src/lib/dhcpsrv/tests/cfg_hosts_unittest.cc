@@ -72,6 +72,7 @@ public:
     void testDeleteForIPv4();
     void testDeleteForIPv6();
     void testDelete2ForIPv6();
+    void testDeleteBothForIPv6();
     void testDel4();
     void testDel6();
     void testDeleteAll4();
@@ -719,7 +720,7 @@ TEST_F(CfgHostsTest, deleteForIPv6MultiThreading) {
 void
 CfgHostsTest::testDelete2ForIPv6() {
     CfgHosts cfg;
-    // Add host with two addresses.
+    // Add a host with two addresses.
     IOAddress address1("2001:db8:1::1");
     IOAddress address2("2001:db8:2::2");
     size_t host_count = 10;
@@ -732,7 +733,7 @@ CfgHostsTest::testDelete2ForIPv6() {
     host->addReservation(IPv6Resrv(IPv6Resrv::TYPE_NA, address2));
     cfg.add(host);
 
-    // Delete one host using first address.
+    // Delete the host using its first address.
     EXPECT_TRUE(cfg.del(subnet_id, address1));
 
     // Check if all addresses were removed.
@@ -747,6 +748,41 @@ TEST_F(CfgHostsTest, delete2ForIPv6) {
 TEST_F(CfgHostsTest, delete2ForIPv6MultiThreading) {
     MultiThreadingTest mt(true);
     testDelete2ForIPv6();
+}
+
+// This test checks that IPv6 address and prefix reservations for the specified
+// subnet ID and IPv6 address can be deleted.
+void
+CfgHostsTest::testDeleteBothForIPv6() {
+    CfgHosts cfg;
+    // Add a host with two addresses.
+    IOAddress address1("2001:db8:1::1");
+    IOAddress address2("2001:db8:2::");
+    size_t host_count = 10;
+    SubnetID subnet_id(42);
+
+    HostPtr host = HostPtr(new Host(duids_[0]->toText(), "duid",
+                                    SUBNET_ID_UNUSED, subnet_id,
+                                    IOAddress::IPV4_ZERO_ADDRESS()));
+    host->addReservation(IPv6Resrv(IPv6Resrv::TYPE_NA, address1));
+    host->addReservation(IPv6Resrv(IPv6Resrv::TYPE_PD, address2, 64));
+    cfg.add(host);
+
+    // Delete the host using its address.
+    EXPECT_TRUE(cfg.del(subnet_id, address1));
+
+    // Check if all reservations were removed.
+    EXPECT_FALSE(cfg.get6(subnet_id, address2));
+    EXPECT_FALSE(cfg.del(subnet_id, address2));
+}
+
+TEST_F(CfgHostsTest, deleteBothForIPv6) {
+    testDeleteBothForIPv6();
+}
+
+TEST_F(CfgHostsTest, deleteBothForIPv6MultiThreading) {
+    MultiThreadingTest mt(true);
+    testDeleteBothForIPv6();
 }
 
 // This test checks that false is returned for deleting the IPv4 reservation

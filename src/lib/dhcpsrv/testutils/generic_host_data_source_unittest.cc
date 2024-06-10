@@ -2620,6 +2620,62 @@ GenericHostDataSourceTest::testDeleteById6Options() {
 }
 
 void
+GenericHostDataSourceTest::testDelete2ForIPv6() {
+    // Make sure we have a pointer to the host data source.
+    ASSERT_TRUE(hdsptr_);
+
+    // Let's create a v6 host...
+    IOAddress address1("2001:db8:1::1");
+    IOAddress address2("2001:db8:2::2");
+    SubnetID subnet_id(42);
+    auto ident = HostDataSourceUtils::generateIdentifier(Host::IDENT_DUID);
+    HostPtr host = HostPtr(new Host(&ident[0], ident.size(), Host::IDENT_DUID,
+                                    SUBNET_ID_UNUSED, subnet_id,
+                                    IOAddress::IPV4_ZERO_ADDRESS()));
+    host->addReservation(IPv6Resrv(IPv6Resrv::TYPE_NA, address1));
+    host->addReservation(IPv6Resrv(IPv6Resrv::TYPE_NA, address2));
+    // ... and add it to the data source.
+    ASSERT_NO_THROW(hdsptr_->add(host));
+    EXPECT_EQ(2, countDBReservations6());
+
+    // Delete the host using its first address.
+    EXPECT_TRUE(hdsptr_->del(subnet_id, address1));
+
+    // Check if all addresses were removed.
+    EXPECT_EQ(0, countDBReservations6());
+    EXPECT_FALSE(hdsptr_->get6(subnet_id, address2));
+    EXPECT_FALSE(hdsptr_->del(subnet_id, address2));
+}
+
+void
+GenericHostDataSourceTest::testDeleteBothForIPv6() {
+    // Make sure we have a pointer to the host data source.
+    ASSERT_TRUE(hdsptr_);
+
+    // Let's create a v6 host...
+    IOAddress address1("2001:db8:1::1");
+    IOAddress address2("2001:db8:2::");
+    SubnetID subnet_id(42);
+    auto ident = HostDataSourceUtils::generateIdentifier(Host::IDENT_DUID);
+    HostPtr host = HostPtr(new Host(&ident[0], ident.size(), Host::IDENT_DUID,
+                                    SUBNET_ID_UNUSED, subnet_id,
+                                    IOAddress::IPV4_ZERO_ADDRESS()));
+    host->addReservation(IPv6Resrv(IPv6Resrv::TYPE_NA, address1));
+    host->addReservation(IPv6Resrv(IPv6Resrv::TYPE_PD, address2, 64));
+    // ... and add it to the data source.
+    ASSERT_NO_THROW(hdsptr_->add(host));
+    EXPECT_EQ(2, countDBReservations6());
+
+    // Delete the host using its address.
+    EXPECT_TRUE(hdsptr_->del(subnet_id, address1));
+
+    // Check if all reservations were removed.
+    EXPECT_EQ(0, countDBReservations6());
+    EXPECT_FALSE(hdsptr_->get6(subnet_id, address2));
+    EXPECT_FALSE(hdsptr_->del(subnet_id, address2));
+}
+
+void
 GenericHostDataSourceTest::testMultipleHostsNoAddress4() {
     // Make sure we have a pointer to the host data source.
     ASSERT_TRUE(hdsptr_);
