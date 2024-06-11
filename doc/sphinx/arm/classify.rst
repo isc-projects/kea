@@ -585,6 +585,9 @@ So inequality, case insensitive pattern matching or pattern search.
 
    Detected invalid regular expressions are considered as syntax errors,
    runtime exceptions during match are handled as no match.
+
+.. warning::
+
    Be careful with the match operator as it can result in very poor
    performance leading to regular expression denial of service (ReDoS).
 
