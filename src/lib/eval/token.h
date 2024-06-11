@@ -1338,7 +1338,8 @@ public:
     /// @brief Match regular expression
     ///
     /// Evaluation uses only the last parameter (top of stack) which is popped.
-    /// "true" when the regular expression or "false" otherwise is pushed.
+    /// Pushes "true" when the regular expression evaluates to true,
+    /// pushes "false" otherwise.
     ///
     /// @param pkt (unused)
     /// @param values - stack of values (1 popped, 1 pushed)

@@ -553,7 +553,7 @@ public:
     ///
     /// @param reg_exp regular expression
     /// @param value value to match
-    /// @param matched true or false
+    /// @param matched expected outcome of the match
     void testMatch(const std::string& reg_exp, const std::string& value,
                    bool matched) {
         clearStack();

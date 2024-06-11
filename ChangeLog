@@ -1,6 +1,6 @@
 2253.	[func]		fdupont
 	Added the predicate token "match" which evaluates regular
-	expression matching.
+	expression matching to classification expression.
 	(Gitlab #3170)
 
 2252.	[bug]		fdupont
