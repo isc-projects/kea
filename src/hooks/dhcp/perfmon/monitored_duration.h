@@ -414,7 +414,8 @@ public:
     ///      "occurrences": 105,
     ///      "min-duration-usecs": 5300,
     ///      "max-duration-usecs": 9000,
-    ///      "total-duration-usecs": 786500
+    ///      "total-duration-usecs": 786500,
+    ///      "ave-duration-usecs": 7490
     ///      }
     /// @endcode
     ///
@@ -433,12 +434,59 @@ public:
     ///      "occurrences": 0,
     ///      "min-duration-usecs": 0,
     ///      "max-duration-usecs": 0,
-    ///      "total-duration-usecs": 0
+    ///      "total-duration-usecs": 0,
+    ///      "ave-duration-usecs": 0
     ///      }
     /// @endcode
     ///
     /// @return Element::map containing the duration key values.
     virtual data::ElementPtr toElement() const;
+
+    /// @brief Fetches a an Element::list of value row column names
+    ///
+    /// The list element includes the name of each column in a value row, in
+    /// the order the values are stored in a value row.
+    ///
+    /// The values in the list in order are:
+    ///
+    /// -# "query-type"
+    /// -# "response-type"
+    /// -# "start-event"
+    /// -# "stop-event"
+    /// -# "subnet-id"
+    /// -# "start-time"
+    /// -# "occurrences"
+    /// -# "min-duration-usecs"
+    /// -# "max-duration-usecs"
+    /// -# "total-duration-usecs"
+    /// -# "ave-duration-usecs"
+    ///
+    /// @return Element::map containing the duration key values.
+    static data::ConstElementPtr valueRowColumns();
+
+    /// @brief Renders the the duration as an Element::list of values.
+    ///
+    /// The list element includes a value for each member of DurationKey
+    /// and the previous interval. If there is no previous interval value of
+    /// of "<none>" will be added for start-time and values of 0 for the
+    /// remaining data values.
+    ///
+    /// The values in the list will be in the following order and type:
+    ///
+    /// -# query-type              Element::string
+    /// -# response-type           Element::string
+    /// -# start-event             Element::string
+    /// -# stop-event              Element::string
+    /// -# subnet-id               Element::int
+    /// -# start-time              Element::string ex: "2024-01-18 10:11:19.498739" or "<none>",
+    /// -# occurrences             Element::int
+    /// -# min-duration-usecs      Element::int
+    /// -# max-duration-usecs      Element::int
+    /// -# total-duration-usecs    Element::int
+    /// -# ave-duration-usecs      Element::int
+    ///
+    /// @return Element::map containing the duration key values.
+    data::ElementPtr toValueRow() const;
 
 private:
     /// @brief Length of the time of a single data interval.

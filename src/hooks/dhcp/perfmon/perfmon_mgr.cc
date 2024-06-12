@@ -343,39 +343,25 @@ PerfMonMgr::formatDurationDataAsElements(MonitoredDurationCollectionPtr duration
 }
 
 ElementPtr
-PerfMonMgr::formatDurationDataAsResultSet(MonitoredDurationCollectionPtr /*durations */) const{
-    isc_throw (NotImplemented, "Not Implemented - " << __FILE__ << ":" << __LINE__ << ":" << __FUNCTION__);
-#if 0
+PerfMonMgr::formatDurationDataAsResultSet(MonitoredDurationCollectionPtr durations) const{
     // Create the result-set map and add it to the wrapper.
     ElementPtr result_set = Element::createMap();
-    result_wrapper->set("result-set", result_set);
 
     // Create the list of column names and add it to the result set.
-    ElementPtr columns = Element::createList();
-    for (auto const& label : column_labels) {
-        columns->add(Element::create(label));
+    result_set->set("columns", MonitoredDuration::valueRowColumns());
+
+    // Create the rows list and add it to the result set.
+    ElementPtr rows = Element::createList();
+    result_set->set("rows", rows);
+
+    for (auto const& d : *durations) {
+        // Create the value row.
+        ElementPtr row = d->toValueRow();
+        rows->add(row);
     }
-    result_set->set("columns", columns);
 
-    // Create the empty value_rows list, add it and then return it.
-    ElementPtr value_rows = Element::createList();
-    result_set->set("rows", value_rows);
-    if (durations.empty()) {
-        return;
-    }
-
-    return (value_rows);
-        for (auto const& d : *durations) {
-            const auto& reported_interval =  d->getPreviousInterval();
-            if (reported_interval) {
-                std::string label = d->getLabel();
-
-        }
-#endif
+    return (result_set);
 }
-
-
-
 
 } // end of namespace perfmon
 } // end of namespace isc

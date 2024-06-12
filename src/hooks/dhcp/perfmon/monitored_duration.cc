@@ -200,11 +200,11 @@ DurationKey::getStatName(const std::string& value_name) const {
 ElementPtr
 DurationKey::toElement() const {
     ElementPtr element = Element::createMap();
-    element->set("subnet-id", Element::create(static_cast<long long>(subnet_id_)));
     element->set("query-type", Element::create(getMessageTypeLabel(family_, query_type_)));
     element->set("response-type", Element::create(getMessageTypeLabel(family_, response_type_)));
     element->set("start-event", Element::create(start_event_label_));
     element->set("stop-event", Element::create(stop_event_label_));
+    element->set("subnet-id", Element::create(static_cast<long long>(subnet_id_)));
     return (element);
 }
 
@@ -333,15 +333,77 @@ MonitoredDuration::toElement() const {
         element->set("min-duration-usecs", Element::create(previous_interval_->getMinDuration().total_microseconds()));
         element->set("max-duration-usecs", Element::create(previous_interval_->getMaxDuration().total_microseconds()));
         element->set("total-duration-usecs", Element::create(previous_interval_->getTotalDuration().total_microseconds()));
+        element->set("ave-duration-usecs", Element::create(previous_interval_->getAverageDuration().total_microseconds()));
     } else {
         element->set("start-time", Element::create("<none>"));
         element->set("occurrences", Element::create(0));
         element->set("min-duration-usecs", Element::create(0));
         element->set("max-duration-usecs", Element::create(0));
         element->set("total-duration-usecs", Element::create(0));
+        element->set("ave-duration-usecs", Element::create(0));
     }
 
     return (element);
+}
+
+ConstElementPtr
+MonitoredDuration::valueRowColumns() {
+    static std::list<std::string> column_labels{
+        "query-type",
+        "response-type",
+        "start-event",
+        "end-event",
+        "subnet-id",
+        "interval-start",
+        "occurences",
+        "min-duration-usecs",
+        "max-duration-usecs",
+        "total-duration-usecs"
+        "ave-duration-usecs"
+    };
+
+    static ElementPtr cols;
+    if (!cols) {
+        // Create the list of column names and add it to the result set.
+        cols = Element::createList();
+        for (auto const& label : column_labels) {
+            cols->add(Element::create(label));
+        }
+    }
+
+    return(cols);
+}
+
+ElementPtr
+MonitoredDuration::toValueRow() const {
+    // Create the value row.
+    ElementPtr row = Element::createList();
+
+    // Add key values.
+    row->add(Element::create(getMessageTypeLabel(family_, query_type_)));
+    row->add(Element::create(getMessageTypeLabel(family_, response_type_)));
+    row->add(Element::create(start_event_label_));
+    row->add(Element::create(stop_event_label_));
+    row->add(Element::create(static_cast<long long>(subnet_id_)));
+
+    // Add interval data values.
+    if (previous_interval_) {
+        row->add(Element::create(ptimeToText(previous_interval_->getStartTime())));
+        row->add(Element::create(static_cast<long long>(previous_interval_->getOccurrences())));
+        row->add(Element::create(previous_interval_->getMinDuration().total_microseconds()));
+        row->add(Element::create(previous_interval_->getMaxDuration().total_microseconds()));
+        row->add(Element::create(previous_interval_->getTotalDuration().total_microseconds()));
+        row->add(Element::create(previous_interval_->getAverageDuration().total_microseconds()));
+    } else {
+        row->add(Element::create("<none>"));
+        row->add(Element::create(0));
+        row->add(Element::create(0));
+        row->add(Element::create(0));
+        row->add(Element::create(0));
+        row->add(Element::create(0));
+    }
+
+    return (row);
 }
 
 } // end of namespace perfmon
