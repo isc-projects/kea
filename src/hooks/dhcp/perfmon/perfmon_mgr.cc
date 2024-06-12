@@ -287,7 +287,6 @@ PerfMonMgr::perfmonGetAllDurationsHandler(hooks::CalloutHandle& handle) {
         extractCommand(handle);
         if (cmd_args_) {
             SimpleParser::checkKeywords(keywords, cmd_args_);
-
             ConstElementPtr elem = cmd_args_->get("result-set-format");
             if (elem) {
                 result_set_format = elem->boolValue();
@@ -309,6 +308,7 @@ PerfMonMgr::perfmonGetAllDurationsHandler(hooks::CalloutHandle& handle) {
         //  Construct the result
         result->set("interval-width-secs", Element::create(getIntervalWidthSecs()));
         result->set("timestamp", Element::create(isc::util::ptimeToText(PktEvent::now())));
+        result->set("result-set-format", Element::create(result_set_format));
         result->set((result_set_format ? "durations-result-set" : "durations"), formatted_durations);
 
         std::ostringstream oss;

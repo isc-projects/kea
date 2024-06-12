@@ -225,6 +225,10 @@ The alarm-cleared INFO log looks like this:
 API Commands
 ~~~~~~~~~~~~
 
+The ``perfmon-control`` Command
+-------------------------------
+
+.. isccmd:: command-perfmon-control:
 .. _command-perfmon-control:
 
 This command can be used to enable or disable active monitoring and statistics
@@ -240,7 +244,7 @@ reporting at runtime without altering or reloading configuration.
         }
    }
 
-Regardless of the arguments (if any) are supplied, the current values of both
+Regardless of the arguments (if any) supplied, the resulting values of both
 flags are always returned:
 
 ::
@@ -254,7 +258,111 @@ flags are always returned:
        }
    }
 
+The ``perfmon-get-all-durations`` Command
+-----------------------------------------
+
+.. isccmd:: perfmon-get-all-durations:
+.. _command-perfmon-get-all-durations:
+
+This command fetches all monitored duration data currently held in memory by
+the Perfmon hook library.
+
+::
+
+    {
+        "command": "perfmon-get-all-durations",
+        "arguments": {
+            "result-set-format\": true"
+        }
+    }
+
+A result of 0 is returned if command succeeds along with monitored duration data,
+while a result of 1 is returned if command is invalid or command processing
+encounters an error.
+
+The format of the monitored duration data returned is determined by the
+optional argument, ``result-set-format``.  When false, (the default), the list
+of durations will be returned as a list of individual elements as shown below:
+
+::
+
+    {
+        "arguments": {
+           "durations\": [{
+               "duration-key": {
+                   "query-type": "DHCPDISCOVER",
+                   "response-type": "DHCPOFFER",
+                   "start-event": "buffer_read",
+                   "stop-event": "mt_queued",
+                   "subnet-id": 0
+               },
+               "max-duration-usecs": 118,
+               "min-duration-usecs": 31,
+               "occurrences": 501,
+               "start-time": "2024-06-12 17:52:06.814884",
+               "total-duration-usecs": 23951,
+               "ave-duration-usecs\": 47
+           },
+           ..,
+           ]",
+           "result-set-format": false,
+           "interval-width-secs": 5,
+           "timestamp": "2024-06-12 17:52:22.397233"
+       },
+    "result": 0,
+    "text": "perfmon-get-all-durations: n found"
+    }
+
+When ``result-set-format`` is true, the list of durations will be returned in
+a format similar to an SQL result set as follows:
+
+::
+
+    {
+        "arguments": {
+            "durations-result-set": {
+                "columns": [
+                    "query-type",
+                    "response-type",
+                    "start-event",
+                    "end-event",
+                    "subnet-id",
+                    "interval-start",
+                    "occurences",
+                    "min-duration-usecs",
+                    "max-duration-usecs",
+                    "total-duration-usecsave-duration-usecs"
+                ],
+                "rows": [ [
+                    "DHCPDISCOVER",
+                    "DHCPOFFER",
+                    "buffer_read",
+                    "mt_queued",
+                    0,
+                    "2024-06-12 17:52:06.814884",
+                    501,
+                    31,
+                    118,
+                    23951,
+                    47
+                    ],
+                ..
+                ]
+            }
+            "result-set-format": true,
+            "interval-width-secs": 5,
+            "timestamp": "2024-06-12 17:52:22.397233"
+        },
+        "result": 0,
+        "text": "perfmon-get-all-durations: n found"
+    }
+
+The data values for each duration will be from the duration's last completed data
+interval.  If a duration has no such interval, ``interval-start`` will be reported
+as "<none>" and the remaining values will be zero.
+
 .. _perfmon-configuration:
+
 
 Configuration
 ~~~~~~~~~~~~~
