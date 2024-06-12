@@ -62,14 +62,6 @@ public:
 
         EXPECT_NO_THROW_LOG(config->setAlarmReportSecs(120));
         EXPECT_EQ(config->getAlarmReportSecs(), 120);
-
-        // Verify shallow copy construction.
-        PerfMonConfigPtr config2(new PerfMonConfig(*config));
-        EXPECT_TRUE(config2->getEnableMonitoring());
-        EXPECT_EQ(config2->getIntervalWidthSecs(), 4);
-        EXPECT_FALSE(config2->getStatsMgrReporting());
-        EXPECT_EQ(config2->getAlarmReportSecs(), 120);
-        EXPECT_EQ(config2->getAlarmStore(), config->getAlarmStore());
     }
 
     /// @brief Exercises PerfMonConfig parameter parsing with valid configuration

@@ -70,3 +70,23 @@ the log message.
 % PERFMON_INIT_OK loading PerfMon hooks library successful
 This info message indicates that the PerfMon hooks library has been
 loaded successfully. Enjoy!
+
+% PERFMON_CMDS_CONTROL_ERROR perfmon-control command processing failed: %1
+This error message is issued when the PerfMon hook library encounters an
+error processing a perfmon-control command.  The argument explains the
+command error.
+
+% PERFMON_CMDS_CONTROL_OK perfmon-control command success: active monitoring: %1, stats-mgr-reporting: %2
+This info log is issued when perfmon-control command has successfully
+enabled/disabled active monitoring and/or statistics mgr reporting.
+Arguments reflect the current state of both.
+
+% PERFMON_CMDS_GET_ALL_DURATIONS_ERROR perfmon-get-all-durations command processing failed: %1
+This error message is issued when the PerfMon hook library encounters an
+error processing a perfmon-get-all-durations command.  The argument explains the
+command error.
+
+% PERFMON_CMDS_GET_ALL_DURATIONS_OK perfmon-get-all-durations returning %1 durations
+This info log is issued when perfmon-get-all-durations command has
+completed successfully.  The argument contains the number of
+durations returned.

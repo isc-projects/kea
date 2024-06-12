@@ -11,6 +11,8 @@
 
 #include <perfmon_log.h>
 #include <perfmon_mgr.h>
+#include <cc/simple_parser.h>
+#include <config/cmd_response_creator.h>
 #include <stats/stats_mgr.h>
 #include <dhcp/dhcp6.h>
 #include <util/boost_time_utils.h>
@@ -18,6 +20,7 @@
 namespace isc {
 namespace perfmon {
 
+using namespace isc::config;
 using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::log;
@@ -26,7 +29,7 @@ using namespace isc::util;
 using namespace boost::posix_time;
 
 PerfMonMgr::PerfMonMgr(uint16_t family_)
-    : PerfMonConfig(family_) {
+    : PerfMonConfig(family_), mutex_(new std::mutex) {
     init();
 }
 
@@ -173,8 +176,8 @@ PerfMonMgr::reportToStatsMgr(MonitoredDurationPtr duration) {
 
     auto average = previous_interval->getAverageDuration();
     if (getStatsMgrReporting()) {
-        StatsMgr::instance().setValue(duration->getStatName("average-ms"),
-                                      static_cast<int64_t>(average.total_milliseconds()));
+        StatsMgr::instance().setValue(duration->getStatName("average-usecs"),
+                                       static_cast<int64_t>(average.total_microseconds()));
     }
 
     /// @todo - decide if we want to report min and max values too.
@@ -218,6 +221,161 @@ void
 PerfMonMgr::setNextReportExpiration() {
     isc_throw (NotImplemented, __FILE__ << ":" << __LINE__ << ":" << __FUNCTION__);
 }
+
+int
+PerfMonMgr::perfmonControlHandler(hooks::CalloutHandle& handle) {
+    static SimpleKeywords keywords = {
+        { "enable-monitoring",   Element::boolean },
+        { "stats-mgr-reporting", Element::boolean }
+    };
+
+    std::string txt = "(missing parameters)";
+    ElementPtr result = Element::createMap();
+    ConstElementPtr response;
+
+    // Extract the command and then the parameters
+    try {
+        extractCommand(handle);
+        if (cmd_args_) {
+            txt = cmd_args_->str();
+        }
+
+        if (cmd_args_) {
+            SimpleParser::checkKeywords(keywords, cmd_args_);
+
+            ConstElementPtr elem = cmd_args_->get("enable-monitoring");
+            if (elem) {
+                enable_monitoring_ = elem->boolValue();
+            }
+
+            elem = cmd_args_->get("stats-mgr-reporting");
+            if (elem) {
+                stats_mgr_reporting_ = elem->boolValue();
+            }
+        }
+
+        LOG_INFO(perfmon_logger, PERFMON_CMDS_CONTROL_OK)
+                .arg(enable_monitoring_ ? "enabled" : "disabled")
+                .arg(stats_mgr_reporting_ ? "enabled" : "disabled");
+
+        result->set("enable-monitoring", Element::create(enable_monitoring_));
+        result->set("stats-mgr-reporting", Element::create(stats_mgr_reporting_));
+        response = createAnswer(CONTROL_RESULT_SUCCESS, "perfmon-control success", result);
+    } catch (const std::exception& ex) {
+        LOG_ERROR(perfmon_logger, PERFMON_CMDS_CONTROL_ERROR)
+                  .arg(ex.what());
+        setErrorResponse(handle, ex.what());
+        return (1);
+    }
+
+    setResponse(handle, response);
+    return (0);
+}
+
+int
+PerfMonMgr::perfmonGetAllDurationsHandler(hooks::CalloutHandle& handle) {
+    static SimpleKeywords keywords = {
+        { "result-set-format",   Element::boolean }
+    };
+
+    ElementPtr result = Element::createMap();
+    ConstElementPtr response;
+
+    try {
+        // Extract the command and then the parameters
+        bool result_set_format = false;
+        extractCommand(handle);
+        if (cmd_args_) {
+            SimpleParser::checkKeywords(keywords, cmd_args_);
+
+            ConstElementPtr elem = cmd_args_->get("result-set-format");
+            if (elem) {
+                result_set_format = elem->boolValue();
+            }
+        }
+
+        // Fetch the durations from the store.
+        auto durations = duration_store_->getAll();
+        auto rows = durations->size();
+        ElementPtr formatted_durations;
+
+        // Format them either as a list of elements or as a result set
+        if (!result_set_format) {
+            formatted_durations = formatDurationDataAsElements(durations);
+        } else {
+            formatted_durations = formatDurationDataAsResultSet(durations);
+        }
+
+        //  Construct the result
+        result->set("interval-width-secs", Element::create(getIntervalWidthSecs()));
+        result->set("timestamp", Element::create(isc::util::ptimeToText(PktEvent::now())));
+        result->set((result_set_format ? "durations-result-set" : "durations"), formatted_durations);
+
+        std::ostringstream oss;
+        oss << "perfmon-get-all-durations: " << rows << " found";
+
+        response = createAnswer(CONTROL_RESULT_SUCCESS, oss.str(), result);
+        LOG_INFO(perfmon_logger, PERFMON_CMDS_GET_ALL_DURATIONS_OK)
+                 .arg(rows);
+    } catch (const std::exception& ex) {
+        LOG_ERROR(perfmon_logger, PERFMON_CMDS_GET_ALL_DURATIONS_ERROR)
+                  .arg(ex.what());
+        setErrorResponse(handle, ex.what());
+        return (1);
+    }
+
+    setResponse(handle, response);
+    return (0);
+}
+
+ElementPtr
+PerfMonMgr::formatDurationDataAsElements(MonitoredDurationCollectionPtr durations) const {
+    // Create the list.
+    ElementPtr duration_list = Element::createList();
+
+    // Add in the duration elements.
+    for (auto const& d : *durations) {
+        ElementPtr element = d->toElement();
+        duration_list->add(element);
+    }
+
+    return (duration_list);
+}
+
+ElementPtr
+PerfMonMgr::formatDurationDataAsResultSet(MonitoredDurationCollectionPtr /*durations */) const{
+    isc_throw (NotImplemented, "Not Implemented - " << __FILE__ << ":" << __LINE__ << ":" << __FUNCTION__);
+#if 0
+    // Create the result-set map and add it to the wrapper.
+    ElementPtr result_set = Element::createMap();
+    result_wrapper->set("result-set", result_set);
+
+    // Create the list of column names and add it to the result set.
+    ElementPtr columns = Element::createList();
+    for (auto const& label : column_labels) {
+        columns->add(Element::create(label));
+    }
+    result_set->set("columns", columns);
+
+    // Create the empty value_rows list, add it and then return it.
+    ElementPtr value_rows = Element::createList();
+    result_set->set("rows", value_rows);
+    if (durations.empty()) {
+        return;
+    }
+
+    return (value_rows);
+        for (auto const& d : *durations) {
+            const auto& reported_interval =  d->getPreviousInterval();
+            if (reported_interval) {
+                std::string label = d->getLabel();
+
+        }
+#endif
+}
+
+
+
 
 } // end of namespace perfmon
 } // end of namespace isc

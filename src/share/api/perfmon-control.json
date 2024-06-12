@@ -1,0 +1,38 @@
+{
+    "access": "write",
+    "avail": "2.7.0",
+    "brief": [
+        "This command enables/disables active monitoring and statistics reporting."
+    ],
+    "cmd-syntax": [
+        "{",
+        "  \"command\": \"perfmon-control\",",
+        "  \"arguments\": {",
+        "    \"enable-monitoring\": true,",
+        "    \"stats-mgr-reporting\": false",
+        "  }",
+        "}",
+        ""
+    ],
+    "description": "See <xref linkend=\"command-perfmon-control\"/>",
+    "hook": "perfmon",
+    "name": "perfmon-control",
+    "resp-comment": [
+        "Result 0 is returned if command succeeds along with the resultant values of both flags.",
+        "Result is 1 when parameters are malformed or missing."
+    ],
+    "resp-syntax": [
+        "  {",
+        "    \"arguments\": {",
+        "       \"enable-monitoring\": true,",
+        "       \"stats-mgr-reporting\": false",
+        "    },",
+        "    \"result\": 0,",
+        "    \"text\": \"perfmon-control success.\"",
+        "  }"
+    ],
+    "support": [
+        "kea-dhcp4",
+        "kea-dhcp6"
+    ]
+}

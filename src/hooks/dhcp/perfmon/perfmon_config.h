@@ -12,6 +12,8 @@
 #include <alarm_store.h>
 #include <monitored_duration.h>
 
+#include <atomic>
+
 namespace isc {
 namespace perfmon {
 
@@ -238,7 +240,7 @@ protected:
     /// true. If false the library loads and configures but does nothing.
     /// Gives users a way to keep the library loaded without it being active.
     /// Should be accessible via explicit API command.
-    bool enable_monitoring_;
+    std::atomic<bool> enable_monitoring_;
 
     /// @brief Number of seconds a duration accumulates samples until reporting.
     /// Defaults to 60.
@@ -246,7 +248,7 @@ protected:
 
     /// @brief If true durations report to StatsMgr at the end of each interval.
     /// Defaults to true.
-    bool stats_mgr_reporting_;
+    std::atomic<bool> stats_mgr_reporting_;
 
     /// @brief Number of seconds between reports of a raised alarm.
     /// Defaults to 300.  A value of zero disables alarms.

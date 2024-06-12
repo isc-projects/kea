@@ -7,6 +7,7 @@
 #ifndef _MONITORED_DURATION_H
 #define _MONITORED_DURATION_H
 
+#include <cc/data.h>
 #include <dhcp/pkt.h>
 #include <dhcpsrv/subnet_id.h>
 
@@ -226,7 +227,7 @@ public:
 
     /// @brief Get the StatsMgr formatted compatible name.
     ///
-    /// @param value_name name of the specific value (e.g. "average-ms", "min-duration-ms").
+    /// @param value_name name of the specific value (e.g. "average-usecs", "min-duration-usecs").
     /// The format of the string:
     ///
     /// @code
@@ -235,14 +236,31 @@ public:
     ///
     /// Examples:
     ///
-    ///  perfmon.discover-offer.socket_received-buffer_read.average-ms
+    ///  perfmon.discover-offer.socket_received-buffer_read.average-usecs
     ///
-    ///  subnet[9].perfmon.discover-offer.socket_received-buffer_read.average-ms
+    ///  subnet[9].perfmon.discover-offer.socket_received-buffer_read.average-usecs
     ///
     /// @endcode
     ///
     /// @return the statistic name.
     std::string getStatName(const std::string& value_name) const;
+
+    /// @brief Renders the the duration key as an Element.
+    ///
+    /// The element will appear as follows:
+    ///
+    /// @code
+    /// {
+    ///     "query-type": "discover",
+    ///     "response-type": "offer",
+    ///     "start-event": "socket_received",
+    ///     "stop-event": "buffer_read",
+    ///     "subnet-id": 10
+    /// }
+    /// @endcode
+    ///
+    /// @return Element::map containing the duration key values.
+    virtual data::ElementPtr toElement() const;
 
     /// @brief Validates that a query and response message type pair is sane.
     ///
@@ -378,6 +396,49 @@ public:
 
     /// @brief Deletes the current and previous intervals.
     void clear();
+
+    /// @brief Renders the the duration as an Element.
+    ///
+    /// The element includes the duration key and the previous interval
+    /// content(if one) as follows:
+    /// @code
+    /// {
+    ///     "duration-key": {
+    ///         "query-type": "discover",
+    ///         "response-type": "offer",
+    ///         "start-event": "socket_received",
+    ///         "stop-event": "buffer_read",
+    ///         "subnet-id": 10
+    ///      },
+    ///      "start-time": "2024-01-18 10:11:19.498739",
+    ///      "occurrences": 105,
+    ///      "min-duration-usecs": 5300,
+    ///      "max-duration-usecs": 9000,
+    ///      "total-duration-usecs": 786500
+    ///      }
+    /// @endcode
+    ///
+    /// If there is no previous interval, it will appears as follows:
+    ///
+    /// @code
+    /// {
+    ///     "duration-key": {
+    ///         "query-type": "discover",
+    ///         "response-type": "offer",
+    ///         "start-event": "socket_received",
+    ///         "stop-event": "buffer_read",
+    ///         "subnet-id": 10
+    ///      },
+    ///      "start-time": "<none>",
+    ///      "occurrences": 0,
+    ///      "min-duration-usecs": 0,
+    ///      "max-duration-usecs": 0,
+    ///      "total-duration-usecs": 0
+    ///      }
+    /// @endcode
+    ///
+    /// @return Element::map containing the duration key values.
+    virtual data::ElementPtr toElement() const;
 
 private:
     /// @brief Length of the time of a single data interval.

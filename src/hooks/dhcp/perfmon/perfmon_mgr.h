@@ -12,6 +12,8 @@
 #define PERFMON_MGR_H
 
 #include <perfmon_config.h>
+#include <config/command_mgr.h>
+#include <config/cmds_impl.h>
 #include <monitored_duration_store.h>
 #include <asiolink/io_service.h>
 #include <asiolink/interval_timer.h>
@@ -24,7 +26,7 @@ namespace perfmon {
 /// the PerfMon hook library. It owns the MonitoredDurationStore and AlarmStore
 /// instances and supplies callout and command API handlers.  It derives from
 /// PerfMonConfig.
-class PerfMonMgr : public PerfMonConfig {
+class PerfMonMgr : public PerfMonConfig, private config::CmdsImpl {
 public:
     /// @brief Constructor.
     ///
@@ -46,7 +48,15 @@ public:
 
     /// @brief Processes the event stack of a query packet.
     ///
-    /// @todo DETAILS TO FOLLOW
+    ///  -# Emit a dump of packet stack to perfmon debug log at detail level.
+    ///  -# Iterates over the query's event stack creating a DurationKey for each
+    ///  adjacent event pair, computing the elapsed time between them and then calls
+    ///  addDurationSample().
+    ///  -# Generates composite duration updates. Durations that monitor total response
+    ///  time for a given query/response pair will be computed using the first and last
+    ///  events in the stack, with a begin event label of "composite" and an end label
+    ///  of "total_response" for the DurationKey. These duration updates will be passed
+    ///  into addDurationSample(). Other composite durations may be added in the future.
     ///
     /// @param query query packet whose stack is to be processed.
     /// @param response response packet generated for the query.
@@ -104,6 +114,151 @@ public:
     ///  else
     ///      cancel report timer
     void setNextReportExpiration();
+
+    /// @brief perfmon-control command handler
+    ///
+    /// This command sets enable-monitoring and/or stats-mgr-reporting (affects
+    /// in memory value(s) only).
+    ///
+    /// @code
+    /// {
+    ///     "command": "perfmon-control",
+    ///     "arguments": {
+    ///         "enable-monitoring": true,
+    ///         "stats-mgr-reporting": true
+    ///      }
+    /// }
+    /// @endcode
+    ///
+    /// It extracts the command name and arguments from the given CalloutHandle,
+    /// attempts to process them, and then set's the handle's "response"
+    /// arguments accordingly.  Regardless of which parameters were specified
+    /// in the command arguments (if any), it returns the values for both
+    /// parameters:
+    ///
+    /// @code
+    /// "arguments": {
+    ///     "enable-monitoring": false,
+    ///     "stats-mgr-reporting": false
+    ///  },
+    ///  "result": 0,
+    ///  "text": "perfmon-control success"
+    /// }
+    /// @endcode
+    ///
+    /// @param handle Callout context - which is expected to contain the
+    /// command JSON text in the "command" argument
+    /// @return result of the operation
+    int perfmonControlHandler(hooks::CalloutHandle& handle);
+
+    /// @brief perfmon-get-all-durations handler
+    ///
+    /// This command fetches all of the monitored durations and their preivous
+    /// intervals (if one).
+    ///
+    /// @code
+    /// {
+    ///     "command": "perfmon-get-all-duations",
+    ///     "arguments": {
+    ///         "result-set-format": true
+    ///      }
+    /// }
+    /// @endcode
+    ///
+    /// It extracts the command name and arguments from the given CalloutHandle,
+    /// attempts to process them, and then set's the handle's "response"
+    /// arguments accordingly.  If result-set-format is false (the default) the
+    /// durations are returned as a list of Elements:
+    ///
+    /// @code
+    /// {
+    ///     "result": 0,
+    ///     "text": "perfmon-get-all-durations: n rows found",
+    ///     "arguments": {
+    ///         "result-set-format": false,
+    ///         "interval-width-secs": 5,
+    ///         "timestamp": "2024-01-18 10:11:20.594800"
+    ///         "durations": [{
+    ///                 "duration-key": {
+    ///                     "query-type": "discover",
+    ///                     "response-type": "offer",
+    ///                     "start-event": "socket_received",
+    ///                     "stop-event": "buffer_read",
+    ///                     "subnet-id": 10
+    ///                 },
+    ///             "start-time": "2024-01-18 10:11:19.498739",
+    ///             "occurrences": 105,
+    ///             "min-duration-usecs": 5300,
+    ///             "max-duration-usecs": 9000,
+    ///             "total-duration-usecs": 786500
+    ///             },
+    ///         ..
+    ///         ]
+    ///     },
+    /// }
+    /// @endcode
+    ///
+    /// If result-set-format is true, the durations are returned in a more compact format,
+    /// patterned after an SQL result set:
+    ///
+    /// @code
+    /// {
+    ///     "result": 0,
+    ///     "text": "perfmon-get-all-durations: n rows found",
+    ///     "arguments": {
+    ///         "result-set-format": true,
+    ///         "interval-width-secs": 5,
+    ///         "timestamp": "2024-01-18 10:11:20.594800"
+    ///         "durations-result-set": {
+    ///             "columns": [
+    ///                 "subnet-id", "query-type", "response-type", "start-event", "end-event",
+    ///                 "interval start", "occurences", "min-duration-usecs", "max-duration-usecs",
+    ///                 "total-duration-usecs"
+    ///             ],
+    ///             "rows": [
+    ///                 [
+    ///                     10, "discover", "offer", "socket_received", "buffer_read",
+    ///                     "2024-01-18 10:11:19.498739",  105, 5300, 9000, 786500
+    ///                 ],
+    ///                 ..
+    ///             ]
+    ///         }
+    ///     }
+    /// }
+    /// @endcode
+    ///
+    /// @param handle Callout context - which is expected to contain the
+    /// command JSON text in the "command" argument
+    /// @return result of the operation
+    int perfmonGetAllDurationsHandler(hooks::CalloutHandle& handle);
+
+    /// @brief Renders a list of MonitoredDurations as a map of individual Elements
+    ///
+    /// @param durations collection of durations to convert
+    data::ElementPtr formatDurationDataAsElements(MonitoredDurationCollectionPtr durations) const;
+
+    /// @brief Renders a list of MonitoredDurations as a result set
+    ///
+    /// The result set Element will be as shown below:
+    ///
+    /// @code
+    ///     "durations-result-set": {
+    ///         "columns": [
+    ///             "subnet-id", "query-type", "response-type", "start-event", "end-event",
+    ///             "interval start", "occurences", "min-duration-usecs", "max-duration-usecs",
+    ///             "total-duration-usecs"
+    ///         ],
+    ///         "rows": [
+    ///             [
+    ///                 10, "discover", "offer", "socket_received", "buffer_read",
+    ///                 "2024-01-18 10:11:19.498739",  105, 5300, 9000, 786500
+    ///             ],
+    ///         ..
+    ///         ]
+    /// @endcode
+    ///
+    /// @param durations collection of durations to convert
+    data::ElementPtr formatDurationDataAsResultSet(MonitoredDurationCollectionPtr durations) const;
 
     /// @brief Get the interval duration.
     ///

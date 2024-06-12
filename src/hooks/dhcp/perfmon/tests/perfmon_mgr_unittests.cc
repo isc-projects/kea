@@ -332,16 +332,16 @@ public:
         ASSERT_NO_THROW_LOG(average = mgr_->reportToStatsMgr(mond));
         EXPECT_EQ(milliseconds(175), average);
 
-        auto obs = StatsMgr::instance().getObservation(mond->getStatName("average-ms"));
+        auto obs = StatsMgr::instance().getObservation(mond->getStatName("average-usecs"));
         ASSERT_TRUE(obs);
-        EXPECT_EQ(175, obs->getInteger().first);
+        EXPECT_EQ(175000, obs->getInteger().first);
 
         StatsMgr::instance().removeAll();
         mgr_->setStatsMgrReporting(false);
 
         ASSERT_NO_THROW_LOG(average = mgr_->reportToStatsMgr(mond));
         EXPECT_EQ(milliseconds(175), average);
-        obs = StatsMgr::instance().getObservation(mond->getStatName("average-ms"));
+        obs = StatsMgr::instance().getObservation(mond->getStatName("average-usecs"));
         ASSERT_FALSE(obs);
     }
 
@@ -411,9 +411,9 @@ public:
 
         // Should have one stat reported with a average value of 80.
         EXPECT_EQ(1, StatsMgr::instance().count());
-        auto obs = StatsMgr::instance().getObservation(key->getStatName("average-ms"));
+        auto obs = StatsMgr::instance().getObservation(key->getStatName("average-usecs"));
         ASSERT_TRUE(obs);
-        EXPECT_EQ(80, obs->getInteger().first);
+        EXPECT_EQ(80000, obs->getInteger().first);
 
         // The alarm should have triggered and reported.
         beforeAndAfterAlarm(__LINE__, before_alarm, Alarm::TRIGGERED, true);
@@ -450,9 +450,9 @@ public:
 
         // Should have one stat reported with a value of 100.
         EXPECT_EQ(1, StatsMgr::instance().count());
-        obs = StatsMgr::instance().getObservation(key->getStatName("average-ms"));
+        obs = StatsMgr::instance().getObservation(key->getStatName("average-usecs"));
         ASSERT_TRUE(obs);
-        EXPECT_EQ(100, obs->getInteger().first);
+        EXPECT_EQ(100000, obs->getInteger().first);
 
         // Sleep 100ms second to make sure the current interval duration elapses.
         usleep(100 * 1000);
@@ -470,9 +470,9 @@ public:
 
         // Should have one stat reported with a value of 10.
         EXPECT_EQ(1, StatsMgr::instance().count());
-        obs = StatsMgr::instance().getObservation(key->getStatName("average-ms"));
+        obs = StatsMgr::instance().getObservation(key->getStatName("average-usecs"));
         ASSERT_TRUE(obs);
-        EXPECT_EQ(10, obs->getInteger().first);
+        EXPECT_EQ(10000, obs->getInteger().first);
 
         // Lastly, verify the log entries.
         EXPECT_TRUE(checkFile());

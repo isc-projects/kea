@@ -115,6 +115,26 @@ int pkt6_send(CalloutHandle& handle) {
     return (0);
 }
 
+/// @brief This is a command callout for 'perfmon-control' command.
+///
+/// @param handle Callout handle used to retrieve a command and
+/// provide a response.
+/// @return 0 if this callout has been invoked successfully,
+/// 1 otherwise.
+int perfmon_control(CalloutHandle& handle) {
+    return (mgr->perfmonControlHandler(handle));
+}
+
+/// @brief This is a command callout for 'perfmon-get-all-durations' command.
+///
+/// @param handle Callout handle used to retrieve a command and
+/// provide a response.
+/// @return 0 if this callout has been invoked successfully,
+/// 1 otherwise.
+int perfmon_get_all_durations(CalloutHandle& handle) {
+    return (mgr->perfmonGetAllDurationsHandler(handle));
+}
+
 /// @brief This function is called when the library is loaded.
 ///
 /// @param handle library handle
@@ -141,8 +161,9 @@ int load(LibraryHandle& handle) {
         ConstElementPtr json = handle.getParameters();
         mgr->configure(json);
 
-        /// @todo register commands
-        /// handle.registerCommandCallout("command-here", handler_here);
+        /// Register commands.
+        handle.registerCommandCallout("perfmon-control", perfmon_control);
+        handle.registerCommandCallout("perfmon-get-all-durations", perfmon_get_all_durations);
     } catch (const std::exception& ex) {
         LOG_ERROR(perfmon_logger, PERFMON_INIT_FAILED)
 	        .arg(ex.what());

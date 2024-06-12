@@ -324,8 +324,13 @@ PerfMonConfig::parse(data::ConstElementPtr config) {
         local.parseAlarms(elem);
     }
 
-    // All values good, shallow copy from local instance.
-    *this = local;
+    // All values good, copy them from local instance.
+    family_= local.getFamily();
+    enable_monitoring_ = local.getEnableMonitoring();
+    interval_width_secs_ = local.getIntervalWidthSecs();
+    stats_mgr_reporting_ = local.getStatsMgrReporting();
+    alarm_report_secs_ = local.getAlarmReportSecs();
+    alarm_store_= local.getAlarmStore();
 }
 
 void

@@ -11,8 +11,11 @@
 #include <dhcp/dhcp6.h>
 #include <exceptions/exceptions.h>
 #include <monitored_duration.h>
+#include <util/boost_time_utils.h>
 
 using namespace isc::dhcp;
+using namespace isc::data;
+using namespace isc::util;
 using namespace boost::posix_time;
 
 namespace isc {
@@ -194,6 +197,17 @@ DurationKey::getStatName(const std::string& value_name) const {
     return (oss.str());
 }
 
+ElementPtr
+DurationKey::toElement() const {
+    ElementPtr element = Element::createMap();
+    element->set("subnet-id", Element::create(static_cast<long long>(subnet_id_)));
+    element->set("query-type", Element::create(getMessageTypeLabel(family_, query_type_)));
+    element->set("response-type", Element::create(getMessageTypeLabel(family_, response_type_)));
+    element->set("start-event", Element::create(start_event_label_));
+    element->set("stop-event", Element::create(stop_event_label_));
+    return (element);
+}
+
 bool
 DurationKey::operator==(const DurationKey& other) const {
     return (
@@ -307,6 +321,27 @@ void
 MonitoredDuration::clear() {
     current_interval_.reset();
     previous_interval_.reset();
+}
+
+ElementPtr
+MonitoredDuration::toElement() const {
+    ElementPtr element = Element::createMap();
+    element->set("duration-key", DurationKey::toElement());
+    if (previous_interval_) {
+        element->set("start-time", Element::create(ptimeToText(previous_interval_->getStartTime())));
+        element->set("occurrences", Element::create(static_cast<long long>(previous_interval_->getOccurrences())));
+        element->set("min-duration-usecs", Element::create(previous_interval_->getMinDuration().total_microseconds()));
+        element->set("max-duration-usecs", Element::create(previous_interval_->getMaxDuration().total_microseconds()));
+        element->set("total-duration-usecs", Element::create(previous_interval_->getTotalDuration().total_microseconds()));
+    } else {
+        element->set("start-time", Element::create("<none>"));
+        element->set("occurrences", Element::create(0));
+        element->set("min-duration-usecs", Element::create(0));
+        element->set("max-duration-usecs", Element::create(0));
+        element->set("total-duration-usecs", Element::create(0));
+    }
+
+    return (element);
 }
 
 } // end of namespace perfmon

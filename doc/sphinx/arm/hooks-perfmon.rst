@@ -145,7 +145,7 @@ duration updates for each of the above:
 
     +--------------------------------------------------------------+--------------+
     |  Global Duration Keys                                        | Update in    |
-    |                                                              | milliseconds |
+    |                                                              | microseconds |
     +==============================================================+==============+
     | DHCPDISCOVER.DHCPOFFER.socket_received-buffer_read.0         |          247 |
     +--------------------------------------------------------------+--------------+
@@ -170,29 +170,29 @@ statistic employs the following naming convention:
     {subnet-id[x]}.perfmon.<query type>-<response type>.<start event>-<end event>.<value-name>
 
 There is both a global and a subnet-specific value for each. Currently, the only
-value reported for a given duration key is ``average-ms``; this statistic is the average time
+value reported for a given duration key is ``averages-usecs``; this statistic is the average time
 between the duration's event pair over the most recently completed interval. In other
 words, if during a given interval there were seven occurrences (i.e. updates) totaling
-350ms, the ``average-ms`` reported would be 50ms. Continuing with the example above, the
+3500us, the ``average-usecs`` reported would be 500us. Continuing with the example above, the
 statistics reported are named as follows for the subnet-level values:
 
 ::
 
-    subnet[100].perfmon.DHCPDISCOVER.DHCPOFFER.socket_received-buffer_read.average-ms
-    subnet[100].perfmon.DHCPDISCOVER.DHCPOFFER.buffer_read-mt_queue.average-ms
-    subnet[100].perfmon.DHCPDISCOVER.DHCPOFFER.mt_queued-process_started.average-ms
-    subnet[100].perfmon.DHCPDISCOVER.DHCPOFFER.process_started-process_completed.average-ms
-    subnet[100].perfmon.DHCPDISCOVER.DHCPOFFER.composite-total_response.average-ms
+    subnet[100].perfmon.DHCPDISCOVER.DHCPOFFER.socket_received-buffer_read.average-usecs
+    subnet[100].perfmon.DHCPDISCOVER.DHCPOFFER.buffer_read-mt_queue.average-usecs
+    subnet[100].perfmon.DHCPDISCOVER.DHCPOFFER.mt_queued-process_started.average-usecs
+    subnet[100].perfmon.DHCPDISCOVER.DHCPOFFER.process_started-process_completed.average-usecs
+    subnet[100].perfmon.DHCPDISCOVER.DHCPOFFER.composite-total_response.average-usecs
 
 and as shown for global values:
 
 ::
 
-    perfmon.DHCPDISCOVER.DHCPOFFER.socket_received-buffer_read.average-ms
-    perfmon.DHCPDISCOVER.DHCPOFFER.buffer_read-mt_queue.average-ms
-    perfmon.DHCPDISCOVER.DHCPOFFER.mt_queued-process_started.average-ms
-    perfmon.DHCPDISCOVER.DHCPOFFER.process_started-process_completed.average-ms
-    perfmon.DHCPDISCOVER.DHCPOFFER.composite-total_response.average-ms
+    perfmon.DHCPDISCOVER.DHCPOFFER.socket_received-buffer_read.average-usecs
+    perfmon.DHCPDISCOVER.DHCPOFFER.buffer_read-mt_queue.average-usecs
+    perfmon.DHCPDISCOVER.DHCPOFFER.mt_queued-process_started.average-usecs
+    perfmon.DHCPDISCOVER.DHCPOFFER.process_started-process_completed.average-usecs
+    perfmon.DHCPDISCOVER.DHCPOFFER.composite-total_response.average-usecs
 
 The results are reported to StatsMgr, an internal Kea component that reports data as statistics
 that can be retrieved using statistics commands. They can be fetched using the commands
@@ -225,8 +225,34 @@ The alarm-cleared INFO log looks like this:
 API Commands
 ~~~~~~~~~~~~
 
-    Commands to enable or disable monitoring, clear or alter alarms, and fetch duration data
-    are anticipated but not yet supported.
+.. _command-perfmon-control:
+
+This command can be used to enable or disable active monitoring and statistics
+reporting at runtime without altering or reloading configuration.
+
+::
+
+   {
+       "command": "perfmon-control"
+        "arguments": {
+            "enable-monitoring": true,
+            "stats-mgr-reporting": false"
+        }
+   }
+
+Regardless of the arguments (if any) are supplied, the current values of both
+flags are always returned:
+
+::
+
+   {
+       "result": 0,
+       "text": "perfmon-control success",
+       "arguments": {
+            "enable-monitoring": true,
+            "stats-mgr-reporting": false"
+       }
+   }
 
 .. _perfmon-configuration:
 
