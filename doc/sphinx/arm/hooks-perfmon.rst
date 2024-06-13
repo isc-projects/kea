@@ -254,7 +254,7 @@ flags are always returned:
        "text": "perfmon-control success",
        "arguments": {
             "enable-monitoring": true,
-            "stats-mgr-reporting": false"
+            "stats-mgr-reporting": false
        }
    }
 
@@ -272,7 +272,7 @@ the Perfmon hook library.
     {
         "command": "perfmon-get-all-durations",
         "arguments": {
-            "result-set-format\": true"
+            "result-set-format": true
         }
     }
 
@@ -288,7 +288,7 @@ of durations will be returned as a list of individual elements as shown below:
 
     {
         "arguments": {
-           "durations\": [{
+           "durations": [{
                "duration-key": {
                    "query-type": "DHCPDISCOVER",
                    "response-type": "DHCPOFFER",
@@ -301,7 +301,7 @@ of durations will be returned as a list of individual elements as shown below:
                "occurrences": 501,
                "start-time": "2024-06-12 17:52:06.814884",
                "total-duration-usecs": 23951,
-               "ave-duration-usecs\": 47
+               "ave-duration-usecs": 47
            },
            ..,
            ]",
