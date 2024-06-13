@@ -237,10 +237,10 @@ reporting at runtime without altering or reloading configuration.
 ::
 
    {
-       "command": "perfmon-control"
+        "command": "perfmon-control",
         "arguments": {
             "enable-monitoring": true,
-            "stats-mgr-reporting": false"
+            "stats-mgr-reporting": false
         }
    }
 
@@ -302,9 +302,9 @@ of durations will be returned as a list of individual elements as shown below:
                "start-time": "2024-06-12 17:52:06.814884",
                "total-duration-usecs": 23951,
                "ave-duration-usecs": 47
-           },
-           ..,
-           ]",
+            },
+            ...
+           ],
            "result-set-format": false,
            "interval-width-secs": 5,
            "timestamp": "2024-06-12 17:52:22.397233"
@@ -346,9 +346,9 @@ a format similar to an SQL result set as follows:
                     23951,
                     47
                     ],
-                ..
+                    ...
                 ]
-            }
+            },
             "result-set-format": true,
             "interval-width-secs": 5,
             "timestamp": "2024-06-12 17:52:22.397233"
@@ -362,7 +362,6 @@ interval.  If a duration has no such interval, ``interval-start`` will be report
 as "<none>" and the remaining values will be zero.
 
 .. _perfmon-configuration:
-
 
 Configuration
 ~~~~~~~~~~~~~
