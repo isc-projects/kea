@@ -482,6 +482,8 @@ TEST_F(CtrlChannelDhcpv4SrvTest, commandsRegistration) {
     EXPECT_TRUE(command_list.find("\"config-set\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"config-write\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"leases-reclaim\"") != string::npos);
+    EXPECT_TRUE(command_list.find("\"localize4\"") != string::npos);
+    EXPECT_TRUE(command_list.find("\"localize4o6\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"server-tag-get\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"shutdown\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"statistic-get\"") != string::npos);

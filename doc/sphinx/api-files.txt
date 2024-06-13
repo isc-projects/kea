@@ -69,6 +69,9 @@ src/share/api/lease6-wipe.json
 src/share/api/lease6-write.json
 src/share/api/leases-reclaim.json
 src/share/api/list-commands.json
+src/share/api/localize4.json
+src/share/api/localize4o6.json
+src/share/api/localize6.json
 src/share/api/network4-add.json
 src/share/api/network4-del.json
 src/share/api/network4-get.json

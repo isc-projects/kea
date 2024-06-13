@@ -864,6 +864,37 @@ command-line argument. This command does not take any parameters.
        "command": "version-get"
    }
 
+Commands Supported by the DHCPv4 Server
+=======================================
+
+.. isccmd:: localize4
+.. _command-localize4:
+
+The ``localize4`` Command
+-------------------------
+
+The :isccmd:`localize4` command returns the result of DHCPv4 subnet selection.
+
+.. isccmd:: localize4o6
+.. _command-localize4o6:
+
+The ``localize4o6`` Command
+---------------------------
+
+The :isccmd:`localize4o6` command returns the result of DHCPv4-over-DHCPv6
+subnet selection.
+
+Commands Supported by the DHCPv6 Server
+=======================================
+
+.. isccmd:: localize6
+.. _command-localize6:
+
+The ``localize6`` Command
+-------------------------
+
+The :isccmd:`localize6` command returns the result of DHCPv6 subnet selection.
+
 Commands Supported by the D2 Server
 ===================================
 

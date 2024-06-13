@@ -1,0 +1,22 @@
+{
+    "access": "read",
+    "avail": "2.7.0",
+    "brief": [ "This command returns the result of DHCPv4 subnet selection" ],
+    "cmd-comment": [ "Possible parameters are the incoming interface name, client address, relay address, client classes, etc." ],
+    "cmd-syntax": [
+	"{",
+	"    \"command\": \"localize4\",",
+	"    \"arguments\": {",
+	"        \"interface\": <string>,",
+	"        \"address\": <string>,",
+	"        \"relay\": <string>,",
+	"        \"classes\": [ <strings> ]",
+        "    }",
+	"}"
+    ],
+    "description": [ "See <xref linkend=\"command-localize4\"/>" ],
+    "name": "localize4",
+    "resp-comment": [ "3 forms for selected shared network, subnet or nothing.." ],
+    "resp-syntax": [ "{ \"result\": 1, \"text\": <localization result> }" ],
+    "support": [ "kea-dhcp4" ]
+}

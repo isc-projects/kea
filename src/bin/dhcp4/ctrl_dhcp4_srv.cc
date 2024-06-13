@@ -696,6 +696,337 @@ ControlledDhcpv4Srv::commandLeasesReclaimHandler(const string&,
 }
 
 ConstElementPtr
+ControlledDhcpv4Srv::commandLocalize4Handler(const string&,
+                                             ConstElementPtr args) {
+    if (!args) {
+        return (createAnswer(CONTROL_RESULT_ERROR, "empty arguments"));
+    }
+    if (args->getType() != Element::map) {
+        return (createAnswer(CONTROL_RESULT_ERROR, "arguments must be a map"));
+    }
+    bool ignore_link_sel =
+        CfgMgr::instance().getCurrentCfg()->getIgnoreRAILinkSelection();
+    SubnetSelector selector;
+    for (auto const& entry : args->mapValue()) {
+        ostringstream errmsg;
+        if (entry.first == "interface") {
+            if (entry.second->getType() != Element::string) {
+                errmsg << "'interface' entry must be a string";
+                return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+            }
+            selector.iface_name_ = entry.second->stringValue();
+            continue;
+        } else if (entry.first == "address") {
+            if (entry.second->getType() != Element::string) {
+                errmsg << "'address' entry must be a string";
+                return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+            }
+            try {
+                IOAddress addr(entry.second->stringValue());
+                if (!addr.isV4()) {
+                    errmsg << "bad 'address' entry: not IPv4";
+                    return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+                }
+                selector.ciaddr_ = addr;
+                continue;
+            } catch (const exception& ex) {
+                errmsg << "bad 'address' entry: " << ex.what();
+                return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+            }
+        } else if (entry.first == "relay") {
+            if (entry.second->getType() != Element::string) {
+                errmsg << "'relay' entry must be a string";
+                return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+            }
+            try {
+                IOAddress addr(entry.second->stringValue());
+                if (!addr.isV4()) {
+                    errmsg << "bad 'relay' entry: not IPv4";
+                    return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+                }
+                selector.giaddr_ = addr;
+                continue;
+            } catch (const exception& ex) {
+                errmsg << "bad 'relay' entry: " << ex.what();
+                return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+            }
+        } else if (entry.first == "local") {
+            if (entry.second->getType() != Element::string) {
+                errmsg << "'local' entry must be a string";
+                return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+            }
+            try {
+                IOAddress addr(entry.second->stringValue());
+                if (!addr.isV4()) {
+                    errmsg << "bad 'local' entry: not IPv4";
+                    return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+                }
+                selector.local_address_ = addr;
+                continue;
+            } catch (const exception& ex) {
+                errmsg << "bad 'local' entry: " << ex.what();
+                return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+            }
+        } else if (entry.first == "remote") {
+            if (entry.second->getType() != Element::string) {
+                errmsg << "'remote' entry must be a string";
+                return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+            }
+            try {
+                IOAddress addr(entry.second->stringValue());
+                if (!addr.isV4()) {
+                    errmsg << "bad 'remote' entry: not IPv4";
+                    return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+                }
+                selector.remote_address_ = addr;
+                continue;
+            } catch (const exception& ex) {
+                errmsg << "bad 'remote' entry: " << ex.what();
+                return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+            }
+        } else if (entry.first == "link") {
+            if (entry.second->getType() != Element::string) {
+                errmsg << "'link' entry must be a string";
+                return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+            }
+            try {
+                IOAddress addr(entry.second->stringValue());
+                if (!addr.isV4()) {
+                    errmsg << "bad 'link' entry: not IPv4";
+                    return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+                }
+                if (!ignore_link_sel) {
+                    selector.option_select_ = addr;
+                }
+                continue;
+            } catch (const exception& ex) {
+                errmsg << "bad 'link' entry: " << ex.what();
+                return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+            }
+        } else if (entry.first == "subnet") {
+            // RAI link-selection has precedence over subnet-selection.
+            if (args->contains("link") && !ignore_link_sel) {
+                continue;
+            }
+            if (entry.second->getType() != Element::string) {
+                errmsg << "'subnet' entry must be a string";
+                return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+            }
+            try {
+                IOAddress addr(entry.second->stringValue());
+                if (!addr.isV4()) {
+                    errmsg << "bad 'subnet' entry: not IPv4";
+                    return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+                }
+                selector.option_select_ = addr;
+                continue;
+            } catch (const exception& ex) {
+                errmsg << "bad 'subnet' entry: " << ex.what();
+                return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+            }
+        } else if (entry.first == "classes") {
+            if (entry.second->getType() != Element::list) {
+                return (createAnswer(CONTROL_RESULT_ERROR,
+                                     "'classes' entry must be a list"));
+            }
+            for (auto const& item : entry.second->listValue()) {
+                if (!item || (item->getType() != Element::string)) {
+                    errmsg << "'classes' entry must be a list of strings";
+                    return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+                }
+                // Skip empty client classes.
+                if (!item->stringValue().empty()) {
+                    selector.client_classes_.insert(item->stringValue());
+                }
+            }
+            continue;
+        } else {
+            errmsg << "unknown entry '" << entry.first << "'";
+            return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+        }
+    }
+    ConstSubnet4Ptr subnet = CfgMgr::instance().getCurrentCfg()->
+        getCfgSubnets4()->selectSubnet(selector);
+    if (!subnet) {
+        return (createAnswer(CONTROL_RESULT_EMPTY, "no selected subnet"));
+    }
+    SharedNetwork4Ptr network;
+    subnet->getSharedNetwork(subnet);
+    ostringstream msg;
+    if (network) {
+        msg << "selected shared network '" << network->getName()
+            << "' starting with subnet '" << subnet->toText()
+            << "' id " << subnet->getID();
+    } else {
+        msg << "selected subnet '" << subnet->toText()
+            << "' id " << subnet->getID();
+    }
+    return (createAnswer(CONTROL_RESULT_SUCCESS, msg.str()));
+}
+
+ConstElementPtr
+ControlledDhcpv4Srv::commandLocalize4o6Handler(const string&,
+                                               ConstElementPtr args) {
+    if (!args) {
+        return (createAnswer(CONTROL_RESULT_ERROR, "empty arguments"));
+    }
+    if (args->getType() != Element::map) {
+        return (createAnswer(CONTROL_RESULT_ERROR, "arguments must be a map"));
+    }
+    SubnetSelector selector;
+    selector.dhcp4o6_ = true;
+    for (auto const& entry : args->mapValue()) {
+        ostringstream errmsg;
+        if (entry.first == "interface") {
+            if (entry.second->getType() != Element::string) {
+                errmsg << "'interface' entry must be a string";
+                return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+            }
+            selector.iface_name_ = entry.second->stringValue();
+            continue;
+        } else if (entry.first == "address") {
+            if (entry.second->getType() != Element::string) {
+                errmsg << "'address' entry must be a string";
+                return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+            }
+            try {
+                IOAddress addr(entry.second->stringValue());
+                if (!addr.isV4()) {
+                    errmsg << "bad 'address' entry: not IPv4";
+                    return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+                }
+                selector.ciaddr_ = addr;
+                continue;
+            } catch (const exception& ex) {
+                errmsg << "bad 'address' entry: " << ex.what();
+                return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+            }
+        } else if (entry.first == "relay") {
+            if (entry.second->getType() != Element::string) {
+                errmsg << "'relay' entry must be a string";
+                return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+            }
+            try {
+                IOAddress addr(entry.second->stringValue());
+                if (!addr.isV4()) {
+                    errmsg << "bad 'relay' entry: not IPv4";
+                    return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+                }
+                selector.giaddr_ = addr;
+                continue;
+            } catch (const exception& ex) {
+                errmsg << "bad 'relay' entry: " << ex.what();
+                return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+            }
+        } else if (entry.first == "local") {
+            if (entry.second->getType() != Element::string) {
+                errmsg << "'local' entry must be a string";
+                return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+            }
+            try {
+                IOAddress addr(entry.second->stringValue());
+                if (!addr.isV4()) {
+                    errmsg << "bad 'local' entry: not IPv4";
+                    return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+                }
+                selector.local_address_ = addr;
+                continue;
+            } catch (const exception& ex) {
+                errmsg << "bad 'local' entry: " << ex.what();
+                return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+            }
+        } else if (entry.first == "remote") {
+            if (entry.second->getType() != Element::string) {
+                errmsg << "'remote' entry must be a string";
+                return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+            }
+            try {
+                IOAddress addr(entry.second->stringValue());
+                if (!addr.isV4()) {
+                    errmsg << "bad 'remote' entry: not IPv4";
+                    return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+                }
+                selector.remote_address_ = addr;
+                continue;
+            } catch (const exception& ex) {
+                errmsg << "bad 'remote' entry: " << ex.what();
+                return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+            }
+        } else if (entry.first == "link") {
+            if (entry.second->getType() != Element::string) {
+                errmsg << "'link' entry must be a string";
+                return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+            }
+            try {
+                IOAddress addr(entry.second->stringValue());
+                if (!addr.isV6()) {
+                    errmsg << "bad 'link' entry: not IPv6";
+                    return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+                }
+                selector.first_relay_linkaddr_ = addr;
+                continue;
+            } catch (const exception& ex) {
+                errmsg << "bad 'link' entry: " << ex.what();
+                return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+            }
+        } else if (entry.first == "subnet") {
+            if (entry.second->getType() != Element::string) {
+                errmsg << "'subnet' entry must be a string";
+                return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+            }
+            try {
+                IOAddress addr(entry.second->stringValue());
+                if (!addr.isV4()) {
+                    errmsg << "bad 'subnet' entry: not IPv4";
+                    return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+                }
+                selector.option_select_ = addr;
+                continue;
+            } catch (const exception& ex) {
+                errmsg << "bad 'subnet' entry: " << ex.what();
+                return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+            }
+        } else if (entry.first == "classes") {
+            if (entry.second->getType() != Element::list) {
+                return (createAnswer(CONTROL_RESULT_ERROR,
+                                     "'classes' entry must be a list"));
+            }
+            for (auto const& item : entry.second->listValue()) {
+                if (!item || (item->getType() != Element::string)) {
+                    errmsg << "'classes' entry must be a list of strings";
+                    return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+                }
+                // Skip empty client classes.
+                if (!item->stringValue().empty()) {
+                    selector.client_classes_.insert(item->stringValue());
+                }
+            }
+            continue;
+        } else {
+            errmsg << "unknown entry '" << entry.first << "'";
+            return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+        }
+    }
+    ConstSubnet4Ptr subnet = CfgMgr::instance().getCurrentCfg()->
+        getCfgSubnets4()->selectSubnet4o6(selector);
+    if (!subnet) {
+        return (createAnswer(CONTROL_RESULT_EMPTY, "no selected subnet"));
+    }
+    SharedNetwork4Ptr network;
+    subnet->getSharedNetwork(subnet);
+    ostringstream msg;
+    if (network) {
+        msg << "selected shared network '" << network->getName()
+            << "' starting with subnet '" << subnet->toText()
+            << "' id " << subnet->getID();
+    } else {
+        msg << "selected subnet '" << subnet->toText()
+            << "' id " << subnet->getID();
+    }
+    return (createAnswer(CONTROL_RESULT_SUCCESS, msg.str()));
+}
+
+ConstElementPtr
 ControlledDhcpv4Srv::commandServerTagGetHandler(const std::string&,
                                                 ConstElementPtr) {
     const std::string& tag =
@@ -1133,6 +1464,12 @@ ControlledDhcpv4Srv::ControlledDhcpv4Srv(uint16_t server_port /*= DHCP4_SERVER_P
     CommandMgr::instance().registerCommand("leases-reclaim",
         std::bind(&ControlledDhcpv4Srv::commandLeasesReclaimHandler, this, ph::_1, ph::_2));
 
+    CommandMgr::instance().registerCommand("localize4",
+        std::bind(&ControlledDhcpv4Srv::commandLocalize4Handler, this, ph::_1, ph::_2));
+
+    CommandMgr::instance().registerCommand("localize4o6",
+        std::bind(&ControlledDhcpv4Srv::commandLocalize4o6Handler, this, ph::_1, ph::_2));
+
     CommandMgr::instance().registerCommand("server-tag-get",
         std::bind(&ControlledDhcpv4Srv::commandServerTagGetHandler, this, ph::_1, ph::_2));
 
@@ -1216,6 +1553,8 @@ ControlledDhcpv4Srv::~ControlledDhcpv4Srv() {
         CommandMgr::instance().deregisterCommand("dhcp-enable");
         CommandMgr::instance().deregisterCommand("leases-reclaim");
         CommandMgr::instance().deregisterCommand("server-tag-get");
+        CommandMgr::instance().deregisterCommand("localize4");
+        CommandMgr::instance().deregisterCommand("localize4o6");
         CommandMgr::instance().deregisterCommand("shutdown");
         CommandMgr::instance().deregisterCommand("statistic-get");
         CommandMgr::instance().deregisterCommand("statistic-get-all");
