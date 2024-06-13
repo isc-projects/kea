@@ -6,7 +6,9 @@
 
 #include <config.h>
 #include <monitored_duration.h>
+#include <cc/data.h>
 #include <dhcp/dhcp6.h>
+#include <util/boost_time_utils.h>
 #include <testutils/gtest_utils.h>
 
 #include <gtest/gtest.h>
@@ -14,8 +16,10 @@
 #include <unordered_set>
 
 using namespace isc;
+using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::perfmon;
+using namespace isc::util;
 using namespace boost::posix_time;
 
 namespace {
@@ -253,6 +257,42 @@ TEST(DurationKey, equalityOperators) {
     ASSERT_NO_THROW_LOG(compkey.reset(new DurationKey(AF_INET6, DHCPV6_SOLICIT, DHCPV6_REPLY,
                                       "event_2", "event_3", 100)));
     EXPECT_NE(*compkey, *refkey);
+}
+
+// Verifies the DurationKey::toElement()
+TEST(DurationKey, toElement) {
+    DurationKeyPtr key;
+
+    // Create valid v4 key, verify contents and label.
+    ASSERT_NO_THROW_LOG(key.reset(new DurationKey(AF_INET, DHCPDISCOVER, DHCPOFFER,
+                                  "process_started", "process_completed",
+                                  SUBNET_ID_GLOBAL)));
+    ASSERT_TRUE(key);
+
+    ElementPtr ref_key_elem = Element::createMap();
+    ref_key_elem->set("query-type", Element::create("DHCPDISCOVER"));
+    ref_key_elem->set("response-type", Element::create("DHCPOFFER"));
+    ref_key_elem->set("start-event", Element::create("process_started"));
+    ref_key_elem->set("stop-event", Element::create("process_completed"));
+    ref_key_elem->set("subnet-id", Element::create(SUBNET_ID_GLOBAL));
+
+    auto key_elem = key->toElement();
+    EXPECT_EQ(*ref_key_elem, *key_elem);
+
+    // Create valid v6 key, verify contents and label.
+    ASSERT_NO_THROW_LOG(key.reset(new DurationKey(AF_INET6, DHCPV6_SOLICIT, DHCPV6_ADVERTISE,
+                                  "mt_queued", "process_started", 77)));
+    ASSERT_TRUE(key);
+
+    ref_key_elem = Element::createMap();
+    ref_key_elem->set("query-type", Element::create("SOLICIT"));
+    ref_key_elem->set("response-type", Element::create("ADVERTISE"));
+    ref_key_elem->set("start-event", Element::create("mt_queued"));
+    ref_key_elem->set("stop-event", Element::create("process_started"));
+    ref_key_elem->set("subnet-id", Element::create(77));
+
+    key_elem = key->toElement();
+    EXPECT_EQ(*ref_key_elem, *key_elem);
 }
 
 // Verifies MonitoredDuration valid construction.
@@ -523,6 +563,130 @@ TEST(MonitoredDuration, expireInterval) {
     auto previous_interval = mond->getPreviousInterval();
     EXPECT_EQ(previous_interval, current_interval);
     EXPECT_EQ(mond->getCurrentIntervalStart(), PktEvent::MIN_TIME());
+}
+
+// Verifies the MonitoredDuration::toElement(). We do not bother with
+// a v6 version of this test as family only influences DurationKey content
+// and that is tested elsewhere.
+TEST(MonitoredDuration, toElement) {
+    MonitoredDurationPtr duration;
+    Duration interval_duration(milliseconds(50));
+
+    // Create valid v4 duration.
+    ASSERT_NO_THROW_LOG(duration.reset(new MonitoredDuration(AF_INET, DHCPDISCOVER, DHCPOFFER,
+                                                             "process_started", "process_completed",
+                                                             SUBNET_ID_GLOBAL, interval_duration)));
+    ASSERT_TRUE(duration);
+    duration->addSample(microseconds(5));
+    duration->addSample(microseconds(2));
+    duration->addSample(microseconds(7));
+
+    ElementPtr ref_duration_elem = Element::createMap();
+    // Add the key.
+    ElementPtr ref_key_elem = Element::createMap();
+    ref_key_elem->set("query-type", Element::create("DHCPDISCOVER"));
+    ref_key_elem->set("response-type", Element::create("DHCPOFFER"));
+    ref_key_elem->set("start-event", Element::create("process_started"));
+    ref_key_elem->set("stop-event", Element::create("process_completed"));
+    ref_key_elem->set("subnet-id", Element::create(SUBNET_ID_GLOBAL));
+    ref_duration_elem->set("duration-key", ref_key_elem);
+
+    // Add the data. Should have empty values as we do not have a previous interval.
+    ref_duration_elem->set("ave-duration-usecs", Element::create(0));
+    ref_duration_elem->set("max-duration-usecs", Element::create(0));
+    ref_duration_elem->set("min-duration-usecs", Element::create(0));
+    ref_duration_elem->set("occurrences", Element::create(0));
+    ref_duration_elem->set("start-time", Element::create("<none>"));
+    ref_duration_elem->set("total-duration-usecs", Element::create(0));
+
+    // Generate the valueRow Element and compare it to the reference.
+    auto duration_elem = duration->toElement();
+    ASSERT_TRUE(duration_elem);
+    EXPECT_EQ(*ref_duration_elem, *duration_elem);
+
+    // Now expire the current interval so we'll have a previous interval.
+    duration->expireCurrentInterval();
+    auto previous_interval = duration->getPreviousInterval();
+    ASSERT_TRUE(previous_interval);
+
+    // Replace the data values with those from the new previous interval.
+    ref_duration_elem->set("ave-duration-usecs", Element::create(4));
+    ref_duration_elem->set("max-duration-usecs", Element::create(7));
+    ref_duration_elem->set("min-duration-usecs", Element::create(2));
+    ref_duration_elem->set("occurrences", Element::create(3));
+    ref_duration_elem->set("start-time",
+                           Element::create(ptimeToText(previous_interval->getStartTime())));
+    ref_duration_elem->set("total-duration-usecs", Element::create(14));
+
+    // Generate the valueRow Element and compare it to the reference.
+    duration_elem = duration->toElement();
+    ASSERT_TRUE(duration_elem);
+    EXPECT_EQ(*ref_duration_elem, *duration_elem);
+}
+
+// Verifies the MonitoredDuration::toElement(). We do not bother with
+// a v4 version of this test as family only influences DurationKey content
+// and that is tested elsewhere.
+TEST(MonitoredDuration, toValueRow) {
+    MonitoredDurationPtr duration;
+    Duration interval_duration(milliseconds(50));
+    auto ten_ms = milliseconds(10);
+
+    // Create valid v4 duration.
+    ASSERT_NO_THROW_LOG(duration.reset(new MonitoredDuration(AF_INET6, DHCPV6_SOLICIT, DHCPV6_ADVERTISE,
+                                                             "process_started", "process_completed",
+                                                             SUBNET_ID_GLOBAL, interval_duration)));
+    ASSERT_TRUE(duration);
+    duration->addSample(microseconds(5));
+    duration->addSample(microseconds(2));
+    duration->addSample(microseconds(7));
+
+    ElementPtr ref_row_elem = Element::createList();
+    // Add key values first.
+    ref_row_elem->add(Element::create("SOLICIT"));              // query-type
+    ref_row_elem->add(Element::create("ADVERTISE"));            // response-type
+    ref_row_elem->add(Element::create("process_started"));      // start-event
+    ref_row_elem->add(Element::create("process_completed"));    // stop-event
+    ref_row_elem->add(Element::create(SUBNET_ID_GLOBAL));       // subnet-id
+
+    // Remember where the data values begin.
+    auto data_start = ref_row_elem->size();
+
+    // Add the data values. Should have empty values as we do not have a previous interval.
+    ref_row_elem->add(Element::create("<none>"));  // start-time
+    ref_row_elem->add(Element::create(0));         // occurrences
+    ref_row_elem->add(Element::create(0));         // min-duration-usecs
+    ref_row_elem->add(Element::create(0));         // max-duration-usecs
+    ref_row_elem->add(Element::create(0));         // total-duration-usecs
+    ref_row_elem->add(Element::create(0));         // ave-duration-usecs
+
+    // Generate the valueRow Element and compare it to the reference.
+    auto row_elem = duration->toValueRow();
+    ASSERT_TRUE(row_elem);
+    EXPECT_EQ(*ref_row_elem, *row_elem);
+
+    // Now expire the current interval so we'll have a previous interval.
+    duration->expireCurrentInterval();
+    auto previous_interval = duration->getPreviousInterval();
+    ASSERT_TRUE(previous_interval);
+
+    // Remove the old reference data values.
+    while (ref_row_elem->size() > data_start) {
+        ref_row_elem->remove(data_start);
+    }
+
+    // Add the new reference data values.
+    ref_row_elem->add(Element::create(ptimeToText(previous_interval->getStartTime())));
+    ref_row_elem->add(Element::create(3));  // occurrences
+    ref_row_elem->add(Element::create(2));  // min-duration-usecs
+    ref_row_elem->add(Element::create(7));  // max-duration-usecs
+    ref_row_elem->add(Element::create(14)); // total-duration-usecs
+    ref_row_elem->add(Element::create(4));  // ave-duration-usecs
+
+    // Generate the valueRow Element and compare it to the reference.
+    row_elem = duration->toValueRow();
+    ASSERT_TRUE(row_elem);
+    EXPECT_EQ(*ref_row_elem, *row_elem);
 }
 
 } // end of anonymous namespace

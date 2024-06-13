@@ -16,6 +16,7 @@
 #include <testutils/log_utils.h>
 #include <testutils/gtest_utils.h>
 #include <testutils/multi_threading_utils.h>
+#include <util/boost_time_utils.h>
 
 #include <gtest/gtest.h>
 #include <list>
@@ -31,6 +32,7 @@ using namespace isc::hooks;
 using namespace isc::perfmon;
 using namespace isc::stats;
 using namespace isc::test;
+using namespace isc::util;
 using namespace isc::dhcp::test;
 using namespace boost::posix_time;
 
@@ -91,28 +93,22 @@ public:
         mgr_->configure(json_elements);
     }
 
-    /// @brief Make a valid family-specific query.
+    /// @brief Adds durations to the store.
     ///
-    /// @return if family is AF_INET return a pointer to a DHCPDISCOVER
-    /// otherwise a pointer to a DHCPV6_SOLICIT.
-    PktPtr makeFamilyQuery() {
-        if (family_ == AF_INET) {
-            return (PktPtr(new Pkt4(DHCPDISCOVER, 7788)));
+    /// @param family protocol family to test, AF_INET or AF_INET6.
+    void addDurations(uint16_t family) {
+        // Create two keys where the stop event for the first key is the start
+        // event for the second key.
+        DurationKeyPtr key1(new DurationKey(family, 0, 0, "socket_received", "buffer_read", 1));
+        DurationKeyPtr key2(new DurationKey(family, 0, 0, "buffer_read", "process_started", 1));
+
+        // Make multiple calls to addDurationSample() for each key, starting with key1.
+        auto store = mgr_->getDurationStore();
+        ASSERT_TRUE(store);
+        for (int i = 0; i < 4; ++i) {
+            ASSERT_NO_THROW_LOG(store->addDurationSample(key1, milliseconds(1)));
+            ASSERT_NO_THROW_LOG(store->addDurationSample(key2, milliseconds(2)));
         }
-
-        return (PktPtr(new Pkt6(DHCPV6_SOLICIT, 7788)));
-    }
-
-    /// @brief Make a valid family-specific response.
-    ///
-    /// @return if family is AF_INET return a pointer to a DHCPOFFER
-    /// otherwise a pointer to a DHCPV6_ADVERTISE.
-    PktPtr makeFamilyResponse() {
-        if (family_ == AF_INET) {
-            return (PktPtr(new Pkt4(DHCPOFFER, 7788)));
-        }
-
-        return (PktPtr(new Pkt6(DHCPV6_ADVERTISE, 7788)));
     }
 
     /// @brief Tests specified command and verifies response.
@@ -178,6 +174,8 @@ public:
         // Run the command handler appropriate for the given command name.
         if (command_name == "perfmon-control") {
             static_cast<void>(mgr_->perfmonControlHandler(*callout_handle));
+        } else if (command_name == "perfmon-get-all-durations") {
+            static_cast<void>(mgr_->perfmonGetAllDurationsHandler(*callout_handle));
         } else {
             ADD_FAILURE() << "unrecognized command '" << command_name << "'";
         }
@@ -239,7 +237,7 @@ public:
         }
     }
 
-    // Verify that invalid perfmon-control commands are caught.
+    /// @brief Verify that invalid perfmon-control commands are caught.
     void testInvalidPerfMonControl() {
         struct Scenario {
             int line_;              // Scenario line number
@@ -283,7 +281,7 @@ public:
         }
     }
 
-    // Verify that valid perfmon-control are processed correctly.
+    /// @brief Verify that valid perfmon-control are processed correctly.
     void testValidPerfMonControl() {
         struct Scenario {
             int line_;                      // Scenario line number
@@ -387,6 +385,158 @@ public:
         }
     }
 
+    /// @brief Verify that invalid perfmon-get-all-durations commands are caught.
+    void testInvalidPerfMonGetAllDurations() {
+        struct Scenario {
+            int line_;              // Scenario line number
+            std::string cmd_;       // JSON command text
+            int exp_result_;        // Expected result code
+            std::string exp_text_;  // Expected result text
+        };
+
+        std::list<Scenario> scenarios = {
+            {
+                __LINE__,
+                R"({
+                    "command": "perfmon-get-all-durations",
+                    "arguments": {
+                        "result-set-format": "bogus"
+                    }
+                })",
+                CONTROL_RESULT_ERROR,
+                "'result-set-format' parameter is not a boolean"
+            },
+            {
+                __LINE__,
+                R"({
+                    "command": "perfmon-get-all-durations",
+                    "arguments": {
+                        "bogus": 23
+                    }
+                })",
+                CONTROL_RESULT_ERROR,
+                "spurious 'bogus' parameter"
+            }
+        };
+
+        for (const auto& scenario : scenarios) {
+            stringstream oss;
+            oss << "scenario at line: " << scenario.line_;
+            SCOPED_TRACE(oss.str());
+            ConstElementPtr answer = testCommand(scenario.cmd_,
+                                                 scenario.exp_result_,
+                                                 scenario.exp_text_);
+        }
+    }
+
+    /// @brief Veriies that a valid perfmon-get-all-durations command with
+    /// result-set-format set false, returns all durations correctly.
+    void testPerfMonGetAllDurationsResultSetFalse() {
+        std::string now_str = ptimeToText(PktEvent::now());
+        std::string cmd =
+                R"({
+                    "command": "perfmon-get-all-durations",
+                    "arguments": {
+                        "result-set-format": false
+                    }
+                })";
+
+        addDurations(family_);
+
+        auto ref_durations = mgr_->getDurationStore()->getAll();
+        auto ref_time = PktEvent::now();
+        std::ostringstream oss;
+        oss << "perfmon-get-all-durations: " << ref_durations->size() << " found";
+        ConstElementPtr answer = testCommand(cmd, CONTROL_RESULT_SUCCESS, oss.str());
+
+        checkAnswerAgainstDurations(ref_durations, answer, ref_time, false);
+    }
+
+    /// @brief Veriies that a valid perfmon-get-all-durations with result-set-format
+    /// set true, returns all durations correctly.
+    void testPerfMonGetAllDurationsResultSetTrue() {
+        std::string now_str = ptimeToText(PktEvent::now());
+        std::string cmd =
+                R"({
+                    "command": "perfmon-get-all-durations",
+                    "arguments": {
+                        "result-set-format": true
+                    }
+                })";
+
+        addDurations(family_);
+        auto ref_durations = mgr_->getDurationStore()->getAll();
+        ASSERT_TRUE(ref_durations);
+
+        auto ref_time = PktEvent::now();
+        std::ostringstream oss;
+        oss << "perfmon-get-all-durations: " << ref_durations->size() << " found";
+        ConstElementPtr answer = testCommand(cmd, CONTROL_RESULT_SUCCESS, oss.str());
+
+        checkAnswerAgainstDurations(ref_durations, answer, ref_time, true);
+    }
+
+    /// @brief Verifies that the command response content against a list of
+    /// MonitoredDurations and the expected format.
+    ///
+    /// @param ref_durations list of expected MonitoredDurations in the order they
+    /// should appear in the results.
+    /// @param anwswer complete command answer to check
+    /// @param ref_time timestamp used to compare againt the "timestamp" in the answer.
+    /// @param result_set_format expected format style of the answer
+    void checkAnswerAgainstDurations(const MonitoredDurationCollectionPtr ref_durations,
+                                    ConstElementPtr answer,
+                                    const Timestamp& ref_time,
+                                    bool result_set_format) {
+        // Sanity check.
+        ASSERT_TRUE(ref_durations);
+        auto ref_count = ref_durations->size();
+        ASSERT_TRUE(answer);
+
+        // Verify content as either list elements or result-set.
+        if (!result_set_format) {
+            auto durations_list = answer->find("arguments/durations");
+            ASSERT_TRUE(durations_list);
+            EXPECT_EQ(ref_count, durations_list->size());
+
+            int i = 0;
+            for (const auto& ref_duration : *ref_durations) {
+                auto duration_elem = durations_list->get(i);
+                ASSERT_TRUE(duration_elem);
+                EXPECT_EQ(*(duration_elem), *(ref_duration->toElement()));
+                ++i;
+            }
+        } else {
+            auto elem = answer->find("arguments/result-set-format");
+            ASSERT_TRUE(elem);
+            ASSERT_TRUE(elem->boolValue());
+
+            auto result_set = answer->find("arguments/durations-result-set");
+            ASSERT_TRUE(result_set);
+            auto columns = result_set->find("columns");
+            ASSERT_TRUE(columns);
+            EXPECT_EQ(*columns, *MonitoredDuration::valueRowColumns());
+
+            auto rows = result_set->find("rows");
+            ASSERT_TRUE(rows);
+
+            int i = 0;
+            for (const auto& ref_duration : *ref_durations) {
+                auto row  = rows->get(i);
+                ASSERT_TRUE(row);
+                EXPECT_EQ(*row, *(ref_duration->toValueRow()));
+                ++i;
+            }
+        }
+
+        auto elem = answer->find("arguments/interval-width-secs");
+        ASSERT_TRUE(elem);
+        EXPECT_EQ(mgr_->getIntervalWidthSecs(), elem->intValue());
+
+        elem = answer->find("arguments/timestamp");
+        ASSERT_TRUE(elem);
+        EXPECT_GE(elem->stringValue(), ptimeToText(ref_time));
+    }
 
     /// @brief Protocol family AF_INET or AF_INET6
     uint16_t family_;
@@ -437,5 +587,28 @@ TEST_F(PerfMonCmdTest6, validPerfMonControl) {
     testValidPerfMonControl();
 }
 
+TEST_F(PerfMonCmdTest4, invalidPerfMonGetAllDurations) {
+    testInvalidPerfMonGetAllDurations();
+}
+
+TEST_F(PerfMonCmdTest6, invalidPerfMonGetAllDurations) {
+    testInvalidPerfMonGetAllDurations();
+}
+
+TEST_F(PerfMonCmdTest4, perfMonGetAllDurationsResultSetFalse) {
+    testPerfMonGetAllDurationsResultSetFalse();
+}
+
+TEST_F(PerfMonCmdTest4, perfMonGetAllDurationsResultSetTrue) {
+    testPerfMonGetAllDurationsResultSetTrue();
+}
+
+TEST_F(PerfMonCmdTest6, perfMonGetAllDurationsResultSetFalse) {
+    testPerfMonGetAllDurationsResultSetFalse();
+}
+
+TEST_F(PerfMonCmdTest6, perfMonGetAllDurationsResultSetTrue) {
+    testPerfMonGetAllDurationsResultSetTrue();
+}
 
 } // end of anonymous namespace
