@@ -1,3 +1,11 @@
+2254.	[func]		tmark
+	Added two API commands to Perfmon hook library:
+	"perfmon-control" which can be used to enable
+	or disable monitoring and reporting at runtime;
+	and "perfmon-get-all-durations" which fetches
+	a snapshot of raw performance data.
+	(Gitlab #3328)
+
 2253.	[func]		fdupont
 	Added the predicate token "match" which evaluates regular
 	expression matching to classification expression.
