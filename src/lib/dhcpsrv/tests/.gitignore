@@ -1,2 +1,3 @@
 /libdhcpsrv_unittests
 /test_libraries.h
+/test_kea_lfc_env.sh

@@ -1629,6 +1629,8 @@ AC_CONFIG_FILES([src/lib/dhcp_ddns/tests/Makefile])
 AC_CONFIG_FILES([src/lib/dhcpsrv/Makefile])
 AC_CONFIG_FILES([src/lib/dhcpsrv/tests/Makefile])
 AC_CONFIG_FILES([src/lib/dhcpsrv/tests/test_libraries.h])
+AC_CONFIG_FILES([src/lib/dhcpsrv/tests/test_kea_lfc_env.sh],
+                [chmod +x src/lib/dhcpsrv/tests/test_kea_lfc_env.sh])
 AC_CONFIG_FILES([src/lib/dhcpsrv/testutils/Makefile])
 AC_CONFIG_FILES([src/lib/dns/Makefile])
 AC_CONFIG_FILES([src/lib/dns/tests/Makefile])

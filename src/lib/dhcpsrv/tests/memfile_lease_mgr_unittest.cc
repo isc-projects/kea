@@ -534,6 +534,32 @@ TEST_F(MemfileLeaseMgrTest, lfcTimer) {
     EXPECT_EQ(2, lease_mgr->getLFCCount());
 }
 
+/// @brief Check that the kea environment is accesible to the Lease
+/// File Cleanup process.
+TEST_F(MemfileLeaseMgrTest, lfcEnv) {
+    DatabaseConnection::ParameterMap pmap;
+    pmap["type"] = "memfile";
+    pmap["universe"] = "4";
+    pmap["name"] = getLeaseFilePath("leasefile4_0.csv");
+    pmap["lfc-interval"] = "1";
+
+    std::ostringstream s;
+    s << DHCP_DATA_DIR << "/test_kea_lfc_env.sh";
+    setenv("KEA_LFC_EXECUTABLE", s.str().c_str(), 1);
+
+    boost::scoped_ptr<NakedMemfileLeaseMgr> lease_mgr(new NakedMemfileLeaseMgr(pmap));
+
+    // Try to run the lease file cleanup.
+    ASSERT_NO_THROW(lease_mgr->lfcCallback());
+
+    // Wait for the LFC process to complete.
+    ASSERT_TRUE(waitForProcess(*lease_mgr, 1));
+
+    // And make sure it has returned an exit status of 0.
+    EXPECT_EQ(0, lease_mgr->getLFCExitStatus())
+        << "environment not available to LFC";
+}
+
 /// @brief This test checks if the LFC timer is disabled (doesn't trigger)
 /// cleanups when the lfc-interval is set to 0.
 TEST_F(MemfileLeaseMgrTest, lfcTimerDisabled) {
