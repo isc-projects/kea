@@ -698,6 +698,123 @@ ControlledDhcpv6Srv::commandLeasesReclaimHandler(const string&,
 }
 
 ConstElementPtr
+ControlledDhcpv6Srv::commandLocalize6Handler(const string&,
+                                             ConstElementPtr args) {
+    if (!args) {
+        return (createAnswer(CONTROL_RESULT_ERROR, "empty arguments"));
+    }
+    if (args->getType() != Element::map) {
+        return (createAnswer(CONTROL_RESULT_ERROR, "arguments must be a map"));
+    }
+    SubnetSelector selector;
+    selector.remote_address_ = IOAddress::IPV6_ZERO_ADDRESS();
+    for (auto const& entry : args->mapValue()) {
+        ostringstream errmsg;
+        if (entry.first == "interface") {
+            if (entry.second->getType() != Element::string) {
+                errmsg << "'interface' entry must be a string";
+                return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+            }
+            selector.iface_name_ = entry.second->stringValue();
+            continue;
+        } if (entry.first == "interface-id") {
+            if (entry.second->getType() != Element::string) {
+                errmsg << "'interface-id' entry must be a string";
+                return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+            }
+            try {
+                string str = entry.second->stringValue();
+                vector<uint8_t> id = util::str::quotedStringToBinary(str);
+                if (id.empty()) {
+                    util::str::decodeFormattedHexString(str, id);
+                }
+                if (id.empty()) {
+                    errmsg << "'interface-id' must be not empty";
+                    return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+                }
+                selector.interface_id_ = OptionPtr(new Option(Option::V6,
+                                                              D6O_INTERFACE_ID,
+                                                              id));
+                continue;
+            } catch (...) {
+                errmsg << "value of 'interface-id' was not recognized";
+                return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+            }
+        } else if (entry.first == "remote") {
+            if (entry.second->getType() != Element::string) {
+                errmsg << "'remote' entry must be a string";
+                return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+            }
+            try {
+                IOAddress addr(entry.second->stringValue());
+                if (!addr.isV6()) {
+                    errmsg << "bad 'remote' entry: not IPv6";
+                    return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+                }
+                selector.remote_address_ = addr;
+                continue;
+            } catch (const exception& ex) {
+                errmsg << "bad 'remote' entry: " << ex.what();
+                return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+            }
+        } else if (entry.first == "link") {
+            if (entry.second->getType() != Element::string) {
+                errmsg << "'link' entry must be a string";
+                return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+            }
+            try {
+                IOAddress addr(entry.second->stringValue());
+                if (!addr.isV6()) {
+                    errmsg << "bad 'link' entry: not IPv6";
+                    return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+                }
+                selector.first_relay_linkaddr_ = addr;
+                continue;
+            } catch (const exception& ex) {
+                errmsg << "bad 'link' entry: " << ex.what();
+                return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+            }
+        } else if (entry.first == "classes") {
+            if (entry.second->getType() != Element::list) {
+                return (createAnswer(CONTROL_RESULT_ERROR,
+                                     "'classes' entry must be a list"));
+            }
+            for (auto const& item : entry.second->listValue()) {
+                if (!item || (item->getType() != Element::string)) {
+                    errmsg << "'classes' entry must be a list of strings";
+                    return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+                }
+                // Skip empty client classes.
+                if (!item->stringValue().empty()) {
+                    selector.client_classes_.insert(item->stringValue());
+                }
+            }
+            continue;
+        } else {
+            errmsg << "unknown entry '" << entry.first << "'";
+            return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+        }
+    }
+    ConstSubnet6Ptr subnet = CfgMgr::instance().getCurrentCfg()->
+        getCfgSubnets6()->selectSubnet(selector);
+    if (!subnet) {
+        return (createAnswer(CONTROL_RESULT_EMPTY, "no selected subnet"));
+    }
+    SharedNetwork6Ptr network;
+    subnet->getSharedNetwork(network);
+    ostringstream msg;
+    if (network) {
+        msg << "selected shared network '" << network->getName()
+            << "' starting with subnet '" << subnet->toText()
+            << "' id " << subnet->getID();
+    } else {
+        msg << "selected subnet '" << subnet->toText()
+            << "' id " << subnet->getID();
+    }
+    return (createAnswer(CONTROL_RESULT_SUCCESS, msg.str()));
+}
+
+ConstElementPtr
 ControlledDhcpv6Srv::commandServerTagGetHandler(const std::string&,
                                                 ConstElementPtr) {
     const std::string& tag =
@@ -1160,6 +1277,9 @@ ControlledDhcpv6Srv::ControlledDhcpv6Srv(uint16_t server_port /*= DHCP6_SERVER_P
     CommandMgr::instance().registerCommand("leases-reclaim",
         std::bind(&ControlledDhcpv6Srv::commandLeasesReclaimHandler, this, ph::_1, ph::_2));
 
+    CommandMgr::instance().registerCommand("localize6",
+        std::bind(&ControlledDhcpv6Srv::commandLocalize6Handler, this, ph::_1, ph::_2));
+
     CommandMgr::instance().registerCommand("server-tag-get",
         std::bind(&ControlledDhcpv6Srv::commandServerTagGetHandler, this, ph::_1, ph::_2));
 
@@ -1242,6 +1362,7 @@ ControlledDhcpv6Srv::~ControlledDhcpv6Srv() {
         CommandMgr::instance().deregisterCommand("dhcp-disable");
         CommandMgr::instance().deregisterCommand("dhcp-enable");
         CommandMgr::instance().deregisterCommand("leases-reclaim");
+        CommandMgr::instance().deregisterCommand("localize6");
         CommandMgr::instance().deregisterCommand("server-tag-get");
         CommandMgr::instance().deregisterCommand("shutdown");
         CommandMgr::instance().deregisterCommand("statistic-get");

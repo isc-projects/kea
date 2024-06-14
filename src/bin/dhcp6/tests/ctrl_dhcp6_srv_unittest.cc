@@ -509,6 +509,7 @@ TEST_F(CtrlDhcpv6SrvTest, commandsRegistration) {
     EXPECT_TRUE(command_list.find("\"config-set\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"config-write\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"leases-reclaim\"") != string::npos);
+    EXPECT_TRUE(command_list.find("\"localize6\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"server-tag-get\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"shutdown\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"statistic-get\"") != string::npos);
@@ -2087,6 +2088,442 @@ TEST_F(CtrlChannelDhcpv6SrvTest, dhcpEnableOriginId) {
 
     // The service should be enabled.
     EXPECT_TRUE(server_->network_state_->isServiceEnabled());
+}
+
+// This test verifies that localize6 command performs sanity check parameters.
+TEST_F(CtrlChannelDhcpv6SrvTest, localize6BadParam) {
+    createUnixChannelServer();
+    std::string response;
+    ConstElementPtr rsp;
+
+    sendUnixCommand("{"
+                    "    \"command\": \"localize6\""
+                    "}", response);
+
+    // The response should be a valid JSON.
+    EXPECT_NO_THROW(rsp = Element::fromJSON(response));
+    ASSERT_TRUE(rsp);
+
+    EXPECT_EQ("{ \"result\": 1, \"text\": \"empty arguments\" }",
+              response);
+
+    sendUnixCommand("{"
+                    "    \"command\": \"localize6\","
+                    "    \"arguments\": [ ]"
+                    "    }"
+                    "}", response);
+    EXPECT_EQ("{ \"result\": 1, \"text\": \"arguments must be a map\" }",
+              response);
+
+    sendUnixCommand("{"
+                    "    \"command\": \"localize6\","
+                    "    \"arguments\": {"
+                    "        \"foo\": \"bar\""
+                    "    }"
+                    "}", response);
+    EXPECT_EQ("{ \"result\": 1, \"text\": \"unknown entry 'foo'\" }",
+              response);
+
+    sendUnixCommand("{"
+                    "    \"command\": \"localize6\","
+                    "    \"arguments\": {"
+                    "        \"interface\": 1"
+                    "    }"
+                    "}", response);
+    string expected = "{ \"result\": 1, \"text\": \"";
+    expected += "'interface' entry must be a string";
+    expected += "\" }";
+    EXPECT_EQ(expected, response);
+
+    sendUnixCommand("{"
+                    "    \"command\": \"localize6\","
+                    "    \"arguments\": {"
+                    "        \"interface-id\": 1"
+                    "    }"
+                    "}", response);
+    expected = "{ \"result\": 1, \"text\": \"";
+    expected += "'interface-id' entry must be a string";
+    expected += "\" }";
+    EXPECT_EQ(expected, response);
+
+    sendUnixCommand("{"
+                    "    \"command\": \"localize6\","
+                    "    \"arguments\": {"
+                    "        \"interface-id\": \"\""
+                    "    }"
+                    "}", response);
+    expected = "{ \"result\": 1, \"text\": \"";
+    expected += "'interface-id' must be not empty";
+    expected += "\" }";
+    EXPECT_EQ(expected, response);
+
+    sendUnixCommand("{"
+                    "    \"command\": \"localize6\","
+                    "    \"arguments\": {"
+                    "        \"interface-id\": \"foo\""
+                    "    }"
+                    "}", response);
+    expected = "{ \"result\": 1, \"text\": \"";
+    expected += "value of 'interface-id' was not recognized";
+    expected += "\" }";
+    EXPECT_EQ(expected, response);
+
+    sendUnixCommand("{"
+                    "    \"command\": \"localize6\","
+                    "    \"arguments\": {"
+                    "        \"remote\": 1"
+                    "    }"
+                    "}", response);
+    expected = "{ \"result\": 1, \"text\": \"";
+    expected += "'remote' entry must be a string";
+    expected += "\" }";
+    EXPECT_EQ(expected, response);
+
+    sendUnixCommand("{"
+                    "    \"command\": \"localize6\","
+                    "    \"arguments\": {"
+                    "        \"remote\": \"192.2.1.2\""
+                    "    }"
+                    "}", response);
+    expected = "{ \"result\": 1, \"text\": \"";
+    expected += "bad 'remote' entry: not IPv6";
+    expected += "\" }";
+    EXPECT_EQ(expected, response);
+
+    sendUnixCommand("{"
+                    "    \"command\": \"localize6\","
+                    "    \"arguments\": {"
+                    "        \"remote\": \"foobar\""
+                    "    }"
+                    "}", response);
+    expected = "{ \"result\": 1, \"text\": \"";
+    expected += "bad 'remote' entry: Failed to convert string to address ";
+    expected += "'foobar': Invalid argument";
+    expected += "\" }";
+    EXPECT_EQ(expected, response);
+
+    sendUnixCommand("{"
+                    "    \"command\": \"localize6\","
+                    "    \"arguments\": {"
+                    "        \"link\": 1"
+                    "    }"
+                    "}", response);
+    expected = "{ \"result\": 1, \"text\": \"";
+    expected += "'link' entry must be a string";
+    expected += "\" }";
+    EXPECT_EQ(expected, response);
+
+    sendUnixCommand("{"
+                    "    \"command\": \"localize6\","
+                    "    \"arguments\": {"
+                    "        \"link\": \"192.2.1.2\""
+                    "    }"
+                    "}", response);
+    expected = "{ \"result\": 1, \"text\": \"";
+    expected += "bad 'link' entry: not IPv6";
+    expected += "\" }";
+    EXPECT_EQ(expected, response);
+
+    sendUnixCommand("{"
+                    "    \"command\": \"localize6\","
+                    "    \"arguments\": {"
+                    "        \"link\": \"foobar\""
+                    "    }"
+                    "}", response);
+    expected = "{ \"result\": 1, \"text\": \"";
+    expected += "bad 'link' entry: Failed to convert string to address ";
+    expected += "'foobar': Invalid argument";
+    expected += "\" }";
+    EXPECT_EQ(expected, response);
+
+    sendUnixCommand("{"
+                    "    \"command\": \"localize6\","
+                    "    \"arguments\": {"
+                    "        \"classes\": \"foo\""
+                    "    }"
+                    "}", response);
+    expected = "{ \"result\": 1, \"text\": \"";
+    expected += "'classes' entry must be a list";
+    expected += "\" }";
+    EXPECT_EQ(expected, response);
+
+    sendUnixCommand("{"
+                    "    \"command\": \"localize6\","
+                    "    \"arguments\": {"
+                    "        \"classes\": [ 1 ]"
+                    "    }"
+                    "}", response);
+    expected = "{ \"result\": 1, \"text\": \"";
+    expected += "'classes' entry must be a list of strings";
+    expected += "\" }";
+    EXPECT_EQ(expected, response);
+}
+
+// This test verifies if localize6 command returns proper subnet for a given
+// remote/source address.
+TEST_F(CtrlChannelDhcpv6SrvTest, localize6Addr) {
+    createUnixChannelServer();
+    std::string response;
+
+    auto subnet = Subnet6::create(IOAddress("2001:db8:1::"),
+                                  64, 1, 2, 3, 4, SubnetID(1));
+    SharedNetwork6Ptr network(new SharedNetwork6("foo"));
+    CfgMgr::instance().clear();
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->add(subnet);
+    CfgMgr::instance().getStagingCfg()->getCfgSharedNetworks6()->add(network);
+    CfgMgr::instance().commit();
+
+    // Address not in range: nothing can be selected.
+    sendUnixCommand("{"
+                    "    \"command\": \"localize6\","
+                    "    \"arguments\": {"
+                    "        \"remote\": \"fe80::abcd\""
+                    "    }"
+                    "}", response);
+    EXPECT_EQ("{ \"result\": 3, \"text\": \"no selected subnet\" }",
+              response);
+
+    // Address in range: the subnet is selected.
+    sendUnixCommand("{"
+                    "    \"command\": \"localize6\","
+                    "    \"arguments\": {"
+                    "        \"remote\": \"2001:db8:1::1\""
+                    "    }"
+                    "}", response);
+    string expected = "{ \"result\": 0, \"text\": \"";
+    expected += "selected subnet '2001:db8:1::/64' id 1";
+    expected += "\" }";
+    EXPECT_EQ(expected, response);
+
+    // Add the subnet to the shared network.
+    subnet->setSharedNetwork(network);
+    sendUnixCommand("{"
+                    "    \"command\": \"localize6\","
+                    "    \"arguments\": {"
+                    "        \"remote\": \"2001:db8:1::1\""
+                    "    }"
+                    "}", response);
+    expected = "{ \"result\": 0, \"text\": \"";
+    expected += "selected shared network 'foo' ";
+    expected += "starting with subnet '2001:db8:1::/64' id 1";
+    expected += "\" }";
+    EXPECT_EQ(expected, response);
+}
+
+// This test verifies if localize6 command returns proper subnet for a given
+// incoming interface.
+TEST_F(CtrlChannelDhcpv6SrvTest, localize6Iface) {
+    createUnixChannelServer();
+    std::string response;
+
+    auto subnet = Subnet6::create(IOAddress("2001:db8:1::"),
+                                  64, 1, 2, 3, 4, SubnetID(1));
+    subnet->setIface("eth0");
+    SharedNetwork6Ptr network(new SharedNetwork6("foo"));
+    CfgMgr::instance().clear();
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->add(subnet);
+    CfgMgr::instance().getStagingCfg()->getCfgSharedNetworks6()->add(network);
+    CfgMgr::instance().commit();
+
+    // Different interface: nothing can be selected.
+    sendUnixCommand("{"
+                    "    \"command\": \"localize6\","
+                    "    \"arguments\": {"
+                    "        \"interface\": \"bar\""
+                    "    }"
+                    "}", response);
+    EXPECT_EQ("{ \"result\": 3, \"text\": \"no selected subnet\" }",
+              response);
+
+    // Same interface: the subnet is selected.
+    sendUnixCommand("{"
+                    "    \"command\": \"localize6\","
+                    "    \"arguments\": {"
+                    "        \"interface\": \"eth0\""
+                    "    }"
+                    "}", response);
+    string expected = "{ \"result\": 0, \"text\": \"";
+    expected += "selected subnet '2001:db8:1::/64' id 1";
+    expected += "\" }";
+    EXPECT_EQ(expected, response);
+
+    // Add the subnet to the shared network.
+    subnet->setSharedNetwork(network);
+    sendUnixCommand("{"
+                    "    \"command\": \"localize6\","
+                    "    \"arguments\": {"
+                    "        \"interface\": \"eth0\""
+                    "    }"
+                    "}", response);
+    expected = "{ \"result\": 0, \"text\": \"";
+    expected += "selected shared network 'foo' ";
+    expected += "starting with subnet '2001:db8:1::/64' id 1";
+    expected += "\" }";
+    EXPECT_EQ(expected, response);
+}
+
+// This test verifies if localize6 command returns proper subnet for a given
+// relay link address.
+TEST_F(CtrlChannelDhcpv6SrvTest, localize6RelayLinkaddr) {
+    createUnixChannelServer();
+    std::string response;
+
+    auto subnet = Subnet6::create(IOAddress("2001:db8:1::"),
+                                  64, 1, 2, 3, 4, SubnetID(1));
+    SharedNetwork6Ptr network(new SharedNetwork6("foo"));
+    CfgMgr::instance().clear();
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->add(subnet);
+    CfgMgr::instance().getStagingCfg()->getCfgSharedNetworks6()->add(network);
+    CfgMgr::instance().commit();
+
+    // Address not in range: nothing can be selected.
+    sendUnixCommand("{"
+                    "    \"command\": \"localize6\","
+                    "    \"arguments\": {"
+                    "        \"link\": \"2001:db8:2::2\""
+                    "    }"
+                    "}", response);
+    EXPECT_EQ("{ \"result\": 3, \"text\": \"no selected subnet\" }",
+              response);
+
+    // Address in range: the subnet is selected.
+    sendUnixCommand("{"
+                    "    \"command\": \"localize6\","
+                    "    \"arguments\": {"
+                    "        \"link\": \"2001:db8:1::1\""
+                    "    }"
+                    "}", response);
+    string expected = "{ \"result\": 0, \"text\": \"";
+    expected += "selected subnet '2001:db8:1::/64' id 1";
+    expected += "\" }";
+    EXPECT_EQ(expected, response);
+
+    // Add the subnet to the shared network.
+    subnet->setSharedNetwork(network);
+    sendUnixCommand("{"
+                    "    \"command\": \"localize6\","
+                    "    \"arguments\": {"
+                    "        \"link\": \"2001:db8:1::1\""
+                    "    }"
+                    "}", response);
+    expected = "{ \"result\": 0, \"text\": \"";
+    expected += "selected shared network 'foo' ";
+    expected += "starting with subnet '2001:db8:1::/64' id 1";
+    expected += "\" }";
+    EXPECT_EQ(expected, response);
+}
+
+// This test verifies if localize6 command returns proper subnet for a given
+// relay interface id.
+TEST_F(CtrlChannelDhcpv6SrvTest, localize6RelayInterfaceId) {
+    createUnixChannelServer();
+    std::string response;
+
+    auto subnet = Subnet6::create(IOAddress("2001:db8:1::"),
+                                  64, 1, 2, 3, 4, SubnetID(1));
+    string iface_id("relay");
+    vector<uint8_t> bin(iface_id.cbegin(), iface_id.cend());
+    OptionPtr id(new Option(Option::V6, D6O_INTERFACE_ID, bin));
+    subnet->setInterfaceId(id);
+    SharedNetwork6Ptr network(new SharedNetwork6("foo"));
+    CfgMgr::instance().clear();
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->add(subnet);
+    CfgMgr::instance().getStagingCfg()->getCfgSharedNetworks6()->add(network);
+    CfgMgr::instance().commit();
+
+    // Note that below a relay link address is required: it says the client
+    // is behind a relay.
+    // Different interface id: nothing can be selected.
+    sendUnixCommand("{"
+                    "    \"command\": \"localize6\","
+                    "    \"arguments\": {"
+                    "        \"link\": \"2001:db8:2::2\","
+                    "        \"interface-id\": \"'foobar'\""
+                    "    }"
+                    "}", response);
+    EXPECT_EQ("{ \"result\": 3, \"text\": \"no selected subnet\" }",
+              response);
+
+    // Same interface id: the subnet is selected.
+    sendUnixCommand("{"
+                    "    \"command\": \"localize6\","
+                    "    \"arguments\": {"
+                    "        \"link\": \"2001:db8:2::2\","
+                    "        \"interface-id\": \"'relay'\""
+                    "    }"
+                    "}", response);
+    string expected = "{ \"result\": 0, \"text\": \"";
+    expected += "selected subnet '2001:db8:1::/64' id 1";
+    expected += "\" }";
+    EXPECT_EQ(expected, response);
+
+    // Add the subnet to the shared network.
+    subnet->setSharedNetwork(network);
+    sendUnixCommand("{"
+                    "    \"command\": \"localize6\","
+                    "    \"arguments\": {"
+                    "        \"link\": \"2001:db8:2::2\","
+                    "        \"interface-id\": \"'relay'\""
+                    "    }"
+                    "}", response);
+    expected = "{ \"result\": 0, \"text\": \"";
+    expected += "selected shared network 'foo' ";
+    expected += "starting with subnet '2001:db8:1::/64' id 1";
+    expected += "\" }";
+    EXPECT_EQ(expected, response);
+}
+
+// This test verifies if localize6 command returns proper guarded subnet.
+TEST_F(CtrlChannelDhcpv6SrvTest, localize6Class) {
+    createUnixChannelServer();
+    std::string response;
+
+    auto subnet = Subnet6::create(IOAddress("2001:db8:1::"),
+                                  64, 1, 2, 3, 4, SubnetID(1));
+    subnet->allowClientClass("foobar");
+    SharedNetwork6Ptr network(new SharedNetwork6("foo"));
+    CfgMgr::instance().clear();
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->add(subnet);
+    CfgMgr::instance().getStagingCfg()->getCfgSharedNetworks6()->add(network);
+    CfgMgr::instance().commit();
+
+    // Address in range but not in guard: nothing can be selected.
+    sendUnixCommand("{"
+                    "    \"command\": \"localize6\","
+                    "    \"arguments\": {"
+                    "        \"remote\": \"2001:db8:1::1\""
+                    "    }"
+                    "}", response);
+    EXPECT_EQ("{ \"result\": 3, \"text\": \"no selected subnet\" }",
+              response);
+
+    // Address in range and in guard: the subnet is selected.
+    sendUnixCommand("{"
+                    "    \"command\": \"localize6\","
+                    "    \"arguments\": {"
+                    "        \"remote\": \"2001:db8:1::1\","
+                    "        \"classes\": [ \"foobar\" ]"
+                    "    }"
+                    "}", response);
+    string expected = "{ \"result\": 0, \"text\": \"";
+    expected += "selected subnet '2001:db8:1::/64' id 1";
+    expected += "\" }";
+    EXPECT_EQ(expected, response);
+
+    // Add the subnet to the shared network.
+    subnet->setSharedNetwork(network);
+    sendUnixCommand("{"
+                    "    \"command\": \"localize6\","
+                    "    \"arguments\": {"
+                    "        \"remote\": \"2001:db8:1::1\","
+                    "        \"classes\": [ \"foobar\" ]"
+                    "    }"
+                    "}", response);
+    expected = "{ \"result\": 0, \"text\": \"";
+    expected += "selected shared network 'foo' ";
+    expected += "starting with subnet '2001:db8:1::/64' id 1";
+    expected += "\" }";
+    EXPECT_EQ(expected, response);
 }
 
 /// Verify that concurrent connections over the control channel can be

@@ -1,0 +1,5 @@
+[func]		fdupont
+	Added new commands to simulate a subnet selection:
+	"localize4" and "localize4o6" for kea-dhcp4, and
+	"localize6" for kea-dhcp6.
+	(Gitlab #2974)

@@ -279,6 +279,19 @@ private:
     commandLeasesReclaimHandler(const std::string& command,
                                 isc::data::ConstElementPtr args);
 
+    /// @brief Handler for processing 'localize6' command
+    ///
+    /// This handler processes localize6 command, which returns
+    /// the result of DHCPv6 subnet selected.
+    ///
+    /// @param command (parameter ignored)
+    /// @param args arguments map { <selector>: <value> }
+    ///
+    /// @return status of the command with the selection result
+    isc::data::ConstElementPtr
+    commandLocalize6Handler(const std::string& command,
+                            isc::data::ConstElementPtr args);
+
     /// @brief handler for server-tag-get command
     ///
     /// This method handles the server-tag-get command, which retrieves

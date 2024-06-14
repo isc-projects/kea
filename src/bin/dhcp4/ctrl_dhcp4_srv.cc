@@ -851,7 +851,7 @@ ControlledDhcpv4Srv::commandLocalize4Handler(const string&,
         return (createAnswer(CONTROL_RESULT_EMPTY, "no selected subnet"));
     }
     SharedNetwork4Ptr network;
-    subnet->getSharedNetwork(subnet);
+    subnet->getSharedNetwork(network);
     ostringstream msg;
     if (network) {
         msg << "selected shared network '" << network->getName()
@@ -875,6 +875,8 @@ ControlledDhcpv4Srv::commandLocalize4o6Handler(const string&,
     }
     SubnetSelector selector;
     selector.dhcp4o6_ = true;
+    selector.local_address_ = IOAddress::IPV6_ZERO_ADDRESS();
+    selector.remote_address_ = IOAddress::IPV6_ZERO_ADDRESS();
     for (auto const& entry : args->mapValue()) {
         ostringstream errmsg;
         if (entry.first == "interface") {
@@ -884,6 +886,29 @@ ControlledDhcpv4Srv::commandLocalize4o6Handler(const string&,
             }
             selector.iface_name_ = entry.second->stringValue();
             continue;
+        } if (entry.first == "interface-id") {
+            if (entry.second->getType() != Element::string) {
+                errmsg << "'interface-id' entry must be a string";
+                return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+            }
+            try {
+                string str = entry.second->stringValue();
+                vector<uint8_t> id = util::str::quotedStringToBinary(str);
+                if (id.empty()) {
+                    util::str::decodeFormattedHexString(str, id);
+                }
+                if (id.empty()) {
+                    errmsg << "'interface-id' must be not empty";
+                    return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+                }
+                selector.interface_id_ = OptionPtr(new Option(Option::V6,
+                                                              D6O_INTERFACE_ID,
+                                                              id));
+                continue;
+            } catch (...) {
+                errmsg << "value of 'interface-id' was not recognized";
+                return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+            }
         } else if (entry.first == "address") {
             if (entry.second->getType() != Element::string) {
                 errmsg << "'address' entry must be a string";
@@ -925,8 +950,8 @@ ControlledDhcpv4Srv::commandLocalize4o6Handler(const string&,
             }
             try {
                 IOAddress addr(entry.second->stringValue());
-                if (!addr.isV4()) {
-                    errmsg << "bad 'local' entry: not IPv4";
+                if (!addr.isV6()) {
+                    errmsg << "bad 'local' entry: not IPv6";
                     return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
                 }
                 selector.local_address_ = addr;
@@ -942,8 +967,8 @@ ControlledDhcpv4Srv::commandLocalize4o6Handler(const string&,
             }
             try {
                 IOAddress addr(entry.second->stringValue());
-                if (!addr.isV4()) {
-                    errmsg << "bad 'remote' entry: not IPv4";
+                if (!addr.isV6()) {
+                    errmsg << "bad 'remote' entry: not IPv6";
                     return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
                 }
                 selector.remote_address_ = addr;
@@ -1013,7 +1038,7 @@ ControlledDhcpv4Srv::commandLocalize4o6Handler(const string&,
         return (createAnswer(CONTROL_RESULT_EMPTY, "no selected subnet"));
     }
     SharedNetwork4Ptr network;
-    subnet->getSharedNetwork(subnet);
+    subnet->getSharedNetwork(network);
     ostringstream msg;
     if (network) {
         msg << "selected shared network '" << network->getName()

@@ -2056,6 +2056,1125 @@ TEST_F(CtrlChannelDhcpv4SrvTest, dhcpEnableOriginId) {
     EXPECT_TRUE(server_->network_state_->isServiceEnabled());
 }
 
+// This test verifies that localize4 command performs sanity check parameters.
+TEST_F(CtrlChannelDhcpv4SrvTest, localize4BadParam) {
+    createUnixChannelServer();
+    std::string response;
+    ConstElementPtr rsp;
+
+    sendUnixCommand("{"
+                    "    \"command\": \"localize4\""
+                    "}", response);
+
+    // The response should be a valid JSON.
+    EXPECT_NO_THROW(rsp = Element::fromJSON(response));
+    ASSERT_TRUE(rsp);
+
+    EXPECT_EQ("{ \"result\": 1, \"text\": \"empty arguments\" }",
+              response);
+
+    sendUnixCommand("{"
+                    "    \"command\": \"localize4\","
+                    "    \"arguments\": [ ]"
+                    "    }"
+                    "}", response);
+    EXPECT_EQ("{ \"result\": 1, \"text\": \"arguments must be a map\" }",
+              response);
+
+    sendUnixCommand("{"
+                    "    \"command\": \"localize4\","
+                    "    \"arguments\": {"
+                    "        \"foo\": \"bar\""
+                    "    }"
+                    "}", response);
+    EXPECT_EQ("{ \"result\": 1, \"text\": \"unknown entry 'foo'\" }",
+              response);
+
+    sendUnixCommand("{"
+                    "    \"command\": \"localize4\","
+                    "    \"arguments\": {"
+                    "        \"interface\": 1"
+                    "    }"
+                    "}", response);
+    string expected = "{ \"result\": 1, \"text\": \"";
+    expected += "'interface' entry must be a string";
+    expected += "\" }";
+    EXPECT_EQ(expected, response);
+
+    sendUnixCommand("{"
+                    "    \"command\": \"localize4\","
+                    "    \"arguments\": {"
+                    "        \"address\": 1"
+                    "    }"
+                    "}", response);
+    expected = "{ \"result\": 1, \"text\": \"";
+    expected += "'address' entry must be a string";
+    expected += "\" }";
+    EXPECT_EQ(expected, response);
+
+    sendUnixCommand("{"
+                    "    \"command\": \"localize4\","
+                    "    \"arguments\": {"
+                    "        \"address\": \"2001:db8:1::1\""
+                    "    }"
+                    "}", response);
+    expected = "{ \"result\": 1, \"text\": \"";
+    expected += "bad 'address' entry: not IPv4";
+    expected += "\" }";
+    EXPECT_EQ(expected, response);
+
+    sendUnixCommand("{"
+                    "    \"command\": \"localize4\","
+                    "    \"arguments\": {"
+                    "        \"address\": \"foobar\""
+                    "    }"
+                    "}", response);
+    expected = "{ \"result\": 1, \"text\": \"";
+    expected += "bad 'address' entry: Failed to convert string to address ";
+    expected += "'foobar': Invalid argument";
+    expected += "\" }";
+    EXPECT_EQ(expected, response);
+
+    sendUnixCommand("{"
+                    "    \"command\": \"localize4\","
+                    "    \"arguments\": {"
+                    "        \"relay\": 1"
+                    "    }"
+                    "}", response);
+    expected = "{ \"result\": 1, \"text\": \"";
+    expected += "'relay' entry must be a string";
+    expected += "\" }";
+    EXPECT_EQ(expected, response);
+
+    sendUnixCommand("{"
+                    "    \"command\": \"localize4\","
+                    "    \"arguments\": {"
+                    "        \"relay\": \"2001:db8:1::1\""
+                    "    }"
+                    "}", response);
+    expected = "{ \"result\": 1, \"text\": \"";
+    expected += "bad 'relay' entry: not IPv4";
+    expected += "\" }";
+    EXPECT_EQ(expected, response);
+
+    sendUnixCommand("{"
+                    "    \"command\": \"localize4\","
+                    "    \"arguments\": {"
+                    "        \"relay\": \"foobar\""
+                    "    }"
+                    "}", response);
+    expected = "{ \"result\": 1, \"text\": \"";
+    expected += "bad 'relay' entry: Failed to convert string to address ";
+    expected += "'foobar': Invalid argument";
+    expected += "\" }";
+    EXPECT_EQ(expected, response);
+
+    sendUnixCommand("{"
+                    "    \"command\": \"localize4\","
+                    "    \"arguments\": {"
+                    "        \"local\": 1"
+                    "    }"
+                    "}", response);
+    expected = "{ \"result\": 1, \"text\": \"";
+    expected += "'local' entry must be a string";
+    expected += "\" }";
+    EXPECT_EQ(expected, response);
+
+    sendUnixCommand("{"
+                    "    \"command\": \"localize4\","
+                    "    \"arguments\": {"
+                    "        \"local\": \"2001:db8:1::1\""
+                    "    }"
+                    "}", response);
+    expected = "{ \"result\": 1, \"text\": \"";
+    expected += "bad 'local' entry: not IPv4";
+    expected += "\" }";
+    EXPECT_EQ(expected, response);
+
+    sendUnixCommand("{"
+                    "    \"command\": \"localize4\","
+                    "    \"arguments\": {"
+                    "        \"local\": \"foobar\""
+                    "    }"
+                    "}", response);
+    expected = "{ \"result\": 1, \"text\": \"";
+    expected += "bad 'local' entry: Failed to convert string to address ";
+    expected += "'foobar': Invalid argument";
+    expected += "\" }";
+    EXPECT_EQ(expected, response);
+
+    sendUnixCommand("{"
+                    "    \"command\": \"localize4\","
+                    "    \"arguments\": {"
+                    "        \"remote\": 1"
+                    "    }"
+                    "}", response);
+    expected = "{ \"result\": 1, \"text\": \"";
+    expected += "'remote' entry must be a string";
+    expected += "\" }";
+    EXPECT_EQ(expected, response);
+
+    sendUnixCommand("{"
+                    "    \"command\": \"localize4\","
+                    "    \"arguments\": {"
+                    "        \"remote\": \"2001:db8:1::1\""
+                    "    }"
+                    "}", response);
+    expected = "{ \"result\": 1, \"text\": \"";
+    expected += "bad 'remote' entry: not IPv4";
+    expected += "\" }";
+    EXPECT_EQ(expected, response);
+
+    sendUnixCommand("{"
+                    "    \"command\": \"localize4\","
+                    "    \"arguments\": {"
+                    "        \"remote\": \"foobar\""
+                    "    }"
+                    "}", response);
+    expected = "{ \"result\": 1, \"text\": \"";
+    expected += "bad 'remote' entry: Failed to convert string to address ";
+    expected += "'foobar': Invalid argument";
+    expected += "\" }";
+    EXPECT_EQ(expected, response);
+
+    sendUnixCommand("{"
+                    "    \"command\": \"localize4\","
+                    "    \"arguments\": {"
+                    "        \"link\": 1"
+                    "    }"
+                    "}", response);
+    expected = "{ \"result\": 1, \"text\": \"";
+    expected += "'link' entry must be a string";
+    expected += "\" }";
+    EXPECT_EQ(expected, response);
+
+    sendUnixCommand("{"
+                    "    \"command\": \"localize4\","
+                    "    \"arguments\": {"
+                    "        \"link\": \"2001:db8:1::1\""
+                    "    }"
+                    "}", response);
+    expected = "{ \"result\": 1, \"text\": \"";
+    expected += "bad 'link' entry: not IPv4";
+    expected += "\" }";
+    EXPECT_EQ(expected, response);
+
+    sendUnixCommand("{"
+                    "    \"command\": \"localize4\","
+                    "    \"arguments\": {"
+                    "        \"link\": \"foobar\""
+                    "    }"
+                    "}", response);
+    expected = "{ \"result\": 1, \"text\": \"";
+    expected += "bad 'link' entry: Failed to convert string to address ";
+    expected += "'foobar': Invalid argument";
+    expected += "\" }";
+    EXPECT_EQ(expected, response);
+
+    sendUnixCommand("{"
+                    "    \"command\": \"localize4\","
+                    "    \"arguments\": {"
+                    "        \"subnet\": 1"
+                    "    }"
+                    "}", response);
+    expected = "{ \"result\": 1, \"text\": \"";
+    expected += "'subnet' entry must be a string";
+    expected += "\" }";
+    EXPECT_EQ(expected, response);
+
+    sendUnixCommand("{"
+                    "    \"command\": \"localize4\","
+                    "    \"arguments\": {"
+                    "        \"subnet\": \"2001:db8:1::1\""
+                    "    }"
+                    "}", response);
+    expected = "{ \"result\": 1, \"text\": \"";
+    expected += "bad 'subnet' entry: not IPv4";
+    expected += "\" }";
+    EXPECT_EQ(expected, response);
+
+    sendUnixCommand("{"
+                    "    \"command\": \"localize4\","
+                    "    \"arguments\": {"
+                    "        \"subnet\": \"foobar\""
+                    "    }"
+                    "}", response);
+    expected = "{ \"result\": 1, \"text\": \"";
+    expected += "bad 'subnet' entry: Failed to convert string to address ";
+    expected += "'foobar': Invalid argument";
+    expected += "\" }";
+    EXPECT_EQ(expected, response);
+
+    sendUnixCommand("{"
+                    "    \"command\": \"localize4\","
+                    "    \"arguments\": {"
+                    "        \"classes\": \"foo\""
+                    "    }"
+                    "}", response);
+    expected = "{ \"result\": 1, \"text\": \"";
+    expected += "'classes' entry must be a list";
+    expected += "\" }";
+    EXPECT_EQ(expected, response);
+
+    sendUnixCommand("{"
+                    "    \"command\": \"localize4\","
+                    "    \"arguments\": {"
+                    "        \"classes\": [ 1 ]"
+                    "    }"
+                    "}", response);
+    expected = "{ \"result\": 1, \"text\": \"";
+    expected += "'classes' entry must be a list of strings";
+    expected += "\" }";
+    EXPECT_EQ(expected, response);
+}
+
+// This test verifies if localize4 command returns proper subnet for a given
+// relay link select address.
+TEST_F(CtrlChannelDhcpv4SrvTest, localize4RAILinkSelect) {
+    createUnixChannelServer();
+    std::string response;
+
+    auto subnet = Subnet4::create(IOAddress("192.0.2.0"),
+                                  24, 1, 2, 3, SubnetID(1));
+    SharedNetwork4Ptr network(new SharedNetwork4("foo"));
+    CfgMgr::instance().clear();
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->add(subnet);
+    CfgMgr::instance().getStagingCfg()->getCfgSharedNetworks4()->add(network);
+    CfgMgr::instance().commit();
+
+    // Address not in range: nothing can be selected.
+    sendUnixCommand("{"
+                    "    \"command\": \"localize4\","
+                    "    \"arguments\": {"
+                    "        \"link\": \"10.0.1.1\""
+                    "    }"
+                    "}", response);
+    EXPECT_EQ("{ \"result\": 3, \"text\": \"no selected subnet\" }",
+              response);
+
+    // Address in range: the subnet is selected.
+    sendUnixCommand("{"
+                    "    \"command\": \"localize4\","
+                    "    \"arguments\": {"
+                    "        \"link\": \"192.0.2.1\""
+                    "    }"
+                    "}", response);
+    string expected = "{ \"result\": 0, \"text\": \"";
+    expected += "selected subnet '192.0.2.0/24' id 1";
+    expected += "\" }";
+    EXPECT_EQ(expected, response);
+
+    // Add the subnet to the shared network.
+    subnet->setSharedNetwork(network);
+    sendUnixCommand("{"
+                    "    \"command\": \"localize4\","
+                    "    \"arguments\": {"
+                    "        \"link\": \"192.0.2.1\""
+                    "    }"
+                    "}", response);
+    expected = "{ \"result\": 0, \"text\": \"";
+    expected += "selected shared network 'foo' ";
+    expected += "starting with subnet '192.0.2.0/24' id 1";
+    expected += "\" }";
+    EXPECT_EQ(expected, response);
+}
+
+// This test verifies if localize4 command returns proper subnet for a given
+// subnet select address.
+TEST_F(CtrlChannelDhcpv4SrvTest, localize4SubnetSelect) {
+    createUnixChannelServer();
+    std::string response;
+
+    auto subnet = Subnet4::create(IOAddress("192.0.2.0"),
+                                  24, 1, 2, 3, SubnetID(1));
+    SharedNetwork4Ptr network(new SharedNetwork4("foo"));
+    CfgMgr::instance().clear();
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->add(subnet);
+    CfgMgr::instance().getStagingCfg()->getCfgSharedNetworks4()->add(network);
+    CfgMgr::instance().commit();
+
+    // Address not in range: nothing can be selected.
+    sendUnixCommand("{"
+                    "    \"command\": \"localize4\","
+                    "    \"arguments\": {"
+                    "        \"subnet\": \"10.0.1.1\""
+                    "    }"
+                    "}", response);
+    EXPECT_EQ("{ \"result\": 3, \"text\": \"no selected subnet\" }",
+              response);
+
+    // Address in range: the subnet is selected.
+    sendUnixCommand("{"
+                    "    \"command\": \"localize4\","
+                    "    \"arguments\": {"
+                    "        \"subnet\": \"192.0.2.1\""
+                    "    }"
+                    "}", response);
+    string expected = "{ \"result\": 0, \"text\": \"";
+    expected += "selected subnet '192.0.2.0/24' id 1";
+    expected += "\" }";
+    EXPECT_EQ(expected, response);
+
+    // Add the subnet to the shared network.
+    subnet->setSharedNetwork(network);
+    sendUnixCommand("{"
+                    "    \"command\": \"localize4\","
+                    "    \"arguments\": {"
+                    "        \"subnet\": \"192.0.2.1\""
+                    "    }"
+                    "}", response);
+    expected = "{ \"result\": 0, \"text\": \"";
+    expected += "selected shared network 'foo' ";
+    expected += "starting with subnet '192.0.2.0/24' id 1";
+    expected += "\" }";
+    EXPECT_EQ(expected, response);
+}
+
+// This test verifies if localize4 command returns proper subnet for a given
+// relay address.
+TEST_F(CtrlChannelDhcpv4SrvTest, localize4RelayAddress) {
+    createUnixChannelServer();
+    std::string response;
+
+    auto subnet = Subnet4::create(IOAddress("192.0.2.0"),
+                                  24, 1, 2, 3, SubnetID(1));
+    subnet->addRelayAddress(IOAddress("192.0.3.1"));
+    SharedNetwork4Ptr network(new SharedNetwork4("foo"));
+    CfgMgr::instance().clear();
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->add(subnet);
+    CfgMgr::instance().getStagingCfg()->getCfgSharedNetworks4()->add(network);
+    CfgMgr::instance().commit();
+
+    // Address not in range: nothing can be selected.
+    sendUnixCommand("{"
+                    "    \"command\": \"localize4\","
+                    "    \"arguments\": {"
+                    "        \"relay\": \"10.0.1.1\""
+                    "    }"
+                    "}", response);
+    EXPECT_EQ("{ \"result\": 3, \"text\": \"no selected subnet\" }",
+              response);
+
+    // Address in range: the subnet is selected.
+    sendUnixCommand("{"
+                    "    \"command\": \"localize4\","
+                    "    \"arguments\": {"
+                    "        \"relay\": \"192.0.3.1\""
+                    "    }"
+                    "}", response);
+    string expected = "{ \"result\": 0, \"text\": \"";
+    expected += "selected subnet '192.0.2.0/24' id 1";
+    expected += "\" }";
+    EXPECT_EQ(expected, response);
+
+    // Add the subnet to the shared network.
+    subnet->setSharedNetwork(network);
+    sendUnixCommand("{"
+                    "    \"command\": \"localize4\","
+                    "    \"arguments\": {"
+                    "        \"relay\": \"192.0.3.1\""
+                    "    }"
+                    "}", response);
+    expected = "{ \"result\": 0, \"text\": \"";
+    expected += "selected shared network 'foo' ";
+    expected += "starting with subnet '192.0.2.0/24' id 1";
+    expected += "\" }";
+    EXPECT_EQ(expected, response);
+}
+
+// This test verifies if localize4 command returns proper subnet for a given
+// gateway address.
+TEST_F(CtrlChannelDhcpv4SrvTest, localize4Gateway) {
+    createUnixChannelServer();
+    std::string response;
+
+    auto subnet = Subnet4::create(IOAddress("192.0.2.0"),
+                                  24, 1, 2, 3, SubnetID(1));
+    SharedNetwork4Ptr network(new SharedNetwork4("foo"));
+    CfgMgr::instance().clear();
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->add(subnet);
+    CfgMgr::instance().getStagingCfg()->getCfgSharedNetworks4()->add(network);
+    CfgMgr::instance().commit();
+
+    // Address not in range: nothing can be selected.
+    sendUnixCommand("{"
+                    "    \"command\": \"localize4\","
+                    "    \"arguments\": {"
+                    "        \"relay\": \"10.0.1.1\""
+                    "    }"
+                    "}", response);
+    EXPECT_EQ("{ \"result\": 3, \"text\": \"no selected subnet\" }",
+              response);
+
+    // Address in range: the subnet is selected.
+    sendUnixCommand("{"
+                    "    \"command\": \"localize4\","
+                    "    \"arguments\": {"
+                    "        \"relay\": \"192.0.2.1\""
+                    "    }"
+                    "}", response);
+    string expected = "{ \"result\": 0, \"text\": \"";
+    expected += "selected subnet '192.0.2.0/24' id 1";
+    expected += "\" }";
+    EXPECT_EQ(expected, response);
+
+    // Add the subnet to the shared network.
+    subnet->setSharedNetwork(network);
+    sendUnixCommand("{"
+                    "    \"command\": \"localize4\","
+                    "    \"arguments\": {"
+                    "        \"relay\": \"192.0.2.1\""
+                    "    }"
+                    "}", response);
+    expected = "{ \"result\": 0, \"text\": \"";
+    expected += "selected shared network 'foo' ";
+    expected += "starting with subnet '192.0.2.0/24' id 1";
+    expected += "\" }";
+    EXPECT_EQ(expected, response);
+}
+
+// This test verifies if localize4 command returns proper subnet for a given
+// client address.
+TEST_F(CtrlChannelDhcpv4SrvTest, localize4Client) {
+    createUnixChannelServer();
+    std::string response;
+
+    auto subnet = Subnet4::create(IOAddress("192.0.2.0"),
+                                  24, 1, 2, 3, SubnetID(1));
+    SharedNetwork4Ptr network(new SharedNetwork4("foo"));
+    CfgMgr::instance().clear();
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->add(subnet);
+    CfgMgr::instance().getStagingCfg()->getCfgSharedNetworks4()->add(network);
+    CfgMgr::instance().commit();
+
+    // Address not in range: nothing can be selected.
+    sendUnixCommand("{"
+                    "    \"command\": \"localize4\","
+                    "    \"arguments\": {"
+                    "        \"address\": \"10.0.1.1\""
+                    "    }"
+                    "}", response);
+    EXPECT_EQ("{ \"result\": 3, \"text\": \"no selected subnet\" }",
+              response);
+
+    // Address in range: the subnet is selected.
+    sendUnixCommand("{"
+                    "    \"command\": \"localize4\","
+                    "    \"arguments\": {"
+                    "        \"address\": \"192.0.2.1\""
+                    "    }"
+                    "}", response);
+    string expected = "{ \"result\": 0, \"text\": \"";
+    expected += "selected subnet '192.0.2.0/24' id 1";
+    expected += "\" }";
+    EXPECT_EQ(expected, response);
+
+    // Add the subnet to the shared network.
+    subnet->setSharedNetwork(network);
+    sendUnixCommand("{"
+                    "    \"command\": \"localize4\","
+                    "    \"arguments\": {"
+                    "        \"address\": \"192.0.2.1\""
+                    "    }"
+                    "}", response);
+    expected = "{ \"result\": 0, \"text\": \"";
+    expected += "selected shared network 'foo' ";
+    expected += "starting with subnet '192.0.2.0/24' id 1";
+    expected += "\" }";
+    EXPECT_EQ(expected, response);
+}
+
+// This test verifies if localize4 command returns proper subnet for a given
+// remote/source address.
+TEST_F(CtrlChannelDhcpv4SrvTest, localize4Remote) {
+    createUnixChannelServer();
+    std::string response;
+
+    auto subnet = Subnet4::create(IOAddress("192.0.2.0"),
+                                  24, 1, 2, 3, SubnetID(1));
+    SharedNetwork4Ptr network(new SharedNetwork4("foo"));
+    CfgMgr::instance().clear();
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->add(subnet);
+    CfgMgr::instance().getStagingCfg()->getCfgSharedNetworks4()->add(network);
+    CfgMgr::instance().commit();
+
+    // Address not in range: nothing can be selected.
+    sendUnixCommand("{"
+                    "    \"command\": \"localize4\","
+                    "    \"arguments\": {"
+                    "        \"remote\": \"10.0.1.1\""
+                    "    }"
+                    "}", response);
+    EXPECT_EQ("{ \"result\": 3, \"text\": \"no selected subnet\" }",
+              response);
+
+    // Address in range: the subnet is selected.
+    sendUnixCommand("{"
+                    "    \"command\": \"localize4\","
+                    "    \"arguments\": {"
+                    "        \"remote\": \"192.0.2.1\""
+                    "    }"
+                    "}", response);
+    string expected = "{ \"result\": 0, \"text\": \"";
+    expected += "selected subnet '192.0.2.0/24' id 1";
+    expected += "\" }";
+    EXPECT_EQ(expected, response);
+
+    // Add the subnet to the shared network.
+    subnet->setSharedNetwork(network);
+    sendUnixCommand("{"
+                    "    \"command\": \"localize4\","
+                    "    \"arguments\": {"
+                    "        \"remote\": \"192.0.2.1\""
+                    "    }"
+                    "}", response);
+    expected = "{ \"result\": 0, \"text\": \"";
+    expected += "selected shared network 'foo' ";
+    expected += "starting with subnet '192.0.2.0/24' id 1";
+    expected += "\" }";
+    EXPECT_EQ(expected, response);
+}
+
+// This test verifies if localize4 command returns proper subnet for a given
+// incoming interface.
+TEST_F(CtrlChannelDhcpv4SrvTest, localize4Iface) {
+    isc::dhcp::test::IfaceMgrTestConfig test_config(true);
+    createUnixChannelServer();
+    std::string response;
+
+    auto subnet = Subnet4::create(IOAddress("192.0.2.0"),
+                                  24, 1, 2, 3, SubnetID(1));
+    // Beware that the interface for 192.0.2.0/24 is eth1.
+    subnet->setIface("eth1");
+    SharedNetwork4Ptr network(new SharedNetwork4("foo"));
+    CfgMgr::instance().clear();
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->add(subnet);
+    CfgMgr::instance().getStagingCfg()->getCfgSharedNetworks4()->add(network);
+    CfgMgr::instance().commit();
+
+    // Different interface: nothing can be selected.
+    sendUnixCommand("{"
+                    "    \"command\": \"localize4\","
+                    "    \"arguments\": {"
+                    "        \"interface\": \"eth0\""
+                    "    }"
+                    "}", response);
+    EXPECT_EQ("{ \"result\": 3, \"text\": \"no selected subnet\" }",
+              response);
+
+    // Same interface: the subnet is selected.
+    sendUnixCommand("{"
+                    "    \"command\": \"localize4\","
+                    "    \"arguments\": {"
+                    "        \"interface\": \"eth1\""
+                    "    }"
+                    "}", response);
+    string expected = "{ \"result\": 0, \"text\": \"";
+    expected += "selected subnet '192.0.2.0/24' id 1";
+    expected += "\" }";
+    EXPECT_EQ(expected, response);
+
+    // Add the subnet to the shared network.
+    subnet->setSharedNetwork(network);
+    sendUnixCommand("{"
+                    "    \"command\": \"localize4\","
+                    "    \"arguments\": {"
+                    "        \"interface\": \"eth1\""
+                    "    }"
+                    "}", response);
+    expected = "{ \"result\": 0, \"text\": \"";
+    expected += "selected shared network 'foo' ";
+    expected += "starting with subnet '192.0.2.0/24' id 1";
+    expected += "\" }";
+    EXPECT_EQ(expected, response);
+}
+
+// This test verifies if localize4 command returns proper guarded subnet.
+TEST_F(CtrlChannelDhcpv4SrvTest, localize4Class) {
+    createUnixChannelServer();
+    std::string response;
+
+    auto subnet = Subnet4::create(IOAddress("192.0.2.0"),
+                                  24, 1, 2, 3, SubnetID(1));
+    subnet->allowClientClass("foobar");
+    SharedNetwork4Ptr network(new SharedNetwork4("foo"));
+    CfgMgr::instance().clear();
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->add(subnet);
+    CfgMgr::instance().getStagingCfg()->getCfgSharedNetworks4()->add(network);
+    CfgMgr::instance().commit();
+
+    // Address in range but not in guard: nothing can be selected.
+    sendUnixCommand("{"
+                    "    \"command\": \"localize4\","
+                    "    \"arguments\": {"
+                    "        \"address\": \"192.0.2.1\""
+                    "    }"
+                    "}", response);
+    EXPECT_EQ("{ \"result\": 3, \"text\": \"no selected subnet\" }",
+              response);
+
+    // Address in range and in guard: the subnet is selected.
+    sendUnixCommand("{"
+                    "    \"command\": \"localize4\","
+                    "    \"arguments\": {"
+                    "        \"address\": \"192.0.2.1\","
+                    "        \"classes\": [ \"foobar\" ]"
+                    "    }"
+                    "}", response);
+    string expected = "{ \"result\": 0, \"text\": \"";
+    expected += "selected subnet '192.0.2.0/24' id 1";
+    expected += "\" }";
+    EXPECT_EQ(expected, response);
+
+    // Add the subnet to the shared network.
+    subnet->setSharedNetwork(network);
+    sendUnixCommand("{"
+                    "    \"command\": \"localize4\","
+                    "    \"arguments\": {"
+                    "        \"address\": \"192.0.2.1\","
+                    "        \"classes\": [ \"foobar\" ]"
+                    "    }"
+                    "}", response);
+    expected = "{ \"result\": 0, \"text\": \"";
+    expected += "selected shared network 'foo' ";
+    expected += "starting with subnet '192.0.2.0/24' id 1";
+    expected += "\" }";
+    EXPECT_EQ(expected, response);
+}
+
+// This test verifies that localize4o6 command performs sanity check parameters.
+TEST_F(CtrlChannelDhcpv4SrvTest, localize4o6BadParam) {
+    createUnixChannelServer();
+    std::string response;
+    ConstElementPtr rsp;
+
+    sendUnixCommand("{"
+                    "    \"command\": \"localize4o6\""
+                    "}", response);
+
+    // The response should be a valid JSON.
+    EXPECT_NO_THROW(rsp = Element::fromJSON(response));
+    ASSERT_TRUE(rsp);
+
+    EXPECT_EQ("{ \"result\": 1, \"text\": \"empty arguments\" }",
+              response);
+
+    sendUnixCommand("{"
+                    "    \"command\": \"localize4o6\","
+                    "    \"arguments\": [ ]"
+                    "    }"
+                    "}", response);
+    EXPECT_EQ("{ \"result\": 1, \"text\": \"arguments must be a map\" }",
+              response);
+
+    sendUnixCommand("{"
+                    "    \"command\": \"localize4o6\","
+                    "    \"arguments\": {"
+                    "        \"foo\": \"bar\""
+                    "    }"
+                    "}", response);
+    EXPECT_EQ("{ \"result\": 1, \"text\": \"unknown entry 'foo'\" }",
+              response);
+
+    sendUnixCommand("{"
+                    "    \"command\": \"localize4o6\","
+                    "    \"arguments\": {"
+                    "        \"interface\": 1"
+                    "    }"
+                    "}", response);
+    string expected = "{ \"result\": 1, \"text\": \"";
+    expected += "'interface' entry must be a string";
+    expected += "\" }";
+    EXPECT_EQ(expected, response);
+
+    sendUnixCommand("{"
+                    "    \"command\": \"localize4o6\","
+                    "    \"arguments\": {"
+                    "        \"address\": 1"
+                    "    }"
+                    "}", response);
+    expected = "{ \"result\": 1, \"text\": \"";
+    expected += "'address' entry must be a string";
+    expected += "\" }";
+    EXPECT_EQ(expected, response);
+
+    sendUnixCommand("{"
+                    "    \"command\": \"localize4o6\","
+                    "    \"arguments\": {"
+                    "        \"address\": \"2001:db8:1::1\""
+                    "    }"
+                    "}", response);
+    expected = "{ \"result\": 1, \"text\": \"";
+    expected += "bad 'address' entry: not IPv4";
+    expected += "\" }";
+    EXPECT_EQ(expected, response);
+
+    sendUnixCommand("{"
+                    "    \"command\": \"localize4o6\","
+                    "    \"arguments\": {"
+                    "        \"address\": \"foobar\""
+                    "    }"
+                    "}", response);
+    expected = "{ \"result\": 1, \"text\": \"";
+    expected += "bad 'address' entry: Failed to convert string to address ";
+    expected += "'foobar': Invalid argument";
+    expected += "\" }";
+    EXPECT_EQ(expected, response);
+
+    sendUnixCommand("{"
+                    "    \"command\": \"localize4o6\","
+                    "    \"arguments\": {"
+                    "        \"relay\": 1"
+                    "    }"
+                    "}", response);
+    expected = "{ \"result\": 1, \"text\": \"";
+    expected += "'relay' entry must be a string";
+    expected += "\" }";
+    EXPECT_EQ(expected, response);
+
+    sendUnixCommand("{"
+                    "    \"command\": \"localize4o6\","
+                    "    \"arguments\": {"
+                    "        \"relay\": \"2001:db8:1::1\""
+                    "    }"
+                    "}", response);
+    expected = "{ \"result\": 1, \"text\": \"";
+    expected += "bad 'relay' entry: not IPv4";
+    expected += "\" }";
+    EXPECT_EQ(expected, response);
+
+    sendUnixCommand("{"
+                    "    \"command\": \"localize4o6\","
+                    "    \"arguments\": {"
+                    "        \"relay\": \"foobar\""
+                    "    }"
+                    "}", response);
+    expected = "{ \"result\": 1, \"text\": \"";
+    expected += "bad 'relay' entry: Failed to convert string to address ";
+    expected += "'foobar': Invalid argument";
+    expected += "\" }";
+    EXPECT_EQ(expected, response);
+
+    sendUnixCommand("{"
+                    "    \"command\": \"localize4o6\","
+                    "    \"arguments\": {"
+                    "        \"local\": 1"
+                    "    }"
+                    "}", response);
+    expected = "{ \"result\": 1, \"text\": \"";
+    expected += "'local' entry must be a string";
+    expected += "\" }";
+    EXPECT_EQ(expected, response);
+
+    sendUnixCommand("{"
+                    "    \"command\": \"localize4o6\","
+                    "    \"arguments\": {"
+                    "        \"local\": \"192.2.1.2\""
+                    "    }"
+                    "}", response);
+    expected = "{ \"result\": 1, \"text\": \"";
+    expected += "bad 'local' entry: not IPv6";
+    expected += "\" }";
+    EXPECT_EQ(expected, response);
+
+    sendUnixCommand("{"
+                    "    \"command\": \"localize4o6\","
+                    "    \"arguments\": {"
+                    "        \"local\": \"foobar\""
+                    "    }"
+                    "}", response);
+    expected = "{ \"result\": 1, \"text\": \"";
+    expected += "bad 'local' entry: Failed to convert string to address ";
+    expected += "'foobar': Invalid argument";
+    expected += "\" }";
+    EXPECT_EQ(expected, response);
+
+    sendUnixCommand("{"
+                    "    \"command\": \"localize4o6\","
+                    "    \"arguments\": {"
+                    "        \"remote\": 1"
+                    "    }"
+                    "}", response);
+    expected = "{ \"result\": 1, \"text\": \"";
+    expected += "'remote' entry must be a string";
+    expected += "\" }";
+    EXPECT_EQ(expected, response);
+
+    sendUnixCommand("{"
+                    "    \"command\": \"localize4o6\","
+                    "    \"arguments\": {"
+                    "        \"remote\": \"192.2.1.2\""
+                    "    }"
+                    "}", response);
+    expected = "{ \"result\": 1, \"text\": \"";
+    expected += "bad 'remote' entry: not IPv6";
+    expected += "\" }";
+    EXPECT_EQ(expected, response);
+
+    sendUnixCommand("{"
+                    "    \"command\": \"localize4o6\","
+                    "    \"arguments\": {"
+                    "        \"remote\": \"foobar\""
+                    "    }"
+                    "}", response);
+    expected = "{ \"result\": 1, \"text\": \"";
+    expected += "bad 'remote' entry: Failed to convert string to address ";
+    expected += "'foobar': Invalid argument";
+    expected += "\" }";
+    EXPECT_EQ(expected, response);
+
+    sendUnixCommand("{"
+                    "    \"command\": \"localize4o6\","
+                    "    \"arguments\": {"
+                    "        \"link\": 1"
+                    "    }"
+                    "}", response);
+    expected = "{ \"result\": 1, \"text\": \"";
+    expected += "'link' entry must be a string";
+    expected += "\" }";
+    EXPECT_EQ(expected, response);
+
+    sendUnixCommand("{"
+                    "    \"command\": \"localize4o6\","
+                    "    \"arguments\": {"
+                    "        \"link\": \"192.2.1.2\""
+                    "    }"
+                    "}", response);
+    expected = "{ \"result\": 1, \"text\": \"";
+    expected += "bad 'link' entry: not IPv6";
+    expected += "\" }";
+    EXPECT_EQ(expected, response);
+
+    sendUnixCommand("{"
+                    "    \"command\": \"localize4o6\","
+                    "    \"arguments\": {"
+                    "        \"link\": \"foobar\""
+                    "    }"
+                    "}", response);
+    expected = "{ \"result\": 1, \"text\": \"";
+    expected += "bad 'link' entry: Failed to convert string to address ";
+    expected += "'foobar': Invalid argument";
+    expected += "\" }";
+    EXPECT_EQ(expected, response);
+
+    sendUnixCommand("{"
+                    "    \"command\": \"localize4o6\","
+                    "    \"arguments\": {"
+                    "        \"subnet\": 1"
+                    "    }"
+                    "}", response);
+    expected = "{ \"result\": 1, \"text\": \"";
+    expected += "'subnet' entry must be a string";
+    expected += "\" }";
+    EXPECT_EQ(expected, response);
+
+    sendUnixCommand("{"
+                    "    \"command\": \"localize4o6\","
+                    "    \"arguments\": {"
+                    "        \"subnet\": \"2001:db8:1::1\""
+                    "    }"
+                    "}", response);
+    expected = "{ \"result\": 1, \"text\": \"";
+    expected += "bad 'subnet' entry: not IPv4";
+    expected += "\" }";
+    EXPECT_EQ(expected, response);
+
+    sendUnixCommand("{"
+                    "    \"command\": \"localize4o6\","
+                    "    \"arguments\": {"
+                    "        \"subnet\": \"foobar\""
+                    "    }"
+                    "}", response);
+    expected = "{ \"result\": 1, \"text\": \"";
+    expected += "bad 'subnet' entry: Failed to convert string to address ";
+    expected += "'foobar': Invalid argument";
+    expected += "\" }";
+    EXPECT_EQ(expected, response);
+
+    sendUnixCommand("{"
+                    "    \"command\": \"localize4o6\","
+                    "    \"arguments\": {"
+                    "        \"classes\": \"foo\""
+                    "    }"
+                    "}", response);
+    expected = "{ \"result\": 1, \"text\": \"";
+    expected += "'classes' entry must be a list";
+    expected += "\" }";
+    EXPECT_EQ(expected, response);
+
+    sendUnixCommand("{"
+                    "    \"command\": \"localize4o6\","
+                    "    \"arguments\": {"
+                    "        \"classes\": [ 1 ]"
+                    "    }"
+                    "}", response);
+    expected = "{ \"result\": 1, \"text\": \"";
+    expected += "'classes' entry must be a list of strings";
+    expected += "\" }";
+    EXPECT_EQ(expected, response);
+}
+
+// This test verifies if localize4o6 command returns proper subnet for a given
+// remote/source address.
+TEST_F(CtrlChannelDhcpv4SrvTest, localize4o6Remote) {
+    createUnixChannelServer();
+    std::string response;
+
+    auto subnet = Subnet4::create(IOAddress("192.0.2.0"),
+                                  24, 1, 2, 3, SubnetID(1));
+    subnet->get4o6().setSubnet4o6(IOAddress("2001:db8:1::"), 64);
+    SharedNetwork4Ptr network(new SharedNetwork4("foo"));
+    CfgMgr::instance().clear();
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->add(subnet);
+    CfgMgr::instance().getStagingCfg()->getCfgSharedNetworks4()->add(network);
+    CfgMgr::instance().commit();
+
+    // Address not in range: nothing can be selected.
+    sendUnixCommand("{"
+                    "    \"command\": \"localize4o6\","
+                    "    \"arguments\": {"
+                    "        \"remote\": \"2001:db8:2::2\""
+                    "    }"
+                    "}", response);
+    EXPECT_EQ("{ \"result\": 3, \"text\": \"no selected subnet\" }",
+              response);
+
+    // Address in range: the subnet is selected.
+    sendUnixCommand("{"
+                    "    \"command\": \"localize4o6\","
+                    "    \"arguments\": {"
+                    "        \"remote\": \"2001:db8:1::1\""
+                    "    }"
+                    "}", response);
+    string expected = "{ \"result\": 0, \"text\": \"";
+    expected += "selected subnet '192.0.2.0/24' id 1";
+    expected += "\" }";
+    EXPECT_EQ(expected, response);
+
+    // Add the subnet to the shared network.
+    subnet->setSharedNetwork(network);
+    sendUnixCommand("{"
+                    "    \"command\": \"localize4o6\","
+                    "    \"arguments\": {"
+                    "        \"remote\": \"2001:db8:1::1\""
+                    "    }"
+                    "}", response);
+    expected = "{ \"result\": 0, \"text\": \"";
+    expected += "selected shared network 'foo' ";
+    expected += "starting with subnet '192.0.2.0/24' id 1";
+    expected += "\" }";
+    EXPECT_EQ(expected, response);
+}
+
+// This test verifies if localize4o6 command returns proper subnet for a given
+// relay interface id.
+TEST_F(CtrlChannelDhcpv4SrvTest, localize4o6RelayInterfaceId) {
+    isc::dhcp::test::IfaceMgrTestConfig test_config(true);
+    createUnixChannelServer();
+    std::string response;
+
+    auto subnet = Subnet4::create(IOAddress("192.0.2.0"),
+                                  24, 1, 2, 3, SubnetID(1));
+    string iface_id("relay");
+    vector<uint8_t> bin(iface_id.cbegin(), iface_id.cend());
+    OptionPtr id(new Option(Option::V6, D6O_INTERFACE_ID, bin));
+    subnet->get4o6().setInterfaceId(id);
+    SharedNetwork4Ptr network(new SharedNetwork4("foo"));
+    CfgMgr::instance().clear();
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->add(subnet);
+    CfgMgr::instance().getStagingCfg()->getCfgSharedNetworks4()->add(network);
+    CfgMgr::instance().commit();
+
+    // Different interface: nothing can be selected.
+    sendUnixCommand("{"
+                    "    \"command\": \"localize4o6\","
+                    "    \"arguments\": {"
+                    "        \"interface-id\": \"'foobar'\""
+                    "    }"
+                    "}", response);
+    EXPECT_EQ("{ \"result\": 3, \"text\": \"no selected subnet\" }",
+              response);
+
+    // Same interface: the subnet is selected.
+    sendUnixCommand("{"
+                    "    \"command\": \"localize4o6\","
+                    "    \"arguments\": {"
+                    "        \"interface-id\": \"'relay'\""
+                    "    }"
+                    "}", response);
+    string expected = "{ \"result\": 0, \"text\": \"";
+    expected += "selected subnet '192.0.2.0/24' id 1";
+    expected += "\" }";
+    EXPECT_EQ(expected, response);
+
+    // Add the subnet to the shared network.
+    subnet->setSharedNetwork(network);
+    sendUnixCommand("{"
+                    "    \"command\": \"localize4o6\","
+                    "    \"arguments\": {"
+                    "        \"interface-id\": \"'relay'\""
+                    "    }"
+                    "}", response);
+    expected = "{ \"result\": 0, \"text\": \"";
+    expected += "selected shared network 'foo' ";
+    expected += "starting with subnet '192.0.2.0/24' id 1";
+    expected += "\" }";
+    EXPECT_EQ(expected, response);
+}
+
+// This test verifies if localize4o6 command returns proper subnet for a given
+// incoming interface.
+TEST_F(CtrlChannelDhcpv4SrvTest, localize4o6Iface) {
+    isc::dhcp::test::IfaceMgrTestConfig test_config(true);
+    createUnixChannelServer();
+    std::string response;
+
+    auto subnet = Subnet4::create(IOAddress("192.0.2.0"),
+                                  24, 1, 2, 3, SubnetID(1));
+    subnet->get4o6().setIface4o6("eth0");
+    SharedNetwork4Ptr network(new SharedNetwork4("foo"));
+    CfgMgr::instance().clear();
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->add(subnet);
+    CfgMgr::instance().getStagingCfg()->getCfgSharedNetworks4()->add(network);
+    CfgMgr::instance().commit();
+
+    // Different interface: nothing can be selected.
+    sendUnixCommand("{"
+                    "    \"command\": \"localize4o6\","
+                    "    \"arguments\": {"
+                    "        \"interface\": \"foobar\""
+                    "    }"
+                    "}", response);
+    EXPECT_EQ("{ \"result\": 3, \"text\": \"no selected subnet\" }",
+              response);
+
+    // Same interface: the subnet is selected.
+    sendUnixCommand("{"
+                    "    \"command\": \"localize4o6\","
+                    "    \"arguments\": {"
+                    "        \"interface\": \"eth0\""
+                    "    }"
+                    "}", response);
+    string expected = "{ \"result\": 0, \"text\": \"";
+    expected += "selected subnet '192.0.2.0/24' id 1";
+    expected += "\" }";
+    EXPECT_EQ(expected, response);
+
+    // Add the subnet to the shared network.
+    subnet->setSharedNetwork(network);
+    sendUnixCommand("{"
+                    "    \"command\": \"localize4o6\","
+                    "    \"arguments\": {"
+                    "        \"interface\": \"eth0\""
+                    "    }"
+                    "}", response);
+    expected = "{ \"result\": 0, \"text\": \"";
+    expected += "selected shared network 'foo' ";
+    expected += "starting with subnet '192.0.2.0/24' id 1";
+    expected += "\" }";
+    EXPECT_EQ(expected, response);
+}
+
 /// Verify that concurrent connections over the control channel can be
 ///  established.
 /// @todo Future Kea 1.3 tickets will modify the behavior of the CommandMgr
