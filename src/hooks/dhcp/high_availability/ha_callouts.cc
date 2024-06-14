@@ -429,10 +429,12 @@ int load(LibraryHandle& handle) {
 /// @return 0 if deregistration was successful, 1 otherwise
 int unload() {
     if (impl) {
-        IOServiceMgr::instance().unregisterIOService(impl->getIOService());
-        impl->getIOService()->stopAndPoll();
+        IOServicePtr io_service = impl->getIOService();
+        IOServiceMgr::instance().unregisterIOService(io_service);
+        io_service->stopAndPoll();
+        impl.reset();
+        io_service->stopAndPoll();
     }
-    impl.reset();
     LOG_INFO(ha_logger, HA_DEINIT_OK);
     return (0);
 }
