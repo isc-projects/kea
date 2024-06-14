@@ -170,29 +170,29 @@ statistic employs the following naming convention:
     {subnet-id[x]}.perfmon.<query type>-<response type>.<start event>-<end event>.<value-name>
 
 There is both a global and a subnet-specific value for each. Currently, the only
-value reported for a given duration key is ``averages-usecs``; this statistic is the average time
+value reported for a given duration key is ``mean-usecs``; this statistic is the mean time
 between the duration's event pair over the most recently completed interval. In other
 words, if during a given interval there were seven occurrences (i.e. updates) totaling
-3500us, the ``average-usecs`` reported would be 500us. Continuing with the example above, the
+3500us, the ``mean-usecs`` reported would be 500us. Continuing with the example above, the
 statistics reported are named as follows for the subnet-level values:
 
 ::
 
-    subnet[100].perfmon.DHCPDISCOVER.DHCPOFFER.socket_received-buffer_read.average-usecs
-    subnet[100].perfmon.DHCPDISCOVER.DHCPOFFER.buffer_read-mt_queue.average-usecs
-    subnet[100].perfmon.DHCPDISCOVER.DHCPOFFER.mt_queued-process_started.average-usecs
-    subnet[100].perfmon.DHCPDISCOVER.DHCPOFFER.process_started-process_completed.average-usecs
-    subnet[100].perfmon.DHCPDISCOVER.DHCPOFFER.composite-total_response.average-usecs
+    subnet[100].perfmon.DHCPDISCOVER.DHCPOFFER.socket_received-buffer_read.mean-usecs
+    subnet[100].perfmon.DHCPDISCOVER.DHCPOFFER.buffer_read-mt_queue.mean-usecs
+    subnet[100].perfmon.DHCPDISCOVER.DHCPOFFER.mt_queued-process_started.mean-usecs
+    subnet[100].perfmon.DHCPDISCOVER.DHCPOFFER.process_started-process_completed.mean-usecs
+    subnet[100].perfmon.DHCPDISCOVER.DHCPOFFER.composite-total_response.mean-usecs
 
 and as shown for global values:
 
 ::
 
-    perfmon.DHCPDISCOVER.DHCPOFFER.socket_received-buffer_read.average-usecs
-    perfmon.DHCPDISCOVER.DHCPOFFER.buffer_read-mt_queue.average-usecs
-    perfmon.DHCPDISCOVER.DHCPOFFER.mt_queued-process_started.average-usecs
-    perfmon.DHCPDISCOVER.DHCPOFFER.process_started-process_completed.average-usecs
-    perfmon.DHCPDISCOVER.DHCPOFFER.composite-total_response.average-usecs
+    perfmon.DHCPDISCOVER.DHCPOFFER.socket_received-buffer_read.mean-usecs
+    perfmon.DHCPDISCOVER.DHCPOFFER.buffer_read-mt_queue.mean-usecs
+    perfmon.DHCPDISCOVER.DHCPOFFER.mt_queued-process_started.mean-usecs
+    perfmon.DHCPDISCOVER.DHCPOFFER.process_started-process_completed.mean-usecs
+    perfmon.DHCPDISCOVER.DHCPOFFER.composite-total_response.mean-usecs
 
 The results are reported to StatsMgr, an internal Kea component that reports data as statistics
 that can be retrieved using statistics commands. They can be fetched using the commands
@@ -202,25 +202,25 @@ Alarms
 ~~~~~~
 
 Alarms may be defined to watch specific durations. Each alarm defines a high-water mark,
-``high-water-ms``, and a low-water mark, ``low-water-ms``. If the reported average value
+``high-water-ms``, and a low-water mark, ``low-water-ms``. If the reported mean value
 for the duration exceeds the high-water mark a WARN level alarm log is emitted, at which
 point the alarm is considered "triggered." Once triggered, the WARN level log is
 repeated at the alarm report interval specified by ``alarm-report-secs``, as long as the reported
-average for the duration remains above the low-water mark. Once the average falls below the
+mean for the duration remains above the low-water mark. Once the mean falls below the
 low-water mark the alarm is cleared and an INFO level log is emitted.
 
 The alarm-triggered WARN log looks similar to the following:
 
 ::
 
-    2024-03-20 10:22:14.030 WARN [kea-dhcp6.leases/47195.139913679886272] PERFMON_ALARM_TRIGGERED Alarm for DHCPDISCOVER.DHCPOFFER.composite-total_response.0 has been triggered since 2024-03-20 10:18:20.070000, reported average duration 00:00:00.700000 exceeds high-water-ms: 500
+    2024-03-20 10:22:14.030 WARN [kea-dhcp6.leases/47195.139913679886272] PERFMON_ALARM_TRIGGERED Alarm for DHCPDISCOVER.DHCPOFFER.composite-total_response.0 has been triggered since 2024-03-20 10:18:20.070000, reported mean duration 00:00:00.700000 exceeds high-water-ms: 500
 
 
 The alarm-cleared INFO log looks like this:
 
 ::
 
-     2024-03-20 10:30:14.030 INFO [kea-dhcp6.leases/47195.139913679886272] PERFMON_ALARM_CLEARED Alarm for DHCPDISCOVER.DHCPOFFER.composite-total_response.0 has been cleared, reported average duration 00:00:00.010000 is now below low-water-ms: 25
+     2024-03-20 10:30:14.030 INFO [kea-dhcp6.leases/47195.139913679886272] PERFMON_ALARM_CLEARED Alarm for DHCPDISCOVER.DHCPOFFER.composite-total_response.0 has been cleared, reported mean duration 00:00:00.010000 is now below low-water-ms: 25
 
 API Commands
 ~~~~~~~~~~~~
@@ -301,7 +301,7 @@ of durations will be returned as a list of individual elements as shown below:
                "occurrences": 501,
                "start-time": "2024-06-12 17:52:06.814884",
                "total-duration-usecs": 23951,
-               "ave-duration-usecs": 47
+               "mean-duration-usecs": 47
             },
             ...
            ],
@@ -328,10 +328,11 @@ a format similar to an SQL result set as follows:
                     "end-event",
                     "subnet-id",
                     "interval-start",
-                    "occurences",
+                    "occurrence",
                     "min-duration-usecs",
                     "max-duration-usecs",
-                    "total-duration-usecsave-duration-usecs"
+                    "total-duration-usecs",
+                    "mean-duration-usecs"
                 ],
                 "rows": [ [
                     "DHCPDISCOVER",

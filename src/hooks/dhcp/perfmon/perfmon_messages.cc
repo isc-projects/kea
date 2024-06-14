@@ -24,8 +24,8 @@ extern const isc::log::MessageID PERFMON_INIT_OK = "PERFMON_INIT_OK";
 namespace {
 
 const char* values[] = {
-    "PERFMON_ALARM_CLEARED", "Alarm for %1 has been cleared, reported average duration %2 is now below low-water-ms: %3",
-    "PERFMON_ALARM_TRIGGERED", "Alarm for %1 has been triggered since %2, reported average duration %3 exceeds high-water-ms: %4",
+    "PERFMON_ALARM_CLEARED", "Alarm for %1 has been cleared, reported mean duration %2 is now below low-water-ms: %3",
+    "PERFMON_ALARM_TRIGGERED", "Alarm for %1 has been triggered since %2, reported mean duration %3 exceeds high-water-ms: %4",
     "PERFMON_CMDS_CONTROL_ERROR", "perfmon-control command processing failed: %1",
     "PERFMON_CMDS_CONTROL_OK", "perfmon-control command success: active monitoring: %1, stats-mgr-reporting: %2",
     "PERFMON_CMDS_GET_ALL_DURATIONS_ERROR", "perfmon-get-all-durations command processing failed: %1",

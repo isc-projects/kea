@@ -25,7 +25,7 @@ namespace perfmon {
 /// @brief Singleton which provides overall configuration, control, and state of
 /// the PerfMon hook library. It owns the MonitoredDurationStore and AlarmStore
 /// instances and supplies callout and command API handlers.  It derives from
-/// PerfMonConfig.
+/// PerfMonConfiga and CmdsImpl.
 class PerfMonMgr : public PerfMonConfig, private config::CmdsImpl {
 public:
     /// @brief Constructor.
@@ -71,7 +71,7 @@ public:
     /// The MonitoredDuration identified by the given key is fetched from
     /// the store and updated with the sample. If the update returns the
     /// duration this means it is time to report the duration via StatsMgr.
-    /// The reported average is then checked against an alarm, if one exists.
+    /// The reported mean is then checked against an alarm, if one exists.
     /// If the check returns the alarm, then the alarm has undergone a
     /// reportable event and is passed to reporting.
     ///
@@ -82,12 +82,12 @@ public:
 
     /// @brief Emits an entry to StatsMgr for a given duration.
     ///
-    /// Calculates the average duration for the reportable interval and
+    /// Calculates the mean duration for the reportable interval and
     /// reports the value to StatsMgr if stat-mgr-reporting is true.
     ///
     /// @param duration duration to report.
     ///
-    /// @return Always returns the average duration for reportable interval.
+    /// @return Always returns the mean duration for reportable interval.
     Duration reportToStatsMgr(MonitoredDurationPtr duration);
 
     /// @brief Emits a report for a given alarm.
@@ -97,8 +97,8 @@ public:
     /// accommodate additional reporting mechanisms.
     ///
     /// @param alarm Alarm to report.
-    /// @param average Duration average which caused the state transition.
-    void reportAlarm(AlarmPtr alarm, const Duration& average);
+    /// @param mean Duration mean which caused the state transition.
+    void reportAlarm(AlarmPtr alarm, const Duration& mean);
 
     /// @brief Handler invoked when the report timer expires.
     ///
@@ -132,14 +132,14 @@ public:
     ///
     /// It extracts the command name and arguments from the given CalloutHandle,
     /// attempts to process them, and then set's the handle's "response"
-    /// arguments accordingly.  Regardless of which parameters were specified
-    /// in the command arguments (if any), it returns the values for both
-    /// parameters:
+    /// arguments accordingly. Regardless of which arguments, if any, were
+    /// specified the command will always return the new/current values
+    /// for both settings.
     ///
     /// @code
     /// "arguments": {
-    ///     "enable-monitoring": false,
-    ///     "stats-mgr-reporting": false
+    ///     "enable-monitoring": true,
+    ///     "stats-mgr-reporting": true
     ///  },
     ///  "result": 0,
     ///  "text": "perfmon-control success"
@@ -153,12 +153,12 @@ public:
 
     /// @brief perfmon-get-all-durations handler
     ///
-    /// This command fetches all of the monitored durations and their preivous
+    /// This command fetches all of the monitored durations and their previous
     /// intervals (if one).
     ///
     /// @code
     /// {
-    ///     "command": "perfmon-get-all-duations",
+    ///     "command": "perfmon-get-all-durations",
     ///     "arguments": {
     ///         "result-set-format": true
     ///      }
@@ -212,7 +212,7 @@ public:
     ///         "durations-result-set": {
     ///             "columns": [
     ///                 "subnet-id", "query-type", "response-type", "start-event", "end-event",
-    ///                 "interval start", "occurences", "min-duration-usecs", "max-duration-usecs",
+    ///                 "interval start", "occurrences", "min-duration-usecs", "max-duration-usecs",
     ///                 "total-duration-usecs"
     ///             ],
     ///             "rows": [
@@ -245,7 +245,7 @@ public:
     ///     "durations-result-set": {
     ///         "columns": [
     ///             "subnet-id", "query-type", "response-type", "start-event", "end-event",
-    ///             "interval start", "occurences", "min-duration-usecs", "max-duration-usecs",
+    ///             "interval start", "occurrences", "min-duration-usecs", "max-duration-usecs",
     ///             "total-duration-usecs"
     ///         ],
     ///         "rows": [

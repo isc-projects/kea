@@ -328,20 +328,20 @@ public:
         mond->addSample(milliseconds(250));
         mond->expireCurrentInterval();
 
-        Duration average;
-        ASSERT_NO_THROW_LOG(average = mgr_->reportToStatsMgr(mond));
-        EXPECT_EQ(milliseconds(175), average);
+        Duration mean;
+        ASSERT_NO_THROW_LOG(mean = mgr_->reportToStatsMgr(mond));
+        EXPECT_EQ(milliseconds(175), mean);
 
-        auto obs = StatsMgr::instance().getObservation(mond->getStatName("average-usecs"));
+        auto obs = StatsMgr::instance().getObservation(mond->getStatName("mean-usecs"));
         ASSERT_TRUE(obs);
         EXPECT_EQ(175000, obs->getInteger().first);
 
         StatsMgr::instance().removeAll();
         mgr_->setStatsMgrReporting(false);
 
-        ASSERT_NO_THROW_LOG(average = mgr_->reportToStatsMgr(mond));
-        EXPECT_EQ(milliseconds(175), average);
-        obs = StatsMgr::instance().getObservation(mond->getStatName("average-usecs"));
+        ASSERT_NO_THROW_LOG(mean = mgr_->reportToStatsMgr(mond));
+        EXPECT_EQ(milliseconds(175), mean);
+        obs = StatsMgr::instance().getObservation(mond->getStatName("mean-usecs"));
         ASSERT_FALSE(obs);
     }
 
@@ -409,15 +409,15 @@ public:
         // Duration should have a current total of 95 ms, and a previous total of 160.
         checkDuration(__LINE__, key, 95, true, 160);
 
-        // Should have one stat reported with a average value of 80.
+        // Should have one stat reported with a mean value of 80.
         EXPECT_EQ(1, StatsMgr::instance().count());
-        auto obs = StatsMgr::instance().getObservation(key->getStatName("average-usecs"));
+        auto obs = StatsMgr::instance().getObservation(key->getStatName("mean-usecs"));
         ASSERT_TRUE(obs);
         EXPECT_EQ(80000, obs->getInteger().first);
 
         // The alarm should have triggered and reported.
         beforeAndAfterAlarm(__LINE__, before_alarm, Alarm::TRIGGERED, true);
-        addString("reported average duration 00:00:00.080000 exceeds high-water-ms: 50");
+        addString("reported mean duration 00:00:00.080000 exceeds high-water-ms: 50");
 
         // Sleep 100ms second to make sure the current interval duration elapses.
         usleep(100 * 1000);
@@ -446,11 +446,11 @@ public:
         // above high water.  The alarm should report again because the reporting
         // interval has elapsed.
         beforeAndAfterAlarm(__LINE__, before_alarm, Alarm::TRIGGERED, true);
-        addString("reported average duration 00:00:00.100000 exceeds high-water-ms: 50");
+        addString("reported mean duration 00:00:00.100000 exceeds high-water-ms: 50");
 
         // Should have one stat reported with a value of 100.
         EXPECT_EQ(1, StatsMgr::instance().count());
-        obs = StatsMgr::instance().getObservation(key->getStatName("average-usecs"));
+        obs = StatsMgr::instance().getObservation(key->getStatName("mean-usecs"));
         ASSERT_TRUE(obs);
         EXPECT_EQ(100000, obs->getInteger().first);
 
@@ -466,11 +466,11 @@ public:
         // The Alarm should now be CLEAR since the newly completed interval is
         // below high water. The alarm should low-water report.
         beforeAndAfterAlarm(__LINE__, before_alarm, Alarm::CLEAR, false);
-        addString("reported average duration 00:00:00.010000 is now below low-water-ms: 25");
+        addString("reported mean duration 00:00:00.010000 is now below low-water-ms: 25");
 
         // Should have one stat reported with a value of 10.
         EXPECT_EQ(1, StatsMgr::instance().count());
-        obs = StatsMgr::instance().getObservation(key->getStatName("average-usecs"));
+        obs = StatsMgr::instance().getObservation(key->getStatName("mean-usecs"));
         ASSERT_TRUE(obs);
         EXPECT_EQ(10000, obs->getInteger().first);
 

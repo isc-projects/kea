@@ -10,6 +10,7 @@
 #include <dhcp/dhcp6.h>
 #include <util/boost_time_utils.h>
 #include <testutils/gtest_utils.h>
+#include <testutils/test_to_element.h>
 
 #include <gtest/gtest.h>
 #include <sstream>
@@ -20,6 +21,7 @@ using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::perfmon;
 using namespace isc::util;
+using namespace isc::test;
 using namespace boost::posix_time;
 
 namespace {
@@ -41,7 +43,7 @@ TEST(DurationDataInterval, basics) {
     EXPECT_EQ(interval->getMinDuration(), pos_infin);
     EXPECT_EQ(interval->getMaxDuration(), neg_infin);
     EXPECT_EQ(interval->getTotalDuration(), DurationDataInterval::ZERO_DURATION());
-    EXPECT_EQ(interval->getAverageDuration(), DurationDataInterval::ZERO_DURATION());
+    EXPECT_EQ(interval->getMeanDuration(), DurationDataInterval::ZERO_DURATION());
 
     // Verify that start time can be specified.
     interval.reset(new DurationDataInterval(start_time + milliseconds(5000)));
@@ -55,7 +57,7 @@ TEST(DurationDataInterval, basics) {
     EXPECT_EQ(interval->getMinDuration(), d100);
     EXPECT_EQ(interval->getMaxDuration(), d100);
     EXPECT_EQ(interval->getTotalDuration(), d100);
-    EXPECT_EQ(interval->getAverageDuration(), d100);
+    EXPECT_EQ(interval->getMeanDuration(), d100);
 
     // Add 300ms duration and check contents.
     Duration d300(milliseconds(300));
@@ -64,7 +66,7 @@ TEST(DurationDataInterval, basics) {
     EXPECT_EQ(interval->getMinDuration(), d100);
     EXPECT_EQ(interval->getMaxDuration(), d300);
     EXPECT_EQ(interval->getTotalDuration(), d100 + d300);
-    EXPECT_EQ(interval->getAverageDuration(), Duration(milliseconds(200)));
+    EXPECT_EQ(interval->getMeanDuration(), Duration(milliseconds(200)));
 
     // Add 50ms duration and check contents.
     Duration d50(milliseconds(50));
@@ -73,7 +75,7 @@ TEST(DurationDataInterval, basics) {
     EXPECT_EQ(interval->getMinDuration(), d50);
     EXPECT_EQ(interval->getMaxDuration(), d300);
     EXPECT_EQ(interval->getTotalDuration(), d100 + d300 + d50);
-    EXPECT_EQ(interval->getAverageDuration(), Duration(milliseconds(150)));
+    EXPECT_EQ(interval->getMeanDuration(), Duration(milliseconds(150)));
 
     // Add a zero duration and check contents.
     interval->addDuration(DurationDataInterval::ZERO_DURATION());
@@ -81,7 +83,7 @@ TEST(DurationDataInterval, basics) {
     EXPECT_EQ(interval->getMinDuration(), DurationDataInterval::ZERO_DURATION());
     EXPECT_EQ(interval->getMaxDuration(), d300);
     EXPECT_EQ(interval->getTotalDuration(), d100 + d300 + d50);
-    EXPECT_EQ(interval->getAverageDuration(), Duration(microseconds(112500)));
+    EXPECT_EQ(interval->getMeanDuration(), Duration(microseconds(112500)));
 }
 
 // Exercises the basic functions of DurationDataInterval.
@@ -101,8 +103,8 @@ TEST(DurationKey, basics) {
     EXPECT_EQ(key->getSubnetId(), SUBNET_ID_GLOBAL);
     EXPECT_EQ("DHCPDISCOVER-DHCPOFFER.process_started-process_completed.0",
               key->getLabel());
-    EXPECT_EQ("perfmon.DHCPDISCOVER-DHCPOFFER.process_started-process_completed.average-ms",
-              key->getStatName("average-ms"));
+    EXPECT_EQ("perfmon.DHCPDISCOVER-DHCPOFFER.process_started-process_completed.mean-usecs",
+              key->getStatName("mean-usecs"));
 
     // Create valid v6 key, verify contents and label.
     ASSERT_NO_THROW_LOG(key.reset(new DurationKey(AF_INET6, DHCPV6_SOLICIT, DHCPV6_ADVERTISE,
@@ -116,8 +118,8 @@ TEST(DurationKey, basics) {
     EXPECT_EQ(key->getSubnetId(), 77);
     EXPECT_EQ("SOLICIT-ADVERTISE.mt_queued-process_started.77",
               key->getLabel());
-    EXPECT_EQ("subnet-id[77].perfmon.SOLICIT-ADVERTISE.mt_queued-process_started.average-ms",
-              key->getStatName("average-ms"));
+    EXPECT_EQ("subnet-id[77].perfmon.SOLICIT-ADVERTISE.mt_queued-process_started.mean-usecs",
+              key->getStatName("mean-usecs"));
 
     // Make sure constructor catches an insane message pairing.
     ASSERT_THROW_MSG(key.reset(new DurationKey(AF_INET6, DHCPV6_ADVERTISE, DHCPV6_SOLICIT,
@@ -269,30 +271,32 @@ TEST(DurationKey, toElement) {
                                   SUBNET_ID_GLOBAL)));
     ASSERT_TRUE(key);
 
-    ElementPtr ref_key_elem = Element::createMap();
-    ref_key_elem->set("query-type", Element::create("DHCPDISCOVER"));
-    ref_key_elem->set("response-type", Element::create("DHCPOFFER"));
-    ref_key_elem->set("start-event", Element::create("process_started"));
-    ref_key_elem->set("stop-event", Element::create("process_completed"));
-    ref_key_elem->set("subnet-id", Element::create(SUBNET_ID_GLOBAL));
+    std::string expected_json =
+        R"({
+            "query-type": "DHCPDISCOVER",
+            "response-type": "DHCPOFFER",
+            "start-event": "process_started",
+            "stop-event": "process_completed",
+            "subnet-id": 0
+        })";
 
-    auto key_elem = key->toElement();
-    EXPECT_EQ(*ref_key_elem, *key_elem);
+    runToElementTest(expected_json, *key);
 
     // Create valid v6 key, verify contents and label.
     ASSERT_NO_THROW_LOG(key.reset(new DurationKey(AF_INET6, DHCPV6_SOLICIT, DHCPV6_ADVERTISE,
                                   "mt_queued", "process_started", 77)));
     ASSERT_TRUE(key);
 
-    ref_key_elem = Element::createMap();
-    ref_key_elem->set("query-type", Element::create("SOLICIT"));
-    ref_key_elem->set("response-type", Element::create("ADVERTISE"));
-    ref_key_elem->set("start-event", Element::create("mt_queued"));
-    ref_key_elem->set("stop-event", Element::create("process_started"));
-    ref_key_elem->set("subnet-id", Element::create(77));
+    expected_json =
+        R"({
+            "query-type": "SOLICIT",
+            "response-type": "ADVERTISE",
+            "start-event": "mt_queued",
+            "stop-event": "process_started",
+            "subnet-id": 77
+        })";
 
-    key_elem = key->toElement();
-    EXPECT_EQ(*ref_key_elem, *key_elem);
+    runToElementTest(expected_json, *key);
 }
 
 // Verifies MonitoredDuration valid construction.
@@ -592,36 +596,56 @@ TEST(MonitoredDuration, toElement) {
     ref_duration_elem->set("duration-key", ref_key_elem);
 
     // Add the data. Should have empty values as we do not have a previous interval.
-    ref_duration_elem->set("ave-duration-usecs", Element::create(0));
+    ref_duration_elem->set("mean-duration-usecs", Element::create(0));
     ref_duration_elem->set("max-duration-usecs", Element::create(0));
     ref_duration_elem->set("min-duration-usecs", Element::create(0));
     ref_duration_elem->set("occurrences", Element::create(0));
     ref_duration_elem->set("start-time", Element::create("<none>"));
     ref_duration_elem->set("total-duration-usecs", Element::create(0));
 
-    // Generate the valueRow Element and compare it to the reference.
-    auto duration_elem = duration->toElement();
-    ASSERT_TRUE(duration_elem);
-    EXPECT_EQ(*ref_duration_elem, *duration_elem);
+    std::string expected_json =
+        R"({
+            "mean-duration-usecs": 0,
+            "duration-key": {
+                "query-type": "DHCPDISCOVER",
+                "response-type": "DHCPOFFER",
+                "start-event": "process_started",
+                "stop-event": "process_completed",
+                "subnet-id": 0 },
+            "max-duration-usecs": 0,
+            "min-duration-usecs": 0,
+            "occurrences": 0,
+            "start-time": "<none>",
+            "total-duration-usecs": 0
+        })";
+
+    // Check toElement() against expected JSON.
+    runToElementTest(expected_json, *duration);
 
     // Now expire the current interval so we'll have a previous interval.
     duration->expireCurrentInterval();
     auto previous_interval = duration->getPreviousInterval();
     ASSERT_TRUE(previous_interval);
 
-    // Replace the data values with those from the new previous interval.
-    ref_duration_elem->set("ave-duration-usecs", Element::create(4));
-    ref_duration_elem->set("max-duration-usecs", Element::create(7));
-    ref_duration_elem->set("min-duration-usecs", Element::create(2));
-    ref_duration_elem->set("occurrences", Element::create(3));
-    ref_duration_elem->set("start-time",
-                           Element::create(ptimeToText(previous_interval->getStartTime())));
-    ref_duration_elem->set("total-duration-usecs", Element::create(14));
+    std::ostringstream oss;
+    oss <<
+        R"({
+            "mean-duration-usecs": 4,
+            "duration-key": {
+                "query-type": "DHCPDISCOVER",
+                "response-type": "DHCPOFFER",
+                "start-event": "process_started",
+                "stop-event": "process_completed",
+                "subnet-id": 0 },
+            "max-duration-usecs": 7,
+            "min-duration-usecs": 2,
+            "occurrences": 3,
+            "start-time": ")"
+        << ptimeToText(previous_interval->getStartTime())
+        << R"(", "total-duration-usecs": 14 })";
 
-    // Generate the valueRow Element and compare it to the reference.
-    duration_elem = duration->toElement();
-    ASSERT_TRUE(duration_elem);
-    EXPECT_EQ(*ref_duration_elem, *duration_elem);
+    // Check toElement() against expected JSON.
+    runToElementTest(oss.str(), *duration);
 }
 
 // Verifies the MonitoredDuration::toElement(). We do not bother with
@@ -630,7 +654,6 @@ TEST(MonitoredDuration, toElement) {
 TEST(MonitoredDuration, toValueRow) {
     MonitoredDurationPtr duration;
     Duration interval_duration(milliseconds(50));
-    auto ten_ms = milliseconds(10);
 
     // Create valid v4 duration.
     ASSERT_NO_THROW_LOG(duration.reset(new MonitoredDuration(AF_INET6, DHCPV6_SOLICIT, DHCPV6_ADVERTISE,
@@ -658,12 +681,13 @@ TEST(MonitoredDuration, toValueRow) {
     ref_row_elem->add(Element::create(0));         // min-duration-usecs
     ref_row_elem->add(Element::create(0));         // max-duration-usecs
     ref_row_elem->add(Element::create(0));         // total-duration-usecs
-    ref_row_elem->add(Element::create(0));         // ave-duration-usecs
+    ref_row_elem->add(Element::create(0));         // mean-duration-usecs
 
     // Generate the valueRow Element and compare it to the reference.
     auto row_elem = duration->toValueRow();
+
     ASSERT_TRUE(row_elem);
-    EXPECT_EQ(*ref_row_elem, *row_elem);
+    EXPECT_EQ(prettyPrint(ref_row_elem), prettyPrint(row_elem));
 
     // Now expire the current interval so we'll have a previous interval.
     duration->expireCurrentInterval();
@@ -681,12 +705,12 @@ TEST(MonitoredDuration, toValueRow) {
     ref_row_elem->add(Element::create(2));  // min-duration-usecs
     ref_row_elem->add(Element::create(7));  // max-duration-usecs
     ref_row_elem->add(Element::create(14)); // total-duration-usecs
-    ref_row_elem->add(Element::create(4));  // ave-duration-usecs
+    ref_row_elem->add(Element::create(4));  // mean-duration-usecs
 
     // Generate the valueRow Element and compare it to the reference.
     row_elem = duration->toValueRow();
     ASSERT_TRUE(row_elem);
-    EXPECT_EQ(*ref_row_elem, *row_elem);
+    EXPECT_EQ(prettyPrint(ref_row_elem), prettyPrint(row_elem));
 }
 
 } // end of anonymous namespace

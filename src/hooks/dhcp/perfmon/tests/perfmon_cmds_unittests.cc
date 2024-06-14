@@ -47,8 +47,8 @@ public:
         StatsMgr::instance().removeAll();
         StatsMgr::instance().setMaxSampleCountAll(1);
         if (family_ == AF_INET) {
-            subnet22_.reset(new Subnet4(IOAddress("192.0.22.0"), 8, 100, 200, 300, 22));
-            subnet33_.reset(new Subnet4(IOAddress("192.0.33.0"), 8, 100, 200, 300, 33));
+            subnet22_.reset(new Subnet4(IOAddress("192.0.22.0"), 24, 100, 200, 300, 22));
+            subnet33_.reset(new Subnet4(IOAddress("192.0.33.0"), 24, 100, 200, 300, 33));
         } else {
             subnet22_.reset(new Subnet6(IOAddress("3001:22::"), 64, 100, 200, 300, 300, 22));
             subnet33_.reset(new Subnet6(IOAddress("3002:33::"), 64, 100, 200, 300, 300, 33));
@@ -56,25 +56,25 @@ public:
     }
 
     void SetUp() {
-        std::string valid_config =
-            R"({
-                    "enable-monitoring": false,
-                    "interval-width-secs": 5000,
-                    "stats-mgr-reporting": false,
-                    "alarm-report-secs": 600000,
-                    "alarms": [{
-                            "duration-key": {
-                                "query-type": "",
-                                "response-type": "",
-                                "start-event": "process-started",
-                                "stop-event": "process-completed",
-                                "subnet-id": 70
-                                },
-                            "enable-alarm": true,
-                            "high-water-ms": 500,
-                            "low-water-ms": 25
-                        }]
-                })";
+        std::string valid_config = R"(
+            {
+                "enable-monitoring": false,
+                "interval-width-secs": 5000,
+                 "stats-mgr-reporting": false,
+                 "alarm-report-secs": 600000,
+                 "alarms": [{
+                    "duration-key": {
+                        "query-type": "",
+                        "response-type": "",
+                        "start-event": "process-started",
+                        "stop-event": "process-completed",
+                        "subnet-id": 70
+                    },
+                    "enable-alarm": true,
+                    "high-water-ms": 500,
+                    "low-water-ms": 25
+                }]
+            })";
 
         ASSERT_NO_THROW_LOG(createMgr(valid_config));
     }
@@ -429,7 +429,7 @@ public:
         }
     }
 
-    /// @brief Veriies that a valid perfmon-get-all-durations command with
+    /// @brief Verifies that a valid perfmon-get-all-durations command with
     /// result-set-format set false, returns all durations correctly.
     void testPerfMonGetAllDurationsResultSetFalse() {
         std::string now_str = ptimeToText(PktEvent::now());
@@ -452,7 +452,7 @@ public:
         checkAnswerAgainstDurations(ref_durations, answer, ref_time, false);
     }
 
-    /// @brief Veriies that a valid perfmon-get-all-durations with result-set-format
+    /// @brief Verifies that a valid perfmon-get-all-durations with result-set-format
     /// set true, returns all durations correctly.
     void testPerfMonGetAllDurationsResultSetTrue() {
         std::string now_str = ptimeToText(PktEvent::now());
@@ -481,8 +481,8 @@ public:
     ///
     /// @param ref_durations list of expected MonitoredDurations in the order they
     /// should appear in the results.
-    /// @param anwswer complete command answer to check
-    /// @param ref_time timestamp used to compare againt the "timestamp" in the answer.
+    /// @param answer complete command answer to check
+    /// @param ref_time timestamp used to compare against the "timestamp" in the answer.
     /// @param result_set_format expected format style of the answer
     void checkAnswerAgainstDurations(const MonitoredDurationCollectionPtr ref_durations,
                                     ConstElementPtr answer,

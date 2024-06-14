@@ -8,6 +8,7 @@
 #define _MONITORED_DURATION_H
 
 #include <cc/data.h>
+#include <cc/cfg_to_element.h>
 #include <dhcp/pkt.h>
 #include <dhcpsrv/subnet_id.h>
 
@@ -90,10 +91,10 @@ public:
         return (total_duration_);
     }
 
-    /// @brief Get the average duration for the interval.
+    /// @brief Get the mean duration for the interval.
     ///
-    /// @return Duration containing the average.
-    Duration getAverageDuration() const;
+    /// @return Duration containing the mean.
+    Duration getMeanDuration() const;
 
     /// @brief Equality operator.
     ///
@@ -130,7 +131,7 @@ typedef boost::shared_ptr<DurationDataInterval> DurationDataIntervalPtr;
 /// -# Start Event
 /// -# Stop Event
 /// -# Subnet ID can be GLOBAL_SUBNET_ID for aggregate durations
-class DurationKey {
+class DurationKey : public data::CfgToElement {
 public:
     /// @brief Constructor
     ///
@@ -227,7 +228,7 @@ public:
 
     /// @brief Get the StatsMgr formatted compatible name.
     ///
-    /// @param value_name name of the specific value (e.g. "average-usecs", "min-duration-usecs").
+    /// @param value_name name of the specific value (e.g. "mean-usecs", "min-duration-usecs").
     /// The format of the string:
     ///
     /// @code
@@ -236,9 +237,9 @@ public:
     ///
     /// Examples:
     ///
-    ///  perfmon.discover-offer.socket_received-buffer_read.average-usecs
+    ///  perfmon.discover-offer.socket_received-buffer_read.mean-usecs
     ///
-    ///  subnet[9].perfmon.discover-offer.socket_received-buffer_read.average-usecs
+    ///  subnet[9].perfmon.discover-offer.socket_received-buffer_read.mean-usecs
     ///
     /// @endcode
     ///
@@ -415,8 +416,8 @@ public:
     ///      "min-duration-usecs": 5300,
     ///      "max-duration-usecs": 9000,
     ///      "total-duration-usecs": 786500,
-    ///      "ave-duration-usecs": 7490
-    ///      }
+    ///      "mean-duration-usecs": 7490
+    /// }
     /// @endcode
     ///
     /// If there is no previous interval, it will appears as follows:
@@ -435,8 +436,8 @@ public:
     ///      "min-duration-usecs": 0,
     ///      "max-duration-usecs": 0,
     ///      "total-duration-usecs": 0,
-    ///      "ave-duration-usecs": 0
-    ///      }
+    ///      "mean-duration-usecs": 0
+    /// }
     /// @endcode
     ///
     /// @return Element::map containing the duration key values.
@@ -459,7 +460,7 @@ public:
     /// -# "min-duration-usecs"
     /// -# "max-duration-usecs"
     /// -# "total-duration-usecs"
-    /// -# "ave-duration-usecs"
+    /// -# "mean-duration-usecs"
     ///
     /// @return Element::map containing the duration key values.
     static data::ConstElementPtr valueRowColumns();
@@ -483,7 +484,7 @@ public:
     /// -# min-duration-usecs      Element::int
     /// -# max-duration-usecs      Element::int
     /// -# total-duration-usecs    Element::int
-    /// -# ave-duration-usecs      Element::int
+    /// -# mean-duration-usecs     Element::int
     ///
     /// @return Element::map containing the duration key values.
     data::ElementPtr toValueRow() const;

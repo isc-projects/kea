@@ -150,15 +150,15 @@ PerfMonMgr::addDurationSample(DurationKeyPtr key, const Duration& sample) {
     // Update duration - duration is only returned if its time to report.
     MonitoredDurationPtr duration = duration_store_->addDurationSample(key, sample);
     if (duration) {
-        // Report to stat mgr, returns average duration.
-        Duration average = reportToStatsMgr(duration);
+        // Report to stat mgr, returns mean duration.
+        Duration mean = reportToStatsMgr(duration);
 
-        // Check the average against an alarm, if one exists.
-        AlarmPtr alarm = alarm_store_->checkDurationSample(duration, average, alarm_report_interval_);
+        // Check the mean against an alarm, if one exists.
+        AlarmPtr alarm = alarm_store_->checkDurationSample(duration, mean, alarm_report_interval_);
 
         // If an alarm had a reportable outcome, report it.
         if (alarm) {
-            reportAlarm(alarm, average);
+            reportAlarm(alarm, mean);
         }
     }
 }
@@ -174,25 +174,25 @@ PerfMonMgr::reportToStatsMgr(MonitoredDurationPtr duration) {
         isc_throw(BadValue, "reportToStatsMgr - duration previous interval is empty!");
     }
 
-    auto average = previous_interval->getAverageDuration();
+    auto mean = previous_interval->getMeanDuration();
     if (getStatsMgrReporting()) {
-        StatsMgr::instance().setValue(duration->getStatName("average-usecs"),
-                                       static_cast<int64_t>(average.total_microseconds()));
+        StatsMgr::instance().setValue(duration->getStatName("mean-usecs"),
+                                       static_cast<int64_t>(mean.total_microseconds()));
     }
 
     /// @todo - decide if we want to report min and max values too.
 
-    return (average);
+    return (mean);
 }
 
 void
-PerfMonMgr::reportAlarm(AlarmPtr alarm, const Duration& average) {
+PerfMonMgr::reportAlarm(AlarmPtr alarm, const Duration& mean) {
     std::string label = alarm->getLabel();
     switch(alarm->getState()) {
     case Alarm::CLEAR:
         LOG_INFO(perfmon_logger, PERFMON_ALARM_CLEARED)
                 .arg(alarm->getLabel())
-                .arg(average)
+                .arg(mean)
                 .arg(alarm->getLowWater().total_milliseconds());
         break;
 
@@ -200,7 +200,7 @@ PerfMonMgr::reportAlarm(AlarmPtr alarm, const Duration& average) {
         LOG_WARN(perfmon_logger, PERFMON_ALARM_TRIGGERED)
                 .arg(alarm->getLabel())
                 .arg(ptimeToText(alarm->getStosTime(), 3))
-                .arg(average)
+                .arg(mean)
                 .arg(alarm->getHighWater().total_milliseconds());
         alarm->setLastHighWaterReport();
         alarm_store_->updateAlarm(alarm);
@@ -240,6 +240,8 @@ PerfMonMgr::perfmonControlHandler(hooks::CalloutHandle& handle) {
             txt = cmd_args_->str();
         }
 
+
+        // Both arguments are optional.
         if (cmd_args_) {
             SimpleParser::checkKeywords(keywords, cmd_args_);
 
@@ -258,6 +260,7 @@ PerfMonMgr::perfmonControlHandler(hooks::CalloutHandle& handle) {
                 .arg(enable_monitoring_ ? "enabled" : "disabled")
                 .arg(stats_mgr_reporting_ ? "enabled" : "disabled");
 
+        // Always return the new/current values for both settings.
         result->set("enable-monitoring", Element::create(enable_monitoring_));
         result->set("stats-mgr-reporting", Element::create(stats_mgr_reporting_));
         response = createAnswer(CONTROL_RESULT_SUCCESS, "perfmon-control success", result);
@@ -314,7 +317,8 @@ PerfMonMgr::perfmonGetAllDurationsHandler(hooks::CalloutHandle& handle) {
         std::ostringstream oss;
         oss << "perfmon-get-all-durations: " << rows << " found";
 
-        response = createAnswer(CONTROL_RESULT_SUCCESS, oss.str(), result);
+        response = createAnswer((rows > 0 ? CONTROL_RESULT_SUCCESS : CONTROL_RESULT_EMPTY),
+                                oss.str(), result);
         LOG_INFO(perfmon_logger, PERFMON_CMDS_GET_ALL_DURATIONS_OK)
                  .arg(rows);
     } catch (const std::exception& ex) {

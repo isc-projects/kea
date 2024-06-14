@@ -105,8 +105,8 @@ public:
     /// @brief Creates a new alarm and adds it to the store
     ///
     /// @param key key value of the alarm to create.
-    /// @param low_water threshold below which the average duration must fall to clear the alarm
-    /// @param high_water threshold above which the average duration must rise to trigger the alarm.
+    /// @param low_water threshold below which the mean duration must fall to clear the alarm
+    /// @param high_water threshold above which the mean duration must rise to trigger the alarm.
     /// @param enabled true sets state to CLEAR, otherwise DISABLED, defaults to true.
     ///
     /// @return pointer to the newly created alarm.

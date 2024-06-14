@@ -44,7 +44,7 @@ DurationDataInterval::addDuration(const Duration& duration) {
 }
 
 Duration
-DurationDataInterval::getAverageDuration() const {
+DurationDataInterval::getMeanDuration() const {
     if (!occurrences_) {
         return (ZERO_DURATION());
     }
@@ -333,14 +333,14 @@ MonitoredDuration::toElement() const {
         element->set("min-duration-usecs", Element::create(previous_interval_->getMinDuration().total_microseconds()));
         element->set("max-duration-usecs", Element::create(previous_interval_->getMaxDuration().total_microseconds()));
         element->set("total-duration-usecs", Element::create(previous_interval_->getTotalDuration().total_microseconds()));
-        element->set("ave-duration-usecs", Element::create(previous_interval_->getAverageDuration().total_microseconds()));
+        element->set("mean-duration-usecs", Element::create(previous_interval_->getMeanDuration().total_microseconds()));
     } else {
         element->set("start-time", Element::create("<none>"));
         element->set("occurrences", Element::create(0));
         element->set("min-duration-usecs", Element::create(0));
         element->set("max-duration-usecs", Element::create(0));
         element->set("total-duration-usecs", Element::create(0));
-        element->set("ave-duration-usecs", Element::create(0));
+        element->set("mean-duration-usecs", Element::create(0));
     }
 
     return (element);
@@ -359,7 +359,7 @@ MonitoredDuration::valueRowColumns() {
         "min-duration-usecs",
         "max-duration-usecs",
         "total-duration-usecs"
-        "ave-duration-usecs"
+        "mean-duration-usecs"
     };
 
     static ElementPtr cols;
@@ -393,7 +393,7 @@ MonitoredDuration::toValueRow() const {
         row->add(Element::create(previous_interval_->getMinDuration().total_microseconds()));
         row->add(Element::create(previous_interval_->getMaxDuration().total_microseconds()));
         row->add(Element::create(previous_interval_->getTotalDuration().total_microseconds()));
-        row->add(Element::create(previous_interval_->getAverageDuration().total_microseconds()));
+        row->add(Element::create(previous_interval_->getMeanDuration().total_microseconds()));
     } else {
         row->add(Element::create("<none>"));
         row->add(Element::create(0));
