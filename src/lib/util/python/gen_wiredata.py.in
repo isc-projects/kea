@@ -1455,17 +1455,16 @@ usage = 'usage: %prog [options] input_file'
 
 
 def main():
-    parser = argparse.ArgumentParser(usage=usage)
+    parser = argparse.ArgumentParser(usage=usage.format(prog=sys.argv[0]))
     parser.add_argument('-o', '--output', action='store', dest='output',
                         default=None, metavar='FILE',
                         help='output file name [default: prefix of input_file]')
+    parser.add_argument(dest='input_file', default=None, help='input file name')
     args = parser.parse_args()
 
-    if len(args) == 0:
-        parser.error('input file is missing')
-    configfile = args[0]
-
+    configfile = args.input_file
     outputfile = args.output
+
     if not outputfile:
         m = re.match(r'(.*)\.[^.]+$', configfile)
         if m:
@@ -1473,13 +1472,12 @@ def main():
         else:
             raise ValueError('output file is not specified and input file is not in the form of "output_file.suffix"')
 
-    # DeprecationWarning: use ConfigParser directly
-    config = configparser.SafeConfigParser()  # pylint: disable=deprecated-class
+    config = configparser.ConfigParser()
     config.read(configfile)
 
     output = open(outputfile, 'w', encoding='utf-8')  # pylint: disable=consider-using-with
 
-    print_header(outputfile, configfile)
+    print_header(output, configfile)
 
     # First try the 'custom' mode; if it fails assume the query mode.
     try:

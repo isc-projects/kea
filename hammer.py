@@ -384,9 +384,9 @@ def execute(cmd, timeout=60, cwd=None, env=None, raise_error=True, dry_run=False
             #        security issue.
             with subprocess.Popen(cmd, cwd=cwd, env=env, shell=True,  # nosec: B602
                                   stdout=subprocess.PIPE, stderr=subprocess.STDOUT) as pipe:
-                if timeout is not None:
-                    pipe.wait(timeout)
                 try:
+                    if timeout is not None:
+                        pipe.wait(timeout)
                     stdout, _ = pipe.communicate()
                 except subprocess.TimeoutExpired as e:
                     pipe.kill()
