@@ -22,6 +22,9 @@ extensions_regex='(\.cpp|\.cc|\.C|\.cxx|\.m|\.hpp|\.hh|\.h|\.H|\.hxx|\.tpp)$'
 
 # Print usage.
 print_usage() {
+  # shellcheck disable=SC2016
+  # SC2016: Expressions don't expand in single quotes, use double quotes for that.
+  # Reason: $directory and $file should be displayed ad-literam. This way, it is expressed that a parameter is expected there.
   printf \
 'Usage: %s {{options}}
 Options:
@@ -56,7 +59,7 @@ script_path=$(cd "$(dirname "${0}")" && pwd)
 
 list_of_files=
 if ${changed-false}; then
-  list_of_files=$(git diff $(git merge-base origin/master HEAD) --name-only | grep -E "${extensions_regex}")
+  list_of_files=$(git diff --name-only "$(git merge-base origin/master HEAD)" | grep -E "${extensions_regex}")
 elif test ${#} = 0; then
   # Use current directory when called without an argument.
   set -- .
@@ -98,7 +101,8 @@ while test ${#} -gt 0 || test -n "${list_of_files}"; do
   if test -f "${file}"; then
     # Format file.
     # shellcheck disable=SC2046
-    # We specifically want word splitting for the parameters.
+    # SC2046: Quote this to prevent word splitting.
+    # Reason: We specifically want word splitting for the parameters.
     uncrustify -c "${script_path}/../.uncrustify.cfg" --replace $(printf '%s' "${parameters}") "${file}"
   elif test -d "${file}"; then
     # Keep CWD for later use.

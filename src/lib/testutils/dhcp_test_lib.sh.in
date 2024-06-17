@@ -425,7 +425,7 @@ set_logger() {
         clean_exit 1
     fi
     printf 'Kea log will be stored in %s.\n' "${LOG_FILE}"
-    export KEA_LOGGER_DESTINATION=${LOG_FILE}
+    export KEA_LOGGER_DESTINATION="${LOG_FILE}"
 }
 
 # Checks if specified process is running.

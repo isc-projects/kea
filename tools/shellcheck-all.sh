@@ -56,11 +56,9 @@ root_path=$(cd "$(dirname "${0}")/.." && pwd)
 cd "${root_path}"
 
 # Disable shellcheck warnings:
-# SC1117: Backslash is literal in "\/". Prefer explicit escaping: "\\/".
 # SC2119: Use "$@" if function's $1 should mean script's $1.
-# SC2039: In POSIX sh, 'local' is undefined.
 # SC3043: In POSIX sh, 'local' is undefined.
-shellcheck_opts="--exclude=SC1117 --exclude=SC2119 --exclude=SC2039 --exclude=SC3043"
+shellcheck_opts="--exclude=SC2119 --exclude=SC3043"
 
 files="$(find . -type f -name '*.sh' -or -name '*.sh.in' | sort)"
 
@@ -75,7 +73,7 @@ for i in \
   fi
 done
 
-# shellcheck disable=SC2046
-# SC2046: Quote this to prevent word splitting.
+# shellcheck disable=SC2086
+# SC2086: Double quote to prevent globbing and word splitting.
 # Reason: We explicitly want the parameters split.
 shellcheck ${shellcheck_opts} ${files}

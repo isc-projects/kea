@@ -25,6 +25,9 @@ Options:
     "$(basename "${0}")"
 }
 
+red='\033[91m'
+reset='\033[0m'
+
 # Parse parameters.
 while test ${#} -gt 0; do
   case "${1}" in
@@ -44,7 +47,7 @@ done
 
 # Get script path.
 script_path=$(cd "$(dirname "${0}")" && pwd)
-pushd "${script_path}/.."
+cd "${script_path}/.."
 
 # Get the last wednesday of the month.
 this_month=$(date +%Y-%m)
@@ -59,7 +62,7 @@ done
 # - rename it to the new revision
 # - change its name in Makefile.am
 # - change its name in yang_revisions.h
-ca=$(git merge-base origin/master $(git rev-parse --abbrev-ref HEAD))
+ca=$(git merge-base origin/master "$(git rev-parse --abbrev-ref HEAD)")
 for module in $(git diff "${ca}" --name-only . | grep  -E '\.yang$'); do
   module=$(basename "${module}")
   new_module="$(printf '%s' "${module}" | sed "s/@.*\.yang/@${wednesday}.yang/g")"

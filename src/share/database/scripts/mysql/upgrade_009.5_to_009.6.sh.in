@@ -37,7 +37,7 @@ fi
 # Add column only if it doesn't exist to work around the 1.9.4 leak of
 # cache_threshold and cache_max_age column alters in subnet and shared network
 # tables in schema version 9.5.
-if ! mysql "${@}" -e 'SELECT cache_threshold FROM dhcp4_subnet LIMIT 1' &> /dev/null; then
+if ! mysql "${@}" -e 'SELECT cache_threshold FROM dhcp4_subnet LIMIT 1' > /dev/null 2>&1; then
     mysql "${@}" <<EOF
 # Add new lease cache parameters.
 ALTER TABLE dhcp4_subnet
