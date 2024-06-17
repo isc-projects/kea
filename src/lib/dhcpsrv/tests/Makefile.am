@@ -15,6 +15,9 @@ endif
 
 CLEANFILES = *.gcno *.gcda
 DISTCLEANFILES = test_libraries.h
+DISTCLEANFILES += test_kea_lfc_env.sh
+
+noinst_SCRIPTS = test_kea_lfc_env.sh
 
 TESTS_ENVIRONMENT = $(LIBTOOL) --mode=execute $(VALGRIND_COMMAND)
 

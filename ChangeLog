@@ -1,3 +1,8 @@
+2255.	[bug]		razvan
+	The environment is now inherited by kea-lfc when started by
+	the kea dhcp server.
+	(Gitlab #3450)
+
 2254.	[func]		tmark
 	Added two API commands to Perfmon hook library:
 	"perfmon-control" which can be used to enable
