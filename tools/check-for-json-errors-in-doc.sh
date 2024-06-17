@@ -90,7 +90,7 @@ for file in ${files}; do
           # 4. replace all '[ <DATA> ]' with '[ "<DATA>" ]' where DATA contains: '-' and 'A-Za-z0-9' and ' '
           # 5. replace all ' <DATA>:' with ' "<DATA>":'
           # 6. replace all ': <DATA>' with ': "<DATA>"'
-          # 7. replace '   ...' with '   "placeholder": "value"
+          # 7. replace '   ...' with '   "placeholder": "value"'
           # 8. replace ', ... ' with ' '
           # 9. replace '   <DATA>' with '   "placeholder": "value"'
           # 10. replace ' <DATA>' with ' "placeholder"'

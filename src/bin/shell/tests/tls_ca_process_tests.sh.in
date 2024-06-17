@@ -152,14 +152,14 @@ list_commands_test() {
 
     # shellcheck disable=SC2086
     # SC2086: Double quote to prevent globbing and word splitting.
-    # Reason: we spcifically want ${arguments} to split because there may be multiple words in it.
+    # Reason: we specifically want ${arguments} to split because there may be multiple words in it.
     tmp="echo | ${shell_bin_path}/${shell_bin} --port 8443 \
     ${arguments} > ${tmpfile_path}/shell-stdout.txt"
     echo "Executing kea-shell ($tmp)"
 
     # shellcheck disable=SC2086
     # SC2086: Double quote to prevent globbing and word splitting.
-    # Reason: we spcifically want ${arguments} to split because there may be multiple words in it.
+    # Reason: we specifically want ${arguments} to split because there may be multiple words in it.
     echo | ${shell_bin_path}/${shell_bin} --port 8443 \
     ${arguments} > ${tmpfile_path}/shell-stdout.txt
     EXIT_CODE=$?
