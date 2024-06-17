@@ -85,7 +85,7 @@ An example of a script implementing all hook points is presented below:
 
 ::
 
-   #!/bin/bash
+   #!/bin/sh
 
    unknown_handle() {
        echo "Unhandled function call ${*}"
@@ -625,3 +625,39 @@ at 0.
    LEASE6_PREFERRED_LIFETIME
    LEASE6_PREFIX_LEN
    LEASE6_TYPE
+
+The leases4_committed hook point needs for loops to handle the list of addresses.
+This can be achived in the following way:
+
+::
+
+   leases4_committed() {
+       for i in $(seq 0 $((LEASES4_SIZE-1))); do
+           LEASE4_ADDRESS=$(eval "echo \$LEASES4_AT${i}_ADDRESS")
+           ...
+       done
+
+       for i in $(seq 0 $((DELETED_LEASES4_SIZE-1))); do
+           DELETED_LEASE4_ADDRESS=$(eval "echo \$DELETED_LEASES4_AT${i}_ADDRESS")
+           ...
+       done
+       exit 0
+   }
+
+The leases6_committed hook point needs for loops to handle the list of addresses.
+This can be achived in the following way:
+
+::
+
+   leases6_committed() {
+       for i in $(seq 0 $((LEASES6_SIZE-1))); do
+           LEASE6_ADDRESS=$(eval "echo \$LEASES6_AT${i}_ADDRESS")
+           ...
+       done
+
+       for i in $(seq 0 $((DELETED_LEASES6_SIZE-1))); do
+           DELETED_LEASE6_ADDRESS=$(eval "echo \$DELETED_LEASES6_AT${i}_ADDRESS")
+           ...
+       done
+       exit 0
+   }
