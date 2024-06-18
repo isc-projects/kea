@@ -271,6 +271,14 @@ As :isccmd:`reservation-add` is expected to store the host, the ``hosts-database
 parameter must be specified in the configuration, and databases must not
 run in read-only mode.
 
+.. note::
+
+   Since kea version 2.7.0 an empty reservation is implicitly global, i.e.
+   if no ``subnet-id`` entry is present and for DHCPv4 ``ip-address`` or
+   for DHCPv6 ``ip-addresses`` and ``prefixes`` do not specify a reserved
+   address or prefix the command is valid and adds a global (subnet id 0)
+   host reservation.
+
 .. isccmd:: reservation-get
 .. _command-reservation-get:
 
