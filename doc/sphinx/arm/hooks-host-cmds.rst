@@ -108,7 +108,9 @@ configuration structure. However, when managing reservations using
 host commands, it is necessary to explicitly identify the scope to which
 the reservation belongs. This is done via the ``subnet-id`` parameter.
 For global reservations, use a value of zero (0). For reservations
-scoped to a specific subnet, use that subnet's ID.
+scoped to a specific subnet, use that subnet's ID. See also the note
+in :ref:`command-reservation-add` about the :isccmd:`reservation-add`
+command for an empty (i.e. with no reserved address or prefix) reservation.
 
 On the other hand, when the ``subnet-id`` is not specified in the command
 parameters, it is added to each host in responses. If the ``subnet-id``
