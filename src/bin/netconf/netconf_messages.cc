@@ -23,6 +23,7 @@ extern const isc::log::MessageID NETCONF_MODULE_MISSING_ERR = "NETCONF_MODULE_MI
 extern const isc::log::MessageID NETCONF_MODULE_MISSING_WARN = "NETCONF_MODULE_MISSING_WARN";
 extern const isc::log::MessageID NETCONF_MODULE_REVISION_ERR = "NETCONF_MODULE_REVISION_ERR";
 extern const isc::log::MessageID NETCONF_MODULE_REVISION_WARN = "NETCONF_MODULE_REVISION_WARN";
+extern const isc::log::MessageID NETCONF_NOTIFICATION_INTERNAL_ERROR = "NETCONF_NOTIFICATION_INTERNAL_ERROR";
 extern const isc::log::MessageID NETCONF_NOTIFICATION_RECEIVED = "NETCONF_NOTIFICATION_RECEIVED";
 extern const isc::log::MessageID NETCONF_NOT_SUBSCRIBED_TO_NOTIFICATIONS = "NETCONF_NOT_SUBSCRIBED_TO_NOTIFICATIONS";
 extern const isc::log::MessageID NETCONF_RUN_EXIT = "NETCONF_RUN_EXIT";
@@ -65,6 +66,7 @@ const char* values[] = {
     "NETCONF_MODULE_MISSING_WARN", "Missing module %1 in sysrepo",
     "NETCONF_MODULE_REVISION_ERR", "Essential module %1 does NOT have the right revision: expected %2, got %3",
     "NETCONF_MODULE_REVISION_WARN", "Module %1 does NOT have the right revision: expected %2, got %3",
+    "NETCONF_NOTIFICATION_INTERNAL_ERROR", "an internal error occurred while sending an event notification for module %1: %2",
     "NETCONF_NOTIFICATION_RECEIVED", "Received notification of type %1 for module %1: %2",
     "NETCONF_NOT_SUBSCRIBED_TO_NOTIFICATIONS", "subscribing to notifications for %1 server with %2 module failed: %3",
     "NETCONF_RUN_EXIT", "application is exiting the event loop",

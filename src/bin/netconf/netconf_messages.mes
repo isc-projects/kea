@@ -80,6 +80,11 @@ This warning message indicates that a module used by Kea is not at the
 right revision in the sysrepo repository. The name, expected and
 available revisions of the module are printed.
 
+% NETCONF_NOTIFICATION_INTERNAL_ERROR an internal error occurred while sending an event notification for module %1: %2
+The error message indicates that kea-netconf got an error while sysrepo was sending an event notification.
+This error is not fatal and can be recovered from.
+The name of the module and the internal error message are printed.
+
 % NETCONF_NOTIFICATION_RECEIVED Received notification of type %1 for module %1: %2
 This informational message logs any YANG notification that has been signaled
 by the server, sent to kea-netconf which then was forwarded to subscribed

@@ -24,6 +24,7 @@ extern const isc::log::MessageID NETCONF_MODULE_MISSING_ERR;
 extern const isc::log::MessageID NETCONF_MODULE_MISSING_WARN;
 extern const isc::log::MessageID NETCONF_MODULE_REVISION_ERR;
 extern const isc::log::MessageID NETCONF_MODULE_REVISION_WARN;
+extern const isc::log::MessageID NETCONF_NOTIFICATION_INTERNAL_ERROR;
 extern const isc::log::MessageID NETCONF_NOTIFICATION_RECEIVED;
 extern const isc::log::MessageID NETCONF_NOT_SUBSCRIBED_TO_NOTIFICATIONS;
 extern const isc::log::MessageID NETCONF_RUN_EXIT;

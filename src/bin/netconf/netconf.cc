@@ -494,7 +494,14 @@ NetconfAgent::subscribeToNotifications(const CfgServersMapPair& service_pair) {
                                  timestamp);
     };
     try {
-        Subscription subscription(running_sess_->onNotification(model, callback));
+        auto exception_handler = [model](std::exception& ex) {
+            LOG_ERROR(netconf_logger, NETCONF_NOTIFICATION_INTERNAL_ERROR)
+                .arg(model)
+                .arg(ex.what());
+        };
+        Subscription subscription(running_sess_->onNotification(model, callback, nullopt, nullopt,
+                                                                nullopt, SubscribeOptions::Default,
+                                                                exception_handler));
         subscriptions_.emplace(server, std::forward<Subscription>(subscription));
     } catch (exception const& ex) {
         ostringstream msg;
