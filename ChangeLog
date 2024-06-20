@@ -1,3 +1,8 @@
+2258.	[build]		razvan
+	The library version numbers have been bumped up for the Kea 2.7.0
+	development release.
+	(Gitlab #3459)
+
 2257.	[func]		andrei
 	Exceptions thrown from Sysrepo while processing a NETCONF config
 	change or while sending notifications are now caught and logged.

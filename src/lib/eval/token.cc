@@ -1434,5 +1434,5 @@ TokenMatch::evaluate(Pkt& pkt, ValueStack& values) {
             .arg(val)
             .arg(ex.what());
     }
-    values.push(txt);   
+    values.push(txt);
 }
