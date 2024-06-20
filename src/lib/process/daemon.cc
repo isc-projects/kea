@@ -128,7 +128,7 @@ Daemon::checkConfigFile() const {
 std::string
 Daemon::getProcName() {
     return (proc_name_);
-};
+}
 
 void
 Daemon::setProcName(const std::string& proc_name) {
@@ -152,7 +152,7 @@ Daemon::getPIDFileName() const {
     }
 
     return ("");
-};
+}
 
 void
 Daemon::setPIDFileName(const std::string& pid_file_name) {
@@ -167,7 +167,7 @@ Daemon::setPIDFileName(const std::string& pid_file_name) {
     }
 
     pid_file_.reset(new util::PIDFile(pid_file_name));
-};
+}
 
 std::string
 Daemon::makePIDFileName() const {
