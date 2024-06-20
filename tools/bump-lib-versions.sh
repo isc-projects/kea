@@ -123,9 +123,13 @@ new_hooks_version="${major}$(printf '%02d' "${middle}")$(printf '%02d' "${minor}
 sed -i "s/^\/\/ Version .* of the hooks framework, set for Kea .*/\/\/ Version ${new_hooks_version} of the hooks framework, set for $(echo "${new_release_tag}" | tr '-' ' ')/" "src/lib/hooks/hooks.h"
 sed -i "s/KEA_HOOKS_VERSION.*/KEA_HOOKS_VERSION = ${new_hooks_version};/" "src/lib/hooks/hooks.h"
 
-for lib in $(git diff --name-only "${old_release_tag}" src/lib | cut -d '/' -f 3 | sort -uV); do
+for lib in $(git diff --name-only "${old_release_tag}" src/lib | cut -d '/' -f 3- | grep -v test | sed "s/\/[^\/]*$//" | sort -uV); do
   # Skip over files and anything that is not a directory.
   if test ! -d "src/lib/${lib}"; then
+    continue
+  fi
+  # Skip over directories that do not contain Makefile.am.
+  if test ! -f "src/lib/${lib}/Makefile.am"; then
     continue
   fi
 
@@ -135,9 +139,13 @@ for lib in $(git diff --name-only "${old_release_tag}" src/lib | cut -d '/' -f 3
 done
 
 if ! ${is_new_tag_stable_release} && ${is_old_tag_stable_release}; then
-  for lib in $(find 'src/lib' -mindepth 1 -maxdepth 1 -type d | cut -d '/' -f 3 | sort -uV); do
+  for lib in $(find 'src/lib' -type d | cut -d '/' -f 3- | grep -v test | sed "s/\/[^\/]*$//" | sort -uV); do
     # Skip over files and anything that is not a directory.
     if test ! -d "src/lib/${lib}"; then
+      continue
+    fi
+    # Skip over directories that do not contain Makefile.am.
+    if test ! -f "src/lib/${lib}/Makefile.am"; then
       continue
     fi
 

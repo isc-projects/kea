@@ -9,6 +9,6 @@ libkea_util_io_la_SOURCES = fd.h fd.cc
 libkea_util_io_la_SOURCES += sockaddr_util.h
 libkea_util_io_la_SOURCES += pktinfo_utilities.h
 libkea_util_io_la_LIBADD = $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
-libkea_util_io_la_LDFLAGS = -no-undefined -version-info 0:1:0
+libkea_util_io_la_LDFLAGS = -no-undefined -version-info 10:0:0
 
 CLEANFILES = *.gcno *.gcda
