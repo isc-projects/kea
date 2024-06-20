@@ -162,12 +162,8 @@ class CARequestUnitTest(unittest.TestCase):
         """
         This test check if the basic HTTP authentication uses UTF-8 encoding.
         """
-        if sys.version_info[0] == 3:
-            user = 'libert\xe9'
-            password = '\xe9galit\xe9'
-        else:
-            user = 'libert\xe9'
-            password = '\xe9galit\xe9'
+        user = 'libert\xe9'
+        password = '\xe9galit\xe9'
         buser = user.encode('utf-8')
         bpassword = password.encode('utf-8')
         secret = b':'.join((buser, bpassword))

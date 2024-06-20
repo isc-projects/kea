@@ -42,7 +42,7 @@ def read_input_files(files):
                 print(f'\nError while processing {f}: {e}\n\n')
                 raise
             if name != descr['name']:
-                raise ValueError("Expected name == descr['name']. Name is {name} and descr['name'] is {descr['name']}.")
+                raise ValueError(f"Expected name == descr['name']. Name is {name}, descr['name'] is {descr['name']}.")
 
         apis[name] = descr
 
