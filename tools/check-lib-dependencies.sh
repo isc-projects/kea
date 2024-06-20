@@ -166,9 +166,9 @@ compute_dependencies() {
     fi
   done
   # all found dependencies in the reverse compilation order
-  BASE_DEPENDENCIES=$(echo "${BASE_DEPENDENCIES}" | xargs)
+  BASE_DEPENDENCIES=$(echo "${BASE_DEPENDENCIES}" | sed 's/ *$//')
   # all found and valid dependencies in the reverse compilation order
-  NON_RECURSIVE_BASE_DEPENDENCIES=$(echo "${NON_RECURSIVE_BASE_DEPENDENCIES}" | xargs)
+  NON_RECURSIVE_BASE_DEPENDENCIES=$(echo "${NON_RECURSIVE_BASE_DEPENDENCIES}" | sed 's/^ *//;s/ *$//')
   echo "${ARTIFACT_PATH}/${ARTIFACT} base dependencies:"
   echo "${BASE_DEPENDENCIES}"
   echo "${ARTIFACT_PATH}/${ARTIFACT} non recursive dependencies:"
@@ -183,7 +183,7 @@ compute_dependencies() {
       DEPENDENCIES="${NEW_DEPENDENCIES} ${DEPENDENCIES}"
     fi
   done
-  DEPENDENCIES=$(echo "${DEPENDENCIES} ${NON_RECURSIVE_BASE_DEPENDENCIES}" | tr -s " " "\n" | sort -u | xargs)
+  DEPENDENCIES=$(echo "${DEPENDENCIES} ${NON_RECURSIVE_BASE_DEPENDENCIES}" | tr -s " " "\n" | sort -u | sed 's/ *$//')
   # order dependencies in the order of compilation
   SORTED_DEPENDENCIES=
   for j in ${LIBRARIES_LIST}; do
