@@ -99,6 +99,9 @@ CfgIfaceTest::TearDown() {
 
     // Reset global handlers
     CfgIface::open_sockets_failed_callback_ = 0;
+
+    // Handle all remaining callbacks.
+    io_service_->stopAndPoll();
 }
 
 bool
