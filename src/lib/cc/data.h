@@ -136,7 +136,7 @@ public:
     ///
     /// any is a special type used in list specifications, specifying that the
     /// elements can be of any type.
-    enum types {
+    enum types : int {
         integer = 0,
         real = 1,
         boolean = 2,
