@@ -52,12 +52,12 @@ public:
     /// @param event The event.
     /// @param private_ctx The private context.
     /// @return the sysrepo return code.
-    sysrepo::ErrorCode module_change(Session sess,
-                                     uint32_t /* subscription_id */,
-                                     string_view module_name,
-                                     optional<string_view> /* sub_xpath */,
-                                     Event event,
-                                     uint32_t /* request_id */) {
+    sysrepo::ErrorCode moduleChange(Session sess,
+                                    uint32_t /* subscription_id */,
+                                    string_view module_name,
+                                    optional<string_view> /* sub_xpath */,
+                                    Event event,
+                                    uint32_t /* request_id */) {
         ostringstream event_type;
         switch (event) {
         case Event::Update:
@@ -97,11 +97,11 @@ public:
         }
     }
 
-    void event_notif(Session /* session */,
-                     uint32_t /* subscription_id */,
-                     NotificationType const notification_type,
-                     optional<DataNode> const notification_tree,
-                     NotificationTimeStamp const /* timestamp */) {
+    void eventNotif(Session /* session */,
+                    uint32_t /* subscription_id */,
+                    NotificationType const notification_type,
+                    optional<DataNode> const notification_tree,
+                    NotificationTimeStamp const /* timestamp */) {
         string n;
         switch (notification_type) {
         case NotificationType::Realtime:
@@ -127,9 +127,14 @@ public:
             break;
         }
 
-        optional<string> const str(
-            notification_tree->printStr(DataFormat::JSON, PrintFlags::WithDefaultsExplicit));
-        string const tree(str ? *str : string());
+        string tree;
+        if (notification_tree) {
+            optional<string> const str(
+                notification_tree->printStr(DataFormat::JSON, PrintFlags::WithDefaultsExplicit));
+            if (str) {
+                tree = *str;
+            }
+        }
         LOG_INFO(netconf_logger, NETCONF_NOTIFICATION_RECEIVED)
             .arg(n)
             .arg(service_pair_.first)
@@ -440,8 +445,8 @@ NetconfAgent::subscribeToDataChanges(const CfgServersMapPair& service_pair) {
                         Event event,
                         uint32_t request_id) {
         NetconfAgentCallback agent(service_pair);
-        return agent.module_change(session, subscription_id, module_name, sub_xpath, event,
-                                   request_id);
+        return agent.moduleChange(session, subscription_id, module_name, sub_xpath, event,
+                                  request_id);
     };
     try {
         SubscribeOptions options(SubscribeOptions::Default);
@@ -490,8 +495,8 @@ NetconfAgent::subscribeToNotifications(const CfgServersMapPair& service_pair) {
                         optional<DataNode> const notification_tree,
                         NotificationTimeStamp const timestamp) {
         NetconfAgentCallback agent(service_pair);
-        return agent.event_notif(session, subscription_id, notification_type, notification_tree,
-                                 timestamp);
+        return agent.eventNotif(session, subscription_id, notification_type, notification_tree,
+                                timestamp);
     };
     try {
         auto exception_handler = [model](std::exception& ex) {

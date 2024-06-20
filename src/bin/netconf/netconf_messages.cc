@@ -67,7 +67,7 @@ const char* values[] = {
     "NETCONF_MODULE_REVISION_ERR", "Essential module %1 does NOT have the right revision: expected %2, got %3",
     "NETCONF_MODULE_REVISION_WARN", "Module %1 does NOT have the right revision: expected %2, got %3",
     "NETCONF_NOTIFICATION_INTERNAL_ERROR", "an internal error occurred while sending an event notification for module %1: %2",
-    "NETCONF_NOTIFICATION_RECEIVED", "Received notification of type %1 for module %1: %2",
+    "NETCONF_NOTIFICATION_RECEIVED", "Received notification of type %1 for module %2: '%3'",
     "NETCONF_NOT_SUBSCRIBED_TO_NOTIFICATIONS", "subscribing to notifications for %1 server with %2 module failed: %3",
     "NETCONF_RUN_EXIT", "application is exiting the event loop",
     "NETCONF_SET_CONFIG", "set configuration to %1 server: %2",
