@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -30,7 +30,6 @@ using NetconfConfigPtr = boost::shared_ptr<NetconfConfig>;
 /// It is derived from the context base class, ConfigBase.
 class NetconfConfig : public process::ConfigBase {
 public:
-
     /// @brief Default constructor
     NetconfConfig();
 
@@ -93,7 +92,6 @@ public:
     isc::data::ElementPtr toElement() const override final;
 
 private:
-
     /// @brief Private copy constructor
     ///
     /// It is private to forbid anyone outside of this class to make copies.

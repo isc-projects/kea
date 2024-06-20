@@ -57,8 +57,7 @@ NetconfProcess::run() {
         } catch (...) {
             // Ignore double errors
         }
-        isc_throw(DProcessBaseError,
-                  "Process run method failed: " << ex.what());
+        isc_throw(DProcessBaseError, "Process run method failed: " << ex.what());
     }
 
     LOG_DEBUG(netconf_logger, isc::log::DBGLVL_START_SHUT, NETCONF_RUN_EXIT);
@@ -95,8 +94,7 @@ NetconfProcess::configure(isc::data::ConstElementPtr config_set,
         IOServiceMgr::instance().pollIOServices();
     } catch (const std::exception& ex) {
         std::ostringstream err;
-        err << "Error initializing hooks: "
-            << ex.what();
+        err << "Error initializing hooks: " << ex.what();
         return (isc::config::createAnswer(CONTROL_RESULT_ERROR, err.str()));
     }
 

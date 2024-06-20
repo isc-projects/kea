@@ -130,4 +130,3 @@ HttpControlSocket::sendCommand(ConstElementPtr command) {
 
 }  // namespace netconf
 }  // namespace isc
-

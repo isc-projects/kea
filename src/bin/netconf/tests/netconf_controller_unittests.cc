@@ -6,14 +6,14 @@
 
 #include <config.h>
 
-#include <gtest/gtest.h>
-
 #include <asiolink/testutils/timed_signal.h>
 #include <cc/data.h>
 #include <netconf/netconf_controller.h>
 #include <netconf/netconf_process.h>
 #include <process/testutils/d_test_stubs.h>
 #include <testutils/gtest_utils.h>
+
+#include <gtest/gtest.h>
 
 using namespace isc::asiolink::test;
 using namespace isc::netconf;
@@ -186,4 +186,4 @@ TEST_F(NetconfControllerTest, sigtermShutdown) {
     EXPECT_TRUE(elapsed_time.total_milliseconds() < 300);
 }
 
-}
+}  // namespace

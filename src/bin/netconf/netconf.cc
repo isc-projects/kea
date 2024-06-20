@@ -142,7 +142,7 @@ public:
     }
 };  // NetconfAgentCallback
 
-}  //anonymous namespace
+}  // anonymous namespace
 
 namespace isc {
 namespace netconf {
@@ -254,15 +254,15 @@ NetconfAgent::initSysrepo() {
         startup_sess_ = Connection{}.sessionStart();
         startup_sess_->switchDatastore(Datastore::Startup);
     } catch (exception const& ex) {
-        isc_throw(Unexpected, "Can't establish a sysrepo session: "
-                  << ex.what());
+        isc_throw(Unexpected, "Can't establish a sysrepo session: " << ex.what());
     }
 
     // Retrieve names and revisions of installed modules from sysrepo.
     getModules();
 }
 
-void NetconfAgent::getModules() {
+void
+NetconfAgent::getModules() {
     vector<Module> modules;
     try {
         Context context(running_sess_->getContext());
@@ -274,8 +274,7 @@ void NetconfAgent::getModules() {
     for (Module const& module : modules) {
         string const name(module.name());
         if (!module.revision()) {
-            isc_throw(Unexpected,
-                      "could not retrieve module revision for module " << name);
+            isc_throw(Unexpected, "could not retrieve module revision for module " << name);
         }
         string const revision(*module.revision());
         modules_.emplace(name, revision);
@@ -464,8 +463,7 @@ NetconfAgent::subscribeToDataChanges(const CfgServersMapPair& service_pair) {
     } catch (exception const& ex) {
         ostringstream msg;
         msg << "module change subscribe failed with " << ex.what();
-        msg << "change subscription for model " << model <<
-            " failed with: " << ex.what();
+        msg << "change subscription for model " << model << " failed with: " << ex.what();
         LOG_ERROR(netconf_logger, NETCONF_SUBSCRIBE_CONFIG_FAILED)
             .arg(server)
             .arg(configuration->getModel())
@@ -754,7 +752,8 @@ NetconfAgent::announceShutdown() const {
     }
 }
 
-bool NetconfAgent::shouldShutdown() const {
+bool
+NetconfAgent::shouldShutdown() const {
     return boost::dynamic_pointer_cast<NetconfController>(NetconfController::instance())
         ->getNetconfProcess()
         ->shouldShutdown();

@@ -6,8 +6,6 @@
 
 #include <config.h>
 
-#include <gtest/gtest.h>
-
 #include <cc/data.h>
 #include <cc/dhcp_config_error.h>
 #include <netconf/parser_context.h>
@@ -17,11 +15,13 @@
 #include <testutils/test_to_element.h>
 #include <testutils/user_context_utils.h>
 
-#include <iostream>
 #include <fstream>
+#include <iostream>
 #include <vector>
 
 #include <boost/algorithm/string.hpp>
+
+#include <gtest/gtest.h>
 
 using namespace isc::data;
 using namespace isc::test;

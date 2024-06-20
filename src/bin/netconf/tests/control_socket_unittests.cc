@@ -6,8 +6,6 @@
 
 #include <config.h>
 
-#include <gtest/gtest.h>
-
 #include <asiolink/asio_wrapper.h>
 #include <asiolink/interval_timer.h>
 #include <asiolink/io_service.h>
@@ -28,6 +26,8 @@
 #include <iostream>
 #include <sstream>
 #include <thread>
+
+#include <gtest/gtest.h>
 
 using namespace std;
 using namespace isc;

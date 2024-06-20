@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -15,9 +15,9 @@
 #include <netconf/stdout_control_socket.h>
 #include <netconf/unix_control_socket.h>
 
-#include <sysrepo-cpp/Session.hpp>
-
 #include <map>
+
+#include <sysrepo-cpp/Session.hpp>
 
 namespace isc {
 namespace netconf {
@@ -69,8 +69,7 @@ public:
     /// @param sess The sysrepo running datastore session.
     /// @param service_pair The service name and configuration pair.
     /// @return return code for sysrepo.
-    static sysrepo::ErrorCode
-    change(sysrepo::Session sess, const CfgServersMapPair& service_pair);
+    static sysrepo::ErrorCode change(sysrepo::Session sess, const CfgServersMapPair& service_pair);
 
     /// @brief Event::Done callback.
     ///
@@ -80,8 +79,7 @@ public:
     /// @param sess The sysrepo running datastore session.
     /// @param service_pair The service name and configuration pair.
     /// @return return code for sysrepo.
-    static sysrepo::ErrorCode
-    done(sysrepo::Session sess, const CfgServersMapPair& service_pair);
+    static sysrepo::ErrorCode done(sysrepo::Session sess, const CfgServersMapPair& service_pair);
 
     /// @brief Log changes.
     ///

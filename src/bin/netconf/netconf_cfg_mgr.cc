@@ -135,11 +135,9 @@ NetconfCfgMgr::parse(isc::data::ConstElementPtr config_set,
     }
 
     if (check_only) {
-        answer = createAnswer(CONTROL_RESULT_SUCCESS,
-                              "Configuration check successful");
+        answer = createAnswer(CONTROL_RESULT_SUCCESS, "Configuration check successful");
     } else {
-        answer = createAnswer(CONTROL_RESULT_SUCCESS,
-                              "Configuration applied successfully.");
+        answer = createAnswer(CONTROL_RESULT_SUCCESS, "Configuration applied successfully.");
     }
 
     return (answer);

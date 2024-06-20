@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,9 +7,9 @@
 #include <config.h>
 
 #include <asiolink/io_error.h>
+#include <exceptions/exceptions.h>
 #include <netconf/netconf_cfg_mgr.h>
 #include <netconf/netconf_log.h>
-#include <exceptions/exceptions.h>
 
 #include <sstream>
 #include <string>
@@ -89,7 +89,7 @@ CfgServer::toText() const {
             s << "UNIX:'" << control_socket_->getName() << "'";
             break;
         case CfgControlSocket::Type::HTTP:
-          s << "HTTP:'" << control_socket_->getUrl().toText() << "'";
+            s << "HTTP:'" << control_socket_->getUrl().toText() << "'";
             break;
         case CfgControlSocket::Type::STDOUT:
             s << "STDOUT";

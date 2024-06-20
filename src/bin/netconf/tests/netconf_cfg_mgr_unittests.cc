@@ -6,8 +6,6 @@
 
 #include <config.h>
 
-#include <gtest/gtest.h>
-
 #include <cc/command_interpreter.h>
 #include <exceptions/exceptions.h>
 #include <netconf/netconf_cfg_mgr.h>
@@ -19,6 +17,8 @@
 #include <testutils/test_to_element.h>
 #include <yang/yang_models.h>
 
+#include <gtest/gtest.h>
+
 using namespace std;
 using namespace isc;
 using namespace isc::netconf;
@@ -29,7 +29,7 @@ using namespace isc::http;
 using namespace isc::process;
 using namespace isc::yang;
 
-namespace  {
+namespace {
 
 /// @brief Almost regular netconf CfgMgr with internal parse method exposed.
 class NakedNetconfCfgMgr : public NetconfCfgMgr {
@@ -64,7 +64,6 @@ TEST(NetconfCfgMgr, getContext) {
 
 // Tests if context can store and retrieve managed server information.
 TEST(NetconfCfgMgr, contextServer) {
-
     NetconfConfig ctx;
 
     // Check managed server parameters.
@@ -377,7 +376,6 @@ TEST(NetconfParser, badSocketType) {
 /// @brief Class used for testing CfgMgr
 class NetconfParserTest : public isc::process::ConfigParseTest {
 public:
-
     /// @brief Tries to load input text as a configuration
     ///
     /// @param config text containing input configuration

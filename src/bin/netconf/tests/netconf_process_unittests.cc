@@ -6,8 +6,6 @@
 
 #include <config.h>
 
-#include <gtest/gtest.h>
-
 #include <asiolink/interval_timer.h>
 #include <asiolink/io_service.h>
 #include <netconf/netconf_cfg_mgr.h>
@@ -16,6 +14,8 @@
 #include <testutils/gtest_utils.h>
 
 #include <functional>
+
+#include <gtest/gtest.h>
 
 using namespace isc;
 using namespace isc::netconf;
@@ -84,4 +84,4 @@ TEST_F(NetconfProcessTest, shutdown) {
     getIOService()->stopAndPoll();
 }
 
-}
+}  // namespace

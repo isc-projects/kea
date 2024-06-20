@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -19,8 +19,9 @@ namespace netconf {
 /// @brief Exception thrown when the error during communication.
 class ControlSocketError : public isc::Exception {
 public:
-    ControlSocketError(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { }
+    ControlSocketError(const char* file, size_t line, const char* what)
+        : isc::Exception(file, line, what) {
+    }
 };  // ControlSocketError
 
 /// @brief Base class for control socket communication.
@@ -38,7 +39,7 @@ public:
     ControlSocketBase(CfgControlSocketPtr ctrl_sock) : socket_cfg_(ctrl_sock) {
         if (!ctrl_sock) {
             isc_throw(ControlSocketError, "ControlSocket constructor called "
-                      "with a null configuration");
+                                          "with a null configuration");
         }
     }
 

@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -79,14 +79,12 @@ public:
     /// of an integer status value (0 means successful, non-zero means failure),
     /// and a string explanation of the outcome.
     isc::data::ConstElementPtr
-    configure(isc::data::ConstElementPtr config_set,
-              bool check_only = false) override final;
+    configure(isc::data::ConstElementPtr config_set, bool check_only = false) override final;
 
     /// @brief Returns a pointer to the configuration manager.
     NetconfCfgMgrPtr getNetconfCfgMgr();
 
 private:
-
     /// @brief Polls all ready handlers and then runs one handler if none
     /// handlers have been executed as a result of polling.
     ///

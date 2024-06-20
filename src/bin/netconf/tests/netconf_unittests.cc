@@ -6,8 +6,6 @@
 
 #include <config.h>
 
-#include <gtest/gtest.h>
-
 #include <asiolink/asio_wrapper.h>
 #include <asiolink/interval_timer.h>
 #include <asiolink/io_service.h>
@@ -26,13 +24,15 @@
 #include <yang/yang_models.h>
 #include <yang/yang_revisions.h>
 
-#include <sysrepo-cpp/utils/exception.hpp>
-
 #include <chrono>
 #include <iostream>
 #include <sstream>
 #include <thread>
 #include <vector>
+
+#include <gtest/gtest.h>
+
+#include <sysrepo-cpp/utils/exception.hpp>
 
 using namespace std;
 using namespace isc;
@@ -61,16 +61,16 @@ using ThreadPtr = shared_ptr<thread>;
 class NakedNetconfAgent : public NetconfAgent {
 public:
     /// Export protected methods and fields.
-    using NetconfAgent::keaConfig;
-    using NetconfAgent::initSysrepo;
     using NetconfAgent::checkModule;
     using NetconfAgent::checkModules;
-    using NetconfAgent::yangConfig;
-    using NetconfAgent::subscribeToDataChanges;
-    using NetconfAgent::startup_sess_;
-    using NetconfAgent::running_sess_;
+    using NetconfAgent::initSysrepo;
+    using NetconfAgent::keaConfig;
     using NetconfAgent::modules_;
+    using NetconfAgent::running_sess_;
+    using NetconfAgent::startup_sess_;
+    using NetconfAgent::subscribeToDataChanges;
     using NetconfAgent::subscriptions_;
+    using NetconfAgent::yangConfig;
 };  // NakedNetconfAgent
 
 /// @brief Type definition for the pointer to NakedNetconfAgent objects.
