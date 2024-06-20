@@ -1,3 +1,12 @@
+2257.	[func]		andrei
+	Exceptions thrown from Sysrepo while processing a NETCONF config
+	change or while sending notifications are now caught and logged.
+	The configuration is not applied in that case, but at least
+	kea-netconf recovers instead of crashing. These scenarios are
+	corner cases that are likely not found in production and that
+	trigger bugs in upstream code.
+	(Gitlab #3435)
+
 2256.	[func]		marcin
 	High Availability hook now supports lease affinity for the
 	released leases. When a lease is released but left in the
@@ -16,7 +25,7 @@
 
 2255.	[bug]		razvan
 	The environment is now inherited by kea-lfc when started by
-	the kea dhcp server.
+	the Kea DHCP server.
 	(Gitlab #3450)
 
 2254.	[func]		tmark
