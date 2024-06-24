@@ -1,3 +1,5 @@
+Kea 2.7.0 (development) released on June 26, 2024
+
 2258.	[build]		razvan
 	The library version numbers have been bumped up for the Kea 2.7.0
 	development release.
@@ -21,7 +23,7 @@
 	the association between the lease and the client in the
 	partner's lease database. This change introduces a new
 	"released" lease state which appears for the released leases
-	in the lease datbase and in the lease updates exchanged
+	in the lease database and in the lease updates exchanged
 	between the HA partners. It is a backward incompatible change
 	for the HA partners that haven't been upgraded to the latest
 	Kea version. They will reject the lease updates for the
@@ -69,7 +71,7 @@
 	(Gitlab #3035)
 
 2248.	[bug]		tmark
-	Fixed a corner-case isssue in kea-dhcp6 that was
+	Fixed a corner-case issue in kea-dhcp6 that was
 	causing it to attempt to update a lease for an address
 	with a generated FQDN even though the address was not
 	available to be leased.
