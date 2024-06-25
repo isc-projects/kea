@@ -49,7 +49,7 @@ uninstalled-headers:
 messages:
   stage: test
   script:
-    - ./tools/check-messages.sh
+    - ./tools/check-messages.py
 
 missing-api-commands:
   stage: test

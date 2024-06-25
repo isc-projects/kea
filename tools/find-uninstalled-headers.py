@@ -27,7 +27,7 @@ def main():
     failure = False
 
     for makefile_am in makefile_ams:
-        with open(makefile_am, 'r', encoding="utf8") as f:
+        with open(makefile_am, 'r', encoding='utf-8') as f:
             lines = f.readlines()
             in_headers_block = False
             for line in lines:
