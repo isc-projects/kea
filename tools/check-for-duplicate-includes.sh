@@ -119,6 +119,7 @@ for i in $(get_source_files); do
   fi
 done
 
+# exit 1 if any diff was found so that CI properly fails.
 if "${found}"; then
   exit 1
 fi

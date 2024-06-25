@@ -46,6 +46,11 @@ uninstalled-headers:
   script:
     - ./tools/find-uninstalled-headers.py
 
+messages:
+  stage: test
+  script:
+    - ./tools/check-messages.sh
+
 missing-api-commands:
   stage: test
   script:
