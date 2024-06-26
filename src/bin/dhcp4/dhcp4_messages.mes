@@ -6,11 +6,6 @@
 
 $NAMESPACE isc::dhcp
 
-% DHCP4_ACTIVATE_INTERFACE activating interface %1
-This message is printed when DHCPv4 server enabled an interface to be used
-to receive DHCPv4 traffic. IPv4 socket on this interface will be opened once
-Interface Manager starts up procedure of opening sockets.
-
 % DHCP4_ALREADY_RUNNING %1 already running? %2
 This is an error message that occurs when the DHCPv4 server encounters
 a pre-existing PID file which contains the PID of a running process.
@@ -171,24 +166,11 @@ new configuration. It is output during server startup, and when an updated
 configuration is committed by the administrator.  Additional information
 may be provided.
 
-% DHCP4_CONFIG_FETCH Fetching configuration data from config backends.
-This is an informational message emitted when the DHCPv4 server about to begin
-retrieving configuration data from one or more configuration backends.
-
 % DHCP4_CONFIG_LOAD_FAIL configuration error using file: %1, reason: %2
 This error message indicates that the DHCPv4 configuration has failed.
 If this is an initial configuration (during server's startup) the server
 will fail to start. If this is a dynamic reconfiguration attempt the
 server will continue to use an old configuration.
-
-% DHCP4_CONFIG_NEW_SUBNET a new subnet has been added to configuration: %1
-This is an informational message reporting that the configuration has
-been extended to include the specified IPv4 subnet.
-
-% DHCP4_CONFIG_OPTION_DUPLICATE multiple options with the code %1 added to the subnet %2
-This warning message is issued on an attempt to configure multiple options
-with the same option code for a particular subnet. Adding multiple options
-is uncommon for DHCPv4, but is not prohibited.
 
 % DHCP4_CONFIG_PACKET_QUEUE DHCPv4 packet queue info after configuration: %1
 This informational message is emitted during DHCPv4 server configuration,
@@ -224,10 +206,6 @@ issued). Finally, the server could be restarted completely.
 This error message is issued when the configuration includes an unsupported
 object (i.e. a top level element).
 
-% DHCP4_CONFIG_UPDATE updated configuration received: %1
-A debug message indicating that the DHCPv4 server has received an
-updated configuration from the Kea configuration system.
-
 % DHCP4_DB_RECONNECT_DISABLED database reconnect is disabled: max-reconnect-tries %1, reconnect-wait-time %2
 This is an informational message indicating that connectivity to either the
 lease or host database or both and that automatic reconnect is not enabled.
@@ -258,11 +236,6 @@ service has been restored.
 This error message indicates that DHCP4 server attempted to send a DDNS
 update request to the DHCP-DDNS server.  This is most likely a configuration or
 networking error.
-
-% DHCP4_DEACTIVATE_INTERFACE deactivate interface %1
-This message is printed when DHCPv4 server disables an interface from being
-used to receive DHCPv4 traffic. Sockets on this interface will not be opened
-by the Interface Manager until interface is enabled.
 
 % DHCP4_DECLINE_FAIL %1: error on decline lease for address %2: %3
 This error message indicates that the software failed to decline a
@@ -434,10 +407,6 @@ Logged at debug log level 55.
 This debug message is issued when the server did not receive a Hostname option
 from the client and hostname generation is enabled.  This provides a means to
 create DNS entries for unsophisticated clients.
-
-% DHCP4_HANDLE_SIGNAL_EXCEPTION An exception was thrown while handing signal: %1
-This error message is printed when an ISC or standard exception was raised during signal
-processing. This likely indicates a coding error and should be reported to ISC.
 
 % DHCP4_HOOK_BUFFER_RCVD_DROP received buffer from %1 to %2 over interface %3 was dropped because a callout set the drop flag
 Logged at debug log level 15.
@@ -654,16 +623,6 @@ respond. The first argument includes the client and the transaction id
 identification information. The second argument includes the IPv4 address
 requested by the client.
 
-% DHCP4_NO_SOCKETS_OPEN no interface configured to listen to DHCP traffic
-This warning message is issued when current server configuration specifies
-no interfaces that server should listen on, or specified interfaces are not
-configured to receive the traffic.
-
-% DHCP4_OPEN_CONFIG_DB Opening configuration database: %1
-This message is printed when the DHCPv4 server is attempting to open a
-configuration database.  The database access string with password redacted
-is logged.
-
 % DHCP4_OPEN_SOCKET opening service sockets on port %1
 Logged at debug log level 0.
 A debug message issued during startup, this indicates that the DHCPv4
@@ -678,10 +637,6 @@ to shut down as specified in the configuration.
 This is an error message indicating a programmatic error that should not occur.
 It prohibits the server from attempting to bind to its service sockets if they
 are unavailable, and the server exits. This error should be reported.
-
-% DHCP4_OPEN_SOCKET_FAIL failed to open socket: %1
-A warning message issued when IfaceMgr fails to open and bind a socket. The reason
-for the failure is appended as an argument of the log message.
 
 % DHCP4_PACKET_DROP_0001 %1: failed to parse packet from %2 to %3, received over interface %4, reason: %5, %6
 Logged at debug log level 15.
@@ -823,11 +778,6 @@ Logged at debug log level 50.
 A debug message issued when an option failed to unpack correctly, making it
 impossible to unpack the remaining options in the packet.  The server will
 server will still attempt to service the packet.
-
-% DHCP4_PACKET_OPTION_UNPACK_FAIL An error unpacking the option %1: %2
-A debug message issued when an option failed to unpack correctly, making it
-to be left unpacked in the packet. The first argument is the option code,
-the second the error.
 
 % DHCP4_PACKET_PACK %1: preparing on-wire format of the packet to be sent
 Logged at debug log level 50.
@@ -1092,14 +1042,6 @@ This error message indicates that the server failed to add a DECLINED lease to
 the lease store. The first argument includes the client and the transaction
 identification information. The second argument holds the IPv4 address for which
 the decline was attempted.
-
-% DHCP4_SERVER_INITIATED_DECLINE_FAILED %1: error on server-initiated decline lease for address %2: %3
-This error message indicates that the software failed to decline a
-lease from the lease database due to an error during a database
-operation. The first argument includes the client and the transaction
-identification information. The second argument holds the IPv4 address
-for which the decline was attempted. The last one contains the reason of
-failure.
 
 % DHCP4_SERVER_INITIATED_DECLINE_RESOURCE_BUSY %1: error declining a lease for address %2
 This error message indicates that while one server thread was attempting to mark

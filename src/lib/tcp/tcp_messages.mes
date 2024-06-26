@@ -29,11 +29,6 @@ This debug message is issued when the server finished receiving a TCP
 request from the remote endpoint. The address of the remote endpoint is
 specified as an argument.
 
-% TCP_CONNECTION_CLOSE_CALLBACK_FAILED Connection close callback threw an exception
-This is an error message emitted when the close connection callback
-registered on the connection failed unexpectedly.  This is a programmatic
-error that should be submitted as a bug.
-
 % TCP_CONNECTION_REJECTED_BY_FILTER connection from %1 has been denied by the connection filter.
 Logged at debug log level 50.
 This debug message is issued when the server's connection filter rejects
@@ -79,12 +74,6 @@ Logged at debug log level 50.
 This debug message is issued when the TCP connection is being closed as a
 result of being idle.
 
-% TCP_PREMATURE_CONNECTION_TIMEOUT_OCCURRED premature connection timeout occurred: in transaction ? %1, transid: %2, current_transid: %3
-This warning message is issued when unexpected timeout occurred during the
-transaction. This is proven to occur when the system clock is moved manually
-or as a result of synchronization with a time server. Any ongoing transactions
-will be interrupted. New transactions should be conducted normally.
-
 % TCP_REQUEST_RECEIVED_FAILED An unexpected error occurred processing a request from %1, error: %2
 This error message is issued when an unexpected error occurred while the
 server attempted to process a received request. The first argument specifies
@@ -103,14 +92,6 @@ Logged at debug log level 40.
 This debug message is issued when the server is starting to send a TCP
 response to a remote endpoint. The argument specifies an address of
 the remote endpoint.
-
-% TCP_SERVER_RESPONSE_SEND_DETAILS detailed information about response sent to %1:\n%2
-This debug message is issued right before the server sends a TCP response
-to the client. It includes detailed information about the response. The
-first argument specifies an address of the remote endpoint to which the
-response is being sent. The second argument provides a response in the
-textual form. The response is truncated by the logger if it is too large
-to be printed.
 
 % TLS_CONNECTION_HANDSHAKE_FAILED TLS handshake with %1 failed with %2
 This information message is issued when the TLS handshake failed at the

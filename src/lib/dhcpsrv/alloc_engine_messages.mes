@@ -25,14 +25,6 @@ Logged at debug log level 40.
 This debug message is logged when the allocation engine successfully
 reclaims a lease. The lease is now available for assignment.
 
-% ALLOC_ENGINE_REMOVAL_NCR_FAILED sending removal name change request failed for lease %1: %2
-This error message is logged when sending a removal NameChangeRequest
-to DHCP DDNS failed. This NameChangeRequest is usually generated when
-the lease reclamation routine acts upon expired leases. If a lease being
-reclaimed has a corresponding DNS entry it needs to be removed.
-This message indicates that removal of the DNS entry has failed.
-Nevertheless the lease will be reclaimed.
-
 % ALLOC_ENGINE_V4_ALLOC_ERROR %1: error during attempt to allocate an IPv4 address: %2
 An error occurred during an attempt to allocate an IPv4 address, the
 reason for the failure being contained in the message.  The server will
@@ -620,13 +612,6 @@ the client and will check if these leases are reserved for another
 client. If they are, they will not be renewed for the client
 requesting their renewal. The first argument includes the client
 identification information.
-
-% ALLOC_ENGINE_V6_RENEW_REMOVE_UNRESERVED dynamically allocating leases for the renewing client %1
-This debug message is issued as the allocation engine is trying
-to dynamically allocate new leases for the renewing client. This
-is the case when the server couldn't renew any of the existing
-client's leases, e.g. because leased resources are reserved for
-another client.
 
 % ALLOC_ENGINE_V6_REUSE_EXPIRED_LEASE_DATA %1: reusing expired lease, updated lease information: %2
 Logged at debug log level 55.

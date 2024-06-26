@@ -37,11 +37,6 @@ addresses is logged.
 The lease6-bulk-apply command has failed. Both the reason as well
 as the parameters passed are logged.
 
-% LEASE_CMDS_DEINIT_FAILED unloading Lease Commands hooks library failed: %1
-This error message indicates an error during unloading the Lease Commands
-hooks library. The details of the error are provided as argument of
-the log message.
-
 % LEASE_CMDS_DEINIT_OK unloading Lease Commands hooks library successful
 This info message indicates that the Lease Commands hooks library has been
 removed successfully.
@@ -71,11 +66,6 @@ parameters passed are logged.
 % LEASE_CMDS_GET6_FAILED lease6-get command failed (parameters: %1, reason: %2)
 The lease4-get command has failed. Both the reason as well as the
 parameters passed are logged.
-
-% LEASE_CMDS_INIT_FAILED loading Lease Commands hooks library failed: %1
-This error message indicates an error during loading the Lease Commands
-hooks library. The details of the error are provided as argument of
-the log message.
 
 % LEASE_CMDS_INIT_OK loading Lease Commands hooks library successful
 This info message indicates that the Lease Commands hooks library has been

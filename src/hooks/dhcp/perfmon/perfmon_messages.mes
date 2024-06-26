@@ -35,11 +35,6 @@ This info log is issued when perfmon-get-all-durations command has
 completed successfully.  The argument contains the number of
 durations returned.
 
-% PERFMON_DEINIT_FAILED unloading PerfMon hooks library failed: %1
-This error message indicates an error unloading the PerfMon hooks
-library. The details of the error are provided as argument of
-the log message.
-
 % PERFMON_DEINIT_OK unloading PerfMon hooks library successful
 This info message indicates that the PerfMon hooks library has been
 removed successfully.

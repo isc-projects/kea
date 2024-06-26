@@ -15,16 +15,6 @@ documented in preceding log entries.
 This is an informational message issued after DHCP_DDNS has submitted DNS
 mapping additions which were received and accepted by an appropriate DNS server.
 
-% DHCP_DDNS_ALREADY_RUNNING %1 already running? %2
-This is an error message that occurs when DHCP_DDNS encounters a pre-existing
-PID file which contains the PID of a running process.  This most likely
-indicates an attempt to start a second instance of DHCP_DDNS using the
-same configuration file.  It is possible, though unlikely, that the PID file
-is a remnant left behind by a server crash or power failure and the PID
-it contains refers to a process other than DHCP_DDNS.  In such an event,
-it would be necessary to manually remove the PID file.  The first argument is
-the DHCP_DDNS process name, the second contains the PID and PID file.
-
 % DHCP_DDNS_AT_MAX_TRANSACTIONS application has %1 queued requests but has reached maximum number of %2 concurrent transactions
 Logged at debug log level 55.
 This is a debug message that indicates that the application has DHCP_DDNS
@@ -34,10 +24,6 @@ requests in the queue but is working as many concurrent requests as allowed.
 Logged at debug log level 0.
 This is a debug message issued when the application has been instructed
 to shutdown and has met the required criteria to exit.
-
-% DHCP_DDNS_COMMAND command directive received, command: %1 - args: %2
-This is a debug message issued when the DHCP-DDNS application command method
-has been invoked.
 
 % DHCP_DDNS_CONFIGURE configuration %1 received: %2
 Logged at debug log level 40.
@@ -249,10 +235,6 @@ update the reverse DNS information for the given FQDN but for which there are
 no configured DDNS domains in the DHCP_DDNS configuration.  Either the DHCP_DDNS
 configuration needs to be updated or the source of the FQDN itself should be
 investigated.
-
-% DHCP_DDNS_PROCESS_INIT application init invoked
-This is a debug message issued when the DHCP-DDNS application enters
-its initialization method.
 
 % DHCP_DDNS_QUEUE_MGR_QUEUE_FULL application request queue has reached maximum number of entries %1
 This an error message indicating that DHCP-DDNS is receiving DNS update

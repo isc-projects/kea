@@ -6,14 +6,6 @@
 
 $NAMESPACE isc::asiodns
 
-% ASIODNS_FD_ADD_TCP adding a new TCP server by opened fd %1
-A debug message informing about installing a file descriptor as a server.
-The file descriptor number is noted.
-
-% ASIODNS_FD_ADD_UDP adding a new UDP server by opened fd %1
-A debug message informing about installing a file descriptor as a server.
-The file descriptor number is noted.
-
 % ASIODNS_FETCH_COMPLETED upstream fetch to %1(%2) has now completed
 Logged at debug log level 70.
 A debug message, this records that the upstream fetch (a query made by the
@@ -47,117 +39,6 @@ enabled.
 The asynchronous I/O code encountered an error when trying to send data to
 the specified address on the given protocol.  The number of the system
 error that caused the problem is given in the message.
-
-% ASIODNS_SYNC_UDP_CLOSE_FAIL failed to close a DNS/UDP socket: %1
-This is the same to ASIODNS_UDP_CLOSE_FAIL but happens on the
-"synchronous UDP server", mainly used for the authoritative DNS server
-daemon.
-
-% ASIODNS_TCP_ACCEPT_FAIL failed to accept TCP DNS connection: %1
-Accepting a TCP connection from a DNS client failed due to an error
-that could happen but should be rare.  The reason for the error is
-included in the log message.  The server still keeps accepting new
-connections, so unless it happens often it's probably okay to ignore
-this error.  If the shown error indicates something like "too many
-open files", it's probably because the run time environment is too
-restrictive on this limitation, so consider adjusting the limit using
-a tool such as ulimit.  If you see other types of errors too often,
-there may be something overlooked; please file a bug report in that case.
-
-% ASIODNS_TCP_CLEANUP_CLOSE_FAIL failed to close a DNS/TCP socket on port cleanup: %1
-A TCP DNS server tried to close a TCP socket (one created on accepting
-a new connection or is already unused) as a step of cleaning up the
-corresponding listening port, but it failed to do that.  This is
-generally an unexpected event and so is logged as an error.
-See also the description of ASIODNS_TCP_CLOSE_ACCEPTOR_FAIL.
-
-% ASIODNS_TCP_CLOSE_ACCEPTOR_FAIL failed to close listening TCP socket: %1
-A TCP DNS server tried to close a listening TCP socket (for accepting
-new connections) as a step of cleaning up the corresponding listening
-port (e.g., on server shutdown or updating port configuration), but it
-failed to do that.  This is generally an unexpected event and so is
-logged as an error.  See ASIODNS_TCP_CLOSE_FAIL on the implication of
-related system resources.
-
-% ASIODNS_TCP_CLOSE_FAIL failed to close DNS/TCP socket with a client: %1
-A TCP DNS server tried to close a TCP socket used to communicate with
-a client, but it failed to do that.  While closing a socket should
-normally be an error-free operation, there have been known cases where
-this happened with a "connection reset by peer" error.  This might be
-because of some odd client behavior, such as sending a TCP RST after
-establishing the connection and before the server closes the socket,
-but how exactly this could happen seems to be system dependent (i.e,
-it's not part of the standard socket API), so it's difficult to
-provide a general explanation.  In any case, it is believed that an
-error on closing a socket doesn't mean leaking system resources (the
-kernel should clean up any internal resource related to the socket,
-just reporting an error detected in the close call), but, again, it
-seems to be system dependent.  This message is logged at a debug level
-as it's known to happen and could be triggered by a remote node and it
-would be better to not be too verbose, but you might want to increase
-the log level and make sure there's no resource leak or other system
-level troubles when it's logged.
-
-% ASIODNS_TCP_CLOSE_NORESP_FAIL failed to close DNS/TCP socket with a client: %1
-A TCP DNS server tried to close a TCP socket used to communicate with
-a client without returning an answer (which normally happens for zone
-transfer requests), but it failed to do that.  See ASIODNS_TCP_CLOSE_FAIL
-for more details.
-
-% ASIODNS_TCP_GETREMOTE_FAIL failed to get remote address of a DNS TCP connection: %1
-A TCP DNS server tried to get the address and port of a remote client
-on a connected socket but failed.  It's expected to be rare but can
-still happen.  See also ASIODNS_TCP_READLEN_FAIL.
-
-% ASIODNS_TCP_READDATA_FAIL failed to get DNS data on a TCP socket: %1
-A TCP DNS server tried to read a DNS message (that follows a 2-byte
-length field) but failed.  It's expected to be rare but can still happen.
-See also ASIODNS_TCP_READLEN_FAIL.
-
-% ASIODNS_TCP_READLEN_FAIL failed to get DNS data length on a TCP socket: %1
-A TCP DNS server tried to get the length field of a DNS message (the first
-2 bytes of a new chunk of data) but failed.  This is generally expected to
-be rare but can still happen, e.g, due to an unexpected reset of the
-connection.  A specific reason for the failure is included in the log
-message.
-
-% ASIODNS_TCP_WRITE_FAIL failed to send DNS message over a TCP socket: %1
-A TCP DNS server tried to send a DNS message to a remote client but
-failed.  It's expected to be rare but can still happen.  See also
-ASIODNS_TCP_READLEN_FAIL.
-
-% ASIODNS_UDP_ASYNC_SEND_FAIL Error sending UDP packet to %1: %2
-The low-level ASIO library reported an error when trying to send a UDP
-packet in asynchronous UDP mode. This can be any error reported by
-send_to(), and can indicate problems such as too high a load on the network,
-or a problem in the underlying library or system.
-This packet is dropped and will not be sent, but service should resume
-normally.
-If you see a single occurrence of this message, it probably does not
-indicate any significant problem, but if it is logged often, it is probably
-a good idea to inspect your network traffic.
-
-% ASIODNS_UDP_CLOSE_FAIL failed to close a DNS/UDP socket: %1
-A UDP DNS server tried to close its UDP socket, but failed to do that.
-This is generally an unexpected event and so is logged as an error.
-
-% ASIODNS_UDP_RECEIVE_FAIL failed to receive UDP DNS packet: %1
-Receiving a UDP packet from a DNS client failed due to an error that
-could happen but should be very rare.  The server still keeps
-receiving UDP packets on this socket.  The reason for the error is
-included in the log message.  This log message is basically not
-expected to appear at all in practice; if it does, there may be some
-system level failure and other system logs may have to be checked.
-
-% ASIODNS_UDP_SYNC_RECEIVE_FAIL failed to receive UDP DNS packet: %1
-This is the same to ASIODNS_UDP_RECEIVE_FAIL but happens on the
-"synchronous UDP server", mainly used for the authoritative DNS server
-daemon.
-
-% ASIODNS_UDP_SYNC_SEND_FAIL Error sending UDP packet to %1: %2
-The low-level ASIO library reported an error when trying to send a UDP
-packet in synchronous UDP mode. See ASIODNS_UDP_ASYNC_SEND_FAIL for
-more information.
 
 % ASIODNS_UNKNOWN_ORIGIN unknown origin for ASIO error code %1 (protocol: %2, address %3)
 An internal consistency check on the origin of a message from the

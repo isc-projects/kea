@@ -15,11 +15,6 @@ kea-dhcp4 is using hook libraries (e.g. radius) that implement the
 "subnet6_select" callout and client queries are arriving faster than
 those callouts can fulfill them.
 
-% DHCP6_ACTIVATE_INTERFACE activating interface %1
-This message is printed when DHCPv6 server enabled an interface to be used
-to receive DHCPv6 traffic. IPv6 socket on this interface will be opened once
-Interface Manager starts up procedure of opening sockets.
-
 % DHCP6_ADD_GLOBAL_STATUS_CODE %1: adding Status Code to DHCPv6 packet: %2
 Logged at debug log level 50.
 This message is logged when the server is adding the top-level
@@ -173,15 +168,6 @@ issued). Finally, the server could be restarted completely.
 This error message is issued when the configuration includes an unsupported
 object (i.e. a top level element).
 
-% DHCP6_CONFIG_UPDATE updated configuration received: %1
-A debug message indicating that the IPv6 DHCP server has received an
-updated configuration from the Kea configuration system.
-
-% DHCP6_DB_BACKEND_STARTED lease database started (type: %1, name: %2)
-This informational message is printed every time the IPv6 DHCP server
-is started.  It indicates what database backend type is being to store
-lease and other information.
-
 % DHCP6_DB_RECONNECT_DISABLED database reconnect is disabled: max-reconnect-tries %1, reconnect-wait-time %2
 This is an informational message indicating that connectivity to either the
 lease or host database or both and that automatic reconnect is not enabled.
@@ -267,15 +253,6 @@ client and transaction identification information. The second argument
 includes the details of the FQDN option being included. Note that the
 name carried in the FQDN option may be modified by the server when
 the lease is acquired for the client.
-
-% DHCP6_DDNS_SEND_FQDN sending DHCPv6 Client FQDN Option to the client: %1
-This debug message is logged when server includes an DHCPv6 Client FQDN Option
-in its response to the client.
-
-% DHCP6_DEACTIVATE_INTERFACE deactivate interface %1
-This message is printed when DHCPv6 server disables an interface from being
-used to receive DHCPv6 traffic. Sockets on this interface will not be opened
-by the Interface Manager until interface is enabled.
 
 % DHCP6_DECLINE_FAIL %1: error on decline lease for address %2: %3
 This error message indicates that the software failed to decline a
@@ -380,10 +357,6 @@ This debug message is printed when host reservation type is set to flexible iden
 and the expression specified in its configuration generated (was evaluated to)
 an identifier for incoming packet. This debug message is mainly intended as a
 debugging assistance for flexible identifier.
-
-% DHCP6_HANDLE_SIGNAL_EXCEPTION An exception was thrown while handing signal: %1
-This error message is printed when an exception was raised during signal
-processing. This likely indicates a coding error and should be reported to ISC.
 
 % DHCP6_HOOK_BUFFER_RCVD_DROP received buffer from %1 to %2 over interface %3 was dropped because a callout set the drop flag
 Logged at debug log level 15.
@@ -618,11 +591,6 @@ IPv6 DHCP server but it is not running.
 During startup the IPv6 DHCP server failed to detect any network
 interfaces and is therefore shutting down.
 
-% DHCP6_NO_SOCKETS_OPEN no interface configured to listen to DHCP traffic
-This warning message is issued when current server configuration specifies
-no interfaces that server should listen on, or specified interfaces are not
-configured to receive the traffic.
-
 % DHCP6_OPEN_SOCKET opening service sockets on port %1
 Logged at debug log level 0.
 A debug message issued during startup, this indicates that the IPv6 DHCP
@@ -637,10 +605,6 @@ to shut down as specified in the configuration.
 This is an error message indicating a programmatic error that should not occur.
 It prohibits the server from attempting to bind to its service sockets if they
 are unavailable, and the server exits. This error should be reported.
-
-% DHCP6_OPEN_SOCKET_FAIL failed to open socket: %1
-A warning message issued when IfaceMgr fails to open and bind a socket. The reason
-for the failure is appended as an argument of the log message.
 
 % DHCP6_PACKET_DROP_DHCP_DISABLED %1: DHCP service is globally disabled
 Logged at debug log level 15.
@@ -1053,9 +1017,6 @@ This debug message indicates that a shutdown of the IPv6 server has
 been requested via a call to the 'shutdown' method of the core Dhcpv6Srv
 object.
 
-% DHCP6_SOCKET_UNICAST server is about to open socket on address %1 on interface %2
-This is a debug message that inform that a unicast socket will be opened.
-
 % DHCP6_SRV_CONSTRUCT_ERROR error creating Dhcpv6Srv object, reason: %1
 This error message indicates that during startup, the construction of a
 core component within the IPv6 DHCP server (the Dhcpv6 server object)
@@ -1074,12 +1035,6 @@ libraries failed to close them. If the list of libraries is empty it is
 a programmatic error in the server code. If it is not empty it could be
 a programmatic error in one of the hooks libraries which could lead to
 a crash during finalization.
-
-% DHCP6_STANDALONE skipping message queue, running standalone
-This is a debug message indicating that the IPv6 server is running in
-standalone mode, not connected to the message queue.  Standalone mode
-is only useful during program development, and should not be used in a
-production environment.
 
 % DHCP6_STARTED Kea DHCPv6 server version %1 started
 This informational message indicates that the IPv6 DHCP server has

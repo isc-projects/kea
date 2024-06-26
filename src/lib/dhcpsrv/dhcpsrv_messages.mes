@@ -29,12 +29,6 @@ interfaces.
 Logged at debug log level 40.
 A debug message issued when the server's DHCP-DDNS settings are changed.
 
-% DHCPSRV_CFGMGR_CLEAR_ACTIVE_IFACES stop listening on all interfaces
-A debug message issued when configuration manager clears the internal list
-of active interfaces. This doesn't prevent the server from listening to
-the DHCP traffic through open sockets, but will rather be used by Interface
-Manager to select active interfaces when sockets are re-opened.
-
 % DHCPSRV_CFGMGR_CONFIG4_MERGED Configuration backend data has been merged.
 This is an informational message emitted when the DHCPv4 server has
 successfully merged configuration data retrieved from its configuration
@@ -57,25 +51,6 @@ identifier. It is recommended to not modify the server identifier, unless
 there is a good reason for it, to avoid increased number of renewals and
 a need for rebinding (increase of multicast traffic, which may be received
 by multiple servers).
-
-% DHCPSRV_CFGMGR_DDNS_PARAMETER_IGNORED dhcp-ddns:%1 is deprecated, using existing global:%2
-This is an informational message issued during configuration parsing when
-the server detects that a deprecated parameter has been specified in the
-"dhcp-ddns" element which conflicts with its corresponding global parameter.
-When this occurs the server simply ignores the value from dhcp-ddns.
-The log message shows be the deprecated and the supported parameter names.
-Note the configuration change only affects the in-memory configuration.
-Modify the configuration to comply with the supported parameters.
-
-% DHCPSRV_CFGMGR_DDNS_PARAMETER_MOVED dhcp-ddns:%1 is deprecated, moving it to global:%2
-This is an informational message issued during configuration parsing when
-the server detects that a deprecated parameter has been specified in the
-"dhcp-ddns" element for which no corresponding global value exists. When
-this occurs, the server removes the parameter from dhcp-ddns and inserts the
-parameter into the global scope. The log message shows the deprecated
-and the supported parameter names. Note the configuration change only affects
-the in-memory configuration. Modify the configuration to comply with
-the supported parameters.
 
 % DHCPSRV_CFGMGR_DEL_SUBNET4 IPv4 subnet %1 removed
 Logged at debug log level 40.
@@ -148,26 +123,6 @@ been extended to include the specified IPv4 subnet.
 % DHCPSRV_CFGMGR_NEW_SUBNET6 a new subnet has been added to configuration: %1
 This is an informational message reporting that the configuration has
 been extended to include the specified subnet.
-
-% DHCPSRV_CFGMGR_NO_SUBNET4 no suitable subnet is defined for address hint %1
-This debug message is output when the DHCP configuration manager has received
-a request for an IPv4 subnet for the specified address, but no such
-subnet exists.
-
-% DHCPSRV_CFGMGR_NO_SUBNET6 no suitable subnet is defined for address hint %1
-This debug message is output when the DHCP configuration manager has received
-a request for an IPv6 subnet for the specified address, but no such
-subnet exists.
-
-% DHCPSRV_CFGMGR_ONLY_SUBNET4 retrieved subnet %1 for address hint %2
-This is a debug message reporting that the DHCP configuration manager has
-returned the specified IPv4 subnet when given the address hint specified
-because it is the only subnet defined.
-
-% DHCPSRV_CFGMGR_ONLY_SUBNET6 retrieved subnet %1 for address hint %2
-This is a debug message reporting that the DHCP configuration manager has
-returned the specified IPv6 subnet when given the address hint specified
-because it is the only subnet defined.
 
 % DHCPSRV_CFGMGR_OPTION_DUPLICATE multiple options with the code: %1 added to the subnet: %2
 This warning message is issued on an attempt to configure multiple options with the
@@ -401,12 +356,6 @@ the host database. The operation started a retry to connect procedure.
 The database access string with password redacted is logged, along with the
 error and details for the reconnect procedure.
 
-% DHCPSRV_INVALID_ACCESS invalid database access string: %1
-This is logged when an attempt has been made to parse a database access string
-and the attempt ended in error. The access string in question - which
-should be of the form 'keyword=value keyword=value...' is included in
-the message.
-
 % DHCPSRV_LEASE4_EXTENDED_INFO_SANITY_FAIL extended info for lease %1 failed checks (%2)
 This error message is printed when a lease extended info failed to
 pass sanity checks. The detail of the found problem was displayed and
@@ -490,10 +439,6 @@ Logged at debug log level 40.
 A debug message issued when the server is extracting extended info.
 The extended info sanity check level and update in file when requested
 are displayed.
-
-% DHCPSRV_MEMFILE_BEGIN_TRANSACTION committing to memory file database
-The code has issued a begin transaction call. For the memory file database
-this is a no-op.
 
 % DHCPSRV_MEMFILE_BUILD_EXTENDED_INFO_TABLES6 building extended info tables saw %1 leases, extended info sanity checks modified %2 leases and %3 leases were entered into tables
 Extended info tables build was finished. Some statistics are displayed, the
@@ -690,10 +635,6 @@ A debug message issued when the server is attempting to obtain a page of
 IPv6 leases from the memory file database beginning with the specified
 address for a given subnet identifier.
 
-% DHCPSRV_MEMFILE_GET_VERSION obtaining schema version information
-A debug message issued when the server is about to obtain schema version
-information from the memory file database.
-
 % DHCPSRV_MEMFILE_LEASE_FILE_LOAD loading leases from file %1
 An info message issued when the server is about to start reading DHCP leases
 from the lease file. All leases currently held in the memory will be
@@ -835,9 +776,6 @@ Logged at debug log level 50.
 A debug message issued when the server is about to add an IPv6 lease
 with the specified address to the MySQL backend database.
 
-% DHCPSRV_MYSQL_BEGIN_TRANSACTION committing to MySQL database
-The code has issued a begin transaction call.
-
 % DHCPSRV_MYSQL_COMMIT committing to MySQL database
 Logged at debug log level 50.
 The code has issued a commit call. All outstanding transactions will be
@@ -874,13 +812,6 @@ A debug message issued when the server is removing reclaimed DHCPv6
 leases which have expired longer than a specified period of time.
 The argument is the amount of time Kea waits after a reclaimed
 lease expires before considering its removal.
-
-% DHCPSRV_MYSQL_FATAL_ERROR Unrecoverable MySQL error occurred: %1 for <%2>, reason: %3 (error code: %4).
-An error message indicating that communication with the MySQL database server
-has been lost. If automatic recovery has been enabled, then the server will
-attempt to recover the connectivity. If not the server will exit with a
-non-zero exit code. The cause of such an error is most likely a network issue
-or the MySQL server has gone down.
 
 % DHCPSRV_MYSQL_GET4 obtaining all IPv4 leases
 Logged at debug log level 50.
@@ -1077,15 +1008,6 @@ Logged at debug log level 50.
 The code has issued a rollback call. All outstanding transaction will
 be rolled back and not committed to the database.
 
-% DHCPSRV_MYSQL_START_TRANSACTION starting new MySQL transaction
-A debug message issued when a new MySQL transaction is being started.
-This message is typically not issued when inserting data into a
-single table because the server doesn't explicitly start
-transactions in this case. This message is issued when data is
-inserted into multiple tables with multiple INSERT statements
-and there may be a need to rollback the whole transaction if
-any of these INSERT statements fail.
-
 % DHCPSRV_MYSQL_TLS_CIPHER TLS cipher: %1
 Logged at debug log level 40.
 A debug message issued when a new MySQL connected is created with TLS.
@@ -1158,9 +1080,6 @@ Logged at debug log level 50.
 A debug message issued when the server is about to add an IPv6 lease
 with the specified address to the PostgreSQL backend database.
 
-% DHCPSRV_PGSQL_BEGIN_TRANSACTION committing to PostgreSQL database
-The code has issued a begin transaction call.
-
 % DHCPSRV_PGSQL_COMMIT committing to PostgreSQL database
 Logged at debug log level 50.
 The code has issued a commit call. All outstanding transactions will be
@@ -1172,13 +1091,6 @@ This informational message is logged when a DHCP server (either V4 or
 V6) is about to open a PostgreSQL lease database. The parameters of the
 connection including database name and username needed to access it
 (but not the password if any) are logged.
-
-% DHCPSRV_PGSQL_DEALLOC_ERROR An error occurred deallocating SQL statements while closing the PostgreSQL lease database: %1
-This is an error message issued when a DHCP server (either V4 or V6) experienced
-and error freeing database SQL resources as part of closing its connection to
-the PostgreSQL database. The connection is closed as part of normal server
-shutdown. This error is most likely a programmatic issue that is highly
-unlikely to occur or negatively impact server operation.
 
 % DHCPSRV_PGSQL_DELETE_ADDR deleting lease for address %1
 Logged at debug log level 50.
@@ -1198,13 +1110,6 @@ A debug message issued when the server is removing reclaimed DHCPv6
 leases which have expired longer than a specified period of time.
 The argument is the amount of time Kea waits after a reclaimed
 lease expires before considering its removal.
-
-% DHCPSRV_PGSQL_FATAL_ERROR Unrecoverable PostgreSQL error occurred: Statement: <%1>, reason: %2 (error code: %3).
-An error message indicating that communication with the PostgreSQL database server
-has been lost. If automatic recovery has been enabled, then the server will
-attempt to recover the connectivity. If not the server will exit with a
-non-zero exit code. The cause of such an error is most likely a network issue
-or the PostgreSQL server has gone down.
 
 % DHCPSRV_PGSQL_GET4 obtaining all IPv4 leases
 Logged at debug log level 50.
@@ -1402,15 +1307,6 @@ Logged at debug log level 50.
 The code has issued a rollback call. All outstanding transaction will
 be rolled back and not committed to the database.
 
-% DHCPSRV_PGSQL_START_TRANSACTION starting a new PostgreSQL transaction
-A debug message issued when a new PostgreSQL transaction is being started.
-This message is typically not issued when inserting data into a
-single table because the server doesn't explicitly start
-transactions in this case. This message is issued when data is
-inserted into multiple tables with multiple INSERT statements
-and there may be a need to rollback the whole transaction if
-any of these INSERT statements fail.
-
 % DHCPSRV_PGSQL_TLS_SUPPORT Attempt to configure TLS: %1
 This informational message is printed when TLS support was required in
 the Kea configuration: The TLS support in PostgreSQL will be initialized but
@@ -1577,13 +1473,6 @@ Logged at debug log level 40.
 A debug message issued when one of the registered interval timers
 is unregistered from the Timer Manager. The name of the timer is
 included in the message.
-
-% DHCPSRV_UNEXPECTED_NAME database access parameters passed through '%1', expected 'lease-database'
-The parameters for access the lease database were passed to the server through
-the named configuration parameter, but the code was expecting them to be
-passed via the parameter named "lease-database". If the database opens
-successfully, there is no impact on server operation. However, as this does
-indicate an error in the source code, please submit a bug report.
 
 % DHCPSRV_UNKNOWN_DB unknown database type: %1
 The database access string specified a database type (given in the
