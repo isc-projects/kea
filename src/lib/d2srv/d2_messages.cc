@@ -9,10 +9,8 @@ namespace d2 {
 
 extern const isc::log::MessageID DHCP_DDNS_ADD_FAILED = "DHCP_DDNS_ADD_FAILED";
 extern const isc::log::MessageID DHCP_DDNS_ADD_SUCCEEDED = "DHCP_DDNS_ADD_SUCCEEDED";
-extern const isc::log::MessageID DHCP_DDNS_ALREADY_RUNNING = "DHCP_DDNS_ALREADY_RUNNING";
 extern const isc::log::MessageID DHCP_DDNS_AT_MAX_TRANSACTIONS = "DHCP_DDNS_AT_MAX_TRANSACTIONS";
 extern const isc::log::MessageID DHCP_DDNS_CLEARED_FOR_SHUTDOWN = "DHCP_DDNS_CLEARED_FOR_SHUTDOWN";
-extern const isc::log::MessageID DHCP_DDNS_COMMAND = "DHCP_DDNS_COMMAND";
 extern const isc::log::MessageID DHCP_DDNS_CONFIGURE = "DHCP_DDNS_CONFIGURE";
 extern const isc::log::MessageID DHCP_DDNS_CONFIGURED_CALLOUT_DROP = "DHCP_DDNS_CONFIGURED_CALLOUT_DROP";
 extern const isc::log::MessageID DHCP_DDNS_CONFIG_CHECK_FAIL = "DHCP_DDNS_CONFIG_CHECK_FAIL";
@@ -51,7 +49,6 @@ extern const isc::log::MessageID DHCP_DDNS_NO_ELIGIBLE_JOBS = "DHCP_DDNS_NO_ELIG
 extern const isc::log::MessageID DHCP_DDNS_NO_FWD_MATCH_ERROR = "DHCP_DDNS_NO_FWD_MATCH_ERROR";
 extern const isc::log::MessageID DHCP_DDNS_NO_MATCH = "DHCP_DDNS_NO_MATCH";
 extern const isc::log::MessageID DHCP_DDNS_NO_REV_MATCH_ERROR = "DHCP_DDNS_NO_REV_MATCH_ERROR";
-extern const isc::log::MessageID DHCP_DDNS_PROCESS_INIT = "DHCP_DDNS_PROCESS_INIT";
 extern const isc::log::MessageID DHCP_DDNS_QUEUE_MGR_QUEUE_FULL = "DHCP_DDNS_QUEUE_MGR_QUEUE_FULL";
 extern const isc::log::MessageID DHCP_DDNS_QUEUE_MGR_QUEUE_RECEIVE = "DHCP_DDNS_QUEUE_MGR_QUEUE_RECEIVE";
 extern const isc::log::MessageID DHCP_DDNS_QUEUE_MGR_RECONFIGURING = "DHCP_DDNS_QUEUE_MGR_RECONFIGURING";
@@ -99,10 +96,8 @@ namespace {
 const char* values[] = {
     "DHCP_DDNS_ADD_FAILED", "DHCP_DDNS Request ID %1: Transaction outcome %2",
     "DHCP_DDNS_ADD_SUCCEEDED", "DHCP_DDNS Request ID %1: successfully added the DNS mapping addition for this request: %2",
-    "DHCP_DDNS_ALREADY_RUNNING", "%1 already running? %2",
     "DHCP_DDNS_AT_MAX_TRANSACTIONS", "application has %1 queued requests but has reached maximum number of %2 concurrent transactions",
     "DHCP_DDNS_CLEARED_FOR_SHUTDOWN", "application has met shutdown criteria for shutdown type: %1",
-    "DHCP_DDNS_COMMAND", "command directive received, command: %1 - args: %2",
     "DHCP_DDNS_CONFIGURE", "configuration %1 received: %2",
     "DHCP_DDNS_CONFIGURED_CALLOUT_DROP", "configuration was rejected because a callout set the next step to 'drop': %1",
     "DHCP_DDNS_CONFIG_CHECK_FAIL", "DHCP-DDNS server configuration check failed: %1",
@@ -141,7 +136,6 @@ const char* values[] = {
     "DHCP_DDNS_NO_FWD_MATCH_ERROR", "Request ID %1: the configured list of forward DDNS domains does not contain a match for: %2  The request has been discarded.",
     "DHCP_DDNS_NO_MATCH", "No DNS servers match FQDN %1",
     "DHCP_DDNS_NO_REV_MATCH_ERROR", "Request ID %1: the configured list of reverse DDNS domains does not contain a match for: %2  The request has been discarded.",
-    "DHCP_DDNS_PROCESS_INIT", "application init invoked",
     "DHCP_DDNS_QUEUE_MGR_QUEUE_FULL", "application request queue has reached maximum number of entries %1",
     "DHCP_DDNS_QUEUE_MGR_QUEUE_RECEIVE", "Request ID %1: received and queued a request.",
     "DHCP_DDNS_QUEUE_MGR_RECONFIGURING", "application is reconfiguring the queue manager",

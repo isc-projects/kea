@@ -10,10 +10,8 @@ namespace d2 {
 
 extern const isc::log::MessageID DHCP_DDNS_ADD_FAILED;
 extern const isc::log::MessageID DHCP_DDNS_ADD_SUCCEEDED;
-extern const isc::log::MessageID DHCP_DDNS_ALREADY_RUNNING;
 extern const isc::log::MessageID DHCP_DDNS_AT_MAX_TRANSACTIONS;
 extern const isc::log::MessageID DHCP_DDNS_CLEARED_FOR_SHUTDOWN;
-extern const isc::log::MessageID DHCP_DDNS_COMMAND;
 extern const isc::log::MessageID DHCP_DDNS_CONFIGURE;
 extern const isc::log::MessageID DHCP_DDNS_CONFIGURED_CALLOUT_DROP;
 extern const isc::log::MessageID DHCP_DDNS_CONFIG_CHECK_FAIL;
@@ -52,7 +50,6 @@ extern const isc::log::MessageID DHCP_DDNS_NO_ELIGIBLE_JOBS;
 extern const isc::log::MessageID DHCP_DDNS_NO_FWD_MATCH_ERROR;
 extern const isc::log::MessageID DHCP_DDNS_NO_MATCH;
 extern const isc::log::MessageID DHCP_DDNS_NO_REV_MATCH_ERROR;
-extern const isc::log::MessageID DHCP_DDNS_PROCESS_INIT;
 extern const isc::log::MessageID DHCP_DDNS_QUEUE_MGR_QUEUE_FULL;
 extern const isc::log::MessageID DHCP_DDNS_QUEUE_MGR_QUEUE_RECEIVE;
 extern const isc::log::MessageID DHCP_DDNS_QUEUE_MGR_RECONFIGURING;

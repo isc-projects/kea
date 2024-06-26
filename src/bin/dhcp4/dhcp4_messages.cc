@@ -7,7 +7,6 @@
 namespace isc {
 namespace dhcp {
 
-extern const isc::log::MessageID DHCP4_ACTIVATE_INTERFACE = "DHCP4_ACTIVATE_INTERFACE";
 extern const isc::log::MessageID DHCP4_ALREADY_RUNNING = "DHCP4_ALREADY_RUNNING";
 extern const isc::log::MessageID DHCP4_BUFFER_RECEIVED = "DHCP4_BUFFER_RECEIVED";
 extern const isc::log::MessageID DHCP4_BUFFER_RECEIVE_FAIL = "DHCP4_BUFFER_RECEIVE_FAIL";
@@ -30,24 +29,19 @@ extern const isc::log::MessageID DHCP4_CLIENT_HOSTNAME_MALFORMED = "DHCP4_CLIENT
 extern const isc::log::MessageID DHCP4_CLIENT_HOSTNAME_PROCESS = "DHCP4_CLIENT_HOSTNAME_PROCESS";
 extern const isc::log::MessageID DHCP4_CLIENT_NAME_PROC_FAIL = "DHCP4_CLIENT_NAME_PROC_FAIL";
 extern const isc::log::MessageID DHCP4_CONFIG_COMPLETE = "DHCP4_CONFIG_COMPLETE";
-extern const isc::log::MessageID DHCP4_CONFIG_FETCH = "DHCP4_CONFIG_FETCH";
 extern const isc::log::MessageID DHCP4_CONFIG_LOAD_FAIL = "DHCP4_CONFIG_LOAD_FAIL";
-extern const isc::log::MessageID DHCP4_CONFIG_NEW_SUBNET = "DHCP4_CONFIG_NEW_SUBNET";
-extern const isc::log::MessageID DHCP4_CONFIG_OPTION_DUPLICATE = "DHCP4_CONFIG_OPTION_DUPLICATE";
 extern const isc::log::MessageID DHCP4_CONFIG_PACKET_QUEUE = "DHCP4_CONFIG_PACKET_QUEUE";
 extern const isc::log::MessageID DHCP4_CONFIG_RECEIVED = "DHCP4_CONFIG_RECEIVED";
 extern const isc::log::MessageID DHCP4_CONFIG_START = "DHCP4_CONFIG_START";
 extern const isc::log::MessageID DHCP4_CONFIG_SYNTAX_WARNING = "DHCP4_CONFIG_SYNTAX_WARNING";
 extern const isc::log::MessageID DHCP4_CONFIG_UNRECOVERABLE_ERROR = "DHCP4_CONFIG_UNRECOVERABLE_ERROR";
 extern const isc::log::MessageID DHCP4_CONFIG_UNSUPPORTED_OBJECT = "DHCP4_CONFIG_UNSUPPORTED_OBJECT";
-extern const isc::log::MessageID DHCP4_CONFIG_UPDATE = "DHCP4_CONFIG_UPDATE";
 extern const isc::log::MessageID DHCP4_DB_RECONNECT_DISABLED = "DHCP4_DB_RECONNECT_DISABLED";
 extern const isc::log::MessageID DHCP4_DB_RECONNECT_FAILED = "DHCP4_DB_RECONNECT_FAILED";
 extern const isc::log::MessageID DHCP4_DB_RECONNECT_LOST_CONNECTION = "DHCP4_DB_RECONNECT_LOST_CONNECTION";
 extern const isc::log::MessageID DHCP4_DB_RECONNECT_NO_DB_CTL = "DHCP4_DB_RECONNECT_NO_DB_CTL";
 extern const isc::log::MessageID DHCP4_DB_RECONNECT_SUCCEEDED = "DHCP4_DB_RECONNECT_SUCCEEDED";
 extern const isc::log::MessageID DHCP4_DDNS_REQUEST_SEND_FAILED = "DHCP4_DDNS_REQUEST_SEND_FAILED";
-extern const isc::log::MessageID DHCP4_DEACTIVATE_INTERFACE = "DHCP4_DEACTIVATE_INTERFACE";
 extern const isc::log::MessageID DHCP4_DECLINE_FAIL = "DHCP4_DECLINE_FAIL";
 extern const isc::log::MessageID DHCP4_DECLINE_LEASE = "DHCP4_DECLINE_LEASE";
 extern const isc::log::MessageID DHCP4_DECLINE_LEASE_MISMATCH = "DHCP4_DECLINE_LEASE_MISMATCH";
@@ -74,7 +68,6 @@ extern const isc::log::MessageID DHCP4_DYNAMIC_RECONFIGURATION_SUCCESS = "DHCP4_
 extern const isc::log::MessageID DHCP4_EMPTY_HOSTNAME = "DHCP4_EMPTY_HOSTNAME";
 extern const isc::log::MessageID DHCP4_FLEX_ID = "DHCP4_FLEX_ID";
 extern const isc::log::MessageID DHCP4_GENERATE_FQDN = "DHCP4_GENERATE_FQDN";
-extern const isc::log::MessageID DHCP4_HANDLE_SIGNAL_EXCEPTION = "DHCP4_HANDLE_SIGNAL_EXCEPTION";
 extern const isc::log::MessageID DHCP4_HOOK_BUFFER_RCVD_DROP = "DHCP4_HOOK_BUFFER_RCVD_DROP";
 extern const isc::log::MessageID DHCP4_HOOK_BUFFER_RCVD_SKIP = "DHCP4_HOOK_BUFFER_RCVD_SKIP";
 extern const isc::log::MessageID DHCP4_HOOK_BUFFER_SEND_SKIP = "DHCP4_HOOK_BUFFER_SEND_SKIP";
@@ -106,12 +99,9 @@ extern const isc::log::MessageID DHCP4_MULTI_THREADING_INFO = "DHCP4_MULTI_THREA
 extern const isc::log::MessageID DHCP4_NCR_CREATION_FAILED = "DHCP4_NCR_CREATION_FAILED";
 extern const isc::log::MessageID DHCP4_NOT_RUNNING = "DHCP4_NOT_RUNNING";
 extern const isc::log::MessageID DHCP4_NO_LEASE_INIT_REBOOT = "DHCP4_NO_LEASE_INIT_REBOOT";
-extern const isc::log::MessageID DHCP4_NO_SOCKETS_OPEN = "DHCP4_NO_SOCKETS_OPEN";
-extern const isc::log::MessageID DHCP4_OPEN_CONFIG_DB = "DHCP4_OPEN_CONFIG_DB";
 extern const isc::log::MessageID DHCP4_OPEN_SOCKET = "DHCP4_OPEN_SOCKET";
 extern const isc::log::MessageID DHCP4_OPEN_SOCKETS_FAILED = "DHCP4_OPEN_SOCKETS_FAILED";
 extern const isc::log::MessageID DHCP4_OPEN_SOCKETS_NO_RECONNECT_CTL = "DHCP4_OPEN_SOCKETS_NO_RECONNECT_CTL";
-extern const isc::log::MessageID DHCP4_OPEN_SOCKET_FAIL = "DHCP4_OPEN_SOCKET_FAIL";
 extern const isc::log::MessageID DHCP4_PACKET_DROP_0001 = "DHCP4_PACKET_DROP_0001";
 extern const isc::log::MessageID DHCP4_PACKET_DROP_0002 = "DHCP4_PACKET_DROP_0002";
 extern const isc::log::MessageID DHCP4_PACKET_DROP_0003 = "DHCP4_PACKET_DROP_0003";
@@ -131,7 +121,6 @@ extern const isc::log::MessageID DHCP4_PACKET_NAK_0002 = "DHCP4_PACKET_NAK_0002"
 extern const isc::log::MessageID DHCP4_PACKET_NAK_0003 = "DHCP4_PACKET_NAK_0003";
 extern const isc::log::MessageID DHCP4_PACKET_NAK_0004 = "DHCP4_PACKET_NAK_0004";
 extern const isc::log::MessageID DHCP4_PACKET_OPTIONS_SKIPPED = "DHCP4_PACKET_OPTIONS_SKIPPED";
-extern const isc::log::MessageID DHCP4_PACKET_OPTION_UNPACK_FAIL = "DHCP4_PACKET_OPTION_UNPACK_FAIL";
 extern const isc::log::MessageID DHCP4_PACKET_PACK = "DHCP4_PACKET_PACK";
 extern const isc::log::MessageID DHCP4_PACKET_PACK_FAIL = "DHCP4_PACKET_PACK_FAIL";
 extern const isc::log::MessageID DHCP4_PACKET_PROCESS_EXCEPTION = "DHCP4_PACKET_PROCESS_EXCEPTION";
@@ -168,7 +157,6 @@ extern const isc::log::MessageID DHCP4_RESPONSE_HOSTNAME_GENERATE = "DHCP4_RESPO
 extern const isc::log::MessageID DHCP4_SERVER_FAILED = "DHCP4_SERVER_FAILED";
 extern const isc::log::MessageID DHCP4_SERVER_INITIATED_DECLINE = "DHCP4_SERVER_INITIATED_DECLINE";
 extern const isc::log::MessageID DHCP4_SERVER_INITIATED_DECLINE_ADD_FAILED = "DHCP4_SERVER_INITIATED_DECLINE_ADD_FAILED";
-extern const isc::log::MessageID DHCP4_SERVER_INITIATED_DECLINE_FAILED = "DHCP4_SERVER_INITIATED_DECLINE_FAILED";
 extern const isc::log::MessageID DHCP4_SERVER_INITIATED_DECLINE_RESOURCE_BUSY = "DHCP4_SERVER_INITIATED_DECLINE_RESOURCE_BUSY";
 extern const isc::log::MessageID DHCP4_SERVER_INITIATED_DECLINE_UPDATE_FAILED = "DHCP4_SERVER_INITIATED_DECLINE_UPDATE_FAILED";
 extern const isc::log::MessageID DHCP4_SHUTDOWN = "DHCP4_SHUTDOWN";
@@ -193,7 +181,6 @@ extern const isc::log::MessageID DHCP4_UNKNOWN_ADDRESS_REQUESTED = "DHCP4_UNKNOW
 namespace {
 
 const char* values[] = {
-    "DHCP4_ACTIVATE_INTERFACE", "activating interface %1",
     "DHCP4_ALREADY_RUNNING", "%1 already running? %2",
     "DHCP4_BUFFER_RECEIVED", "received buffer from %1:%2 to %3:%4 over interface %5",
     "DHCP4_BUFFER_RECEIVE_FAIL", "error on attempt to receive packet: %1",
@@ -216,24 +203,19 @@ const char* values[] = {
     "DHCP4_CLIENT_HOSTNAME_PROCESS", "%1: processing client's Hostname option",
     "DHCP4_CLIENT_NAME_PROC_FAIL", "%1: failed to process the fqdn or hostname sent by a client: %2",
     "DHCP4_CONFIG_COMPLETE", "DHCPv4 server has completed configuration: %1",
-    "DHCP4_CONFIG_FETCH", "Fetching configuration data from config backends.",
     "DHCP4_CONFIG_LOAD_FAIL", "configuration error using file: %1, reason: %2",
-    "DHCP4_CONFIG_NEW_SUBNET", "a new subnet has been added to configuration: %1",
-    "DHCP4_CONFIG_OPTION_DUPLICATE", "multiple options with the code %1 added to the subnet %2",
     "DHCP4_CONFIG_PACKET_QUEUE", "DHCPv4 packet queue info after configuration: %1",
     "DHCP4_CONFIG_RECEIVED", "received configuration %1",
     "DHCP4_CONFIG_START", "DHCPv4 server is processing the following configuration: %1",
     "DHCP4_CONFIG_SYNTAX_WARNING", "configuration syntax warning: %1",
     "DHCP4_CONFIG_UNRECOVERABLE_ERROR", "DHCPv4 server new configuration failed with an error which cannot be recovered",
     "DHCP4_CONFIG_UNSUPPORTED_OBJECT", "DHCPv4 server configuration includes an unsupported object: %1",
-    "DHCP4_CONFIG_UPDATE", "updated configuration received: %1",
     "DHCP4_DB_RECONNECT_DISABLED", "database reconnect is disabled: max-reconnect-tries %1, reconnect-wait-time %2",
     "DHCP4_DB_RECONNECT_FAILED", "maximum number of database reconnect attempts: %1, has been exhausted without success",
     "DHCP4_DB_RECONNECT_LOST_CONNECTION", "database connection lost.",
     "DHCP4_DB_RECONNECT_NO_DB_CTL", "unexpected error in database reconnect",
     "DHCP4_DB_RECONNECT_SUCCEEDED", "database connection recovered.",
     "DHCP4_DDNS_REQUEST_SEND_FAILED", "failed sending a request to kea-dhcp-ddns, error: %1,  ncr: %2",
-    "DHCP4_DEACTIVATE_INTERFACE", "deactivate interface %1",
     "DHCP4_DECLINE_FAIL", "%1: error on decline lease for address %2: %3",
     "DHCP4_DECLINE_LEASE", "Received DHCPDECLINE for addr %1 from client %2. The lease will be unavailable for %3 seconds.",
     "DHCP4_DECLINE_LEASE_MISMATCH", "Received DHCPDECLINE for addr %1 from client %2, but the data doesn't match: received hwaddr: %3, lease hwaddr: %4, received client-id: %5, lease client-id: %6",
@@ -260,7 +242,6 @@ const char* values[] = {
     "DHCP4_EMPTY_HOSTNAME", "%1: received empty hostname from the client, skipping processing of this option",
     "DHCP4_FLEX_ID", "%1: flexible identifier generated for incoming packet: %2",
     "DHCP4_GENERATE_FQDN", "%1: client did not send a FQDN or hostname; FQDN will be generated for the client",
-    "DHCP4_HANDLE_SIGNAL_EXCEPTION", "An exception was thrown while handing signal: %1",
     "DHCP4_HOOK_BUFFER_RCVD_DROP", "received buffer from %1 to %2 over interface %3 was dropped because a callout set the drop flag",
     "DHCP4_HOOK_BUFFER_RCVD_SKIP", "received buffer from %1 to %2 over interface %3 is not parsed because a callout set the next step to SKIP.",
     "DHCP4_HOOK_BUFFER_SEND_SKIP", "%1: prepared response is dropped because a callout set the next step to SKIP.",
@@ -292,12 +273,9 @@ const char* values[] = {
     "DHCP4_NCR_CREATION_FAILED", "%1: failed to generate name change requests for DNS: %2",
     "DHCP4_NOT_RUNNING", "DHCPv4 server is not running",
     "DHCP4_NO_LEASE_INIT_REBOOT", "%1: no lease for address %2 requested by INIT-REBOOT client",
-    "DHCP4_NO_SOCKETS_OPEN", "no interface configured to listen to DHCP traffic",
-    "DHCP4_OPEN_CONFIG_DB", "Opening configuration database: %1",
     "DHCP4_OPEN_SOCKET", "opening service sockets on port %1",
     "DHCP4_OPEN_SOCKETS_FAILED", "maximum number of open service sockets attempts: %1, has been exhausted without success",
     "DHCP4_OPEN_SOCKETS_NO_RECONNECT_CTL", "unexpected error in bind service sockets.",
-    "DHCP4_OPEN_SOCKET_FAIL", "failed to open socket: %1",
     "DHCP4_PACKET_DROP_0001", "%1: failed to parse packet from %2 to %3, received over interface %4, reason: %5, %6",
     "DHCP4_PACKET_DROP_0002", "%1, from interface %2: no suitable subnet configured for a direct client",
     "DHCP4_PACKET_DROP_0003", "%1, from interface %2: it contains a foreign server identifier",
@@ -317,7 +295,6 @@ const char* values[] = {
     "DHCP4_PACKET_NAK_0003", "%1: failed to advertise a lease, client sent ciaddr %2, requested-ip-address %3",
     "DHCP4_PACKET_NAK_0004", "%1: failed to grant a lease, client sent ciaddr %2, requested-ip-address %3",
     "DHCP4_PACKET_OPTIONS_SKIPPED", "%1: An error unpacking an option, caused subsequent options to be skipped: %2",
-    "DHCP4_PACKET_OPTION_UNPACK_FAIL", "An error unpacking the option %1: %2",
     "DHCP4_PACKET_PACK", "%1: preparing on-wire format of the packet to be sent",
     "DHCP4_PACKET_PACK_FAIL", "%1: preparing on-wire-format of the packet to be sent failed %2",
     "DHCP4_PACKET_PROCESS_EXCEPTION", "%1: exception occurred during packet processing",
@@ -354,7 +331,6 @@ const char* values[] = {
     "DHCP4_SERVER_FAILED", "server failed: %1",
     "DHCP4_SERVER_INITIATED_DECLINE", "%1: Lease for addr %2 has been found to be already in use. The lease will be unavailable for %3 seconds.",
     "DHCP4_SERVER_INITIATED_DECLINE_ADD_FAILED", "%1: error adding a lease for address %2",
-    "DHCP4_SERVER_INITIATED_DECLINE_FAILED", "%1: error on server-initiated decline lease for address %2: %3",
     "DHCP4_SERVER_INITIATED_DECLINE_RESOURCE_BUSY", "%1: error declining a lease for address %2",
     "DHCP4_SERVER_INITIATED_DECLINE_UPDATE_FAILED", "%1: error updating lease for address %2",
     "DHCP4_SHUTDOWN", "server shutdown",

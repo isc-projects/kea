@@ -10,7 +10,6 @@ namespace dhcp {
 extern const isc::log::MessageID ALLOC_ENGINE_IGNORING_UNSUITABLE_GLOBAL_ADDRESS = "ALLOC_ENGINE_IGNORING_UNSUITABLE_GLOBAL_ADDRESS";
 extern const isc::log::MessageID ALLOC_ENGINE_IGNORING_UNSUITABLE_GLOBAL_ADDRESS6 = "ALLOC_ENGINE_IGNORING_UNSUITABLE_GLOBAL_ADDRESS6";
 extern const isc::log::MessageID ALLOC_ENGINE_LEASE_RECLAIMED = "ALLOC_ENGINE_LEASE_RECLAIMED";
-extern const isc::log::MessageID ALLOC_ENGINE_REMOVAL_NCR_FAILED = "ALLOC_ENGINE_REMOVAL_NCR_FAILED";
 extern const isc::log::MessageID ALLOC_ENGINE_V4_ALLOC_ERROR = "ALLOC_ENGINE_V4_ALLOC_ERROR";
 extern const isc::log::MessageID ALLOC_ENGINE_V4_ALLOC_FAIL = "ALLOC_ENGINE_V4_ALLOC_FAIL";
 extern const isc::log::MessageID ALLOC_ENGINE_V4_ALLOC_FAIL_CLASSES = "ALLOC_ENGINE_V4_ALLOC_FAIL_CLASSES";
@@ -80,7 +79,6 @@ extern const isc::log::MessageID ALLOC_ENGINE_V6_RECLAIMED_LEASES_DELETE_COMPLET
 extern const isc::log::MessageID ALLOC_ENGINE_V6_RECLAIMED_LEASES_DELETE_FAILED = "ALLOC_ENGINE_V6_RECLAIMED_LEASES_DELETE_FAILED";
 extern const isc::log::MessageID ALLOC_ENGINE_V6_RENEW_HR = "ALLOC_ENGINE_V6_RENEW_HR";
 extern const isc::log::MessageID ALLOC_ENGINE_V6_RENEW_REMOVE_RESERVED = "ALLOC_ENGINE_V6_RENEW_REMOVE_RESERVED";
-extern const isc::log::MessageID ALLOC_ENGINE_V6_RENEW_REMOVE_UNRESERVED = "ALLOC_ENGINE_V6_RENEW_REMOVE_UNRESERVED";
 extern const isc::log::MessageID ALLOC_ENGINE_V6_REUSE_EXPIRED_LEASE_DATA = "ALLOC_ENGINE_V6_REUSE_EXPIRED_LEASE_DATA";
 extern const isc::log::MessageID ALLOC_ENGINE_V6_REVOKED_ADDR_LEASE = "ALLOC_ENGINE_V6_REVOKED_ADDR_LEASE";
 extern const isc::log::MessageID ALLOC_ENGINE_V6_REVOKED_PREFIX_LEASE = "ALLOC_ENGINE_V6_REVOKED_PREFIX_LEASE";
@@ -96,7 +94,6 @@ const char* values[] = {
     "ALLOC_ENGINE_IGNORING_UNSUITABLE_GLOBAL_ADDRESS", "%1: ignoring globally reserved address %2, it falls outside %3",
     "ALLOC_ENGINE_IGNORING_UNSUITABLE_GLOBAL_ADDRESS6", "%1: ignoring globally reserved address %2, it falls outside %3",
     "ALLOC_ENGINE_LEASE_RECLAIMED", "successfully reclaimed lease %1",
-    "ALLOC_ENGINE_REMOVAL_NCR_FAILED", "sending removal name change request failed for lease %1: %2",
     "ALLOC_ENGINE_V4_ALLOC_ERROR", "%1: error during attempt to allocate an IPv4 address: %2",
     "ALLOC_ENGINE_V4_ALLOC_FAIL", "%1: failed to allocate an IPv4 address after %2 attempt(s)",
     "ALLOC_ENGINE_V4_ALLOC_FAIL_CLASSES", "%1: Failed to allocate an IPv4 address for client with classes: %2",
@@ -166,7 +163,6 @@ const char* values[] = {
     "ALLOC_ENGINE_V6_RECLAIMED_LEASES_DELETE_FAILED", "deletion of expired-reclaimed leases failed: %1",
     "ALLOC_ENGINE_V6_RENEW_HR", "allocating leases reserved for the client %1 as a result of Renew",
     "ALLOC_ENGINE_V6_RENEW_REMOVE_RESERVED", "%1: checking if existing client's leases are reserved for another client",
-    "ALLOC_ENGINE_V6_RENEW_REMOVE_UNRESERVED", "dynamically allocating leases for the renewing client %1",
     "ALLOC_ENGINE_V6_REUSE_EXPIRED_LEASE_DATA", "%1: reusing expired lease, updated lease information: %2",
     "ALLOC_ENGINE_V6_REVOKED_ADDR_LEASE", "%1: address %2 was revoked from client %3 as it is reserved for client %4",
     "ALLOC_ENGINE_V6_REVOKED_PREFIX_LEASE", "%1: prefix %2/%3 was revoked from client %4 as it is reserved for client %5",

@@ -11,7 +11,6 @@ namespace dhcp {
 extern const isc::log::MessageID ALLOC_ENGINE_IGNORING_UNSUITABLE_GLOBAL_ADDRESS;
 extern const isc::log::MessageID ALLOC_ENGINE_IGNORING_UNSUITABLE_GLOBAL_ADDRESS6;
 extern const isc::log::MessageID ALLOC_ENGINE_LEASE_RECLAIMED;
-extern const isc::log::MessageID ALLOC_ENGINE_REMOVAL_NCR_FAILED;
 extern const isc::log::MessageID ALLOC_ENGINE_V4_ALLOC_ERROR;
 extern const isc::log::MessageID ALLOC_ENGINE_V4_ALLOC_FAIL;
 extern const isc::log::MessageID ALLOC_ENGINE_V4_ALLOC_FAIL_CLASSES;
@@ -81,7 +80,6 @@ extern const isc::log::MessageID ALLOC_ENGINE_V6_RECLAIMED_LEASES_DELETE_COMPLET
 extern const isc::log::MessageID ALLOC_ENGINE_V6_RECLAIMED_LEASES_DELETE_FAILED;
 extern const isc::log::MessageID ALLOC_ENGINE_V6_RENEW_HR;
 extern const isc::log::MessageID ALLOC_ENGINE_V6_RENEW_REMOVE_RESERVED;
-extern const isc::log::MessageID ALLOC_ENGINE_V6_RENEW_REMOVE_UNRESERVED;
 extern const isc::log::MessageID ALLOC_ENGINE_V6_REUSE_EXPIRED_LEASE_DATA;
 extern const isc::log::MessageID ALLOC_ENGINE_V6_REVOKED_ADDR_LEASE;
 extern const isc::log::MessageID ALLOC_ENGINE_V6_REVOKED_PREFIX_LEASE;

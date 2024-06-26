@@ -11,7 +11,6 @@ extern const isc::log::MessageID PERFMON_CMDS_CONTROL_ERROR;
 extern const isc::log::MessageID PERFMON_CMDS_CONTROL_OK;
 extern const isc::log::MessageID PERFMON_CMDS_GET_ALL_DURATIONS_ERROR;
 extern const isc::log::MessageID PERFMON_CMDS_GET_ALL_DURATIONS_OK;
-extern const isc::log::MessageID PERFMON_DEINIT_FAILED;
 extern const isc::log::MessageID PERFMON_DEINIT_OK;
 extern const isc::log::MessageID PERFMON_DHCP4_PKT_EVENTS;
 extern const isc::log::MessageID PERFMON_DHCP4_PKT_PROCESS_ERROR;

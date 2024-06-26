@@ -8,19 +8,14 @@ namespace isc {
 namespace process {
 
 extern const isc::log::MessageID DCTL_ALREADY_RUNNING = "DCTL_ALREADY_RUNNING";
-extern const isc::log::MessageID DCTL_CCSESSION_ENDING = "DCTL_CCSESSION_ENDING";
 extern const isc::log::MessageID DCTL_CFG_FILE_RELOAD_ERROR = "DCTL_CFG_FILE_RELOAD_ERROR";
 extern const isc::log::MessageID DCTL_CFG_FILE_RELOAD_SIGNAL_RECVD = "DCTL_CFG_FILE_RELOAD_SIGNAL_RECVD";
-extern const isc::log::MessageID DCTL_COMMAND_RECEIVED = "DCTL_COMMAND_RECEIVED";
 extern const isc::log::MessageID DCTL_CONFIG_CHECK_COMPLETE = "DCTL_CONFIG_CHECK_COMPLETE";
 extern const isc::log::MessageID DCTL_CONFIG_COMPLETE = "DCTL_CONFIG_COMPLETE";
 extern const isc::log::MessageID DCTL_CONFIG_DEPRECATED = "DCTL_CONFIG_DEPRECATED";
 extern const isc::log::MessageID DCTL_CONFIG_FETCH = "DCTL_CONFIG_FETCH";
 extern const isc::log::MessageID DCTL_CONFIG_FILE_LOAD_FAIL = "DCTL_CONFIG_FILE_LOAD_FAIL";
-extern const isc::log::MessageID DCTL_CONFIG_LOAD_FAIL = "DCTL_CONFIG_LOAD_FAIL";
 extern const isc::log::MessageID DCTL_CONFIG_START = "DCTL_CONFIG_START";
-extern const isc::log::MessageID DCTL_CONFIG_STUB = "DCTL_CONFIG_STUB";
-extern const isc::log::MessageID DCTL_CONFIG_UPDATE = "DCTL_CONFIG_UPDATE";
 extern const isc::log::MessageID DCTL_DB_OPEN_CONNECTION_WITH_RETRY_FAILED = "DCTL_DB_OPEN_CONNECTION_WITH_RETRY_FAILED";
 extern const isc::log::MessageID DCTL_DEVELOPMENT_VERSION = "DCTL_DEVELOPMENT_VERSION";
 extern const isc::log::MessageID DCTL_INIT_PROCESS = "DCTL_INIT_PROCESS";
@@ -31,7 +26,6 @@ extern const isc::log::MessageID DCTL_PARSER_FAIL = "DCTL_PARSER_FAIL";
 extern const isc::log::MessageID DCTL_PID_FILE_ERROR = "DCTL_PID_FILE_ERROR";
 extern const isc::log::MessageID DCTL_PROCESS_FAILED = "DCTL_PROCESS_FAILED";
 extern const isc::log::MessageID DCTL_RUN_PROCESS = "DCTL_RUN_PROCESS";
-extern const isc::log::MessageID DCTL_SESSION_FAIL = "DCTL_SESSION_FAIL";
 extern const isc::log::MessageID DCTL_SHUTDOWN = "DCTL_SHUTDOWN";
 extern const isc::log::MessageID DCTL_SHUTDOWN_SIGNAL_RECVD = "DCTL_SHUTDOWN_SIGNAL_RECVD";
 extern const isc::log::MessageID DCTL_STANDALONE = "DCTL_STANDALONE";
@@ -46,19 +40,14 @@ namespace {
 
 const char* values[] = {
     "DCTL_ALREADY_RUNNING", "%1 already running? %2",
-    "DCTL_CCSESSION_ENDING", "%1 ending control channel session",
     "DCTL_CFG_FILE_RELOAD_ERROR", "configuration reload failed: %1, reverting to current configuration.",
     "DCTL_CFG_FILE_RELOAD_SIGNAL_RECVD", "OS signal %1 received, reloading configuration from file: %2",
-    "DCTL_COMMAND_RECEIVED", "%1 received command: %2, arguments: %3",
     "DCTL_CONFIG_CHECK_COMPLETE", "server has completed configuration check: %1, result: %2",
     "DCTL_CONFIG_COMPLETE", "server has completed configuration: %1",
     "DCTL_CONFIG_DEPRECATED", "server configuration includes a deprecated object: %1",
     "DCTL_CONFIG_FETCH", "Fetching configuration data from config backends.",
     "DCTL_CONFIG_FILE_LOAD_FAIL", "%1 reason: %2",
-    "DCTL_CONFIG_LOAD_FAIL", "%1 configuration failed to load: %2",
     "DCTL_CONFIG_START", "parsing new configuration: %1",
-    "DCTL_CONFIG_STUB", "%1 configuration stub handler called",
-    "DCTL_CONFIG_UPDATE", "%1 updated configuration received: %2",
     "DCTL_DB_OPEN_CONNECTION_WITH_RETRY_FAILED", "Failed to connect to database: %1 with error: %2",
     "DCTL_DEVELOPMENT_VERSION", "This software is a development branch of Kea. It is not recommended for production use.",
     "DCTL_INIT_PROCESS", "%1 initializing the application",
@@ -69,7 +58,6 @@ const char* values[] = {
     "DCTL_PID_FILE_ERROR", "%1 could not create a PID file: %2",
     "DCTL_PROCESS_FAILED", "%1 application execution failed: %2",
     "DCTL_RUN_PROCESS", "%1 starting application event loop",
-    "DCTL_SESSION_FAIL", "%1 controller failed to establish Kea session: %1",
     "DCTL_SHUTDOWN", "%1 has shut down, pid: %2, version: %3",
     "DCTL_SHUTDOWN_SIGNAL_RECVD", "OS signal %1 received, starting shutdown",
     "DCTL_STANDALONE", "%1 skipping message queue, running standalone",
