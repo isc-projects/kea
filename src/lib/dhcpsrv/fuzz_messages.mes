@@ -36,7 +36,7 @@ sends data received from AFL to the socket on which Kea is listening) fails.
 The reason for the failure is given in the message.  The fuzzing code will
 attempt to continue from this, but it may cause the fuzzing process to fail.
 
-% FUZZ_SHORT_SEND expected to send %d bytes to Kea input socket but only sent %2
+% FUZZ_SHORT_SEND expected to send %1 bytes to Kea input socket but only sent %2
 A warning message that is output if the sendto() call (used to send data
 from the fuzzing thread to the main Kea processing) did not send as much
 data as that read from AFL.  This may indicate a problem in the underlying

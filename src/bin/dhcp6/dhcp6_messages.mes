@@ -699,7 +699,7 @@ This error is output if the IPv6 DHCP server fails to send an assembled
 DHCP message to a client. The reason for the error is included in the
 message.
 
-% DHCP6_PACK_FAIL 1%: failed to assemble response correctly: %2
+% DHCP6_PACK_FAIL %1: failed to assemble response correctly: %2
 This error is output if the server failed to assemble the data to be
 returned to the client into a valid packet.  The reason is most likely
 to be to a programming error: please raise a bug report.
