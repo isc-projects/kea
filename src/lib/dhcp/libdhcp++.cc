@@ -30,6 +30,8 @@
 
 #include <limits>
 #include <list>
+#include <unordered_map>
+#include <vector>
 
 using namespace std;
 using namespace isc::dhcp;
@@ -482,6 +484,69 @@ LibDHCP::unpackOptions4(const OptionBuffer& buf, const string& option_space,
 
     // The buffer being read comprises a set of options, each starting with
     // a one-byte type code and a one-byte length field.
+
+    // Track seen options in a first pass.
+    vector<bool> seen(256, false);
+    unordered_map<uint8_t, size_t> counts;
+    while (offset < buf.size()) {
+        // Get the option type
+        uint8_t opt_type = buf[offset++];
+
+        // DHO_END is a special, one octet long option
+        // Valid in dhcp4 space or when check is true and
+        // there is a sub-option configured for this code.
+        if ((opt_type == DHO_END) && (space_is_dhcp4 || flex_end)) {
+            // Done.
+            break;
+        }
+
+        // DHO_PAD is just a padding after DHO_END. Let's continue parsing
+        // in case we receive a message without DHO_END.
+        // Valid in dhcp4 space or when check is true and
+        // there is a sub-option configured for this code.
+        if ((opt_type == DHO_PAD) && (space_is_dhcp4 || flex_pad)) {
+            continue;
+        }
+
+        if (offset + 1 > buf.size()) {
+            // Error case.
+            break;
+        }
+
+        uint8_t opt_len = buf[offset++];
+        if (offset + opt_len > buf.size()) {
+            // Error case.
+            break;
+        }
+
+        // See below for this special case.
+        if (space_is_dhcp4 && opt_len == 0 && opt_type == DHO_HOST_NAME) {
+            continue;
+        }
+
+        offset += opt_len;
+
+        // Mark as seen.
+        if (!seen[opt_type]) {
+            seen[opt_type] = true;
+            continue;
+        }
+
+        // Already seen.
+        size_t& count = counts[opt_type];
+        if (count == 0) {
+            // Default value for size_t is 0 but this option was already seen.
+            count = 2;
+        } else {
+            ++count;
+        }
+    }
+
+    // Fusing option buffers.
+    unordered_map<uint8_t, OptionBuffer> fused;
+
+    // Second pass.
+    offset = 0;
     while (offset < buf.size()) {
         // Save the current offset for backtracking
         last_offset = offset;
@@ -534,6 +599,25 @@ LibDHCP::unpackOptions4(const OptionBuffer& buf, const string& option_space,
         // and we know we drop it.
         if (space_is_dhcp4 && opt_len == 0 && opt_type == DHO_HOST_NAME) {
             continue;
+        }
+
+        OptionBuffer obuf(buf.begin() + offset, buf.begin() + offset + opt_len);
+        offset += opt_len;
+
+        // Concatenate multiple instance of an option.
+        try {
+            size_t count = counts.at(opt_type);
+            OptionBuffer& previous = fused[opt_type];
+            previous.insert(previous.end(), obuf.begin(), obuf.end());
+            if (count <= 1) {
+                // last occurrence: build the option.
+                obuf = previous;
+            } else {
+                counts[opt_type] = count - 1;
+                continue;
+            }
+        } catch (const std::out_of_range&) {
+            // Regular case.
         }
 
         // Get all definitions with the particular option code. Note
@@ -592,9 +676,7 @@ LibDHCP::unpackOptions4(const OptionBuffer& buf, const string& option_space,
                       " This will be supported once support for option spaces"
                       " is implemented");
         } else if (num_defs == 0) {
-            opt = OptionPtr(new Option(Option::V4, opt_type,
-                                       buf.begin() + offset,
-                                       buf.begin() + offset + opt_len));
+            opt = OptionPtr(new Option(Option::V4, opt_type, obuf));
             opt->setEncapsulatedSpace(DHCP4_OPTION_SPACE);
         } else {
             try {
@@ -602,9 +684,7 @@ LibDHCP::unpackOptions4(const OptionBuffer& buf, const string& option_space,
                 // the option instance from the provided buffer chunk.
                 const OptionDefinitionPtr& def = *(range.first);
                 isc_throw_assert(def);
-                opt = def->optionFactory(Option::V4, opt_type,
-                                         buf.begin() + offset,
-                                         buf.begin() + offset + opt_len);
+                opt = def->optionFactory(Option::V4, opt_type, obuf);
             } catch (const SkipThisOptionError&) {
                 opt.reset();
             }
@@ -614,77 +694,9 @@ LibDHCP::unpackOptions4(const OptionBuffer& buf, const string& option_space,
         if (opt) {
             options.insert(std::make_pair(opt_type, opt));
         }
-
-        offset += opt_len;
     }
     last_offset = offset;
     return (last_offset);
-}
-
-bool
-LibDHCP::fuseOptions4(OptionCollection& options) {
-    bool result = false;
-    // We need to loop until all options have been fused.
-    for (;;) {
-        uint32_t found = 0;
-        bool found_suboptions = false;
-        // Iterate over all options in the container.
-        for (auto const& option : options) {
-            OptionPtr candidate = option.second;
-            OptionCollection& sub_options = candidate->getMutableOptions();
-            // Fuse suboptions recursively, if any.
-            if (sub_options.size()) {
-                // Fusing suboptions might result in new options with multiple
-                // options having the same code, so we need to iterate again
-                // until no option needs fusing.
-                found_suboptions = LibDHCP::fuseOptions4(sub_options);
-                if (found_suboptions) {
-                    result = true;
-                }
-            }
-            OptionBuffer data;
-            OptionCollection suboptions;
-            // Make a copy of the options so we can safely iterate over the
-            // old container.
-            OptionCollection copy = options;
-            for (auto const& old_option : copy) {
-                if (old_option.first == option.first) {
-                    // Copy the option data to the buffer.
-                    data.insert(data.end(), old_option.second->getData().begin(),
-                                old_option.second->getData().end());
-                    suboptions.insert(old_option.second->getOptions().begin(),
-                                      old_option.second->getOptions().end());
-                    // Other options might need fusing, so we need to iterate
-                    // again until no options needs fusing.
-                    found++;
-                }
-            }
-            if (found > 1) {
-                result = true;
-                // Erase the old options from the new container so that only the
-                // new option is present.
-                copy.erase(option.first);
-                // Create new option with entire data.
-                OptionPtr new_option(new Option(candidate->getUniverse(),
-                                                candidate->getType(), data));
-                // Recreate suboptions container.
-                new_option->getMutableOptions() = suboptions;
-                // Add the new option to the new container.
-                copy.insert(make_pair(candidate->getType(), new_option));
-                // After all options have been fused and new option added,
-                // update the option container with the new container.
-                options = copy;
-                break;
-            } else {
-                found = 0;
-            }
-        }
-        // No option needs fusing, so we can exit the loop.
-        if ((found <= 1) && !found_suboptions) {
-            break;
-        }
-    }
-    return (result);
 }
 
 namespace { // Anonymous namespace.

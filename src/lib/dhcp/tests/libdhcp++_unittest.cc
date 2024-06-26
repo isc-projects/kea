@@ -1548,7 +1548,7 @@ TEST_F(LibDhcpTest, fuseLongOption) {
         col.insert(std::make_pair(231, option));
     }
     ASSERT_EQ(256, col.size());
-    LibDHCP::fuseOptions4(col);
+    //// LibDHCP::fuseOptions4(col);
 
     ASSERT_EQ(1, col.size());
     uint8_t index = 0;
@@ -1588,7 +1588,7 @@ TEST_F(LibDhcpTest, fuseLongOptionWithLongSuboption) {
     col.insert(std::make_pair(213, rai));
     ASSERT_EQ(1, col.size());
     ASSERT_EQ(256, col.begin()->second->getOptions().size());
-    LibDHCP::fuseOptions4(col);
+    //// LibDHCP::fuseOptions4(col);
 
     ASSERT_EQ(1, col.size());
     ASSERT_EQ(1, col.begin()->second->getOptions().size());
@@ -1644,7 +1644,7 @@ TEST_F(LibDhcpTest, extendVivco) {
     options.insert(make_pair(DHO_VIVCO_SUBOPTIONS, opt2));
     options.insert(make_pair(DHO_VIVCO_SUBOPTIONS, opt3));
     EXPECT_EQ(options.size(), 3);
-    EXPECT_NO_THROW(LibDHCP::fuseOptions4(options));
+    //// LibDHCP::fuseOptions4(options);
     EXPECT_EQ(options.size(), 1);
     EXPECT_NO_THROW(LibDHCP::extendVendorOptions4(options));
     EXPECT_EQ(options.size(), 2);
@@ -1712,7 +1712,7 @@ TEST_F(LibDhcpTest, extendVivso) {
                                                       option.second->getType(),
                                                       buffer))));
     }
-    ASSERT_NO_THROW(LibDHCP::fuseOptions4(options));
+    //// LibDHCP::fuseOptions4(options);
     ASSERT_EQ(options.size(), 1);
     ASSERT_EQ(options.count(DHO_VIVSO_SUBOPTIONS), 1);
     ASSERT_EQ(options.find(DHO_VIVSO_SUBOPTIONS)->second->getType(), DHO_VIVSO_SUBOPTIONS);

@@ -291,14 +291,6 @@ public:
                                  size_t* relay_msg_offset = 0,
                                  size_t* relay_msg_len = 0);
 
-    /// @brief Fuse multiple options with the same option code in long options
-    /// (RFC3396).
-    ///
-    /// @param options The option container which needs to be updated with fused
-    /// options.
-    /// @return True if any option has been fused, false otherwise.
-    static bool fuseOptions4(isc::dhcp::OptionCollection& options);
-
     /// @brief Extend vendor options from fused options in multiple OptionVendor
     /// or OptionVendorClass options and add respective suboptions or values.
     ///

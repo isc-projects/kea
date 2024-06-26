@@ -222,14 +222,6 @@ Pkt4::unpack() {
     // }
     (void)offset;
 
-    // The RFC3396 adds support for multiple options using the same code fused
-    // into long options.
-    // All instances of the same option are fused together, including merging
-    // the suboption lists and fusing suboptions. As a result, the options will
-    // store more than 255 bytes of data and the regex parsers can effectively
-    // access the entire data.
-    LibDHCP::fuseOptions4(options_);
-
     // Kea supports multiple vendor options so it needs to split received and
     // fused options in multiple OptionVendor instances.
     LibDHCP::extendVendorOptions4(options_);
