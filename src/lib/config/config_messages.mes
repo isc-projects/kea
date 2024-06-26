@@ -1,4 +1,4 @@
-# Copyright (C) 2011-2023 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -14,20 +14,24 @@ If starting the acceptor fails, subsequent error messages will provide a
 reason for failure.
 
 % COMMAND_DEREGISTERED Command %1 deregistered
+Logged at debug log level 10.
 This debug message indicates that the daemon stopped supporting specified
 command. This command can no longer be issued. If the command socket is
 open and this command is issued, the daemon will not be able to process it.
 
 % COMMAND_EXTENDED_REGISTERED Command %1 registered
+Logged at debug log level 10.
 This debug message indicates that the daemon started supporting specified
 command. The handler for the registered command includes a parameter holding
 entire command to be processed.
 
 % COMMAND_HTTP_LISTENER_COMMAND_REJECTED Command HTTP listener rejected command '%1' from '%2'
+Logged at debug log level 10.
 This debug messages is issued when a command is rejected. Arguments detail
 the command and the address the request was received from.
 
 % COMMAND_HTTP_LISTENER_STARTED Command HTTP listener started with %1 threads, listening on %2:%3, use TLS: %4
+Logged at debug log level 10.
 This debug messages is issued when an HTTP listener has been started to
 accept connections from Command API clients through which commands can be
 received and responses sent.  Arguments detail the number of threads
@@ -35,10 +39,12 @@ that the listener is using, the address and port at which it is listening,
 and if HTTPS/TLS is used or not.
 
 % COMMAND_HTTP_LISTENER_STOPPED Command HTTP listener for %1:%2 stopped.
+Logged at debug log level 10.
 This debug messages is issued when the Command HTTP listener, listening
 at the given address and port, has completed shutdown.
 
 % COMMAND_HTTP_LISTENER_STOPPING Stopping Command HTTP listener for %1:%2
+Logged at debug log level 10.
 This debug messages is issued when the Command HTTP listener, listening
 at the given address and port, has begun to shutdown.
 
@@ -60,6 +66,7 @@ socket. The nature of this command and its possible results will be logged
 with separate messages.
 
 % COMMAND_REGISTERED Command %1 registered
+Logged at debug log level 10.
 This debug message indicates that the daemon started supporting specified
 command. If the command socket is open, this command can now be issued.
 
@@ -86,6 +93,7 @@ when the timeout occurs during communication with a client. The error message
 includes details about the reason for failure.
 
 % COMMAND_SOCKET_CONNECTION_CLOSED Closed socket %1 for existing command connection
+Logged at debug log level 10.
 This is a debug message indicating that the socket created for handling
 client's connection is closed. This usually means that the client disconnected,
 but may also mean a timeout.
@@ -96,6 +104,7 @@ command connection and/or removing it from the connections pool. The
 detailed error is provided as an argument.
 
 % COMMAND_SOCKET_CONNECTION_OPENED Opened socket %1 for incoming command connection
+Logged at debug log level 10.
 This is a debug message indicating that a new incoming command connection was
 detected and a dedicated socket was opened for that connection.
 
@@ -109,6 +118,7 @@ occurred for one of the command channel connections. The response
 sent by the server indicates a timeout and is then closed.
 
 % COMMAND_SOCKET_READ Received %1 bytes over command socket %2
+Logged at debug log level 10.
 This debug message indicates that specified number of bytes was received
 over command socket identified by specified file descriptor.
 
@@ -117,6 +127,7 @@ This error message indicates that an error was encountered while
 reading from command socket.
 
 % COMMAND_SOCKET_WRITE Sent response of %1 bytes (%2 bytes left to send) over command socket %3
+Logged at debug log level 10.
 This debug message indicates that the specified number of bytes was sent
 over command socket identifier by the specified file descriptor.
 

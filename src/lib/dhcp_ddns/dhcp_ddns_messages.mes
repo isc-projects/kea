@@ -1,4 +1,4 @@
-# Copyright (C) 2013-2020 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -50,6 +50,7 @@ that should be reported.  The application may or may not continue to operate
 correctly.
 
 % DHCP_DDNS_NCR_UDP_RECV_CANCELED UDP socket receive was canceled while listening for DNS Update requests
+Logged at debug log level 40.
 This is a debug  message indicating that the listening on a UDP socket
 for DNS update requests has been canceled.  This is a normal part of
 suspending listening operations.

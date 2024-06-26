@@ -45,11 +45,13 @@ This info message indicates that the PerfMon hooks library has been
 removed successfully.
 
 % PERFMON_DHCP4_PKT_EVENTS query: %1 events=[%2]
+Logged at debug log level 50.
 This debug message is emitted after an inbound DHCPv4 query has been
 processed, the arguments are the query label and the dump of the
 query's packet event stack.
 
 % PERFMON_DHCP4_PKT_PROCESS_ERROR Packet event stack was not processed for query %1, reason %2
+Logged at debug log level 50.
 This debug message is emitted when the query's event stack could not
 be processed. This is most likely a programmatic error and should be
 reported.  The arguments identify the query and the reason it could
@@ -57,6 +59,7 @@ not be processed.  These errors should not affect server's normal
 operations.
 
 % PERFMON_DHCP4_SOCKET_RECEIVED_TIME_SUPPORT Kernel supports socket received time? %1
+Logged at debug log level 40.
 This debug message is emitted after a (re)configuration and indicates
 whether or not the packet filter being used by kea-dhcp4 can supply
 the timestamp a packet was received by the kernel for recording
@@ -64,11 +67,13 @@ SOCKET_RECEIVED events. If it does not, perfmon will still function but
 will not have data available to determine kernel buffer wait times.
 
 % PERFMON_DHCP6_PKT_EVENTS query: %1 events=[%2]
+Logged at debug log level 50.
 The debug message is emitted after an inbound DHCPv6 query has been
 processed, the arguments are the query label and the dump of the
 query's packet event stack.
 
 % PERFMON_DHCP6_PKT_PROCESS_ERROR Packet event stack was not processed for query %1, reason %2
+Logged at debug log level 50.
 This debug message is emitted when the query's event stack could not
 be processed. This is most likely a programmatic error and should be
 reported.  The arguments identify the query and the reason it could
@@ -76,6 +81,7 @@ not be processed.  These errors should not affect server's normal
 operations.
 
 % PERFMON_DHCP6_SOCKET_RECEIVED_TIME_SUPPORT Kernel supports socket received time? %1
+Logged at debug log level 40.
 This debug message is emitted after a (re)configuration and indicates
 whether or not the packet filter being used by kea-dhcp6 can supply
 the timestamp a packet was received by the kernel for recording

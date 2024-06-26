@@ -1,4 +1,4 @@
-# Copyright (C) 2013-2020 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,21 +7,25 @@
 $NAMESPACE isc::hooks
 
 % HOOKS_ALL_CALLOUTS_DEREGISTERED hook library at index %1 removed all callouts on hook %2
+Logged at debug log level 55.
 A debug message issued when all callouts on the specified hook registered
 by the library with the given index were removed.  This is similar to
 the HOOKS_CALLOUTS_REMOVED message (and the two are likely to be seen
 together), but is issued at a lower-level in the hook framework.
 
 % HOOKS_CALLOUTS_BEGIN begin all callouts for hook %1
+Logged at debug log level 45.
 This debug message is issued when callout manager begins to invoke callouts
 for the hook. The argument specifies the hook name.
 
 % HOOKS_CALLOUTS_COMPLETE completed callouts for hook %1 (total callouts duration: %2)
+Logged at debug log level 45.
 This debug message is issued when callout manager has completed execution
 of all callouts for the particular hook. The arguments specify the hook
 name and total execution time for all callouts in milliseconds.
 
 % HOOKS_CALLOUTS_REMOVED callouts removed from hook %1 for library %2
+Logged at debug log level 45.
 This is a debug message issued during library unloading.  It notes that
 one of more callouts registered by that library have been removed from
 the specified hook.  This is similar to the HOOKS_DEREGISTER_ALL_CALLOUTS
@@ -29,6 +33,7 @@ message (and the two are likely to be seen together), but is issued at a
 higher-level in the hook framework.
 
 % HOOKS_CALLOUT_CALLED hooks library with index %1 has called a callout on hook %2 that has address %3 (callout duration: %4)
+Logged at debug log level 55.
 Only output at a high debugging level, this message indicates that
 a callout on the named hook registered by the library with the given
 index (in the list of loaded libraries) has been called and returned a
@@ -36,6 +41,7 @@ success state.  The address of the callout is given in the message.
 The message includes the callout execution time in milliseconds.
 
 % HOOKS_CALLOUT_DEREGISTERED hook library at index %1 deregistered a callout on hook %2
+Logged at debug log level 55.
 A debug message issued when all instances of a particular callouts on
 the hook identified in the message that were registered by the library
 with the given index have been removed.
@@ -55,6 +61,7 @@ it and the address of the callout.  The error is otherwise ignored.
 The error message includes the callout execution time in milliseconds.
 
 % HOOKS_CALLOUT_REGISTRATION hooks library with index %1 registering callout for hook '%2'
+Logged at debug log level 45.
 This is a debug message, output when a library (whose index in the list
 of libraries (being) loaded is given) registers a callout.
 
@@ -88,11 +95,13 @@ This information message is issued when a user-supplied hooks library
 has been successfully loaded.
 
 % HOOKS_LIBRARY_LOADING loading hooks library %1
+Logged at debug log level 40.
 This is a debug message output just before the specified library is loaded.
 If the action is successfully, it will be followed by the
 HOOKS_LIBRARY_LOADED informational message.
 
 % HOOKS_LIBRARY_MULTI_THREADING_COMPATIBLE hooks library %1 reports its multi-threading compatibility as %2
+Logged at debug log level 45.
 A debug message issued when the "multi_threading_compatible" function was
 called. The returned value (0 means not compatible, others compatible)
 is displayed.
@@ -108,11 +117,13 @@ This information message is issued when a user-supplied hooks library
 has been successfully unloaded.
 
 % HOOKS_LIBRARY_UNLOADING unloading library %1
+Logged at debug log level 40.
 This is a debug message called when the specified library is
 being unloaded.  If all is successful, it will be followed by the
 HOOKS_LIBRARY_UNLOADED informational message.
 
 % HOOKS_LIBRARY_VERSION hooks library %1 reports its version as %2
+Logged at debug log level 45.
 A debug  message issued when the version check on the hooks library
 has succeeded.
 
@@ -137,6 +148,7 @@ The library has been unloaded and no callouts from it will be
 installed.
 
 % HOOKS_LOAD_SUCCESS 'load' function in hook library %1 returned success
+Logged at debug log level 40.
 This is a debug message issued when the "load" function has been found
 in a hook library and has been successfully called.
 
@@ -146,12 +158,14 @@ function in the specified hooks library was called and generated an
 exception.  The library is considered unusable and will not be loaded.
 
 % HOOKS_NO_LOAD no 'load' function found in hook library %1
+Logged at debug log level 40.
 This is a debug message saying that the specified library was loaded
 but no function called "load" was found in it.  Providing the library
 contained some "standard" functions (i.e. functions with the names of
 the hooks for the given server), this is not an issue.
 
 % HOOKS_NO_UNLOAD no 'unload' function found in hook library %1
+Logged at debug log level 40.
 This is a debug message issued when the library is being unloaded.
 It merely states that the library did not contain an "unload" function.
 
@@ -168,6 +182,7 @@ reason. The library has not been loaded.  Kea will continue to
 function, but without the services offered by the library.
 
 % HOOKS_STD_CALLOUT_REGISTERED hooks library %1 registered standard callout for hook %2 at address %3
+Logged at debug log level 45.
 This is a debug message, output when the library loading function has
 located a standard callout (a callout with the same name as a hook point)
 and registered it.  The address of the callout is indicated.
@@ -192,6 +207,7 @@ is recorded in the message.  The unload process continued after
 this message and the library has been unloaded.
 
 % HOOKS_UNLOAD_SUCCESS 'unload' function in hook library %1 returned success
+Logged at debug log level 40.
 This is a debug message issued when an "unload" function has been found
 in a hook library during the unload process, called, and returned success.
 

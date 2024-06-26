@@ -7,6 +7,7 @@
 $NAMESPACE isc::dhcp
 
 % FUZZ_DATA_READ read %1 byte(s) from AFL via stdin
+Logged at debug log level 50.
 A debug message output to indicate how much data has been received from
 the fuzzer via stdin
 
@@ -26,6 +27,7 @@ occurs, the thread will sleep for a short period before retrying the read.
 The message includes the reason for the failure.
 
 % FUZZ_SEND sent %1 byte(s) to the socket connected to the Kea interface
+Logged at debug log level 50.
 A debug message stating that the sendto() call in the main fuzzing function
 has successfully completed and reporting the number of bytes sent.  This
 call sends data received from AFL to the port on which Kea is listening.

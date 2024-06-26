@@ -8,6 +8,7 @@ point failed.  This may occur as a result of an internal server error.
 The argument contains a reason for the error.
 
 % HA_BUFFER4_RECEIVE_NOT_FOR_US %1: dropping query to be processed by another server
+Logged at debug log level 40.
 This debug message is issued when the received DHCPv4 query is dropped
 by this server because it should be served by another server. This
 is the case when the remote server was designated to process the packet
@@ -16,12 +17,14 @@ hot standby configuration. The argument provides client identification
 information retrieved from the query.
 
 % HA_BUFFER4_RECEIVE_PACKET_OPTIONS_SKIPPED an error unpacking an option, caused subsequent options to be skipped: %1
+Logged at debug log level 40.
 A debug message issued when an option failed to unpack correctly, making it
 impossible to unpack the remaining options in the DHCPv4 query. The server
 will still attempt to service the packet. The sole argument provides a
 reason for unpacking error.
 
 % HA_BUFFER4_RECEIVE_UNPACK_FAILED failed to parse query from %1 to %2, received over interface %3, reason: %4
+Logged at debug log level 40.
 This debug message is issued when received DHCPv4 query is malformed and
 can't be parsed by the buffer4_receive callout. The query will be
 dropped by the server. The first three arguments specify source IP address,
@@ -34,6 +37,7 @@ point failed. This may occur as a result of an internal server error.
 The argument contains a reason for the error.
 
 % HA_BUFFER6_RECEIVE_NOT_FOR_US %1: dropping query to be processed by another server
+Logged at debug log level 40.
 This debug message is issued when the received DHCPv6 query is dropped
 by this server because it should be served by another server. This
 is the case when the remote server was designated to process the packet
@@ -42,12 +46,14 @@ hot standby configuration. The argument provides client identification
 information retrieved from the query.
 
 % HA_BUFFER6_RECEIVE_PACKET_OPTIONS_SKIPPED an error unpacking an option, caused subsequent options to be skipped: %1
+Logged at debug log level 40.
 A debug message issued when an option failed to unpack correctly, making it
 impossible to unpack the remaining options in the DHCPv6 query. The server
 will still attempt to service the packet. The sole argument provides a
 reason for unpacking error.
 
 % HA_BUFFER6_RECEIVE_UNPACK_FAILED failed to parse query from %1 to %2, received over interface %3, reason: %4
+Logged at debug log level 40.
 This debug message is issued when received DHCPv6 query is malformed and
 can't be parsed by the buffer6_receive callout. The query will be
 dropped by the server. The first three arguments specify source IP address,
@@ -281,6 +287,7 @@ the callout by the DHCP server (unlikely internal server error).
 The argument contains a reason for the error.
 
 % HA_LEASES4_COMMITTED_NOTHING_TO_UPDATE %1: leases4_committed callout was invoked without any leases
+Logged at debug log level 40.
 This debug message is issued when the "leases4_committed" callout returns
 because there are neither new leases nor deleted leases for which updates
 should be sent. The sole argument specifies the details of the client
@@ -300,6 +307,7 @@ the callout by the DHCP server (unlikely internal server error).
 The argument contains a reason for the error.
 
 % HA_LEASES6_COMMITTED_NOTHING_TO_UPDATE %1: leases6_committed callout was invoked without any leases
+Logged at debug log level 40.
 This debug message is issued when the "leases6_committed" callout returns
 because there are neither new leases nor deleted leases for which updates
 should be sent. The sole argument specifies the details of the client
@@ -377,6 +385,7 @@ provided as a first argument. The third argument provides a reason for
 the failure.
 
 % HA_LEASE_SYNC_STALE_LEASE4_SKIP %1: skipping stale lease %2 in subnet %3
+Logged at debug log level 40.
 This debug message is issued during lease database synchronization, when
 fetched IPv4 lease instance appears to be older than the instance in the
 local database. The newer instance is left in the database and the fetched
@@ -386,6 +395,7 @@ specifies the local server's name. The second argument specifies leased
 address. The third argument specifies a subnet to which the lease belongs.
 
 % HA_LEASE_SYNC_STALE_LEASE6_SKIP %1: skipping stale lease %2 in subnet %3
+Logged at debug log level 40.
 This debug message is issued during lease database synchronization, when
 fetched IPv6 lease instance appears to be older than the instance in the
 local database. The newer instance is left in the database and the fetched
@@ -440,12 +450,14 @@ by the partner exceeds the limit set with max-rejected-lease-updates
 configuration parameter.
 
 % HA_LOAD_BALANCING_DUID_MISSING %1: load balancing failed for the DHCPv6 message (transaction id: %2) because DUID is missing
+Logged at debug log level 40.
 This debug message is issued when the HA hook library was unable to load
 balance an incoming DHCPv6 query because neither client identifier nor
 HW address was included in the query. The query will be dropped. The
 sole argument contains transaction id.
 
 % HA_LOAD_BALANCING_IDENTIFIER_MISSING %1: load balancing failed for the DHCPv4 message (transaction id: %2) because HW address and client identifier are missing
+Logged at debug log level 40.
 This debug message is issued when the HA hook library was unable to load
 balance an incoming DHCPv4 query because neither client identifier nor
 HW address was included in the query. The query will be dropped. The
@@ -622,6 +634,7 @@ The first argument is the client identification information. The second argument
 is a subnet prefix.
 
 % HA_SUBNET4_SELECT_NOT_FOR_US %1: dropping query in relationship %2 to be processed by another server
+Logged at debug log level 40.
 This debug message is issued when the received DHCPv4 query is dropped
 by this server because it should be served by another server. This
 is the case when a remote primary server is operational. The first argument
@@ -648,6 +661,7 @@ the client identification information. The second argument is a subnet
 prefix.
 
 % HA_SUBNET4_SELECT_NO_SUBNET_SELECTED %1: unable to determine HA relationship because no subnet has been selected for the client
+Logged at debug log level 40.
 This debug message is issued when the received DHCPv4 query is dropped
 by this server because it could not select a subnet for this client.
 Selecting the subnet is required to find a suitable HA relationship.
@@ -667,6 +681,7 @@ The first argument is the client identification information. The second argument
 is a subnet prefix.
 
 % HA_SUBNET6_SELECT_NOT_FOR_US %1: dropping query in relationship %2 to be processed by another server
+Logged at debug log level 40.
 This debug message is issued when the received DHCPv6 query is dropped
 by this server because it should be served by another server. This
 is the case when a remote primary server is operational. The first argument
@@ -693,6 +708,7 @@ the client identification information. The second argument is a subnet
 prefix.
 
 % HA_SUBNET6_SELECT_NO_SUBNET_SELECTED %1: unable to determine HA relationship because no subnet has been selected for the client
+Logged at debug log level 40.
 This debug message is issued when the received DHCPv6 query is dropped
 by this server because it could not select a subnet for this client.
 Selecting the subnet is required to find a suitable HA relationship.

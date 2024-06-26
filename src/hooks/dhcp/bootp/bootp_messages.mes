@@ -1,6 +1,7 @@
-# Copyright (C) 2019-2020 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2019-2024 Internet Systems Consortium, Inc. ("ISC")
 
 % BOOTP_BOOTP_QUERY recognized a BOOTP query: %1
+Logged at debug log level 40.
 This debug message is printed when the BOOTP query was recognized. The
 BOOTP client class was added and the message type set to DHCPREQUEST.
 The query client and transaction identification are displayed.
@@ -9,12 +10,14 @@ The query client and transaction identification are displayed.
 This info message indicates that the Bootp hooks library has been loaded.
 
 % BOOTP_PACKET_OPTIONS_SKIPPED an error unpacking an option, caused subsequent options to be skipped: %1
+Logged at debug log level 40.
 A debug message issued when an option failed to unpack correctly, making it
 impossible to unpack the remaining options in the DHCPv4 query. The server
 will still attempt to service the packet. The sole argument provides a
 reason for unpacking error.
 
 % BOOTP_PACKET_PACK %1: preparing on-wire format of the packet to be sent
+Logged at debug log level 40.
 This debug message is issued when the server starts preparing the on-wire
 format of the packet to be sent back to the client. The argument specifies
 the client and the transaction identification information.
@@ -25,6 +28,7 @@ packet has failed. The first argument identifies the client and the
 BOOTP transaction.  The second argument includes the error string.
 
 % BOOTP_PACKET_UNPACK_FAILED failed to parse query from %1 to %2, received over interface %3, reason: %4
+Logged at debug log level 40.
 This debug message is issued when received DHCPv4 query is malformed and
 can't be parsed by the buffer4_receive callout. The query will be
 dropped by the server. The first three arguments specify source IP address,

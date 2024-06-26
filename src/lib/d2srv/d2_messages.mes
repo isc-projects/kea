@@ -1,4 +1,4 @@
-# Copyright (C) 2013-2023 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -26,10 +26,12 @@ it would be necessary to manually remove the PID file.  The first argument is
 the DHCP_DDNS process name, the second contains the PID and PID file.
 
 % DHCP_DDNS_AT_MAX_TRANSACTIONS application has %1 queued requests but has reached maximum number of %2 concurrent transactions
+Logged at debug log level 55.
 This is a debug message that indicates that the application has DHCP_DDNS
 requests in the queue but is working as many concurrent requests as allowed.
 
 % DHCP_DDNS_CLEARED_FOR_SHUTDOWN application has met shutdown criteria for shutdown type: %1
+Logged at debug log level 0.
 This is a debug message issued when the application has been instructed
 to shutdown and has met the required criteria to exit.
 
@@ -38,6 +40,7 @@ This is a debug message issued when the DHCP-DDNS application command method
 has been invoked.
 
 % DHCP_DDNS_CONFIGURE configuration %1 received: %2
+Logged at debug log level 40.
 This is a debug message issued when the DHCP-DDNS application configure method
 has been invoked.
 
@@ -195,11 +198,13 @@ a forward mapping replace.  The application will retry against the same
 server or others as appropriate.
 
 % DHCP_DDNS_FWD_REQUEST_IGNORED Request ID %1: Forward updates are disabled, the forward portion of request will be ignored: %2
+Logged at debug log level 55.
 This is a debug message issued when forward DNS updates are disabled and
 DHCP_DDNS receives an update request containing a forward DNS update. The
 forward update will not performed.
 
 % DHCP_DDNS_INVALID_RESPONSE received response to DNS Update message is malformed: %1
+Logged at debug log level 50.
 This is a debug message issued when the DHCP-DDNS application encountered an
 error while decoding a response to DNS Update message. Typically, this error
 will be encountered when a response message is malformed.
@@ -221,6 +226,7 @@ IPv6 loopback addresses should only be used for testing purposes. A future
 version of Kea will implement authentication to guard against such attacks.
 
 % DHCP_DDNS_NO_ELIGIBLE_JOBS although there are queued requests, there are pending transactions for each, Queue count: %1  Transaction count: %2
+Logged at debug log level 55.
 This is a debug message issued when all of the queued requests represent clients
 for which there is an update already in progress.  This may occur under
 normal operations but should be temporary situation.
@@ -256,11 +262,13 @@ requests too quickly, or perhaps upstream DNS servers are experiencing
 load issues.
 
 % DHCP_DDNS_QUEUE_MGR_QUEUE_RECEIVE Request ID %1: received and queued a request.
+Logged at debug log level 55.
 This is an informational message indicating that the NameChangeRequest listener used
 by DHCP-DDNS to receive a request has received a request and queued it for further
 processing.
 
 % DHCP_DDNS_QUEUE_MGR_RECONFIGURING application is reconfiguring the queue manager
+Logged at debug log level 40.
 This is an informational message indicating that DHCP_DDNS is reconfiguring the queue manager as part of normal startup or in response to a new configuration.
 
 % DHCP_DDNS_QUEUE_MGR_RECOVERING application is attempting to recover from a queue manager IO error
@@ -288,6 +296,7 @@ accepting new requests, has processed enough entries from the receive queue to
 resume accepting requests.
 
 % DHCP_DDNS_QUEUE_MGR_STARTED application's queue manager has begun listening for requests.
+Logged at debug log level 0.
 This is a debug message indicating that DHCP_DDNS's Queue Manager has
 successfully started and is now listening for NameChangeRequests.
 
@@ -299,12 +308,14 @@ such as an IP address or port, that are unavailable.  DHCP_DDNS will attempt to
 restart the queue manager if given a new configuration.
 
 % DHCP_DDNS_QUEUE_MGR_STOPPED application's queue manager has stopped listening for requests.
+Logged at debug log level 40.
 This is a debug message indicating that DHCP_DDNS's Queue Manager has
 stopped listening for NameChangeRequests.  This may be because of normal event
 such as reconfiguration or as a result of an error.  There should be log
 messages preceding this one to indicate why it has stopped.
 
 % DHCP_DDNS_QUEUE_MGR_STOPPING application is stopping the queue manager for %1
+Logged at debug log level 0.
 This is an informational message indicating that DHCP_DDNS is stopping the
 queue manager either to reconfigure it or as part of application shutdown.
 
@@ -337,6 +348,7 @@ This is an informational message issued after DHCP_DDNS has submitted DNS
 mapping removals which were received and accepted by an appropriate DNS server.
 
 % DHCP_DDNS_REQUEST_DROPPED Request ID %1: Request contains no enabled update requests and will be dropped: %2
+Logged at debug log level 55.
 This is a debug message issued when DHCP_DDNS receives a request which does not
 contain updates in a direction that is enabled.  In other words, if only forward
 updates are enabled and request is received that asks only for reverse updates
@@ -407,15 +419,18 @@ a reverse mapping replacement.  The application will retry against the same
 server or others as appropriate.
 
 % DHCP_DDNS_REV_REQUEST_IGNORED Request ID %1: Reverse updates are disabled, the reverse portion of request will be ignored: %2
+Logged at debug log level 55.
 This is a debug message issued when reverse DNS updates are disabled and
 DHCP_DDNS receives an update request containing a reverse DNS update.  The
 reverse update will not performed.
 
 % DHCP_DDNS_RUN_EXIT application is exiting the event loop
+Logged at debug log level 0.
 This is a debug message issued when the DHCP-DDNS server exits its
 event lo
 
 % DHCP_DDNS_SHUTDOWN_COMMAND application received shutdown command with args: %1
+Logged at debug log level 0.
 This is a debug message issued when the application has been instructed
 to shut down by the controller.
 
@@ -425,6 +440,7 @@ processed all configuration information and is ready to begin processing.
 The version is also printed.
 
 % DHCP_DDNS_STARTING_TRANSACTION Request ID %1:
+Logged at debug log level 50.
 This is a debug message issued when DHCP-DDNS has begun a transaction for
 a given request.
 
@@ -441,9 +457,11 @@ likely a programmatic error, rather than a communications issue. Some or all
 of the DNS updates requested as part of this request did not succeed.
 
 % DHCP_DDNS_UPDATE_REQUEST_SENT Request ID %1: %2 to server: %3
+Logged at debug log level 50.
 This is a debug message issued when DHCP_DDNS sends a DNS request to a DNS
 server.
 
 % DHCP_DDNS_UPDATE_RESPONSE_RECEIVED Request ID %1: to server: %2 status: %3
+Logged at debug log level 50.
 This is a debug message issued when DHCP_DDNS receives sends a DNS update
 response from a DNS server.

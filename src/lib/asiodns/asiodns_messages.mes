@@ -15,10 +15,12 @@ A debug message informing about installing a file descriptor as a server.
 The file descriptor number is noted.
 
 % ASIODNS_FETCH_COMPLETED upstream fetch to %1(%2) has now completed
+Logged at debug log level 70.
 A debug message, this records that the upstream fetch (a query made by the
 resolver on behalf of its client) to the specified address has completed.
 
 % ASIODNS_FETCH_STOPPED upstream fetch to %1(%2) has been stopped
+Logged at debug log level 40.
 An external component has requested the halting of an upstream fetch.  This
 is an allowed operation, and the message should only appear if debug is
 enabled.
@@ -35,6 +37,7 @@ the specified address on the given protocol.  The number of the system
 error that caused the problem is given in the message.
 
 % ASIODNS_READ_TIMEOUT receive timeout while waiting for data from %1(%2)
+Logged at debug log level 50.
 An upstream fetch from the specified address timed out.  This may happen for
 any number of reasons and is most probably a problem at the remote server
 or a problem on the network.  The message will only appear if debug is

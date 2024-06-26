@@ -1,4 +1,4 @@
-# Copyright (C) 2022-2023 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2022-2024 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,20 +7,24 @@
 $NAMESPACE isc::tcp
 
 % MT_TCP_LISTENER_MGR_STARTED MtTcpListenerMgr started with %1 threads, listening on %2:%3, use TLS: %4
+Logged at debug log level 40.
 This debug messages is issued when an MtTcpListenerMgr has been started to
 accept connections.  Arguments detail the number of threads that the listener
 is using, the address and port at which it is listening, and if TLS is used
 or not.
 
 % MT_TCP_LISTENER_MGR_STOPPED MtTcpListenerMgr for %1:%2 stopped.
+Logged at debug log level 40.
 This debug messages is issued when the MtTcpListenerMgr, listening
 at the given address and port, has completed shutdown.
 
 % MT_TCP_LISTENER_MGR_STOPPING Stopping MtTcpListenerMgr for %1:%2
+Logged at debug log level 40.
 This debug messages is issued when the MtTcpListenerMgr, listening
 at the given address and port, has begun to shutdown.
 
 % TCP_CLIENT_REQUEST_RECEIVED received TCP request from %1
+Logged at debug log level 40.
 This debug message is issued when the server finished receiving a TCP
 request from the remote endpoint. The address of the remote endpoint is
 specified as an argument.
@@ -31,10 +35,12 @@ registered on the connection failed unexpectedly.  This is a programmatic
 error that should be submitted as a bug.
 
 % TCP_CONNECTION_REJECTED_BY_FILTER connection from %1 has been denied by the connection filter.
+Logged at debug log level 50.
 This debug message is issued when the server's connection filter rejects
 a new connection based on the client's ip address.
 
 % TCP_CONNECTION_SHUTDOWN shutting down TCP connection from %1
+Logged at debug log level 40.
 This debug message is issued when one of the TCP connections is shut down.
 The connection can be stopped as a result of an error or after the
 successful message exchange with a client.
@@ -44,6 +50,7 @@ This error message is issued when an error occurred during shutting down
 a TCP connection with a client.
 
 % TCP_CONNECTION_STOP stopping TCP connection from %1
+Logged at debug log level 40.
 This debug message is issued when one of the TCP connections is stopped.
 The connection can be stopped as a result of an error or after the
 successful message exchange with a client.
@@ -53,6 +60,7 @@ This error message is issued when an error occurred during closing a
 TCP connection with a client.
 
 % TCP_DATA_RECEIVED received %1 bytes from %2
+Logged at debug log level 55.
 This debug message is issued when the server receives a chunk of data from
 the remote endpoint. This may include the whole request or only a part
 of the request. The first argument specifies the amount of received data.
@@ -60,12 +68,14 @@ The second argument specifies an address of the remote endpoint which
 produced the data.
 
 % TCP_DATA_SENT send %1 bytes to %2
+Logged at debug log level 55.
 This debug message is issued when the server sends a chunk of data to
 the remote endpoint. This may include the whole response or only a part
 of the response. The first argument specifies the amount of sent data.
 The second argument specifies an address of the remote endpoint.
 
 % TCP_IDLE_CONNECTION_TIMEOUT_OCCURRED closing connection with %1 as a result of a timeout
+Logged at debug log level 50.
 This debug message is issued when the TCP connection is being closed as a
 result of being idle.
 
@@ -82,12 +92,14 @@ the address of the remote endpoint. The second argument describes the nature
 error.
 
 % TCP_REQUEST_RECEIVE_START start receiving request from %1 with timeout %2
+Logged at debug log level 50.
 This debug message is issued when the server starts receiving new request
 over the established connection. The first argument specifies the address
 of the remote endpoint. The second argument specifies request timeout in
 seconds.
 
 % TCP_SERVER_RESPONSE_SEND sending TCP response to %1
+Logged at debug log level 40.
 This debug message is issued when the server is starting to send a TCP
 response to a remote endpoint. The argument specifies an address of
 the remote endpoint.
@@ -105,18 +117,21 @@ This information message is issued when the TLS handshake failed at the
 server side. The client address and the error message are displayed.
 
 % TLS_CONNECTION_HANDSHAKE_START start TLS handshake with %1 with timeout %2
+Logged at debug log level 50.
 This debug message is issued when the server starts the TLS handshake
 with the remote endpoint. The first argument specifies the address
 of the remote endpoint. The second argument specifies request timeout in
 seconds.
 
 % TLS_REQUEST_RECEIVE_START start receiving request from %1 with timeout %2
+Logged at debug log level 50.
 This debug message is issued when the server starts receiving new request
 over the established connection. The first argument specifies the address
 of the remote endpoint. The second argument specifies request timeout in
 seconds.
 
 % TLS_SERVER_RESPONSE_SEND sending TLS response to %1
+Logged at debug log level 40.
 This debug message is issued when the server is starting to send a TLS
 response to a remote endpoint. The argument specifies an address of
 the remote endpoint.

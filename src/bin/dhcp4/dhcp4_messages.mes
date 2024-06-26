@@ -23,6 +23,7 @@ the PID file.  The first argument is the DHCPv4 process name, the
 second contains the PID and PID file.
 
 % DHCP4_BUFFER_RECEIVED received buffer from %1:%2 to %3:%4 over interface %5
+Logged at debug log level 40.
 This debug message is logged when the server has received a packet
 over the socket. When the message is logged the contents of the received
 packet hasn't been parsed yet. The only available information is the
@@ -34,12 +35,14 @@ occurred during this attempt. The reason for the error is included in
 the message.
 
 % DHCP4_BUFFER_UNPACK parsing buffer received from %1 to %2 over interface %3
+Logged at debug log level 50.
 This debug message is issued when the server starts parsing the received
 buffer holding the DHCPv4 message. The arguments specify the source and
 destination IPv4 addresses as well as the interface over which the buffer has
 been received.
 
 % DHCP4_BUFFER_WAIT_SIGNAL signal received while waiting for next packet
+Logged at debug log level 50.
 This debug message is issued when the server was waiting for the
 packet, but the wait has been interrupted by the signal received
 by the process. The signal will be handled before the server starts
@@ -66,6 +69,7 @@ to fetch configuration updates. The administrator must fix the configuration
 in the database and reload (or restart) the server.
 
 % DHCP4_CLASSES_ASSIGNED %1: client packet has been assigned on %2 message to the following classes: %3
+Logged at debug log level 40.
 This debug message informs that incoming packet has been assigned to specified
 classes. This is a normal behavior and indicates successful operation.
 The first argument specifies the client and transaction identification
@@ -73,6 +77,7 @@ information. The second argument specifies the DHCPv4 message type. The third
 argument includes all classes to which the packet has been assigned.
 
 % DHCP4_CLASSES_ASSIGNED_AFTER_SUBNET_SELECTION %1: client packet has been assigned to the following classes: %2
+Logged at debug log level 40.
 This debug message informs that incoming packet has been assigned to specified
 classes. This is a normal behavior and indicates successful operation.
 The first argument specifies the client and transaction identification
@@ -80,6 +85,7 @@ information. The second argument includes all classes to which the packet has
 been assigned.
 
 % DHCP4_CLASS_ASSIGNED %1: client packet has been assigned to the following class: %2
+Logged at debug log level 40.
 This debug message informs that incoming packet has been assigned to specified
 class. This is a normal behavior and indicates successful operation.
 The first argument specifies the client and transaction identification
@@ -87,20 +93,24 @@ information. The second argument includes the new class to which the
 packet has been assigned.
 
 % DHCP4_CLASS_UNCONFIGURED %1: client packet belongs to an unconfigured class: %2
+Logged at debug log level 40.
 This debug message informs that incoming packet belongs to a class
 which cannot be found in the configuration. Either a hook written
 before the classification was added to Kea is used, or class naming is
 inconsistent.
 
 % DHCP4_CLASS_UNDEFINED required class %1 has no definition
+Logged at debug log level 40.
 This debug message informs that a class is listed for required evaluation but
 has no definition.
 
 % DHCP4_CLASS_UNTESTABLE required class %1 has no test expression
+Logged at debug log level 40.
 This debug message informs that a class was listed for required evaluation but
 its definition does not include a test expression to evaluate.
 
 % DHCP4_CLIENTID_IGNORED_FOR_LEASES %1: not using client identifier for lease allocation for subnet %2
+Logged at debug log level 50.
 This debug message is issued when the server is processing the DHCPv4 message
 for which client identifier will not be used when allocating new lease or
 renewing existing lease. The server is explicitly configured to not use
@@ -113,6 +123,7 @@ of the subnet where the client is connected and for which this mode of
 operation is configured on the server.
 
 % DHCP4_CLIENT_FQDN_DATA %1: Client sent FQDN option: %2
+Logged at debug log level 55.
 This debug message includes the detailed information extracted from the
 Client FQDN option sent in the query. The first argument includes the
 client and transaction identification information. The second argument
@@ -120,11 +131,13 @@ specifies the detailed information about the FQDN option received
 by the server.
 
 % DHCP4_CLIENT_FQDN_PROCESS %1: processing Client FQDN option
+Logged at debug log level 50.
 This debug message is issued when the server starts processing the Client
 FQDN option sent in the client's query. The argument includes the
 client and transaction identification information.
 
 % DHCP4_CLIENT_HOSTNAME_DATA %1: client sent Hostname option: %2
+Logged at debug log level 55.
 This debug message includes the detailed information extracted from the
 Hostname option sent in the query. The first argument includes the
 client and transaction identification information. The second argument
@@ -132,17 +145,20 @@ specifies the hostname carried in the Hostname option sent by the
 client.
 
 % DHCP4_CLIENT_HOSTNAME_MALFORMED %1: client hostname option malformed: %2
+Logged at debug log level 50.
 This debug message is issued when the DHCP server was unable to process the
 the hostname option sent by the client because the content is malformed.
 The first argument includes the client and transaction identification
 information. The second argument contains a description of the data error.
 
 % DHCP4_CLIENT_HOSTNAME_PROCESS %1: processing client's Hostname option
+Logged at debug log level 50.
 This debug message is issued when the server starts processing the Hostname
 option sent in the client's query. The argument includes the client and
 transaction identification information.
 
 % DHCP4_CLIENT_NAME_PROC_FAIL %1: failed to process the fqdn or hostname sent by a client: %2
+Logged at debug log level 55.
 This debug message is issued when the DHCP server was unable to process the
 FQDN or Hostname option sent by a client. This is likely because the client's
 name was malformed or due to internal server error. The first argument
@@ -180,10 +196,12 @@ immediately after configuring the DHCPv4 packet queue.  The information
 shown depends upon the packet queue type selected.
 
 % DHCP4_CONFIG_RECEIVED received configuration %1
+Logged at debug log level 10.
 A debug message listing the configuration received by the DHCPv4 server.
 The source of that configuration depends on used configuration backend.
 
 % DHCP4_CONFIG_START DHCPv4 server is processing the following configuration: %1
+Logged at debug log level 10.
 This is a debug message that is issued every time the server receives a
 configuration. That happens at start up and also when a server configuration
 change is committed by the administrator.
@@ -278,10 +296,12 @@ However, the server does not have a record for this address. This may indicate
 a client's error or a server's purged database.
 
 % DHCP4_DEFERRED_OPTION_MISSING %1: cannot find deferred option code %2 in the query
+Logged at debug log level 50.
 This debug message is printed when a deferred option cannot be found in
 the query.
 
 % DHCP4_DEFERRED_OPTION_UNPACK_FAIL %1: An error unpacking the deferred option %2: %3
+Logged at debug log level 50.
 A debug message issued when deferred unpacking of an option failed, making it
 to be left unpacked in the packet. The first argument is the option code,
 the second the error.
@@ -291,9 +311,11 @@ This warning message is displayed when the version is a development
 (vs stable) one: the second number of the version is odd.
 
 % DHCP4_DHCP4O6_BAD_PACKET %1: received malformed DHCPv4o6 packet: %2
+Logged at debug log level 50.
 A malformed DHCPv4o6 packet was received.
 
 % DHCP4_DHCP4O6_HOOK_SUBNET4_SELECT_DROP %1: packet was dropped, because a callout set the next step to 'drop'
+Logged at debug log level 40.
 This debug message is printed when a callout installed on the
 subnet4_select hook point sets the next step to 'drop' value. For this particular hook
 point, the setting to that value instructs the server to drop the received
@@ -301,6 +323,7 @@ packet. The argument specifies the client and transaction identification
 information.
 
 % DHCP4_DHCP4O6_HOOK_SUBNET4_SELECT_SKIP %1: no subnet was selected, because a callout set the next skip flag
+Logged at debug log level 40.
 This debug message is printed when a callout installed on the
 subnet4_select hook point sets the next step to SKIP value. For this particular hook
 point, the setting of the flag instructs the server not to choose a
@@ -310,10 +333,12 @@ The argument specifies the client and transaction identification
 information.
 
 % DHCP4_DHCP4O6_PACKET_RECEIVED received DHCPv4o6 packet from DHCPv4 server (type %1) for %2 on interface %3
+Logged at debug log level 40.
 This debug message is printed when the server is receiving a DHCPv4o6
 from the DHCPv4 server over inter-process communication.
 
 % DHCP4_DHCP4O6_PACKET_SEND %1: trying to send packet %2 (type %3) to %4 port %5 on interface %6 encapsulating %7: %8 (type %9)
+Logged at debug log level 40.
 The arguments specify the client identification information (HW address
 and client identifier), DHCPv6 message name and type, source IPv6
 address and port, and interface name, DHCPv4 client identification,
@@ -325,15 +350,18 @@ DHCPv4o6 message to the IPv6 DHCP server. The reason for the
 error is included in the message.
 
 % DHCP4_DHCP4O6_RECEIVE_FAIL failed to receive DHCPv4o6: %1
+Logged at debug log level 50.
 This debug message indicates the inter-process communication with the
 DHCPv6 server failed. The reason for the error is included in
 the message.
 
 % DHCP4_DHCP4O6_RECEIVING receiving DHCPv4o6 packet from DHCPv6 server
+Logged at debug log level 50.
 This debug message is printed when the server is receiving a DHCPv4o6
 from the DHCPv6 server over inter-process communication socket.
 
 % DHCP4_DHCP4O6_RESPONSE_DATA %1: responding with packet %2 (type %3), packet details: %4
+Logged at debug log level 55.
 A debug message including the detailed data about the packet being
 sent to the DHCPv6 server to be forwarded to the client. The first
 argument contains the client and the transaction identification
@@ -342,12 +370,14 @@ and type respectively. The fourth argument contains detailed packet
 information.
 
 % DHCP4_DHCP4O6_SUBNET_DATA %1: the selected subnet details: %2
+Logged at debug log level 55.
 This debug message includes the details of the subnet selected for
 the client. The first argument includes the client and the
 transaction identification information. The second arguments
 includes the subnet details.
 
 % DHCP4_DHCP4O6_SUBNET_SELECTED %1: the subnet with ID %2 was selected for client assignments
+Logged at debug log level 45.
 This is a debug message noting the selection of a subnet to be used for
 address and option assignment. Subnet selection is one of the early
 steps in the processing of incoming client message. The first
@@ -355,6 +385,7 @@ argument includes the client and the transaction identification
 information. The second argument holds the selected subnet id.
 
 % DHCP4_DHCP4O6_SUBNET_SELECTION_FAILED %1: failed to select subnet for the client
+Logged at debug log level 50.
 This debug message indicates that the server failed to select the
 subnet for the client which has sent a message to the server.
 The server will not be able to offer any lease to the client and
@@ -364,6 +395,7 @@ The argument includes the client and the transaction identification
 information.
 
 % DHCP4_DISCOVER %1: server is processing DHCPDISCOVER with hint=%2
+Logged at debug log level 50.
 This is a debug message that indicates the processing of a received DHCPDISCOVER
 message. The first argument contains the client and the transaction
 identification information. The second argument may hold the hint for the server
@@ -384,18 +416,21 @@ This is info message logged when the dynamic reconfiguration of the DHCP server
 succeeded.
 
 % DHCP4_EMPTY_HOSTNAME %1: received empty hostname from the client, skipping processing of this option
+Logged at debug log level 50.
 This debug message is issued when the server received an empty Hostname option
 from a client. Server does not process empty Hostname options and therefore
 option is skipped. The argument holds the client and transaction identification
 information.
 
 % DHCP4_FLEX_ID %1: flexible identifier generated for incoming packet: %2
+Logged at debug log level 40.
 This debug message is printed when host reservation type is set to flexible identifier
 and the expression specified in its configuration generated (was evaluated to)
 an identifier for incoming packet. This debug message is mainly intended as a
 debugging assistance for flexible identifier.
 
 % DHCP4_GENERATE_FQDN %1: client did not send a FQDN or hostname; FQDN will be generated for the client
+Logged at debug log level 55.
 This debug message is issued when the server did not receive a Hostname option
 from the client and hostname generation is enabled.  This provides a means to
 create DNS entries for unsophisticated clients.
@@ -405,6 +440,7 @@ This error message is printed when an ISC or standard exception was raised durin
 processing. This likely indicates a coding error and should be reported to ISC.
 
 % DHCP4_HOOK_BUFFER_RCVD_DROP received buffer from %1 to %2 over interface %3 was dropped because a callout set the drop flag
+Logged at debug log level 15.
 This debug message is printed when a callout installed on buffer4_receive
 hook point set the drop flag. For this particular hook point, the
 setting of the flag by a callout instructs the server to drop the packet.
@@ -412,6 +448,7 @@ The arguments specify the source and destination IPv4 address as well as
 the name of the interface over which the buffer has been received.
 
 % DHCP4_HOOK_BUFFER_RCVD_SKIP received buffer from %1 to %2 over interface %3 is not parsed because a callout set the next step to SKIP.
+Logged at debug log level 50.
 This debug message is printed when a callout installed on
 buffer4_receive hook point set the next step to SKIP. For this particular hook
 point, this value set by a callout instructs the server to
@@ -420,6 +457,7 @@ arguments specify the source and destination IPv4 address as well as
 the name of the interface over which the buffer has been received.
 
 % DHCP4_HOOK_BUFFER_SEND_SKIP %1: prepared response is dropped because a callout set the next step to SKIP.
+Logged at debug log level 40.
 This debug message is printed when a callout installed on buffer4_send
 hook point set the next step to SKIP. For this particular hook point, the
 SKIP value set by a callout instructs the server to drop the packet.
@@ -427,11 +465,13 @@ Server completed all the processing (e.g. may have assigned, updated
 or released leases), but the response will not be send to the client.
 
 % DHCP4_HOOK_DDNS_UPDATE A hook has updated the DDNS parameters: hostname %1=>%2, forward update %3=>%4, reverse update %5=>%6
+Logged at debug log level 15.
 This message indicates that there was a hook called on ddns4_update hook point
 and that hook updated the DDNS update parameters: hostname, or whether to
 conduct forward (A record) or reverse (PTR record) DDNS updates.
 
 % DHCP4_HOOK_DECLINE_SKIP Decline4 hook callouts set status to DROP, ignoring packet.
+Logged at debug log level 15.
 This message indicates that the server received DHCPDECLINE message, it was verified
 to be correct and matching server's lease information. The server called hooks
 for decline4 hook point and one of the callouts set next step status to DROP.
@@ -461,6 +501,7 @@ kea-dhcp4 is using hook libraries (e.g. ping-check) that implement the
 those callouts can fulfill them.
 
 % DHCP4_HOOK_LEASE4_RELEASE_SKIP %1: lease was not released because a callout set the next step to SKIP
+Logged at debug log level 15.
 This debug message is printed when a callout installed on lease4_release
 hook point set the next step status to SKIP. For this particular hook point, the
 value set by a callout instructs the server to not release a lease.
@@ -482,11 +523,13 @@ kea-dhcp4 is using hook libraries (e.g. HA) that implement the
 those callouts can fulfill them.
 
 % DHCP4_HOOK_PACKET_RCVD_SKIP %1: packet is dropped, because a callout set the next step to SKIP
+Logged at debug log level 40.
 This debug message is printed when a callout installed on the pkt4_receive
 hook point sets the next step to SKIP. For this particular hook point, the
 value setting of the flag instructs the server to drop the packet.
 
 % DHCP4_HOOK_PACKET_SEND_DROP %1: prepared DHCPv4 response was not sent because a callout set the next ste to DROP
+Logged at debug log level 15.
 This debug message is printed when a callout installed on the pkt4_send
 hook point set the next step to DROP. For this particular hook point, the setting
 of the value by a callout instructs the server to drop the packet. This
@@ -496,6 +539,7 @@ allocated a lease). The argument specifies the client and transaction
 identification information.
 
 % DHCP4_HOOK_PACKET_SEND_SKIP %1: prepared response is not sent, because a callout set the next stp to SKIP
+Logged at debug log level 40.
 This debug message is printed when a callout installed on the pkt4_send
 hook point sets the next step to SKIP. For this particular hook point, this
 setting instructs the server to drop the packet. This means that
@@ -503,6 +547,7 @@ the client will not get any response, even though the server processed
 client's request and acted on it (e.g. possibly allocated a lease).
 
 % DHCP4_HOOK_SUBNET4_SELECT_4O6_PARKING_LOT_FULL The parked-packet-limit %1, has been reached, dropping query: %2
+Logged at debug log level 15.
 This debug message occurs when the parking lot used to hold client queries
 while the hook library work for them completes has reached or exceeded the
 limit set by the parked-packet-limit global parameter. This can occur when
@@ -511,6 +556,7 @@ kea-dhcp4 is using hook libraries (e.g. radius) that implement the
 those callouts can fulfill them.
 
 % DHCP4_HOOK_SUBNET4_SELECT_DROP %1: packet was dropped, because a callout set the next step to 'drop'
+Logged at debug log level 40.
 This debug message is printed when a callout installed on the
 subnet4_select hook point sets the next step to 'drop' value. For this particular hook
 point, the setting to that value instructs the server to drop the received
@@ -518,11 +564,13 @@ packet. The argument specifies the client and transaction identification
 information.
 
 % DHCP4_HOOK_SUBNET4_SELECT_PARK %1: packet was parked
+Logged at debug log level 40.
 This debug message is printed when a callout installed on the
 subnet4_select hook point set the park flag. The argument holds the
 client and transaction identification information.
 
 % DHCP4_HOOK_SUBNET4_SELECT_PARKING_LOT_FULL The parked-packet-limit %1, has been reached, dropping query: %2
+Logged at debug log level 15.
 This debug message occurs when the parking lot used to hold client queries
 while the hook library work for them completes has reached or exceeded the
 limit set by the parked-packet-limit global parameter. This can occur when
@@ -531,6 +579,7 @@ kea-dhcp4 is using hook libraries (e.g. radius) that implement the
 those callouts can fulfill them.
 
 % DHCP4_HOOK_SUBNET4_SELECT_SKIP %1: no subnet was selected, because a callout set the next skip flag
+Logged at debug log level 40.
 This debug message is printed when a callout installed on the
 subnet4_select hook point sets the next step to SKIP value. For this particular hook
 point, the setting of the flag instructs the server not to choose a
@@ -540,6 +589,7 @@ The argument specifies the client and transaction identification
 information.
 
 % DHCP4_INFORM_DIRECT_REPLY %1: DHCPACK in reply to the DHCPINFORM will be sent directly to %2 over %3
+Logged at debug log level 50.
 This debug message is issued when the DHCPACK will be sent directly to the
 client, rather than via a relay. The first argument contains the client
 and transaction identification information. The second argument contains
@@ -597,6 +647,7 @@ A warning message is issued when an attempt is made to shut down the
 DHCPv4 server but it is not running.
 
 % DHCP4_NO_LEASE_INIT_REBOOT %1: no lease for address %2 requested by INIT-REBOOT client
+Logged at debug log level 50.
 This debug message is issued when the client being in the INIT-REBOOT state
 requested an IPv4 address but this client is unknown. The server will not
 respond. The first argument includes the client and the transaction id
@@ -614,6 +665,7 @@ configuration database.  The database access string with password redacted
 is logged.
 
 % DHCP4_OPEN_SOCKET opening service sockets on port %1
+Logged at debug log level 0.
 A debug message issued during startup, this indicates that the DHCPv4
 server is about to open sockets on the specified port.
 
@@ -632,10 +684,12 @@ A warning message issued when IfaceMgr fails to open and bind a socket. The reas
 for the failure is appended as an argument of the log message.
 
 % DHCP4_PACKET_DROP_0001 %1: failed to parse packet from %2 to %3, received over interface %4, reason: %5, %6
+Logged at debug log level 15.
 The DHCPv4 server has received a packet that it is unable to
 interpret. The reason why the packet is invalid is included in the message.
 
 % DHCP4_PACKET_DROP_0002 %1, from interface %2: no suitable subnet configured for a direct client
+Logged at debug log level 15.
 This info message is logged when received a message from a directly connected
 client but there is no suitable subnet configured for the interface on
 which this message has been received. The IPv4 address assigned on this
@@ -643,6 +697,7 @@ interface must belong to one of the configured subnets. Otherwise
 received message is dropped.
 
 % DHCP4_PACKET_DROP_0003 %1, from interface %2: it contains a foreign server identifier
+Logged at debug log level 15.
 This debug message is issued when received DHCPv4 message is dropped because
 it is addressed to a different server, i.e. a server identifier held by
 this message doesn't match the identifier used by our server. The arguments
@@ -650,12 +705,14 @@ of this message hold the name of the transaction id and interface on which
 the message has been received.
 
 % DHCP4_PACKET_DROP_0004 %1, from interface %2: missing msg-type option
+Logged at debug log level 15.
 This is a debug message informing that incoming DHCPv4 packet did not
 have mandatory DHCP message type option and thus was dropped. The
 arguments specify the client and transaction identification information,
 as well as the interface on which the message has been received.
 
 % DHCP4_PACKET_DROP_0005 %1: unrecognized type %2 in option 53
+Logged at debug log level 15.
 This debug message indicates that the message type carried in DHCPv4 option
 53 is unrecognized by the server. The valid message types are listed
 on the IANA website: http://www.iana.org/assignments/bootp-dhcp-parameters/bootp-dhcp-parameters.xhtml#message-type-53.
@@ -664,6 +721,7 @@ the client and transaction identification information, as well as the
 received message type.
 
 % DHCP4_PACKET_DROP_0006 %1: unsupported DHCPv4 message type %2
+Logged at debug log level 15.
 This debug message indicates that the message type carried in DHCPv4 option
 53 is valid but the message will not be processed by the server. This includes
 messages being normally sent by the server to the client, such as DHCPOFFER,
@@ -671,6 +729,7 @@ DHCPACK, DHCPNAK etc. The first argument specifies the client and transaction
 identification information. The second argument specifies the message type.
 
 % DHCP4_PACKET_DROP_0007 %1: failed to process packet: %2
+Logged at debug log level 15.
 This is a general catch-all message indicating that the processing of a
 received packet failed.  The reason is given in the message.  The server
 will not send a response but will instead ignore the packet. The first
@@ -678,21 +737,25 @@ argument contains the client and transaction identification information.
 The second argument includes the details of the error.
 
 % DHCP4_PACKET_DROP_0008 %1: DHCP service is globally disabled
+Logged at debug log level 15.
 This debug message is issued when a packet is dropped because the DHCP service
 has been temporarily disabled. This affects all received DHCP packets. The
 service may be enabled by the "dhcp-enable" control command or automatically
 after a specified amount of time since receiving "dhcp-disable" command.
 
 % DHCP4_PACKET_DROP_0009 %1: Option 53 missing (no DHCP message type), is this a BOOTP packet?
+Logged at debug log level 15.
 This debug message is issued when a packet is dropped because it did contain
 option 53 and thus has no DHCP message type. The most likely explanation is
 that it was BOOTP packet.
 
 % DHCP4_PACKET_DROP_0010 dropped as member of the special class 'DROP': %1, %2
+Logged at debug log level 15.
 This debug message is emitted when an incoming packet was classified
 into the special class 'DROP' and dropped. The packet details are displayed.
 
 % DHCP4_PACKET_DROP_0011 dropped as sent by the same client than a packet being processed by another thread: dropped %1, %2 by thread %3 as duplicate of %4, %5 processed by %6
+Logged at debug log level 15.
 Currently multi-threading processing avoids races between packets sent by
 a client using the same client id option by dropping new packets until
 processing is finished.
@@ -700,6 +763,7 @@ Packet details and thread identifiers are included for both packets in
 this warning message.
 
 % DHCP4_PACKET_DROP_0012 dropped as sent by the same client than a packet being processed by another thread: dropped %1, %2 by thread %3 as duplicate of %4, %5 processed by %6
+Logged at debug log level 15.
 Currently multi-threading processing avoids races between packets sent by
 a client using the same hardware address by dropping new packets until
 processing is finished.
@@ -707,11 +771,13 @@ Packet details and thread identifiers are included for both packets in
 this warning message.
 
 % DHCP4_PACKET_DROP_0013 dropped as member of the special class 'DROP' after host reservation lookup: %1, %2
+Logged at debug log level 15.
 This debug message is emitted when an incoming packet was classified
 after host reservation lookup into the special class 'DROP' and dropped.
 The packet details are displayed.
 
 % DHCP4_PACKET_DROP_0014 dropped as member of the special class 'DROP' after early global host reservations lookup: %1, %2
+Logged at debug log level 15.
 This debug message is emitted when an incoming packet was classified
 after early global host reservations lookup into the special class 'DROP'
 and dropped. The packet details are displayed.
@@ -725,6 +791,7 @@ contains the source IPv4 address of the packet. The third argument contains
 the name of the received packet.
 
 % DHCP4_PACKET_NAK_0002 %1: invalid address %2 requested by INIT-REBOOT
+Logged at debug log level 50.
 This debug message is issued when the client being in the INIT-REBOOT state
 requested an IPv4 address which is not assigned to him. The server will respond
 to this client with DHCPNAK. The first argument contains the client and
@@ -732,6 +799,7 @@ the transaction identification information. The second arguments holds the
 IPv4 address requested by the client.
 
 % DHCP4_PACKET_NAK_0003 %1: failed to advertise a lease, client sent ciaddr %2, requested-ip-address %3
+Logged at debug log level 50.
 This message indicates that the server has failed to offer a lease to
 the specified client after receiving a DISCOVER message from it. There are
 many possible reasons for such a failure. The first argument contains
@@ -741,6 +809,7 @@ argument contains the IPv4 address in the requested-ip-address option
 (if present).
 
 % DHCP4_PACKET_NAK_0004 %1: failed to grant a lease, client sent ciaddr %2, requested-ip-address %3
+Logged at debug log level 50.
 This message indicates that the server failed to grant a lease to the
 specified client after receiving a REQUEST message from it.  There are many
 possible reasons for such a failure. Additional messages will indicate the
@@ -750,6 +819,7 @@ in the ciaddr field. The third argument contains the IPv4 address in the
 requested-ip-address option (if present).
 
 % DHCP4_PACKET_OPTIONS_SKIPPED %1: An error unpacking an option, caused subsequent options to be skipped: %2
+Logged at debug log level 50.
 A debug message issued when an option failed to unpack correctly, making it
 impossible to unpack the remaining options in the packet.  The server will
 server will still attempt to service the packet.
@@ -760,6 +830,7 @@ to be left unpacked in the packet. The first argument is the option code,
 the second the error.
 
 % DHCP4_PACKET_PACK %1: preparing on-wire format of the packet to be sent
+Logged at debug log level 50.
 This debug message is issued when the server starts preparing the on-wire
 format of the packet to be sent back to the client. The argument specifies
 the client and the transaction identification information.
@@ -796,6 +867,7 @@ continue operation. This error message may appear in main server processing
 loop.
 
 % DHCP4_PACKET_QUEUE_FULL multi-threading packet queue is full
+Logged at debug log level 40.
 A debug message noting that the multi-threading packet queue is full so
 the oldest packet of the queue was dropped to make room for the received one.
 
@@ -869,6 +941,7 @@ the case when the server dynamically switches to another subnet (than
 initially selected for allocation) from the same shared network.
 
 % DHCP4_QUERY_DATA %1, packet details: %2
+Logged at debug log level 55.
 A debug message printing the details of the received packet. The first
 argument includes the client and the transaction identification
 information.
@@ -882,12 +955,14 @@ This error message indicates that the reclaim expired leases operation failed
 and provides the cause of failure.
 
 % DHCP4_RECOVERED_STASHED_RELAY_AGENT_INFO recovered for query %1 relay agent option from lease %2: %3
+Logged at debug log level 55.
 This debug message indicates that agent options were stashed in the lease for
 the client address of the request and were recovered. The first argument
 includes the request information, the second the client address and the last
 argument the content of the dhcp-agent-options option.
 
 % DHCP4_RELEASE %1: address %2 was released properly.
+Logged at debug log level 50.
 This informational message indicates that an address was released properly. It
 is a normal operation during client shutdown. The first argument includes
 the client and transaction identification information. The second argument
@@ -916,6 +991,7 @@ client and transaction identification information. The second argument includes
 the released IPv4 address.
 
 % DHCP4_RELEASE_FAIL %1: failed to remove lease for address %2
+Logged at debug log level 50.
 This error message indicates that the software failed to remove a
 lease from the lease database. It is probably due to an error during a
 database operation: resolution will most likely require administrator
@@ -927,6 +1003,7 @@ information. The second argument holds the IPv4 address which release
 was attempted.
 
 % DHCP4_RELEASE_FAIL_NO_LEASE %1: client is trying to release non-existing lease %2
+Logged at debug log level 50.
 This debug message is printed when client attempts to release a lease,
 but no such lease is known to the server. The first argument contains
 the client and transaction identification information. The second
@@ -934,6 +1011,7 @@ argument contains the IPv4 address which the client is trying to
 release.
 
 % DHCP4_RELEASE_FAIL_WRONG_CLIENT %1: client is trying to release the lease %2 which belongs to a different client
+Logged at debug log level 50.
 This debug message is issued when a client is trying to release the
 lease for the address which is currently used by another client, i.e.
 the 'client identifier' or 'chaddr' doesn't match between the client
@@ -942,6 +1020,7 @@ transaction identification information. The second argument specifies
 the leased address.
 
 % DHCP4_REQUEST %1: server is processing DHCPREQUEST with hint=%2
+Logged at debug log level 50.
 This is a debug message that indicates the processing of a received DHCPREQUEST
 message. The first argument contains the client and the transaction
 identification information. The second argument may hold the hint for the server
@@ -954,12 +1033,14 @@ This is a message informing that host reservations lookup is performed before
 lease lookup when multi-threading is enabled overwriting configured value.
 
 % DHCP4_RESERVED_HOSTNAME_ASSIGNED %1: server assigned reserved hostname %2
+Logged at debug log level 55.
 This debug message is issued when the server found a hostname reservation
 for a client and uses this reservation in a hostname option sent back
 to this client. The reserved hostname is qualified with a value
 of 'ddns-qualifying-suffix' parameter, if this parameter is specified.
 
 % DHCP4_RESPONSE_DATA %1: responding with packet %2 (type %3), packet details: %4
+Logged at debug log level 55.
 A debug message including the detailed data about the packet being sent
 to the client. The first argument contains the client and the transaction
 identification information. The second and third argument contains the
@@ -967,6 +1048,7 @@ packet name and type respectively. The fourth argument contains detailed
 packet information.
 
 % DHCP4_RESPONSE_FQDN_DATA %1: including FQDN option in the server's response: %2
+Logged at debug log level 55.
 This debug message is issued when the server is adding the Client FQDN
 option in its response to the client. The first argument includes the
 client and transaction identification information. The second argument
@@ -975,6 +1057,7 @@ name carried in the FQDN option may be modified by the server when
 the lease is acquired for the client.
 
 % DHCP4_RESPONSE_HOSTNAME_DATA %1: including Hostname option in the server's response: %2
+Logged at debug log level 55.
 This debug message is issued when the server is adding the Hostname
 option in its response to the client. The first argument includes the
 client and transaction identification information. The second argument
@@ -983,6 +1066,7 @@ name carried in the Hostname option may be modified by the server when
 the lease is acquired for the client.
 
 % DHCP4_RESPONSE_HOSTNAME_GENERATE %1: server has generated hostname %2 for the client
+Logged at debug log level 50.
 This debug message includes the auto-generated hostname which will be used
 for the client which message is processed. Hostnames may need to be generated
 when required by the server's configuration or when the client hasn't
@@ -1030,9 +1114,11 @@ the transaction identification information. The second argument holds the IPv4
 address for which the decline was attempted.
 
 % DHCP4_SHUTDOWN server shutdown
+Logged at debug log level 40.
 The DHCPv4 server has terminated normally.
 
 % DHCP4_SHUTDOWN_REQUEST shutdown of server requested
+Logged at debug log level 40.
 This debug message indicates that a shutdown of the DHCPv4 server has
 been requested via a call to the 'shutdown' method of the core Dhcpv4Srv
 object.
@@ -1073,17 +1159,20 @@ processed any command-line switches and is starting. The version
 is also printed.
 
 % DHCP4_START_INFO pid: %1, server port: %2, client port: %3, verbose: %4
+Logged at debug log level 0.
 This is a debug message issued during the DHCPv4 server startup.
 It lists some information about the parameters with which the server
 is running.
 
 % DHCP4_SUBNET_DATA %1: the selected subnet details: %2
+Logged at debug log level 55.
 This debug message includes the details of the subnet selected for
 the client. The first argument includes the client and the
 transaction identification information. The second arguments
 includes the subnet details.
 
 % DHCP4_SUBNET_DYNAMICALLY_CHANGED %1: changed selected subnet %2 to subnet %3 from shared network %4 for client assignments
+Logged at debug log level 45.
 This debug message indicates that the server is using another subnet
 than initially selected for client assignments. This newly selected
 subnet belongs to the same shared network as the original subnet.
@@ -1092,6 +1181,7 @@ exhaustion in the original subnet or the fact that the new subnet
 includes some static reservations for this client.
 
 % DHCP4_SUBNET_SELECTED %1: the subnet with ID %2 was selected for client assignments
+Logged at debug log level 45.
 This is a debug message noting the selection of a subnet to be used for
 address and option assignment. Subnet selection is one of the early
 steps in the processing of incoming client message. The first
@@ -1099,6 +1189,7 @@ argument includes the client and the transaction identification
 information. The second argument holds the selected subnet id.
 
 % DHCP4_SUBNET_SELECTION_FAILED %1: failed to select subnet for the client
+Logged at debug log level 50.
 This debug message indicates that the server failed to select the
 subnet for the client which has sent a message to the server.
 The server will not be able to offer any lease to the client and
@@ -1114,6 +1205,7 @@ source address of incoming packet. Usable just in testing environment
 to simulate multiple subnet traffic from single source.
 
 % DHCP4_UNKNOWN_ADDRESS_REQUESTED %1: client requested an unknown address, client sent ciaddr %2, requested-ip-address %3
+Logged at debug log level 50.
 This message indicates that the client requested an address that does
 not belong to any dynamic pools managed by this server.  The first argument
 contains the client and the transaction identification information.

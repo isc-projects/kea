@@ -11,6 +11,7 @@ This informational message is issued when the initial configuration
 was retrieved using NETCONF and successfully applied to Kea server.
 
 % NETCONF_CONFIG_CHANGED_DETAIL YANG configuration changed: %1
+Logged at debug log level 55.
 This debug message indicates a YANG configuration change. The format
 is the change operation (created, modified, deleted or moved) followed
 by xpaths and values of old and new nodes.
@@ -38,6 +39,7 @@ This is a fatal error message issued when kea-netconf
 got an unrecoverable error from within the event loop.
 
 % NETCONF_GET_CONFIG got configuration from %1 server: %2
+Logged at debug log level 55.
 This debug message indicates that kea-netconf got the configuration from a
 Kea server. The server name and the retrieved configuration are printed.
 
@@ -99,10 +101,12 @@ there may be other more unexpected causes as well.
 The server name, module name and the error are printed.
 
 % NETCONF_RUN_EXIT application is exiting the event loop
+Logged at debug log level 0.
 This is a debug message issued when kea-netconf exits its
 event loop. This is a normal step during kea-netconf shutdown.
 
 % NETCONF_SET_CONFIG set configuration to %1 server: %2
+Logged at debug log level 55.
 This debug message indicates that kea-netconf set the configuration to a
 Kea server. The server name and the applied configuration are printed.
 
@@ -137,6 +141,7 @@ This information message indicates that kea-netconf is trying to subscribe to
 notifications for a Kea server. The server name and module name are printed.
 
 % NETCONF_UPDATE_CONFIG updating configuration with %1 server: %2
+Logged at debug log level 55.
 This debug message indicates that kea-netconf update the configuration
 of a Kea server. The server name and the updated configuration are
 printed.
@@ -156,6 +161,7 @@ This informational message indicates that kea-netconf is trying to update the
 configuration of a Kea server.
 
 % NETCONF_VALIDATE_CONFIG validating configuration with %1 server: %2
+Logged at debug log level 55.
 This debug message indicates that kea-netconf is validating the configuration
 with a Kea server. The server name and the validated configuration are
 printed.
