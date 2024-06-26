@@ -216,11 +216,7 @@ public:
         fake_received_.push_back(pkt);
     }
 
-    virtual ~NakedDhcpv6Srv() {
-        // Close the lease database
-        isc::dhcp::LeaseMgrFactory::destroy();
-        getIOService()->stopAndPoll();
-    }
+    virtual ~NakedDhcpv6Srv() = default;
 
     /// @brief Processes incoming Solicit message.
     ///

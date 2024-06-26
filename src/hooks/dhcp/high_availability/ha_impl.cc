@@ -66,6 +66,9 @@ HAImpl::~HAImpl() {
         // than relying on destruction order.
         service->stopClientAndListener();
     }
+    config_.reset();
+    services_.reset(new HAServiceMapper());
+    io_service_->stopAndPoll();
 }
 
 void

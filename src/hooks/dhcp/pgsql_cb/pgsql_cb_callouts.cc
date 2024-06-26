@@ -94,9 +94,11 @@ int unload() {
     // Unregister the factories and remove PostgreSQL backends
     isc::dhcp::PgSqlConfigBackendDHCPv4::unregisterBackendType();
     isc::dhcp::PgSqlConfigBackendDHCPv6::unregisterBackendType();
-    IOServiceMgr::instance().unregisterIOService(isc::dhcp::PgSqlConfigBackendImpl::getIOService());
-    if (isc::dhcp::PgSqlConfigBackendImpl::getIOService()) {
-        isc::dhcp::PgSqlConfigBackendImpl::getIOService()->stopAndPoll();
+    IOServicePtr io_service = isc::dhcp::PgSqlConfigBackendImpl::getIOService();
+    if (io_service) {
+        IOServiceMgr::instance().unregisterIOService(io_service);
+        io_service->stopAndPoll();
+        isc::dhcp::PgSqlConfigBackendImpl::setIOService(IOServicePtr());
     }
     return (0);
 }

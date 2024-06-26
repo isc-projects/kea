@@ -245,7 +245,6 @@ protected:
 
     /// @brief Pointer to the high availability services (state machines).
     HAServiceMapperPtr services_;
-
 };
 
 /// @brief Pointer to the High Availability hooks library implementation.
