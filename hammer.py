@@ -1367,12 +1367,6 @@ ssl_key = {cert_dir}/kea-client.key
             execute('cat /var/log/mysql/error.log', raise_error=False)
             sys.exit(exit_code)
 
-    elif system == 'freebsd':
-        cmd = "echo 'SET PASSWORD = \"\";' "
-        cmd += ("| sudo mysql -u root --password=\"$(sudo cat /root/.mysql_secret | grep -v '^#')\""
-                " --connect-expired-password")
-        execute(cmd, raise_error=False)
-
     elif system == 'alpine':
         execute('sudo sed -i "/^skip-networking$/d" /etc/my.cnf.d/mariadb-server.cnf')
         execute('sudo rc-update add mariadb')
@@ -1489,9 +1483,6 @@ def _change_postgresql_auth_method(connection_type, auth_method, hba_file):
 def _configure_pgsql(system, features):
     """ Configure PostgreSQL DB """
 
-    if system == 'freebsd':
-        execute('sudo sysrc postgresql_enable="yes"')
-
     # Some execute() calls set cwd='/tmp' when switching user to postgres to
     # avoid the error:
     #   could not change as postgres user directory to "/home/jenkins": Permission denied
@@ -1505,26 +1496,25 @@ def _configure_pgsql(system, features):
             else:
                 execute('sudo postgresql-setup --initdb --unit postgresql')
     elif system == 'freebsd':
-        # Trying to match e.g. /var/db/postgres/data13
-        if not glob.glob('/var/db/postgres/data*'):
-            execute('sudo service postgresql initdb')
+        # If data directory is not created, then initdb.
+        var_db_postgres_data = glob.glob('/var/db/postgres/data*')
+        if len(var_db_postgres_data) == 0:
+            execute('sudo service postgresql oneinitdb')
 
-        # Stop any hypothetical existing postgres service.
-        execute('sudo service postgresql stop || true')
-
-        # Get the path to the data directory e.g. /var/db/postgres/data11 for
-        # FreeBSD 12 and /var/db/postgres/data13 for FreeBSD 13.
-        _, output = execute('ls -1d /var/db/postgres/data*', capture=True)
-        var_db_postgres_data = output.rstrip()
-
-        # Create postgres internals.
-        execute(f'sudo test ! -d {var_db_postgres_data} && sudo /usr/local/etc/rc.d/postgresql oneinitdb || true')
+        # Get data directory again. It will be needed later.
+        var_db_postgres_data = glob.glob('/var/db/postgres/data*')
+        if len(var_db_postgres_data) == 0:
+            raise UnexpectedError('Could not find /var/db/postgres/data*')
+        var_db_postgres_data = var_db_postgres_data[-1]
 
         # if the file '/var/db/postgres/data*/postmaster.opts' does not exist the 'restart' of postgresql will fail
         # with error:
         #    pg_ctl: could not read file "/var/db/postgres/data*/postmaster.opts"
         # the initial start of the postgresql will create the 'postmaster.opts' file
-        execute(f'sudo test ! -f {var_db_postgres_data}/postmaster.opts && sudo service postgresql onestart || true')
+        # There might be a bug that makes execute freeze when the subprocess exits before reaching communicate().
+        # In reality, this should never happen. I'm suspecting a bug in python. interactive=True prevents the freeze.
+        execute(f'if sudo test ! -f {var_db_postgres_data}/postmaster.opts; then sudo service postgresql onestart; fi',
+                interactive=True)
 
     _enable_postgresql(system)
     _restart_postgresql(system)
@@ -1966,10 +1956,14 @@ def install_packages_local(system, revision, features, check_times, ignore_error
                 packages.extend(['mysql80-server', 'mysql80-client'])
 
         if 'pgsql' in features:
-            if revision.startswith(('11', '12')):
-                packages.extend(['postgresql11-server', 'postgresql11-client'])
-            else:
-                packages.extend(['postgresql13-server', 'postgresql13-client'])
+            # Install the latest postgresql-client and postgresql-server.
+            _, output = execute("pkg search postgresql | grep -E 'postgresql[0-9]+-client' | tail -n 1 | "
+                                "cut -d ' ' -f 1 | cut -d '-' -f 1-2", capture=True)
+            postgresql_client = output.strip()
+            _, output = execute("pkg search postgresql | grep -E 'postgresql[0-9]+-server' | tail -n 1 | "
+                                "cut -d ' ' -f 1 | cut -d '-' -f 1-2", capture=True)
+            postgresql_server = output.strip()
+            packages.extend([postgresql_client, postgresql_server])
 
         if 'gssapi' in features:
             packages.extend(['krb5-devel'])
