@@ -1621,6 +1621,55 @@ TEST_F(LibDhcpTest, fuseLongOptionWithLongSuboption) {
     }
 }
 
+// This test verifies that fuse options for v4 is working correctly.
+TEST_F(LibDhcpTest, fuseNotAligned) {
+    OptionBuffer buf = {
+        DHO_SUBNET_MASK,             // Option subnet-mask first part.
+        2,                           // length 2.
+        192, 0,                      // Address 192.0.2.1 first part.
+        DHO_VENDOR_CLASS_IDENTIFIER, // Option vendor-class-identifer.
+        3,                           // length 3.
+        0x66, 0x6f, 0x6f,            // "foo".
+        DHO_SUBNET_MASK,             // Option subnet mask second part.
+        2,                           // length 2.
+        2, 1,                        // Address 192.0.2.1 second part.
+        DHO_VENDOR_CLASS_IDENTIFIER, // Option vendor-class-identifer.
+        3,                           // length 3.
+        0x62, 0x61, 0x72             // "bar".
+    };
+    OptionCollection options;
+    std::list<uint16_t> deferred_options;
+    ASSERT_NO_THROW(LibDHCP::unpackOptions4(buf, DHCP4_OPTION_SPACE, options,
+                                            deferred_options));
+    ASSERT_EQ(2, options.size());
+    bool seen_subnet(false);
+    bool seen_vci(false);
+    for (auto const& option : options) {
+        if (option.first == DHO_SUBNET_MASK) {
+            EXPECT_FALSE(seen_subnet);
+            seen_subnet = true;
+            OptionCustomPtr subnet =
+                boost::dynamic_pointer_cast<OptionCustom>(option.second);
+            ASSERT_TRUE(subnet);
+            IOAddress addr("::");
+            EXPECT_NO_THROW(addr = subnet->readAddress(0));
+            EXPECT_EQ("192.0.2.1", addr.toText());
+            EXPECT_THROW(subnet->readAddress(1), isc::OutOfRange);
+        } else if (option.first == DHO_VENDOR_CLASS_IDENTIFIER) {
+            EXPECT_FALSE(seen_vci);
+            seen_vci = true;
+            OptionStringPtr vci =
+                boost::dynamic_pointer_cast<OptionString>(option.second);
+            ASSERT_TRUE(vci);
+            EXPECT_EQ("foobar", vci->getValue());
+        } else {
+            FAIL() << "unexpected option " << option.second->toText();
+        }
+    }
+    EXPECT_TRUE(seen_subnet);
+    EXPECT_TRUE(seen_vci);
+}
+
 // This test checks that the server can receive multiple vendor options
 // (code 124) with some using the same enterprise ID and some using a different
 // enterprise ID. It should also be able to extend one option which contains
