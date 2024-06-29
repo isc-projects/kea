@@ -168,7 +168,7 @@ Dhcpv4Exchange::Dhcpv4Exchange(const AllocEnginePtr& alloc_engine,
                                const Subnet4Ptr& subnet,
                                bool& drop)
     : alloc_engine_(alloc_engine), query_(query), resp_(),
-      context_(context) {
+      context_(context), ipv6_only_preferred_(false) {
 
     if (!alloc_engine_) {
         isc_throw(BadValue, "alloc_engine value must not be NULL"
@@ -2840,6 +2840,53 @@ Dhcpv4Srv::createNameChangeRequests(const Lease4Ptr& lease,
     }
 }
 
+bool
+Dhcpv4Srv::assignZero(Subnet4Ptr& subnet, const ClientClasses& client_classes) {
+    Subnet4Ptr current_subnet = subnet;
+    while (current_subnet) {
+        // Try pools.
+        for (auto const& pool : current_subnet->getPools(Lease::TYPE_V4)) {
+            if (!pool->clientSupported(client_classes)) {
+                continue;
+            }
+            auto const& co = pool->getCfgOption();
+            if (!co->empty()) {
+                OptionDescriptor desc = co->get(DHCP4_OPTION_SPACE,
+                                                DHO_V6_ONLY_PREFERRED);
+                if (desc.option_) {
+                    subnet = current_subnet;
+                    return (true);
+                }
+            }
+        }
+        // Try the subnet.
+        auto const& co = current_subnet->getCfgOption();
+        if (!co->empty()) {
+            OptionDescriptor desc = co->get(DHCP4_OPTION_SPACE,
+                                            DHO_V6_ONLY_PREFERRED);
+            if (desc.option_) {
+                subnet = current_subnet;
+                return (true);
+            }
+        }
+        current_subnet = current_subnet->getNextSubnet(subnet, client_classes);
+    }
+    // Try the shared network.
+    SharedNetwork4Ptr network;
+    subnet->getSharedNetwork(network);
+    if (network) {
+        auto const& co = network->getCfgOption();
+        if (!co->empty()) {
+            OptionDescriptor desc = co->get(DHCP4_OPTION_SPACE,
+                                            DHO_V6_ONLY_PREFERRED);
+            if (desc.option_) {
+                return (true);
+            }
+        }
+    }
+    return (false);
+}
+
 void
 Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
     // Get the pointers to the query and the response messages.
@@ -2848,6 +2895,35 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
 
     // Get the context.
     AllocEngine::ClientContext4Ptr ctx = ex.getContext();
+
+    // Subnet should have been already selected when the context was created.
+    Subnet4Ptr subnet = ctx->subnet_;
+
+    // "Fake" allocation is processing of DISCOVER message. We pretend to do an
+    // allocation, but we do not put the lease in the database. That is ok,
+    // because we do not guarantee that the user will get that exact lease. If
+    // the user selects this server to do actual allocation (i.e. sends REQUEST)
+    // it should include this hint. That will help us during the actual lease
+    // allocation.
+    bool fake_allocation = (query->getType() == DHCPDISCOVER);
+
+    // Check if IPv6-Only Preferred was requested.
+    OptionUint8ArrayPtr option_prl = boost::dynamic_pointer_cast<
+        OptionUint8Array>(query->getOption(DHO_DHCP_PARAMETER_REQUEST_LIST));
+    if (option_prl) {
+        auto const& requested_opts = option_prl->getValues();
+        if ((std::find(requested_opts.cbegin(), requested_opts.cend(),
+                       DHO_V6_ONLY_PREFERRED) != requested_opts.cend()) &&
+            assignZero(subnet, query->getClasses())) {
+            ex.setIPv6OnlyPreferred(true);
+            ctx->subnet_ = subnet;
+            resp->setYiaddr(IOAddress::IPV4_ZERO_ADDRESS());
+            if (!fake_allocation) {
+                resp->setCiaddr(query->getCiaddr());
+            }
+            return;
+        }
+    }
 
     // Get the server identifier. It will be used to determine the state
     // of the client.
@@ -2866,17 +2942,6 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
         hint = query->getCiaddr();
 
     }
-
-    // "Fake" allocation is processing of DISCOVER message. We pretend to do an
-    // allocation, but we do not put the lease in the database. That is ok,
-    // because we do not guarantee that the user will get that exact lease. If
-    // the user selects this server to do actual allocation (i.e. sends REQUEST)
-    // it should include this hint. That will help us during the actual lease
-    // allocation.
-    bool fake_allocation = (query->getType() == DHCPDISCOVER);
-
-    // Subnet should have been already selected when the context was created.
-    Subnet4Ptr subnet = ctx->subnet_;
 
     // This flag controls whether or not the server should respond to the clients
     // in the INIT-REBOOT state. We will initialize it to a configured value only
@@ -3716,8 +3781,9 @@ Dhcpv4Srv::processDiscover(Pkt4Ptr& discover, AllocEngine::ClientContext4Ptr& co
         return (Pkt4Ptr());
     }
 
-    // Adding any other options makes sense only when we got the lease.
-    if (!ex.getResponse()->getYiaddr().isV4Zero()) {
+    // Adding any other options makes sense only when we got the lease
+    // or it is for an IPv6-Only client.
+    if (!ex.getResponse()->getYiaddr().isV4Zero() || ex.getIPv6OnlyPreferred()) {
         // If this is global reservation or the subnet doesn't belong to a shared
         // network we have already fetched it and evaluated the classes.
         ex.conditionallySetReservedClientClasses();
@@ -3732,6 +3798,13 @@ Dhcpv4Srv::processDiscover(Pkt4Ptr& discover, AllocEngine::ClientContext4Ptr& co
 
         buildCfgOptionList(ex);
         appendRequestedOptions(ex);
+        // Sanity check for IPv6-Only clients.
+        if (ex.getIPv6OnlyPreferred()) {
+            if (!ex.getResponse()->getOption(DHO_V6_ONLY_PREFERRED)) {
+                // Better to drop the packet than to send an insane response.
+                return (Pkt4Ptr());
+            }
+        }
         appendRequestedVendorOptions(ex);
         // There are a few basic options that we always want to
         // include in the response. If client did not request
@@ -3792,8 +3865,9 @@ Dhcpv4Srv::processRequest(Pkt4Ptr& request, AllocEngine::ClientContext4Ptr& cont
         response->addClass("BOOTP");
     }
 
-    // Adding any other options makes sense only when we got the lease.
-    if (!response->getYiaddr().isV4Zero()) {
+    // Adding any other options makes sense only when we got the lease
+    // or it is for an IPv6-Only client.
+    if (!response->getYiaddr().isV4Zero() || ex.getIPv6OnlyPreferred()) {
         // If this is global reservation or the subnet doesn't belong to a shared
         // network we have already fetched it and evaluated the classes.
         ex.conditionallySetReservedClientClasses();
@@ -3808,6 +3882,13 @@ Dhcpv4Srv::processRequest(Pkt4Ptr& request, AllocEngine::ClientContext4Ptr& cont
 
         buildCfgOptionList(ex);
         appendRequestedOptions(ex);
+        // Sanity check for IPv6-Only clients.
+        if (ex.getIPv6OnlyPreferred()) {
+            if (!response->getOption(DHO_V6_ONLY_PREFERRED)) {
+                // Better to drop the packet than to send an insane response.
+                return (Pkt4Ptr());
+            }
+        }
         appendRequestedVendorOptions(ex);
         // There are a few basic options that we always want to
         // include in the response. If client did not request

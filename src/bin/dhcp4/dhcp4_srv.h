@@ -124,6 +124,18 @@ public:
         return (cfg_option_list_);
     }
 
+    /// @brief Returns the IPv6-Only Preferred flag.
+    bool getIPv6OnlyPreferred() const {
+        return (ipv6_only_preferred_);
+    }
+
+    /// @brief Set the IPv6-Only Preferred flag.
+    ///
+    /// @param ipv6_only_preferred new flag value.
+    void setIPv6OnlyPreferred(bool ipv6_only_preferred) {
+        ipv6_only_preferred_ = ipv6_only_preferred;
+    }
+
     /// @brief Sets reserved values of siaddr, sname and file in the
     /// server's response.
     void setReservedMessageFields();
@@ -232,6 +244,9 @@ private:
     /// @note The configured option list is an *ordered* list of
     /// @c CfgOption objects used to append options to the response.
     CfgOptionList cfg_option_list_;
+
+    /// @brief IPv6-Only Preferred flag (RFC 8925).
+    bool ipv6_only_preferred_;
 };
 
 /// @brief Type representing the pointer to the @c Dhcpv4Exchange.
@@ -715,6 +730,21 @@ protected:
     /// @param ex The exchange holding both the client's message and the
     /// server's response.
     void appendRequestedVendorOptions(Dhcpv4Exchange& ex);
+
+    /// @brief Assign the 0.0.0.0 address to an IPv6-Only client.
+    ///
+    /// @note In fact there is no difference between assigning no address
+    /// or assigning the zero address as the assigned address if the
+    /// Yiaddr field of the DHCPv4 message header...
+    ///
+    /// Check if there is a pool, subnet or shared network defining an
+    /// IPv6-Only Preferred option which will be included by the response.
+    ///
+    /// @param subnet Reference to the selected subnet, can be modified if
+    /// the option is found in another subnet of the shared network.
+    /// @param client_classes Client classes.
+    /// @return true if an IPv6-Only Preferred option was found, false otherwise.
+    bool assignZero(Subnet4Ptr& subnet, const ClientClasses& client_classes);
 
     /// @brief Assigns a lease and appends corresponding options
     ///
