@@ -4380,6 +4380,9 @@ GenericConfigBackendDHCPv6Test::getClientClass6Test() {
     EXPECT_EQ(30, client_class->getValid().getMin());
     EXPECT_EQ(60, client_class->getValid().get());
     EXPECT_EQ(90, client_class->getValid().getMax());
+    EXPECT_EQ(25, client_class->getPreferred().getMin());
+    EXPECT_EQ(55, client_class->getPreferred().get());
+    EXPECT_EQ(85, client_class->getPreferred().getMax());
 
     // Validate options belonging to this class.
     ASSERT_TRUE(client_class->getCfgOption());
