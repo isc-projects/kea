@@ -3873,7 +3873,7 @@ Dhcpv4Srv::processRequest(Pkt4Ptr& request, AllocEngine::ClientContext4Ptr& cont
         if (ex.getIPv6OnlyPreferred()) {
             if (!response->getOption(DHO_V6_ONLY_PREFERRED)) {
                 // Better to drop the packet than to send an insane response.
-                LOG_ERROR(packet4_logger, DHCP4_V6_ONLY_PREFERRED_MISSING_IN_OFFER)
+                LOG_ERROR(packet4_logger, DHCP4_V6_ONLY_PREFERRED_MISSING_IN_ACK)
                     .arg(request->getLabel());
                 return (Pkt4Ptr());
             }

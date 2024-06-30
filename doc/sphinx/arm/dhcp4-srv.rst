@@ -3038,6 +3038,19 @@ the same option code) and to fuse the data chunks into one option. This is
 also supported for sub-options if each sub-option data chunk also contains the
 sub-option code and sub-option length.
 
+.. _dhcp4-support-for-v6-only-preferred-option:
+
+Support for IPv6-Only Preferred Option
+--------------------------------------
+
+The ``v6-only-preferred`` (code 108) option is handled in a specific
+way described in `RFC 8925 <https://tools.ietf.org/html/rfc8925>`_
+by :iscman:`kea-dhcp4` when it is configured in a subnet or a
+shared network: when the client requests the option (i.e. puts
+the 108 code in the DHCP parameter request list option) and
+the subnet or shared network is selected the 0.0.0.0 address
+is offered and the option returned in the response.
+
 .. _dhcp4-stateless-configuration:
 
 Stateless Configuration of DHCPv4 Clients

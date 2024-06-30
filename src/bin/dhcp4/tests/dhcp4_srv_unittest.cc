@@ -6249,6 +6249,100 @@ TEST_F(Dhcpv4SrvTest, noV6OnlyPreferredRequestGlobal) {
     EXPECT_EQ(v6only_wait, got_v6op_opt->getValue());
 }
 
+// Verify that when discover requesting v6-only-preferred 0.0.0.0 is offered
+// but the option is not added to the response is an error case.
+TEST_F(Dhcpv4SrvTest, v6OnlyPreferredDiscoverError) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    NakedDhcpv4Srv srv(0);
+
+    // Recreate subnet.
+    Triplet<uint32_t> unspecified;
+    Triplet<uint32_t> valid_lft(500, 1000, 1500);
+    subnet_ = Subnet4::create(IOAddress("192.0.2.0"), 24,
+                              unspecified,
+                              unspecified,
+                              valid_lft,
+                              subnet_->getID());
+    // Add the v6-only-preferred option data.
+    const uint32_t v6only_wait(3600);
+    OptionUint32Ptr v6op_opt(new OptionUint32(Option::V4,
+                                              DHO_V6_ONLY_PREFERRED,
+                                              v6only_wait));
+    subnet_->getCfgOption()->add(v6op_opt, false, false, DHCP4_OPTION_SPACE);
+    CfgMgr::instance().clear();
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->add(subnet_);
+    // Cancel the v6-only-preferred option at the global level.
+    CfgMgr::instance().getStagingCfg()->getCfgOption()->
+        add(v6op_opt, false, true, DHCP4_OPTION_SPACE);
+    CfgMgr::instance().commit();
+
+    Pkt4Ptr dis = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
+    dis->setRemoteAddr(IOAddress("192.0.2.1"));
+    OptionPtr clientid = generateClientId();
+    dis->addOption(clientid);
+    dis->setIface("eth1");
+    dis->setIndex(ETH1_INDEX);
+
+    // Add a PRL with v6-only-preferred.
+    OptionUint8ArrayPtr prl(new OptionUint8Array(Option::V4,
+                                                 DHO_DHCP_PARAMETER_REQUEST_LIST));
+    ASSERT_TRUE(prl);
+    prl->addValue(DHO_V6_ONLY_PREFERRED);
+    dis->addOption(prl);
+
+    // No DHCPOFFER is returned.
+    EXPECT_FALSE(srv.processDiscover(dis));
+}
+
+// Verify that when request requesting v6-only-preferred 0.0.0.0 is offered
+// but the option is not added to the response is an error case.
+TEST_F(Dhcpv4SrvTest, v6OnlyPreferredRequestError) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    NakedDhcpv4Srv srv(0);
+
+    // Recreate subnet.
+    Triplet<uint32_t> unspecified;
+    Triplet<uint32_t> valid_lft(500, 1000, 1500);
+    subnet_ = Subnet4::create(IOAddress("192.0.2.0"), 24,
+                              unspecified,
+                              unspecified,
+                              valid_lft,
+                              subnet_->getID());
+    // Add the v6-only-preferred option data.
+    const uint32_t v6only_wait(3600);
+    OptionUint32Ptr v6op_opt(new OptionUint32(Option::V4,
+                                              DHO_V6_ONLY_PREFERRED,
+                                              v6only_wait));
+    subnet_->getCfgOption()->add(v6op_opt, false, false, DHCP4_OPTION_SPACE);
+    CfgMgr::instance().clear();
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->add(subnet_);
+    // Cancel the v6-only-preferred option at the global level.
+    CfgMgr::instance().getStagingCfg()->getCfgOption()->
+        add(v6op_opt, false, true, DHCP4_OPTION_SPACE);
+    CfgMgr::instance().commit();
+
+    Pkt4Ptr req = Pkt4Ptr(new Pkt4(DHCPREQUEST, 1234));
+    req->setRemoteAddr(IOAddress("192.0.2.1"));
+    OptionPtr clientid = generateClientId();
+    req->addOption(clientid);
+    req->setIface("eth1");
+    req->setIndex(ETH1_INDEX);
+
+    // Add a PRL with v6-only-preferred.
+    OptionUint8ArrayPtr prl(new OptionUint8Array(Option::V4,
+                                                 DHO_DHCP_PARAMETER_REQUEST_LIST));
+    ASSERT_TRUE(prl);
+    prl->addValue(DHO_V6_ONLY_PREFERRED);
+    req->addOption(prl);
+
+    // No DHCPACK is returned.
+    EXPECT_FALSE(srv.processRequest(req));
+}
+
 /// @brief Test fixture for recoverStashedAgentOption.
 class StashAgentOptionTest : public Dhcpv4SrvTest {
 public:

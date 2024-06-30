@@ -1,3 +1,8 @@
+2263.	[func]		fdupont
+	RFC 8925 "IPv6-Only Preferred Option for DHCPv4" is now
+	fully implemented: 0.0.0.0 address can be offerred.
+	(Gitlab #3094)
+
 2262.	[bug]		marcin
 	Corrected a bug in storing and fetching the encapsulated DHCP
 	options from the configuration backend. These options were
