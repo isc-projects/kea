@@ -2843,24 +2843,9 @@ Dhcpv4Srv::createNameChangeRequests(const Lease4Ptr& lease,
 bool
 Dhcpv4Srv::assignZero(Subnet4Ptr& subnet, const ClientClasses& client_classes) {
     Subnet4Ptr current_subnet = subnet;
+    // Try subnets.
     while (current_subnet) {
-        // Try pools.
-        for (auto const& pool : current_subnet->getPools(Lease::TYPE_V4)) {
-            if (!pool->clientSupported(client_classes)) {
-                continue;
-            }
-            auto const& co = pool->getCfgOption();
-            if (!co->empty()) {
-                OptionDescriptor desc = co->get(DHCP4_OPTION_SPACE,
-                                                DHO_V6_ONLY_PREFERRED);
-                if (desc.option_) {
-                    subnet = current_subnet;
-                    return (true);
-                }
-            }
-        }
-        // Try the subnet.
-        auto const& co = current_subnet->getCfgOption();
+        const ConstCfgOptionPtr& co = current_subnet->getCfgOption();
         if (!co->empty()) {
             OptionDescriptor desc = co->get(DHCP4_OPTION_SPACE,
                                             DHO_V6_ONLY_PREFERRED);
@@ -2875,7 +2860,7 @@ Dhcpv4Srv::assignZero(Subnet4Ptr& subnet, const ClientClasses& client_classes) {
     SharedNetwork4Ptr network;
     subnet->getSharedNetwork(network);
     if (network) {
-        auto const& co = network->getCfgOption();
+        const ConstCfgOptionPtr& co = network->getCfgOption();
         if (!co->empty()) {
             OptionDescriptor desc = co->get(DHCP4_OPTION_SPACE,
                                             DHO_V6_ONLY_PREFERRED);
@@ -3802,6 +3787,8 @@ Dhcpv4Srv::processDiscover(Pkt4Ptr& discover, AllocEngine::ClientContext4Ptr& co
         if (ex.getIPv6OnlyPreferred()) {
             if (!ex.getResponse()->getOption(DHO_V6_ONLY_PREFERRED)) {
                 // Better to drop the packet than to send an insane response.
+                LOG_ERROR(packet4_logger, DHCP4_V6_ONLY_PREFERRED_MISSING_IN_OFFER)
+                    .arg(discover->getLabel());
                 return (Pkt4Ptr());
             }
         }
@@ -3886,6 +3873,8 @@ Dhcpv4Srv::processRequest(Pkt4Ptr& request, AllocEngine::ClientContext4Ptr& cont
         if (ex.getIPv6OnlyPreferred()) {
             if (!response->getOption(DHO_V6_ONLY_PREFERRED)) {
                 // Better to drop the packet than to send an insane response.
+                LOG_ERROR(packet4_logger, DHCP4_V6_ONLY_PREFERRED_MISSING_IN_OFFER)
+                    .arg(request->getLabel());
                 return (Pkt4Ptr());
             }
         }

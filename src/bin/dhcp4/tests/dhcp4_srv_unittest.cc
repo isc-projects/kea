@@ -5215,6 +5215,1040 @@ TEST_F(Dhcpv4SrvTest, fixedFieldsInClassOrder) {
     }
 }
 
+// Verify that discover requesting v6-only-preferred 0.0.0.0 is offered
+// only when the option is configured.
+TEST_F(Dhcpv4SrvTest, noV6OnlyPreferredDiscover) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    NakedDhcpv4Srv srv(0);
+
+    Pkt4Ptr dis = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
+    dis->setRemoteAddr(IOAddress("192.0.2.1"));
+    OptionPtr clientid = generateClientId();
+    dis->addOption(clientid);
+    dis->setIface("eth1");
+    dis->setIndex(ETH1_INDEX);
+
+    // Add a PRL with v6-only-preferred.
+    OptionUint8ArrayPtr prl(new OptionUint8Array(Option::V4,
+                                                 DHO_DHCP_PARAMETER_REQUEST_LIST));
+    ASSERT_TRUE(prl);
+    prl->addValue(DHO_V6_ONLY_PREFERRED);
+    dis->addOption(prl);
+
+    // Get the DHCPOFFER.
+    Pkt4Ptr offer = srv.processDiscover(dis);
+    ASSERT_TRUE(offer);
+    checkResponse(offer, DHCPOFFER, 1234);
+
+    // An address was offered.
+    EXPECT_FALSE(offer->getYiaddr().isV4Zero());
+
+    // No v6-only-preferred option.
+    EXPECT_FALSE(offer->getOption(DHO_V6_ONLY_PREFERRED));
+}
+
+// Verify that discover requesting v6-only-preferred 0.0.0.0 is offered
+// only when the option is configured.
+TEST_F(Dhcpv4SrvTest, noV6OnlyPreferredRequest) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    NakedDhcpv4Srv srv(0);
+
+    Pkt4Ptr req = Pkt4Ptr(new Pkt4(DHCPREQUEST, 1234));
+    req->setRemoteAddr(IOAddress("192.0.2.1"));
+    OptionPtr clientid = generateClientId();
+    req->addOption(clientid);
+    req->setIface("eth1");
+    req->setIndex(ETH1_INDEX);
+
+    // Add a PRL with v6-only-preferred.
+    OptionUint8ArrayPtr prl(new OptionUint8Array(Option::V4,
+                                                 DHO_DHCP_PARAMETER_REQUEST_LIST));
+    ASSERT_TRUE(prl);
+    prl->addValue(DHO_V6_ONLY_PREFERRED);
+    req->addOption(prl);
+
+    // Get the DHCPACK.
+    Pkt4Ptr ack = srv.processRequest(req);
+    ASSERT_TRUE(ack);
+    checkResponse(ack, DHCPACK, 1234);
+
+    // An address was offered.
+    EXPECT_FALSE(ack->getYiaddr().isV4Zero());
+
+    // No v6-only-preferred option.
+    EXPECT_FALSE(ack->getOption(DHO_V6_ONLY_PREFERRED));
+}
+
+// Verify that discover requesting v6-only-preferred 0.0.0.0 is offered
+// when the option is configured in the subnet.
+TEST_F(Dhcpv4SrvTest, v6OnlyPreferredDiscover) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    NakedDhcpv4Srv srv(0);
+
+    // Recreate subnet.
+    Triplet<uint32_t> unspecified;
+    Triplet<uint32_t> valid_lft(500, 1000, 1500);
+    subnet_ = Subnet4::create(IOAddress("192.0.2.0"), 24,
+                              unspecified,
+                              unspecified,
+                              valid_lft,
+                              subnet_->getID());
+    // Add the v6-only-preferred option data.
+    const uint32_t v6only_wait(3600);
+    OptionUint32Ptr v6op_opt(new OptionUint32(Option::V4,
+                                              DHO_V6_ONLY_PREFERRED,
+                                              v6only_wait));
+    subnet_->getCfgOption()->add(v6op_opt, false, false, DHCP4_OPTION_SPACE);
+    CfgMgr::instance().clear();
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->add(subnet_);
+    CfgMgr::instance().commit();
+
+    Pkt4Ptr dis = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
+    dis->setRemoteAddr(IOAddress("192.0.2.1"));
+    OptionPtr clientid = generateClientId();
+    dis->addOption(clientid);
+    dis->setIface("eth1");
+    dis->setIndex(ETH1_INDEX);
+
+    // Add a PRL with v6-only-preferred.
+    OptionUint8ArrayPtr prl(new OptionUint8Array(Option::V4,
+                                                 DHO_DHCP_PARAMETER_REQUEST_LIST));
+    ASSERT_TRUE(prl);
+    prl->addValue(DHO_V6_ONLY_PREFERRED);
+    dis->addOption(prl);
+
+    // Get the DHCPOFFER.
+    Pkt4Ptr offer = srv.processDiscover(dis);
+    ASSERT_TRUE(offer);
+    checkResponse(offer, DHCPOFFER, 1234);
+
+    // 0.0.0.0 was offered.
+    EXPECT_TRUE(offer->getYiaddr().isV4Zero());
+
+    // v6-only-preferred option was added.
+    OptionPtr got_opt = offer->getOption(DHO_V6_ONLY_PREFERRED);
+    ASSERT_TRUE(got_opt);
+    OptionUint32Ptr got_v6op_opt =
+        boost::dynamic_pointer_cast<OptionUint32>(got_opt);
+    ASSERT_TRUE(got_v6op_opt);
+    EXPECT_EQ(v6only_wait, got_v6op_opt->getValue());
+}
+
+// Verify that request requesting v6-only-preferred 0.0.0.0 is offered
+// when the option is configured in the subnet.
+TEST_F(Dhcpv4SrvTest, v6OnlyPreferredRequest) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    NakedDhcpv4Srv srv(0);
+
+    // Recreate subnet.
+    Triplet<uint32_t> unspecified;
+    Triplet<uint32_t> valid_lft(500, 1000, 1500);
+    subnet_ = Subnet4::create(IOAddress("192.0.2.0"), 24,
+                              unspecified,
+                              unspecified,
+                              valid_lft,
+                              subnet_->getID());
+    // Add the v6-only-preferred option data.
+    const uint32_t v6only_wait(3600);
+    OptionUint32Ptr v6op_opt(new OptionUint32(Option::V4,
+                                              DHO_V6_ONLY_PREFERRED,
+                                              v6only_wait));
+    subnet_->getCfgOption()->add(v6op_opt, false, false, DHCP4_OPTION_SPACE);
+    CfgMgr::instance().clear();
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->add(subnet_);
+    CfgMgr::instance().commit();
+
+    Pkt4Ptr req = Pkt4Ptr(new Pkt4(DHCPREQUEST, 1234));
+    req->setRemoteAddr(IOAddress("192.0.2.1"));
+    OptionPtr clientid = generateClientId();
+    req->addOption(clientid);
+    req->setIface("eth1");
+    req->setIndex(ETH1_INDEX);
+
+    // Add a PRL with v6-only-preferred.
+    OptionUint8ArrayPtr prl(new OptionUint8Array(Option::V4,
+                                                 DHO_DHCP_PARAMETER_REQUEST_LIST));
+    ASSERT_TRUE(prl);
+    prl->addValue(DHO_V6_ONLY_PREFERRED);
+    req->addOption(prl);
+
+    // Get the DHCPACK.
+    Pkt4Ptr ack = srv.processRequest(req);
+    ASSERT_TRUE(ack);
+    checkResponse(ack, DHCPACK, 1234);
+
+    // 0.0.0.0 was offered.
+    EXPECT_TRUE(ack->getYiaddr().isV4Zero());
+
+    // v6-only-preferred option was added.
+    OptionPtr got_opt = ack->getOption(DHO_V6_ONLY_PREFERRED);
+    ASSERT_TRUE(got_opt);
+    OptionUint32Ptr got_v6op_opt =
+        boost::dynamic_pointer_cast<OptionUint32>(got_opt);
+    ASSERT_TRUE(got_v6op_opt);
+    EXPECT_EQ(v6only_wait, got_v6op_opt->getValue());
+}
+
+// Verify that discover requesting v6-only-preferred 0.0.0.0 is offered
+// when the option is configured in another subnet of the shared network.
+TEST_F(Dhcpv4SrvTest, v6OnlyPreferredDiscoverAnother) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    NakedDhcpv4Srv srv(0);
+
+    // Recreate subnet.
+    Triplet<uint32_t> unspecified;
+    Triplet<uint32_t> valid_lft(500, 1000, 1500);
+    subnet_ = Subnet4::create(IOAddress("192.0.2.0"), 24,
+                              unspecified,
+                              unspecified,
+                              valid_lft,
+                              subnet_->getID());
+    // Add the domain name "foo".
+    OptionStringPtr dn(new OptionString(Option::V4, DHO_DOMAIN_NAME, "foo"));
+    subnet_->getCfgOption()->add(dn, false, false, DHCP4_OPTION_SPACE);
+    // Add another subnet,
+    Subnet4Ptr subnet2 = Subnet4::create(IOAddress("192.0.3.0"), 24,
+                                         unspecified,
+                                         unspecified,
+                                         valid_lft,
+                                         subnet_->getID() + 1);
+    // Add the domain name "bar".
+    OptionStringPtr dn2(new OptionString(Option::V4, DHO_DOMAIN_NAME, "bar"));
+    subnet2->getCfgOption()->add(dn2, false, false, DHCP4_OPTION_SPACE);
+    // Add the v6-only-preferred option data.
+    const uint32_t v6only_wait(3600);
+    OptionUint32Ptr v6op_opt(new OptionUint32(Option::V4,
+                                              DHO_V6_ONLY_PREFERRED,
+                                              v6only_wait));
+    subnet2->getCfgOption()->add(v6op_opt, false, false, DHCP4_OPTION_SPACE);
+    // Create a shared network.
+    SharedNetwork4Ptr network(new SharedNetwork4("one"));
+    network->add(subnet_);
+    network->add(subnet2);
+    CfgMgr::instance().clear();
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->add(subnet_);
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->add(subnet2);
+    CfgMgr::instance().getStagingCfg()->getCfgSharedNetworks4()->add(network);
+    CfgMgr::instance().commit();
+
+    Pkt4Ptr dis = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
+    dis->setRemoteAddr(IOAddress("192.0.2.1"));
+    OptionPtr clientid = generateClientId();
+    dis->addOption(clientid);
+    dis->setIface("eth1");
+    dis->setIndex(ETH1_INDEX);
+
+    // Add a PRL with v6-only-preferred.
+    OptionUint8ArrayPtr prl(new OptionUint8Array(Option::V4,
+                                                 DHO_DHCP_PARAMETER_REQUEST_LIST));
+    ASSERT_TRUE(prl);
+    prl->addValue(DHO_V6_ONLY_PREFERRED);
+    dis->addOption(prl);
+
+    // Get the DHCPOFFER.
+    Pkt4Ptr offer = srv.processDiscover(dis);
+    ASSERT_TRUE(offer);
+    checkResponse(offer, DHCPOFFER, 1234);
+
+    // 0.0.0.0 was offered.
+    EXPECT_TRUE(offer->getYiaddr().isV4Zero());
+
+    // v6-only-preferred option was added.
+    OptionPtr got_opt = offer->getOption(DHO_V6_ONLY_PREFERRED);
+    ASSERT_TRUE(got_opt);
+    OptionUint32Ptr got_v6op_opt =
+        boost::dynamic_pointer_cast<OptionUint32>(got_opt);
+    ASSERT_TRUE(got_v6op_opt);
+    EXPECT_EQ(v6only_wait, got_v6op_opt->getValue());
+
+    // domain-name option "bar" was added.
+    got_opt = offer->getOption(DHO_DOMAIN_NAME);
+    ASSERT_TRUE(got_opt);
+    OptionStringPtr got_dn_opt =
+        boost::dynamic_pointer_cast<OptionString>(got_opt);
+    ASSERT_TRUE(got_dn_opt);
+    EXPECT_EQ("bar", got_dn_opt->getValue());
+}
+
+// Verify that request requesting v6-only-preferred 0.0.0.0 is offered
+// when the option is configured in another subnet of the shared network.
+TEST_F(Dhcpv4SrvTest, v6OnlyPreferredRequestAnother) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    NakedDhcpv4Srv srv(0);
+
+    // Recreate subnet.
+    Triplet<uint32_t> unspecified;
+    Triplet<uint32_t> valid_lft(500, 1000, 1500);
+    subnet_ = Subnet4::create(IOAddress("192.0.2.0"), 24,
+                              unspecified,
+                              unspecified,
+                              valid_lft,
+                              subnet_->getID());
+    // Add the domain name "foo".
+    OptionStringPtr dn(new OptionString(Option::V4, DHO_DOMAIN_NAME, "foo"));
+    subnet_->getCfgOption()->add(dn, false, false, DHCP4_OPTION_SPACE);
+    // Add another subnet,
+    Subnet4Ptr subnet2 = Subnet4::create(IOAddress("192.0.3.0"), 24,
+                                         unspecified,
+                                         unspecified,
+                                         valid_lft,
+                                         subnet_->getID() + 1);
+    // Add the domain name "bar".
+    OptionStringPtr dn2(new OptionString(Option::V4, DHO_DOMAIN_NAME, "bar"));
+    subnet2->getCfgOption()->add(dn2, false, false, DHCP4_OPTION_SPACE);
+    // Add the v6-only-preferred option data.
+    const uint32_t v6only_wait(3600);
+    OptionUint32Ptr v6op_opt(new OptionUint32(Option::V4,
+                                              DHO_V6_ONLY_PREFERRED,
+                                              v6only_wait));
+    subnet2->getCfgOption()->add(v6op_opt, false, false, DHCP4_OPTION_SPACE);
+    // Create a shared network.
+    SharedNetwork4Ptr network(new SharedNetwork4("one"));
+    network->add(subnet_);
+    network->add(subnet2);
+    CfgMgr::instance().clear();
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->add(subnet_);
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->add(subnet2);
+    CfgMgr::instance().getStagingCfg()->getCfgSharedNetworks4()->add(network);
+    CfgMgr::instance().commit();
+
+    Pkt4Ptr req = Pkt4Ptr(new Pkt4(DHCPREQUEST, 1234));
+    req->setRemoteAddr(IOAddress("192.0.2.1"));
+    OptionPtr clientid = generateClientId();
+    req->addOption(clientid);
+    req->setIface("eth1");
+    req->setIndex(ETH1_INDEX);
+
+    // Add a PRL with v6-only-preferred.
+    OptionUint8ArrayPtr prl(new OptionUint8Array(Option::V4,
+                                                 DHO_DHCP_PARAMETER_REQUEST_LIST));
+    ASSERT_TRUE(prl);
+    prl->addValue(DHO_V6_ONLY_PREFERRED);
+    req->addOption(prl);
+
+    // Get the DHCPACK.
+    Pkt4Ptr ack = srv.processRequest(req);
+    ASSERT_TRUE(ack);
+    checkResponse(ack, DHCPACK, 1234);
+
+    // 0.0.0.0 was offered.
+    EXPECT_TRUE(ack->getYiaddr().isV4Zero());
+
+    // v6-only-preferred option was added.
+    OptionPtr got_opt = ack->getOption(DHO_V6_ONLY_PREFERRED);
+    ASSERT_TRUE(got_opt);
+    OptionUint32Ptr got_v6op_opt =
+        boost::dynamic_pointer_cast<OptionUint32>(got_opt);
+    ASSERT_TRUE(got_v6op_opt);
+    EXPECT_EQ(v6only_wait, got_v6op_opt->getValue());
+
+    // domain-name option "bar" was added.
+    got_opt = ack->getOption(DHO_DOMAIN_NAME);
+    ASSERT_TRUE(got_opt);
+    OptionStringPtr got_dn_opt =
+        boost::dynamic_pointer_cast<OptionString>(got_opt);
+    ASSERT_TRUE(got_dn_opt);
+    EXPECT_EQ("bar", got_dn_opt->getValue());
+}
+
+// Verify that discover requesting v6-only-preferred 0.0.0.0 is offered
+// when the option is configured in another subnet of the shared network
+// with a matching guard (another subnet is used when subnet selection
+// skips not matching guards).
+TEST_F(Dhcpv4SrvTest, v6OnlyPreferredDiscoverGuarded) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    NakedDhcpv4Srv srv(0);
+
+    // Recreate subnet.
+    Triplet<uint32_t> unspecified;
+    Triplet<uint32_t> valid_lft(500, 1000, 1500);
+    subnet_ = Subnet4::create(IOAddress("192.0.2.0"), 24,
+                              unspecified,
+                              unspecified,
+                              valid_lft,
+                              subnet_->getID());
+    // Add the domain name "foo".
+    OptionStringPtr dn(new OptionString(Option::V4, DHO_DOMAIN_NAME, "foo"));
+    subnet_->getCfgOption()->add(dn, false, false, DHCP4_OPTION_SPACE);
+    // Add another subnet,
+    Subnet4Ptr subnet2 = Subnet4::create(IOAddress("192.0.3.0"), 24,
+                                         unspecified,
+                                         unspecified,
+                                         valid_lft,
+                                         subnet_->getID() + 1);
+    // Add the "guard" guard to subnet2.
+    subnet2->allowClientClass("guard");
+    // Add the domain name "bar".
+    OptionStringPtr dn2(new OptionString(Option::V4, DHO_DOMAIN_NAME, "bar"));
+    subnet2->getCfgOption()->add(dn2, false, false, DHCP4_OPTION_SPACE);
+    // Add the v6-only-preferred option data.
+    const uint32_t v6only_wait(3600);
+    OptionUint32Ptr v6op_opt(new OptionUint32(Option::V4,
+                                              DHO_V6_ONLY_PREFERRED,
+                                              v6only_wait));
+    subnet2->getCfgOption()->add(v6op_opt, false, false, DHCP4_OPTION_SPACE);
+    // Create a shared network.
+    SharedNetwork4Ptr network(new SharedNetwork4("one"));
+    network->add(subnet_);
+    network->add(subnet2);
+    CfgMgr::instance().clear();
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->add(subnet_);
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->add(subnet2);
+    CfgMgr::instance().getStagingCfg()->getCfgSharedNetworks4()->add(network);
+    CfgMgr::instance().commit();
+
+    Pkt4Ptr dis = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
+    dis->setRemoteAddr(IOAddress("192.0.2.1"));
+    OptionPtr clientid = generateClientId();
+    dis->addOption(clientid);
+    dis->setIface("eth1");
+    dis->setIndex(ETH1_INDEX);
+
+    // Add a PRL with v6-only-preferred.
+    OptionUint8ArrayPtr prl(new OptionUint8Array(Option::V4,
+                                                 DHO_DHCP_PARAMETER_REQUEST_LIST));
+    ASSERT_TRUE(prl);
+    prl->addValue(DHO_V6_ONLY_PREFERRED);
+    dis->addOption(prl);
+
+    // Put into the "guard" class.
+    srv.classifyPacket(dis);
+    dis->addClass("guard");
+
+    // Get the DHCPOFFER.
+    Pkt4Ptr offer = srv.processDiscover(dis);
+    ASSERT_TRUE(offer);
+    checkResponse(offer, DHCPOFFER, 1234);
+
+    // 0.0.0.0 was offered.
+    EXPECT_TRUE(offer->getYiaddr().isV4Zero());
+
+    // v6-only-preferred option was added.
+    OptionPtr got_opt = offer->getOption(DHO_V6_ONLY_PREFERRED);
+    ASSERT_TRUE(got_opt);
+    OptionUint32Ptr got_v6op_opt =
+        boost::dynamic_pointer_cast<OptionUint32>(got_opt);
+    ASSERT_TRUE(got_v6op_opt);
+    EXPECT_EQ(v6only_wait, got_v6op_opt->getValue());
+
+    // domain-name option "bar" was added.
+    got_opt = offer->getOption(DHO_DOMAIN_NAME);
+    ASSERT_TRUE(got_opt);
+    OptionStringPtr got_dn_opt =
+        boost::dynamic_pointer_cast<OptionString>(got_opt);
+    ASSERT_TRUE(got_dn_opt);
+    EXPECT_EQ("bar", got_dn_opt->getValue());
+}
+
+// Verify that request requesting v6-only-preferred 0.0.0.0 is offered
+// when the option is configured in another subnet of the shared network
+// with a matching guard (another subnet is used when subnet selection
+// skips not matching guards).
+TEST_F(Dhcpv4SrvTest, v6OnlyPreferredRequestGuarded) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    NakedDhcpv4Srv srv(0);
+
+    // Recreate subnet.
+    Triplet<uint32_t> unspecified;
+    Triplet<uint32_t> valid_lft(500, 1000, 1500);
+    subnet_ = Subnet4::create(IOAddress("192.0.2.0"), 24,
+                              unspecified,
+                              unspecified,
+                              valid_lft,
+                              subnet_->getID());
+    // Add the domain name "foo".
+    OptionStringPtr dn(new OptionString(Option::V4, DHO_DOMAIN_NAME, "foo"));
+    subnet_->getCfgOption()->add(dn, false, false, DHCP4_OPTION_SPACE);
+    // Add another subnet,
+    Subnet4Ptr subnet2 = Subnet4::create(IOAddress("192.0.3.0"), 24,
+                                         unspecified,
+                                         unspecified,
+                                         valid_lft,
+                                         subnet_->getID() + 1);
+    // Add the "guard" guard to subnet2.
+    subnet2->allowClientClass("guard");
+    // Add the domain name "bar".
+    OptionStringPtr dn2(new OptionString(Option::V4, DHO_DOMAIN_NAME, "bar"));
+    subnet2->getCfgOption()->add(dn2, false, false, DHCP4_OPTION_SPACE);
+    // Add the v6-only-preferred option data.
+    const uint32_t v6only_wait(3600);
+    OptionUint32Ptr v6op_opt(new OptionUint32(Option::V4,
+                                              DHO_V6_ONLY_PREFERRED,
+                                              v6only_wait));
+    subnet2->getCfgOption()->add(v6op_opt, false, false, DHCP4_OPTION_SPACE);
+    // Create a shared network.
+    SharedNetwork4Ptr network(new SharedNetwork4("one"));
+    network->add(subnet_);
+    network->add(subnet2);
+    CfgMgr::instance().clear();
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->add(subnet_);
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->add(subnet2);
+    CfgMgr::instance().getStagingCfg()->getCfgSharedNetworks4()->add(network);
+    CfgMgr::instance().commit();
+
+    Pkt4Ptr req = Pkt4Ptr(new Pkt4(DHCPREQUEST, 1234));
+    req->setRemoteAddr(IOAddress("192.0.2.1"));
+    OptionPtr clientid = generateClientId();
+    req->addOption(clientid);
+    req->setIface("eth1");
+    req->setIndex(ETH1_INDEX);
+
+    // Add a PRL with v6-only-preferred.
+    OptionUint8ArrayPtr prl(new OptionUint8Array(Option::V4,
+                                                 DHO_DHCP_PARAMETER_REQUEST_LIST));
+    ASSERT_TRUE(prl);
+    prl->addValue(DHO_V6_ONLY_PREFERRED);
+    req->addOption(prl);
+
+    // Put into the "guard" class.
+    srv.classifyPacket(req);
+    req->addClass("guard");
+
+    // Get the DHCPACK.
+    Pkt4Ptr ack = srv.processRequest(req);
+    ASSERT_TRUE(ack);
+    checkResponse(ack, DHCPACK, 1234);
+
+    // 0.0.0.0 was offered.
+    EXPECT_TRUE(ack->getYiaddr().isV4Zero());
+
+    // v6-only-preferred option was added.
+    OptionPtr got_opt = ack->getOption(DHO_V6_ONLY_PREFERRED);
+    ASSERT_TRUE(got_opt);
+    OptionUint32Ptr got_v6op_opt =
+        boost::dynamic_pointer_cast<OptionUint32>(got_opt);
+    ASSERT_TRUE(got_v6op_opt);
+    EXPECT_EQ(v6only_wait, got_v6op_opt->getValue());
+
+    // domain-name option "bar" was added.
+    got_opt = ack->getOption(DHO_DOMAIN_NAME);
+    ASSERT_TRUE(got_opt);
+    OptionStringPtr got_dn_opt =
+        boost::dynamic_pointer_cast<OptionString>(got_opt);
+    ASSERT_TRUE(got_dn_opt);
+    EXPECT_EQ("bar", got_dn_opt->getValue());
+}
+
+// Verify that discover requesting v6-only-preferred 0.0.0.0 is not offered
+// when the option is configured in another subnet of the shared network
+// with a not matching guard.
+TEST_F(Dhcpv4SrvTest, noV6OnlyPreferredDiscoverGuarded) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    NakedDhcpv4Srv srv(0);
+
+    // Recreate subnet with a pool.
+    Triplet<uint32_t> unspecified;
+    Triplet<uint32_t> valid_lft(500, 1000, 1500);
+    subnet_ = Subnet4::create(IOAddress("192.0.2.0"), 24,
+                              unspecified,
+                              unspecified,
+                              valid_lft,
+                              subnet_->getID());
+
+    pool_ = Pool4Ptr(new Pool4(IOAddress("192.0.2.100"),
+                               IOAddress("192.0.2.110")));
+    subnet_->addPool(pool_);
+
+    // Add another subnet,
+    Subnet4Ptr subnet2 = Subnet4::create(IOAddress("192.0.3.0"), 24,
+                                         unspecified,
+                                         unspecified,
+                                         valid_lft,
+                                         subnet_->getID() + 1);
+    // Add the "guard" guard to subnet2.
+    subnet2->allowClientClass("guard");
+    // Add the v6-only-preferred option data.
+    const uint32_t v6only_wait(3600);
+    OptionUint32Ptr v6op_opt(new OptionUint32(Option::V4,
+                                              DHO_V6_ONLY_PREFERRED,
+                                              v6only_wait));
+    subnet2->getCfgOption()->add(v6op_opt, false, false, DHCP4_OPTION_SPACE);
+    // Create a shared network.
+    SharedNetwork4Ptr network(new SharedNetwork4("one"));
+    network->add(subnet_);
+    network->add(subnet2);
+    CfgMgr::instance().clear();
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->add(subnet_);
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->add(subnet2);
+    CfgMgr::instance().getStagingCfg()->getCfgSharedNetworks4()->add(network);
+    CfgMgr::instance().commit();
+
+    Pkt4Ptr dis = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
+    dis->setRemoteAddr(IOAddress("192.0.2.1"));
+    OptionPtr clientid = generateClientId();
+    dis->addOption(clientid);
+    dis->setIface("eth1");
+    dis->setIndex(ETH1_INDEX);
+
+    // Add a PRL with v6-only-preferred.
+    OptionUint8ArrayPtr prl(new OptionUint8Array(Option::V4,
+                                                 DHO_DHCP_PARAMETER_REQUEST_LIST));
+    ASSERT_TRUE(prl);
+    prl->addValue(DHO_V6_ONLY_PREFERRED);
+    dis->addOption(prl);
+
+    // Not in the "guard" class.
+    srv.classifyPacket(dis);
+    EXPECT_FALSE(dis->inClass("guard"));
+
+    // Get the DHCPOFFER.
+    Pkt4Ptr offer = srv.processDiscover(dis);
+    ASSERT_TRUE(offer);
+    checkResponse(offer, DHCPOFFER, 1234);
+
+    // An address was offered.
+    EXPECT_FALSE(offer->getYiaddr().isV4Zero());
+
+    // No v6-only-preferred option.
+    EXPECT_FALSE(offer->getOption(DHO_V6_ONLY_PREFERRED));
+}
+
+// Verify that request requesting v6-only-preferred 0.0.0.0 is not offered
+// when the option is configured in another subnet of the shared network
+// with a not matching guard.
+TEST_F(Dhcpv4SrvTest, noV6OnlyPreferredRequestGuarded) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    NakedDhcpv4Srv srv(0);
+
+    // Recreate subnet with a pool.
+    Triplet<uint32_t> unspecified;
+    Triplet<uint32_t> valid_lft(500, 1000, 1500);
+    subnet_ = Subnet4::create(IOAddress("192.0.2.0"), 24,
+                              unspecified,
+                              unspecified,
+                              valid_lft,
+                              subnet_->getID());
+
+    pool_ = Pool4Ptr(new Pool4(IOAddress("192.0.2.100"),
+                               IOAddress("192.0.2.110")));
+    subnet_->addPool(pool_);
+
+    // Add another subnet,
+    Subnet4Ptr subnet2 = Subnet4::create(IOAddress("192.0.3.0"), 24,
+                                         unspecified,
+                                         unspecified,
+                                         valid_lft,
+                                         subnet_->getID() + 1);
+    // Add the "guard" guard to subnet2.
+    subnet2->allowClientClass("guard");
+    // Add the v6-only-preferred option data.
+    const uint32_t v6only_wait(3600);
+    OptionUint32Ptr v6op_opt(new OptionUint32(Option::V4,
+                                              DHO_V6_ONLY_PREFERRED,
+                                              v6only_wait));
+    subnet2->getCfgOption()->add(v6op_opt, false, false, DHCP4_OPTION_SPACE);
+    // Create a shared network.
+    SharedNetwork4Ptr network(new SharedNetwork4("one"));
+    network->add(subnet_);
+    network->add(subnet2);
+    CfgMgr::instance().clear();
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->add(subnet_);
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->add(subnet2);
+    CfgMgr::instance().getStagingCfg()->getCfgSharedNetworks4()->add(network);
+    CfgMgr::instance().commit();
+
+    Pkt4Ptr req = Pkt4Ptr(new Pkt4(DHCPREQUEST, 1234));
+    req->setRemoteAddr(IOAddress("192.0.2.1"));
+    OptionPtr clientid = generateClientId();
+    req->addOption(clientid);
+    req->setIface("eth1");
+    req->setIndex(ETH1_INDEX);
+
+    // Add a PRL with v6-only-preferred.
+    OptionUint8ArrayPtr prl(new OptionUint8Array(Option::V4,
+                                                 DHO_DHCP_PARAMETER_REQUEST_LIST));
+    ASSERT_TRUE(prl);
+    prl->addValue(DHO_V6_ONLY_PREFERRED);
+    req->addOption(prl);
+
+    // Not in the "guard" class.
+    srv.classifyPacket(req);
+    EXPECT_FALSE(req->inClass("guard"));
+
+    // Get the DHCPACK.
+    Pkt4Ptr ack = srv.processRequest(req);
+    ASSERT_TRUE(ack);
+    checkResponse(ack, DHCPACK, 1234);
+
+    // An address was offered.
+    EXPECT_FALSE(ack->getYiaddr().isV4Zero());
+
+    // No v6-only-preferred option.
+    EXPECT_FALSE(ack->getOption(DHO_V6_ONLY_PREFERRED));
+}
+
+// Verify that discover requesting v6-only-preferred 0.0.0.0 is offered
+// when the option is configured in the shared network.
+TEST_F(Dhcpv4SrvTest, v6OnlyPreferredDiscoverSharedNetwork) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    NakedDhcpv4Srv srv(0);
+
+    // Recreate subnet.
+    Triplet<uint32_t> unspecified;
+    Triplet<uint32_t> valid_lft(500, 1000, 1500);
+    subnet_ = Subnet4::create(IOAddress("192.0.2.0"), 24,
+                              unspecified,
+                              unspecified,
+                              valid_lft,
+                              subnet_->getID());
+    // Create a shared network.
+    SharedNetwork4Ptr network(new SharedNetwork4("one"));
+    network->add(subnet_);
+    // Add the v6-only-preferred option data.
+    const uint32_t v6only_wait(3600);
+    OptionUint32Ptr v6op_opt(new OptionUint32(Option::V4,
+                                              DHO_V6_ONLY_PREFERRED,
+                                              v6only_wait));
+    network->getCfgOption()->add(v6op_opt, false, false, DHCP4_OPTION_SPACE);
+
+    CfgMgr::instance().clear();
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->add(subnet_);
+    CfgMgr::instance().getStagingCfg()->getCfgSharedNetworks4()->add(network);
+    CfgMgr::instance().commit();
+
+    Pkt4Ptr dis = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
+    dis->setRemoteAddr(IOAddress("192.0.2.1"));
+    OptionPtr clientid = generateClientId();
+    dis->addOption(clientid);
+    dis->setIface("eth1");
+    dis->setIndex(ETH1_INDEX);
+
+    // Add a PRL with v6-only-preferred.
+    OptionUint8ArrayPtr prl(new OptionUint8Array(Option::V4,
+                                                 DHO_DHCP_PARAMETER_REQUEST_LIST));
+    ASSERT_TRUE(prl);
+    prl->addValue(DHO_V6_ONLY_PREFERRED);
+    dis->addOption(prl);
+
+    // Get the DHCPOFFER.
+    Pkt4Ptr offer = srv.processDiscover(dis);
+    ASSERT_TRUE(offer);
+    checkResponse(offer, DHCPOFFER, 1234);
+
+    // 0.0.0.0 was offered.
+    EXPECT_TRUE(offer->getYiaddr().isV4Zero());
+
+    // v6-only-preferred option was added.
+    OptionPtr got_opt = offer->getOption(DHO_V6_ONLY_PREFERRED);
+    ASSERT_TRUE(got_opt);
+    OptionUint32Ptr got_v6op_opt =
+        boost::dynamic_pointer_cast<OptionUint32>(got_opt);
+    ASSERT_TRUE(got_v6op_opt);
+    EXPECT_EQ(v6only_wait, got_v6op_opt->getValue());
+}
+
+// Verify that request requesting v6-only-preferred 0.0.0.0 is offered
+// when the option is configured in the shared network.
+TEST_F(Dhcpv4SrvTest, v6OnlyPreferredRequestSharedNetwork) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    NakedDhcpv4Srv srv(0);
+
+    // Recreate subnet.
+    Triplet<uint32_t> unspecified;
+    Triplet<uint32_t> valid_lft(500, 1000, 1500);
+    subnet_ = Subnet4::create(IOAddress("192.0.2.0"), 24,
+                              unspecified,
+                              unspecified,
+                              valid_lft,
+                              subnet_->getID());
+    // Create a shared network.
+    SharedNetwork4Ptr network(new SharedNetwork4("one"));
+    network->add(subnet_);
+    // Add the v6-only-preferred option data.
+    const uint32_t v6only_wait(3600);
+    OptionUint32Ptr v6op_opt(new OptionUint32(Option::V4,
+                                              DHO_V6_ONLY_PREFERRED,
+                                              v6only_wait));
+    network->getCfgOption()->add(v6op_opt, false, false, DHCP4_OPTION_SPACE);
+
+    CfgMgr::instance().clear();
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->add(subnet_);
+    CfgMgr::instance().getStagingCfg()->getCfgSharedNetworks4()->add(network);
+    CfgMgr::instance().commit();
+
+    Pkt4Ptr req = Pkt4Ptr(new Pkt4(DHCPREQUEST, 1234));
+    req->setRemoteAddr(IOAddress("192.0.2.1"));
+    OptionPtr clientid = generateClientId();
+    req->addOption(clientid);
+    req->setIface("eth1");
+    req->setIndex(ETH1_INDEX);
+
+    // Add a PRL with v6-only-preferred.
+    OptionUint8ArrayPtr prl(new OptionUint8Array(Option::V4,
+                                                 DHO_DHCP_PARAMETER_REQUEST_LIST));
+    ASSERT_TRUE(prl);
+    prl->addValue(DHO_V6_ONLY_PREFERRED);
+    req->addOption(prl);
+
+    // Get the DHCPACK.
+    Pkt4Ptr ack = srv.processRequest(req);
+    ASSERT_TRUE(ack);
+    checkResponse(ack, DHCPACK, 1234);
+
+    // 0.0.0.0 was offered.
+    EXPECT_TRUE(ack->getYiaddr().isV4Zero());
+
+    // v6-only-preferred option was added.
+    OptionPtr got_opt = ack->getOption(DHO_V6_ONLY_PREFERRED);
+    ASSERT_TRUE(got_opt);
+    OptionUint32Ptr got_v6op_opt =
+        boost::dynamic_pointer_cast<OptionUint32>(got_opt);
+    ASSERT_TRUE(got_v6op_opt);
+    EXPECT_EQ(v6only_wait, got_v6op_opt->getValue());
+}
+
+// Verify that discover requesting v6-only-preferred 0.0.0.0 is not offered
+// when the option is configured in a pool (i.e. either the pool is used
+// to assign the address or the pool is not used to add options).
+TEST_F(Dhcpv4SrvTest, noV6OnlyPreferredDiscoverPool) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    NakedDhcpv4Srv srv(0);
+
+    // Recreate subnet with a pool.
+    Triplet<uint32_t> unspecified;
+    Triplet<uint32_t> valid_lft(500, 1000, 1500);
+    subnet_ = Subnet4::create(IOAddress("192.0.2.0"), 24,
+                              unspecified,
+                              unspecified,
+                              valid_lft,
+                              subnet_->getID());
+
+    pool_ = Pool4Ptr(new Pool4(IOAddress("192.0.2.100"),
+                               IOAddress("192.0.2.110")));
+    subnet_->addPool(pool_);
+
+    // Add the v6-only-preferred option data.
+    const uint32_t v6only_wait(3600);
+    OptionUint32Ptr v6op_opt(new OptionUint32(Option::V4,
+                                              DHO_V6_ONLY_PREFERRED,
+                                              v6only_wait));
+    pool_->getCfgOption()->add(v6op_opt, false, false, DHCP4_OPTION_SPACE);
+
+    CfgMgr::instance().clear();
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->add(subnet_);
+    CfgMgr::instance().commit();
+
+    Pkt4Ptr dis = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
+    dis->setRemoteAddr(IOAddress("192.0.2.1"));
+    OptionPtr clientid = generateClientId();
+    dis->addOption(clientid);
+    dis->setIface("eth1");
+    dis->setIndex(ETH1_INDEX);
+
+    // Add a PRL with v6-only-preferred.
+    OptionUint8ArrayPtr prl(new OptionUint8Array(Option::V4,
+                                                 DHO_DHCP_PARAMETER_REQUEST_LIST));
+    ASSERT_TRUE(prl);
+    prl->addValue(DHO_V6_ONLY_PREFERRED);
+    dis->addOption(prl);
+
+    // Get the DHCPOFFER.
+    Pkt4Ptr offer = srv.processDiscover(dis);
+    ASSERT_TRUE(offer);
+    checkResponse(offer, DHCPOFFER, 1234);
+
+    // Address 192.0.2.100 was offered.
+    EXPECT_EQ("192.0.2.100", offer->getYiaddr().toText());
+
+    // v6-only-preferred option was added because the address is from the pool.
+    OptionPtr got_opt = offer->getOption(DHO_V6_ONLY_PREFERRED);
+    ASSERT_TRUE(got_opt);
+    OptionUint32Ptr got_v6op_opt =
+        boost::dynamic_pointer_cast<OptionUint32>(got_opt);
+    ASSERT_TRUE(got_v6op_opt);
+    EXPECT_EQ(v6only_wait, got_v6op_opt->getValue());
+}
+
+// Verify that request requesting v6-only-preferred 0.0.0.0 is not offered
+// when the option is configured in a pool (i.e. either the pool is used
+// to assign the address or the pool is not used to add options).
+TEST_F(Dhcpv4SrvTest, noV6OnlyPreferredRequestPool) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    NakedDhcpv4Srv srv(0);
+
+    // Recreate subnet with a pool.
+    Triplet<uint32_t> unspecified;
+    Triplet<uint32_t> valid_lft(500, 1000, 1500);
+    subnet_ = Subnet4::create(IOAddress("192.0.2.0"), 24,
+                              unspecified,
+                              unspecified,
+                              valid_lft,
+                              subnet_->getID());
+
+    pool_ = Pool4Ptr(new Pool4(IOAddress("192.0.2.100"),
+                               IOAddress("192.0.2.110")));
+    subnet_->addPool(pool_);
+
+    // Add the v6-only-preferred option data.
+    const uint32_t v6only_wait(3600);
+    OptionUint32Ptr v6op_opt(new OptionUint32(Option::V4,
+                                              DHO_V6_ONLY_PREFERRED,
+                                              v6only_wait));
+    pool_->getCfgOption()->add(v6op_opt, false, false, DHCP4_OPTION_SPACE);
+
+    CfgMgr::instance().clear();
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->add(subnet_);
+    CfgMgr::instance().commit();
+
+    Pkt4Ptr req = Pkt4Ptr(new Pkt4(DHCPREQUEST, 1234));
+    req->setRemoteAddr(IOAddress("192.0.2.1"));
+    OptionPtr clientid = generateClientId();
+    req->addOption(clientid);
+    req->setIface("eth1");
+    req->setIndex(ETH1_INDEX);
+
+    // Add a PRL with v6-only-preferred.
+    OptionUint8ArrayPtr prl(new OptionUint8Array(Option::V4,
+                                                 DHO_DHCP_PARAMETER_REQUEST_LIST));
+    ASSERT_TRUE(prl);
+    prl->addValue(DHO_V6_ONLY_PREFERRED);
+    req->addOption(prl);
+
+    // Get the DHCPACK.
+    Pkt4Ptr ack = srv.processRequest(req);
+    ASSERT_TRUE(ack);
+    checkResponse(ack, DHCPACK, 1234);
+
+    // Address 192.0.2.100 was offered.
+    EXPECT_EQ("192.0.2.100", ack->getYiaddr().toText());
+
+    // v6-only-preferred option was added because the address is from the pool.
+    OptionPtr got_opt = ack->getOption(DHO_V6_ONLY_PREFERRED);
+    ASSERT_TRUE(got_opt);
+    OptionUint32Ptr got_v6op_opt =
+        boost::dynamic_pointer_cast<OptionUint32>(got_opt);
+    ASSERT_TRUE(got_v6op_opt);
+    EXPECT_EQ(v6only_wait, got_v6op_opt->getValue());
+}
+
+// Verify that discover requesting v6-only-preferred 0.0.0.0 is not offered
+// when the option is configured at the global level.
+TEST_F(Dhcpv4SrvTest, noV6OnlyPreferredDiscoverGlobal) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    NakedDhcpv4Srv srv(0);
+
+    // Add the v6-only-preferred option data.
+    const uint32_t v6only_wait(3600);
+    OptionUint32Ptr v6op_opt(new OptionUint32(Option::V4,
+                                              DHO_V6_ONLY_PREFERRED,
+                                              v6only_wait));
+    CfgMgr::instance().clear();
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->add(subnet_);
+    CfgMgr::instance().getStagingCfg()->getCfgOption()->
+        add(v6op_opt, false, false, DHCP4_OPTION_SPACE);
+    CfgMgr::instance().commit();
+
+    Pkt4Ptr dis = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
+    dis->setRemoteAddr(IOAddress("192.0.2.1"));
+    OptionPtr clientid = generateClientId();
+    dis->addOption(clientid);
+    dis->setIface("eth1");
+    dis->setIndex(ETH1_INDEX);
+
+    // Add a PRL with v6-only-preferred.
+    OptionUint8ArrayPtr prl(new OptionUint8Array(Option::V4,
+                                                 DHO_DHCP_PARAMETER_REQUEST_LIST));
+    ASSERT_TRUE(prl);
+    prl->addValue(DHO_V6_ONLY_PREFERRED);
+    dis->addOption(prl);
+
+    // Get the DHCPOFFER.
+    Pkt4Ptr offer = srv.processDiscover(dis);
+    ASSERT_TRUE(offer);
+    checkResponse(offer, DHCPOFFER, 1234);
+
+    // An address was offered.
+    EXPECT_FALSE(offer->getYiaddr().isV4Zero());
+
+    // v6-only-preferred option was added.
+    OptionPtr got_opt = offer->getOption(DHO_V6_ONLY_PREFERRED);
+    ASSERT_TRUE(got_opt);
+    OptionUint32Ptr got_v6op_opt =
+        boost::dynamic_pointer_cast<OptionUint32>(got_opt);
+    ASSERT_TRUE(got_v6op_opt);
+    EXPECT_EQ(v6only_wait, got_v6op_opt->getValue());
+}
+
+// Verify that request requesting v6-only-preferred 0.0.0.0 is not offered
+// when the option is configured at the global level.
+TEST_F(Dhcpv4SrvTest, noV6OnlyPreferredRequestGlobal) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    NakedDhcpv4Srv srv(0);
+
+    // Add the v6-only-preferred option data.
+    const uint32_t v6only_wait(3600);
+    OptionUint32Ptr v6op_opt(new OptionUint32(Option::V4,
+                                              DHO_V6_ONLY_PREFERRED,
+                                              v6only_wait));
+    CfgMgr::instance().clear();
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->add(subnet_);
+    CfgMgr::instance().getStagingCfg()->getCfgOption()->
+        add(v6op_opt, false, false, DHCP4_OPTION_SPACE);
+    CfgMgr::instance().commit();
+
+    Pkt4Ptr req = Pkt4Ptr(new Pkt4(DHCPREQUEST, 1234));
+    req->setRemoteAddr(IOAddress("192.0.2.1"));
+    OptionPtr clientid = generateClientId();
+    req->addOption(clientid);
+    req->setIface("eth1");
+    req->setIndex(ETH1_INDEX);
+
+    // Add a PRL with v6-only-preferred.
+    OptionUint8ArrayPtr prl(new OptionUint8Array(Option::V4,
+                                                 DHO_DHCP_PARAMETER_REQUEST_LIST));
+    ASSERT_TRUE(prl);
+    prl->addValue(DHO_V6_ONLY_PREFERRED);
+    req->addOption(prl);
+
+    // Get the DHCPACK.
+    Pkt4Ptr ack = srv.processRequest(req);
+    ASSERT_TRUE(ack);
+    checkResponse(ack, DHCPACK, 1234);
+
+    // An address was offered.
+    EXPECT_FALSE(ack->getYiaddr().isV4Zero());
+
+    // v6-only-preferred option was added.
+    OptionPtr got_opt = ack->getOption(DHO_V6_ONLY_PREFERRED);
+    ASSERT_TRUE(got_opt);
+    OptionUint32Ptr got_v6op_opt =
+        boost::dynamic_pointer_cast<OptionUint32>(got_opt);
+    ASSERT_TRUE(got_v6op_opt);
+    EXPECT_EQ(v6only_wait, got_v6op_opt->getValue());
+}
+
 /// @brief Test fixture for recoverStashedAgentOption.
 class StashAgentOptionTest : public Dhcpv4SrvTest {
 public:

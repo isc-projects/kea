@@ -174,6 +174,8 @@ extern const isc::log::MessageID DHCP4_SUBNET_SELECTED = "DHCP4_SUBNET_SELECTED"
 extern const isc::log::MessageID DHCP4_SUBNET_SELECTION_FAILED = "DHCP4_SUBNET_SELECTION_FAILED";
 extern const isc::log::MessageID DHCP4_TESTING_MODE_SEND_TO_SOURCE_ENABLED = "DHCP4_TESTING_MODE_SEND_TO_SOURCE_ENABLED";
 extern const isc::log::MessageID DHCP4_UNKNOWN_ADDRESS_REQUESTED = "DHCP4_UNKNOWN_ADDRESS_REQUESTED";
+extern const isc::log::MessageID DHCP4_V6_ONLY_PREFERRED_MISSING_IN_ACK = "DHCP4_V6_ONLY_PREFERRED_MISSING_IN_ACK";
+extern const isc::log::MessageID DHCP4_V6_ONLY_PREFERRED_MISSING_IN_OFFER = "DHCP4_V6_ONLY_PREFERRED_MISSING_IN_OFFER";
 
 } // namespace dhcp
 } // namespace isc
@@ -348,6 +350,8 @@ const char* values[] = {
     "DHCP4_SUBNET_SELECTION_FAILED", "%1: failed to select subnet for the client",
     "DHCP4_TESTING_MODE_SEND_TO_SOURCE_ENABLED", "All packets will be send to source address of an incoming packet - use only for testing",
     "DHCP4_UNKNOWN_ADDRESS_REQUESTED", "%1: client requested an unknown address, client sent ciaddr %2, requested-ip-address %3",
+    "DHCP4_V6_ONLY_PREFERRED_MISSING_IN_ACK", "v6-only-preferred option missing in 0.0.0.0 offer to query: %1",
+    "DHCP4_V6_ONLY_PREFERRED_MISSING_IN_OFFER", "v6-only-preferred option missing in 0.0.0.0 offer to query: %1",
     NULL
 };
 

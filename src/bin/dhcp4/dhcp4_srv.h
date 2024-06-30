@@ -737,7 +737,7 @@ protected:
     /// or assigning the zero address as the assigned address if the
     /// Yiaddr field of the DHCPv4 message header...
     ///
-    /// Check if there is a pool, subnet or shared network defining an
+    /// Check if there is asubnet or shared network defining an
     /// IPv6-Only Preferred option which will be included by the response.
     ///
     /// @param subnet Reference to the selected subnet, can be modified if
