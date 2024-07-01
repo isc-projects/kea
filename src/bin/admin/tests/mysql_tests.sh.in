@@ -829,6 +829,20 @@ mysql_upgrade_23_to_24_test() {
     assert_str_eq '18' "${OUTPUT}" "${query}: expected output %s, returned %s"
 }
 
+mysql_upgrade_24_to_25_test() {
+    # excluded_prefix should have been added to ipv6_reservations
+    qry="select excluded_prefix from ipv6_reservations limit 1"
+    run_command \
+        mysql_execute "${qry}"
+    assert_eq 0 "${EXIT_CODE}" "${qry}. (expected status code %d, returned %d)"
+
+    # excluded_prefix_len should have been added to ipv6_reservations
+    qry="select excluded_prefix_len from ipv6_reservations limit 1"
+    run_command \
+        mysql_execute "${qry}"
+    assert_eq 0 "${EXIT_CODE}" "${qry}. (expected status code %d, returned %d)"
+}
+
 mysql_upgrade_test() {
 
     test_start "mysql.upgrade"
@@ -1518,6 +1532,9 @@ SET @disable_audit = 0"
 
     # Check upgrade from 23.0 to 24.0.
     mysql_upgrade_23_to_24_test
+
+    # Check upgrade from 24.0 to 25.0.
+    mysql_upgrade_24_to_25_test
 
     # Let's wipe the whole database
     mysql_wipe

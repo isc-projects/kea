@@ -113,6 +113,7 @@ SELECT updateOptionDataDef();
 -- Get rid of the now obsolete function.
 DROP FUNCTION IF EXISTS updateOptionDataDef();
 
+-- Update the schema version number.
 UPDATE schema_version
     SET version = '24', minor = '0';
 

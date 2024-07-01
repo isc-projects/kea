@@ -6465,10 +6465,24 @@ SELECT updateOptionDataDef();
 -- Get rid of the now obsolete function.
 DROP FUNCTION IF EXISTS updateOptionDataDef();
 
+-- Update the schema version number.
 UPDATE schema_version
     SET version = '24', minor = '0';
 
 -- This line concludes the schema upgrade to version 24.0.
+
+-- This line starts the schema upgrade to version 25.0
+
+-- Add prefix exclude option to IPv6 reservations.
+ALTER TABLE ipv6_reservations
+    ADD COLUMN excluded_prefix INET DEFAULT NULL,
+    ADD COLUMN excluded_prefix_len SMALLINT NOT NULL;
+
+-- Update the schema version number.
+UPDATE schema_version
+    SET version = '25', minor = '0';
+
+-- This line concludes the schema upgrade to version 25.0.
 
 -- Commit the script transaction.
 COMMIT;
