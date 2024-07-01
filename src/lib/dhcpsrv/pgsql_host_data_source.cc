@@ -912,7 +912,7 @@ class PgSqlHostIPv6Exchange : public PgSqlHostWithOptionsExchange {
 private:
 
     /// @brief Number of columns holding IPv6 reservation information.
-    static const size_t RESERVATION_COLUMNS = 5;
+    static const size_t RESERVATION_COLUMNS = 7;
 
 public:
 
@@ -927,6 +927,8 @@ public:
           prefix_len_index_(reservation_id_index_ + 2),
           type_index_(reservation_id_index_ + 3),
           iaid_index_(reservation_id_index_ + 4),
+          excluded_prefix_index_(reservation_id_index_ + 5),
+          excluded_prefix_len_index_(reservation_id_index_ + 6),
           most_recent_reservation_id_(0) {
 
         // Provide names of additional columns returned by the queries.
@@ -935,8 +937,10 @@ public:
         columns_[prefix_len_index_] = "prefix_len";
         columns_[type_index_] = "type";
         columns_[iaid_index_] = "dhcp6_iaid";
+        columns_[excluded_prefix_index_] = "excluded_prefix";
+        columns_[excluded_prefix_len_index_] = "excluded_prefix_len";
 
-        BOOST_STATIC_ASSERT(4 < RESERVATION_COLUMNS);
+        BOOST_STATIC_ASSERT(6 < RESERVATION_COLUMNS);
     }
 
     /// @brief Reinitializes state information
@@ -1002,6 +1006,16 @@ public:
 
         // Create the reservation.
         IPv6Resrv reservation(resv_type, IOAddress(address), prefix_len);
+
+        // excluded_prefix and excluded_prefix_len
+        if (!isColumnNull(r, row, excluded_prefix_index_)) {
+            isc::asiolink::IOAddress prefix(getIPv6Value(r, row,
+                                                         excluded_prefix_index_));
+            uint16_t excluded_prefix_len;
+            getColumnValue(r, row, excluded_prefix_len_index_,
+                           excluded_prefix_len);
+            reservation.setPDExclude(prefix, excluded_prefix_len);
+        }
         return (reservation);
     };
 
@@ -1065,6 +1079,12 @@ private:
     /// @brief Index of IAID column.
     size_t iaid_index_;
 
+    /// @brief Index of excluded prefix column.
+    size_t excluded_prefix_index_;
+
+    /// @brief Index of excluded prefix length column.
+    size_t excluded_prefix_len_index_;
+
     //@}
 
     /// @brief Reservation id for last processed row.
@@ -1085,7 +1105,7 @@ class PgSqlIPv6ReservationExchange : public PgSqlExchange {
 private:
 
     /// @brief Set number of columns for ipv6_reservation table.
-    static const size_t RESRV_COLUMNS = 6;
+    static const size_t RESRV_COLUMNS = 8;
 
 public:
 
@@ -1101,8 +1121,10 @@ public:
         columns_[2] = "prefix_len";
         columns_[3] = "type";
         columns_[4] = "dhcp6_iaid";
+        columns_[5] = "excluded_prefix";
+        columns_[6] = "excluded_prefix_len";
 
-        BOOST_STATIC_ASSERT(5 < RESRV_COLUMNS);
+        BOOST_STATIC_ASSERT(7 < RESRV_COLUMNS);
     }
 
     /// @brief Populate a bind array representing an IPv6 reservation
@@ -1144,6 +1166,19 @@ public:
             // dhcp6_iaid: INT UNSIGNED
             /// @todo: We don't support iaid in the IPv6Resrv yet.
             bind_array->addNull();
+
+            // excluded_prefix INET NOT NULL.
+            Option6PDExcludePtr opt = resv.getPDExclude();
+            if (opt) {
+                IOAddress excluded_prefix =
+                    opt->getExcludedPrefix(resv.getPrefix(),
+                                           resv.getPrefixLen());
+                bind_array->add(excluded_prefix);
+            } else {
+                bind_array->addNull();
+            }
+            uint16_t excluded_prefix_len(opt ? opt->getExcludedPrefixLength() : 0);
+            bind_array->add(excluded_prefix_len);
 
             // host_id: BIGINT NOT NULL
             bind_array->add(host_id);
@@ -1668,7 +1703,8 @@ TaggedStatementArray tagged_statements = { {
      "  o4.persistent, o4.cancelled, o4.user_context, "
      "  o6.option_id, o6.code, o6.value, o6.formatted_value, o6.space, "
      "  o6.persistent, o6.cancelled, o6.user_context, "
-     "  r.reservation_id, host(r.address), r.prefix_len, r.type, r.dhcp6_iaid "
+     "  r.reservation_id, host(r.address), r.prefix_len, r.type, "
+     "  r.dhcp6_iaid, host(r.excluded_prefix), r.excluded_prefix_len "
      "FROM hosts AS h "
      "LEFT JOIN dhcp4_options AS o4 ON h.host_id = o4.host_id "
      "LEFT JOIN dhcp6_options AS o6 ON h.host_id = o6.host_id "
@@ -1733,7 +1769,8 @@ TaggedStatementArray tagged_statements = { {
      "  h.dhcp4_boot_file_name, h.auth_key, "
      "  o.option_id, o.code, o.value, o.formatted_value, o.space, "
      "  o.persistent, o.cancelled, o.user_context, "
-     "  r.reservation_id, host(r.address), r.prefix_len, r.type, r.dhcp6_iaid "
+     "  r.reservation_id, host(r.address), r.prefix_len, r.type, "
+     "  r.dhcp6_iaid, host(r.excluded_prefix), r.excluded_prefix_len "
      "FROM hosts AS h "
      "LEFT JOIN dhcp6_options AS o ON h.host_id = o.host_id "
      "LEFT JOIN ipv6_reservations AS r ON h.host_id = r.host_id "
@@ -1782,7 +1819,7 @@ TaggedStatementArray tagged_statements = { {
      "  o.option_id, o.code, o.value, o.formatted_value, o.space, "
      "  o.persistent, o.cancelled, o.user_context, "
      "  r.reservation_id, host(r.address), r.prefix_len, r.type, "
-     "  r.dhcp6_iaid "
+     "  r.dhcp6_iaid, host(r.excluded_prefix), r.excluded_prefix_len "
      "FROM hosts AS h "
      "LEFT JOIN dhcp6_options AS o ON h.host_id = o.host_id "
      "LEFT JOIN ipv6_reservations AS r ON h.host_id = r.host_id "
@@ -1811,7 +1848,7 @@ TaggedStatementArray tagged_statements = { {
      "  o.option_id, o.code, o.value, o.formatted_value, o.space, "
      "  o.persistent, o.cancelled, o.user_context, "
      "  r.reservation_id, host(r.address), r.prefix_len, r.type, "
-     "  r.dhcp6_iaid "
+     "  r.dhcp6_iaid, host(r.excluded_prefix), r.excluded_prefix_len "
      "FROM hosts AS h "
      "LEFT JOIN dhcp6_options AS o ON h.host_id = o.host_id "
      "LEFT JOIN ipv6_reservations AS r ON h.host_id = r.host_id "
@@ -1840,8 +1877,8 @@ TaggedStatementArray tagged_statements = { {
      "  h.dhcp4_boot_file_name, h.auth_key, "
      "  o.option_id, o.code, o.value, o.formatted_value, o.space, "
      "  o.persistent, o.cancelled, o.user_context, "
-     "  r.reservation_id, r.address, r.prefix_len, r.type, "
-     "  r.dhcp6_iaid "
+     "  r.reservation_id, host(r.address), r.prefix_len, r.type, "
+     "  r.dhcp6_iaid, host(r.excluded_prefix), r.excluded_prefix_len "
      "FROM hosts AS h "
      "LEFT JOIN dhcp6_options AS o ON h.host_id = o.host_id "
      "LEFT JOIN ipv6_reservations AS r ON h.host_id = r.host_id "
@@ -1894,7 +1931,8 @@ TaggedStatementArray tagged_statements = { {
      "  h.dhcp4_boot_file_name, h.auth_key, "
      "  o.option_id, o.code, o.value, o.formatted_value, o.space, "
      "  o.persistent, o.cancelled, o.user_context, "
-     "  r.reservation_id, host(r.address), r.prefix_len, r.type, r.dhcp6_iaid "
+     "  r.reservation_id, host(r.address), r.prefix_len, r.type, "
+     "  r.dhcp6_iaid, host(r.excluded_prefix), r.excluded_prefix_len "
      "FROM hosts AS h "
      "LEFT JOIN dhcp6_options AS o ON h.host_id = o.host_id "
      "LEFT JOIN ipv6_reservations AS r ON h.host_id = r.host_id "
@@ -1921,7 +1959,8 @@ TaggedStatementArray tagged_statements = { {
      "  o4.persistent, o4.cancelled, o4.user_context, "
      "  o6.option_id, o6.code, o6.value, o6.formatted_value, o6.space, "
      "  o6.persistent, o6.cancelled, o6.user_context, "
-     "  r.reservation_id, host(r.address), r.prefix_len, r.type, r.dhcp6_iaid "
+     "  r.reservation_id, host(r.address), r.prefix_len, r.type, "
+     "  r.dhcp6_iaid, host(r.excluded_prefix), r.excluded_prefix_len "
      "FROM hosts AS h "
      "LEFT JOIN dhcp4_options AS o4 ON h.host_id = o4.host_id "
      "LEFT JOIN dhcp6_options AS o6 ON h.host_id = o6.host_id "
@@ -1969,7 +2008,8 @@ TaggedStatementArray tagged_statements = { {
      "  h.dhcp4_boot_file_name, h.auth_key, "
      "  o.option_id, o.code, o.value, o.formatted_value, o.space, "
      "  o.persistent, o.cancelled, o.user_context, "
-     "  r.reservation_id, host(r.address), r.prefix_len, r.type, r.dhcp6_iaid "
+     "  r.reservation_id, host(r.address), r.prefix_len, r.type, "
+     "  r.dhcp6_iaid, host(r.excluded_prefix), r.excluded_prefix_len "
      "FROM hosts AS h "
      "LEFT JOIN dhcp6_options AS o ON h.host_id = o.host_id "
      "LEFT JOIN ipv6_reservations AS r ON h.host_id = r.host_id "
@@ -2018,7 +2058,8 @@ TaggedStatementArray tagged_statements = { {
      "  h.dhcp4_boot_file_name, h.auth_key, "
      "  o.option_id, o.code, o.value, o.formatted_value, o.space, "
      "  o.persistent, o.cancelled, o.user_context, "
-     "  r.reservation_id, host(r.address), r.prefix_len, r.type, r.dhcp6_iaid "
+     "  r.reservation_id, host(r.address), r.prefix_len, r.type, "
+     "  r.dhcp6_iaid, host(r.excluded_prefix), r.excluded_prefix_len "
      "FROM ( SELECT * FROM hosts AS h "
      "       WHERE h.dhcp6_subnet_id = $1 AND h.host_id > $2 "
      "       ORDER BY h.host_id "
@@ -2069,7 +2110,8 @@ TaggedStatementArray tagged_statements = { {
      "  h.dhcp4_boot_file_name, h.auth_key, "
      "  o.option_id, o.code, o.value, o.formatted_value, o.space, "
      "  o.persistent, o.cancelled, o.user_context, "
-     "  r.reservation_id, host(r.address), r.prefix_len, r.type, r.dhcp6_iaid "
+     "  r.reservation_id, host(r.address), r.prefix_len, r.type, "
+     "  r.dhcp6_iaid, host(r.excluded_prefix), r.excluded_prefix_len "
      "FROM ( SELECT * FROM hosts AS h "
      "       WHERE h.host_id > $1 "
      "       ORDER BY h.host_id "
@@ -2129,26 +2171,27 @@ TaggedStatementArray tagged_statements = { {
     // PgSqlHostDataSourceImpl::INSERT_V6_RESRV_NON_UNIQUE
     // Inserts a single IPv6 reservation into 'reservations' table without
     // checking that the inserted reservation is unique.
-    {5,
-     { OID_VARCHAR, OID_INT2, OID_INT4, OID_INT4, OID_INT4 },
+    {7,
+     { OID_VARCHAR, OID_INT2, OID_INT4, OID_INT4, OID_VARCHAR, OID_INT2, OID_INT4 },
      "insert_v6_resrv_non_unique",
      "INSERT INTO ipv6_reservations(address, prefix_len, type, "
-     "  dhcp6_iaid, host_id) "
-     "VALUES (cast($1 as inet), $2, $3, $4, $5)"
+     "  dhcp6_iaid, excluded_prefix, excluded_prefix_len, host_id) "
+     "VALUES (cast($1 as inet), $2, $3, $4, cast($5 as inet), $6, $7)"
     },
 
     // PgSqlHostDataSourceImpl::INSERT_V6_RESRV_UNIQUE
     // Inserts a single IPv6 reservation into 'reservations' table with
     // checking that the inserted reservation is unique.
-    {7,
-     { OID_VARCHAR, OID_INT2, OID_INT4, OID_INT4, OID_INT4, OID_VARCHAR, OID_INT2 },
+    {9,
+     { OID_VARCHAR, OID_INT2, OID_INT4, OID_INT4, OID_VARCHAR, OID_INT2,
+       OID_INT4, OID_VARCHAR, OID_INT2 },
      "insert_v6_resrv_unique",
      "INSERT INTO ipv6_reservations(address, prefix_len, type, "
-     "  dhcp6_iaid, host_id) "
-     "SELECT cast($1 as inet), $2, $3, $4, $5 "
+     "  dhcp6_iaid, excluded_prefix, excluded_prefix_len, host_id) "
+     "SELECT cast($1 as inet), $2, $3, $4, cast($5 as inet), $6, $7 "
      "  WHERE NOT EXISTS ("
      "      SELECT 1 FROM ipv6_reservations"
-     "          WHERE address = cast($6 as inet) AND prefix_len = $7"
+     "          WHERE address = cast($8 as inet) AND prefix_len = $9"
      "      LIMIT 1"
      "  )"
     },

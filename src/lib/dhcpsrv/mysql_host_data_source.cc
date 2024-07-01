@@ -1415,7 +1415,7 @@ class MySqlHostIPv6Exchange : public MySqlHostWithOptionsExchange {
 private:
 
     /// @brief Number of columns holding IPv6 reservation information.
-    static const size_t RESERVATION_COLUMNS = 5;
+    static const size_t RESERVATION_COLUMNS = 7;
 
 public:
 
@@ -1427,15 +1427,21 @@ public:
         : MySqlHostWithOptionsExchange(fetched_options, RESERVATION_COLUMNS),
           reservation_id_(0),
           reserv_type_(0), reserv_type_null_(MLM_FALSE),
-          ipv6_address_buffer_len_(0), prefix_len_(0), iaid_(0),
+          ipv6_address_buffer_len_(0),
+          excluded_prefix_null_(MLM_FALSE), excluded_prefix_buffer_len_(0),
+          prefix_len_(0), iaid_(0),
+          excluded_prefix_len_(0),
           reservation_id_index_(findAvailColumn()),
           address_index_(reservation_id_index_ + 1),
           prefix_len_index_(reservation_id_index_ + 2),
           type_index_(reservation_id_index_ + 3),
           iaid_index_(reservation_id_index_ + 4),
+          excluded_prefix_index_(reservation_id_index_ + 5),
+          excluded_prefix_len_index_(reservation_id_index_ + 6),
           most_recent_reservation_id_(0) {
 
         memset(ipv6_address_buffer_, 0, sizeof(ipv6_address_buffer_));
+        memset(excluded_prefix_buffer_, 0, sizeof(excluded_prefix_buffer_));
 
         // Provide names of additional columns returned by the queries.
         columns_[reservation_id_index_] = "reservation_id";
@@ -1443,6 +1449,8 @@ public:
         columns_[prefix_len_index_] = "prefix_len";
         columns_[type_index_] = "type";
         columns_[iaid_index_] = "dhcp6_iaid";
+        columns_[excluded_prefix_index_] = "excluded_prefix";
+        columns_[excluded_prefix_len_index_] = "excluded_prefix_len";
     }
 
     /// @brief Returns last fetched reservation id.
@@ -1483,6 +1491,13 @@ public:
 
         IOAddress addr6 = IOAddress::fromBytes(AF_INET6, ipv6_address_buffer_);
         IPv6Resrv r(type, addr6, prefix_len_);
+
+        if (excluded_prefix_null_ == MLM_FALSE) {
+            IOAddress prefix =
+                IOAddress::fromBytes(AF_INET6, excluded_prefix_buffer_);
+            r.setPDExclude(prefix, excluded_prefix_len_);
+        }
+
         return (r);
     }
 
@@ -1576,6 +1591,22 @@ public:
         bind_[iaid_index_].buffer = reinterpret_cast<char*>(&iaid_);
         bind_[iaid_index_].is_unsigned = MLM_TRUE;
 
+        // excluded_prefix BINARY(16)
+        excluded_prefix_null_ = MLM_FALSE;
+        excluded_prefix_buffer_len_ = isc::asiolink::V6ADDRESS_LEN;
+        bind_[excluded_prefix_index_].buffer_type = MYSQL_TYPE_BLOB;
+        bind_[excluded_prefix_index_].buffer =
+            reinterpret_cast<char*>(excluded_prefix_buffer_);
+        bind_[excluded_prefix_index_].buffer_length = excluded_prefix_buffer_len_;
+        bind_[excluded_prefix_index_].length = &excluded_prefix_buffer_len_;
+        bind_[excluded_prefix_index_].is_null = &excluded_prefix_null_;
+
+        // excluded_prefix_len : TINYINT
+        bind_[excluded_prefix_len_index_].buffer_type = MYSQL_TYPE_TINY;
+        bind_[excluded_prefix_len_index_].buffer =
+            reinterpret_cast<char*>(&excluded_prefix_len_);
+        bind_[excluded_prefix_len_index_].is_unsigned = MLM_TRUE;
+
         // Add the error flags
         setErrorIndicators(bind_, error_);
 
@@ -1602,11 +1633,23 @@ private:
     /// @brief Length of the textual address representation.
     unsigned long ipv6_address_buffer_len_;
 
+    /// @brief Boolean flag indicating if excluded prefix field is null.
+    my_bool excluded_prefix_null_;
+
+    /// @brief Buffer holding excluded prefix in textual format.
+    uint8_t excluded_prefix_buffer_[isc::asiolink::V6ADDRESS_LEN];
+
+    /// @brief Length of the excluded prefix.
+    unsigned long excluded_prefix_buffer_len_;
+
     /// @brief Length of the prefix (128 for addresses)
     uint8_t prefix_len_;
 
     /// @brief IAID.
     uint32_t iaid_;
+
+    /// @brief Length of the excluded prefix (default 0)
+    uint8_t excluded_prefix_len_;
 
     /// @name Indexes of columns holding information about IPv6 reservations.
     //@{
@@ -1624,6 +1667,12 @@ private:
 
     /// @brief Index of IAID column.
     size_t iaid_index_;
+
+    /// @brief Index of excluded_prefix column.
+    size_t excluded_prefix_index_;
+
+    /// @brief Index of excluded_prefix_len column.
+    size_t excluded_prefix_len_index_;
 
     //@}
 
@@ -1645,7 +1694,7 @@ class MySqlIPv6ReservationExchange {
 private:
 
     /// @brief Set number of columns for ipv6_reservation table.
-    static const size_t RESRV_COLUMNS = 6;
+    static const size_t RESRV_COLUMNS = 8;
 
 public:
 
@@ -1653,8 +1702,9 @@ public:
     ///
     /// Initialize class members representing a single IPv6 reservation.
     MySqlIPv6ReservationExchange()
-        : host_id_(0), prefix_len_(0), type_(0),
-          iaid_(0), resv_(IPv6Resrv::TYPE_NA, asiolink::IOAddress("::"), 128) {
+        : host_id_(0), prefix_len_(0), type_(0), iaid_(0),
+          resv_(IPv6Resrv::TYPE_NA, asiolink::IOAddress("::"), 128),
+          excluded_prefix_len_(0) {
 
         // Reset error table.
         std::fill(&error_[0], &error_[RESRV_COLUMNS], MLM_FALSE);
@@ -1665,8 +1715,10 @@ public:
         columns_[2] = "prefix_len";
         columns_[3] = "type";
         columns_[4] = "dhcp6_iaid";
+        columns_[5] = "excluded_prefix";
+        columns_[6] = "excluded_prefix_len";
 
-        BOOST_STATIC_ASSERT(4 < RESRV_COLUMNS);
+        BOOST_STATIC_ASSERT(6 < RESRV_COLUMNS);
     }
 
     /// @brief Create MYSQL_BIND objects for IPv6 Reservation.
@@ -1733,10 +1785,39 @@ public:
             bind_[3].buffer = reinterpret_cast<char*>(&iaid_);
             bind_[3].is_unsigned = MLM_TRUE;
 
+            // excluded_prefix BINARY(16) NULL
+            Option6PDExcludePtr opt = resv.getPDExclude();
+            IOAddress excluded_prefix("::");
+            if (opt) {
+                excluded_prefix = opt->getExcludedPrefix(resv.getPrefix(),
+                                                         resv.getPrefixLen());
+                excluded_prefix_ = excluded_prefix.toBytes();
+                if (excluded_prefix_.size() != isc::asiolink::V6ADDRESS_LEN) {
+                    isc_throw(DbOperationError, "createBindForSend() - "
+                              << "excluded prefix is not "
+                              << isc::asiolink::V6ADDRESS_LEN
+                              << " bytes long");
+                }
+                excluded_prefix_length_ = isc::asiolink::V6ADDRESS_LEN;
+                bind_[4].buffer_type = MYSQL_TYPE_BLOB;
+                bind_[4].buffer = reinterpret_cast<char*>(&excluded_prefix_[0]);
+                bind_[4].buffer_length = excluded_prefix_length_;
+                bind_[4].length = &excluded_prefix_length_;
+                excluded_prefix_len_ = opt->getExcludedPrefixLength();
+            } else {
+                bind_[4].buffer_type = MYSQL_TYPE_NULL;
+                excluded_prefix_len_ = 0;
+            }
+
+            // excluded_prefix_len TINYINT UNSIGNED
+            bind_[5].buffer_type = MYSQL_TYPE_TINY;
+            bind_[5].buffer = reinterpret_cast<char*>(&excluded_prefix_len_);
+            bind_[5].is_unsigned = MLM_TRUE;
+
             // host_id INT UNSIGNED NOT NULL
-            bind_[4].buffer_type = MYSQL_TYPE_LONG;
-            bind_[4].buffer = reinterpret_cast<char*>(&host_id_);
-            bind_[4].is_unsigned = MLM_TRUE;
+            bind_[6].buffer_type = MYSQL_TYPE_LONG;
+            bind_[6].buffer = reinterpret_cast<char*>(&host_id_);
+            bind_[6].is_unsigned = MLM_TRUE;
 
         } catch (const std::exception& ex) {
             isc_throw(DbOperationError,
@@ -1792,6 +1873,15 @@ private:
 
     /// @brief Binary address length.
     unsigned long addr6_length_;
+
+    /// @brief Binary excluded prefix data.
+    std::vector<uint8_t> excluded_prefix_;
+
+    /// @brief Binary excluded prefix length.
+    unsigned long excluded_prefix_length_;
+
+    /// @brief Excluded prefix length.
+    uint8_t excluded_prefix_len_;
 };
 
 /// @brief This class is used for inserting options into a database.
@@ -2350,7 +2440,7 @@ TaggedStatementArray tagged_statements = { {
                 "o6.option_id, o6.code, o6.value, o6.formatted_value, o6.space, "
                 "o6.persistent, o6.cancelled, o6.user_context, "
                 "r.reservation_id, r.address, r.prefix_len, r.type, "
-                "r.dhcp6_iaid "
+                "r.dhcp6_iaid, r.excluded_prefix, r.excluded_prefix_len "
             "FROM hosts AS h "
             "LEFT JOIN dhcp4_options AS o4 "
                 "ON h.host_id = o4.host_id "
@@ -2409,7 +2499,7 @@ TaggedStatementArray tagged_statements = { {
                 "o.option_id, o.code, o.value, o.formatted_value, o.space, "
                 "o.persistent, o.cancelled, o.user_context, "
                 "r.reservation_id, r.address, r.prefix_len, r.type, "
-                "r.dhcp6_iaid "
+                "r.dhcp6_iaid, r.excluded_prefix, r.excluded_prefix_len "
             "FROM hosts AS h "
             "LEFT JOIN dhcp6_options AS o "
                 "ON h.host_id = o.host_id "
@@ -2453,7 +2543,7 @@ TaggedStatementArray tagged_statements = { {
                 "o.option_id, o.code, o.value, o.formatted_value, o.space, "
                 "o.persistent, o.cancelled, o.user_context,"
                 "r.reservation_id, r.address, r.prefix_len, r.type, "
-                "r.dhcp6_iaid "
+                "r.dhcp6_iaid, r.excluded_prefix, r.excluded_prefix_len "
             "FROM hosts AS h "
             "LEFT JOIN dhcp6_options AS o "
                 "ON h.host_id = o.host_id "
@@ -2480,7 +2570,7 @@ TaggedStatementArray tagged_statements = { {
                 "o.option_id, o.code, o.value, o.formatted_value, o.space, "
                 "o.persistent, o.cancelled, o.user_context, "
                 "r.reservation_id, r.address, r.prefix_len, r.type, "
-                "r.dhcp6_iaid "
+                "r.dhcp6_iaid, r.excluded_prefix, r.excluded_prefix_len "
             "FROM hosts AS h "
             "LEFT JOIN dhcp6_options AS o "
                 "ON h.host_id = o.host_id "
@@ -2508,7 +2598,7 @@ TaggedStatementArray tagged_statements = { {
      "o.option_id, o.code, o.value, o.formatted_value, o.space, "
      "o.persistent, o.cancelled, o.user_context, "
      "r.reservation_id, r.address, r.prefix_len, r.type, "
-     "r.dhcp6_iaid "
+     "r.dhcp6_iaid, r.excluded_prefix, r.excluded_prefix_len "
      "FROM hosts AS h "
      "LEFT JOIN dhcp6_options AS o "
      "ON h.host_id = o.host_id "
@@ -2550,7 +2640,7 @@ TaggedStatementArray tagged_statements = { {
                 "o.option_id, o.code, o.value, o.formatted_value, o.space, "
                 "o.persistent, o.cancelled, o.user_context, "
                 "r.reservation_id, r.address, r.prefix_len, r.type, "
-                "r.dhcp6_iaid "
+                "r.dhcp6_iaid, r.excluded_prefix, r.excluded_prefix_len "
             "FROM hosts AS h "
             "LEFT JOIN dhcp6_options AS o "
                 "ON h.host_id = o.host_id "
@@ -2575,7 +2665,7 @@ TaggedStatementArray tagged_statements = { {
                 "o6.option_id, o6.code, o6.value, o6.formatted_value, o6.space, "
                 "o6.persistent, o6.cancelled, o6.user_context, "
                 "r.reservation_id, r.address, r.prefix_len, r.type, "
-                "r.dhcp6_iaid "
+                "r.dhcp6_iaid, r.excluded_prefix, r.excluded_prefix_len "
             "FROM hosts AS h "
             "LEFT JOIN dhcp4_options AS o4 "
                 "ON h.host_id = o4.host_id "
@@ -2616,7 +2706,7 @@ TaggedStatementArray tagged_statements = { {
                 "o.option_id, o.code, o.value, o.formatted_value, o.space, "
                 "o.persistent, o.cancelled, o.user_context, "
                 "r.reservation_id, r.address, r.prefix_len, r.type, "
-                "r.dhcp6_iaid "
+                "r.dhcp6_iaid, r.excluded_prefix, r.excluded_prefix_len "
             "FROM hosts AS h "
             "LEFT JOIN dhcp6_options AS o "
                 "ON h.host_id = o.host_id "
@@ -2661,7 +2751,7 @@ TaggedStatementArray tagged_statements = { {
                 "o.option_id, o.code, o.value, o.formatted_value, o.space, "
                 "o.persistent, o.cancelled, o.user_context, "
                 "r.reservation_id, r.address, r.prefix_len, r.type, "
-                "r.dhcp6_iaid "
+                "r.dhcp6_iaid, r.excluded_prefix, r.excluded_prefix_len "
             "FROM ( SELECT * FROM hosts AS h "
                     "WHERE h.dhcp6_subnet_id = ? AND h.host_id > ? "
                     "ORDER BY h.host_id "
@@ -2708,7 +2798,7 @@ TaggedStatementArray tagged_statements = { {
                 "o.option_id, o.code, o.value, o.formatted_value, o.space, "
                 "o.persistent, o.cancelled, o.user_context, "
                 "r.reservation_id, r.address, r.prefix_len, r.type, "
-                "r.dhcp6_iaid "
+                "r.dhcp6_iaid, r.excluded_prefix, r.excluded_prefix_len "
             "FROM ( SELECT * FROM hosts AS h "
                     "WHERE h.host_id > ? "
                     "ORDER BY h.host_id "
@@ -2757,15 +2847,15 @@ TaggedStatementArray tagged_statements = { {
     // checking that the inserted reservation is unique.
     {MySqlHostDataSourceImpl::INSERT_V6_RESRV_NON_UNIQUE,
             "INSERT INTO ipv6_reservations(address, prefix_len, type, "
-                "dhcp6_iaid, host_id) "
-            "VALUES (?, ?, ?, ?, ?)"},
+                "dhcp6_iaid, excluded_prefix, excluded_prefix_len, host_id) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?)"},
 
     // Inserts a single IPv6 reservation into 'reservations' table with
     // checking that the inserted reservation is unique.
     {MySqlHostDataSourceImpl::INSERT_V6_RESRV_UNIQUE,
             "INSERT INTO ipv6_reservations(address, prefix_len, type, "
-                "dhcp6_iaid, host_id) "
-                "SELECT ?, ?, ?, ?, ? FROM DUAL "
+                "dhcp6_iaid, excluded_prefix, excluded_prefix_len, host_id) "
+                "SELECT ?, ?, ?, ?, ?, ?, ? FROM DUAL "
                     "WHERE NOT EXISTS ("
                         "SELECT 1 FROM ipv6_reservations "
                             "WHERE address = ? AND prefix_len = ? "
