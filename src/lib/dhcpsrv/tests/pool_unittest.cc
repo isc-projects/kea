@@ -473,7 +473,7 @@ TEST(Pool6Test, toText) {
     Pool6 pool3(IOAddress("2001:db8:1::"), 96, 112,
                 IOAddress("2001:db8:1::1000"), 120);
     EXPECT_EQ("type=IA_PD, 2001:db8:1::-2001:db8:1::ffff:ffff, delegated_len=112,"
-              " excluded_prefix_len=120",
+              " excluded_prefix=2001:db8:1::1000/120",
               pool3.toText());
 
     Pool6 pool4(Lease::TYPE_NA, IOAddress("2001:db8::"),

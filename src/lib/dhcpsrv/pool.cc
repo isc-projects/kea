@@ -427,7 +427,9 @@ Pool6::toText() const {
       << static_cast<unsigned>(prefix_len_);
 
     if (pd_exclude_option_) {
-       s << ", excluded_prefix_len="
+       s << ", excluded_prefix="
+         << pd_exclude_option_->getExcludedPrefix(first_, prefix_len_).toText()
+         << "/"
          << static_cast<unsigned>(pd_exclude_option_->getExcludedPrefixLength());
     }
     return (s.str());
