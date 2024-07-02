@@ -794,6 +794,11 @@ TEST_F(PgSqlHostDataSourceTest, usercontextMultiThreading) {
     testUserContext(Element::fromJSON(comment));
 }
 
+/// @brief Test insert and retrieve a v6 host with prefix exclude option.
+TEST_F(PgSqlHostDataSourceTest, prefixExclude) {
+    testPrefixExclude("2001:db8::", "2001:db8:0:1::");
+}
+
 /// @brief Test verifies if the hardware or client-id query can match hardware address.
 TEST_F(PgSqlHostDataSourceTest, DISABLED_hwaddrOrClientId1) {
     /// @todo: The logic behind ::get4(subnet_id, hwaddr, duid) call needs to
