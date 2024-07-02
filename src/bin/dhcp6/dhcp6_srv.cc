@@ -2463,6 +2463,32 @@ Dhcpv6Srv::getMAC(const Pkt6Ptr& pkt) {
 }
 
 OptionPtr
+Dhcpv6Srv::getPDExclude(const AllocEngine::ClientContext6& ctx,
+                        const Lease6Ptr& lease) {
+
+    // Search the reservation the prefix is from.
+    ConstHostPtr host = ctx.currentHost();
+    if (host) {
+        IPv6ResrvRange resvs = host->getIPv6Reservations(IPv6Resrv::TYPE_PD);
+        BOOST_FOREACH(auto const& resv, resvs) {
+            if ((resv.second.getPrefix() == lease->addr_) &&
+                (resv.second.getPrefixLen() == lease->prefixlen_)) {
+                return (resv.second.getPDExclude());
+            }
+        }
+    }
+
+    // Search the pool the address is from.
+    const Subnet6Ptr& subnet = ctx.subnet_;
+    Pool6Ptr pool = boost::dynamic_pointer_cast<Pool6>(
+        subnet->getPool(Lease::TYPE_PD, lease->addr_));
+    if (pool) {
+        return (pool->getPrefixExcludeOption());
+    }
+    return (OptionPtr());
+}
+
+OptionPtr
 Dhcpv6Srv::assignIA_NA(const Pkt6Ptr& query,
                        AllocEngine::ClientContext6& ctx,
                        boost::shared_ptr<Option6IA> ia) {
@@ -2718,15 +2744,9 @@ Dhcpv6Srv::assignIA_PD(const Pkt6Ptr& query,
             ia_rsp->addOption(addr);
 
             if (pd_exclude_requested) {
-                // PD exclude option has been requested via ORO, thus we need to
-                // include it if the pool configuration specifies this option.
-                Pool6Ptr pool = boost::dynamic_pointer_cast<
-                    Pool6>(subnet->getPool(Lease::TYPE_PD, l->addr_));
-                if (pool) {
-                    Option6PDExcludePtr pd_exclude_option = pool->getPrefixExcludeOption();
-                    if (pd_exclude_option) {
-                        addr->addOption(pd_exclude_option);
-                    }
+                OptionPtr pd_exclude_option = getPDExclude(ctx, l);
+                if (pd_exclude_option) {
+                    addr->addOption(pd_exclude_option);
                 }
             }
         }
@@ -3049,16 +3069,9 @@ Dhcpv6Srv::extendIA_PD(const Pkt6Ptr& query,
         ia_rsp->addOption(prf);
 
         if (pd_exclude_requested) {
-            // PD exclude option has been requested via ORO, thus we need to
-            // include it if the pool configuration specifies this option.
-            Pool6Ptr pool = boost::dynamic_pointer_cast<
-                Pool6>(subnet->getPool(Lease::TYPE_PD, l->addr_));
-
-            if (pool) {
-                Option6PDExcludePtr pd_exclude_option = pool->getPrefixExcludeOption();
-                if (pd_exclude_option) {
-                    prf->addOption(pd_exclude_option);
-                }
+            OptionPtr pd_exclude_option = getPDExclude(ctx, l);
+            if (pd_exclude_option) {
+                prf->addOption(pd_exclude_option);
             }
         }
 

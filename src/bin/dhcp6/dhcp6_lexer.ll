@@ -1720,6 +1720,15 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     }
 }
 
+\"excluded-prefixes\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::RESERVATIONS:
+        return isc::dhcp::Dhcp6Parser::make_EXCLUDED_PREFIXES(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("excluded-prefixes", driver.loc_);
+    }
+}
+
 \"duid\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::MAC_SOURCES:

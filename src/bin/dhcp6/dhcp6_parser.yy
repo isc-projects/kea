@@ -189,6 +189,7 @@ using namespace std;
   RESERVATIONS "reservations"
   IP_ADDRESSES "ip-addresses"
   PREFIXES "prefixes"
+  EXCLUDED_PREFIXES "excluded-prefixes"
   DUID "duid"
   HW_ADDRESS "hw-address"
   HOSTNAME "hostname"
@@ -2377,6 +2378,7 @@ reservation_param: duid
                  | reservation_client_classes
                  | ip_addresses
                  | prefixes
+                 | excluded_prefixes
                  | hw_address
                  | hostname
                  | flex_id_value
@@ -2401,6 +2403,17 @@ prefixes: PREFIXES {
     ctx.unique("prefixes", ctx.loc2pos(@1));
     ElementPtr l(new ListElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("prefixes", l);
+    ctx.stack_.push_back(l);
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON list_strings {
+    ctx.stack_.pop_back();
+    ctx.leave();
+};
+
+excluded_prefixes: EXCLUDED_PREFIXES {
+    ctx.unique("excluded-prefixes", ctx.loc2pos(@1));
+    ElementPtr l(new ListElement(ctx.loc2pos(@1)));
+    ctx.stack_.back()->set("excluded-prefixes", l);
     ctx.stack_.push_back(l);
     ctx.enter(ctx.NO_KEYWORD);
 } COLON list_strings {

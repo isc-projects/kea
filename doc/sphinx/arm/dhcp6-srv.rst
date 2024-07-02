@@ -4285,8 +4285,26 @@ another.
    An empty ``excluded-prefixes`` list or a list with only empty strings
    can be omitted (and will be omitted when produced by Kea).
 
-   todo: add something about adding the pd-exclude option to returned
-   prefixes as done for prefix delegation pools.
+::
+
+    "reservations": [
+        {
+            "duid": "01:02:03:04:05:06:07:08:09:0A",
+            "ip-addresses": [ "2001:db8:1::103" ],
+            "prefixes": [ "2001:db8::/48 ],
+            "excluded-prefixes": [ "2001:db8:0:1::/64 ],
+            "hostname": "foo.example.com"
+        }
+    ],
+    ...
+
+
+.. note::
+
+   Host reservations have precedence over prefix pools so when a reserved
+   prefix without an excluded prefix is assigned no pd-exclude option
+   is added to the prefix option even the prefix is in a configured
+   prefix pool with an excluded prefix (different from previous behavior).
 
 .. _reservation6-conflict:
 

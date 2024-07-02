@@ -4050,7 +4050,7 @@ TEST_F(Dhcpv6SrvTest, generateFqdnUpdate) {
     EXPECT_EQ("myhost-2001-db8-1--1.example.com.", l->hostname_);
 
     // Should see follow log message ids in the log file.
-    EXPECT_EQ(1, countFile("DHCP6_DDNS_FQDN_GENERATED")); 
+    EXPECT_EQ(1, countFile("DHCP6_DDNS_FQDN_GENERATED"));
     EXPECT_EQ(0, countFile("DHCP6_DDNS_GENERATED_FQDN_UPDATE_FAIL"));
 }
 
@@ -4104,7 +4104,7 @@ TEST_F(Dhcpv6SrvTest, generateFqdnNoUpdate) {
 
     // Check that an IA_NA with an iaaddr was returned for the requested
     // address with lifetimes of 0.
-    boost::shared_ptr<Option6IAAddr> iaaddr = checkIA_NA(reply, 234, 0, 0); 
+    boost::shared_ptr<Option6IAAddr> iaaddr = checkIA_NA(reply, 234, 0, 0);
     ASSERT_TRUE(iaaddr);
     EXPECT_EQ(addr, iaaddr->getAddress());
     EXPECT_EQ(0, iaaddr->getPreferred());

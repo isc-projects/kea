@@ -1059,6 +1059,14 @@ protected:
     void checkDynamicSubnetChange(const Pkt6Ptr& question, Pkt6Ptr& answer,
                                   AllocEngine::ClientContext6& ctx,
                                   const Subnet6Ptr orig_subnet);
+
+    /// @brief Return the PD exclude option to include.
+    ///
+    /// @param ctx client context (contains subnet and hosts).
+    /// @param lease lease (contains address/prefix and prefix length).
+    OptionPtr getPDExclude(const AllocEngine::ClientContext6& ctx,
+                           const Lease6Ptr& lease);
+
 public:
 
     /// Used for DHCPv4-over-DHCPv6 too.

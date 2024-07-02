@@ -1152,6 +1152,9 @@
                                 // List of reserved IPv6 prefixes.
                                 "prefixes": [ "2001:db8:2:abcd::/64" ],
 
+                                // List of excluded IPv6 prefixes.
+				"excluded-prefixes": [ "2001:db8:2:abcd:1::/80" ],
+
                                 // Reserved hostname.
                                 "hostname": "foo.example.com",
 

@@ -74,6 +74,16 @@ namespace {
 ///   - One subnet with three distinct pools.
 ///   - Random allocator enabled globally for delegated prefixes.
 ///   - Iterative allocator for address allocation.
+///
+/// - Configation 7:
+///   - Cache max age and threshold.
+///
+/// - Configuration 8 (derived from 3):
+///   - one subnet 3000::/32 used on eth0 interface
+///   - prefixes of length 64, delegated from the pool: 2001:db8:3::/48
+///   - Excluded Prefix specified (RFC 6603).
+///   - Reservation (which has precedence over the pool) with excluded prefix.
+///
 const char* CONFIGS[] = {
     // Configuration 0
     "{ \"interfaces-config\": {"
@@ -328,6 +338,35 @@ const char* CONFIGS[] = {
         ],
         "valid-lifetime": 600
     })",
+
+    // Configuration 8
+    "{ \"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"id\": 1, "
+        "    \"pd-pools\": ["
+        "        { \"prefix\": \"2001:db8:3::\", "
+        "          \"prefix-len\": 48, "
+        "          \"delegated-len\": 64,"
+        "          \"excluded-prefix\": \"2001:db8:3::1000\","
+        "          \"excluded-prefix-len\": 120"
+        "        } ],"
+        "    \"subnet\": \"3000::/32\", "
+        "    \"reservations\": ["
+        "    {"
+        "        \"duid\": \"01:02:03:05\","
+        "        \"prefixes\": [ \"2001:db8:3::/64\" ],"
+        "        \"excluded-prefixes\": [ \"2001:db8:3::2000/120\" ]"
+        "    } ],"
+        "    \"interface-id\": \"\","
+        "    \"interface\": \"eth0\""
+        " } ],"
+        "\"valid-lifetime\": 4000"
+    "}",
 };
 
 /// @brief Test fixture class for testing 4-way exchange: Solicit-Advertise,
@@ -379,8 +418,13 @@ public:
 
     /// @brief This test verifies that it is possible to specify an excluded
     /// prefix (RFC 6603) and send it back to the client requesting prefix
-    /// delegation.
-    void directClientExcludedPrefix();
+    /// delegation using a pool.
+    void directClientExcludedPrefixPool();
+
+    /// @brief This test verifies that it is possible to specify an excluded
+    /// prefix (RFC 6603) and send it back to the client requesting prefix
+    /// delegation using a reservation.
+    void directClientExcludedPrefixHost();
 
     /// @brief Check that when the client includes the Rapid Commit option in
     /// its Solicit, the server responds with Reply and commits the lease.
@@ -638,7 +682,7 @@ TEST_F(SARRTest, optionsInheritanceMultiThreading) {
 }
 
 void
-SARRTest::directClientExcludedPrefix() {
+SARRTest::directClientExcludedPrefixPool() {
     Dhcp6Client client;
     // Configure client to request IA_PD.
     client.requestPrefix();
@@ -677,14 +721,66 @@ SARRTest::directClientExcludedPrefix() {
     EXPECT_EQ(120, static_cast<unsigned>(pd_exclude->getExcludedPrefixLength()));
 }
 
-TEST_F(SARRTest, directClientExcludedPrefix) {
+TEST_F(SARRTest, directClientExcludedPrefixPool) {
     Dhcpv6SrvMTTestGuard guard(*this, false);
-    directClientExcludedPrefix();
+    directClientExcludedPrefixPool();
 }
 
-TEST_F(SARRTest, directClientExcludedPrefixMultiThreading) {
+TEST_F(SARRTest, directClientExcludedPrefixPoolMultiThreading) {
     Dhcpv6SrvMTTestGuard guard(*this, true);
-    directClientExcludedPrefix();
+    directClientExcludedPrefixPool();
+}
+
+void
+SARRTest::directClientExcludedPrefixHost() {
+    Dhcp6Client client;
+    // Set DUID matching the one used to create host reservations.
+    client.setDUID("01:02:03:05");
+    // Configure client to request IA_PD.
+    client.requestPrefix();
+    client.requestOption(D6O_PD_EXCLUDE);
+    configure(CONFIGS[8], *client.getServer());
+    // Make sure we ended-up having expected number of subnets configured.
+    const Subnet6Collection* subnets = CfgMgr::instance().getCurrentCfg()->
+        getCfgSubnets6()->getAll();
+    ASSERT_EQ(1, subnets->size());
+    // Perform 4-way exchange.
+    ASSERT_NO_THROW(client.doSARR());
+    // Server should have assigned a prefix.
+    ASSERT_EQ(1, client.getLeaseNum());
+    Lease6 lease_client = client.getLease(0);
+    EXPECT_EQ(64, lease_client.prefixlen_);
+    EXPECT_EQ(3000, lease_client.preferred_lft_);
+    EXPECT_EQ(4000, lease_client.valid_lft_);
+    Lease6Ptr lease_server = checkLease(lease_client);
+    // Check that the server recorded the lease.
+    ASSERT_TRUE(lease_server);
+
+    OptionPtr option = client.getContext().response_->getOption(D6O_IA_PD);
+    ASSERT_TRUE(option);
+    Option6IAPtr ia = boost::dynamic_pointer_cast<Option6IA>(option);
+    ASSERT_TRUE(ia);
+    option = ia->getOption(D6O_IAPREFIX);
+    ASSERT_TRUE(option);
+    Option6IAPrefixPtr pd_option = boost::dynamic_pointer_cast<Option6IAPrefix>(option);
+    ASSERT_TRUE(pd_option);
+    option = pd_option->getOption(D6O_PD_EXCLUDE);
+    ASSERT_TRUE(option);
+    Option6PDExcludePtr pd_exclude = boost::dynamic_pointer_cast<Option6PDExclude>(option);
+    ASSERT_TRUE(pd_exclude);
+    EXPECT_EQ("2001:db8:3::2000", pd_exclude->getExcludedPrefix(IOAddress("2001:db8:3::"),
+                                                                64).toText());
+    EXPECT_EQ(120, static_cast<unsigned>(pd_exclude->getExcludedPrefixLength()));
+}
+
+TEST_F(SARRTest, directClientExcludedPrefixHost) {
+    Dhcpv6SrvMTTestGuard guard(*this, false);
+    directClientExcludedPrefixHost();
+}
+
+TEST_F(SARRTest, directClientExcludedPrefixHostMultiThreading) {
+    Dhcpv6SrvMTTestGuard guard(*this, true);
+    directClientExcludedPrefixHost();
 }
 
 void
