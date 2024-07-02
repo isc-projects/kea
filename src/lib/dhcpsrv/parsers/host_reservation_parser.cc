@@ -19,6 +19,9 @@
 using namespace isc::asiolink;
 using namespace isc::data;
 
+namespace isc {
+namespace dhcp {
+
 namespace {
 
 /// @brief Returns set of the supported parameters for DHCPv4.
@@ -94,10 +97,62 @@ getSupportedParams6(const bool identifiers_only = false) {
     return (identifiers_only ? identifiers_set : params_set);
 }
 
+/// @brief Extract the prefix from the value specified in
+/// the following format: 2001:db8:2000::/64.
+///
+/// @param prefix Prefix in text format.
+/// @param[out] addr Address part of the prefix.
+/// @param[out] len Length part of the prefix.
+/// @param msg Message to prepend to first error log.
+void
+parsePrefix(std::string prefix, IOAddress& addr, uint8_t& len, std::string msg) {
+    // The slash is mandatory for prefixes. If there is no slash,
+    // return an error.
+    size_t len_pos  = prefix.find('/');
+    if (len_pos == std::string::npos) {
+        isc_throw(DhcpConfigError, msg << " requires prefix length "
+                  << "be specified in '" << prefix << "'");
+    } else if (len_pos >= prefix.length() - 1) {
+        // If there is nothing after the slash, we should also
+        // report an error.
+        isc_throw(DhcpConfigError, "prefix '" <<  prefix
+                  << "' requires length after '/'");
+
+    }
+
+    // Convert the prefix length from the string to the number.
+    // Note, that we don't use the uint8_t type as the lexical cast
+    // would expect a character, e.g. 'a', instead of prefix length,
+    // e.g. '64'.
+    unsigned int prefix_len = len;
+    try {
+        prefix_len = boost::lexical_cast<unsigned int>(prefix.substr(len_pos + 1));
+    } catch (const boost::bad_lexical_cast&) {
+        isc_throw(DhcpConfigError, "prefix length value '"
+                  << prefix.substr(len_pos + 1) << "' is invalid");
+    }
+    if ((prefix_len == 0) || (prefix_len > 128)) {
+        isc_throw(OutOfRange,
+                  "'prefix-len' value must be in range of [1..128]");
+    }
+    len = static_cast<uint8_t>(prefix_len);
+
+    // Remove the slash character and the prefix length from the
+    // parsed value.
+    prefix.erase(len_pos);
+    addr = IOAddress(prefix);
+
+    if (len != 128) {
+        IOAddress first_address = firstAddrInPrefix(addr, len);
+        if (first_address != addr) {
+            isc_throw(BadValue, "Prefix address: " << addr
+                      << " exceeds prefix/prefix-len pair: " << first_address
+                      << "/" << prefix_len);
+        }
+    }
 }
 
-namespace isc {
-namespace dhcp {
+}
 
 HostPtr
 HostReservationParser::parse(const SubnetID& subnet_id,
@@ -247,63 +302,6 @@ HostReservationParser4::getSupportedParameters(const bool identifiers_only) cons
     return (getSupportedParams4(identifiers_only));
 }
 
-namespace {
-
-// Extract the prefix length from the value specified in
-// the following format: 2001:db8:2000::/64.
-std::pair<IOAddress, uint8_t>
-parsePrefix(std::string prefix, std::string msg) {
-    uint8_t prefix_len = 128;
-    // The slash is mandatory for prefixes. If there is no slash,
-    // return an error.
-    size_t len_pos  = prefix.find('/');
-    if (len_pos == std::string::npos) {
-        isc_throw(DhcpConfigError, msg << " requires prefix length "
-                  << "be specified in '" << prefix << "'");
-
-        // If there is nothing after the slash, we should also
-        // report an error.
-    } else if (len_pos >= prefix.length() - 1) {
-        isc_throw(DhcpConfigError, "prefix '" <<  prefix
-                  << "' requires length after '/'");
-
-    }
-
-    // Convert the prefix length from the string to the number.
-    // Note, that we don't use the uint8_t type as the lexical cast
-    // would expect a character, e.g. 'a', instead of prefix length,
-    // e.g. '64'.
-
-    try {
-        prefix_len = boost::lexical_cast<unsigned int>(prefix.substr(len_pos + 1));
-    } catch (const boost::bad_lexical_cast&) {
-        isc_throw(DhcpConfigError, "prefix length value '"
-                  << prefix.substr(len_pos + 1) << "' is invalid");
-    }
-
-    if ((prefix_len == 0) || (prefix_len > 128)) {
-        isc_throw(OutOfRange,
-                  "'prefix-len' value must be in range of [1..128]");
-    }
-
-    // Remove the slash character and the prefix length from the
-    // parsed value.
-    prefix.erase(len_pos);
-    IOAddress addr(prefix);
-
-    if (prefix_len != 128) {
-        IOAddress first_address = firstAddrInPrefix(addr, prefix_len);
-        if (first_address != addr) {
-            isc_throw(BadValue, "Prefix address: " << addr
-                      << " exceeds prefix/prefix-len pair: " << first_address
-                      << "/" << static_cast<uint32_t>(prefix_len));
-        }
-    }
-    return (std::pair<IOAddress, uint8_t>(addr, prefix_len));
-}
-
-} // end of anonymous namespace.
-
 HostPtr
 HostReservationParser6::parseInternal(const SubnetID& subnet_id,
                                       isc::data::ConstElementPtr reservation_data,
@@ -369,16 +367,21 @@ HostReservationParser6::parseInternal(const SubnetID& subnet_id,
             ConstElementPtr element = prefixes->get(idx);
             try {
                 std::string prefix = element->stringValue();
-                auto const p = parsePrefix(prefix, "prefix reservation");
-                IPv6Resrv res(IPv6Resrv::TYPE_PD, p.first, p.second);
+                IOAddress addr("::");
+                uint8_t prefix_len(128);
+                parsePrefix(prefix, addr, prefix_len, "prefix reservation");
+                IPv6Resrv res(IPv6Resrv::TYPE_PD, addr, prefix_len);
                 std::string exclude("");
                 if (excluded_prefixes) {
                     element = excluded_prefixes->get(idx);
                     exclude = element->stringValue();
                 }
                 if (!exclude.empty()) {
-                    auto const x = parsePrefix(exclude, "exclude prefix");
-                    res.setPDExclude(x.first, x.second);
+                    IOAddress excluded_prefix("::");
+                    uint8_t excluded_prefix_len(0);
+                    parsePrefix(exclude, excluded_prefix, excluded_prefix_len,
+                                "exclude prefix");
+                    res.setPDExclude(excluded_prefix, excluded_prefix_len);
                 }
                 host->addReservation(res);
             } catch (const std::exception& ex) {
