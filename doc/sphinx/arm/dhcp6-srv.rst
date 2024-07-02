@@ -4291,8 +4291,8 @@ another.
         {
             "duid": "01:02:03:04:05:06:07:08:09:0A",
             "ip-addresses": [ "2001:db8:1::103" ],
-            "prefixes": [ "2001:db8::/48 ],
-            "excluded-prefixes": [ "2001:db8:0:1::/64 ],
+            "prefixes": [ "2001:db8::/48" ],
+            "excluded-prefixes": [ "2001:db8:0:1::/64" ],
             "hostname": "foo.example.com"
         }
     ],
