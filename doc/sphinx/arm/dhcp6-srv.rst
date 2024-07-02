@@ -4271,6 +4271,23 @@ another.
    host reservation has preference over a global reservation
    when both exist for the same client.
 
+.. note::
+
+   Since Kea 2.7.1, a reserved (so delegated) prefix can be associated
+   with a single prefix to exclude as for prefix delegation pools
+   :ref:`pd-exclude-option`. The host reservation syntax is extended
+   by a new entry ``excluded-prefixes`` which when is present must have
+   the same size as the ``prefixes`` entry: both contains strings
+   representing IPv6 prefixes (e.g. ``2001:db8::/48``). Each element of
+   the ``excluded-prefixes`` must be either the empty string or match
+   the prefix at the same position in the ``prefixes`` list, e.g.
+   ``2001:db8:0:1::/64`` matches / can be associated with ``2001:db8::/48``.
+   An empty ``excluded-prefixes`` list or a list with only empty strings
+   can be omitted (and will be omitted when produced by Kea).
+
+   todo: add something about adding the pd-exclude option to returned
+   prefixes as done for prefix delegation pools.
+
 .. _reservation6-conflict:
 
 Conflicts in DHCPv6 Reservations
