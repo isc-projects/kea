@@ -1,3 +1,10 @@
+2280.	[func]		fdupont
+	IPv6 host reservation syntax now accepts a new entry
+	"excluded-prefixes": a pd-exclude option (RFC6603)
+	can now be added into an iaprefix option carrying
+	a reserved prefix.
+	(Gitlab #1387)
+
 2279.	[build]		pprindeville
 	Replace the cut and rev utilities with shell variable expansions,
 	improving compatibility with minimal setups on embedded systems.
