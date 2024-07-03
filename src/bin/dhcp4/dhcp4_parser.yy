@@ -311,6 +311,8 @@ using namespace std;
 %type <ElementPtr> ncr_protocol_value
 %type <ElementPtr> ddns_replace_client_name_value
 %type <ElementPtr> ddns_conflict_resolution_mode_value
+%type <ElementPtr> control_socket_type_value
+%type <ElementPtr> auth_type_value
 
 %printer { yyoutput << $$; } <*>;
 

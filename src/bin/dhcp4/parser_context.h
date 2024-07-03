@@ -294,18 +294,18 @@ public:
         CONTROL_SOCKET,
 
         /// Used while parsing Dhcp4/control-socket/socket-type structures.
-	CONTROL_SOCKET_TYPE,
+        CONTROL_SOCKET_TYPE,
 
-	/// Used while parsing Dhcp4/control-socket/authentication structures.
-	AUTHENTICATION,
+        /// Used while parsing Dhcp4/control-socket/authentication structures.
+        AUTHENTICATION,
 
-	/// Used while parsing Dhcp4/control-socket/authentication/type
+        /// Used while parsing Dhcp4/control-socket/authentication/type
         /// structures.
-	AUTH_TYPE,
+        AUTH_TYPE,
 
-	/// Used while parsing Dhcp4/control-socket/authentication/clients
+        /// Used while parsing Dhcp4/control-socket/authentication/clients
         /// structures.
-	CLIENTS,
+        CLIENTS,
 
         /// Used while parsing Dhcp4/dhcp-queue-control structures.
         DHCP_QUEUE_CONTROL,
