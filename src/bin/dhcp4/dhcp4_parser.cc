@@ -4127,7 +4127,7 @@ namespace isc { namespace dhcp {
 #line 2609 "dhcp4_parser.yy"
                                                {
     ctx.unique("socket-port", ctx.loc2pos(yystack_[2].location));
-    ElementPtr port(new StringElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr port(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("socket-port", port);
 }
 #line 4134 "dhcp4_parser.cc"
@@ -4202,7 +4202,7 @@ namespace isc { namespace dhcp {
 #line 2663 "dhcp4_parser.yy"
              {
     ctx.unique("realm", ctx.loc2pos(yystack_[0].location));
-    ctx.enter(ctx.NO_KEYWORDS);
+    ctx.enter(ctx.NO_KEYWORD);
 }
 #line 4208 "dhcp4_parser.cc"
     break;
@@ -4221,7 +4221,7 @@ namespace isc { namespace dhcp {
 #line 2672 "dhcp4_parser.yy"
                      {
     ctx.unique("directory", ctx.loc2pos(yystack_[0].location));
-    ctx.enter(ctx.NO_KEYWORDS);
+    ctx.enter(ctx.NO_KEYWORD);
 }
 #line 4227 "dhcp4_parser.cc"
     break;
@@ -4295,7 +4295,7 @@ namespace isc { namespace dhcp {
 #line 2727 "dhcp4_parser.yy"
                      {
     ctx.unique("user-file", ctx.loc2pos(yystack_[0].location));
-    ctx.enter(ctx.NO_KEYWORDS);
+    ctx.enter(ctx.NO_KEYWORD);
 }
 #line 4301 "dhcp4_parser.cc"
     break;
@@ -4314,7 +4314,7 @@ namespace isc { namespace dhcp {
 #line 2736 "dhcp4_parser.yy"
                              {
     ctx.unique("password-file", ctx.loc2pos(yystack_[0].location));
-    ctx.enter(ctx.NO_KEYWORDS);
+    ctx.enter(ctx.NO_KEYWORD);
 }
 #line 4320 "dhcp4_parser.cc"
     break;

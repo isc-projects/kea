@@ -2608,7 +2608,7 @@ control_socket_address: SOCKET_ADDRESS {
 
 control_socket_port: SOCKET_PORT COLON INTEGER {
     ctx.unique("socket-port", ctx.loc2pos(@1));
-    ElementPtr port(new StringElement($3, ctx.loc2pos(@3)));
+    ElementPtr port(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("socket-port", port);
 };
 
@@ -2662,7 +2662,7 @@ auth_type_value: BASIC { $$ = ElementPtr(new StringElement("basic", ctx.loc2pos(
 
 realm: REALM {
     ctx.unique("realm", ctx.loc2pos(@1));
-    ctx.enter(ctx.NO_KEYWORDS);
+    ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     ElementPtr realm(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("realm", realm);
@@ -2671,7 +2671,7 @@ realm: REALM {
 
 directory: DIRECTORY {
     ctx.unique("directory", ctx.loc2pos(@1));
-    ctx.enter(ctx.NO_KEYWORDS);
+    ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     ElementPtr directory(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("directory", directory);
@@ -2726,7 +2726,7 @@ clients_param: user
 
 user_file: USER_FILE {
     ctx.unique("user-file", ctx.loc2pos(@1));
-    ctx.enter(ctx.NO_KEYWORDS);
+    ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     ElementPtr user(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("user-file", user);
@@ -2735,7 +2735,7 @@ user_file: USER_FILE {
 
 password_file: PASSWORD_FILE {
     ctx.unique("password-file", ctx.loc2pos(@1));
-    ctx.enter(ctx.NO_KEYWORDS);
+    ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     ElementPtr password(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("password-file", password);
