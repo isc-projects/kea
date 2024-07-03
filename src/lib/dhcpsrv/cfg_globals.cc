@@ -52,7 +52,6 @@ CfgGlobals::nameToIndex = {
     { "ddns-ttl-percent", DDNS_TTL_PERCENT },
     { "ddns-conflict-resolution-mode", DDNS_CONFLICT_RESOLUTION_MODE },
     { "compatibility", COMPATIBILITY },
-    { "control-socket", CONTROL_SOCKET },
     { "dhcp-ddns", DHCP_DDNS },
     { "expired-leases-processing", EXPIRED_LEASES_PROCESSING },
     { "multi-threading", MULTI_THREADING },
