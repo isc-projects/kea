@@ -235,7 +235,7 @@ using namespace std;
   DIRECTORY "directory"
   CLIENTS "clients"
   USER_FILE "user-file"
-  USER_PASSWORD "user-password"
+  PASSWORD_FILE "password-file"
   CERT_REQUIRED "cert-required"
 
   DHCP_QUEUE_CONTROL "dhcp-queue-control"
