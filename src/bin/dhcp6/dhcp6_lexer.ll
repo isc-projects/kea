@@ -551,6 +551,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     case isc::dhcp::Parser6Context::OPTION_DEF:
     case isc::dhcp::Parser6Context::SERVER_ID:
     case isc::dhcp::Parser6Context::CONFIG_DATABASE:
+    case isc::dhcp::Parser6Context::AUTHENTICATION:
         return isc::dhcp::Dhcp6Parser::make_TYPE(driver.loc_);
     default:
         return isc::dhcp::Dhcp6Parser::make_STRING("type", driver.loc_);
@@ -589,6 +590,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     case isc::dhcp::Parser6Context::LEASE_DATABASE:
     case isc::dhcp::Parser6Context::HOSTS_DATABASE:
     case isc::dhcp::Parser6Context::CONFIG_DATABASE:
+    case isc::dhcp::Parser6Context::CLIENTS:
         return isc::dhcp::Dhcp6Parser::make_USER(driver.loc_);
     default:
         return isc::dhcp::Dhcp6Parser::make_STRING("user", driver.loc_);
@@ -600,6 +602,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     case isc::dhcp::Parser6Context::LEASE_DATABASE:
     case isc::dhcp::Parser6Context::HOSTS_DATABASE:
     case isc::dhcp::Parser6Context::CONFIG_DATABASE:
+    case isc::dhcp::Parser6Context::CLIENTS:
         return isc::dhcp::Dhcp6Parser::make_PASSWORD(driver.loc_);
     default:
         return isc::dhcp::Dhcp6Parser::make_STRING("password", driver.loc_);
@@ -780,6 +783,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     case isc::dhcp::Parser6Context::LEASE_DATABASE:
     case isc::dhcp::Parser6Context::HOSTS_DATABASE:
     case isc::dhcp::Parser6Context::CONFIG_DATABASE:
+    case isc::dhcp::Parser6Context::CONTROL_SOCKET:
         return isc::dhcp::Dhcp6Parser::make_TRUST_ANCHOR(driver.loc_);
     default:
         return isc::dhcp::Dhcp6Parser::make_STRING("trust-anchor", driver.loc_);
@@ -791,6 +795,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     case isc::dhcp::Parser6Context::LEASE_DATABASE:
     case isc::dhcp::Parser6Context::HOSTS_DATABASE:
     case isc::dhcp::Parser6Context::CONFIG_DATABASE:
+    case isc::dhcp::Parser6Context::CONTROL_SOCKET:
         return isc::dhcp::Dhcp6Parser::make_CERT_FILE(driver.loc_);
     default:
         return isc::dhcp::Dhcp6Parser::make_STRING("cert-file", driver.loc_);
@@ -802,6 +807,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     case isc::dhcp::Parser6Context::LEASE_DATABASE:
     case isc::dhcp::Parser6Context::HOSTS_DATABASE:
     case isc::dhcp::Parser6Context::CONFIG_DATABASE:
+    case isc::dhcp::Parser6Context::CONTROL_SOCKET:
         return isc::dhcp::Dhcp6Parser::make_KEY_FILE(driver.loc_);
     default:
         return isc::dhcp::Dhcp6Parser::make_STRING("key-file", driver.loc_);
@@ -1322,6 +1328,8 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     case isc::dhcp::Parser6Context::CLIENT_CLASSES:
     case isc::dhcp::Parser6Context::SERVER_ID:
     case isc::dhcp::Parser6Context::CONTROL_SOCKET:
+    case isc::dhcp::Parser6Context::AUTHENTICATION:
+    case isc::dhcp::Parser6Context::CLIENTS:
     case isc::dhcp::Parser6Context::DHCP_QUEUE_CONTROL:
     case isc::dhcp::Parser6Context::DHCP_MULTI_THREADING:
     case isc::dhcp::Parser6Context::LOGGERS:
@@ -1346,6 +1354,8 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     case isc::dhcp::Parser6Context::CLIENT_CLASSES:
     case isc::dhcp::Parser6Context::SERVER_ID:
     case isc::dhcp::Parser6Context::CONTROL_SOCKET:
+    case isc::dhcp::Parser6Context::AUTHENTICATION:
+    case isc::dhcp::Parser6Context::CLIENTS:
     case isc::dhcp::Parser6Context::DHCP_QUEUE_CONTROL:
     case isc::dhcp::Parser6Context::DHCP_MULTI_THREADING:
     case isc::dhcp::Parser6Context::LOGGERS:
@@ -2022,6 +2032,15 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     }
 }
 
+\"control-sockets\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::DHCP6:
+        return isc::dhcp::Dhcp6Parser::make_CONTROL_SOCKETS(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("control-sockets", driver.loc_);
+    }
+}
+
 \"socket-type\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::CONTROL_SOCKET:
@@ -2031,12 +2050,129 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     }
 }
 
+\"unix\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::CONTROL_SOCKET_TYPE:
+        return isc::dhcp::Dhcp6Parser::make_UNIX(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("unix", driver.loc_);
+    }
+}
+
+\"http\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::CONTROL_SOCKET_TYPE:
+        return isc::dhcp::Dhcp6Parser::make_HTTP(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("http", driver.loc_);
+    }
+}
+
+\"https\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::CONTROL_SOCKET_TYPE:
+        return isc::dhcp::Dhcp6Parser::make_HTTPS(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("https", driver.loc_);
+    }
+}
+
 \"socket-name\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::CONTROL_SOCKET:
         return isc::dhcp::Dhcp6Parser::make_SOCKET_NAME(driver.loc_);
     default:
         return isc::dhcp::Dhcp6Parser::make_STRING("socket-name", driver.loc_);
+    }
+}
+
+\"socket-address\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::CONTROL_SOCKET:
+        return isc::dhcp::Dhcp6Parser::make_SOCKET_ADDRESS(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("socket-address", driver.loc_);
+    }
+}
+
+\"socket-port\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::CONTROL_SOCKET:
+        return isc::dhcp::Dhcp6Parser::make_SOCKET_PORT(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("socket-port", driver.loc_);
+    }
+}
+
+\"authentication\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::CONTROL_SOCKET:
+        return isc::dhcp::Dhcp6Parser::make_AUTHENTICATION(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("authentication", driver.loc_);
+    }
+}
+
+\"basic\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::AUTH_TYPE:
+        return isc::dhcp::Dhcp6Parser::make_BASIC(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("basic", driver.loc_);
+    }
+}
+
+\"realm\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::AUTHENTICATION:
+        return isc::dhcp::Dhcp6Parser::make_REALM(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("realm", driver.loc_);
+    }
+}
+
+\"directory\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::AUTHENTICATION:
+        return isc::dhcp::Dhcp6Parser::make_DIRECTORY(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("directory", driver.loc_);
+    }
+}
+
+\"clients\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::AUTHENTICATION:
+        return isc::dhcp::Dhcp6Parser::make_CLIENTS(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("clients", driver.loc_);
+    }
+}
+
+\"user-file\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::CLIENTS:
+        return isc::dhcp::Dhcp6Parser::make_USER_FILE(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("user-file", driver.loc_);
+    }
+}
+
+\"password-file\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::CLIENTS:
+        return isc::dhcp::Dhcp6Parser::make_PASSWORD_FILE(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("password-file", driver.loc_);
+    }
+}
+
+\"cert-required\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::CONTROL_SOCKET:
+        return isc::dhcp::Dhcp6Parser::make_CERT_REQUIRED(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("cert-required", driver.loc_);
     }
 }
 

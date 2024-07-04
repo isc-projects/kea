@@ -2513,6 +2513,7 @@ dhcp4o6_port: DHCP4O6_PORT COLON INTEGER {
 
 control_socket: CONTROL_SOCKET {
     ctx.unique("control-socket", ctx.loc2pos(@1));
+    ctx.unique("control-sockets", ctx.loc2pos(@1));
     ElementPtr m(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("control-socket", m);
     ctx.stack_.push_back(m);
@@ -2524,6 +2525,7 @@ control_socket: CONTROL_SOCKET {
 
 control_sockets: CONTROL_SOCKETS {
     ctx.unique("control-sockets", ctx.loc2pos(@1));
+    ctx.unique("control-socket", ctx.loc2pos(@1));
     ElementPtr l(new ListElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("control-sockets", l);
     ctx.stack_.push_back(l);

@@ -61,6 +61,7 @@ const SimpleKeywords SimpleParser6::GLOBAL6_PARAMETERS = {
     { "server-id",                        Element::map },
     { "dhcp4o6-port",                     Element::integer },
     { "control-socket",                   Element::map },
+    { "control-sockets",                  Element::list },
     { "dhcp-queue-control",               Element::map },
     { "dhcp-ddns",                        Element::map },
     { "user-context",                     Element::map },

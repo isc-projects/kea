@@ -296,6 +296,20 @@ public:
         /// Used while parsing Dhcp6/control-socket structures.
         CONTROL_SOCKET,
 
+        /// Used while parsing Dhcp6/control-socket/socket-type structures.
+        CONTROL_SOCKET_TYPE,
+
+        /// Used while parsing Dhcp6/control-socket/authentication structures.
+        AUTHENTICATION,
+
+        /// Used while parsing Dhcp6/control-socket/authentication/type
+        /// structures.
+        AUTH_TYPE,
+
+        /// Used while parsing Dhcp6/control-socket/authentication/clients
+        /// structures.
+        CLIENTS,
+
         /// Used while parsing Dhcp6/dhcp-queue-control structures.
         DHCP_QUEUE_CONTROL,
 

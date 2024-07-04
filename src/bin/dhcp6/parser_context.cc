@@ -186,6 +186,14 @@ Parser6Context::contextName() {
         return ("duid-type");
     case CONTROL_SOCKET:
         return ("control-socket");
+    case CONTROL_SOCKET_TYPE:
+        return ("control-socket-type");
+    case AUTHENTICATION:
+        return ("authentication");
+    case AUTH_TYPE:
+        return ("auth-type");
+    case CLIENTS:
+        return ("clients");
     case DHCP_QUEUE_CONTROL:
         return ("dhcp-queue-control");
     case DHCP_MULTI_THREADING:
