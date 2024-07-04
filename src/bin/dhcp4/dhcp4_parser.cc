@@ -4026,7 +4026,7 @@ namespace isc { namespace dhcp {
 #line 2547 "dhcp4_parser.yy"
                                      {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
-    ctx.stack_.back()->set("control-socket", m);
+    ctx.stack_.back()->add(m);
     ctx.stack_.push_back(m);
 }
 #line 4033 "dhcp4_parser.cc"
@@ -4036,7 +4036,6 @@ namespace isc { namespace dhcp {
 #line 2551 "dhcp4_parser.yy"
                                        {
     ctx.stack_.pop_back();
-    ctx.leave();
 }
 #line 4042 "dhcp4_parser.cc"
     break;

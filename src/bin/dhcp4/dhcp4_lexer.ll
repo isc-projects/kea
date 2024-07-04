@@ -401,7 +401,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     case isc::dhcp::Parser4Context::HOSTS_DATABASE:
     case isc::dhcp::Parser4Context::OPTION_DEF:
     case isc::dhcp::Parser4Context::CONFIG_DATABASE:
-    case isc::dhcp::Parser4Context::AUTH_TYPE:
+    case isc::dhcp::Parser4Context::AUTHENTICATION:
         return isc::dhcp::Dhcp4Parser::make_TYPE(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("type", driver.loc_);
@@ -1071,6 +1071,8 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     case isc::dhcp::Parser4Context::RESERVATIONS:
     case isc::dhcp::Parser4Context::CLIENT_CLASSES:
     case isc::dhcp::Parser4Context::CONTROL_SOCKET:
+    case isc::dhcp::Parser4Context::AUTHENTICATION:
+    case isc::dhcp::Parser4Context::CLIENTS:
     case isc::dhcp::Parser4Context::DHCP_QUEUE_CONTROL:
     case isc::dhcp::Parser4Context::DHCP_MULTI_THREADING:
     case isc::dhcp::Parser4Context::LOGGERS:
@@ -1093,6 +1095,8 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     case isc::dhcp::Parser4Context::RESERVATIONS:
     case isc::dhcp::Parser4Context::CLIENT_CLASSES:
     case isc::dhcp::Parser4Context::CONTROL_SOCKET:
+    case isc::dhcp::Parser4Context::AUTHENTICATION:
+    case isc::dhcp::Parser4Context::CLIENTS:
     case isc::dhcp::Parser4Context::DHCP_QUEUE_CONTROL:
     case isc::dhcp::Parser4Context::DHCP_MULTI_THREADING:
     case isc::dhcp::Parser4Context::LOGGERS:

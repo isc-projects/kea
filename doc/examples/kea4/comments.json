@@ -51,12 +51,32 @@
        }
    ],
 
-   // In control socket (more for the agent)
-   "control-socket": {
-       "socket-type": "unix",
-       "socket-name": "/tmp/kea4-ctrl-socket",
-       "user-context": { "comment": "Indirect comment" }
-   },
+   // In control sockets (more for the agent)
+   "control-sockets": [
+       {
+           "socket-type": "unix",
+           "socket-name": "/tmp/kea4-ctrl-socket",
+           "user-context": { "comment": "Indirect comment" }
+       },
+       {
+           "comment": "HTTP control socket",
+           "socket-type": "http",
+           "socket-address": "::1",
+           "socket-port": 8000,
+           
+           // In authentication
+           "authentication": {
+               "comment": "basic HTTP authentication",
+               "type": "basic",
+               // In basic HTTP authentication clients
+               "clients": [ {
+                   "comment": "admin is authorized",
+                   "user": "admin",
+                   "password": "1234"
+               } ]
+           }
+       }
+   ],
 
    // In shared networks
    "shared-networks": [ {

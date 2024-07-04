@@ -919,10 +919,21 @@ public:
 TEST_F(TrailingCommasTest, tests) {
     string txt(R"({
   "Dhcp4": {
-    "control-socket": {
-      "socket-name": "/tmp/kea-dhcp4-ctrl.sock",
-      "socket-type": "unix",
-    },
+    "control-sockets": [
+      {
+        "socket-type": "http",
+        "socket-address": "127.0.0.1",
+        "authentication": {
+          "clients": [
+            {
+              "password-file": "/tmp/pwd",
+            }
+          ],
+          "type": "basic",
+        },
+        "socket-port": 8000,
+      },
+    ],
     "hooks-libraries": [
       {
         "library": "/usr/local/lib/kea/hooks/libdhcp_dummy.so",
@@ -970,22 +981,25 @@ TEST_F(TrailingCommasTest, tests) {
 })");
     testParser(txt, Parser4Context::PARSER_DHCP4, false);
 
-    addLog("<string>:5.28");
-    addLog("<string>:9.63");
-    addLog("<string>:10.8");
-    addLog("<string>:14.15");
-    addLog("<string>:15.8");
-    addLog("<string>:20.24");
-    addLog("<string>:28.31");
-    addLog("<string>:29.12");
-    addLog("<string>:31.28");
-    addLog("<string>:32.8");
-    addLog("<string>:43.37");
-    addLog("<string>:44.12");
-    addLog("<string>:47.35");
-    addLog("<string>:48.8");
-    addLog("<string>:49.6");
-    addLog("<string>:50.4");
+    addLog("<string>:10.42");
+    addLog("<string>:13.26");
+    addLog("<string>:15.28");
+    addLog("<string>:16.8");
+    addLog("<string>:20.63");
+    addLog("<string>:21.8");
+    addLog("<string>:25.15");
+    addLog("<string>:26.8");
+    addLog("<string>:31.24");
+    addLog("<string>:39.31");
+    addLog("<string>:40.12");
+    addLog("<string>:42.28");
+    addLog("<string>:43.8");
+    addLog("<string>:54.37");
+    addLog("<string>:55.12");
+    addLog("<string>:58.35");
+    addLog("<string>:59.8");
+    addLog("<string>:60.6");
+    addLog("<string>:61.4");
     EXPECT_TRUE(checkFile());
 
     // Test with many consecutive commas.

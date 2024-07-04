@@ -47,7 +47,7 @@
                     "password": "1234"
                 },
 
-                // This specifies a hiddent client.
+                // This specifies a hidden client.
                 {
                     // The user id is the content of the file /tmp/kea-creds/hiddenu.
                     "user-file": "hiddenu",

@@ -2546,11 +2546,10 @@ not_empty_control_socket_list: control_socket_entry
 
 control_socket_entry: LCURLY_BRACKET {
     ElementPtr m(new MapElement(ctx.loc2pos(@1)));
-    ctx.stack_.back()->set("control-socket", m);
+    ctx.stack_.back()->add(m);
     ctx.stack_.push_back(m);
 } control_socket_params RCURLY_BRACKET {
     ctx.stack_.pop_back();
-    ctx.leave();
 };
 
 control_socket_params: control_socket_param

@@ -578,6 +578,7 @@ processDhcp4Config(isc::data::ConstElementPtr config_set) {
             if ((config_pair.first == "option-def") ||
                 (config_pair.first == "option-data") ||
                 (config_pair.first == "control-socket") ||
+                (config_pair.first == "control-sockets") ||
                 (config_pair.first == "multi-threading") ||
                 (config_pair.first == "dhcp-queue-control") ||
                 (config_pair.first == "host-reservation-identifiers") ||

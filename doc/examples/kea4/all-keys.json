@@ -143,16 +143,112 @@
         },
 
         // Command control socket configuration parameters for the Kea DHCPv4 server.
-        "control-socket": {
-            // Location of the UNIX domain socket file the DHCPv4 server uses
-            // to receive control commands from the Kea Control Agent or the
-            // local server administrator.
-            "socket-name": "/tmp/kea4-ctrl-socket",
+        "control-sockets": [
+            {
+                // Control socket type used by the Kea DHCPv4 server.
+                // Must be unix, http or https.
+                "socket-type": "unix",
 
-            // Control socket type used by the Kea DHCPv4 server. The 'unix'
-            // socket is currently the only supported type.
-            "socket-type": "unix"
-        },
+               // Location of the UNIX domain socket file the DHCPv4
+               // server uses to receive control commands from the
+               // local server administrator.
+               "socket-name": "/tmp/kea4-ctrl-socket"
+            },
+            {
+                // Control socket type used by the Kea DHCPv4 server.
+                // Must be unix, http or https.
+                "socket-type": "https",
+
+                // Address of the HTTPS socket the Kea DHCPv4 server should
+                // listen for incoming queries. In fact an alias of
+                // socket-name.
+                "socket-address": "127.0.0.1",
+
+                // Port of the HTTPS socket the Kea DHCPv4 server
+                // should listen for incoming queries. If enabling HA
+                // and multi-threading, the 8000 port is used by the
+                // HA hook library http listener. When using HA hook
+                // library with multi-threading to function, make sure
+                // the port used by dedicated listener is different
+                // (e.g. 8001) than the one specified here.  Note the
+                // commands should still be sent to a control socket.
+                // The dedicated listener is specifically for HA
+                // updates only.
+                "socket-port": 8000,
+
+                // TLS trust anchor (Certificate Authority). This is a
+                // file name or a directory path. Make sense with other
+                // TLS parameters only for the https control socket type.
+                "trust-anchor": "my-ca",
+
+                // TLS server certificate file name.
+                "cert-file": "my-cert",
+
+                // TLS server private key file name.
+                "key-file": "my-key",
+
+                // TLS require client certificates flag. Default is
+                // true and means require client certificates. False
+                // means they are optional.
+                "cert-required": true,
+
+                // Optional authentication.
+                "authentication": {
+
+                    // Required authentication type. The only
+                    // supported value is basic for the basic HTTP
+                    // authentication.
+                    "type": "basic",
+
+                    // An optional parameter is the basic HTTP
+                    // authentication realm.  Its default is
+                    // "kea-dhcpv4-server"
+                    "realm": "kea-dhcpv4-server",
+
+                    // This optional parameter can be used to specify a common
+                    // prefix for files handling client credentials.
+                    "directory": "/tmp/kea-creds",
+
+                    // This list specifies the user ids and passwords
+                    // to use for basic HTTP authentication. If empty
+                    // or not present any client is authorized.
+                    "clients": [
+                        // This specifies an authorized client.
+                        {
+                            // The user id must not be empty or
+                            // contain the ':' character. It is a
+                            // mandatory parameter.
+                            "user": "admin",
+
+                            // If password is not specified an empty
+                            // password is used.
+                            "password": "1234"
+                        },
+
+                        // This specifies a hidden client.
+                        {
+                            // The user id is the content of the
+                            // file /tmp/kea-creds/hiddenu.
+                            "user-file": "hiddenu",
+
+                            // The password is the content of the
+                            // file /tmp/kea-creds/hiddenp.
+                            "password-file": "hiddenp"
+                        },
+
+                        // This specifies a hidden client using a
+                        // secret in a file.
+                        {
+                            // The secret is the content of the file
+                            // /tmp/kea-creds/hiddens which must be in
+                            // the <user-id>:<password> format.
+                            "password-file": "hiddens"
+                        }
+                    ]
+                }
+            }
+        ],
+
 
         // Specifies a prefix to be prepended to the generated Client FQDN.
         // It may be specified at the global, shared-network, and subnet levels.
