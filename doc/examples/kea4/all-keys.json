@@ -249,7 +249,6 @@
             }
         ],
 
-
         // Specifies a prefix to be prepended to the generated Client FQDN.
         // It may be specified at the global, shared-network, and subnet levels.
         "ddns-generated-prefix": "myhost",

@@ -93,29 +93,29 @@
             "lenient-option-parsing": true
         },
 
-        // Command control socket configuration parameters for the Kea DHCPv4 server.
+        // Command control socket configuration parameters for the Kea DHCPv6 server.
         "control-sockets": [
             {
-                // Control socket type used by the Kea DHCPv4 server.
+                // Control socket type used by the Kea DHCPv6 server.
                 // Must be unix, http or https.
                 "socket-type": "unix",
 
-               // Location of the UNIX domain socket file the DHCPv4
+               // Location of the UNIX domain socket file the DHCPv6
                // server uses to receive control commands from the
                // local server administrator.
-               "socket-name": "/tmp/kea4-ctrl-socket"
+               "socket-name": "/tmp/kea6-ctrl-socket"
             },
             {
-                // Control socket type used by the Kea DHCPv4 server.
+                // Control socket type used by the Kea DHCPv6 server.
                 // Must be unix, http or https.
                 "socket-type": "https",
 
-                // Address of the HTTPS socket the Kea DHCPv4 server should
+                // Address of the HTTPS socket the Kea DHCPv6 server should
                 // listen for incoming queries. In fact an alias of
                 // socket-name.
                 "socket-address": "::1",
 
-                // Port of the HTTPS socket the Kea DHCPv4 server
+                // Port of the HTTPS socket the Kea DHCPv6 server
                 // should listen for incoming queries. If enabling HA
                 // and multi-threading, the 8000 port is used by the
                 // HA hook library http listener. When using HA hook
@@ -153,8 +153,8 @@
 
                     // An optional parameter is the basic HTTP
                     // authentication realm.  Its default is
-                    // "kea-dhcpv4-server"
-                    "realm": "kea-dhcpv4-server",
+                    // "kea-dhcpv6-server"
+                    "realm": "kea-dhcpv6-server",
 
                     // This optional parameter can be used to specify a common
                     // prefix for files handling client credentials.
@@ -199,7 +199,6 @@
                 }
             }
         ],
-
 
         // Specifies a prefix to be prepended to the generated Client FQDN.
         // It may be specified at the global, shared-network, and subnet levels.

@@ -78,8 +78,22 @@ using namespace std;
   SECRET_FILE "secret-file"
 
   CONTROL_SOCKET "control-socket"
+  CONTROL_SOCKETS "control-sockets"
   SOCKET_TYPE "socket-type"
+  UNIX "unix"
+  HTTP "http"
+  HTTPS "https"
   SOCKET_NAME "socket-name"
+  SOCKET_ADDRESS "socket-address"
+  SOCKET_PORT "socket-port"
+  AUTHENTICATION "authentication"
+  BASIC "basic"
+  REALM "realm"
+  DIRECTORY "directory"
+  CLIENTS "clients"
+  USER_FILE "user-file"
+  PASSWORD_FILE "password-file"
+  CERT_REQUIRED "cert-required"
 
   HOOKS_LIBRARIES "hooks-libraries"
   LIBRARY "library"
@@ -118,6 +132,8 @@ using namespace std;
 %type <ElementPtr> value
 %type <ElementPtr> map_value
 %type <ElementPtr> ncr_protocol_value
+%type <ElementPtr> control_socket_type_value
+%type <ElementPtr> auth_type_value
 
 %printer { yyoutput << $$; } <*>;
 
@@ -286,6 +302,7 @@ dhcpddns_param: ip_address
               | reverse_ddns
               | tsig_keys
               | control_socket
+              | control_sockets
               | hooks_libraries
               | loggers
               | user_context
@@ -739,10 +756,11 @@ tsig_key_secret_file: SECRET_FILE {
 
 // --- end of tsig-keys ---------------------------------
 
-// --- control socket ----------------------------------------
+// --- control sockets ----------------------------------------
 
 control_socket: CONTROL_SOCKET {
     ctx.unique("control-socket", ctx.loc2pos(@1));
+    ctx.unique("control-sockets", ctx.loc2pos(@1));
     ElementPtr m(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("control-socket", m);
     ctx.stack_.push_back(m);
@@ -750,6 +768,37 @@ control_socket: CONTROL_SOCKET {
 } COLON LCURLY_BRACKET control_socket_params RCURLY_BRACKET {
     ctx.stack_.pop_back();
     ctx.leave();
+};
+
+control_sockets: CONTROL_SOCKETS {
+    ctx.unique("control-sockets", ctx.loc2pos(@1));
+    ctx.unique("control-socket", ctx.loc2pos(@1));
+    ElementPtr l(new ListElement(ctx.loc2pos(@1)));
+    ctx.stack_.back()->set("control-sockets", l);
+    ctx.stack_.push_back(l);
+    ctx.enter(ctx.CONTROL_SOCKET);
+} COLON LSQUARE_BRACKET control_socket_list RSQUARE_BRACKET {
+    ctx.stack_.pop_back();
+    ctx.leave();
+};
+
+control_socket_list: %empty
+                   | not_empty_control_socket_list
+                   ;
+
+not_empty_control_socket_list: control_socket_entry
+                             | not_empty_control_socket_list COMMA control_socket_entry
+                             | not_empty_control_socket_list COMMA {
+                                 ctx.warnAboutExtraCommas(@2);
+                                 }
+                             ;
+
+control_socket_entry: LCURLY_BRACKET {
+    ElementPtr m(new MapElement(ctx.loc2pos(@1)));
+    ctx.stack_.back()->add(m);
+    ctx.stack_.push_back(m);
+} control_socket_params RCURLY_BRACKET {
+    ctx.stack_.pop_back();
 };
 
 control_socket_params: control_socket_param
@@ -761,6 +810,13 @@ control_socket_params: control_socket_param
 
 control_socket_param: control_socket_type
                     | control_socket_name
+                    | control_socket_address
+                    | control_socket_port
+                    | authentication
+                    | trust_anchor
+                    | cert_file
+                    | key_file
+                    | cert_required
                     | user_context
                     | comment
                     | unknown_map_entry
@@ -768,12 +824,17 @@ control_socket_param: control_socket_type
 
 control_socket_type: SOCKET_TYPE {
     ctx.unique("socket-type", ctx.loc2pos(@1));
-    ctx.enter(ctx.NO_KEYWORD);
-} COLON STRING {
-    ElementPtr stype(new StringElement($4, ctx.loc2pos(@4)));
-    ctx.stack_.back()->set("socket-type", stype);
+    ctx.enter(ctx.CONTROL_SOCKET_TYPE);
+} COLON control_socket_type_value {
+    ctx.stack_.back()->set("socket-type", $4);
     ctx.leave();
 };
+
+control_socket_type_value:
+    UNIX { $$ = ElementPtr(new StringElement("unix", ctx.loc2pos(@1))); }
+  | HTTP { $$ = ElementPtr(new StringElement("http", ctx.loc2pos(@1))); }
+  | HTTPS { $$ = ElementPtr(new StringElement("https", ctx.loc2pos(@1))); }
+  ;
 
 control_socket_name: SOCKET_NAME {
     ctx.unique("socket-name", ctx.loc2pos(@1));
@@ -781,6 +842,151 @@ control_socket_name: SOCKET_NAME {
 } COLON STRING {
     ElementPtr name(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("socket-name", name);
+    ctx.leave();
+};
+
+control_socket_address: SOCKET_ADDRESS {
+    ctx.unique("socket-address", ctx.loc2pos(@1));
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr address(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("socket-address", address);
+    ctx.leave();
+};
+
+control_socket_port: SOCKET_PORT COLON INTEGER {
+    ctx.unique("socket-port", ctx.loc2pos(@1));
+    ElementPtr port(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("socket-port", port);
+};
+
+cert_required: CERT_REQUIRED COLON BOOLEAN {
+    ctx.unique("cert-required", ctx.loc2pos(@1));
+    ElementPtr req(new BoolElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("cert-required", req);
+};
+
+// --- authentication ---------------------------------------------
+
+authentication: AUTHENTICATION {
+    ctx.unique("authentication", ctx.loc2pos(@1));
+    ElementPtr m(new MapElement(ctx.loc2pos(@1)));
+    ctx.stack_.back()->set("authentication", m);
+    ctx.stack_.push_back(m);
+    ctx.enter(ctx.AUTHENTICATION);
+} COLON LCURLY_BRACKET auth_params RCURLY_BRACKET {
+    // The type parameter is required
+    ctx.require("type", ctx.loc2pos(@4), ctx.loc2pos(@6));
+    ctx.stack_.pop_back();
+    ctx.leave();
+};
+
+auth_params: auth_param
+           | auth_params COMMA auth_param
+           | auth_params COMMA {
+               ctx.warnAboutExtraCommas(@2);
+               }
+           ;
+
+auth_param: auth_type
+          | realm
+          | directory
+          | clients
+          | comment
+          | user_context
+          | unknown_map_entry
+          ;
+
+auth_type: TYPE {
+    ctx.unique("type", ctx.loc2pos(@1));
+    ctx.enter(ctx.AUTH_TYPE);
+} COLON auth_type_value {
+    ctx.stack_.back()->set("type", $4);
+    ctx.leave();
+};
+
+auth_type_value: BASIC { $$ = ElementPtr(new StringElement("basic", ctx.loc2pos(@1))); }
+               ;
+
+realm: REALM {
+    ctx.unique("realm", ctx.loc2pos(@1));
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr realm(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("realm", realm);
+    ctx.leave();
+};
+
+directory: DIRECTORY {
+    ctx.unique("directory", ctx.loc2pos(@1));
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr directory(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("directory", directory);
+    ctx.leave();
+};
+
+clients: CLIENTS {
+    ctx.unique("clients", ctx.loc2pos(@1));
+    ElementPtr l(new ListElement(ctx.loc2pos(@1)));
+    ctx.stack_.back()->set("clients", l);
+    ctx.stack_.push_back(l);
+    ctx.enter(ctx.CLIENTS);
+} COLON LSQUARE_BRACKET clients_list RSQUARE_BRACKET {
+    ctx.stack_.pop_back();
+    ctx.leave();
+};
+
+clients_list: %empty
+            | not_empty_clients_list
+            ;
+
+not_empty_clients_list: basic_auth
+                      | not_empty_clients_list COMMA basic_auth
+                      | not_empty_clients_list COMMA {
+                          ctx.warnAboutExtraCommas(@2);
+                          }
+                      ;
+
+basic_auth: LCURLY_BRACKET {
+    ElementPtr m(new MapElement(ctx.loc2pos(@1)));
+    ctx.stack_.back()->add(m);
+    ctx.stack_.push_back(m);
+} clients_params RCURLY_BRACKET {
+    ctx.stack_.pop_back();
+};
+
+clients_params: clients_param
+              | clients_params COMMA clients_param
+              | clients_params COMMA {
+                  ctx.warnAboutExtraCommas(@2);
+                  }
+              ;
+
+clients_param: user
+             | user_file
+             | password
+             | password_file
+             | user_context
+             | comment
+             | unknown_map_entry
+             ;
+
+user_file: USER_FILE {
+    ctx.unique("user-file", ctx.loc2pos(@1));
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr user(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("user-file", user);
+    ctx.leave();
+};
+
+password_file: PASSWORD_FILE {
+    ctx.unique("password-file", ctx.loc2pos(@1));
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr password(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("password-file", password);
     ctx.leave();
 };
 
