@@ -227,7 +227,6 @@ using namespace std;
   CONTROL_SOCKET "control-socket"
   CONTROL_SOCKETS "control-sockets"
   SOCKET_TYPE "socket-type"
-  SOCKET_NAME "socket-name"
   UNIX "unix"
   HTTP "http"
   HTTPS "https"
