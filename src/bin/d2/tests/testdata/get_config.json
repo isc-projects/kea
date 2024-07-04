@@ -1,9 +1,11 @@
 {
     "DhcpDdns": {
-        "control-socket": {
-            "socket-name": "/tmp/kea-ddns-ctrl-socket",
-            "socket-type": "unix"
-        },
+        "control-sockets": [
+            {
+                "socket-name": "/tmp/kea-ddns-ctrl-socket",
+                "socket-type": "unix"
+            }
+        ],
         "dns-server-timeout": 1000,
         "forward-ddns": {
             "ddns-domains": [

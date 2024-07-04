@@ -91,16 +91,28 @@ public:
         keys_ = keys;
     }
 
-    /// @brief Returns information about control socket
+    /// @brief Returns information about UNIX control socket
     /// @return pointer to the Element that holds control-socket map
     const isc::data::ConstElementPtr getControlSocketInfo() const {
-        return (control_socket_);
+        return (unix_control_socket_);
     }
 
-    /// @brief Sets information about the control socket
+    /// @brief Sets information about the UNIX control socket
     /// @param control_socket Element that holds control-socket map
     void setControlSocketInfo(const isc::data::ConstElementPtr& control_socket) {
-        control_socket_ = control_socket;
+        unix_control_socket_ = control_socket;
+    }
+
+    /// @brief Returns information about HTTP/HTTPS control socket
+    /// @return pointer to the Element that holds control-socket map
+    const isc::data::ConstElementPtr getHttpControlSocketInfo() const {
+        return (http_control_socket_);
+    }
+
+    /// @brief Sets information about the HTTP/HTTPS control socket
+    /// @param control_socket Element that holds control-socket map
+    void setHttpControlSocketInfo(const isc::data::ConstElementPtr& control_socket) {
+        http_control_socket_ = control_socket;
     }
 
     /// @brief Returns non-const reference to configured hooks libraries.
@@ -142,8 +154,11 @@ private:
     /// @brief Storage for the map of TSIGKeyInfos.
     TSIGKeyInfoMapPtr keys_;
 
-    /// @brief Pointer to the control-socket information.
-    isc::data::ConstElementPtr control_socket_;
+    /// @brief Pointer to the UNIX control-socket information.
+    isc::data::ConstElementPtr unix_control_socket_;
+
+    /// @brief Pointer to the HTTP/HTTPS control-socket information.
+    isc::data::ConstElementPtr http_control_socket_;
 
     /// @brief Configured hooks libraries.
     isc::hooks::HooksConfig hooks_config_;
@@ -285,10 +300,15 @@ public:
     /// @return reference to const D2ParamsPtr
     const D2ParamsPtr& getD2Params();
 
-    /// @brief Convenience method fetches information about control socket
-    /// from context
+    /// @brief Convenience method fetches information about
+    /// UNIX control socket from context
     /// @return pointer to the Element that holds control-socket map
     const isc::data::ConstElementPtr getControlSocketInfo();
+
+    /// @brief Convenience method fetches information about
+    /// HTTP/HTTPS control socket from context
+    /// @return pointer to the Element that holds control-socket map
+    const isc::data::ConstElementPtr getHttpControlSocketInfo();
 
     /// @brief Returns configuration summary in the textual format.
     ///

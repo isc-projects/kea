@@ -75,11 +75,13 @@ namespace d2 {
 ///  "interface" : "eth1" ,
 ///  "ip-address" : "192.168.1.33" ,
 ///  "port" : 88 ,
-///  "control-socket":
-///  {
-///    "socket-type": "unix" ,
-///    "socket-name": "/tmp/kea-ddns-ctrl-socket"
-//// },
+///  "control-sockets":
+///  [
+///    {
+///     "socket-type": "unix" ,
+///     "socket-name": "/tmp/kea-ddns-ctrl-socket"
+///    }
+///  ],
 ///  "tsig-keys":
 //// [
 ///    {

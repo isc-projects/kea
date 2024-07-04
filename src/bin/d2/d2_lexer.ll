@@ -424,9 +424,9 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
 \"control-sockets\" {
     switch(driver.ctx_) {
     case isc::d2::D2ParserContext::DHCPDDNS:
-        return isc::d2::D2Parser::make_CONTROL_SOCKET(driver.loc_);
+        return isc::d2::D2Parser::make_CONTROL_SOCKETS(driver.loc_);
     default:
-        return isc::d2::D2Parser::make_STRING("control-socket", driver.loc_);
+        return isc::d2::D2Parser::make_STRING("control-sockets", driver.loc_);
     }
 }
 
@@ -495,7 +495,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
 
 \"authentication\" {
     switch(driver.ctx_) {
-    case isc::dhcp::Parser4Context::CONTROL_SOCKET:
+    case isc::d2::D2ParserContext::CONTROL_SOCKET:
         return isc::d2::D2Parser::make_AUTHENTICATION(driver.loc_);
     default:
         return isc::d2::D2Parser::make_STRING("authentication", driver.loc_);
@@ -504,7 +504,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
 
 \"type\" {
     switch(driver.ctx_) {
-    case isc::dhcp::Parser4Context::AUTHENTICATION:
+    case isc::d2::D2ParserContext::AUTHENTICATION:
         return isc::d2::D2Parser::make_TYPE(driver.loc_);
     default:
         return isc::d2::D2Parser::make_STRING("type", driver.loc_);
@@ -513,7 +513,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
 
 \"basic\" {
     switch(driver.ctx_) {
-    case isc::dhcp::Parser4Context::AUTH_TYPE:
+    case isc::d2::D2ParserContext::AUTH_TYPE:
         return isc::d2::D2Parser::make_BASIC(driver.loc_);
     default:
         return isc::d2::D2Parser::make_STRING("basic", driver.loc_);
@@ -522,7 +522,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
 
 \"realm\" {
     switch(driver.ctx_) {
-    case isc::dhcp::Parser4Context::AUTHENTICATION:
+    case isc::d2::D2ParserContext::AUTHENTICATION:
         return isc::d2::D2Parser::make_REALM(driver.loc_);
     default:
         return isc::d2::D2Parser::make_STRING("realm", driver.loc_);
@@ -531,7 +531,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
 
 \"directory\" {
     switch(driver.ctx_) {
-    case isc::dhcp::Parser4Context::AUTHENTICATION:
+    case isc::d2::D2ParserContext::AUTHENTICATION:
         return isc::d2::D2Parser::make_DIRECTORY(driver.loc_);
     default:
         return isc::d2::D2Parser::make_STRING("directory", driver.loc_);
@@ -540,7 +540,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
 
 \"clients\" {
     switch(driver.ctx_) {
-    case isc::dhcp::Parser4Context::AUTHENTICATION:
+    case isc::d2::D2ParserContext::AUTHENTICATION:
         return isc::d2::D2Parser::make_CLIENTS(driver.loc_);
     default:
         return isc::d2::D2Parser::make_STRING("clients", driver.loc_);
@@ -549,7 +549,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
 
 \"user\" {
     switch(driver.ctx_) {
-    case isc::dhcp::Parser4Context::CLIENTS:
+    case isc::d2::D2ParserContext::CLIENTS:
         return isc::d2::D2Parser::make_USER(driver.loc_);
     default:
         return isc::d2::D2Parser::make_STRING("user", driver.loc_);
@@ -558,7 +558,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
 
 \"user-file\" {
     switch(driver.ctx_) {
-    case isc::dhcp::Parser4Context::CLIENTS:
+    case isc::d2::D2ParserContext::CLIENTS:
         return isc::d2::D2Parser::make_USER_FILE(driver.loc_);
     default:
         return isc::d2::D2Parser::make_STRING("user-file", driver.loc_);
@@ -567,7 +567,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
 
 \"password\" {
     switch(driver.ctx_) {
-    case isc::dhcp::Parser4Context::CLIENTS:
+    case isc::d2::D2ParserContext::CLIENTS:
         return isc::d2::D2Parser::make_PASSWORD(driver.loc_);
     default:
         return isc::d2::D2Parser::make_STRING("password", driver.loc_);
@@ -576,7 +576,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
 
 \"password-file\" {
     switch(driver.ctx_) {
-    case isc::dhcp::Parser4Context::CLIENTS:
+    case isc::d2::D2ParserContext::CLIENTS:
         return isc::d2::D2Parser::make_PASSWORD_FILE(driver.loc_);
     default:
         return isc::d2::D2Parser::make_STRING("password-file", driver.loc_);
@@ -585,7 +585,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
 
 \"trust-anchor\" {
     switch(driver.ctx_) {
-    case isc::dhcp::Parser4Context::CONTROL_SOCKET:
+    case isc::d2::D2ParserContext::CONTROL_SOCKET:
         return isc::d2::D2Parser::make_TRUST_ANCHOR(driver.loc_);
     default:
         return isc::d2::D2Parser::make_STRING("trust-anchor", driver.loc_);
@@ -594,7 +594,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
 
 \"cert-file\" {
     switch(driver.ctx_) {
-    case isc::dhcp::Parser4Context::CONTROL_SOCKET:
+    case isc::d2::D2ParserContext::CONTROL_SOCKET:
         return isc::d2::D2Parser::make_CERT_FILE(driver.loc_);
     default:
         return isc::d2::D2Parser::make_STRING("cert-file", driver.loc_);
@@ -603,7 +603,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
 
 \"key-file\" {
     switch(driver.ctx_) {
-    case isc::dhcp::Parser4Context::CONTROL_SOCKET:
+    case isc::d2::D2ParserContext::CONTROL_SOCKET:
         return isc::d2::D2Parser::make_KEY_FILE(driver.loc_);
     default:
         return isc::d2::D2Parser::make_STRING("key-file", driver.loc_);
@@ -612,7 +612,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
 
 \"cert-required\" {
     switch(driver.ctx_) {
-    case isc::dhcp::Parser4Context::CONTROL_SOCKET:
+    case isc::d2::D2ParserContext::CONTROL_SOCKET:
         return isc::d2::D2Parser::make_CERT_REQUIRED(driver.loc_);
     default:
         return isc::d2::D2Parser::make_STRING("cert-required", driver.loc_);

@@ -971,11 +971,29 @@ TEST_F(D2CfgMgrTest, comments) {
                         "\"comment\": \"D2 config\" , "
                         "\"ip-address\" : \"192.168.1.33\" , "
                         "\"port\" : 88 , "
-                        "\"control-socket\": {"
-                        " \"comment\": \"Control channel\" , "
-                        " \"socket-type\": \"unix\" ,"
-                        " \"socket-name\": \"/tmp/d2-ctrl-channel\" "
+                        "\"control-sockets\": ["
+                        "{"
+                        " \"socket-type\": \"unix\","
+                        " \"socket-name\": \"/tmp/d2-ctrl-socket\","
+                        " \"user-context\": { \"comment\":"
+                        "  \"Indirect comment\" }"
                         "},"
+                        "{"
+                        " \"comment\": \"HTTP control socket\","
+                        " \"socket-type\": \"http\","
+                        " \"socket-address\": \"::1\","
+                        " \"socket-port\": 8053,"
+                        " \"authentication\": {"
+                        "  \"comment\": \"basic HTTP authentication\","
+                        "  \"type\": \"basic\","
+                        "  \"clients\": [ {"
+                        "   \"comment\": \"admin is authorized\","
+                        "   \"user\": \"admin\","
+                        "   \"password\": \"1234\""
+                        "  } ]"
+                        " }"
+                        "}"
+                        "],"
                         "\"tsig-keys\": ["
                         "{"
                         "  \"user-context\": { "
@@ -1011,12 +1029,45 @@ TEST_F(D2CfgMgrTest, comments) {
     ASSERT_TRUE(ctx->get("comment"));
     EXPECT_EQ("\"D2 config\"", ctx->get("comment")->str());
 
-    // Check control socket.
-    ConstElementPtr ctrl_sock = d2_context->getControlSocketInfo();
-    ASSERT_TRUE(ctrl_sock);
-    ASSERT_TRUE(ctrl_sock->get("user-context"));
-    EXPECT_EQ("{ \"comment\": \"Control channel\" }",
-              ctrl_sock->get("user-context")->str());
+    // There is a UNIX control socket.
+    ConstElementPtr socket = d2_context->getControlSocketInfo();
+    ASSERT_TRUE(socket);
+    ConstElementPtr ctx_socket = socket->get("user-context");
+    ASSERT_TRUE(ctx_socket);
+    ASSERT_EQ(1, ctx_socket->size());
+    ASSERT_TRUE(ctx_socket->get("comment"));
+    EXPECT_EQ("\"Indirect comment\"", ctx_socket->get("comment")->str());
+
+    // There is a HTTP control socket with authentication.
+    socket = d2_context->getHttpControlSocketInfo();
+    ASSERT_TRUE(socket);
+    ctx_socket = socket->get("user-context");
+    ASSERT_TRUE(ctx_socket);
+    ASSERT_EQ(1, ctx_socket->size());
+    ASSERT_TRUE(ctx_socket->get("comment"));
+    EXPECT_EQ("\"HTTP control socket\"", ctx_socket->get("comment")->str());
+
+    // HTTP authentication.
+    ConstElementPtr auth = socket->get("authentication");
+    ASSERT_TRUE(auth);
+    ConstElementPtr ctx_auth = auth->get("user-context");
+    ASSERT_TRUE(ctx_auth);
+    ASSERT_EQ(1, ctx_auth->size());
+    ASSERT_TRUE(ctx_auth->get("comment"));
+    EXPECT_EQ("\"basic HTTP authentication\"", ctx_auth->get("comment")->str());
+
+    // Authentication client.
+    ConstElementPtr clients = auth->get("clients");
+    ASSERT_TRUE(clients);
+    ASSERT_EQ(1, clients->size());
+    ConstElementPtr client;
+    ASSERT_NO_THROW(client = clients->get(0));
+    ASSERT_TRUE(client);
+    ConstElementPtr ctx_client = client->get("user-context");
+    ASSERT_TRUE(ctx_client);
+    ASSERT_EQ(1, ctx_client->size());
+    ASSERT_TRUE(ctx_client->get("comment"));
+    EXPECT_EQ("\"admin is authorized\"", ctx_client->get("comment")->str());
 
     // Check TSIG keys.
     TSIGKeyInfoMapPtr keys = d2_context->getKeys();

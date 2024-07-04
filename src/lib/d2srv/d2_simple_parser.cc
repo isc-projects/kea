@@ -262,13 +262,61 @@ void D2SimpleParser::parse(const D2CfgContextPtr& ctx,
         ctx->setContext(user);
     }
 
-    ConstElementPtr socket = config->get("control-socket");
-    if (socket) {
-        if (socket->getType() != Element::map) {
-            isc_throw(D2CfgError, "Specified control-socket is expected to be a map"
-                      ", i.e. a structure defined within { }");
+    // Get control sockets.
+    ConstElementPtr control_sockets = config->get("control-sockets");
+    ConstElementPtr control_socket = config->get("control-socket");
+    if (control_socket) {
+        ElementPtr l = Element::createList();
+        l->add(UserContext::toElement(control_socket));
+        control_sockets = l;
+    }
+    if (control_sockets) {
+        if (control_sockets->getType() != Element::list) {
+            // Sanity check: not supposed to fail.
+            isc_throw(D2CfgError,
+                      "Specified control-sockets is expected to be a list");
         }
-        ctx->setControlSocketInfo(socket);
+        bool seen_unix(false);
+        bool seen_http(false);
+        for (ConstElementPtr socket : control_sockets->listValue()) {
+            if (socket->getType() != Element::map) {
+                // Sanity check: not supposed to fail.
+                isc_throw(D2CfgError,
+                          "Specified control-sockets is expected to be a list of maps");
+            }
+            ConstElementPtr socket_type = socket->get("socket-type");
+            if (!socket_type) {
+                isc_throw(D2CfgError,
+                          "'socket-type' parameter is mandatory in control-sockets items");
+            }
+            if (socket_type->getType() != Element::string) {
+                // Sanity check: not supposed to fail.
+                isc_throw(D2CfgError,
+                          "'socket-type' parameter is expected to be a string");
+            }
+            std::string type = socket_type->stringValue();
+            if (type == "unix") {
+                if (seen_unix) {
+                    isc_throw(D2CfgError,
+                              "control socket of type 'unix' already configured");
+                }
+                seen_unix = true;
+                ctx->setControlSocketInfo(socket);
+            } else if ((type == "http") || (type == "https")) {
+                if (seen_http) {
+                    isc_throw(D2CfgError,
+                              "control socket of type 'http' or 'https'"
+                              " already configured");
+                }
+                seen_http = true;
+                ctx->setHttpControlSocketInfo(socket);
+            } else {
+                // Sanity check: not supposed to fail.
+                isc_throw(D2CfgError,
+                          "unsupported 'socket-type': '" << type
+                          << "' not 'unix', 'http' or 'https'");
+            }
+        }
     }
 
     // Finally, let's get the hook libs!

@@ -861,7 +861,22 @@ TEST_F(TrailingCommasTest, tests) {
         "name": "d2.md5.key",
         "secret": "sensitivejdPJI5QxlpnfQ==",
       },
-    ]
+    ],
+    "control-sockets": [
+      {
+        "socket-type": "http",
+        "socket-address": "::1",
+        "authentication": {
+          "clients": [
+            {
+              "password-file": "/tmp/pwd",
+            }
+          ],
+          "type": "basic",
+        },
+        "socket-port": 8053,
+      },
+    ],
   },
 })");
     testParser(txt, D2ParserContext::PARSER_DHCPDDNS, false);
@@ -871,7 +886,12 @@ TEST_F(TrailingCommasTest, tests) {
     addLog("<string>:14.8");
     addLog("<string>:22.45");
     addLog("<string>:23.8");
-    addLog("<string>:25.4");
+    addLog("<string>:32.42");
+    addLog("<string>:35.26");
+    addLog("<string>:37.28");
+    addLog("<string>:38.8");
+    addLog("<string>:39.6");
+    addLog("<string>:40.4");
     EXPECT_TRUE(checkFile());
 
     // Test with many consecutive commas.

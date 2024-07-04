@@ -35,7 +35,8 @@ D2CfgContext::D2CfgContext()
       forward_mgr_(new DdnsDomainListMgr("forward-ddns")),
       reverse_mgr_(new DdnsDomainListMgr("reverse-ddns")),
       keys_(new TSIGKeyInfoMap()),
-      control_socket_(ConstElementPtr()) {
+      unix_control_socket_(ConstElementPtr()),
+      http_control_socket_(ConstElementPtr()) {
 }
 
 D2CfgContext::D2CfgContext(const D2CfgContext& rhs) : ConfigBase(rhs) {
@@ -52,7 +53,9 @@ D2CfgContext::D2CfgContext(const D2CfgContext& rhs) : ConfigBase(rhs) {
 
     keys_ = rhs.keys_;
 
-    control_socket_ = rhs.control_socket_;
+    unix_control_socket_ = rhs.unix_control_socket_;
+
+    http_control_socket_ = rhs.http_control_socket_;
 
     hooks_config_ = rhs.hooks_config_;
 }
@@ -98,9 +101,16 @@ D2CfgContext::toElement() const {
         tsig_keys->add(key.second->toElement());
     }
     d2->set("tsig-keys", tsig_keys);
-    // Set control-socket (skip if null as empty is not legal)
-    if (!isNull(control_socket_)) {
-        d2->set("control-socket", UserContext::toElement(control_socket_));
+    // Set control-sockets.
+    ElementPtr control_sockets = Element::createList();
+    if (!isNull(unix_control_socket_)) {
+        control_sockets->add(UserContext::toElement(unix_control_socket_));
+    }
+    if (!isNull(http_control_socket_)) {
+        control_sockets->add(UserContext::toElement(http_control_socket_));
+    }
+    if (!control_sockets->empty()) {
+        d2->set("control-sockets", control_sockets);
     }
     // Set hooks-libraries
     d2->set("hooks-libraries", hooks_config_.toElement());
@@ -235,6 +245,11 @@ D2CfgMgr::getD2Params() {
 const isc::data::ConstElementPtr
 D2CfgMgr::getControlSocketInfo() {
     return (getD2CfgContext()->getControlSocketInfo());
+}
+
+const isc::data::ConstElementPtr
+D2CfgMgr::getHttpControlSocketInfo() {
+    return (getD2CfgContext()->getHttpControlSocketInfo());
 }
 
 std::string

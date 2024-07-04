@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -188,6 +188,14 @@ D2ParserContext::contextName()
         return("dns-servers");
     case CONTROL_SOCKET:
         return("control-socket");
+    case CONTROL_SOCKET_TYPE:
+        return ("control-socket-type");
+    case AUTHENTICATION:
+        return ("authentication");
+    case AUTH_TYPE:
+        return ("auth-type");
+    case CLIENTS:
+        return ("clients");
     case LOGGERS:
         return ("loggers");
     case OUTPUT_OPTIONS:

@@ -203,11 +203,28 @@ const char* PARSER_CONFIGS[] = {
     "           }"
     "        }"
     "        ],"
-    "    \"control-socket\": {"
-    "        \"socket-type\": \"unix\","
-    "        \"socket-name\": \"/tmp/kea4-ctrl-socket\","
-    "        \"user-context\": { \"comment\": \"Indirect comment\" }"
-    "    },"
+    "    \"control-sockets\": ["
+    "        {"
+    "            \"socket-type\": \"unix\","
+    "            \"socket-name\": \"/tmp/kea4-ctrl-socket\","
+    "            \"user-context\": { \"comment\": \"Indirect comment\" }"
+    "        },"
+    "        {"
+    "            \"comment\": \"HTTP control socket\","
+    "            \"socket-type\": \"http\","
+    "            \"socket-address\": \"::1\","
+    "            \"socket-port\": 8000,"
+    "            \"authentication\": {"
+    "                \"comment\": \"basic HTTP authentication\","
+    "                \"type\": \"basic\","
+    "                \"clients\": [ {"
+    "                    \"comment\": \"admin is authorized\","
+    "                    \"user\": \"admin\","
+    "                    \"password\": \"1234\""
+    "                } ]"
+    "            }"
+    "        }"
+    "    ],"
     "    \"shared-networks\": [ {"
     "        \"comment\": \"A shared network\","
     "        \"name\": \"foo\","
@@ -6781,7 +6798,7 @@ TEST_F(Dhcp4ParserTest, comments) {
     ASSERT_TRUE(ctx_class->get("version"));
     EXPECT_EQ("1", ctx_class->get("version")->str());
 
-    // There is a control socket.
+    // There is a UNIX control socket.
     ConstElementPtr socket =
         CfgMgr::instance().getStagingCfg()->getControlSocketInfo();
     ASSERT_TRUE(socket);
@@ -6790,11 +6807,57 @@ TEST_F(Dhcp4ParserTest, comments) {
     ASSERT_TRUE(socket->get("socket-name"));
     EXPECT_EQ("\"/tmp/kea4-ctrl-socket\"", socket->get("socket-name")->str());
 
-    // Check control socket comment and user context.
+    // Check UNIX control socket comment and user context.
     ConstElementPtr ctx_socket = socket->get("user-context");
+    ASSERT_TRUE(ctx_socket);
     ASSERT_EQ(1, ctx_socket->size());
     ASSERT_TRUE(ctx_socket->get("comment"));
     EXPECT_EQ("\"Indirect comment\"", ctx_socket->get("comment")->str());
+
+    // There is a HTTP control socket with authentication.
+    socket = CfgMgr::instance().getStagingCfg()->getHttpControlSocketInfo();
+    ASSERT_TRUE(socket);
+    ASSERT_TRUE(socket->get("socket-type"));
+    EXPECT_EQ("\"http\"", socket->get("socket-type")->str());
+    ASSERT_TRUE(socket->get("socket-address"));
+    EXPECT_EQ("\"::1\"", socket->get("socket-address")->str());
+    ASSERT_TRUE(socket->get("socket-port"));
+    EXPECT_EQ("8000", socket->get("socket-port")->str());
+
+    // Check HTTP control socket comment.
+    ctx_socket = socket->get("user-context");
+    ASSERT_TRUE(ctx_socket);
+    ASSERT_EQ(1, ctx_socket->size());
+    ASSERT_TRUE(ctx_socket->get("comment"));
+    EXPECT_EQ("\"HTTP control socket\"", ctx_socket->get("comment")->str());
+
+    // HTTP authentication.
+    ConstElementPtr auth = socket->get("authentication");
+    ASSERT_TRUE(auth);
+    ASSERT_TRUE(auth->get("type"));
+    EXPECT_EQ("\"basic\"", auth->get("type")->str());
+    ConstElementPtr ctx_auth = auth->get("user-context");
+    ASSERT_TRUE(ctx_auth);
+    ASSERT_EQ(1, ctx_auth->size());
+    ASSERT_TRUE(ctx_auth->get("comment"));
+    EXPECT_EQ("\"basic HTTP authentication\"", ctx_auth->get("comment")->str());
+
+    // Authentication client.
+    ConstElementPtr clients = auth->get("clients");
+    ASSERT_TRUE(clients);
+    ASSERT_EQ(1, clients->size());
+    ConstElementPtr client;
+    ASSERT_NO_THROW(client = clients->get(0));
+    ASSERT_TRUE(client);
+    ASSERT_TRUE(client->get("user"));
+    ASSERT_EQ("\"admin\"", client->get("user")->str());
+    ASSERT_TRUE(client->get("password"));
+    ASSERT_EQ("\"1234\"", client->get("password")->str());
+    ConstElementPtr ctx_client = client->get("user-context");
+    ASSERT_TRUE(ctx_client);
+    ASSERT_EQ(1, ctx_client->size());
+    ASSERT_TRUE(ctx_client->get("comment"));
+    EXPECT_EQ("\"admin is authorized\"", ctx_client->get("comment")->str());
 
     // Now verify that the shared network was indeed configured.
     const CfgSharedNetworks4Ptr& cfg_net =

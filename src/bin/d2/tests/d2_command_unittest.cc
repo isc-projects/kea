@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -453,33 +453,7 @@ TEST_F(CtrlChannelD2Test, configure) {
     EXPECT_EQ(1, status);
     ASSERT_TRUE(txt);
     ASSERT_EQ(Element::string, txt->getType());
-    EXPECT_EQ("Mandatory 'socket-type' parameter missing", txt->stringValue());
-    EXPECT_EQ(-1, CommandMgr::instance().getControlSocketFD());
-
-    // bad type.
-    string bad2 =
-        "{"
-        "    \"ip-address\": \"192.168.77.1\","
-        "    \"port\": 777,"
-        "    \"control-socket\": {"
-        "        \"socket-type\": \"bogus\","
-        "        \"socket-name\": \"/tmp/d2.sock\""
-        "    },"
-        "    \"tsig-keys\": [],"
-        "    \"forward-ddns\" : {},"
-        "    \"reverse-ddns\" : {}"
-        "}";
-    ASSERT_NO_THROW(config = parseDHCPDDNS(bad2, true));
-
-    answer = proc->configure(config, false);
-    ASSERT_TRUE(answer);
-
-    status = 0;
-    txt = parseAnswer(status, answer);
-    EXPECT_EQ(1, status);
-    ASSERT_TRUE(txt);
-    ASSERT_EQ(Element::string, txt->getType());
-    EXPECT_EQ("Invalid 'socket-type' parameter value bogus",
+    EXPECT_EQ("'socket-type' parameter is mandatory in control-sockets items",
               txt->stringValue());
     EXPECT_EQ(-1, CommandMgr::instance().getControlSocketFD());
 
