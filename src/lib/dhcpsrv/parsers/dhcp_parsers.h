@@ -204,18 +204,18 @@ public:
     void parse(CfgMACSource& mac_sources, isc::data::ConstElementPtr value);
 };
 
-/// @brief Parser for the control-socket structure
+/// @brief Parser for the control-sockets structure
 ///
-/// It does not parse anything, simply stores the element in
+/// It does not parse anything, simply stores elements in
 /// the staging config.
-class ControlSocketParser : public isc::data::SimpleParser {
+class ControlSocketsParser : public isc::data::SimpleParser {
 public:
-    /// @brief "Parses" control-socket structure
+    /// @brief "Parses" control-sockets structure
     ///
-    /// Since the SrvConfig structure takes the socket definition
+    /// Since the SrvConfig structure takes the socket definitions
     /// as ConstElementPtr, there's really nothing to parse here.
     /// It only does basic sanity checks and throws DhcpConfigError
-    /// if the value is null or is not a map.
+    /// if the syntax is not valid.
     ///
     /// @param srv_cfg parsed values will be stored here
     /// @param value pointer to the content of parsed values

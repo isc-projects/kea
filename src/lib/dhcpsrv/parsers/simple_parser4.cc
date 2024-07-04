@@ -54,7 +54,6 @@ const SimpleKeywords SimpleParser4::GLOBAL4_PARAMETERS = {
     { "hooks-libraries",                  Element::list },
     { "expired-leases-processing",        Element::map },
     { "dhcp4o6-port",                     Element::integer },
-    { "control-socket",                   Element::map },
     { "control-sockets",                  Element::list },
     { "dhcp-queue-control",               Element::map },
     { "dhcp-ddns",                        Element::map },

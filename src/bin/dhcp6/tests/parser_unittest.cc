@@ -985,7 +985,7 @@ TEST_F(TrailingCommasTest, tests) {
     addLog("<string>:40.12");
     addLog("<string>:42.28");
     addLog("<string>:43.8");
-    addLog("<string>:54.37");
+    addLog("<string>:54.38");
     addLog("<string>:55.12");
     addLog("<string>:58.16");
     addLog("<string>:59.8");

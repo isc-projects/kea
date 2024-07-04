@@ -295,13 +295,6 @@ SrvConfig::mergeGlobalMaps(SrvConfig& other) {
             parser.parse(compatibility, *this);
             addConfiguredGlobal("compatibility", compatibility);
         }
-        ConstElementPtr control_socket = config->get("control-socket");
-        parameter_name = "control-socket";
-        if (control_socket) {
-            ControlSocketParser parser;
-            parser.parse(*this, control_socket);
-            addConfiguredGlobal("control-socket", control_socket);
-        }
         ElementPtr dhcp_ddns = boost::const_pointer_cast<Element>(config->get("dhcp-ddns"));
         parameter_name = "dhcp-ddns";
         if (dhcp_ddns) {
@@ -900,9 +893,16 @@ SrvConfig::toElement() const {
     if (family == AF_INET6) {
         dhcp->set("mac-sources", cfg_mac_source_.toElement());
     }
-    // Set control-socket (skip if null as empty is not legal)
-    if (!isNull(control_socket_)) {
-        dhcp->set("control-socket", UserContext::toElement(control_socket_));
+    // Set control-sockets.
+    ElementPtr control_sockets = Element::createList();
+    if (!isNull(unix_control_socket_)) {
+        control_sockets->add(UserContext::toElement(unix_control_socket_));
+    }
+    if (!isNull(http_control_socket_)) {
+        control_sockets->add(UserContext::toElement(http_control_socket_));
+    }
+    if (!control_sockets->empty()) {
+        dhcp->set("control-sockets", control_sockets);
     }
     // Set client-classes
     ConstElementPtr client_classes = class_dictionary_->toElement();

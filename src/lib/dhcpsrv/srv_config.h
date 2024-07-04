@@ -530,18 +530,32 @@ public:
         return (cfg_mac_source_);
     }
 
-    /// @brief Returns information about control socket
+    /// @brief Returns information about UNIX control socket
     ///
     /// @return pointer to the Element that holds control-socket map
     const isc::data::ConstElementPtr getControlSocketInfo() const {
-        return (control_socket_);
+        return (unix_control_socket_);
     }
 
-    /// @brief Sets information about the control socket
+    /// @brief Sets information about the UNIX control socket
     ///
     /// @param control_socket Element that holds control-socket map
     void setControlSocketInfo(const isc::data::ConstElementPtr& control_socket) {
-        control_socket_ = control_socket;
+        unix_control_socket_ = control_socket;
+    }
+
+    /// @brief Returns information about HTTP/HTTPS control socket
+    ///
+    /// @return pointer to the Element that holds control-socket map
+    const isc::data::ConstElementPtr getHttpControlSocketInfo() const {
+        return (http_control_socket_);
+    }
+
+    /// @brief Sets information about the HTTP/HTTPS control socket
+    ///
+    /// @param control_socket Element that holds control-socket map
+    void setHttpControlSocketInfo(const isc::data::ConstElementPtr& control_socket) {
+        http_control_socket_ = control_socket;
     }
 
     /// @brief Returns DHCP queue control information
@@ -897,7 +911,8 @@ public:
         ignore_dhcp_server_identifier_ = false;
         ignore_rai_link_selection_ = false;
         exclude_first_last_24_ = false;
-        control_socket_.reset();
+        unix_control_socket_.reset();
+        http_control_socket_.reset();
         d2_client_config_.reset(new D2ClientConfig());
         cfg_expiration_.reset(new CfgExpiration());
         dhcp_multi_threading_.reset();
@@ -1175,8 +1190,11 @@ private:
     /// DHCPv6.
     CfgHostOperationsPtr cfg_host_operations6_;
 
-    /// @brief Pointer to the control-socket information
-    isc::data::ConstElementPtr control_socket_;
+    /// @brief Pointer to the UNIX control-socket information
+    isc::data::ConstElementPtr unix_control_socket_;
+
+    /// @brief Pointer to the HTTP control-socket information
+    isc::data::ConstElementPtr http_control_socket_;
 
     /// @brief Pointer to the dhcp-queue-control information
     isc::data::ConstElementPtr dhcp_queue_control_;

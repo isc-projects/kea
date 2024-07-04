@@ -506,11 +506,18 @@ processDhcp6Config(isc::data::ConstElementPtr config_set) {
 
         ConstElementPtr control_socket = mutable_cfg->get("control-socket");
         if (control_socket) {
-            parameter_name = "control-socket";
-            ControlSocketParser parser;
-            parser.parse(*srv_config, control_socket);
+            mutable_cfg->remove("control-socket");
+            ElementPtr l = Element::createList();
+            l->add(UserContext::toElement(control_socket));
+            mutable_cfg->set("control-sockets", l);
         }
 
+        ConstElementPtr control_sockets = mutable_cfg->get("control-sockets");
+        if (control_sockets) {
+            parameter_name = "control-sockets";
+            ControlSocketsParser parser;
+            parser.parse(*srv_config, control_sockets);
+        }
         ConstElementPtr multi_threading = mutable_cfg->get("multi-threading");
         if (multi_threading) {
             parameter_name = "multi-threading";

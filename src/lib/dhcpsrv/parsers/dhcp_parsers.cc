@@ -73,19 +73,54 @@ MACSourcesListConfigParser::parse(CfgMACSource& mac_sources, ConstElementPtr val
     }
 }
 
-// ******************** ControlSocketParser *************************
-void ControlSocketParser::parse(SrvConfig& srv_cfg, isc::data::ConstElementPtr value) {
-    if (!value) {
+// ******************** ControlSocketsParser *************************
+void ControlSocketsParser::parse(SrvConfig& srv_cfg, ConstElementPtr value) {
+    if (value->getType() != Element::list) {
         // Sanity check: not supposed to fail.
-        isc_throw(DhcpConfigError, "Logic error: specified control-socket is null");
+        isc_throw(DhcpConfigError,
+                  "Specified control-sockets is expected to be a list");
     }
-
-    if (value->getType() != Element::map) {
-        // Sanity check: not supposed to fail.
-        isc_throw(DhcpConfigError, "Specified control-socket is expected to be a map"
-                  ", i.e. a structure defined within { }");
+    bool seen_unix(false);
+    bool seen_http(false);
+    for (ConstElementPtr socket : value->listValue()) {
+        if (socket->getType() != Element::map) {
+            // Sanity check: not supposed to fail.
+            isc_throw(DhcpConfigError,
+                      "Specified control-sockets is expected to be a list of maps");
+        }
+        ConstElementPtr socket_type = socket->get("socket-type");
+        if (!socket_type) {
+            isc_throw(DhcpConfigError,
+                      "'socket-type' parameter is mandatory in control-sockets items");
+        }
+        if (socket_type->getType() != Element::string) {
+            // Sanity check: not supposed to fail.
+            isc_throw(DhcpConfigError,
+                      "'socket-type' parameter is expected to be a string");
+        }
+        string type = socket_type->stringValue();
+        if (type == "unix") {
+            if (seen_unix) {
+                isc_throw(DhcpConfigError,
+                          "control socket of type 'unix' already configured");
+            }
+            seen_unix = true;
+            srv_cfg.setControlSocketInfo(socket);
+        } else if ((type == "http") || (type == "https")) {
+            if (seen_http) {
+                isc_throw(DhcpConfigError,
+                          "control socket of type 'http' or 'https'"
+                          " already configured");
+            }
+            seen_http = true;
+            srv_cfg.setHttpControlSocketInfo(socket);
+        } else {
+            // Sanity check: not supposed to fail.
+            isc_throw(DhcpConfigError,
+                      "unsupported 'socket-type': '" << type
+                      << "' not 'unix', 'http' or 'https'");
+        }
     }
-    srv_cfg.setControlSocketInfo(value);
 }
 
 // ******************************** OptionDefParser ****************************
