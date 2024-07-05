@@ -10,6 +10,7 @@
 #include <gtest/gtest.h>
 
 #include <cc/command_interpreter.h>
+#include <config/http_command_config.h>
 #include <dhcp4/dhcp4_srv.h>
 #include <dhcp4/ctrl_dhcp4_srv.h>
 #include <dhcp4/json_config_parser.h>
@@ -6815,7 +6816,11 @@ TEST_F(Dhcp4ParserTest, comments) {
     EXPECT_EQ("\"Indirect comment\"", ctx_socket->get("comment")->str());
 
     // There is a HTTP control socket with authentication.
-    socket = CfgMgr::instance().getStagingCfg()->getHttpControlSocketInfo();
+    HttpCommandConfigPtr http_socket =
+        CfgMgr::instance().getStagingCfg()->getHttpControlSocketInfo();
+    ASSERT_TRUE(http_socket);
+    /// @todo use the configuration object.
+    socket = http_socket->toElement();
     ASSERT_TRUE(socket);
     ASSERT_TRUE(socket->get("socket-type"));
     EXPECT_EQ("\"http\"", socket->get("socket-type")->str());

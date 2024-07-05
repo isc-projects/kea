@@ -898,8 +898,8 @@ SrvConfig::toElement() const {
     if (!isNull(unix_control_socket_)) {
         control_sockets->add(UserContext::toElement(unix_control_socket_));
     }
-    if (!isNull(http_control_socket_)) {
-        control_sockets->add(UserContext::toElement(http_control_socket_));
+    if (http_control_socket_) {
+        control_sockets->add(http_control_socket_->toElement());
     }
     if (!control_sockets->empty()) {
         dhcp->set("control-sockets", control_sockets);

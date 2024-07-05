@@ -6,6 +6,7 @@
 
 #include <config.h>
 
+#include <config/http_command_config.h>
 #include <d2/parser_context.h>
 #include <d2/tests/parser_unittest.h>
 #include <d2/tests/test_callout_libraries.h>
@@ -1039,7 +1040,11 @@ TEST_F(D2CfgMgrTest, comments) {
     EXPECT_EQ("\"Indirect comment\"", ctx_socket->get("comment")->str());
 
     // There is a HTTP control socket with authentication.
-    socket = d2_context->getHttpControlSocketInfo();
+    config::HttpCommandConfigPtr http_socket =
+        d2_context->getHttpControlSocketInfo();
+    ASSERT_TRUE(http_socket);
+    /// @todo use the configuration object.
+    socket = http_socket->toElement();
     ASSERT_TRUE(socket);
     ctx_socket = socket->get("user-context");
     ASSERT_TRUE(ctx_socket);

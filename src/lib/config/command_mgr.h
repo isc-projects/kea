@@ -88,7 +88,6 @@ private:
     boost::shared_ptr<CommandMgrImpl> impl_;
 };
 
-}; // end of isc::config namespace
-}; // end of isc namespace
-
+} // end of isc::config namespace
+} // end of isc namespace
 #endif

@@ -113,7 +113,9 @@ void ControlSocketsParser::parse(SrvConfig& srv_cfg, ConstElementPtr value) {
                           " already configured");
             }
             seen_http = true;
-            srv_cfg.setHttpControlSocketInfo(socket);
+            using namespace isc::config;
+            HttpCommandConfigPtr http_config(new HttpCommandConfig(socket));
+            srv_cfg.setHttpControlSocketInfo(http_config);
         } else {
             // Sanity check: not supposed to fail.
             isc_throw(DhcpConfigError,

@@ -7,6 +7,7 @@
 #include <config.h>
 
 #include <cc/command_interpreter.h>
+#include <config/http_command_config.h>
 #include <dhcp/docsis3_option_defs.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option6_ia.h>
@@ -7398,7 +7399,11 @@ TEST_F(Dhcp6ParserTest, comments) {
     EXPECT_EQ("\"Indirect comment\"", ctx_socket->get("comment")->str());
 
     // There is a HTTP control socket with authentication.
-    socket = CfgMgr::instance().getStagingCfg()->getHttpControlSocketInfo();
+    HttpCommandConfigPtr http_socket =
+        CfgMgr::instance().getStagingCfg()->getHttpControlSocketInfo();
+    ASSERT_TRUE(http_socket);
+    /// @todo use the configuration object.
+    socket = http_socket->toElement();
     ASSERT_TRUE(socket);
     ASSERT_TRUE(socket->get("socket-type"));
     EXPECT_EQ("\"http\"", socket->get("socket-type")->str());

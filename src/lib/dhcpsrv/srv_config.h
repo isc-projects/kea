@@ -30,6 +30,7 @@
 #include <cc/data.h>
 #include <cc/user_context.h>
 #include <cc/simple_parser.h>
+#include <config/http_command_config.h>
 #include <util/optional.h>
 #include <util/str.h>
 
@@ -546,15 +547,15 @@ public:
 
     /// @brief Returns information about HTTP/HTTPS control socket
     ///
-    /// @return pointer to the Element that holds control-socket map
-    const isc::data::ConstElementPtr getHttpControlSocketInfo() const {
+    /// @return pointer to the HTTP/HTTPS control socket config
+    isc::config::HttpCommandConfigPtr getHttpControlSocketInfo() const {
         return (http_control_socket_);
     }
 
     /// @brief Sets information about the HTTP/HTTPS control socket
     ///
-    /// @param control_socket Element that holds control-socket map
-    void setHttpControlSocketInfo(const isc::data::ConstElementPtr& control_socket) {
+    /// @param control_socket HTTP/HTTPScontrol socket config
+    void setHttpControlSocketInfo(const isc::config::HttpCommandConfigPtr& control_socket) {
         http_control_socket_ = control_socket;
     }
 
@@ -1193,8 +1194,8 @@ private:
     /// @brief Pointer to the UNIX control-socket information
     isc::data::ConstElementPtr unix_control_socket_;
 
-    /// @brief Pointer to the HTTP control-socket information
-    isc::data::ConstElementPtr http_control_socket_;
+    /// @brief Pointer to the HTTP/HTTPS control socket configuration
+    isc::config::HttpCommandConfigPtr http_control_socket_;
 
     /// @brief Pointer to the dhcp-queue-control information
     isc::data::ConstElementPtr dhcp_queue_control_;

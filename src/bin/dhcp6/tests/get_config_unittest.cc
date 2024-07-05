@@ -9638,6 +9638,8 @@ const char* UNPARSED_CONFIGS[] = {
 "                            }\n"
 "                        }\n"
 "                    ],\n"
+"                    \"directory\": \"\",\n"
+"                    \"realm\": \"\",\n"
 "                    \"type\": \"basic\",\n"
 "                    \"user-context\": {\n"
 "                        \"comment\": \"basic HTTP authentication\"\n"

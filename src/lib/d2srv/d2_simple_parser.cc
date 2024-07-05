@@ -309,7 +309,9 @@ void D2SimpleParser::parse(const D2CfgContextPtr& ctx,
                               " already configured");
                 }
                 seen_http = true;
-                ctx->setHttpControlSocketInfo(socket);
+                using namespace isc::config;
+                HttpCommandConfigPtr http_config(new HttpCommandConfig(socket));
+                ctx->setHttpControlSocketInfo(http_config);
             } else {
                 // Sanity check: not supposed to fail.
                 isc_throw(D2CfgError,

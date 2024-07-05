@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,6 +9,7 @@
 
 #include <asiolink/io_service.h>
 #include <cc/data.h>
+#include <config/http_command_config.h>
 #include <exceptions/exceptions.h>
 #include <d2srv/d2_config.h>
 #include <hooks/hooks_config.h>
@@ -104,14 +105,14 @@ public:
     }
 
     /// @brief Returns information about HTTP/HTTPS control socket
-    /// @return pointer to the Element that holds control-socket map
-    const isc::data::ConstElementPtr getHttpControlSocketInfo() const {
+    /// @return pointer to the HTTP/HTTPS control socket config
+    isc::config::HttpCommandConfigPtr getHttpControlSocketInfo() const {
         return (http_control_socket_);
     }
 
     /// @brief Sets information about the HTTP/HTTPS control socket
-    /// @param control_socket Element that holds control-socket map
-    void setHttpControlSocketInfo(const isc::data::ConstElementPtr& control_socket) {
+    /// @param control_socket HTTP/HTTPScontrol socket config
+    void setHttpControlSocketInfo(const isc::config::HttpCommandConfigPtr& control_socket) {
         http_control_socket_ = control_socket;
     }
 
@@ -157,8 +158,8 @@ private:
     /// @brief Pointer to the UNIX control-socket information.
     isc::data::ConstElementPtr unix_control_socket_;
 
-    /// @brief Pointer to the HTTP/HTTPS control-socket information.
-    isc::data::ConstElementPtr http_control_socket_;
+    /// @brief Pointer to the HTTP/HTTPS control socket configuration
+    isc::config::HttpCommandConfigPtr http_control_socket_;
 
     /// @brief Configured hooks libraries.
     isc::hooks::HooksConfig hooks_config_;
@@ -307,8 +308,8 @@ public:
 
     /// @brief Convenience method fetches information about
     /// HTTP/HTTPS control socket from context
-    /// @return pointer to the Element that holds control-socket map
-    const isc::data::ConstElementPtr getHttpControlSocketInfo();
+    /// @return pointer to the HTTP/HTTPS control socket config
+    isc::config::HttpCommandConfigPtr getHttpControlSocketInfo();
 
     /// @brief Returns configuration summary in the textual format.
     ///
