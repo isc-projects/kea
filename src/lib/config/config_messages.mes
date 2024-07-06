@@ -152,3 +152,18 @@ This error message is issued when the command manager was unable to set
 ready status after scheduling asynchronous send. This is programmatic error
 that should be reported. The command manager may or may not continue
 to operate correctly.
+
+% HTTP_COMMAND_MGR_IGNORED_TLS_SETUP_CHANGES ignore a change in TLS setup of the http control socket
+The warning message is issued when the HTTP/HTTPS control socket was
+reconfigured with a different TLS setup but keeping the address and port.
+As these changes can't be applied without opening a new socket which
+will conflicts with the existing one they are ignored.
+
+% HTTP_COMMAND_MGR_SERVICE_STARTED started %1 service bound to address %2 port %3
+This informational message indicates that the server has started
+HTTP/HTTPS service on the specified address and port for receiving
+control commands.
+
+% HTTP_COMMAND_MGR_SERVICE_STOPPING stopping %1 service%2
+This informational message indicates that the server has stopped
+HTTP/HTTPS service. When known the address and port are displayed.
