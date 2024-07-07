@@ -33,6 +33,10 @@ HttpCommandConfig::HttpCommandConfig(ConstElementPtr config)
       socket_port_(DefaultSocketPort), auth_config_(),
       trust_anchor_(""), cert_file_(""), key_file_(""), cert_required_(true),
       emulate_agent_response_(true) {
+    if (config->getType() != Element::map) {
+        isc_throw(DhcpConfigError, "expected map type ("
+                  << config->getPosition() << ")");
+    }
     // Get socket type.
     ConstElementPtr socket_type = config->get("socket-type");
     if (socket_type) {
@@ -43,7 +47,7 @@ HttpCommandConfig::HttpCommandConfig(ConstElementPtr config)
         }
         socket_type_ = socket_type->stringValue();
         if ((socket_type_ != "http") && (socket_type_ != "https")) {
-            isc_throw(DhcpConfigError, "unsupported 'socket-type': '"
+            isc_throw(DhcpConfigError, "unsupported 'socket-type' '"
                       << socket_type_ << "' not 'http' or 'https'");
         }
     }
@@ -89,10 +93,11 @@ HttpCommandConfig::HttpCommandConfig(ConstElementPtr config)
         if ((value < numeric_limits<uint16_t>::min()) ||
             (value > numeric_limits<uint16_t>::max())) {
             isc_throw(DhcpConfigError,
-                      "out of range value (" << value
-                      << ") specified for parameter 'socket-port' {"
+                      "out of range value " << value
+                      << " specified for parameter 'socket-port' ("
                       << socket_port->getPosition() << ")");
         }
+        socket_port_ = static_cast<uint16_t>(value);
     }
 
     // Get HTTP authentication.
@@ -125,7 +130,7 @@ HttpCommandConfig::HttpCommandConfig(ConstElementPtr config)
     // Get trust anchor.
     ConstElementPtr trust_anchor = config->get("trust-anchor");
     if (trust_anchor) {
-        if (socket_port->getType() != Element::string) {
+        if (trust_anchor->getType() != Element::string) {
             isc_throw(DhcpConfigError,
                       "invalid type specified for parameter 'trust-anchor' ("
                       << trust_anchor->getPosition() << ")");
@@ -136,7 +141,7 @@ HttpCommandConfig::HttpCommandConfig(ConstElementPtr config)
     // Get cert file.
     ConstElementPtr cert_file = config->get("cert-file");
     if (cert_file) {
-        if (socket_port->getType() != Element::string) {
+        if (cert_file->getType() != Element::string) {
             isc_throw(DhcpConfigError,
                       "invalid type specified for parameter 'cert-file' ("
                       << cert_file->getPosition() << ")");
@@ -147,7 +152,7 @@ HttpCommandConfig::HttpCommandConfig(ConstElementPtr config)
     // Get key file.
     ConstElementPtr key_file = config->get("key-file");
     if (key_file) {
-        if (socket_port->getType() != Element::string) {
+        if (key_file->getType() != Element::string) {
             isc_throw(DhcpConfigError,
                       "invalid type specified for parameter 'key-file' ("
                       << key_file->getPosition() << ")");
@@ -158,7 +163,7 @@ HttpCommandConfig::HttpCommandConfig(ConstElementPtr config)
     // Get cert required.
     ConstElementPtr cert_required = config->get("cert-required");
     if (cert_required) {
-        if (socket_port->getType() != Element::boolean) {
+        if (cert_required->getType() != Element::boolean) {
             isc_throw(DhcpConfigError,
                       "invalid type specified for parameter 'cert-required' ("
                       << cert_required->getPosition() << ")");
@@ -183,21 +188,23 @@ HttpCommandConfig::checkTlsSetup(bool require_tls) const {
     bool have_key = !key_file_.empty();
     if (!have_ca && !have_cert && !have_key) {
         if (require_tls) {
-            isc_throw(ConfigError, "no TLS setup for a HTTPS control socket");
+            isc_throw(DhcpConfigError,
+                      "no TLS setup for a HTTPS control socket");
         }
         return;
     }
     // TLS is used: all 3 parameters are required.
     if (!have_ca) {
-        isc_throw(ConfigError, "trust-anchor parameter is missing or empty:"
+        isc_throw(DhcpConfigError,
+                  "trust-anchor parameter is missing or empty:"
                   " all or none of TLS parameters must be set");
     }
     if (!have_cert) {
-        isc_throw(ConfigError, "cert-file parameter is missing or empty:"
+        isc_throw(DhcpConfigError, "cert-file parameter is missing or empty:"
                   " all or none of TLS parameters must be set");
     }
     if (!have_key) {
-        isc_throw(ConfigError, "key-file parameter is missing or empty:"
+        isc_throw(DhcpConfigError, "key-file parameter is missing or empty:"
                   " all or none of TLS parameters must be set");
     }
 }

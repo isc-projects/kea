@@ -1,0 +1,334 @@
+// Copyright (C) 2021-2024 Internet Systems Consortium, Inc. ("ISC")
+//
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+#include <config.h>
+
+#include <config/http_command_config.h>
+#include <http/basic_auth_config.h>
+#include <testutils/gtest_utils.h>
+#include <testutils/test_to_element.h>
+
+using namespace isc;
+using namespace isc::asiolink;
+using namespace isc::config;
+using namespace isc::data;
+using namespace isc::dhcp;
+using namespace isc::http;
+using namespace isc::test;
+using namespace std;
+
+namespace {
+
+/// @brief Test fixture for HTTP control socket configuration.
+class HttpCommandConfigTest : public ::testing::Test {
+public:
+    /// @brief Constructor.
+    HttpCommandConfigTest() : http_config_() {
+        HttpCommandConfig::DefaultSocketAddress = IOAddress("127.0.0.1");
+        HttpCommandConfig::DefaultSocketPort = 8000;
+        HttpCommandConfig::DefaultAuthenticationRealm = "";
+    }
+
+    /// @brief Destructor.
+    ~HttpCommandConfigTest() {
+        HttpCommandConfig::DefaultSocketAddress = IOAddress("127.0.0.1");
+        HttpCommandConfig::DefaultSocketPort = 8000;
+        HttpCommandConfig::DefaultAuthenticationRealm = "";
+    }
+
+    /// @brief HTTP control socket configuration.
+    HttpCommandConfigPtr http_config_;
+};
+
+// This test verifies the default HTTP control socket configuration.
+TEST_F(HttpCommandConfigTest, default) {
+    ElementPtr json = Element::createMap();
+    ASSERT_NO_THROW_LOG(http_config_.reset(new HttpCommandConfig(json)));
+
+    // Check default values.
+    EXPECT_EQ("http", http_config_->getSocketType());
+    EXPECT_EQ("127.0.0.1", http_config_->getSocketAddress().toText());
+    EXPECT_EQ(8000, http_config_->getSocketPort());
+    EXPECT_FALSE(http_config_->getAuthConfig());
+    EXPECT_EQ("", http_config_->getTrustAnchor());
+    EXPECT_EQ("", http_config_->getCertFile());
+    EXPECT_EQ("", http_config_->getKeyFile());
+    EXPECT_TRUE(http_config_->getCertRequired());
+    EXPECT_TRUE(http_config_->getEmulateAgentResponse());
+
+    // Check unparse.
+    string expected = R"(
+        {
+            "socket-type": "http",
+            "socket-address": "127.0.0.1",
+            "socket-port": 8000
+        }
+    )";
+    runToElementTest(expected, *http_config_);
+
+    // Change class defaults.
+    HttpCommandConfig::DefaultSocketAddress = IOAddress("::1");
+    HttpCommandConfig::DefaultSocketPort = 8080;
+    ASSERT_NO_THROW_LOG(http_config_.reset(new HttpCommandConfig(json)));
+    EXPECT_EQ("::1", http_config_->getSocketAddress().toText());
+    EXPECT_EQ(8080, http_config_->getSocketPort());
+}
+
+// This test verifies direct error cases.
+TEST_F(HttpCommandConfigTest, errors) {
+    // Error scenarios.
+    struct scenario {
+        string title;
+        string input;
+        string msg;
+    } scenarios[] = {
+        {
+            "bad type",
+            "[ ]",
+            "expected map type (<string>:1:2)"
+        },
+        {
+            "bad socket-type type",
+            R"( { "socket-type": 1 } )",
+            "invalid type specified for parameter 'socket_type' "
+            "(<string>:1:19)"
+        },
+        {
+            "unsupported socket-type",
+            R"( { "socket-type": "unix" } )",
+            "unsupported 'socket-type' 'unix' not 'http' or 'https'"
+        },
+        {
+            "both socket-name and socket-address",
+            R"( { "socket-name": "::1", "socket-address": "::1" } )",
+            "specify both 'socket-name' and 'socket-address' "
+            "is forbidden"
+        },
+        {
+            "bad socket-name type",
+            R"( { "socket-name": 8000 } )",
+            "invalid type specified for parameter 'socket-name' "
+            "(<string>:1:19)"
+        },
+        {
+            "bad socket-address type",
+            R"( { "socket-address": 8000 } )",
+            "invalid type specified for parameter 'socket-address' "
+            "(<string>:1:22)"
+        },
+        {
+            "bad address",
+            R"( { "socket-address": ":::" } )",
+            "failed to convert ':::' to address: "
+            "Failed to convert string to address ':::': Invalid argument "
+            "(<string>:1:22)"
+        },
+        {
+            "bad socket-port type",
+            R"( { "socket-port": "8000" } )",
+            "invalid type specified for parameter 'socket-port' "
+            "(<string>:1:19)"
+        },
+        {
+            "socket-port negative",
+            R"( { "socket-port": -1 } )",
+            "out of range value -1 specified for parameter 'socket-port' "
+            "(<string>:1:19)"
+        },
+        {
+            "bad authentication type",
+            R"( { "authentication": "none" } )",
+            "invalid type specified for parameter 'authentication' "
+            "(<string>:1:22)"
+        },
+        // Authentication parsing failures are checked at another place.
+        {
+            "bad trust-anchor type",
+            R"( { "trust-anchor": false } )",
+            "invalid type specified for parameter 'trust-anchor' "
+            "(<string>:1:20)"
+        },
+        {
+            "bad cert-file type",
+            R"( { "cert-file": false } )",
+            "invalid type specified for parameter 'cert-file' "
+            "(<string>:1:17)"
+        },
+        {
+            "bad key-file type",
+            R"( { "key-file": false } )",
+            "invalid type specified for parameter 'key-file' "
+            "(<string>:1:16)"
+        },
+        {
+            "bad cert-required type",
+            R"( { "cert-required": 0 } )",
+            "invalid type specified for parameter 'cert-required' "
+            "(<string>:1:21)"
+        },
+        {
+            "https requires TLS",
+            R"( { "socket-type": "https" } )",
+            "no TLS setup for a HTTPS control socket"
+        },
+        {
+            "missing trust-anchor",
+            R"( { "cert-file": "foo" } )",
+            "trust-anchor parameter is missing or empty:"
+            " all or none of TLS parameters must be set"
+        },
+        {
+            "empty trust-anchor",
+            R"( { "trust-anchor": "", "cert-file": "foo" } )",
+            "trust-anchor parameter is missing or empty:"
+            " all or none of TLS parameters must be set"
+        },
+        {
+            "missing cert-file",
+            R"( { "trust-anchor": "foo" } )",
+            "cert-file parameter is missing or empty:"
+            " all or none of TLS parameters must be set"
+        },
+        {
+            "empty cert-file",
+            R"( { "trust-anchor": "foo", "cert-file": "" } )",
+            "cert-file parameter is missing or empty:"
+            " all or none of TLS parameters must be set"
+        },
+        {
+            "missing key-file",
+            R"( { "trust-anchor": "foo", "cert-file": "bar" } )",
+            "key-file parameter is missing or empty:"
+            " all or none of TLS parameters must be set"
+        },
+        {
+            "empty key-file",
+            R"( {
+                        "trust-anchor": "foo",
+                        "cert-file": "bar",
+                        "key-file": ""
+                     } )",
+            "key-file parameter is missing or empty:"
+            " all or none of TLS parameters must be set"
+        }
+    };
+    for (auto const& s : scenarios) {
+        SCOPED_TRACE(s.title);
+        ElementPtr json;
+        ASSERT_NO_THROW(json = Element::fromJSON(s.input));
+        EXPECT_THROW_MSG(http_config_.reset(new HttpCommandConfig(json)),
+                         DhcpConfigError, s.msg);
+    }
+}
+
+// This test verifies a HTTP control socket configuration with authentication
+// can be parsed and unparsed.
+TEST_F(HttpCommandConfigTest, authentication) {
+    // Configure with authentication.
+    string config = R"(
+    {
+        "authentication": {
+            "clients": [ {
+                "user": "admin",
+                "password": "1234"
+            } ]
+        }
+    })";
+    ElementPtr json;
+    ASSERT_NO_THROW(json = Element::fromJSON(config));
+    ASSERT_NO_THROW(http_config_.reset(new HttpCommandConfig(json)));
+
+    // Verify the authentication and its defaults.
+    auto auth_config = http_config_->getAuthConfig();
+    ASSERT_TRUE(auth_config);
+    EXPECT_EQ("", auth_config->getRealm());
+    BasicHttpAuthConfigPtr auth =
+        boost::dynamic_pointer_cast<BasicHttpAuthConfig>(auth_config);
+    ASSERT_TRUE(auth);
+
+    // Verify that default realm is applied.
+    HttpCommandConfig::DefaultAuthenticationRealm = "FOO";
+    ASSERT_NO_THROW(json = Element::fromJSON(config));
+    ASSERT_NO_THROW(http_config_.reset(new HttpCommandConfig(json)));
+    auth_config = http_config_->getAuthConfig();
+    ASSERT_TRUE(auth_config);
+    EXPECT_EQ("FOO", auth_config->getRealm());
+
+    // Verify that default is applied only when not configured.
+    config = R"(
+    {
+        "authentication": {
+            "realm": "BAR",
+            "clients": [ {
+                "user": "admin",
+                "password": "1234"
+            } ]
+        }
+    })";
+    ASSERT_NO_THROW(json = Element::fromJSON(config));
+    ASSERT_NO_THROW(http_config_.reset(new HttpCommandConfig(json)));
+    auth_config = http_config_->getAuthConfig();
+    ASSERT_TRUE(auth_config);
+    EXPECT_EQ("BAR", auth_config->getRealm());
+
+    // Check unparse.
+    string expected = R"(
+    {
+        "socket-type": "http",
+        "socket-address": "127.0.0.1",
+        "socket-port": 8000,
+        "authentication": {
+            "type": "basic",
+            "realm": "BAR",
+            "directory": "",
+            "clients": [ {
+                "user": "admin",
+                "password": "1234"
+            } ]
+        }
+    })";
+    runToElementTest(expected, *http_config_);
+}
+
+// This test verifies a HTTP control socket configuration with TLS can
+// be parsed and unparsed.
+TEST_F(HttpCommandConfigTest, tls) {
+    // Configure with TLS.
+    string config = R"(
+    {
+        "trust-anchor": "my ca",
+        "cert-file": "my cert",
+        "key-file": "my key",
+        "cert-required": false
+    })";
+    ElementPtr json;
+    ASSERT_NO_THROW(json = Element::fromJSON(config));
+    ASSERT_NO_THROW(http_config_.reset(new HttpCommandConfig(json)));
+    EXPECT_EQ("http", http_config_->getSocketType());
+    EXPECT_EQ("127.0.0.1", http_config_->getSocketAddress().toText());
+    EXPECT_EQ(8000, http_config_->getSocketPort());
+    EXPECT_FALSE(http_config_->getAuthConfig());
+    EXPECT_EQ("my ca", http_config_->getTrustAnchor());
+    EXPECT_EQ("my cert", http_config_->getCertFile());
+    EXPECT_EQ("my key", http_config_->getKeyFile());
+    EXPECT_FALSE(http_config_->getCertRequired());
+    EXPECT_TRUE(http_config_->getEmulateAgentResponse());
+
+    // Check unparse.
+    string expected = R"(
+    {
+        "socket-type": "http",
+        "socket-address": "127.0.0.1",
+        "socket-port": 8000,
+        "trust-anchor": "my ca",
+        "cert-file": "my cert",
+        "key-file": "my key",
+        "cert-required": false
+    })";
+    runToElementTest(expected, *http_config_);
+}
+
+} // end of anonymous namespace
