@@ -66,6 +66,9 @@ public:
         config->set("socket-address", Element::create(SERVER_ADDRESS));
         config->set("socket-port", Element::create(SERVER_PORT));
         http_config_.reset(new HttpCommandConfig(config));
+
+        // Register the foo command.
+        CommandMgr::instance().registerCommand("foo", fooHandler);
     }
 
     /// @brief Destructor.
@@ -143,6 +146,14 @@ public:
         io_service_->stop();
     }
 
+    /// @brief Runs IO service.
+    void runIOService() {
+        EXPECT_TRUE(client_);
+        // Run until a client stops the service or an error occurs.
+        io_service_->run();
+        EXPECT_TRUE(client_ && client_->receiveDone());
+    }
+
     /// @brief Create an HttpResponse from a response string.
     ///
     /// @param response_str a string containing the whole HTTP
@@ -164,6 +175,20 @@ public:
         return (hr);
     }
 
+    /// @brief "foo" command handler.
+    ///
+    /// The command needs no arguments and returns a response
+    ///  with a body containing:
+    ///
+    /// "[ { \"arguments\": [ \"bar\" ], \"result\": 0 } ]"
+    ///
+    /// @return Returns response with a single string "bar".
+    static ConstElementPtr fooHandler(const string&, const ConstElementPtr&) {
+        ElementPtr arguments = Element::createList();
+        arguments->add(Element::create("bar"));
+        return (createAnswer(CONTROL_RESULT_SUCCESS, arguments));
+    }
+
     /// @brief IO service used in drive the test and test clients.
     IOServicePtr io_service_;
 
@@ -178,7 +203,43 @@ public:
 };
 
 /// Verifies the configure and close of HttpCommandMgr.
-TEST_F(HttpCommandMgrTest, basics) {
+TEST_F(HttpCommandMgrTest, basic) {
+    // Make sure we can confiugure one.
+    ASSERT_NO_THROW_LOG(HttpCommandMgr::instance().configure(http_config_));
+    auto listener = HttpCommandMgr::instance().getHttpListener();
+    ASSERT_TRUE(listener);
+
+    // Verify the getters do what we expect.
+    EXPECT_EQ(SERVER_ADDRESS, listener->getLocalAddress().toText());
+    EXPECT_EQ(SERVER_PORT, listener->getLocalPort());
+
+    // Stop it and verify we're no longer listening.
+    ASSERT_NO_THROW_LOG(HttpCommandMgr::instance().close());
+    EXPECT_FALSE(HttpCommandMgr::instance().getHttpListener());
+
+    // Make sure we can call stop again without problems.
+    ASSERT_NO_THROW_LOG(HttpCommandMgr::instance().close());
+
+    // We should be able to restart it.
+    ASSERT_NO_THROW_LOG(HttpCommandMgr::instance().configure(http_config_));
+    EXPECT_TRUE(HttpCommandMgr::instance().getHttpListener());
+
+    // Close it with postponed garbage collection.
+    ASSERT_NO_THROW_LOG(HttpCommandMgr::instance().close(false));
+    EXPECT_TRUE(HttpCommandMgr::instance().getHttpListener());
+    ASSERT_NO_THROW_LOG(HttpCommandMgr::instance().garbageCollectListeners());
+    EXPECT_FALSE(HttpCommandMgr::instance().getHttpListener());
+}
+
+/// Verifies the configure and close of HttpCommandMgr with TLS.
+TEST_F(HttpCommandMgrTest, basicTls) {
+    string ca_dir(string(TEST_CA_DIR));
+    // Setup TLS for the manager.
+    http_config_->setSocketType("https");
+    http_config_->setTrustAnchor(ca_dir + string("/kea-ca.crt"));
+    http_config_->setCertFile(ca_dir + string("/kea-server.crt"));
+    http_config_->setKeyFile(ca_dir + string("/kea-server.key"));
+
     // Make sure we can create one.
     ASSERT_NO_THROW_LOG(HttpCommandMgr::instance().configure(http_config_));
     auto listener = HttpCommandMgr::instance().getHttpListener();
@@ -206,19 +267,12 @@ TEST_F(HttpCommandMgrTest, basics) {
     EXPECT_FALSE(HttpCommandMgr::instance().getHttpListener());
 }
 
-#if 0
 // This test verifies that an HTTP connection can be established and used to
 // transmit an HTTP request and receive the response.
-TEST_F(HttpCommandMgrTest, basicListenAndRespond) {
-
-    // Create a listener.
-    ASSERT_NO_THROW_LOG(listener_.reset(new HttpCommandMgr(IOAddress(SERVER_ADDRESS),
-                                                           SERVER_PORT)));
-    ASSERT_TRUE(listener_);
-
-    // Start the listener and verify it's listening.
-    ASSERT_NO_THROW_LOG(listener_->start());
-    ASSERT_TRUE(listener_->isRunning());
+TEST_F(HttpCommandMgrTest, command) {
+    // Configure.
+    ASSERT_NO_THROW_LOG(HttpCommandMgr::instance().configure(http_config_));
+    EXPECT_TRUE(HttpCommandMgr::instance().getHttpListener());
 
     // Now let's send a "foo" command.  This should create a client, connect
     // to our listener, post our request and retrieve our reply.
@@ -231,53 +285,8 @@ TEST_F(HttpCommandMgrTest, basicListenAndRespond) {
     HttpResponsePtr hr;
     ASSERT_NO_THROW_LOG(hr = parseResponse(client_->getResponse()));
 
-    // Without a command handler loaded, we should get an unsupported command response.
-    EXPECT_EQ(hr->getBody(), "[ { \"result\": 2, \"text\": \"'foo' command not supported.\" } ]");
-
-    // Now let's register the foo command handler.
-    CommandMgr::instance().registerCommand("foo",
-                                            std::bind(&HttpCommandMgrTest::fooCommandHandler,
-                                                      this, ph::_1, ph::_2));
-    // Try posting the foo command again.
-    ASSERT_NO_THROW(startRequest("{\"command\": \"foo\"}"));
-    ASSERT_TRUE(client_);
-
-    // Parse the response.
-    ASSERT_NO_THROW_LOG(hr = parseResponse(client_->getResponse()));
-
     // We should have a response from our command handler.
     EXPECT_EQ(hr->getBody(), "[ { \"arguments\": [ \"bar\" ], \"result\": 0 } ]");
-
-    // Make sure the listener is still listening.
-    ASSERT_TRUE(listener_->isRunning());
-
-    // Stop the listener then verify it has stopped.
-    ASSERT_NO_THROW_LOG(listener_->stop());
-    ASSERT_TRUE(listener_->isStopped());
 }
-
-// Check if a TLS listener can be created.
-TEST_F(HttpCommandMgrTest, tls) {
-    IOAddress address(SERVER_ADDRESS);
-    uint16_t port = SERVER_PORT;
-    TlsContextPtr context;
-    configServer(context);
-
-    // Make sure we can create the listener.
-    ASSERT_NO_THROW_LOG(listener_.reset(new HttpCommandMgr(address, port, 1, context)));
-    EXPECT_EQ(listener_->getAddress(), address);
-    EXPECT_EQ(listener_->getPort(), port);
-    EXPECT_EQ(listener_->getTlsContext(), context);
-    EXPECT_TRUE(listener_->isStopped());
-
-    // Make sure we can start it and it's listening.
-    ASSERT_NO_THROW_LOG(listener_->start());
-    ASSERT_TRUE(listener_->isRunning());
-
-    // Stop it.
-    ASSERT_NO_THROW_LOG(listener_->stop());
-    ASSERT_TRUE(listener_->isStopped());
-}
-#endif
 
 } // end of anonymous namespace
