@@ -9,6 +9,7 @@
 #include <asiolink/io_service_mgr.h>
 #include <cc/command_interpreter.h>
 #include <config/command_mgr.h>
+#include <config/http_command_mgr.h>
 #include <database/dbaccess_parser.h>
 #include <database/backend_selector.h>
 #include <database/server_selector.h>
@@ -54,15 +55,15 @@
 #include <netinet/in.h>
 #include <vector>
 
-using namespace std;
-using namespace isc;
+using namespace isc::asiolink;
+using namespace isc::config;
 using namespace isc::data;
 using namespace isc::dhcp;
-using namespace isc::asiolink;
 using namespace isc::hooks;
 using namespace isc::process;
-using namespace isc::config;
 using namespace isc::util;
+using namespace isc;
+using namespace std;
 
 namespace {
 
@@ -309,16 +310,23 @@ void configureCommandChannel() {
     // receive the configuration result.
     if (!sock_cfg || !current_sock_cfg || sock_changed) {
         // Close the existing socket (if any).
-        isc::config::CommandMgr::instance().closeCommandSocket();
+        CommandMgr::instance().closeCommandSocket();
 
         if (sock_cfg) {
             // This will create a control socket and install the external
             // socket in IfaceMgr. That socket will be monitored when
             // Dhcp4Srv::receivePacket() calls IfaceMgr::receive4() and
             // callback in CommandMgr will be called, if necessary.
-            isc::config::CommandMgr::instance().openCommandSocket(sock_cfg);
+            CommandMgr::instance().openCommandSocket(sock_cfg);
         }
     }
+
+    // HTTP control socket is simpler: just (re)configure it.
+
+    // Get new config.
+    HttpCommandConfigPtr http_config =
+        CfgMgr::instance().getStagingCfg()->getHttpControlSocketInfo();
+    HttpCommandMgr::instance().configure(http_config);
 }
 
 /// @brief Process a DHCPv4 confguration and return an answer stating if the

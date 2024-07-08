@@ -9,6 +9,7 @@
 
 #include <asiolink/io_address.h>
 #include <asiolink/io_service_mgr.h>
+#include <config/http_command_mgr.h>
 #include <dhcp_ddns/ncr_msg.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/docsis3_option_defs.h>
@@ -614,6 +615,7 @@ Dhcpv6Srv::run() {
             // Handle events registered by hooks using external IOService objects.
             IOServiceMgr::instance().pollIOServices();
             getIOService()->poll();
+            config::HttpCommandMgr::instance().garbageCollectListeners();
         } catch (const std::exception& e) {
             // General catch-all standard exceptions that are not caught by more
             // specific catches.

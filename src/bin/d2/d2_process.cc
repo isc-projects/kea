@@ -9,6 +9,7 @@
 #include <asiolink/io_service_mgr.h>
 #include <cc/command_interpreter.h>
 #include <config/command_mgr.h>
+#include <config/http_command_mgr.h>
 #include <d2/d2_controller.h>
 #include <d2/d2_process.h>
 #include <d2srv/d2_cfg_mgr.h>
@@ -74,8 +75,9 @@ D2Process::D2Process(const char* name, const asiolink::IOServicePtr& io_service)
 
 void
 D2Process::init() {
-    // CommandMgr uses IO service to run asynchronous socket operations.
+    // CommandMgrs use IO service to run asynchronous socket operations.
     isc::config::CommandMgr::instance().setIOService(getIOService());
+    isc::config::HttpCommandMgr::instance().setIOService(getIOService());
 };
 
 void
@@ -152,6 +154,7 @@ D2Process::runIO() {
         // service is stopped it will return immediately with a cnt of zero.
         cnt = getIOService()->runOne();
     }
+    config::HttpCommandMgr::instance().garbageCollectListeners();
     return (cnt);
 }
 
@@ -517,6 +520,13 @@ D2Process::reconfigureCommandChannel() {
 
     // Commit the new socket configuration.
     current_control_socket_ = sock_cfg;
+
+    // HTTP control socket is simpler: just (re)configure it.
+
+    // Get new config.
+    HttpCommandConfigPtr http_config =
+        getD2CfgMgr()->getHttpControlSocketInfo();
+    HttpCommandMgr::instance().configure(http_config);
 }
 
 } // namespace isc::d2

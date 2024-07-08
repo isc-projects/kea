@@ -7,6 +7,7 @@
 #include <config.h>
 
 #include <config/command_mgr.h>
+#include <config/http_command_mgr.h>
 #include <d2/d2_controller.h>
 #include <d2/d2_process.h>
 #include <d2/parser_context.h>
@@ -103,8 +104,9 @@ D2Controller::registerCommands() {
 void
 D2Controller::deregisterCommands() {
     try {
-        // Close the command socket (if it exists).
+        // Close command sockets.
         CommandMgr::instance().closeCommandSocket();
+        HttpCommandMgr::instance().close();
 
         // Deregister any registered commands (please keep in alphabetic order)
         CommandMgr::instance().deregisterCommand(BUILD_REPORT_COMMAND);

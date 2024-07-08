@@ -8,6 +8,7 @@
 #include <kea_version.h>
 
 #include <asiolink/io_service_mgr.h>
+#include <config/http_command_mgr.h>
 #include <dhcp/dhcp4.h>
 #include <dhcp/duid.h>
 #include <dhcp/hwaddr.h>
@@ -1142,6 +1143,7 @@ Dhcpv4Srv::run() {
             // Handle events registered by hooks using external IOService objects.
             IOServiceMgr::instance().pollIOServices();
             getIOService()->poll();
+            config::HttpCommandMgr::instance().garbageCollectListeners();
         } catch (const std::exception& e) {
             // General catch-all exception that are not caught by more specific
             // catches. This one is for exceptions derived from std::exception.

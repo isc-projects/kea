@@ -11,6 +11,7 @@
 #include <cc/command_interpreter.h>
 #include <cc/data.h>
 #include <config/command_mgr.h>
+#include <config/http_command_mgr.h>
 #include <cryptolink/crypto_hash.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp6/ctrl_dhcp6_srv.h>
@@ -1104,8 +1105,9 @@ ControlledDhcpv6Srv::ControlledDhcpv6Srv(uint16_t server_port /*= DHCP6_SERVER_P
     // TimerMgr uses IO service to run asynchronous timers.
     TimerMgr::instance()->setIOService(getIOService());
 
-    // CommandMgr uses IO service to run asynchronous socket operations.
+    // CommandMgr's use IO service to run asynchronous socket operations.
     CommandMgr::instance().setIOService(getIOService());
+    HttpCommandMgr::instance().setIOService(getIOService());
 
     // DatabaseConnection uses IO service to run asynchronous timers.
     DatabaseConnection::setIOService(getIOService());
@@ -1211,8 +1213,9 @@ ControlledDhcpv6Srv::~ControlledDhcpv6Srv() {
 
         cleanup();
 
-        // Close the command socket (if it exists).
+        // Close command sockets.
         CommandMgr::instance().closeCommandSocket();
+        HttpCommandMgr::instance().close();
 
         // Deregister any registered commands (please keep in alphabetic order)
         CommandMgr::instance().deregisterCommand("build-report");
