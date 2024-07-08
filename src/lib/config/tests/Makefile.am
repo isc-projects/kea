@@ -25,6 +25,7 @@ run_unittests_SOURCES += cmd_http_listener_unittests.cc
 run_unittests_SOURCES += cmd_response_creator_unittests.cc
 run_unittests_SOURCES += cmd_response_creator_factory_unittests.cc
 run_unittests_SOURCES += http_command_config_unittests.cc
+run_unittests_SOURCES += http_command_mgr_unittests.cc
 run_unittests_SOURCES += http_command_response_creator_factory_unittests.cc
 run_unittests_SOURCES += http_command_response_creator_unittests.cc
 
