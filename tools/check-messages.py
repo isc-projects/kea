@@ -248,7 +248,7 @@ def main():
                 line = line.strip()
 
                 if len(current_debug_level) != 0:
-                    debug_levels[current_debug_level] = (line.strip().strip().rstrip(';')
+                    debug_levels[current_debug_level] = (line.strip().rstrip(';')
                                                          .replace('isc::log::', '').replace('log::', ''))
                     current_debug_level = ''
 
