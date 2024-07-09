@@ -75,9 +75,13 @@ D2Process::D2Process(const char* name, const asiolink::IOServicePtr& io_service)
 
 void
 D2Process::init() {
+    using namespace isc::config;
     // CommandMgrs use IO service to run asynchronous socket operations.
-    isc::config::CommandMgr::instance().setIOService(getIOService());
-    isc::config::HttpCommandMgr::instance().setIOService(getIOService());
+    CommandMgr::instance().setIOService(getIOService());
+    HttpCommandMgr::instance().setIOService(getIOService());
+
+    // Set the HTTP authentication default realm.
+    HttpCommandConfig::DefaultAuthenticationRealm = "kea-dhcp-ddns-server";
 };
 
 void

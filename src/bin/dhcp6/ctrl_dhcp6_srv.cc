@@ -1109,6 +1109,9 @@ ControlledDhcpv6Srv::ControlledDhcpv6Srv(uint16_t server_port /*= DHCP6_SERVER_P
     CommandMgr::instance().setIOService(getIOService());
     HttpCommandMgr::instance().setIOService(getIOService());
 
+    // Set the HTTP authentication default realm.
+    HttpCommandConfig::DefaultAuthenticationRealm = "kea-dhcpv6-server";
+
     // DatabaseConnection uses IO service to run asynchronous timers.
     DatabaseConnection::setIOService(getIOService());
 
