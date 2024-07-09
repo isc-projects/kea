@@ -41,15 +41,15 @@ duplicate-includes:
   script:
     - ./tools/check-for-duplicate-includes.sh
 
+duplicate-log-messages:
+  stage: test
+  script:
+    - ./tools/check-messages.py
+
 uninstalled-headers:
   stage: test
   script:
     - ./tools/find-uninstalled-headers.py
-
-messages:
-  stage: test
-  script:
-    - ./tools/check-messages.py
 
 missing-api-commands:
   stage: test
