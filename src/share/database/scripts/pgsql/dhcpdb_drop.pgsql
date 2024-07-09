@@ -31,6 +31,7 @@ DROP FUNCTION IF EXISTS proc_stat_lease6_insert ();
 DROP FUNCTION IF EXISTS proc_stat_lease6_update ();
 DROP FUNCTION IF EXISTS proc_stat_lease6_delete ();
 DROP TABLE IF EXISTS logs CASCADE;
+DROP TABLE IF EXISTS option_def_data_type CASCADE;
 
 -- config backend procedures for DHCPv6
 DROP FUNCTION IF EXISTS createAuditRevisionDHCP6(audit_ts TIMESTAMP WITH TIME ZONE, server_tag VARCHAR(64),

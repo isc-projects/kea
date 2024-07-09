@@ -376,7 +376,7 @@ mysql_upgrade() {
         echo "Processing $script file..."
         "${script}" --host="${db_host}" --user="${db_user}" \
         --password="${db_password}" "${db_name}" ${extra_arguments}
-    done
+    done | sort -V
 
     version=$(checked_mysql_version)
     printf 'Schema version reported after upgrade: %s\n' "${version}"
@@ -423,7 +423,7 @@ pgsql_upgrade() {
         echo "Processing $script file..."
         "${script}" -U "${db_user}" -h "${db_host}" \
         -d "${db_name}" ${extra_arguments}
-    done
+    done | sort -V
 
     version=$(checked_pgsql_version)
     printf 'Schema version reported after upgrade: %s\n' "${version}"

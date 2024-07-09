@@ -2155,4 +2155,50 @@ TEST_F(OptionDefinitionTest, internalOptionTypeBinary) {
               option_cast->toText());
 }
 
+// Verify converstion of OptionDefintion type strings to type enums.
+TEST(OptionDataTypeUtil, typeToString) {
+    EXPECT_EQ(OPT_EMPTY_TYPE, OptionDataTypeUtil::getDataType("empty"));
+    EXPECT_EQ(OPT_BINARY_TYPE, OptionDataTypeUtil::getDataType("binary"));
+    EXPECT_EQ(OPT_BOOLEAN_TYPE, OptionDataTypeUtil::getDataType("boolean"));
+    EXPECT_EQ(OPT_INT8_TYPE, OptionDataTypeUtil::getDataType("int8"));
+    EXPECT_EQ(OPT_INT16_TYPE, OptionDataTypeUtil::getDataType("int16"));
+    EXPECT_EQ(OPT_INT32_TYPE, OptionDataTypeUtil::getDataType("int32"));
+    EXPECT_EQ(OPT_UINT8_TYPE, OptionDataTypeUtil::getDataType("uint8"));
+    EXPECT_EQ(OPT_UINT16_TYPE, OptionDataTypeUtil::getDataType("uint16"));
+    EXPECT_EQ(OPT_UINT32_TYPE, OptionDataTypeUtil::getDataType("uint32"));
+    EXPECT_EQ(OPT_IPV4_ADDRESS_TYPE, OptionDataTypeUtil::getDataType("ipv4-address"));
+    EXPECT_EQ(OPT_IPV6_ADDRESS_TYPE, OptionDataTypeUtil::getDataType("ipv6-address"));
+    EXPECT_EQ(OPT_IPV6_PREFIX_TYPE, OptionDataTypeUtil::getDataType("ipv6-prefix"));
+    EXPECT_EQ(OPT_PSID_TYPE, OptionDataTypeUtil::getDataType("psid"));
+    EXPECT_EQ(OPT_STRING_TYPE, OptionDataTypeUtil::getDataType("string"));
+    EXPECT_EQ(OPT_TUPLE_TYPE, OptionDataTypeUtil::getDataType("tuple"));
+    EXPECT_EQ(OPT_FQDN_TYPE, OptionDataTypeUtil::getDataType("fqdn"));
+    // EXPECT_EQ(OPT_INTERNAL_TYPE, OptionDataTypeUtil::getDataType("internal"));
+    EXPECT_EQ(OPT_RECORD_TYPE, OptionDataTypeUtil::getDataType("record"));
+    EXPECT_EQ(OPT_UNKNOWN_TYPE, OptionDataTypeUtil::getDataType("bogus"));
+}
+
+// Verify converstion of OptionDefintion type enums to type strings.
+TEST(OptionDataTypeUtil, stringToType) {
+    EXPECT_EQ("empty", OptionDataTypeUtil::getDataTypeName(OPT_EMPTY_TYPE));
+    EXPECT_EQ("binary", OptionDataTypeUtil::getDataTypeName( OPT_BINARY_TYPE));
+    EXPECT_EQ("boolean", OptionDataTypeUtil::getDataTypeName(OPT_BOOLEAN_TYPE));
+    EXPECT_EQ("int8", OptionDataTypeUtil::getDataTypeName(OPT_INT8_TYPE));
+    EXPECT_EQ("int16", OptionDataTypeUtil::getDataTypeName(OPT_INT16_TYPE));
+    EXPECT_EQ("int32", OptionDataTypeUtil::getDataTypeName(OPT_INT32_TYPE));
+    EXPECT_EQ("uint8", OptionDataTypeUtil::getDataTypeName(OPT_UINT8_TYPE));
+    EXPECT_EQ("uint16", OptionDataTypeUtil::getDataTypeName(OPT_UINT16_TYPE));
+    EXPECT_EQ("uint32", OptionDataTypeUtil::getDataTypeName(OPT_UINT32_TYPE));
+    EXPECT_EQ("ipv4-address", OptionDataTypeUtil::getDataTypeName(OPT_IPV4_ADDRESS_TYPE));
+    EXPECT_EQ("ipv6-address", OptionDataTypeUtil::getDataTypeName(OPT_IPV6_ADDRESS_TYPE));
+    EXPECT_EQ("ipv6-prefix", OptionDataTypeUtil::getDataTypeName(OPT_IPV6_PREFIX_TYPE));
+    EXPECT_EQ("psid", OptionDataTypeUtil::getDataTypeName(OPT_PSID_TYPE));
+    EXPECT_EQ("string", OptionDataTypeUtil::getDataTypeName(OPT_STRING_TYPE));
+    EXPECT_EQ("tuple", OptionDataTypeUtil::getDataTypeName(OPT_TUPLE_TYPE));
+    EXPECT_EQ("fqdn", OptionDataTypeUtil::getDataTypeName(OPT_FQDN_TYPE));
+    // EXPECT_EQ("internal", OptionDataTypeUtil::getDataTypeName(OPT_INTERNAL_TYPE));
+    EXPECT_EQ("record", OptionDataTypeUtil::getDataTypeName(OPT_RECORD_TYPE));
+    EXPECT_EQ("unknown", OptionDataTypeUtil::getDataTypeName(OPT_UNKNOWN_TYPE));
+}
+
 } // anonymous namespace

@@ -1,0 +1,118 @@
+#!/bin/sh
+
+# Copyright (C) 2024 Internet Systems Consortium, Inc. ("ISC")
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+# Exit with error if commands exit with non-zero and if undefined variables are
+# used.
+set -eu
+
+# shellcheck disable=SC2034
+# SC2034: ... appears unused. Verify use (or export if used externally).
+prefix="@prefix@"
+
+# Include utilities based on location of this script. Check for sources first,
+# so that the unexpected situations with weird paths fall on the default
+# case of installed.
+script_path=$(cd "$(dirname "${0}")" && pwd)
+if test "${script_path}" = "@abs_top_builddir@/src/share/database/scripts/pgsql"; then
+    # shellcheck source=./src/bin/admin/admin-utils.sh.in
+    . "@abs_top_builddir@/src/bin/admin/admin-utils.sh"
+else
+    # shellcheck source=./src/bin/admin/admin-utils.sh.in
+    . "@datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh"
+fi
+
+VERSION=$(pgsql_version "$@")
+
+if [ "$VERSION" != "23.0" ]; then
+    printf 'This script upgrades 23.0 to 24.0. '
+    printf 'Reported version is %s. Skipping upgrade.\n' "${VERSION}"
+    exit 0
+fi
+
+psql "$@" >/dev/null <<EOF
+START TRANSACTION;
+
+-- This line starts the schema upgrade to version 24.0.
+
+-- Create a function to conditionally migrate option_def data type
+-- values.  If they are updating from 2.6.1 this has been done already
+-- and we don't want to do it twice.
+DROP FUNCTION IF EXISTS updateOptionDataDef();
+CREATE OR REPLACE FUNCTION updateOptionDataDef() RETURNS text AS \$\$
+    DECLARE skipper BOOLEAN;
+BEGIN
+    SELECT exists(SELECT FROM pg_tables WHERE tablename = 'option_def_data_type') into skipper;
+    IF skipper THEN
+        -- Table already exists which means the migration was already done.
+        RETURN 'EXISTS';
+    END IF;
+
+    -- First we migrate existing OPT_RECORD_TYPE values
+    -- If they're coming from pre-2.6.0 record type is 17, from
+    -- 2.6.0 or 2.7.0 it is 18. No viable to way to know where we
+    -- started.
+
+    -- Can we attempt to discern between internal and rec by testing
+    -- record_types?
+    UPDATE dhcp4_option_def SET type = 254 WHERE type >= 17 AND record_types IS NOT NULL;
+    UPDATE dhcp6_option_def SET type = 254 WHERE type >= 17 AND record_types IS NOT NULL;
+
+    -- Create the table that enumerates option definition data types.
+    CREATE TABLE option_def_data_type (
+        id smallint NOT NULL,
+        name VARCHAR(32) NOT NULL,
+        PRIMARY KEY (id)
+    );
+
+    -- Now insert supported types.
+    -- We skip (9, 'any-address') as it is not externally supported.
+    INSERT INTO option_def_data_type VALUES
+        (0, 'empty'),
+        (1, 'binary'),
+        (2, 'boolean'),
+        (3, 'int8"'),
+        (4, 'int16'),
+        (5, 'int32'),
+        (6, 'uint8'),
+        (7, 'uint16'),
+        (8, 'uint32'),
+        (10, 'ipv4-address'),
+        (11, 'ipv6-address'),
+        (12, 'ipv6-prefix'),
+        (13, 'psid'),
+        (14, 'string'),
+        (15, 'tuple'),
+        (16, 'fqdn'),
+        (17, 'internal'),
+        (254, 'record');
+
+    --  Add foreign key constraints to enforce only valid types.
+    ALTER TABLE dhcp4_option_def
+        ADD CONSTRAINT fk_option_def_data_type4 FOREIGN KEY (type) REFERENCES option_def_data_type(id);
+
+    ALTER TABLE dhcp6_option_def
+        ADD CONSTRAINT fk_option_def_data_type6 FOREIGN KEY (type) REFERENCES option_def_data_type(id);
+
+    RETURN 'UPDATED';
+END;
+\$\$ LANGUAGE plpgsql;
+
+select updateOptionDataDef();
+
+-- Get rid of the now obsolete function.
+DROP FUNCTION IF EXISTS updateOptionDataDef();
+
+UPDATE schema_version
+    SET version = '24', minor = '0';
+
+-- This line concludes the schema upgrade to version 24.0.
+
+-- Commit the script transaction.
+COMMIT;
+
+EOF

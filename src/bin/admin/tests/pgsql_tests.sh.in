@@ -142,7 +142,7 @@ pgsql_db_version_test() {
     run_command \
         "${kea_admin}" db-version pgsql -u "${db_user}" -p "${db_password}" -n "${db_name}"
     version="${OUTPUT}"
-    assert_str_eq "23.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
+    assert_str_eq "24.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
 
     # Let's wipe the whole database
     pgsql_wipe
@@ -917,6 +917,14 @@ pgsql_upgrade_22_to_23_test() {
     assert_str_eq 'released' "${OUTPUT}" "${query}: expected output %s, returned %s"
 }
 
+pgsql_upgrade_23_to_24_test() {
+    query="SELECT count(id) from option_def_data_type"
+    run_command \
+        pgsql_execute "${query}"
+    assert_eq 0 "${EXIT_CODE}" "${query}: expected %d, returned %d"
+    assert_str_eq '18' "${OUTPUT}" "${query}: expected output %s, returned %s"
+}
+
 pgsql_upgrade_test() {
     test_start "pgsql.upgrade"
 
@@ -935,7 +943,7 @@ pgsql_upgrade_test() {
 
     # Verify upgraded schema reports the latest version.
     version=$("${kea_admin}" db-version pgsql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}")
-    assert_str_eq "23.0" "${version}" 'Expected kea-admin to return %s, returned value was %s'
+    assert_str_eq "24.0" "${version}" 'Expected kea-admin to return %s, returned value was %s'
 
     # Check 1.0 to 2.0 upgrade
     pgsql_upgrade_1_0_to_2_0_test
@@ -996,6 +1004,9 @@ pgsql_upgrade_test() {
 
     # Check 22 to 23 upgrade
     pgsql_upgrade_22_to_23_test
+
+    # Check 23 to 24 upgrade
+    pgsql_upgrade_23_to_24_test
 
     # Let's wipe the whole database
     pgsql_wipe

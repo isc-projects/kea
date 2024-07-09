@@ -821,6 +821,14 @@ mysql_upgrade_22_to_23_test() {
     assert_str_eq 'released' "${OUTPUT}" "${qry}: expected output %s, returned %s"
 }
 
+mysql_upgrade_23_to_24_test() {
+    query="SELECT count(id) from option_def_data_type"
+    run_command \
+        mysql_execute "${query}"
+    assert_eq 0 "${EXIT_CODE}" "${query}: expected %d, returned %d"
+    assert_str_eq '18' "${OUTPUT}" "${query}: expected output %s, returned %s"
+}
+
 mysql_upgrade_test() {
 
     test_start "mysql.upgrade"
@@ -842,7 +850,7 @@ mysql_upgrade_test() {
 
     # Verify that the upgraded schema reports the latest version.
     version=$("${kea_admin}" db-version mysql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}")
-    assert_str_eq "23.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
+    assert_str_eq "24.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
 
     # Let's check that the new tables are indeed there.
 
@@ -1505,9 +1513,11 @@ SET @disable_audit = 0"
     # Check upgrade from 18.0 to 19.0.
     mysql_upgrade_18_to_19_test
 
-
     # Check upgrade from 22.0 to 23.0.
     mysql_upgrade_22_to_23_test
+
+    # Check upgrade from 23.0 to 24.0.
+    mysql_upgrade_23_to_24_test
 
     # Let's wipe the whole database
     mysql_wipe

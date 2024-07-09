@@ -161,3 +161,4 @@ DROP FUNCTION IF EXISTS checkLease6Limits;
 DROP FUNCTION IF EXISTS isJsonSupported;
 DROP TABLE IF EXISTS lease6_relay_id;
 DROP TABLE IF EXISTS lease6_remote_id;
+DROP TABLE IF EXISTS option_def_data_type;
