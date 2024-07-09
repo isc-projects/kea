@@ -215,6 +215,7 @@ CBControlDHCPv4::databaseConfigApply(const BackendSelector& backend_selector,
 
         // Class options also need to be created when returned from the config backend.
         client_classes.createOptions(external_cfg->getCfgOptionDef());
+        client_classes.encapsulateOptions();
 
         external_cfg->setClientClassDictionary(boost::make_shared<ClientClassDictionary>(client_classes));
     }

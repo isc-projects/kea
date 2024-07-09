@@ -200,6 +200,10 @@ public:
             // Create the network's options based on the given definitions.
             other_network->getCfgOption()->createOptions(cfg_def);
 
+            // Encapsulate options, so that the DHCP server can effectively return
+            // them to the clients without having to encapsulate them for each request.
+            other_network->getCfgOption()->encapsulate();
+
             // Add the new/updated nework.
             static_cast<void>(networks_.push_back(other_network));
         }

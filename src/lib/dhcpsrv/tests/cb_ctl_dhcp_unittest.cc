@@ -587,6 +587,7 @@ public:
             (getTimestamp("dhcp4_options") > lb_modification_time)) {
             ASSERT_TRUE(found_opt.option_);
             EXPECT_EQ("new.example.com", found_opt.option_->toString());
+            EXPECT_TRUE(options->isEncapsulated());
 
         } else {
             EXPECT_FALSE(found_opt.option_);
@@ -601,6 +602,7 @@ public:
             (getTimestamp("dhcp4_shared_network") > lb_modification_time)) {
             ASSERT_TRUE(found_network);
             EXPECT_TRUE(found_network->hasFetchGlobalsFn());
+            EXPECT_TRUE(found_network->getCfgOption()->isEncapsulated());
 
         } else {
             EXPECT_FALSE(found_network);
@@ -616,6 +618,7 @@ public:
             EXPECT_TRUE(found_subnet->hasFetchGlobalsFn());
             EXPECT_TRUE(boost::dynamic_pointer_cast<RandomAllocator>
                         (found_subnet->getAllocator(Lease::TYPE_V4)));
+            EXPECT_TRUE(found_subnet->getCfgOption()->isEncapsulated());
 
         } else {
             EXPECT_FALSE(found_subnet);
@@ -647,6 +650,9 @@ public:
             EXPECT_EQ(OptionBuffer(option_desc.formatted_value_.begin(),
                                    option_desc.formatted_value_.end()),
                       option->getData());
+
+            // Make sure that the options have been encapsulated.
+            EXPECT_TRUE(cfg_option_desc->isEncapsulated());
         } else {
             EXPECT_FALSE(found_class);
         }
@@ -1500,6 +1506,7 @@ public:
             (getTimestamp("dhcp6_options") > lb_modification_time)) {
             ASSERT_TRUE(found_opt.option_);
             EXPECT_EQ("some.bootfile", found_opt.option_->toString());
+            EXPECT_TRUE(options->isEncapsulated());
 
         } else {
             EXPECT_FALSE(found_opt.option_);
@@ -1514,6 +1521,7 @@ public:
             (getTimestamp("dhcp6_shared_network") > lb_modification_time)) {
             ASSERT_TRUE(found_network);
             EXPECT_TRUE(found_network->hasFetchGlobalsFn());
+            EXPECT_TRUE(found_network->getCfgOption()->isEncapsulated());
 
         } else {
             EXPECT_FALSE(found_network);
@@ -1531,6 +1539,7 @@ public:
             EXPECT_TRUE(boost::dynamic_pointer_cast<RandomAllocator>
                         (found_subnet->getAllocator(Lease::TYPE_PD)));
             EXPECT_TRUE(found_subnet->hasFetchGlobalsFn());
+            EXPECT_TRUE(found_subnet->getCfgOption()->isEncapsulated());
 
         } else {
             EXPECT_FALSE(found_subnet);
@@ -1554,6 +1563,8 @@ public:
             EXPECT_EQ(OptionBuffer(option_desc.formatted_value_.begin(),
                                    option_desc.formatted_value_.end()),
                       option->getData());
+            EXPECT_TRUE(found_class->getCfgOption()->isEncapsulated());
+
         } else {
             EXPECT_FALSE(found_class);
         }

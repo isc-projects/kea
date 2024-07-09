@@ -154,9 +154,14 @@ CfgSubnets4::merge(CfgOptionDefPtr cfg_def, CfgSharedNetworks4Ptr networks,
         // Create the subnet's options based on the given definitions.
         other_subnet->getCfgOption()->createOptions(cfg_def);
 
+        // Encapsulate options, so that the DHCP server can effectively return
+        // them to the clients without having to encapsulate them for each request.
+        other_subnet->getCfgOption()->encapsulate();
+
         // Create the options for pool based on the given definitions.
         for (auto const& pool : other_subnet->getPoolsWritable(Lease::TYPE_V4)) {
             pool->getCfgOption()->createOptions(cfg_def);
+            pool->getCfgOption()->encapsulate();
         }
 
         // Add the "other" subnet to the our collection of subnets.

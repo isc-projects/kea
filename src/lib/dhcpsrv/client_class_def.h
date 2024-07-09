@@ -471,6 +471,10 @@ public:
     /// @param cfg_option_def set of option definitions to use.
     void createOptions(const CfgOptionDefPtr& cfg_option_def);
 
+    /// @brief Iterates over the classes in the dictionary and encapsulates
+    /// suboptions.
+    void encapsulateOptions() const;
+
     /// @brief Equality operator.
     ///
     /// @param other Other client class dictionary to compare to.
