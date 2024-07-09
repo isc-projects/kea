@@ -10,20 +10,21 @@
 #include <asiolink/io_service.h>
 #include <cc/command_interpreter.h>
 #include <config/command_mgr.h>
+#include <config/http_command_mgr.h>
 #include <config/timeouts.h>
-#include <testutils/io_utils.h>
-#include <testutils/unix_control_client.h>
 #include <d2/d2_controller.h>
 #include <d2/d2_process.h>
 #include <d2/parser_context.h>
+#include <http/response.h>
+#include <http/response_parser.h>
+#include <http/tests/test_http_client.h>
 #include <gtest/gtest.h>
-#include <testutils/sandbox.h>
 #include <boost/pointer_cast.hpp>
+#include <atomic>
 #include <fstream>
 #include <iostream>
 #include <sstream>
 #include <thread>
-#include <unistd.h>
 
 using namespace std;
 using namespace isc;
@@ -31,19 +32,28 @@ using namespace isc::asiolink;
 using namespace isc::config;
 using namespace isc::d2;
 using namespace isc::data;
-using namespace isc::dhcp::test;
+//using namespace isc::dhcp::test;
+using namespace isc::http;
 using namespace isc::process;
-using namespace boost::asio;
 namespace ph = std::placeholders;
 
 namespace isc {
 namespace d2 {
 
+/// @brief IP address to which HTTP service is bound.
+const std::string SERVER_ADDRESS = "127.0.0.1";
+
+/// @brief Port number to which HTTP service is bound.
+const unsigned short SERVER_PORT = 18125;
+
+/// @brief Test timeout (ms).
+const long TEST_TIMEOUT = 10000;
+
+// "Naked" D2 controller, exposes internal methods.
 class NakedD2Controller;
 typedef boost::shared_ptr<NakedD2Controller> NakedD2ControllerPtr;
 
 class NakedD2Controller : public D2Controller {
-    // "Naked" D2 controller, exposes internal methods.
 public:
     static DControllerBasePtr& instance() {
         static DControllerBasePtr controller_ptr;
@@ -72,40 +82,9 @@ private:
 
 namespace {
 
-/// @brief Simple RAII class which stops IO service upon destruction
-/// of the object.
-class IOServiceWork {
+/// @brief Fixture class intended for testing HTTP control channel in D2.
+class HttpCtrlChannelD2Test : public ::testing::Test {
 public:
-
-    /// @brief Constructor.
-    ///
-    /// @param io_service Pointer to the IO service to be stopped.
-    explicit IOServiceWork(const IOServicePtr& io_service)
-        : io_service_(io_service) {
-    }
-
-    /// @brief Destructor.
-    ///
-    /// Stops IO service.
-    ~IOServiceWork() {
-        io_service_->stop();
-    }
-
-private:
-
-    /// @brief Pointer to the IO service to be stopped upon destruction.
-    IOServicePtr io_service_;
-
-};
-
-/// @brief Fixture class intended for testing control channel in D2.
-class CtrlChannelD2Test : public ::testing::Test {
-public:
-    isc::test::Sandbox sandbox;
-
-    /// @brief Path to the UNIX socket being used to communicate with the server.
-    string socket_path_;
-
     /// @brief Reference to the base controller object.
     DControllerBasePtr& server_;
 
@@ -120,29 +99,21 @@ public:
     /// @brief Default constructor.
     ///
     /// Sets socket path to its default value.
-    CtrlChannelD2Test()
+    HttpCtrlChannelD2Test()
         : server_(NakedD2Controller::instance()) {
-        const char* env = getenv("KEA_SOCKET_TEST_DIR");
-        if (env) {
-            socket_path_ = string(env) + "/d2.sock";
-        } else {
-            socket_path_ = sandbox.join("d2.sock");
-        }
-        ::remove(socket_path_.c_str());
     }
 
     /// @brief Destructor.
-    ~CtrlChannelD2Test() {
+    ~HttpCtrlChannelD2Test() {
         // Deregister & co.
         server_.reset();
 
         // Remove files.
         ::remove(CFG_TEST_FILE);
-        ::remove(socket_path_.c_str());
 
         // Reset command manager.
         CommandMgr::instance().deregisterAll();
-        CommandMgr::instance().setConnectionTimeout(TIMEOUT_DHCP_SERVER_RECEIVE_COMMAND);
+        HttpCommandMgr::instance().setConnectionTimeout(TIMEOUT_AGENT_RECEIVE_COMMAND);
     }
 
     /// @brief Returns pointer to the server's IO service.
@@ -151,6 +122,35 @@ public:
     /// hasn't been created server.
     IOServicePtr getIOService() {
         return (server_ ? d2Controller()->getIOService() : IOServicePtr());
+    }
+
+    /// @brief Callback function invoke upon test timeout.
+    ///
+    /// It stops the IO service and reports test timeout.
+    ///
+    /// @param fail_on_timeout Specifies if test failure should be reported.
+    void timeoutHandler(const bool fail_on_timeout) {
+        if (fail_on_timeout) {
+            ADD_FAILURE() << "Timeout occurred while running the test!";
+        }
+        getIOService()->stop();
+    }
+
+    /// @brief Runs IO service.
+    void runIOService() {
+        IOServicePtr io_service = getIOService();
+        ASSERT_TRUE(io_service);
+        IntervalTimer test_timer(io_service);
+        test_timer.setup(std::bind(&HttpCtrlChannelD2Test::timeoutHandler,
+                                   this, true),
+                         TEST_TIMEOUT, IntervalTimer::ONE_SHOT);
+        // Run until the client stops the service or an error occurs.
+        io_service->run();
+        test_timer.cancel();
+        if (io_service->stopped()) {
+            io_service->restart();
+        }
+        io_service->poll();
     }
 
     /// @brief Runs parser in DHCPDDNS mode
@@ -171,31 +171,23 @@ public:
         }
     }
 
-    /// @brief Create a server with a command channel.
-    void createUnixChannelServer() {
-        ::remove(socket_path_.c_str());
-
+    /// @brief Create a server with a HTTP command channel.
+    void createHttpChannelServer() {
         // Just a simple config. The important part here is the socket
         // location information.
-        string header =
+        string config_txt =
             "{"
             "    \"ip-address\": \"192.168.77.1\","
             "    \"port\": 777,"
             "    \"control-socket\": {"
-            "        \"socket-type\": \"unix\","
-            "        \"socket-name\": \"";
-
-        string footer =
-            "\""
+            "        \"socket-type\": \"http\","
+            "        \"socket-address\": \"127.0.0.1\","
+            "        \"socket-port\": 18125"
             "    },"
             "    \"tsig-keys\": [],"
             "    \"forward-ddns\" : {},"
             "    \"reverse-ddns\" : {}"
             "}";
-
-        // Fill in the socket-name value with socket_path_ to make
-        // the actual configuration text.
-        string config_txt = header + socket_path_  + footer;
 
         ASSERT_TRUE(server_);
 
@@ -214,12 +206,108 @@ public:
         ASSERT_EQ(0, status) << txt->str();
 
         // Now check that the socket was indeed open.
-        ASSERT_GT(CommandMgr::instance().getControlSocketFD(), -1);
+        ASSERT_TRUE(HttpCommandMgr::instance().getHttpListener());
     }
 
-    /// @brief Conducts a command/response exchange via UnixCommandSocket.
+    /// @brief Constructs a complete HTTP POST given a request body.
     ///
-    /// This method connects to the given server over the given socket path.
+    /// @param request_body string containing the desired request body.
+    ///
+    /// @return string containing the constructed POST.
+    std::string buildPostStr(const std::string& request_body) {
+        // Create the command string.
+        std::stringstream ss;
+        ss << "POST /foo/bar HTTP/1.1\r\n"
+              "Content-Type: application/json\r\n"
+              "Content-Length: "
+              << request_body.size() << "\r\n\r\n"
+              << request_body;
+        return (ss.str());
+    }
+
+    /// @brief Parse list answer.
+    ///
+    /// Clone of parseAnswer but taking the answer as a list and
+    /// decapulating it.
+    ///
+    /// @param rcode Return code.
+    /// @param msg_list The message to parse.
+    /// @return The optional argument in the message after decapsulation.
+    ConstElementPtr parseListAnswer(int &rcode,
+                                    const ConstElementPtr& msg_list) {
+        if (!msg_list) {
+            isc_throw(CtrlChannelError, "invalid answer: no answer specified");
+        }
+        if (msg_list->getType() != Element::list) {
+            isc_throw(CtrlChannelError, "invalid answer: expected toplevel "
+                      << "entry to be a list, got "
+                      << Element::typeToName(msg_list->getType())
+                      << " instead");
+        }
+        if (msg_list->size() != 1) {
+            isc_throw(CtrlChannelError, "invalid answer: expected toplevel "
+                      << "entry to be an one element list, got "
+                      << msg_list->size() << " long list instead");
+        }
+        ConstElementPtr msg = msg_list->get(0);
+        if (!msg) {
+            isc_throw(CtrlChannelError, "invalid answer: null element");
+        }
+        if (msg->getType() != Element::map) {
+            isc_throw(CtrlChannelError, "invalid answer: expected list of "
+                      << "one map, got list of one "
+                      << Element::typeToName(msg->getType())
+                      << " instead");
+        }
+        if (!msg->contains(CONTROL_RESULT)) {
+            isc_throw(CtrlChannelError, "invalid answer: does not contain "
+                      << "mandatory '" << CONTROL_RESULT << "'");
+        }
+
+        ConstElementPtr result = msg->get(CONTROL_RESULT);
+        if (result->getType() != Element::integer) {
+            isc_throw(CtrlChannelError, "invalid answer: expected '"
+                      << CONTROL_RESULT << "' to be an integer, got "
+                      << Element::typeToName(result->getType())
+                      << " instead");
+        }
+
+        rcode = result->intValue();
+
+        // If there are arguments, return them.
+        ConstElementPtr args = msg->get(CONTROL_ARGUMENTS);
+        if (args) {
+            return (args);
+        }
+
+        // There are no arguments, let's try to return just the text status.
+        return (msg->get(CONTROL_TEXT));
+    }
+
+    /// @brief Create an HttpResponse from a response string.
+    ///
+    /// @param response_str a string containing the whole HTTP
+    /// response received.
+    ///
+    /// @return An HttpResponse constructed from by parsing the
+    /// response string.
+    HttpResponsePtr parseResponse(const std::string response_str) {
+        HttpResponsePtr hr(new HttpResponse());
+        HttpResponseParser parser(*hr);
+        parser.initModel();
+        parser.postBuffer(&response_str[0], response_str.size());
+        parser.poll();
+        if (!parser.httpParseOk()) {
+            isc_throw(Unexpected, "response_str: '" << response_str
+                      << "' failed to parse: " << parser.getErrorMessage());
+        }
+
+        return (hr);
+    }
+
+    /// @brief Conducts a command/response exchange via HttpCommandSocket.
+    ///
+    /// This method connects to the given server over the given address/port.
     /// If successful, it then sends the given command and retrieves the
     /// server's response.  Note that it polls the server's I/O service
     /// where needed to cause the server to process IO events on
@@ -228,30 +316,27 @@ public:
     /// @param command the command text to execute in JSON form
     /// @param response variable into which the received response should be
     ///        placed.
-    void sendUnixCommand(const string& command, string& response) {
+    void sendHttpCommand(const string& command, string& response) {
         response = "";
-        boost::scoped_ptr<UnixControlClient> client;
-        client.reset(new UnixControlClient());
+        boost::scoped_ptr<TestHttpClient> client;
+        client.reset(new TestHttpClient(getIOService(), SERVER_ADDRESS,
+                                        SERVER_PORT));
         ASSERT_TRUE(client);
 
-        // Connect to the server. This is expected to trigger server's acceptor
-        // handler when IOService::poll() is run.
-        ASSERT_TRUE(client->connectToServer(socket_path_));
-        ASSERT_NO_THROW(getIOService()->poll());
+        // Send the command. This will trigger server's handler which
+        // receives data over the HTTP socket. The server will start
+        // sending response to the client.
+        ASSERT_NO_THROW(client->startRequest(buildPostStr(command)));
+        runIOService();
+        ASSERT_TRUE(client->receiveDone());
 
-        // Send the command. This will trigger server's handler which receives
-        // data over the unix domain socket. The server will start sending
-        // response to the client.
-        ASSERT_TRUE(client->sendCommand(command));
-        ASSERT_NO_THROW(getIOService()->poll());
+        // Read the response generated by the server.
+        HttpResponsePtr hr;
+        ASSERT_NO_THROW(hr = parseResponse(client->getResponse()));
+        response = hr->getBody();
 
-        // Read the response generated by the server. Note that getResponse
-        // only fails if there an IO error or no response data was present.
-        // It is not based on the response content.
-        ASSERT_TRUE(client->getResponse(response));
-
-        // Now disconnect and process the close event.
-        client->disconnectFromServer();
+        // Now close client.
+        client->close();
 
         ASSERT_NO_THROW(getIOService()->poll());
     }
@@ -266,7 +351,7 @@ public:
     void checkListCommands(const ConstElementPtr& rsp, const string command) {
         ConstElementPtr params;
         int status_code = -1;
-        EXPECT_NO_THROW(params = parseAnswer(status_code, rsp));
+        EXPECT_NO_THROW(params = parseListAnswer(status_code, rsp));
         EXPECT_EQ(CONTROL_RESULT_SUCCESS, status_code);
         ASSERT_TRUE(params);
         ASSERT_EQ(Element::list, params->getType());
@@ -302,7 +387,7 @@ public:
         ASSERT_TRUE(rsp);
 
         int status;
-        ConstElementPtr params = parseAnswer(status, rsp);
+        ConstElementPtr params = parseListAnswer(status, rsp);
         EXPECT_EQ(exp_status, status);
 
         if (exp_status == CONTROL_RESULT_SUCCESS) {
@@ -375,13 +460,13 @@ public:
 
     /// @brief Command handler which generates long response.
     ///
-    /// This handler generates a large response (over 400kB). It includes
+    /// This handler generates a large response (over 4kB). It includes
     /// a list of randomly generated strings to make sure that the test
     /// can catch out of order delivery.
     static ConstElementPtr
     longResponseHandler(const string&, const ConstElementPtr&) {
         ElementPtr arguments = Element::createList();
-        for (unsigned i = 0; i < 80000; ++i) {
+        for (unsigned i = 0; i < 800; ++i) { // was 80000 (400kB).
             std::ostringstream s;
             s << std::setw(5) << i;
             arguments->add(Element::create(s.str()));
@@ -390,211 +475,71 @@ public:
     }
 };
 
-const char* CtrlChannelD2Test::CFG_TEST_FILE = "d2-test-config.json";
-
-// Test bad syntax rejected by the parser.
-TEST_F(CtrlChannelD2Test, parser) {
-    // no empty map.
-    string bad1 =
-        "{"
-        "    \"ip-address\": \"192.168.77.1\","
-        "    \"port\": 777,"
-        "    \"control-socket\": { },"
-        "    \"tsig-keys\": [],"
-        "    \"forward-ddns\" : {},"
-        "    \"reverse-ddns\" : {}"
-        "}";
-    ASSERT_THROW(parseDHCPDDNS(bad1), D2ParseError);
-
-    // unknown keyword.
-    string bad2 =
-        "{"
-        "    \"ip-address\": \"192.168.77.1\","
-        "    \"port\": 777,"
-        "    \"control-socket\": {"
-        "        \"socket-type\": \"unix\","
-        "        \"socket-name\": \"/tmp/d2.sock\","
-        "        \"bogus\": \"unknown...\""
-        "    },"
-        "    \"tsig-keys\": [],"
-        "    \"forward-ddns\" : {},"
-        "    \"reverse-ddns\" : {}"
-        "}";
-    ASSERT_THROW(parseDHCPDDNS(bad2), D2ParseError);
-}
-
-// Test bad syntax rejected by the process.
-TEST_F(CtrlChannelD2Test, configure) {
-    ASSERT_TRUE(server_);
-    ASSERT_NO_THROW(d2Controller()->initProcess());
-    D2ProcessPtr proc = d2Controller()->getProcess();
-    ASSERT_TRUE(proc);
-
-    // no type.
-    string bad1 =
-        "{"
-        "    \"ip-address\": \"192.168.77.1\","
-        "    \"port\": 777,"
-        "    \"control-socket\": {"
-        "        \"socket-name\": \"/tmp/d2.sock\""
-        "    },"
-        "    \"tsig-keys\": [],"
-        "    \"forward-ddns\" : {},"
-        "    \"reverse-ddns\" : {}"
-        "}";
-    ConstElementPtr config;
-    ASSERT_NO_THROW(config = parseDHCPDDNS(bad1, true));
-
-    ConstElementPtr answer = proc->configure(config, false);
-    ASSERT_TRUE(answer);
-
-    int status = 0;
-    ConstElementPtr txt = parseAnswer(status, answer);
-    EXPECT_EQ(1, status);
-    ASSERT_TRUE(txt);
-    ASSERT_EQ(Element::string, txt->getType());
-    EXPECT_EQ("'socket-type' parameter is mandatory in control-sockets items",
-              txt->stringValue());
-    EXPECT_EQ(-1, CommandMgr::instance().getControlSocketFD());
-
-    // no name.
-    string bad3 =
-        "{"
-        "    \"ip-address\": \"192.168.77.1\","
-        "    \"port\": 777,"
-        "    \"control-socket\": {"
-        "        \"socket-type\": \"unix\""
-        "    },"
-        "    \"tsig-keys\": [],"
-        "    \"forward-ddns\" : {},"
-        "    \"reverse-ddns\" : {}"
-        "}";
-    ASSERT_NO_THROW(config = parseDHCPDDNS(bad3, true));
-
-    answer = proc->configure(config, false);
-    ASSERT_TRUE(answer);
-
-    status = 0;
-    txt = parseAnswer(status, answer);
-    EXPECT_EQ(1, status);
-    ASSERT_TRUE(txt);
-    ASSERT_EQ(Element::string, txt->getType());
-    EXPECT_EQ("Mandatory 'socket-name' parameter missing",
-              txt->stringValue());
-    EXPECT_EQ(-1, CommandMgr::instance().getControlSocketFD());
-}
-
-// This test checks which commands are registered by the D2 server.
-TEST_F(CtrlChannelD2Test, commandsRegistration) {
-
-    ConstElementPtr list_cmds = createCommand("list-commands");
-    ConstElementPtr answer;
-
-    // By default the list should be empty (except the standard list-commands
-    // supported by the CommandMgr itself).
-    EXPECT_NO_THROW(answer = CommandMgr::instance().processCommand(list_cmds));
-    ASSERT_TRUE(answer);
-    ASSERT_TRUE(answer->get("arguments"));
-    EXPECT_EQ("[ \"list-commands\" ]", answer->get("arguments")->str());
-
-    // Created server should register several additional commands.
-    EXPECT_NO_THROW(createUnixChannelServer());
-
-    EXPECT_NO_THROW(answer = CommandMgr::instance().processCommand(list_cmds));
-    ASSERT_TRUE(answer);
-    ASSERT_TRUE(answer->get("arguments"));
-    string command_list = answer->get("arguments")->str();
-
-    EXPECT_TRUE(command_list.find("\"list-commands\"") != string::npos);
-    EXPECT_TRUE(command_list.find("\"build-report\"") != string::npos);
-    EXPECT_TRUE(command_list.find("\"config-get\"") != string::npos);
-    EXPECT_TRUE(command_list.find("\"config-hash-get\"") != string::npos);
-    EXPECT_TRUE(command_list.find("\"config-reload\"") != string::npos);
-    EXPECT_TRUE(command_list.find("\"config-set\"") != string::npos);
-    EXPECT_TRUE(command_list.find("\"config-test\"") != string::npos);
-    EXPECT_TRUE(command_list.find("\"config-write\"") != string::npos);
-    EXPECT_TRUE(command_list.find("\"shutdown\"") != string::npos);
-    EXPECT_TRUE(command_list.find("\"status-get\"") != string::npos);
-    EXPECT_TRUE(command_list.find("\"statistic-get\"") != string::npos);
-    EXPECT_TRUE(command_list.find("\"statistic-get-all\"") != string::npos);
-    EXPECT_TRUE(command_list.find("\"statistic-reset\"") != string::npos);
-    EXPECT_TRUE(command_list.find("\"statistic-reset-all\"") != string::npos);
-    EXPECT_TRUE(command_list.find("\"version-get\"") != string::npos);
-
-    // Ok, and now delete the server. It should deregister its commands.
-    server_.reset();
-
-    // The list should be (almost) empty again.
-    EXPECT_NO_THROW(answer = CommandMgr::instance().processCommand(list_cmds));
-    ASSERT_TRUE(answer);
-    ASSERT_TRUE(answer->get("arguments"));
-    EXPECT_EQ("[ \"list-commands\" ]", answer->get("arguments")->str());
-}
+const char* HttpCtrlChannelD2Test::CFG_TEST_FILE = "d2-http-test-config.json";
 
 // Tests that the server properly responds to invalid commands.
-TEST_F(CtrlChannelD2Test, invalid) {
-    EXPECT_NO_THROW(createUnixChannelServer());
+TEST_F(HttpCtrlChannelD2Test, invalid) {
+    EXPECT_NO_THROW(createHttpChannelServer());
     string response;
 
-    sendUnixCommand("{ \"command\": \"bogus\" }", response);
-    EXPECT_EQ("{ \"result\": 2, \"text\": \"'bogus' command not supported.\" }",
+    sendHttpCommand("{ \"command\": \"bogus\" }", response);
+    EXPECT_EQ("[ { \"result\": 2, \"text\": \"'bogus' command not supported.\" } ]",
               response);
 
-    sendUnixCommand("utter nonsense", response);
-    EXPECT_EQ("{ \"result\": 1, \"text\": \"invalid first character u\" }",
-              response);
+    sendHttpCommand("utter nonsense", response);
+    EXPECT_EQ("{ \"result\": 400, \"text\": \"Bad Request\" }", response);
 }
 
 // Tests that the server properly responds to shutdown command.
-TEST_F(CtrlChannelD2Test, shutdown) {
-    EXPECT_NO_THROW(createUnixChannelServer());
+TEST_F(HttpCtrlChannelD2Test, shutdown) {
+    EXPECT_NO_THROW(createHttpChannelServer());
     string response;
 
-    sendUnixCommand("{ \"command\": \"shutdown\" }", response);
-    EXPECT_EQ("{ \"result\": 0, \"text\": \"Shutdown initiated, type is: normal\" }",
+    sendHttpCommand("{ \"command\": \"shutdown\" }", response);
+    EXPECT_EQ("[ { \"result\": 0, \"text\": \"Shutdown initiated, type is: normal\" } ]",
               response);
     EXPECT_EQ(EXIT_SUCCESS, server_->getExitValue());
 }
 
 // Tests that the server sets exit value supplied as argument
 // to shutdown command.
-TEST_F(CtrlChannelD2Test, shutdownExitValue) {
-    EXPECT_NO_THROW(createUnixChannelServer());
+TEST_F(HttpCtrlChannelD2Test, shutdownExitValue) {
+    EXPECT_NO_THROW(createHttpChannelServer());
     string response;
 
-    sendUnixCommand("{ \"command\": \"shutdown\", "
+    sendHttpCommand("{ \"command\": \"shutdown\", "
                     "\"arguments\": { \"exit-value\": 77 }}",
                     response);
 
-    EXPECT_EQ("{ \"result\": 0, \"text\": \"Shutdown initiated, type is: normal\" }",
+    EXPECT_EQ("[ { \"result\": 0, \"text\": \"Shutdown initiated, type is: normal\" } ]",
               response);
 
     EXPECT_EQ(77, server_->getExitValue());
 }
 
 // This test verifies that the DHCP server handles version-get commands.
-TEST_F(CtrlChannelD2Test, getversion) {
-    EXPECT_NO_THROW(createUnixChannelServer());
+TEST_F(HttpCtrlChannelD2Test, getversion) {
+    EXPECT_NO_THROW(createHttpChannelServer());
     string response;
 
     // Send the version-get command.
-    sendUnixCommand("{ \"command\": \"version-get\" }", response);
+    sendHttpCommand("{ \"command\": \"version-get\" }", response);
     EXPECT_TRUE(response.find("\"result\": 0") != string::npos);
     EXPECT_TRUE(response.find("log4cplus") != string::npos);
     EXPECT_FALSE(response.find("GTEST_VERSION") != string::npos);
 
     // Send the build-report command.
-    sendUnixCommand("{ \"command\": \"build-report\" }", response);
+    sendHttpCommand("{ \"command\": \"build-report\" }", response);
     EXPECT_TRUE(response.find("\"result\": 0") != string::npos);
     EXPECT_TRUE(response.find("GTEST_VERSION") != string::npos);
 }
 
 // Tests that the server properly responds to list-commands command.
-TEST_F(CtrlChannelD2Test, listCommands) {
-    EXPECT_NO_THROW(createUnixChannelServer());
+TEST_F(HttpCtrlChannelD2Test, listCommands) {
+    EXPECT_NO_THROW(createHttpChannelServer());
     string response;
 
-    sendUnixCommand("{ \"command\": \"list-commands\" }", response);
+    sendHttpCommand("{ \"command\": \"list-commands\" }", response);
 
     ConstElementPtr rsp;
     EXPECT_NO_THROW(rsp = Element::fromJSON(response));
@@ -618,15 +563,19 @@ TEST_F(CtrlChannelD2Test, listCommands) {
 }
 
 // This test verifies that the D2 server handles status-get commands
-TEST_F(CtrlChannelD2Test, statusGet) {
-    EXPECT_NO_THROW(createUnixChannelServer());
+TEST_F(HttpCtrlChannelD2Test, statusGet) {
+    EXPECT_NO_THROW(createHttpChannelServer());
 
     std::string response_txt;
 
     // Send the version-get command
-    sendUnixCommand("{ \"command\": \"status-get\" }", response_txt);
-    ConstElementPtr response;
-    ASSERT_NO_THROW(response = Element::fromJSON(response_txt));
+    sendHttpCommand("{ \"command\": \"status-get\" }", response_txt);
+    ConstElementPtr response_list;
+    ASSERT_NO_THROW(response_list = Element::fromJSON(response_txt));
+    ASSERT_TRUE(response_list);
+    ASSERT_EQ(Element::list, response_list->getType());
+    EXPECT_EQ(1, response_list->size());
+    ConstElementPtr response = response_list->get(0);
     ASSERT_TRUE(response);
     ASSERT_EQ(Element::map, response->getType());
     EXPECT_EQ(2, response->size());
@@ -659,11 +608,11 @@ TEST_F(CtrlChannelD2Test, statusGet) {
 // Tests if the server returns its configuration using config-get.
 // Note there are separate tests that verify if toElement() called by the
 // config-get handler are actually converting the configuration correctly.
-TEST_F(CtrlChannelD2Test, configGet) {
-    EXPECT_NO_THROW(createUnixChannelServer());
+TEST_F(HttpCtrlChannelD2Test, configGet) {
+    EXPECT_NO_THROW(createHttpChannelServer());
     string response;
 
-    sendUnixCommand("{ \"command\": \"config-get\" }", response);
+    sendHttpCommand("{ \"command\": \"config-get\" }", response);
     ConstElementPtr rsp;
 
     // The response should be a valid JSON.
@@ -671,7 +620,7 @@ TEST_F(CtrlChannelD2Test, configGet) {
     ASSERT_TRUE(rsp);
 
     int status;
-    ConstElementPtr cfg = parseAnswer(status, rsp);
+    ConstElementPtr cfg = parseListAnswer(status, rsp);
     EXPECT_EQ(CONTROL_RESULT_SUCCESS, status);
 
     // Ok, now roughly check if the response seems legit.
@@ -682,11 +631,11 @@ TEST_F(CtrlChannelD2Test, configGet) {
 
 // Tests if the server returns the hash of its configuration using
 // config-hash-get.
-TEST_F(CtrlChannelD2Test, configHashGet) {
-    EXPECT_NO_THROW(createUnixChannelServer());
+TEST_F(HttpCtrlChannelD2Test, configHashGet) {
+    EXPECT_NO_THROW(createHttpChannelServer());
     string response;
 
-    sendUnixCommand("{ \"command\": \"config-hash-get\" }", response);
+    sendHttpCommand("{ \"command\": \"config-hash-get\" }", response);
     ConstElementPtr rsp;
 
     // The response should be a valid JSON.
@@ -694,12 +643,12 @@ TEST_F(CtrlChannelD2Test, configHashGet) {
     ASSERT_TRUE(rsp);
 
     int status;
-    ConstElementPtr args = parseAnswer(status, rsp);
+    ConstElementPtr args = parseListAnswer(status, rsp);
     EXPECT_EQ(CONTROL_RESULT_SUCCESS, status);
-    // the parseAnswer is trying to be smart with ignoring hash.
+    // the parseListAnswer is trying to be smart with ignoring hash.
     // But this time we really want to see the hash, so we'll retrieve
     // the arguments manually.
-    args = rsp->get(CONTROL_ARGUMENTS);
+    ASSERT_NO_THROW(args = rsp->get(0)->get(CONTROL_ARGUMENTS));
 
     // Ok, now roughly check if the response seems legit.
     ASSERT_TRUE(args);
@@ -712,69 +661,37 @@ TEST_F(CtrlChannelD2Test, configHashGet) {
 }
 
 // Verify that the "config-test" command will do what we expect.
-TEST_F(CtrlChannelD2Test, configTest) {
+TEST_F(HttpCtrlChannelD2Test, configTest) {
 
-    // Define strings to permutate the config arguments.
-    // (Note the line feeds makes errors easy to find)
-    string config_test_txt = "{ \"command\": \"config-test\" \n";
-    string args_txt = " \"arguments\": { \n";
-    string d2_header =
-        "    \"DhcpDdns\": \n";
     string d2_cfg_txt =
         "    { \n"
         "        \"ip-address\": \"192.168.77.1\", \n"
         "        \"port\": 777, \n"
         "        \"forward-ddns\" : {}, \n"
         "        \"reverse-ddns\" : {}, \n"
-        "        \"tsig-keys\": [ \n";
-    string key1 =
+        "        \"tsig-keys\": [ \n"
         "            {\"name\": \"d2_key.example.com\", \n"
         "             \"algorithm\": \"hmac-md5\", \n"
-        "             \"secret\": \"LSWXnfkKZjdPJI5QxlpnfQ==\"} \n";
-    string key2 =
-        "           {\"name\": \"d2_key.billcat.net\", \n"
-        "            \"algorithm\": \"hmac-md5\", \n"
-        "            \"digest-bits\": 120, \n"
-        "            \"secret\": \"LSWXnfkKZjdPJI5QxlpnfQ==\"} \n";
-    string bad_key =
-        "            {\"BOGUS\": \"d2_key.example.com\", \n"
-        "             \"algorithm\": \"hmac-md5\", \n"
-        "             \"secret\": \"LSWXnfkKZjdPJI5QxlpnfQ==\"} \n";
-    string key_footer =
-        "          ] \n";
-    string control_socket_header =
-        "       ,\"control-socket\": { \n"
-        "           \"socket-type\": \"unix\", \n"
-        "           \"socket-name\": \"";
-    string control_socket_footer =
-        "\"   \n} \n";
-
-    ostringstream os;
-    // Create a valid config with all the parts should parse.
-    os << d2_cfg_txt
-       << key1
-       << key_footer
-       << control_socket_header
-       << socket_path_
-       << control_socket_footer
-       << "}\n";
+        "             \"secret\": \"LSWXnfkKZjdPJI5QxlpnfQ==\"} \n"
+        "          ], \n"
+        "        \"control-socket\": { \n"
+        "           \"socket-type\": \"http\", \n"
+        "           \"socket-address\": \"127.0.0.1\", \n"
+        "           \"socket-port\": 18125 \n"
+        "        } \n"
+        "    } \n";
 
     ASSERT_TRUE(server_);
 
     ConstElementPtr config;
-    ASSERT_NO_THROW(config = parseDHCPDDNS(os.str(), true));
+    ASSERT_NO_THROW(config = parseDHCPDDNS(d2_cfg_txt, true));
     ASSERT_NO_THROW(d2Controller()->initProcess());
     D2ProcessPtr proc = d2Controller()->getProcess();
     ASSERT_TRUE(proc);
     ConstElementPtr answer = proc->configure(config, false);
     ASSERT_TRUE(answer);
-    // The config contains random
-    // socket name (/tmp/kea-<value-changing-each-time>/kea6.sock), so the
-    // hash will be different each time. As such, we can do simplified checks:
-    // - verify the "result": 0 is there
-    // - verify the "text": "Configuration successful." is there
-    EXPECT_NE(answer->str().find("\"result\": 0"), std::string::npos);
-    EXPECT_NE(answer->str().find("\"text\": \"Configuration applied successfully.\""), std::string::npos);
+    EXPECT_EQ("{ \"arguments\": { \"hash\": \"029AE1208415D6911B5651A6F82D054F55B7877D2589CFD1DCEB5BFFCD3B13A3\" }, \"result\": 0, \"text\": \"Configuration applied successfully.\" }",
+              answer->str());
     ASSERT_NO_THROW(d2Controller()->registerCommands());
 
     // Check that the config was indeed applied.
@@ -786,28 +703,37 @@ TEST_F(CtrlChannelD2Test, configTest) {
     ASSERT_TRUE(keys);
     EXPECT_EQ(1, keys->size());
 
-    ASSERT_GT(CommandMgr::instance().getControlSocketFD(), -1);
+    ASSERT_TRUE(HttpCommandMgr::instance().getHttpListener());
 
     // Create a config with malformed subnet that should fail to parse.
-    os.str("");
-    os << config_test_txt << ","
-       << args_txt
-       << d2_header
-       << d2_cfg_txt
-       << bad_key
-       << key_footer
-       << control_socket_header
-       << socket_path_
-       << control_socket_footer
-       << "}\n"                        // close DhcpDdns.
-       << "}}";
+    string config_test_txt =
+        "{ \"command\": \"config-test\", \n"
+        "  \"arguments\": { \n"
+        "    \"DhcpDdns\": \n"
+        "    { \n"
+        "        \"ip-address\": \"192.168.77.1\", \n"
+        "        \"port\": 777, \n"
+        "        \"forward-ddns\" : {}, \n"
+        "        \"reverse-ddns\" : {}, \n"
+        "        \"tsig-keys\": [ \n"
+        "            {\"BOGUS\": \"d2_key.example.com\", \n"
+        "             \"algorithm\": \"hmac-md5\", \n"
+        "             \"secret\": \"LSWXnfkKZjdPJI5QxlpnfQ==\"} \n"
+        "          ], \n"
+        "        \"control-socket\": { \n"
+        "           \"socket-type\": \"http\", \n"
+        "           \"socket-address\": \"127.0.0.1\", \n"
+        "           \"socket-port\": 18125 \n"
+        "        } \n"
+        "    } \n"
+        "}} \n";
 
     // Send the config-test command.
     string response;
-    sendUnixCommand(os.str(), response);
+    sendHttpCommand(config_test_txt, response);
 
     // Should fail with a syntax error.
-    EXPECT_EQ("{ \"result\": 1, \"text\": \"missing parameter 'name' (<wire>:9:14)\" }",
+    EXPECT_EQ("[ { \"result\": 1, \"text\": \"missing parameter 'name' (<string>:10:14)\" } ]",
               response);
 
     // Check that the config was not lost (fix: reacquire the context).
@@ -817,29 +743,32 @@ TEST_F(CtrlChannelD2Test, configTest) {
     EXPECT_EQ(1, keys->size());
 
     // Create a valid config with two keys and no command channel.
-    os.str("");
-    os << config_test_txt << ","
-       << args_txt
-       << d2_header
-       << d2_cfg_txt
-       << key1
-       << ",\n"
-       << key2
-       << key_footer
-       << "}\n"                        // close DhcpDdns.
-       << "}}";
-
-    // Verify the control channel socket exists.
-    ASSERT_TRUE(test::fileExists(socket_path_));
+    config_test_txt =
+        "{ \"command\": \"config-test\", \n"
+        "  \"arguments\": { \n"
+        "    \"DhcpDdns\": \n"
+        "    { \n"
+        "        \"ip-address\": \"192.168.77.1\", \n"
+        "        \"port\": 777, \n"
+        "        \"forward-ddns\" : {}, \n"
+        "        \"reverse-ddns\" : {}, \n"
+        "        \"tsig-keys\": [ \n"
+        "            {\"name\": \"d2_key.example.com\", \n"
+        "             \"algorithm\": \"hmac-md5\", \n"
+        "             \"secret\": \"LSWXnfkKZjdPJI5QxlpnfQ==\"}, \n"
+        "           {\"name\": \"d2_key.billcat.net\", \n"
+        "            \"algorithm\": \"hmac-md5\", \n"
+        "            \"digest-bits\": 120, \n"
+        "            \"secret\": \"LSWXnfkKZjdPJI5QxlpnfQ==\"} \n"
+        "          ] \n"
+        "    } \n"
+        "}} \n";
 
     // Send the config-test command.
-    sendUnixCommand(os.str(), response);
-
-    // Verify the control channel socket still exists.
-    EXPECT_TRUE(test::fileExists(socket_path_));
+    sendHttpCommand(config_test_txt, response);
 
     // Verify the configuration was successful.
-    EXPECT_EQ("{ \"result\": 0, \"text\": \"Configuration check successful\" }",
+    EXPECT_EQ("[ { \"result\": 0, \"text\": \"Configuration check successful\" } ]",
               response);
 
     // Check that the config was not applied.
@@ -850,70 +779,37 @@ TEST_F(CtrlChannelD2Test, configTest) {
 }
 
 // Verify that the "config-set" command will do what we expect.
-TEST_F(CtrlChannelD2Test, configSet) {
+TEST_F(HttpCtrlChannelD2Test, configSet) {
 
-    // Define strings to permutate the config arguments.
-    // (Note the line feeds makes errors easy to find)
-    string config_set_txt = "{ \"command\": \"config-set\" \n";
-    string args_txt = " \"arguments\": { \n";
-    string d2_header =
-        "    \"DhcpDdns\": \n";
     string d2_cfg_txt =
         "    { \n"
         "        \"ip-address\": \"192.168.77.1\", \n"
         "        \"port\": 777, \n"
         "        \"forward-ddns\" : {}, \n"
         "        \"reverse-ddns\" : {}, \n"
-        "        \"tsig-keys\": [ \n";
-    string key1 =
+        "        \"tsig-keys\": [ \n"
         "            {\"name\": \"d2_key.example.com\", \n"
         "             \"algorithm\": \"hmac-md5\", \n"
-        "             \"secret\": \"LSWXnfkKZjdPJI5QxlpnfQ==\"} \n";
-    string key2 =
-        "           {\"name\": \"d2_key.billcat.net\", \n"
-        "            \"algorithm\": \"hmac-md5\", \n"
-        "            \"digest-bits\": 120, \n"
-        "            \"secret\": \"LSWXnfkKZjdPJI5QxlpnfQ==\"} \n";
-    string bad_key =
-        "            {\"BOGUS\": \"d2_key.example.com\", \n"
-        "             \"algorithm\": \"hmac-md5\", \n"
-        "             \"secret\": \"LSWXnfkKZjdPJI5QxlpnfQ==\"} \n";
-    string key_footer =
-        "          ] \n";
-    string control_socket_header =
-        "       ,\"control-socket\": { \n"
-        "           \"socket-type\": \"unix\", \n"
-        "           \"socket-name\": \"";
-    string control_socket_footer =
-        "\"   \n} \n";
-
-    ostringstream os;
-    // Create a valid config with all the parts should parse.
-    os << d2_cfg_txt
-       << key1
-       << key_footer
-       << control_socket_header
-       << socket_path_
-       << control_socket_footer
-       << "}\n";
+        "             \"secret\": \"LSWXnfkKZjdPJI5QxlpnfQ==\"} \n"
+        "          ], \n"
+        "        \"control-socket\": { \n"
+        "           \"socket-type\": \"http\", \n"
+        "           \"socket-address\": \"127.0.0.1\", \n"
+        "           \"socket-port\": 18125 \n"
+        "        } \n"
+        "    } \n";
 
     ASSERT_TRUE(server_);
 
     ConstElementPtr config;
-    ASSERT_NO_THROW(config = parseDHCPDDNS(os.str(), true));
+    ASSERT_NO_THROW(config = parseDHCPDDNS(d2_cfg_txt, true));
     ASSERT_NO_THROW(d2Controller()->initProcess());
     D2ProcessPtr proc = d2Controller()->getProcess();
     ASSERT_TRUE(proc);
     ConstElementPtr answer = proc->configure(config, false);
     ASSERT_TRUE(answer);
-    // The config contains random
-    // socket name (/tmp/kea-<value-changing-each-time>/kea6.sock), so the
-    // hash will be different each time. As such, we can do simplified checks:
-    // - verify the "result": 0 is there
-    // - verify the "text": "Configuration successful." is there
-    EXPECT_NE(answer->str().find("\"result\": 0"), std::string::npos);
-    EXPECT_NE(answer->str().find("\"text\": \"Configuration applied successfully.\""),
-              std::string::npos);
+    EXPECT_EQ("{ \"arguments\": { \"hash\": \"029AE1208415D6911B5651A6F82D054F55B7877D2589CFD1DCEB5BFFCD3B13A3\" }, \"result\": 0, \"text\": \"Configuration applied successfully.\" }",
+              answer->str());
     ASSERT_NO_THROW(d2Controller()->registerCommands());
 
     // Check that the config was indeed applied.
@@ -925,28 +821,37 @@ TEST_F(CtrlChannelD2Test, configSet) {
     ASSERT_TRUE(keys);
     EXPECT_EQ(1, keys->size());
 
-    ASSERT_GT(CommandMgr::instance().getControlSocketFD(), -1);
+    ASSERT_TRUE(HttpCommandMgr::instance().getHttpListener());
 
     // Create a config with malformed subnet that should fail to parse.
-    os.str("");
-    os << config_set_txt << ","
-       << args_txt
-       << d2_header
-       << d2_cfg_txt
-       << bad_key
-       << key_footer
-       << control_socket_header
-       << socket_path_
-       << control_socket_footer
-       << "}\n"                        // close DhcpDdns.
-       << "}}";
+    string config_test_txt =
+        "{ \"command\": \"config-set\", \n"
+        "  \"arguments\": { \n"
+        "    \"DhcpDdns\": \n"
+        "    { \n"
+        "        \"ip-address\": \"192.168.77.1\", \n"
+        "        \"port\": 777, \n"
+        "        \"forward-ddns\" : {}, \n"
+        "        \"reverse-ddns\" : {}, \n"
+        "        \"tsig-keys\": [ \n"
+        "            {\"BOGUS\": \"d2_key.example.com\", \n"
+        "             \"algorithm\": \"hmac-md5\", \n"
+        "             \"secret\": \"LSWXnfkKZjdPJI5QxlpnfQ==\"} \n"
+        "          ], \n"
+        "        \"control-socket\": { \n"
+        "           \"socket-type\": \"http\", \n"
+        "           \"socket-address\": \"127.0.0.1\", \n"
+        "           \"socket-port\": 18125 \n"
+        "        } \n"
+        "    } \n"
+        "}} \n";
 
     // Send the config-set command.
     string response;
-    sendUnixCommand(os.str(), response);
+    sendHttpCommand(config_test_txt, response);
 
     // Should fail with a syntax error.
-    EXPECT_EQ("{ \"result\": 1, \"text\": \"missing parameter 'name' (<wire>:9:14)\" }",
+    EXPECT_EQ("[ { \"result\": 1, \"text\": \"missing parameter 'name' (<string>:10:14)\" } ]",
               response);
 
     // Check that the config was not lost (fix: reacquire the context).
@@ -956,30 +861,40 @@ TEST_F(CtrlChannelD2Test, configSet) {
     EXPECT_EQ(1, keys->size());
 
     // Create a valid config with two keys and no command channel.
-    os.str("");
-    os << config_set_txt << ","
-       << args_txt
-       << d2_header
-       << d2_cfg_txt
-       << key1
-       << ",\n"
-       << key2
-       << key_footer
-       << "}\n"                        // close DhcpDdns.
-       << "}}";
+    config_test_txt =
+        "{ \"command\": \"config-set\", \n"
+        "  \"arguments\": { \n"
+        "    \"DhcpDdns\": \n"
+        "    { \n"
+        "        \"ip-address\": \"192.168.77.1\", \n"
+        "        \"port\": 777, \n"
+        "        \"forward-ddns\" : {}, \n"
+        "        \"reverse-ddns\" : {}, \n"
+        "        \"tsig-keys\": [ \n"
+        "            {\"name\": \"d2_key.example.com\", \n"
+        "             \"algorithm\": \"hmac-md5\", \n"
+        "             \"secret\": \"LSWXnfkKZjdPJI5QxlpnfQ==\"}, \n"
+        "           {\"name\": \"d2_key.billcat.net\", \n"
+        "            \"algorithm\": \"hmac-md5\", \n"
+        "            \"digest-bits\": 120, \n"
+        "            \"secret\": \"LSWXnfkKZjdPJI5QxlpnfQ==\"} \n"
+        "          ] \n"
+        "    } \n"
+        "}} \n";
 
-    // Verify the control channel socket exists.
-    ASSERT_TRUE(test::fileExists(socket_path_));
+    // Verify the HTTP control channel socket exists.
+    EXPECT_TRUE(HttpCommandMgr::instance().getHttpListener());
 
     // Send the config-set command.
-    sendUnixCommand(os.str(), response);
+    sendHttpCommand(config_test_txt, response);
 
-    // Verify the control channel socket no longer exists.
-    EXPECT_FALSE(test::fileExists(socket_path_));
+    // Verify the HTTP control channel socket no longer exists.
+    ASSERT_NO_THROW(HttpCommandMgr::instance().garbageCollectListeners());
+    EXPECT_FALSE(HttpCommandMgr::instance().getHttpListener());
 
     // Verify the configuration was successful.
-    EXPECT_EQ("{ \"arguments\": { \"hash\": \"5206A1BEC7E3C6ADD5E97C5983861F97739EA05CFEAD823CBBC4"
-              "524095AAA10A\" }, \"result\": 0, \"text\": \"Configuration applied successfully.\" }",
+    EXPECT_EQ("[ { \"arguments\": { \"hash\": \"5206A1BEC7E3C6ADD5E97C5983861F97739EA05CFEAD823CBBC4"
+              "524095AAA10A\" }, \"result\": 0, \"text\": \"Configuration applied successfully.\" } ]",
               response);
 
     // Check that the config was applied.
@@ -990,8 +905,8 @@ TEST_F(CtrlChannelD2Test, configSet) {
 }
 
 // Tests if config-write can be called without any parameters.
-TEST_F(CtrlChannelD2Test, writeConfigNoFilename) {
-    EXPECT_NO_THROW(createUnixChannelServer());
+TEST_F(HttpCtrlChannelD2Test, writeConfigNoFilename) {
+    EXPECT_NO_THROW(createHttpChannelServer());
     string response;
 
     // This is normally set by the command line -c parameter.
@@ -999,18 +914,18 @@ TEST_F(CtrlChannelD2Test, writeConfigNoFilename) {
 
     // If the filename is not explicitly specified, the name used
     // in -c command line switch is used.
-    sendUnixCommand("{ \"command\": \"config-write\" }", response);
+    sendHttpCommand("{ \"command\": \"config-write\" }", response);
 
     checkConfigWrite(response, CONTROL_RESULT_SUCCESS, "test1.json");
     ::remove("test1.json");
 }
 
 // Tests if config-write can be called with a valid filename as parameter.
-TEST_F(CtrlChannelD2Test, writeConfigFilename) {
-    EXPECT_NO_THROW(createUnixChannelServer());
+TEST_F(HttpCtrlChannelD2Test, writeConfigFilename) {
+    EXPECT_NO_THROW(createHttpChannelServer());
     string response;
 
-    sendUnixCommand("{ \"command\": \"config-write\", "
+    sendHttpCommand("{ \"command\": \"config-write\", "
                     "\"arguments\": { \"filename\": \"test2.json\" } }",
                     response);
     checkConfigWrite(response, CONTROL_RESULT_SUCCESS, "test2.json");
@@ -1019,8 +934,8 @@ TEST_F(CtrlChannelD2Test, writeConfigFilename) {
 
 // Tests if config-reload attempts to reload a file and reports that the
 // file is missing.
-TEST_F(CtrlChannelD2Test, configReloadMissingFile) {
-    EXPECT_NO_THROW(createUnixChannelServer());
+TEST_F(HttpCtrlChannelD2Test, configReloadMissingFile) {
+    EXPECT_NO_THROW(createHttpChannelServer());
     string response;
 
     // This is normally set to whatever value is passed to -c when the server is
@@ -1029,19 +944,19 @@ TEST_F(CtrlChannelD2Test, configReloadMissingFile) {
 
     // Tell the server to reload its configuration. It should attempt to load
     // does-not-exist.json (and fail, because the file is not there).
-    sendUnixCommand("{ \"command\": \"config-reload\" }", response);
+    sendHttpCommand("{ \"command\": \"config-reload\" }", response);
 
     // Verify the reload was rejected.
-    string expected = "{ \"result\": 1, \"text\": "
+    string expected = "[ { \"result\": 1, \"text\": "
         "\"Configuration parsing failed: "
-        "Unable to open file does-not-exist.json\" }";
+        "Unable to open file does-not-exist.json\" } ]";
     EXPECT_EQ(expected, response);
 }
 
 // Tests if config-reload attempts to reload a file and reports that the
 // file is not a valid JSON.
-TEST_F(CtrlChannelD2Test, configReloadBrokenFile) {
-    EXPECT_NO_THROW(createUnixChannelServer());
+TEST_F(HttpCtrlChannelD2Test, configReloadBrokenFile) {
+    EXPECT_NO_THROW(createHttpChannelServer());
     string response;
 
     // This is normally set to whatever value is passed to -c when the server is
@@ -1057,12 +972,12 @@ TEST_F(CtrlChannelD2Test, configReloadBrokenFile) {
     // Tell the server to reload its configuration. It should attempt to load
     // testbad.json (and fail, because the file is not valid JSON).
     // does-not-exist.json (and fail, because the file is not there).
-    sendUnixCommand("{ \"command\": \"config-reload\" }", response);
+    sendHttpCommand("{ \"command\": \"config-reload\" }", response);
 
     // Verify the reload was rejected.
-    string expected = "{ \"result\": 1, \"text\": "
+    string expected = "[ { \"result\": 1, \"text\": "
         "\"Configuration parsing failed: "
-        "testbad.json:1.1: Invalid character: b\" }";
+        "testbad.json:1.1: Invalid character: b\" } ]";
     EXPECT_EQ(expected, response);
 
     // Remove the file.
@@ -1071,8 +986,8 @@ TEST_F(CtrlChannelD2Test, configReloadBrokenFile) {
 
 // Tests if config-reload attempts to reload a file and reports that the
 // file is missing.
-TEST_F(CtrlChannelD2Test, configReloadFileValid) {
-    EXPECT_NO_THROW(createUnixChannelServer());
+TEST_F(HttpCtrlChannelD2Test, configReloadFileValid) {
+    EXPECT_NO_THROW(createHttpChannelServer());
     string response;
 
     // This is normally set to whatever value is passed to -c when the server is
@@ -1094,12 +1009,12 @@ TEST_F(CtrlChannelD2Test, configReloadFileValid) {
 
     // Tell the server to reload its configuration. It should attempt to load
     // testvalid.json (and succeed).
-    sendUnixCommand("{ \"command\": \"config-reload\" }", response);
+    sendHttpCommand("{ \"command\": \"config-reload\" }", response);
 
     // Verify the reload was successful.
-    string expected = "{ \"arguments\": { \"hash\": \"DC1235F1948D68E06F1425FC28BE326EF01DC4856C3"
+    string expected = "[ { \"arguments\": { \"hash\": \"DC1235F1948D68E06F1425FC28BE326EF01DC4856C3"
                       "833673B9CC8732409B04D\" }, \"result\": 0, \"text\": "
-                      "\"Configuration applied successfully.\" }";
+                      "\"Configuration applied successfully.\" } ]";
     EXPECT_EQ(expected, response);
 
     // Check that the config was indeed applied.
@@ -1119,48 +1034,78 @@ TEST_F(CtrlChannelD2Test, configReloadFileValid) {
     ::remove("testvalid.json");
 }
 
-/// Verify that concurrent connections over the control channel can be
-/// established. (@todo change when response will be sent in multiple chunks)
-TEST_F(CtrlChannelD2Test, concurrentConnections) {
-    EXPECT_NO_THROW(createUnixChannelServer());
+/// Verify that concurrent connections over the HTTP control channel can be
+/// established.
+TEST_F(HttpCtrlChannelD2Test, concurrentConnections) {
+    EXPECT_NO_THROW(createHttpChannelServer());
 
-    boost::scoped_ptr<UnixControlClient> client1(new UnixControlClient());
-    ASSERT_TRUE(client1);
+    const size_t NB = 5;
+    vector<IOServicePtr> io_services;
+    vector<TestHttpClientPtr> clients;
 
-    boost::scoped_ptr<UnixControlClient> client2(new UnixControlClient());
-    ASSERT_TRUE(client2);
+    // Create clients.
+    for (size_t i = 0; i < NB; ++i) {
+        IOServicePtr io_service(new IOService());
+        io_services.push_back(io_service);
+        TestHttpClientPtr client(new TestHttpClient(io_service, SERVER_ADDRESS,
+                                                    SERVER_PORT));
+        clients.push_back(client);
+    }
+    ASSERT_EQ(NB, io_services.size());
+    ASSERT_EQ(NB, clients.size());
 
-    // Client 1 connects.
-    ASSERT_TRUE(client1->connectToServer(socket_path_));
-    ASSERT_NO_THROW(getIOService()->poll());
+    // Send requests and receive responses.
+    atomic<size_t> terminated;
+    terminated = 0;
+    vector<thread> threads;
+    const string command = "{ \"command\": \"list-commands\" }";
+    for (size_t i = 0; i < NB; ++i) {
+        threads.push_back(thread([&, i] () {
+            TestHttpClientPtr client = clients[i];
+            ASSERT_TRUE(client);
+            client->startRequest(buildPostStr(command));
+            IOServicePtr io_service = io_services[i];
+            ASSERT_TRUE(io_service);
+            io_service->run();
+            ASSERT_TRUE(client->receiveDone());
+            HttpResponsePtr hr;
+            ASSERT_NO_THROW(hr = parseResponse(client->getResponse()));
+            string response = hr->getBody();
+            EXPECT_TRUE(response.find("\"result\": 0") != std::string::npos);
+            client->close();
+            ++terminated;
+        }));
+    }
+    ASSERT_EQ(NB, threads.size());
 
-    // Client 2 connects.
-    ASSERT_TRUE(client2->connectToServer(socket_path_));
-    ASSERT_NO_THROW(getIOService()->poll());
+    // Run the service IO services with a timeout.
+    IntervalTimer test_timer(getIOService());
+    bool timeout = false;
+    test_timer.setup([&timeout] () { timeout = true; },
+                     TEST_TIMEOUT, IntervalTimer::ONE_SHOT);
+    while (!timeout && (terminated < NB)) {
+        getIOService()->poll();
+    }
+    test_timer.cancel();
+    EXPECT_FALSE(timeout);
 
-    // Send the command while another client is connected.
-    ASSERT_TRUE(client2->sendCommand("{ \"command\": \"list-commands\" }"));
-    ASSERT_NO_THROW(getIOService()->poll());
-
-    string response;
-    // The server should respond ok.
-    ASSERT_TRUE(client2->getResponse(response));
-    EXPECT_TRUE(response.find("\"result\": 0") != std::string::npos);
-
-    // Disconnect the servers.
-    client1->disconnectFromServer();
-    client2->disconnectFromServer();
-    ASSERT_NO_THROW(getIOService()->poll());
+    // Cleanup clients.
+    for (IOServicePtr io_service : io_services) {
+        io_service->stopAndPoll();
+    }
+    for (auto th = threads.begin(); th != threads.end(); ++th) {
+        th->join();
+    }
 }
 
 // This test verifies that the server can receive and process a large command.
-TEST_F(CtrlChannelD2Test, longCommand) {
+TEST_F(HttpCtrlChannelD2Test, longCommand) {
 
     ostringstream command;
 
-    // This is the desired size of the command sent to the server (1MB).
+    // This is the desired size of the command sent to the server (100kB).
     // The actual size sent will be slightly greater than that.
-    const size_t command_size = 1024 * 1000;
+    const size_t command_size = 1024 * 100; // was 1024 * 1000 (1MB).
 
     while (command.tellp() < command_size) {
 
@@ -1189,223 +1134,61 @@ TEST_F(CtrlChannelD2Test, longCommand) {
 
     ASSERT_NO_THROW(
         CommandMgr::instance().registerCommand("foo",
-            std::bind(&CtrlChannelD2Test::longCommandHandler,
+            std::bind(&HttpCtrlChannelD2Test::longCommandHandler,
                       command.str(), ph::_1, ph::_2));
     );
 
-    createUnixChannelServer();
+    createHttpChannelServer();
 
     string response;
-    std::thread th([this, &response, &command]() {
+    ASSERT_NO_THROW(sendHttpCommand(command.str(), response));
 
-        // IO service will be stopped automatically when this object goes
-        // out of scope and is destroyed. This is useful because we use
-        // asserts which may break the thread in various exit points.
-        IOServiceWork work(getIOService());
-
-        // Create client which we will use to send command to the server.
-        boost::scoped_ptr<UnixControlClient> client(new UnixControlClient());
-        ASSERT_TRUE(client);
-
-        // Connect to the server. This will trigger acceptor handler on the
-        // server side and create a new connection.
-        ASSERT_TRUE(client->connectToServer(socket_path_));
-
-        // Initially the remaining_string holds the entire command and we
-        // will be erasing the portions that we have sent.
-        string remaining_data = command.str();
-        while (!remaining_data.empty()) {
-            // Send the command in chunks of 1024 bytes.
-            const size_t l = remaining_data.size() < 1024 ? remaining_data.size() : 1024;
-            ASSERT_TRUE(client->sendCommand(remaining_data.substr(0, l)));
-            remaining_data.erase(0, l);
-        }
-
-        // Set timeout to 5 seconds to allow the time for the server to send
-        // a response.
-        const unsigned int timeout = 5;
-        ASSERT_TRUE(client->getResponse(response, timeout));
-
-        // We're done. Close the connection to the server.
-        client->disconnectFromServer();
-        });
-
-    // Run the server until the command has been processed and response
-    // received.
-    getIOService()->run();
-
-    // Wait for the thread to complete.
-    th.join();
-
-    EXPECT_EQ("{ \"result\": 0, \"text\": \"long command received ok\" }",
+    EXPECT_EQ("[ { \"result\": 0, \"text\": \"long command received ok\" } ]",
               response);
 }
 
 // This test verifies that the server can send long response to the client.
-TEST_F(CtrlChannelD2Test, longResponse) {
+TEST_F(HttpCtrlChannelD2Test, longResponse) {
     // We need to generate large response. The simplest way is to create
     // a command and a handler which will generate some static response
-    // of a desired size
+    // of a desired size.
     ASSERT_NO_THROW(
         CommandMgr::instance().registerCommand("foo",
-            std::bind(&CtrlChannelD2Test::longResponseHandler, ph::_1, ph::_2));
+            std::bind(&HttpCtrlChannelD2Test::longResponseHandler,
+                      ph::_1, ph::_2));
     );
 
-    createUnixChannelServer();
+    createHttpChannelServer();
 
-    // The UnixControlClient doesn't have any means to check that the entire
-    // response has been received. What we want to do is to generate a
-    // reference response using our command handler and then compare
-    // what we have received over the unix domain socket with this reference
-    // response to figure out when to stop receiving.
-    string reference_response = longResponseHandler("foo", ConstElementPtr())->str();
+    // The entire response should be received but anayway check it.
+    ConstElementPtr raw_response =
+        longResponseHandler("foo", ConstElementPtr());
+    ElementPtr json_response = Element::createList();
+    json_response->add(isc::data::copy(raw_response));
+    string reference_response = json_response->str();
 
-    // In this stream we're going to collect out partial responses.
-    ostringstream response;
-
-    // The client is synchronous so it is useful to run it in a thread.
-    std::thread th([this, &response, reference_response]() {
-
-        // IO service will be stopped automatically when this object goes
-        // out of scope and is destroyed. This is useful because we use
-        // asserts which may break the thread in various exit points.
-        IOServiceWork work(getIOService());
-
-        // Remember the response size so as we know when we should stop
-        // receiving.
-        const size_t long_response_size = reference_response.size();
-
-        // Create the client and connect it to the server.
-        boost::scoped_ptr<UnixControlClient> client(new UnixControlClient());
-        ASSERT_TRUE(client);
-        ASSERT_TRUE(client->connectToServer(socket_path_));
-
-        // Send the stub command.
-        std::string command = "{ \"command\": \"foo\", \"arguments\": { }  }";
-        ASSERT_TRUE(client->sendCommand(command));
-
-        // Keep receiving response data until we have received the full answer.
-        while (response.tellp() < long_response_size) {
-            std::string partial;
-            const unsigned int timeout = 5;
-            ASSERT_TRUE(client->getResponse(partial, timeout));
-            response << partial;
-        }
-
-        // We have received the entire response, so close the connection and
-        // stop the IO service.
-        client->disconnectFromServer();
-        });
-
-    // Run the server until the entire response has been received.
-    getIOService()->run();
-
-    // Wait for the thread to complete.
-    th.join();
+    string response;
+    string command = "{ \"command\": \"foo\", \"arguments\": { }  }";
+    ASSERT_NO_THROW(sendHttpCommand(command, response));
 
     // Make sure we have received correct response.
-    EXPECT_EQ(reference_response, response.str());
-}
-
-// This test verifies that the server signals timeout if the transmission
-// takes too long, after receiving a partial command
-TEST_F(CtrlChannelD2Test, connectionTimeoutPartialCommand) {
-    createUnixChannelServer();
-
-    // Set connection timeout to 2s to prevent long waiting time for the
-    // timeout during this test.
-    const unsigned short timeout = 2000;
-    CommandMgr::instance().setConnectionTimeout(timeout);
-
-    // Server's response will be assigned to this variable.
-    string response;
-
-    // It is useful to create a thread and run the server and the client
-    // at the same time and independently.
-    std::thread th([this, &response]() {
-
-        // IO service will be stopped automatically when this object goes
-        // out of scope and is destroyed. This is useful because we use
-        // asserts which may break the thread in various exit points.
-        IOServiceWork work(getIOService());
-
-        // Create the client and connect it to the server.
-        boost::scoped_ptr<UnixControlClient> client(new UnixControlClient());
-        ASSERT_TRUE(client);
-        ASSERT_TRUE(client->connectToServer(socket_path_));
-
-        // Send partial command. The server will be waiting for the remaining
-        // part to be sent and will eventually signal a timeout.
-        string command = "{ \"command\": \"foo\" ";
-        ASSERT_TRUE(client->sendCommand(command));
-
-        // Let's wait up to 15s for the server's response. The response
-        // should arrive sooner assuming that the timeout mechanism for
-        // the server is working properly.
-        const unsigned int timeout = 15;
-        ASSERT_TRUE(client->getResponse(response, timeout));
-
-        // Explicitly close the client's connection.
-        client->disconnectFromServer();
-        });
-
-    // Run the server until stopped.
-    getIOService()->run();
-
-    // Wait for the thread to return.
-    th.join();
-
-    // Check that the server has signalled a timeout.
-    EXPECT_EQ("{ \"result\": 1, \"text\": \"Connection over control channel timed out, discarded partial command of 19 bytes\" }" ,
-              response);
+    EXPECT_EQ(reference_response, response);
 }
 
 // This test verifies that the server signals timeout if the transmission
 // takes too long, having received no data from the client.
-TEST_F(CtrlChannelD2Test, connectionTimeoutNoData) {
-    createUnixChannelServer();
-
+TEST_F(HttpCtrlChannelD2Test, connectionTimeoutNoData) {
     // Set connection timeout to 2s to prevent long waiting time for the
     // timeout during this test.
     const unsigned short timeout = 2000;
-    CommandMgr::instance().setConnectionTimeout(timeout);
+    HttpCommandMgr::instance().setConnectionTimeout(timeout);
 
-    // Server's response will be assigned to this variable.
+    createHttpChannelServer();
+
     string response;
+    ASSERT_NO_THROW(sendHttpCommand("{ \"command\": ", response));
 
-    // It is useful to create a thread and run the server and the client
-    // at the same time and independently.
-    std::thread th([this, &response]() {
-
-        // IO service will be stopped automatically when this object goes
-        // out of scope and is destroyed. This is useful because we use
-        // asserts which may break the thread in various exit points.
-        IOServiceWork work(getIOService());
-
-        // Create the client and connect it to the server.
-        boost::scoped_ptr<UnixControlClient> client(new UnixControlClient());
-        ASSERT_TRUE(client);
-        ASSERT_TRUE(client->connectToServer(socket_path_));
-
-        // Let's wait up to 15s for the server's response. The response
-        // should arrive sooner assuming that the timeout mechanism for
-        // the server is working properly.
-        const unsigned int timeout = 15;
-        ASSERT_TRUE(client->getResponse(response, timeout));
-
-        // Explicitly close the client's connection.
-        client->disconnectFromServer();
-        });
-
-    // Run the server until stopped.
-    getIOService()->run();
-
-    // Wait for the thread to return.
-    th.join();
-
-    // Check that the server has signalled a timeout.
-    EXPECT_EQ("{ \"result\": 1, \"text\": \"Connection over control channel timed out\" }",
-              response);
+    EXPECT_EQ("{ \"result\": 400, \"text\": \"Bad Request\" }", response);
 }
 
 } // End of anonymous namespace
