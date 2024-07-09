@@ -30,7 +30,8 @@ public:
 
     /// @brief Constructor.
     HttpCommandMgrImpl()
-        : io_service_(), timeout_(TIMEOUT_DHCP_SERVER_RECEIVE_COMMAND),
+        : io_service_(), timeout_(TIMEOUT_AGENT_RECEIVE_COMMAND),
+          idle_timeout_(TIMEOUT_AGENT_IDLE_CONNECTION_TIMEOUT),
           current_config_(), http_listeners_(), active_(0) {
     }
 
@@ -53,6 +54,9 @@ public:
 
     /// @brief Connection timeout.
     long timeout_;
+
+    /// @brief Idle connection timeout.
+    long idle_timeout_;
 
     /// @brief Current config.
     HttpCommandConfigPtr current_config_;
@@ -125,8 +129,8 @@ HttpCommandMgrImpl::configure(HttpCommandConfigPtr config) {
                           server_port,
                           tls_context,
                           rfc,
-                          HttpListener::RequestTimeout(TIMEOUT_AGENT_RECEIVE_COMMAND),
-                          HttpListener::IdleTimeout(TIMEOUT_AGENT_IDLE_CONNECTION_TIMEOUT)));
+                          HttpListener::RequestTimeout(timeout_),
+                          HttpListener::IdleTimeout(idle_timeout_)));
     // Instruct the HTTP listener to actually open socket, install
     // callback and start listening.
     http_listener->start();
@@ -212,6 +216,11 @@ HttpCommandMgr::setIOService(const IOServicePtr& io_service) {
 void
 HttpCommandMgr::setConnectionTimeout(const long timeout) {
     impl_->timeout_ = timeout;
+}
+
+void
+HttpCommandMgr::setIdleConnectionTimeout(const long timeout) {
+    impl_->idle_timeout_ = timeout;
 }
 
 void

@@ -43,6 +43,11 @@ public:
     /// @param timeout New connection timeout in milliseconds.
     void setConnectionTimeout(const long timeout);
 
+    /// @brief Override default idle connection timeout.
+    ///
+    /// @param timeout New connection timeout in milliseconds.
+    void setIdleConnectionTimeout(const long timeout);
+
     /// @brief Configure control socket from configuration.
     ///
     /// @param config Configuration of the control socket.
