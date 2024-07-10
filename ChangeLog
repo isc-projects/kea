@@ -1,7 +1,12 @@
+2261.	[bug]		razvan
+	Reset the local and remote disabled state when applying
+	configuration.
+	(Gitlab #3446)
+
 2260.	[bug]		razvan
 	Fixed a file descriptor leak in the High Availability hook
 	library.
-	(Gitlab #3349)
+	(Gitlab #3449)
 
 2259.	[func]		fdupont
 	All permissions for other users are now removed from files
