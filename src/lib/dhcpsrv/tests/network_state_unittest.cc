@@ -157,10 +157,17 @@ public:
 // This test verifies the default is enable state.
 void
 NetworkStateTest::defaultTest() {
+    std::string expected("{ \"disabled-by-db-connection\": false, "
+                           "\"disabled-by-local-command\": [  ], "
+                           "\"disabled-by-remote-command\": [  ], "
+                           "\"disabled-by-user\": false, "
+                           "\"globally-disabled\": false }");
     NetworkState state4(NetworkState::DHCPv4);
     EXPECT_TRUE(state4.isServiceEnabled());
+    EXPECT_EQ(expected, state4.toElement()->str());
     NetworkState state6(NetworkState::DHCPv6);
     EXPECT_TRUE(state6.isServiceEnabled());
+    EXPECT_EQ(expected, state6.toElement()->str());
 }
 
 // This test verifies that it is possible to disable and then enable DHCPv4
