@@ -430,9 +430,8 @@ int load(LibraryHandle& handle) {
 int unload() {
     if (impl) {
         IOServiceMgr::instance().unregisterIOService(impl->getIOService());
-        impl->getIOService()->stopAndPoll();
+        impl.reset();
     }
-    impl.reset();
     LOG_INFO(ha_logger, HA_DEINIT_OK);
     return (0);
 }

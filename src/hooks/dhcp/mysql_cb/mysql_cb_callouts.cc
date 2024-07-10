@@ -94,9 +94,11 @@ int unload() {
     // Unregister the factories and remove MySQL backends
     isc::dhcp::MySqlConfigBackendDHCPv4::unregisterBackendType();
     isc::dhcp::MySqlConfigBackendDHCPv6::unregisterBackendType();
-    IOServiceMgr::instance().unregisterIOService(isc::dhcp::MySqlConfigBackendImpl::getIOService());
-    if (isc::dhcp::MySqlConfigBackendImpl::getIOService()) {
-        isc::dhcp::MySqlConfigBackendImpl::getIOService()->stopAndPoll();
+    IOServicePtr io_service = isc::dhcp::MySqlConfigBackendImpl::getIOService();
+    if (io_service) {
+        IOServiceMgr::instance().unregisterIOService(io_service);
+        io_service->stopAndPoll();
+        isc::dhcp::MySqlConfigBackendImpl::setIOService(IOServicePtr());
     }
     return (0);
 }

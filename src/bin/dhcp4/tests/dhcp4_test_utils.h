@@ -209,16 +209,7 @@ public:
         fake_received_.push_back(pkt);
     }
 
-    virtual ~NakedDhcpv4Srv() {
-        // Close the lease database
-        isc::dhcp::LeaseMgrFactory::destroy();
-
-        getIOService()->restart();
-        try {
-            getIOService()->poll();
-        } catch (...) {
-        }
-    }
+    virtual ~NakedDhcpv4Srv() = default;
 
     /// @brief Runs processing DHCPDISCOVER.
     ///

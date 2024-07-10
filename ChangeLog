@@ -1,3 +1,8 @@
+2248.	[bug]		razvan
+	Fixed a file descriptor leak in the High Availability hook
+	library.
+	(Gitlab #3449, #3486)
+
 Kea 2.6.0 (stable) released on May 29, 2024
 
 2247.	[build]		razvan
