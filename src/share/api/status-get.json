@@ -48,6 +48,13 @@
         "        \"sockets\": {",
         "            \"errors\": [ <error received during the last attempt to open all sockets> ],",
         "            \"status\": <ready, retrying, or failed>",
+        "        },",
+        "        \"dhcp-state\": {",
+        "            \"disabled-by-db-connection\": false,",
+        "            \"disabled-by-local-command\": [],",
+        "            \"disabled-by-remote-command\": [],",
+        "            \"disabled-by-user\": false,",
+        "            \"globally-disabled\": false",
         "        }",
         "    }",
         "}"

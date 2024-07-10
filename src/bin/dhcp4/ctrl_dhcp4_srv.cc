@@ -799,7 +799,7 @@ ControlledDhcpv4Srv::commandStatusGetHandler(const string&,
     }
     status->set("sockets", sockets);
 
-    status->set("dhcp-state": network_state_->toElement());
+    status->set("dhcp-state", network_state_->toElement());
 
     return (createAnswer(CONTROL_RESULT_SUCCESS, status));
 }

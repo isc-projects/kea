@@ -184,18 +184,16 @@ public:
         result->set("disabled-by-db-connection", Element::create(disabled_by_db_connection_ != 0));
         bool disabled_by_user = false;
         ElementPtr local_origin = Element::createList();
-        uint16_t local_count = 0;
         ElementPtr remote_origin = Element::createList();
-        uint16_t remote_count = 0;
         for (auto const& origin : disabled_by_origin_) {
             if (origin == NetworkState::USER_COMMAND) {
                 disabled_by_user = true;
             }
             if (origin >= NetworkState::HA_LOCAL_COMMAND && origin < NetworkState::HA_REMOTE_COMMAND) {
-                local_origin->set(local_count++, Element::create(origin - NetworkState::HA_LOCAL_COMMAND));
+                local_origin->add(Element::create(origin - NetworkState::HA_LOCAL_COMMAND));
             }
             if (origin >= NetworkState::HA_REMOTE_COMMAND && origin < NetworkState::DB_CONNECTION) {
-                remote_origin->set(remote_count++, Element::create(origin - NetworkState::HA_REMOTE_COMMAND));
+                remote_origin->add(Element::create(origin - NetworkState::HA_REMOTE_COMMAND));
             }
         }
         result->set("disabled-by-user", Element::create(disabled_by_user));
