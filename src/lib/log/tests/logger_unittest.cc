@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -20,6 +20,7 @@
 #include <log/output_option.h>
 #include <log/tests/log_test_messages.h>
 
+#include <cstdlib>
 #include <iostream>
 #include <string>
 
@@ -34,13 +35,26 @@ using namespace std;
 
 class LoggerTest : public ::testing::Test {
 public:
-    LoggerTest() {
-        // Initialize logging before each test, even if it is already done in main().
+    LoggerTest() : kld_value_(0) {
+        // HasAppender fails when KEA_LOGGER_DESTINATION is set so remove it.
+        kld_value_ = getenv("KEA_LOGGER_DESTINATION");
+        if (kld_value_ != 0) {
+            static_cast<void>(unsetenv("KEA_LOGGER_DESTINATION"));
+        }
+
         isc::log::initLogger();
     }
     ~LoggerTest() {
         LoggerManager::reset();
+
+        // Restore KEA_LOGGER_DESTINATION value.
+        if (kld_value_ != 0) {
+            static_cast<void>(setenv("KEA_LOGGER_DESTINATION", kld_value_, 1));
+        }
     }
+
+    // The KEA_LOGGER_DESTINATION environment variable value.
+    char* kld_value_;
 };
 
 // Check version
