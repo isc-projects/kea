@@ -139,6 +139,18 @@ public:
     /// all other origins is enabled.
     void resetForDbConnection();
 
+    /// @brief Reset origins for local commands.
+    ///
+    /// It results in enabling the network service if network service for
+    /// all other origins is enabled.
+    void resetForLocalCommands();
+
+    /// @brief Reset origins for remote commands.
+    ///
+    /// It results in enabling the network service if network service for
+    /// all other origins is enabled.
+    void resetForRemoteCommands();
+
     /// @brief Schedules enabling DHCP service in the future.
     ///
     /// @param seconds Number of seconds after which the service should be enabled
@@ -195,6 +207,11 @@ public:
     ///
     /// @throw isc::NotImplemented
     void selectiveEnable(const NetworkState::Networks& networks);
+
+    /// @brief The network state as Element.
+    ///
+    /// @return The network state as Element.
+    isc::data::ConstElementPtr toElement();
 
     //@}
 

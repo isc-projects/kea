@@ -804,6 +804,8 @@ ControlledDhcpv6Srv::commandStatusGetHandler(const string&,
     }
     status->set("sockets", sockets);
 
+    status->set("dhcp-state": network_state_->toElement());
+
     return (createAnswer(CONTROL_RESULT_SUCCESS, status));
 }
 
@@ -886,6 +888,8 @@ ControlledDhcpv6Srv::processConfig(isc::data::ConstElementPtr config) {
         cfg_db->createManagers();
         // Reset counters related to connections as all managers have been recreated.
         srv->getNetworkState()->resetForDbConnection();
+        srv->getNetworkState()->resetForLocalCommands();
+        srv->getNetworkState()->resetForRemoteCommands();
     } catch (const std::exception& ex) {
         err << "Unable to open database: " << ex.what();
         return (isc::config::createAnswer(CONTROL_RESULT_ERROR, err.str()));

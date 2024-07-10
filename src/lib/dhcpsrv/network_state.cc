@@ -16,6 +16,7 @@
 #include <string>
 #include <unordered_set>
 
+using namespace isc::data;
 using namespace isc::util;
 
 namespace isc {
@@ -88,6 +89,36 @@ public:
         }
     }
 
+    /// @brief Reset origin for local commands.
+    ///
+    /// @note The dhcp service will remain disabled until all flags are cleared.
+    void resetForLocalCommands() {
+        auto disabled_by_origin = disabled_by_origin_;
+        for (auto const& origin : disabled_by_origin) {
+            if (origin >= NetworkState::HA_LOCAL_COMMAND && origin < NetworkState::HA_REMOTE_COMMAND) {
+                disabled_by_origin_.erase(origin);
+            }
+        }
+        if (disabled_by_origin_.empty()) {
+            globally_disabled_ = false;
+        }
+    }
+
+    /// @brief Reset origin for remote commands.
+    ///
+    /// @note The dhcp service will remain disabled until all flags are cleared.
+    void resetForRemoteCommands() {
+        auto disabled_by_origin = disabled_by_origin_;
+        for (auto const& origin : disabled_by_origin) {
+            if (origin >= NetworkState::HA_REMOTE_COMMAND && origin < NetworkState::DB_CONNECTION) {
+                disabled_by_origin_.erase(origin);
+            }
+        }
+        if (disabled_by_origin_.empty()) {
+            globally_disabled_ = false;
+        }
+    }
+
     /// @brief Enables DHCP service for an origin.
     ///
     /// If delayed enabling DHCP service has been scheduled, it cancels it.
@@ -144,6 +175,36 @@ public:
         return (timer_name.str());
     }
 
+    /// @brief The network state as Element.
+    ///
+    /// @return The network state as Element.
+    ConstElementPtr toElement() {
+        ElementPtr result = Element::createMap();
+        result->set("globally-disabled", Element::create(globally_disabled_));
+        result->set("disabled-by-db-connection", Element::create(disabled_by_db_connection_ != 0));
+        bool disabled_by_user = false;
+        ElementPtr local_origin = Element::createList();
+        uint16_t local_count = 0;
+        ElementPtr remote_origin = Element::createList();
+        uint16_t remote_count = 0;
+        for (auto const& origin : disabled_by_origin_) {
+            if (origin == NetworkState::USER_COMMAND) {
+                disabled_by_user = true;
+            }
+            if (origin >= NetworkState::HA_LOCAL_COMMAND && origin < NetworkState::HA_REMOTE_COMMAND) {
+                local_origin->set(local_count++, Element::create(origin - NetworkState::HA_LOCAL_COMMAND));
+            }
+            if (origin >= NetworkState::HA_REMOTE_COMMAND && origin < NetworkState::DB_CONNECTION) {
+                remote_origin->set(remote_count++, Element::create(origin - NetworkState::HA_REMOTE_COMMAND));
+            }
+        }
+        result->set("disabled-by-user", Element::create(disabled_by_user));
+        result->set("disabled-by-local-command", local_origin);
+        result->set("disabled-by-remote-command", remote_origin);
+
+        return (result);
+    }
+
     /// @brief Server type.
     NetworkState::ServerType server_type_;
 
@@ -193,6 +254,18 @@ NetworkState::resetForDbConnection() {
 }
 
 void
+NetworkState::resetForLocalCommands() {
+    MultiThreadingLock lock(*mutex_);
+    impl_->resetForLocalCommands();
+}
+
+void
+NetworkState::resetForRemoteCommands() {
+    MultiThreadingLock lock(*mutex_);
+    impl_->resetForRemoteCommands();
+}
+
+void
 NetworkState::delayedEnableService(const unsigned int seconds, unsigned int origin) {
     MultiThreadingLock lock(*mutex_);
     impl_->createTimer(seconds, origin);
@@ -232,6 +305,11 @@ NetworkState::selectiveEnable(const NetworkState::Subnets&) {
 void
 NetworkState::selectiveEnable(const NetworkState::Networks&) {
     isc_throw(NotImplemented, "selectiveEnableService is not implemented");
+}
+
+ConstElementPtr NetworkState::toElement() {
+    MultiThreadingLock lock(*mutex_);
+    return (impl_->toElement());
 }
 
 } // end of namespace isc::dhcp
