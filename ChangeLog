@@ -1,3 +1,11 @@
+2264.	[bug]*		tmark
+	Corrected an issue with overlapping enum values
+	for option definition data type.  This was causing
+	option definitions of type "record", created via
+	config backend commands, to not load properly when
+	fetched from the back end.
+	(Gitlab #3476)
+
 2263.	[func]		fdupont
 	RFC 8925 "IPv6-Only Preferred Option for DHCPv4" is now
 	fully implemented: 0.0.0.0 address can be offerred.
