@@ -52,15 +52,10 @@ BEGIN
         RETURN 'EXISTS';
     END IF;
 
-    -- First we migrate existing OPT_RECORD_TYPE values
-    -- If they're coming from pre-2.6.0 record type is 17, from
-    -- 2.6.0 or 2.7.0 it is 18. No viable to way to know where we
-    -- started.
-
-    -- Can we attempt to discern between internal and rec by testing
-    -- record_types?
-    UPDATE dhcp4_option_def SET type = 254 WHERE type >= 17 AND record_types IS NOT NULL;
-    UPDATE dhcp6_option_def SET type = 254 WHERE type >= 17 AND record_types IS NOT NULL;
+    -- First we migrate existing OPT_RECORD_TYPE values.
+    PERFORM set_config('kea.disable_audit', 'true', false);
+    UPDATE dhcp4_option_def SET type = 254 WHERE record_types IS NOT NULL;
+    UPDATE dhcp6_option_def SET type = 254 WHERE record_types IS NOT NULL;
 
     -- Create the table that enumerates option definition data types.
     CREATE TABLE option_def_data_type (

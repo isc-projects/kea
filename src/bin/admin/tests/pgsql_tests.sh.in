@@ -2576,6 +2576,77 @@ pgsql_reservation_mode_out_of_pool_parameters_test() {
     test_finish 0
 }
 
+# Verifies that OPT_RECORD_TYPE values are updated
+pgsql_migrate_opt_record_type() {
+    test_start "pgsql.migrate_opt_record_type"
+
+    # Let's wipe the whole database
+    pgsql_wipe
+
+    # We need to create an older database with lease data so we can
+    # verify the upgrade mechanisms which prepopulate the lease stat
+    # tables.
+    #
+    # Initialize database to schema 1.0.
+    pgsql_execute_script "@abs_top_srcdir@/src/bin/admin/tests/dhcpdb_create_1.0.pgsql"
+    assert_eq 0 "${EXIT_CODE}" "cannot initialize 1.0 database, expected exit code: %d, actual: %d"
+
+    # Now upgrade to schema 23.0
+    pgsql_upgrade_schema_to_version 23.0
+
+    # Now insert option definitions.
+    sql=\
+"select set_config('kea.disable_audit', 'true', false);\
+ insert into dhcp4_option_def (code,name,space,type,modification_ts,record_types, is_array, encapsulate)\
+    values ('222','foo','dhcp4',17,current_timestamp,NULL, false, false);\
+ insert into dhcp4_option_def (code,name,space,type,modification_ts,record_types, is_array, encapsulate)\
+    values ('223','bar','dhcp4',17,current_timestamp,'10, 7, 2, 14', false, false);\
+ insert into dhcp4_option_def (code,name,space,type,modification_ts,record_types, is_array, encapsulate)\
+    values ('224','bar2','dhcp4',18,current_timestamp,'10, 7, 2, 14', false, false);
+ insert into dhcp6_option_def (code,name,space,type,modification_ts,record_types, is_array, encapsulate)\
+    values ('222','foo','dhcp6',17,current_timestamp,NULL, false, false);\
+ insert into dhcp6_option_def (code,name,space,type,modification_ts,record_types, is_array, encapsulate)\
+    values ('223','bar','dhcp6',17,current_timestamp,'10, 7, 2, 14', false, false);\
+ insert into dhcp6_option_def (code,name,space,type,modification_ts,record_types, is_array, encapsulate)\
+    values ('224','bar2','dhcp6',18,current_timestamp,'10, 7, 2, 14', false, false);
+"
+    run_statement "insert otion definitions" "$sql"
+
+    # Verify the inserted record counts.
+    qry="select count(*) from dhcp4_option_def;"
+    run_statement "#get 4_option_def_count before update" "$qry" 3
+
+    qry="select count(*) from dhcp6_option_def;"
+    run_statement "#get 6_option_def_count before update" "$qry" 3
+
+    # Upgrade to schema 24.0
+    pgsql_upgrade_schema_to_version 24.0
+
+    # Verify the migrated records.
+    qry="select type from dhcp4_option_def where  name = 'foo';"
+    run_statement "#get 4_option_def_foo after update" "$qry" 17
+
+    qry="select type from dhcp4_option_def where  name = 'bar';"
+    run_statement "#get 4_option_def_bar after update" "$qry" 254 
+
+    qry="select type from dhcp4_option_def where  name = 'bar2';"
+    run_statement "#get 4_option_def_bar2 after update" "$qry" 254
+
+    qry="select type from dhcp6_option_def where  name = 'foo';"
+    run_statement "#get 6_option_def_foo after update" "$qry" 17
+
+    qry="select type from dhcp6_option_def where  name = 'bar';"
+    run_statement "#get 6_option_def_bar after update" "$qry" 254 
+
+    qry="select type from dhcp6_option_def where  name = 'bar2';"
+    run_statement "#get 6_option_def_bar2 after update" "$qry" 254
+
+    # Let's wipe the whole database
+    pgsql_wipe
+
+    test_finish 0
+}
+
 # Run tests.
 pgsql_db_init_test
 pgsql_db_version_test
@@ -2602,3 +2673,4 @@ pgsql_reservation_mode_off_parameters_test
 pgsql_reservation_mode_all_parameters_test
 pgsql_reservation_mode_global_parameters_test
 pgsql_reservation_mode_out_of_pool_parameters_test
+pgsql_migrate_opt_record_type

@@ -1,4 +1,4 @@
-// Copyright (C) 2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2022-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -286,6 +286,14 @@ public:
     /// specified for the particular server overrides the definition for
     /// all servers.
     void optionDefs4WithServerTagsTest();
+
+    /// @brief This test verifies that the back end prevents storage
+    /// of definitions with invalid data types
+    void invalidOptionDefDataType4Test();
+
+    /// @brief This test verifies that it is possible to create options of each
+    /// valid data type.
+    void allOptionDefDataTypes4Test();
 
     /// @brief Test that all option definitions can be fetched.
     void getAllOptionDefs4Test();
