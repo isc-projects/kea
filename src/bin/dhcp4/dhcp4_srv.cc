@@ -624,7 +624,7 @@ Dhcpv4Srv::Dhcpv4Srv(uint16_t server_port, uint16_t client_port,
     : io_service_(new IOService()), server_port_(server_port),
       client_port_(client_port), shutdown_(true),
       alloc_engine_(), use_bcast_(use_bcast),
-      network_state_(new NetworkState(NetworkState::DHCPv4)),
+      network_state_(new NetworkState()),
       cb_control_(new CBControlDHCPv4()),
       test_send_responses_to_source_(false) {
 

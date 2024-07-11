@@ -71,12 +71,6 @@ class NetworkStateImpl;
 class NetworkState {
 public:
 
-    /// @brief DHCP server type.
-    enum ServerType {
-        DHCPv4,
-        DHCPv6
-    };
-
     /// @brief Origin of the network state transition.
     ///
     /// The enumeration indicates the originator of the state transition of the
@@ -113,7 +107,7 @@ public:
     typedef std::set<std::string> Networks;
 
     /// @brief Constructor.
-    NetworkState(const ServerType& server_type);
+    NetworkState();
 
     /// @brief Disable the DHCP service state for respective transition origin.
     ///
@@ -211,7 +205,7 @@ public:
     /// @brief The network state as Element.
     ///
     /// @return The network state as Element.
-    isc::data::ConstElementPtr toElement();
+    isc::data::ConstElementPtr toElement() const;
 
     //@}
 
