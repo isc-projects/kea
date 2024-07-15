@@ -197,6 +197,7 @@ CfgMgr::mergeIntoCurrentCfg(const uint32_t seq) {
         // First we need to remove statistics.
         getCurrentCfg()->removeStatistics();
         mergeIntoCfg(getCurrentCfg(), seq);
+        LibDHCP::setRuntimeOptionDefs(getCurrentCfg()->getCfgOptionDef()->getContainer());
 
     } catch (...) {
         // Make sure the statistics is updated even if the merge failed.
