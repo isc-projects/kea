@@ -6377,6 +6377,54 @@ UPDATE schema_version
 
 -- This line concludes the schema upgrade to version 22.0.
 
+-- This line starts the schema upgrade to version 22.1.
+
+-- First we migrate existing OPT_RECORD_TYPE values.
+SELECT set_config('kea.disable_audit', 'true', false);
+UPDATE dhcp4_option_def SET type = 254 WHERE record_types IS NOT NULL;
+UPDATE dhcp6_option_def SET type = 254 WHERE record_types IS NOT NULL;
+
+-- Create the table that enumerates option definition data types.
+CREATE TABLE option_def_data_type (
+    id smallint NOT NULL,
+    name VARCHAR(32) NOT NULL,
+    PRIMARY KEY (id)
+);
+
+-- Now insert supported types.
+-- We skip (9, 'any-address') as it is not externally supported.
+INSERT INTO option_def_data_type VALUES
+    (0, 'empty'),
+    (1, 'binary'),
+    (2, 'boolean'),
+    (3, 'int8"'),
+    (4, 'int16'),
+    (5, 'int32'),
+    (6, 'uint8'),
+    (7, 'uint16'),
+    (8, 'uint32'),
+    (10, 'ipv4-address'),
+    (11, 'ipv6-address'),
+    (12, 'ipv6-prefix'),
+    (13, 'psid'),
+    (14, 'string'),
+    (15, 'tuple'),
+    (16, 'fqdn'),
+    (17, 'internal'),
+    (254, 'record');
+
+--  Add foreign key constraints to enforce only valid types.
+ALTER TABLE dhcp4_option_def
+    ADD CONSTRAINT fk_option_def_data_type4 FOREIGN KEY (type) REFERENCES option_def_data_type(id);
+
+ALTER TABLE dhcp6_option_def
+    ADD CONSTRAINT fk_option_def_data_type6 FOREIGN KEY (type) REFERENCES option_def_data_type(id);
+
+UPDATE schema_version
+    SET version = '22', minor = '1';
+
+-- This line concludes the schema upgrade to version 22.1.
+
 -- Commit the script transaction.
 COMMIT;
 

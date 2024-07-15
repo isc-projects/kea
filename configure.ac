@@ -1764,6 +1764,8 @@ AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_020_to_021.sh],
                 [chmod +x src/share/database/scripts/mysql/upgrade_020_to_021.sh])
 AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_021_to_022.sh],
                 [chmod +x src/share/database/scripts/mysql/upgrade_021_to_022.sh])
+AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_022_to_022.1.sh],
+                [chmod +x src/share/database/scripts/mysql/upgrade_022_to_022.1.sh])
 AC_CONFIG_FILES([src/share/database/scripts/mysql/wipe_data.sh],
                 [chmod +x src/share/database/scripts/mysql/wipe_data.sh])
 AC_CONFIG_FILES([src/share/database/scripts/pgsql/Makefile])
@@ -1821,6 +1823,8 @@ AC_CONFIG_FILES([src/share/database/scripts/pgsql/upgrade_020_to_021.sh],
                 [chmod +x src/share/database/scripts/pgsql/upgrade_020_to_021.sh])
 AC_CONFIG_FILES([src/share/database/scripts/pgsql/upgrade_021_to_022.sh],
                 [chmod +x src/share/database/scripts/pgsql/upgrade_021_to_022.sh])
+AC_CONFIG_FILES([src/share/database/scripts/pgsql/upgrade_022_to_022.1.sh],
+                [chmod +x src/share/database/scripts/pgsql/upgrade_022_to_022.1.sh])
 AC_CONFIG_FILES([src/share/database/scripts/pgsql/wipe_data.sh],
                 [chmod +x src/share/database/scripts/pgsql/wipe_data.sh])
 AC_CONFIG_FILES([src/share/yang/Makefile])
