@@ -41,13 +41,15 @@ for file in ${files}; do
   echo "processing: $file"
   IFS=
   content=$(tr '\n' '\r' < "${file}" | sed -r 's/,[[:blank:]]*\r[[:blank:]]*\.\.\.//g' | sed -r 's/\\[[:blank:]]*\r[[:blank:]]*//g' | tr '\r' '\n')
-  stop_at=$(echo "${content}" | wc -l)
+  content="${content}
+"
+  stop_at=$(printf '%s' "${content}" | wc -l)
   while true; do
     line_num=$((line_num + 1))
     if test "${line_num}" -gt "${stop_at}"; then
       break
     fi
-    line=$(echo "${content}" | head -n "${line_num}" | tail -n 1)
+    line=$(printf '%s' "${content}" | head -n "${line_num}" | tail -n 1)
     if [ $comment -eq 0 ] && [ $json -eq 0 ] && [ "$(echo "$line" | grep -c "^[A-Za-z]+\|^\s*\`")" -eq 1 ]; then
       # ignore line if it starts with 'A-Za-z' or spaces followed by '`'
       continue
@@ -65,7 +67,7 @@ for file in ${files}; do
       # if this is not a comment and the line starts with spaces followed by '{' or by '"' followed by "{"
       json=1
       # ignore any map name before top level map
-      line=$(echo "$line" | sed 's/.*{/{/g')
+      line=$(printf '%s' "${line}" | sed 's/.*{/{/g')
       echo > "${work_file}"
     elif [ $comment -eq 0 ] && [ $json -eq 1 ] && [ "$(echo "$line" | grep -c "^\s*[A-Za-z]\|^\s*\`")" -eq 1 ]; then
       # if the line is not a comment and the line starts with spaces followed by 'A-Za-z' or followed by "`" and the parser is processing a json structure
@@ -83,7 +85,8 @@ for file in ${files}; do
       if [ "$(echo "$line" | grep -c "^\s*\.\.\s")" -eq 1 ]; then
         echo >> "${work_file}"
       else
-          # if file is .json the following replace in line are done:
+        if [ "$(echo "$file" | grep -c "\.json")" -eq 0 ]; then
+          # if file is .rst the following replace in line are done:
           # 1. delete everything after '#'
           # 2. delete everything after //
           # 3. ignore <?include?>
@@ -94,14 +97,13 @@ for file in ${files}; do
           # 8. replace ', ... ' with ' '
           # 9. replace '   <DATA>' with '   "placeholder": "value"'
           # 10. replace ' <DATA>' with ' "placeholder"'
-        if [ "$(echo "$file" | grep -c "\.json")" -eq 0 ]; then
-          echo "$line" | cut -d "#" -f 1 | sed 's/\/\/ .*//g' | sed 's/<?.*?>//g' | sed 's/\[ <\([-A-Za-z0-9 ]*\)> \]/\[ \"<\1>\" \]/g' | sed 's/ <\(.*\)>:/ \"<\1>\":/g' | sed 's/: <\(.*\)>/: \"<\1>\"/g' | sed 's/   \.\.\./   \"placeholder\": \"value\"/g' | sed 's/, \.\.\. / /g' | sed 's/   <\(.*\)>/   \"placeholder\": \"value\"/g' | sed 's/ <\(.*\)>/ \"placeholder\"/g' >> "${work_file}"
+          printf '%s' "${line}" | cut -d "#" -f 1 | sed 's/\/\/ .*//g' | sed 's/<?.*?>//g' | sed 's/\[ <\([-A-Za-z0-9 ]*\)> \]/\[ \"<\1>\" \]/g' | sed 's/ <\(.*\)>:/ \"<\1>\":/g' | sed 's/: <\(.*\)>/: \"<\1>\"/g' | sed 's/   \.\.\./   \"placeholder\": \"value\"/g' | sed 's/, \.\.\. / /g' | sed 's/   <\(.*\)>/   \"placeholder\": \"value\"/g' | sed 's/ <\(.*\)>/ \"placeholder\"/g' >> "${work_file}"
         else
-          # if file is .rst the following replace in line are done:
+          # if file is .json the following replace in line are done:
           # 1. delete everything after '#'
           # 2. delete everything after //
           # 3. ignore <?include?>
-          echo "$line" | cut -d "#" -f 1 | sed 's/\/\/ .*//g' | sed 's/<?.*?>//g' >> "${work_file}"
+          printf '%s' "${line}" | cut -d "#" -f 1 | sed 's/\/\/ .*//g' | sed 's/<?.*?>//g' >> "${work_file}"
         fi
       fi
     fi
