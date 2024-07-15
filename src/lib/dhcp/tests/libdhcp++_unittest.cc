@@ -385,7 +385,7 @@ public:
         // Second sub-option 171
         opt_data.push_back(171);
         opt_data.push_back(top_opt->getHeaderLen() + top_size);
-        // Sub-sub=option 172
+        // Sub-sub-option 172
         opt_data.push_back(172);
         opt_data.push_back(top_size);
         // Data 0..248
