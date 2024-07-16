@@ -23,7 +23,8 @@ namespace isc {
 namespace dhcp {
 
 /// @brief Implementation of the @c NetworkState class.
-class NetworkStateImpl : public boost::enable_shared_from_this<NetworkStateImpl> {
+class NetworkStateImpl : public boost::enable_shared_from_this<NetworkStateImpl>,
+                         public CfgToElement {
 public:
 
     /// @brief Constructor.
@@ -178,7 +179,7 @@ public:
     /// @brief The network state as Element.
     ///
     /// @return The network state as Element.
-    ConstElementPtr toElement() const {
+    virtual ElementPtr toElement() const {
         ElementPtr result = Element::createMap();
         result->set("globally-disabled", Element::create(globally_disabled_));
         result->set("disabled-by-db-connection", Element::create(disabled_by_db_connection_ != 0));
@@ -303,7 +304,7 @@ NetworkState::selectiveEnable(const NetworkState::Networks&) {
     isc_throw(NotImplemented, "selectiveEnableService is not implemented");
 }
 
-ConstElementPtr NetworkState::toElement() const {
+ElementPtr NetworkState::toElement() const {
     MultiThreadingLock lock(*mutex_);
     return (impl_->toElement());
 }

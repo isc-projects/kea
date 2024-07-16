@@ -7,6 +7,7 @@
 #ifndef NETWORK_STATE_H
 #define NETWORK_STATE_H
 
+#include <cc/cfg_to_element.h>
 #include <cc/data.h>
 #include <dhcpsrv/subnet_id.h>
 #include <boost/scoped_ptr.hpp>
@@ -68,7 +69,7 @@ class NetworkStateImpl;
 /// corresponding request to enable the service. It prevents the situation that the
 /// service remains disabled because there were more requests to disable than to
 /// enable the service. It is hard to ensure the same consistency for the HA.
-class NetworkState {
+class NetworkState : public isc::data::CfgToElement {
 public:
 
     /// @brief Origin of the network state transition.
@@ -205,7 +206,7 @@ public:
     /// @brief The network state as Element.
     ///
     /// @return The network state as Element.
-    isc::data::ConstElementPtr toElement() const;
+    virtual isc::data::ElementPtr toElement() const;
 
     //@}
 
