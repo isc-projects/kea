@@ -734,10 +734,10 @@ protected:
     /// @brief Assign the 0.0.0.0 address to an IPv6-Only client.
     ///
     /// @note In fact there is no difference between assigning no address
-    /// or assigning the zero address as the assigned address if the
+    /// or assigning the zero address as the assigned address is the
     /// Yiaddr field of the DHCPv4 message header...
     ///
-    /// Check if there is asubnet or shared network defining an
+    /// Check if there is a subnet or shared network defining an
     /// IPv6-Only Preferred option which will be included by the response.
     ///
     /// @param subnet Reference to the selected subnet, can be modified if
