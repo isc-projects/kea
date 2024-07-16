@@ -52,13 +52,15 @@ def filter_the_noise(file, text, is_upgrade_script):
     '''
 
     # Determine the schema's latest version.
-    version = 0
+    version = None
+    pattern = re.compile(r"SET version = '(\d+)', minor = '(\d+)';")
     for i in text:
-        m = re.findall(r"SET version = '(\d+)', minor = '\d+';", i)
+        m = pattern.search(i)
         if m is not None:
-            version = max(version, int(m[0]) if len(m) else 0)
-    if version == 0:
-        print(f"ERROR: expected schema version upgrade statement of format \"SET version = '\\d+', minor = '\\d+';\" in file \"{file}\", but not found.", file=sys.stderr)
+            version = f'{m[1]}.{m[2]}'
+    if version is None:
+        print("ERROR: expected schema version upgrade statement of format "
+              f"\"SET version = '\\d+', minor = '\\d+';\" in file \"{file}\", but not found.", file=sys.stderr)
         sys.exit(2)
 
     append = False
