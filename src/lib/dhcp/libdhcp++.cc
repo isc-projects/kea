@@ -605,8 +605,9 @@ LibDHCP::unpackOptions4(const OptionBuffer& buf, const string& option_space,
         offset += opt_len;
 
         // Concatenate multiple instance of an option.
-        try {
-            size_t count = counts.at(opt_type);
+        
+        if (counts.count(opt_type) > 0) {
+            size_t count = counts[opt_type];
             OptionBuffer& previous = fused[opt_type];
             previous.insert(previous.end(), obuf.begin(), obuf.end());
             if (count <= 1) {
@@ -616,8 +617,6 @@ LibDHCP::unpackOptions4(const OptionBuffer& buf, const string& option_space,
                 counts[opt_type] = count - 1;
                 continue;
             }
-        } catch (const std::out_of_range&) {
-            // Regular case.
         }
 
         // Get all definitions with the particular option code. Note
