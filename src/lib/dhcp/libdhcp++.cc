@@ -605,8 +605,7 @@ LibDHCP::unpackOptions4(const OptionBuffer& buf, const string& option_space,
         offset += opt_len;
 
         // Concatenate multiple instance of an option.
-        
-        if (counts.count(opt_type) > 0) {
+        if (!counts.empty() && (counts.count(opt_type) > 0)) {
             size_t count = counts[opt_type];
             OptionBuffer& previous = fused[opt_type];
             previous.insert(previous.end(), obuf.begin(), obuf.end());
