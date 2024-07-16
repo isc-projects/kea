@@ -18,7 +18,7 @@ using namespace isc::asiolink;
 using namespace isc::dhcp;
 using namespace isc::util;
 
-namespace  {
+namespace {
 
 /// @brief Test fixture class for @c NetworkState class.
 class NetworkStateTest : public ::testing::Test {
@@ -201,32 +201,33 @@ public:
                            std::vector<uint32_t> local,
                            std::vector<uint32_t> remote,
                            bool global) {
-        std::string expected = "{ \"disabled-by-db-connection\": ";
-        expected += db_connection ? "true" : "false";
-        expected += ", \"disabled-by-local-command\": [ ";
+        std::ostringstream data;
+        data << std::boolalpha
+             << "{ \"disabled-by-db-connection\": " << db_connection
+             << ", \"disabled-by-local-command\": [ ";
         bool not_first = false;
         for (auto const value : local) {
             if (not_first) {
-                expected += ", ";
+                data << ", ";
             }
-            expected += std::to_string(value);
+            data << value;
             not_first = true;
         }
-        expected += " ], \"disabled-by-remote-command\": [ ";
+        data << " ], \"disabled-by-remote-command\": [ ";
         not_first = false;
         for (auto const value : remote) {
             if (not_first) {
-                expected += ", ";
+                data << ", ";
             }
-            expected += std::to_string(value);
+            data << value;
             not_first = true;
         }
-        expected += " ], \"disabled-by-user\": ";
-        expected += user ? "true" : "false";
-        expected += ", \"globally-disabled\": ";
-        expected += global ? "true" : "false";
-        expected += " }";
-        EXPECT_EQ(expected, state.toElement()->str());
+        data << " ], \"disabled-by-user\": " << user
+             << ", \"globally-disabled\": " << global
+             << " }";
+        auto const& expected = data.str();
+        auto const& actual = state.toElement()->str();
+        EXPECT_EQ(expected, actual);
         EXPECT_EQ(!global, state.isServiceEnabled());
     }
 
