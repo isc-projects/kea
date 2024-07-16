@@ -93,11 +93,12 @@ public:
     void resetForLocalCommands() {
         auto disabled_by_origin = disabled_by_origin_;
         for (auto const& origin : disabled_by_origin) {
-            if (origin >= NetworkState::HA_LOCAL_COMMAND && origin < NetworkState::HA_REMOTE_COMMAND) {
+            if (origin >= NetworkState::HA_LOCAL_COMMAND &&
+                origin < NetworkState::HA_REMOTE_COMMAND) {
                 disabled_by_origin_.erase(origin);
             }
         }
-        if (disabled_by_origin_.empty()) {
+        if (disabled_by_origin_.empty() && disabled_by_db_connection_ == 0) {
             globally_disabled_ = false;
         }
     }
@@ -108,11 +109,12 @@ public:
     void resetForRemoteCommands() {
         auto disabled_by_origin = disabled_by_origin_;
         for (auto const& origin : disabled_by_origin) {
-            if (origin >= NetworkState::HA_REMOTE_COMMAND && origin < NetworkState::DB_CONNECTION) {
+            if (origin >= NetworkState::HA_REMOTE_COMMAND &&
+                origin < NetworkState::DB_CONNECTION) {
                 disabled_by_origin_.erase(origin);
             }
         }
-        if (disabled_by_origin_.empty()) {
+        if (disabled_by_origin_.empty() && disabled_by_db_connection_ == 0) {
             globally_disabled_ = false;
         }
     }
@@ -183,7 +185,7 @@ public:
         bool disabled_by_user = false;
         ElementPtr local_origin = Element::createList();
         ElementPtr remote_origin = Element::createList();
-        std::set<uint32_t> ordered(disabled_by_origin_.begin(), disabled_by_origin_.end());
+        std::set<unsigned int> ordered(disabled_by_origin_.begin(), disabled_by_origin_.end());
         for (auto const& origin : ordered) {
             if (origin == NetworkState::USER_COMMAND) {
                 disabled_by_user = true;
@@ -218,7 +220,7 @@ public:
     TimerMgrPtr timer_mgr_;
 
     /// @brief A set of requests to disable the service by origin.
-    std::unordered_set<uint32_t> disabled_by_origin_;
+    std::unordered_set<unsigned int> disabled_by_origin_;
 
     /// @brief Flag which indicates the state has been disabled by a DB
     /// connection loss.
