@@ -18,6 +18,7 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/client_class_def.h>
 #include <dhcpsrv/config_backend_dhcp4_mgr.h>
+#include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <dhcpsrv/pool.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/testutils/generic_cb_dhcp4_unittest.h>
@@ -320,7 +321,7 @@ GenericConfigBackendDHCPv4Test::initTestOptionDefs() {
     test_option_defs_.push_back(option_def);
 
     option_def.reset(new OptionDefinition("foobar", 234, DHCP4_OPTION_SPACE,
-                                          "uint64", true));
+                                          "uint16", true));
     test_option_defs_.push_back(option_def);
 }
 
@@ -4617,5 +4618,115 @@ GenericConfigBackendDHCPv4Test::multipleAuditEntriesTest() {
                                           it->getRevisionId()).size();
         EXPECT_EQ(partial_size + 1, distance);
         distance--;
+    }
+}
+
+void
+GenericConfigBackendDHCPv4Test::invalidOptionDefDataType4Test() {
+    OptionDefinitionPtr test_def;
+    ASSERT_NO_THROW_LOG(test_def.reset(new OptionDefinition("foobar", 234, DHCP4_OPTION_SPACE,
+                                                              "unknown", true)));
+    ASSERT_TRUE(test_def);
+    ASSERT_THROW(cbptr_->createUpdateOptionDef4(ServerSelector::ALL(), test_def),
+                 DbOperationError);
+}
+
+void
+GenericConfigBackendDHCPv4Test::allOptionDefDataTypes4Test() {
+
+    OptionDefListParser parser(AF_INET);
+    std::string defs_str = R"([
+    {
+        "name": "my-empty", "code": 221, "type": "empty", "array": false,
+        "record-types": "", "space": "dhcp4", "encapsulate": ""
+    },
+    {
+        "name": "my-binary", "code": 222, "type": "binary", "array": false,
+        "record-types": "", "space": "dhcp4", "encapsulate": ""
+    },
+    {
+        "name": "my-boolean", "code": 223, "type": "boolean", "array": false,
+        "record-types": "", "space": "dhcp4", "encapsulate": ""
+    },
+    {
+        "name": "my-int8", "code": 224, "type": "int8", "array": false,
+        "record-types": "", "space": "dhcp4", "encapsulate": ""
+    },
+    {
+        "name": "my-int16", "code": 225, "type": "int16", "array": false,
+        "record-types": "", "space": "dhcp4", "encapsulate": ""
+    },
+    {
+        "name": "my-int32", "code": 226, "type": "int32", "array": false,
+        "record-types": "", "space": "dhcp4", "encapsulate": ""
+    },
+    {
+        "name": "my-uint8", "code": 227, "type": "uint8", "array": false,
+        "record-types": "", "space": "dhcp4", "encapsulate": ""
+    },
+    {
+        "name": "my-uint16", "code": 228, "type": "uint16", "array": false,
+        "record-types": "", "space": "dhcp4", "encapsulate": ""
+    },
+    {
+        "name": "my-uint32", "code": 229, "type": "uint32", "array": false,
+        "record-types": "", "space": "dhcp4", "encapsulate": ""
+    },
+    {
+        "name": "my-ipv4-address", "code": 230, "type": "ipv4-address", "array": false,
+        "record-types": "", "space": "dhcp4", "encapsulate": ""
+    },
+    {
+        "name": "my-ipv6-address", "code": 231, "type": "ipv6-address", "array": false,
+        "record-types": "", "space": "dhcp4", "encapsulate": ""
+    },
+    {
+        "name": "my-ipv6-prefix", "code": 232, "type": "ipv6-prefix", "array": false,
+        "record-types": "", "space": "dhcp4", "encapsulate": ""
+    },
+    {
+        "name": "my-psid", "code": 233, "type": "psid", "array": false,
+        "record-types": "", "space": "dhcp4", "encapsulate": ""
+    },
+    {
+        "name": "my-string", "code": 234, "type": "string", "array": false,
+        "record-types": "", "space": "dhcp4", "encapsulate": ""
+    },
+    {
+        "name": "my-tuple", "code": 235, "type": "tuple", "array": false,
+        "record-types": "", "space": "dhcp4", "encapsulate": ""
+    },
+    {
+        "name": "my-fqdn", "code": 236, "type": "fqdn", "array": false,
+        "record-types": "", "space": "dhcp4", "encapsulate": ""
+    },
+    {
+        "name": "my-internal", "code": 237, "type": "internal", "array": false,
+        "record-types": "", "space": "dhcp4", "encapsulate": ""
+    },
+    {
+        "name": "my-record", "code": 238, "type": "record", "array": false,
+        "record-types": "uint8, uint8", "space": "dhcp4", "encapsulate": ""
+    }
+    ])";
+
+    ConstElementPtr defs_elem;
+    ASSERT_NO_THROW_LOG(defs_elem = Element::fromJSON(defs_str));
+
+    CfgOptionDefPtr storage(new CfgOptionDef());
+    ASSERT_NO_THROW_LOG(parser.parse(storage, defs_elem));
+
+    auto test_defs = storage->getAll("dhcp4");
+    ASSERT_EQ(test_defs->size(), 18);
+
+    // Insert each option definition into the database.
+    for (auto const& test_def : *test_defs) {
+        ASSERT_NO_THROW_LOG(cbptr_->createUpdateOptionDef4(ServerSelector::ALL(), test_def));
+        auto found_def = cbptr_->getOptionDef4(ServerSelector::ALL(),
+                                               test_def->getCode(), "dhcp4");
+
+        ASSERT_TRUE(found_def) << "no option found for " << test_def->getName();
+        ASSERT_EQ(*found_def, *test_def);
+        std::cout << "option ok for " << found_def->getName() << std::endl;
     }
 }

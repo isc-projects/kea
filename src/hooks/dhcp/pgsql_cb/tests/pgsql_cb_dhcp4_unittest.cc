@@ -317,6 +317,14 @@ TEST_F(PgSqlConfigBackendDHCPv4Test, optionDefs4WithServerTagsTest) {
     optionDefs4WithServerTagsTest();
 }
 
+TEST_F(PgSqlConfigBackendDHCPv4Test, invalidOptionDefDataType4Test) {
+    invalidOptionDefDataType4Test();
+}
+
+TEST_F(PgSqlConfigBackendDHCPv4Test, allOptionDefDataTypes4Test) {
+    allOptionDefDataTypes4Test();
+}
+
 TEST_F(PgSqlConfigBackendDHCPv4Test, getAllOptionDefs4Test) {
     getAllOptionDefs4Test();
 }

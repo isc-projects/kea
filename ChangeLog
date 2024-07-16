@@ -1,10 +1,17 @@
+2250.	[bug]		tmark
+	Corrected an issue with overlapping enum values
+	for option definition data type.  This was causing
+	option definitions of type "record", created via
+	config backend commands, to not load properly when
+	fetched from the back end.
+	(Gitlab #3484, #3476)
+
 2249.	[bug]		marcin
 	Corrected a bug in storing and fetching the encapsulated DHCP
 	options from the configuration backend. These options were
 	sometimes not returned when they were specified at the subnet,
 	shared network or client class level.
 	(Gitlab #3485)
-
 2248.	[bug]		razvan
 	Fixed a file descriptor leak in the High Availability hook
 	library.

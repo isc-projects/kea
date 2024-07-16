@@ -61,8 +61,8 @@ enum OptionDataType {
     OPT_FQDN_TYPE,
     // Type to be used only internally. Allows convenient notation of the option config.
     OPT_INTERNAL_TYPE,
-    OPT_RECORD_TYPE,
-    OPT_UNKNOWN_TYPE
+    OPT_RECORD_TYPE = 254,  // Do not alter this value.
+    OPT_UNKNOWN_TYPE = 255  // Do not alter this value.
 };
 
 /// @brief Parameters being used to make up an option definition.

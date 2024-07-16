@@ -319,6 +319,14 @@ TEST_F(MySqlConfigBackendDHCPv6Test, optionDefs6WithServerTagsTest) {
     optionDefs6WithServerTagsTest();
 }
 
+TEST_F(MySqlConfigBackendDHCPv6Test, invalidOptionDefDataType6Test) {
+    invalidOptionDefDataType6Test();
+}
+
+TEST_F(MySqlConfigBackendDHCPv6Test, allOptionDefDataTypes6Test) {
+    allOptionDefDataTypes6Test();
+}
+
 TEST_F(MySqlConfigBackendDHCPv6Test, getAllOptionDefs6Test) {
     getAllOptionDefs6Test();
 }
