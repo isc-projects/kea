@@ -8,6 +8,7 @@
 
 #include <exceptions/exceptions.h>
 #include <dhcp/dhcp6.h>
+#include <dhcp/libdhcp++.h>
 #include <dhcp/testutils/iface_mgr_test_config.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
@@ -1054,6 +1055,13 @@ TEST_F(CfgMgrTest, mergeIntoCurrentCfg) {
     // Those must be two separate instances.
     ASSERT_FALSE(ext_cfg1 == ext_cfg2);
 
+    // Add an option definition.
+    ext_cfg1->getCfgOptionDef()->add(OptionDefinition::create("option-foo",
+                                                              1,
+                                                              "isc",
+                                                              OPT_EMPTY_TYPE,
+                                                              ""));
+
     // Add a subnet which will be merged from first configuration.
     Subnet4Ptr subnet1(new Subnet4(IOAddress("192.1.2.0"), 24, 1, 2, 3, 123));
     ext_cfg1->getCfgSubnets4()->add(subnet1);
@@ -1072,6 +1080,10 @@ TEST_F(CfgMgrTest, mergeIntoCurrentCfg) {
     // from the second configuration.
     ASSERT_TRUE(cfg_mgr.getCurrentCfg()->getCfgSubnets4()->getBySubnetId(123));
     ASSERT_FALSE(cfg_mgr.getCurrentCfg()->getCfgSubnets4()->getBySubnetId(124));
+
+    // Ensure that the runtime option definitions have been updated.
+    auto runtime_def = LibDHCP::getRuntimeOptionDef("isc", "option-foo");
+    ASSERT_TRUE(runtime_def);
 
     // Create another configuration instance to check what sequence it would
     // pick. It should pick the first available one.

@@ -20,6 +20,7 @@
 #include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/subnet_id.h>
+
 #include <dhcpsrv/subnet_selector.h>
 #include <dhcpsrv/cfg_hosts.h>
 #include <stats/stats_mgr.h>
@@ -1076,6 +1077,7 @@ TEST(CfgSubnets6Test, mergeSubnets) {
     opstr = boost::dynamic_pointer_cast<OptionString>(desc.option_);
     ASSERT_TRUE(opstr);
     EXPECT_EQ("Team!", opstr->getValue());
+    EXPECT_TRUE(subnet->getCfgOption()->isEncapsulated());
 
     // subnet4 should be replaced by subnet4b and moved to network1.
     ASSERT_NO_FATAL_FAILURE(checkMergedSubnet(cfg_to, "2001:4::/64",
@@ -1093,6 +1095,7 @@ TEST(CfgSubnets6Test, mergeSubnets) {
     opstr = boost::dynamic_pointer_cast<OptionString>(desc.option_);
     ASSERT_TRUE(opstr);
     EXPECT_EQ("POOLS", opstr->getValue());
+    EXPECT_TRUE(merged_pool->getCfgOption()->isEncapsulated());
 
     const PoolPtr merged_pool2 = subnet->getPool(Lease::TYPE_PD, IOAddress("2001:1::"));
     ASSERT_TRUE(merged_pool2);
@@ -1100,6 +1103,7 @@ TEST(CfgSubnets6Test, mergeSubnets) {
     opstr = boost::dynamic_pointer_cast<OptionString>(desc.option_);
     ASSERT_TRUE(opstr);
     EXPECT_EQ("RULE!", opstr->getValue());
+    EXPECT_TRUE(merged_pool2->getCfgOption()->isEncapsulated());
 }
 
 // This test verifies the Subnet6 parser's validation logic for id parameter.

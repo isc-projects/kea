@@ -553,6 +553,16 @@ ClientClassDictionary::createOptions(const CfgOptionDefPtr& external_defs) {
     }
 }
 
+void
+ClientClassDictionary::encapsulateOptions() const {
+    for (auto const& c : *list_) {
+        CfgOptionPtr class_options = c->getCfgOption();
+        if (class_options) {
+            class_options->encapsulate();
+        }
+    }
+}
+
 ElementPtr
 ClientClassDictionary::toElement() const {
     ElementPtr result = Element::createList();

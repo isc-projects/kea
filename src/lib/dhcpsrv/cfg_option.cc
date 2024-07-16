@@ -256,6 +256,7 @@ CfgOption::copyTo(CfgOption& other) const {
     other.options_.clearItems();
     other.vendor_options_.clearItems();
     mergeTo(other);
+    other.encapsulated_ = isEncapsulated();
 }
 
 void

@@ -370,6 +370,7 @@ TEST(CfgSharedNetworks4Test, mergeNetworks) {
     OptionStringPtr opstr = boost::dynamic_pointer_cast<OptionString>(desc.option_);
     ASSERT_TRUE(opstr);
     EXPECT_EQ("Yay!", opstr->getValue());
+    EXPECT_TRUE(network->getCfgOption()->isEncapsulated());
 
     // No changes to network2.
     ASSERT_NO_FATAL_FAILURE(checkMergedNetwork(cfg_to, "network2", Triplet<uint32_t>(200),

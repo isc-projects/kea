@@ -474,6 +474,14 @@ TEST_F(CfgOptionTest, copy) {
     container = cfg_dst.getAll("foo");
     ASSERT_TRUE(container);
     EXPECT_EQ(10, container->size());
+
+    // Source config wasn't encapsulated, so the destination shouldn't be too.
+    EXPECT_FALSE(cfg_dst.isEncapsulated());
+
+    // Now let's make sure that the encapsulation flag is correctly set.
+    cfg_src.encapsulate();
+    ASSERT_NO_THROW(cfg_src.copyTo(cfg_dst));
+    EXPECT_TRUE(cfg_dst.isEncapsulated());
 }
 
 // This test verifies that DHCP options from one configuration

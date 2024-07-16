@@ -390,6 +390,7 @@ TEST(CfgSubnets4Test, mergeSubnets) {
     opstr = boost::dynamic_pointer_cast<OptionString>(desc.option_);
     ASSERT_TRUE(opstr);
     EXPECT_EQ("Team!", opstr->getValue());
+    EXPECT_TRUE(subnet->getCfgOption()->isEncapsulated());
 
     // subnet4 should be replaced by subnet4b and moved to network1.
     ASSERT_NO_FATAL_FAILURE(checkMergedSubnet(cfg_to, "192.0.4.0/26",
@@ -407,6 +408,7 @@ TEST(CfgSubnets4Test, mergeSubnets) {
     opstr = boost::dynamic_pointer_cast<OptionString>(desc.option_);
     ASSERT_TRUE(opstr);
     EXPECT_EQ("POOLS", opstr->getValue());
+    EXPECT_TRUE(merged_pool->getCfgOption()->isEncapsulated());
 
     const PoolPtr merged_pool2 = subnet->getPool(Lease::TYPE_V4, IOAddress("192.0.5.30"));
     ASSERT_TRUE(merged_pool2);
@@ -414,6 +416,7 @@ TEST(CfgSubnets4Test, mergeSubnets) {
     opstr = boost::dynamic_pointer_cast<OptionString>(desc.option_);
     ASSERT_TRUE(opstr);
     EXPECT_EQ("RULE!", opstr->getValue());
+    EXPECT_TRUE(merged_pool2->getCfgOption()->isEncapsulated());
 }
 
 // This test verifies that it is possible to retrieve a subnet using an
