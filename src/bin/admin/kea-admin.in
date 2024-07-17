@@ -418,8 +418,8 @@ pgsql_upgrade() {
     # thru an env
     export PGPASSWORD=$db_password
 
-    for script in "${upgrade_scripts_dir}"/upgrade*.sh
-    do
+    upgrade_scripts=$(find "${upgrade_scripts_dir}" -type f -name 'upgrade_*.sh' | sort -V)
+    for script in ${upgrade_scripts}; do
         echo "Processing $script file..."
         "${script}" -U "${db_user}" -h "${db_host}" \
         -d "${db_name}" ${extra_arguments}
