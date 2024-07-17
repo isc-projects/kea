@@ -66,7 +66,7 @@ BEGIN
     DECLARE skipper TINYINT;
 
     SELECT COUNT(table_name) FROM information_schema.tables
-        WHERE table_schema LIKE database() AND table_name = 'option_def_data_type' into skipper;
+        WHERE table_schema LIKE database() AND table_name = 'option_def_data_type' INTO skipper;
 
     IF skipper = 0 THEN
         -- First we migrate existing OPT_RECORD_TYPE values
@@ -115,7 +115,7 @@ BEGIN
 END $$
 DELIMITER ;
 
-call updateOptionDataDef();
+CALL updateOptionDataDef();
 
 -- Get rid of the now obsolete function.
 DROP PROCEDURE IF EXISTS updateOptionDataDef;

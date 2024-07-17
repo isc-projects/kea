@@ -6387,6 +6387,8 @@ INSERT INTO lease_state VALUES (3, 'released');
 UPDATE schema_version
     SET version = '23', minor = '0';
 
+-- This line concludes the schema upgrade to version 23.0.
+
 -- This line starts the schema upgrade to version 24.0.
 
 -- Create a function to conditionally migrate option_def data type
@@ -6396,7 +6398,7 @@ DROP FUNCTION IF EXISTS updateOptionDataDef();
 CREATE OR REPLACE FUNCTION updateOptionDataDef() RETURNS text AS $$
     DECLARE skipper BOOLEAN;
 BEGIN
-    SELECT exists(SELECT FROM pg_tables WHERE tablename = 'option_def_data_type') into skipper;
+    SELECT exists(SELECT FROM pg_tables WHERE tablename = 'option_def_data_type') INTO skipper;
     IF skipper THEN
         -- Table already exists which means the migration was already done.
         RETURN 'EXISTS';
@@ -6447,7 +6449,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-select updateOptionDataDef();
+SELECT updateOptionDataDef();
 
 -- Get rid of the now obsolete function.
 DROP FUNCTION IF EXISTS updateOptionDataDef();

@@ -3068,9 +3068,9 @@ void
 GenericConfigBackendDHCPv4Test::invalidOptionDefDataType4Test() {
     OptionDefinitionPtr test_def;
     ASSERT_NO_THROW_LOG(test_def.reset(new OptionDefinition("foobar", 234, DHCP4_OPTION_SPACE,
-                                                              "unknown", true)));
+                                                            "unknown", true)));
     ASSERT_TRUE(test_def);
-    ASSERT_THROW(cbptr_->createUpdateOptionDef4(ServerSelector::ALL(), test_def), 
+    ASSERT_THROW(cbptr_->createUpdateOptionDef4(ServerSelector::ALL(), test_def),
                  DbOperationError);
 }
 
@@ -3160,7 +3160,7 @@ GenericConfigBackendDHCPv4Test::allOptionDefDataTypes4Test() {
     ASSERT_NO_THROW_LOG(parser.parse(storage, defs_elem));
 
     auto test_defs = storage->getAll("dhcp4");
-    ASSERT_EQ(test_defs->size(), 18); 
+    ASSERT_EQ(test_defs->size(), 18);
 
     // Insert each option definition into the database.
     for (auto const& test_def : *test_defs) {

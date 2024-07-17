@@ -46,7 +46,7 @@ DROP FUNCTION IF EXISTS updateOptionDataDef();
 CREATE OR REPLACE FUNCTION updateOptionDataDef() RETURNS text AS \$\$
     DECLARE skipper BOOLEAN;
 BEGIN
-    SELECT exists(SELECT FROM pg_tables WHERE tablename = 'option_def_data_type') into skipper;
+    SELECT exists(SELECT FROM pg_tables WHERE tablename = 'option_def_data_type') INTO skipper;
     IF skipper THEN
         -- Table already exists which means the migration was already done.
         RETURN 'EXISTS';
@@ -97,7 +97,7 @@ BEGIN
 END;
 \$\$ LANGUAGE plpgsql;
 
-select updateOptionDataDef();
+SELECT updateOptionDataDef();
 
 -- Get rid of the now obsolete function.
 DROP FUNCTION IF EXISTS updateOptionDataDef();
