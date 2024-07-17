@@ -4625,7 +4625,7 @@ void
 GenericConfigBackendDHCPv4Test::invalidOptionDefDataType4Test() {
     OptionDefinitionPtr test_def;
     ASSERT_NO_THROW_LOG(test_def.reset(new OptionDefinition("foobar", 234, DHCP4_OPTION_SPACE,
-                                                              "unknown", true)));
+                                                            "unknown", true)));
     ASSERT_TRUE(test_def);
     ASSERT_THROW(cbptr_->createUpdateOptionDef4(ServerSelector::ALL(), test_def),
                  DbOperationError);
@@ -4727,6 +4727,5 @@ GenericConfigBackendDHCPv4Test::allOptionDefDataTypes4Test() {
 
         ASSERT_TRUE(found_def) << "no option found for " << test_def->getName();
         ASSERT_EQ(*found_def, *test_def);
-        std::cout << "option ok for " << found_def->getName() << std::endl;
     }
 }

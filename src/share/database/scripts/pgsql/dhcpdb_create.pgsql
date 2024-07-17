@@ -6420,6 +6420,7 @@ ALTER TABLE dhcp4_option_def
 ALTER TABLE dhcp6_option_def
     ADD CONSTRAINT fk_option_def_data_type6 FOREIGN KEY (type) REFERENCES option_def_data_type(id);
 
+SELECT set_config('kea.disable_audit', 'false', false);
 UPDATE schema_version
     SET version = '22', minor = '1';
 

@@ -814,7 +814,7 @@ mysql_upgrade_18_to_19_test() {
 }
 
 mysql_upgrade_22_0_to_22_1_test() {
-    query="SELECT count(id) from option_def_data_type"
+    query="SELECT count(id) FROM option_def_data_type"
     run_command \
         mysql_execute "${query}"
     assert_eq 0 "${EXIT_CODE}" "${query}: expected %d, returned %d"
@@ -3337,7 +3337,7 @@ mysql_migrate_opt_record_type() {
  insert into dhcp6_option_def (code,name,space,type,modification_ts,record_types, is_array, encapsulate)\
     values ('224','bar2','dhcp6',18,current_timestamp,'10, 7, 2, 14', false, false);
 "
-    run_statement "insert otion definitions" "$sql"
+    run_statement "insert option definitions" "$sql"
 
     # Verify the inserted record counts.
     qry="select count(*) from dhcp4_option_def;"
@@ -3350,22 +3350,22 @@ mysql_migrate_opt_record_type() {
     mysql_upgrade_schema_to_version 22.1
 
     # Verify the migrated records.
-    qry="select type from dhcp4_option_def where  name = 'foo';"
+    qry="select type from dhcp4_option_def  = 'foo';"
     run_statement "#get 4_option_def_foo after update" "$qry" 17
 
-    qry="select type from dhcp4_option_def where  name = 'bar';"
+    qry="select type from dhcp4_option_def  = 'bar';"
     run_statement "#get 4_option_def_bar after update" "$qry" 254
 
-    qry="select type from dhcp4_option_def where  name = 'bar2';"
+    qry="select type from dhcp4_option_def  = 'bar2';"
     run_statement "#get 4_option_def_bar2 after update" "$qry" 254
 
-    qry="select type from dhcp6_option_def where  name = 'foo';"
+    qry="select type from dhcp6_option_def  = 'foo';"
     run_statement "#get 6_option_def_foo after update" "$qry" 17
 
-    qry="select type from dhcp6_option_def where  name = 'bar';"
+    qry="select type from dhcp6_option_def  = 'bar';"
     run_statement "#get 6_option_def_bar after update" "$qry" 254
 
-    qry="select type from dhcp6_option_def where  name = 'bar2';"
+    qry="select type from dhcp6_option_def  = 'bar2';"
     run_statement "#get 6_option_def_bar2 after update" "$qry" 254
 
     # Let's wipe the whole database

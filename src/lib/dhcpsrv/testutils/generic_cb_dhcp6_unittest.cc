@@ -4776,7 +4776,7 @@ void
 GenericConfigBackendDHCPv6Test::invalidOptionDefDataType6Test() {
     OptionDefinitionPtr test_def;
     ASSERT_NO_THROW_LOG(test_def.reset(new OptionDefinition("foobar", 234, DHCP6_OPTION_SPACE,
-                                                              "unknown", true)));
+                                                            "unknown", true)));
     ASSERT_TRUE(test_def);
     ASSERT_THROW(cbptr_->createUpdateOptionDef6(ServerSelector::ALL(), test_def),
                  DbOperationError);
@@ -4878,6 +4878,5 @@ GenericConfigBackendDHCPv6Test::allOptionDefDataTypes6Test() {
 
         ASSERT_TRUE(found_def) << "no option found for " << test_def->getName();
         ASSERT_EQ(*found_def, *test_def);
-        std::cout << "option ok for " << found_def->getName() << std::endl;
     }
 }
