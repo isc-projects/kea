@@ -6391,6 +6391,16 @@ UPDATE schema_version
 
 -- This line starts the schema upgrade to version 24.0.
 
+SELECT set_config('kea.disable_audit', 'true', false);
+
+DELETE FROM dhcp4_global_parameter WHERE name='control-socket.socket-name';
+DELETE FROM dhcp4_global_parameter WHERE name='control-socket.socket-type';
+
+DELETE FROM dhcp6_global_parameter WHERE name='control-socket.socket-name';
+DELETE FROM dhcp6_global_parameter WHERE name='control-socket.socket-type';
+
+SELECT set_config('kea.disable_audit', 'false', false);
+
 -- Create a function to conditionally migrate option_def data type
 -- values.  If they are updating from 2.6.1 this has been done already
 -- and we don't want to do it twice.

@@ -1,3 +1,10 @@
+2265.	[bug]*		fdupont
+	The 'control-socket' ('control-socket.socket-name' and
+	'control-socket.socket-type') was removed from the global maps
+	which can be managed by the config backend because in fact if
+	it is possible to change values they are not applied.
+	(Gitlab #3479)
+
 2264.	[bug]*		tmark
 	Corrected an issue with overlapping enum values
 	for option definition data type.  This was causing

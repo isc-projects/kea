@@ -2647,6 +2647,61 @@ pgsql_migrate_opt_record_type() {
     test_finish 0
 }
 
+# Verifies that control-socket global map parameters are removed.
+pgsql_remove_control_socket_parameters_test() {
+    test_start "pgsql.pgsql_remove_control_socket_parameters_test"
+
+    # Let's wipe the whole database
+    pgsql_wipe
+
+    # We need to create an older database with lease data so we can
+    # verify the upgrade mechanisms which prepopulate the lease stat
+    # tables.
+    #
+    # Initialize database to schema 1.0.
+    pgsql_execute_script "@abs_top_srcdir@/src/bin/admin/tests/dhcpdb_create_1.0.pgsql"
+    assert_eq 0 "${EXIT_CODE}" "cannot initialize 1.0 database, expected exit code: %d, actual: %d"
+
+    # Now upgrade to schema 23.0
+    pgsql_upgrade_schema_to_version 23.0
+
+    # Now insert global parameter instances of control-socket.
+    sql=\
+"select set_config('kea.disable_audit', 'true', false);\
+ insert into dhcp4_global_parameter (name,value,modification_ts,parameter_type)\
+    values ('control-socket.socket-name','/tmp/socket',current_timestamp,4);
+ insert into dhcp4_global_parameter (name,value,modification_ts,parameter_type)\
+    values ('control-socket.socket-type','unix',current_timestamp,4);
+ insert into dhcp6_global_parameter (name,value,modification_ts,parameter_type)\
+    values ('control-socket.socket-name','/tmp/socket',current_timestamp,4);
+ insert into dhcp6_global_parameter (name,value,modification_ts,parameter_type)\
+    values ('control-socket.socket-type','unix',current_timestamp,4);"
+
+    run_statement "insert control-socket map parameters" "$sql"
+
+    # Verify the inserted record counts.
+    qry="select count(*) from dhcp4_global_parameter where name like '%control-socket%';"
+    run_statement "#get 4_global parameter count before update" "$qry" 2
+
+    qry="select count(*) from dhcp6_global_parameter where name like '%control-socket%';"
+    run_statement "#get 6_global parameter count before update" "$qry" 2
+
+    # Upgrade to schema 24.0
+    pgsql_upgrade_schema_to_version 24.0
+
+    # Verify the record have been removed.
+    qry="select count(*) from dhcp4_global_parameter where name like '%control-socket%';"
+    run_statement "#get 4_global parameter count after update" "$qry" 0
+
+    qry="select count(*) from dhcp6_global_parameter where name like '%control-socket%';"
+    run_statement "#get 6_global parameter count after update" "$qry" 0
+
+    # Let's wipe the whole database
+    pgsql_wipe
+
+    test_finish 0
+}
+
 # Run tests.
 pgsql_db_init_test
 pgsql_db_version_test
@@ -2674,3 +2729,4 @@ pgsql_reservation_mode_all_parameters_test
 pgsql_reservation_mode_global_parameters_test
 pgsql_reservation_mode_out_of_pool_parameters_test
 pgsql_migrate_opt_record_type
+pgsql_remove_control_socket_parameters_test

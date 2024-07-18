@@ -1155,7 +1155,7 @@ The second argument contains the IPv4 address in the ciaddr field. The
 third argument contains the IPv4 address in the requested-ip-address
 option (if present).
 
-% DHCP4_V6_ONLY_PREFERRED_MISSING_IN_ACK v6-only-preferred option missing in 0.0.0.0 offer to query: %1
+% DHCP4_V6_ONLY_PREFERRED_MISSING_IN_ACK v6-only-preferred option missing in 0.0.0.0 reply to query: %1
 An DHCPACK for the 0.0.0.0 address was generated for a client requesting
 the v6-only-preferred (108) option but the option is not in the response as
 expected: the erroneous response is dropped, the request query is displayed.
