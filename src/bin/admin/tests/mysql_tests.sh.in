@@ -3350,22 +3350,22 @@ mysql_migrate_opt_record_type() {
     mysql_upgrade_schema_to_version 22.1
 
     # Verify the migrated records.
-    qry="select type from dhcp4_option_def  = 'foo';"
+    qry="select type from dhcp4_option_def where name = 'foo';"
     run_statement "#get 4_option_def_foo after update" "$qry" 17
 
-    qry="select type from dhcp4_option_def  = 'bar';"
+    qry="select type from dhcp4_option_def where name = 'bar';"
     run_statement "#get 4_option_def_bar after update" "$qry" 254
 
-    qry="select type from dhcp4_option_def  = 'bar2';"
+    qry="select type from dhcp4_option_def where name = 'bar2';"
     run_statement "#get 4_option_def_bar2 after update" "$qry" 254
 
-    qry="select type from dhcp6_option_def  = 'foo';"
+    qry="select type from dhcp6_option_def where name  = 'foo';"
     run_statement "#get 6_option_def_foo after update" "$qry" 17
 
-    qry="select type from dhcp6_option_def  = 'bar';"
+    qry="select type from dhcp6_option_def where name = 'bar';"
     run_statement "#get 6_option_def_bar after update" "$qry" 254
 
-    qry="select type from dhcp6_option_def  = 'bar2';"
+    qry="select type from dhcp6_option_def where name = 'bar2';"
     run_statement "#get 6_option_def_bar2 after update" "$qry" 254
 
     # Let's wipe the whole database
