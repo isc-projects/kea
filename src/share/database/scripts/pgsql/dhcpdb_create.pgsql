@@ -6445,6 +6445,7 @@ BEGIN
     ALTER TABLE dhcp6_option_def
         ADD CONSTRAINT fk_option_def_data_type6 FOREIGN KEY (type) REFERENCES option_def_data_type(id);
 
+    PERFORM set_config('kea.disable_audit', 'false', false);
     RETURN 'UPDATED';
 END;
 $$ LANGUAGE plpgsql;

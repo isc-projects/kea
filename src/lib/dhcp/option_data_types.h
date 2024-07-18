@@ -35,34 +35,35 @@ public:
 
 /// @brief Data types of DHCP option fields.
 ///
-/// @warning The order of data types matters: OPT_UNKNOWN_TYPE
-/// must always be the last position. Also, OPT_RECORD_TYPE
-/// must be at last but one position. This is because some
-/// functions perform sanity checks on data type values using
-/// '>' operators, assuming that all values beyond the
-/// OPT_RECORD_TYPE are invalid.
-enum OptionDataType {
-    OPT_EMPTY_TYPE,
-    OPT_BINARY_TYPE,
-    OPT_BOOLEAN_TYPE,
-    OPT_INT8_TYPE,
-    OPT_INT16_TYPE,
-    OPT_INT32_TYPE,
-    OPT_UINT8_TYPE,
-    OPT_UINT16_TYPE,
-    OPT_UINT32_TYPE,
-    OPT_ANY_ADDRESS_TYPE,
-    OPT_IPV4_ADDRESS_TYPE,
-    OPT_IPV6_ADDRESS_TYPE,
-    OPT_IPV6_PREFIX_TYPE,
-    OPT_PSID_TYPE,
-    OPT_STRING_TYPE,
-    OPT_TUPLE_TYPE,
-    OPT_FQDN_TYPE,
+/// @warning Do NOT alter existing values to add (or remove) new types.
+/// These values are stored by config backend.  Altering any existing
+/// values will produce code that is incompatiable with pre-existing data.
+/// Futhermore, the order of data types matters: OPT_UNKNOWN_TYPE
+/// must always be and OPT_RECORD_TYPE must be at second to last.
+/// This is because some functions perform sanity checks on data type
+/// values using '>' operators, assuming that all values beyond the
+enum OptionDataType : int {
+    OPT_EMPTY_TYPE          = 0,
+    OPT_BINARY_TYPE         = 1,
+    OPT_BOOLEAN_TYPE        = 2,
+    OPT_INT8_TYPE           = 3,
+    OPT_INT16_TYPE          = 4,
+    OPT_INT32_TYPE          = 5,
+    OPT_UINT8_TYPE          = 6,
+    OPT_UINT16_TYPE         = 7,
+    OPT_UINT32_TYPE         = 8,
+    OPT_ANY_ADDRESS_TYPE    = 9,
+    OPT_IPV4_ADDRESS_TYPE   = 10,
+    OPT_IPV6_ADDRESS_TYPE   = 11,
+    OPT_IPV6_PREFIX_TYPE    = 12,
+    OPT_PSID_TYPE           = 13,
+    OPT_STRING_TYPE         = 14,
+    OPT_TUPLE_TYPE          = 15,
+    OPT_FQDN_TYPE           = 16,
     // Type to be used only internally. Allows convenient notation of the option config.
-    OPT_INTERNAL_TYPE,
-    OPT_RECORD_TYPE = 254,  // Do not alter this value.
-    OPT_UNKNOWN_TYPE = 255  // Do not alter this value.
+    OPT_INTERNAL_TYPE       = 17,
+    OPT_RECORD_TYPE         = 254,
+    OPT_UNKNOWN_TYPE        = 255
 };
 
 /// @brief Parameters being used to make up an option definition.

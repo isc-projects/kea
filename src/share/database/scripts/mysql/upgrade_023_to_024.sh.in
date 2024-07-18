@@ -111,6 +111,7 @@ BEGIN
 
         ALTER TABLE dhcp6_option_def
           ADD CONSTRAINT fk_option_def_data_type6 FOREIGN KEY (type) REFERENCES option_def_data_type(id);
+        SET @disable_audit = 0;
     END IF;
 END $$
 DELIMITER ;

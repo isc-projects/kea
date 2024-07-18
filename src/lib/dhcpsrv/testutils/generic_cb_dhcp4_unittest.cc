@@ -3170,7 +3170,6 @@ GenericConfigBackendDHCPv4Test::allOptionDefDataTypes4Test() {
 
         ASSERT_TRUE(found_def) << "no option found for " << test_def->getName();
         ASSERT_EQ(*found_def, *test_def);
-        std::cout << "option ok for " << found_def->getName() << std::endl;
     }
 }
 

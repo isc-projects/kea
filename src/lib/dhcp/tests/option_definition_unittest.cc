@@ -2173,7 +2173,7 @@ TEST(OptionDataTypeUtil, typeToString) {
     EXPECT_EQ(OPT_STRING_TYPE, OptionDataTypeUtil::getDataType("string"));
     EXPECT_EQ(OPT_TUPLE_TYPE, OptionDataTypeUtil::getDataType("tuple"));
     EXPECT_EQ(OPT_FQDN_TYPE, OptionDataTypeUtil::getDataType("fqdn"));
-    // EXPECT_EQ(OPT_INTERNAL_TYPE, OptionDataTypeUtil::getDataType("internal"));
+    EXPECT_EQ(OPT_INTERNAL_TYPE, OptionDataTypeUtil::getDataType("internal"));
     EXPECT_EQ(OPT_RECORD_TYPE, OptionDataTypeUtil::getDataType("record"));
     EXPECT_EQ(OPT_UNKNOWN_TYPE, OptionDataTypeUtil::getDataType("bogus"));
 }
@@ -2196,7 +2196,7 @@ TEST(OptionDataTypeUtil, stringToType) {
     EXPECT_EQ("string", OptionDataTypeUtil::getDataTypeName(OPT_STRING_TYPE));
     EXPECT_EQ("tuple", OptionDataTypeUtil::getDataTypeName(OPT_TUPLE_TYPE));
     EXPECT_EQ("fqdn", OptionDataTypeUtil::getDataTypeName(OPT_FQDN_TYPE));
-    // EXPECT_EQ("internal", OptionDataTypeUtil::getDataTypeName(OPT_INTERNAL_TYPE));
+    EXPECT_EQ("internal", OptionDataTypeUtil::getDataTypeName(OPT_INTERNAL_TYPE));
     EXPECT_EQ("record", OptionDataTypeUtil::getDataTypeName(OPT_RECORD_TYPE));
     EXPECT_EQ("unknown", OptionDataTypeUtil::getDataTypeName(OPT_UNKNOWN_TYPE));
 }
