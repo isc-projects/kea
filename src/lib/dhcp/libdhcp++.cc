@@ -485,8 +485,15 @@ LibDHCP::unpackOptions4(const OptionBuffer& buf, const string& option_space,
     // The buffer being read comprises a set of options, each starting with
     // a one-byte type code and a one-byte length field.
 
-    // Track seen options in a first pass.
+    // Track seen options in a first pass. We use 2 different data structures
+    // (seen and counts) because this code is in the critical path and
+    // having more than one instance of an option is a very rare case.
+
+    // Record if an option was already seen using the most efficient
+    // data structure for this goal.
     vector<bool> seen(256, false);
+    // Handle the very rare case where an option is more than once in the
+    // input buffer, in other / common case it stays empty.
     unordered_map<uint8_t, size_t> counts;
     while (offset < buf.size()) {
         // Get the option type
