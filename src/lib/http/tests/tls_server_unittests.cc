@@ -388,7 +388,7 @@ public:
 
 
 /// @brief Entity which can connect to the HTTP server endpoint.
-class TestHttpClient : public boost::noncopyable {
+class TestHttpsClient : public boost::noncopyable {
 public:
 
     /// @brief Constructor.
@@ -398,7 +398,7 @@ public:
     ///
     /// @param io_service IO service to be stopped on error.
     /// @param tls_context TLS context.
-    TestHttpClient(const IOServicePtr& io_service, TlsContextPtr tls_context)
+    TestHttpsClient(const IOServicePtr& io_service, TlsContextPtr tls_context)
         : io_service_(io_service), stream_(io_service_->getInternalIOService(),
           tls_context->getContext()), buf_(), response_() {
     }
@@ -406,7 +406,7 @@ public:
     /// @brief Destructor.
     ///
     /// Closes the underlying socket if it is open.
-    ~TestHttpClient() {
+    ~TestHttpsClient() {
         close();
     }
 
@@ -624,8 +624,8 @@ private:
     std::string response_;
 };
 
-/// @brief Pointer to the TestHttpClient.
-typedef boost::shared_ptr<TestHttpClient> TestHttpClientPtr;
+/// @brief Pointer to the TestHttpsClient.
+typedef boost::shared_ptr<TestHttpsClient> TestHttpsClientPtr;
 
 /// @brief Test fixture class for @ref HttpListener.
 class HttpsListenerTest : public ::testing::Test {
@@ -657,13 +657,13 @@ public:
 
     /// @brief Connect to the endpoint.
     ///
-    /// This method creates TestHttpClient instance and retains it in the clients_
+    /// This method creates TestHttpsClient instance and retains it in the clients_
     /// list.
     ///
     /// @param request String containing the HTTP request to be sent.
     void startRequest(const std::string& request) {
-        TestHttpClientPtr client(new TestHttpClient(io_service_,
-                                                    client_context_));
+        TestHttpsClientPtr client(new TestHttpsClient(io_service_,
+                                                      client_context_));
         clients_.push_back(client);
         clients_.back()->startRequest(request);
     }
@@ -731,7 +731,7 @@ public:
         ASSERT_NO_THROW(startRequest(request));
         ASSERT_NO_THROW(runIOService());
         ASSERT_EQ(1, clients_.size());
-        TestHttpClientPtr client = *clients_.begin();
+        TestHttpsClientPtr client = *clients_.begin();
         ASSERT_TRUE(client);
 
         // Build the reference response.
@@ -790,7 +790,7 @@ public:
         ASSERT_NO_THROW(runIOService());
 
         ASSERT_EQ(1, clients_.size());
-        TestHttpClientPtr client = *clients_.begin();
+        TestHttpsClientPtr client = *clients_.begin();
         ASSERT_TRUE(client);
         EXPECT_EQ(httpOk(HttpVersion::HTTP_11()), client->getResponse());
     }
@@ -809,7 +809,7 @@ public:
     IntervalTimer run_io_service_timer_;
 
     /// @brief List of client connections.
-    std::list<TestHttpClientPtr> clients_;
+    std::list<TestHttpsClientPtr> clients_;
 
     /// @brief Server TLS context.
     TlsContextPtr server_context_;
@@ -836,7 +836,7 @@ TEST_F(HttpsListenerTest, listen) {
     ASSERT_NO_THROW(startRequest(request));
     ASSERT_NO_THROW(runIOService());
     ASSERT_EQ(1, clients_.size());
-    TestHttpClientPtr client = *clients_.begin();
+    TestHttpsClientPtr client = *clients_.begin();
     ASSERT_TRUE(client);
     EXPECT_EQ(httpOk(HttpVersion::HTTP_11()), client->getResponse());
 
@@ -868,7 +868,7 @@ TEST_F(HttpsListenerTest, keepAlive) {
     ASSERT_NO_THROW(startRequest(request));
     ASSERT_NO_THROW(runIOService());
     ASSERT_EQ(1, clients_.size());
-    TestHttpClientPtr client = *clients_.begin();
+    TestHttpsClientPtr client = *clients_.begin();
     ASSERT_TRUE(client);
     EXPECT_EQ(httpOk(HttpVersion::HTTP_10()), client->getResponse());
 
@@ -917,7 +917,7 @@ TEST_F(HttpsListenerTest, persistentConnection) {
     ASSERT_NO_THROW(startRequest(request));
     ASSERT_NO_THROW(runIOService());
     ASSERT_EQ(1, clients_.size());
-    TestHttpClientPtr client = *clients_.begin();
+    TestHttpsClientPtr client = *clients_.begin();
     ASSERT_TRUE(client);
     EXPECT_EQ(httpOk(HttpVersion::HTTP_11()), client->getResponse());
 
@@ -969,7 +969,7 @@ TEST_F(HttpsListenerTest, keepAliveTimeout) {
     ASSERT_NO_THROW(startRequest(request));
     ASSERT_NO_THROW(runIOService());
     ASSERT_EQ(1, clients_.size());
-    TestHttpClientPtr client = *clients_.begin();
+    TestHttpsClientPtr client = *clients_.begin();
     ASSERT_TRUE(client);
     EXPECT_EQ(httpOk(HttpVersion::HTTP_10()), client->getResponse());
 
@@ -1026,7 +1026,7 @@ TEST_F(HttpsListenerTest, persistentConnectionTimeout) {
     ASSERT_NO_THROW(startRequest(request));
     ASSERT_NO_THROW(runIOService());
     ASSERT_EQ(1, clients_.size());
-    TestHttpClientPtr client = *clients_.begin();
+    TestHttpsClientPtr client = *clients_.begin();
     ASSERT_TRUE(client);
     EXPECT_EQ(httpOk(HttpVersion::HTTP_11()), client->getResponse());
 
@@ -1082,7 +1082,7 @@ TEST_F(HttpsListenerTest, persistentConnectionBadBody) {
     ASSERT_NO_THROW(startRequest(request));
     ASSERT_NO_THROW(runIOService());
     ASSERT_EQ(1, clients_.size());
-    TestHttpClientPtr client = *clients_.begin();
+    TestHttpsClientPtr client = *clients_.begin();
     ASSERT_TRUE(client);
     EXPECT_EQ("HTTP/1.1 400 Bad Request\r\n"
               "Content-Length: 40\r\n"
@@ -1141,7 +1141,7 @@ TEST_F(HttpsListenerTest, badRequest) {
     ASSERT_NO_THROW(startRequest(request));
     ASSERT_NO_THROW(runIOService());
     ASSERT_EQ(1, clients_.size());
-    TestHttpClientPtr client = *clients_.begin();
+    TestHttpsClientPtr client = *clients_.begin();
     ASSERT_TRUE(client);
     EXPECT_EQ("HTTP/1.1 400 Bad Request\r\n"
               "Content-Length: 40\r\n"
