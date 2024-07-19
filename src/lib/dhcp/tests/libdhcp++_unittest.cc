@@ -1358,7 +1358,7 @@ TEST_F(LibDhcpTest, splitOptionWithSuboptionWhichOverflow) {
                                                        RAI_OPTION_SUBSCRIBER_ID,
                                                        buf_in.begin(),
                                                        buf_in.end()));
-    ASSERT_TRUE(subscriber_id_opt);
+ASSERT_TRUE(subscriber_id_opt);
     rai->addOption(subscriber_id_opt);
 
     splitOptionWithSuboptionWhichOverflow(rai, circuit_id_opt, remote_id_opt, subscriber_id_opt);

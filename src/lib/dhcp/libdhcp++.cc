@@ -485,16 +485,8 @@ LibDHCP::unpackOptions4(const OptionBuffer& buf, const string& option_space,
     // The buffer being read comprises a set of options, each starting with
     // a one-byte type code and a one-byte length field.
 
-    // Track seen options in a first pass. We use 2 different data structures
-    // (seen and counts) because this code is in the critical path and
-    // having more than one instance of an option is a very rare case.
-
-    // Record if an option was already seen using the most efficient
-    // data structure for this goal.
-    vector<bool> seen(256, false);
-    // Handle the very rare case where an option is more than once in the
-    // input buffer, in other / common case it stays empty.
-    unordered_map<uint8_t, size_t> counts;
+    // Track seen options in a first pass.
+    vector<uint32_t> count(256, 0);
     while (offset < buf.size()) {
         // Get the option type
         uint8_t opt_type = buf[offset++];
@@ -533,24 +525,13 @@ LibDHCP::unpackOptions4(const OptionBuffer& buf, const string& option_space,
 
         offset += opt_len;
 
-        // Mark as seen.
-        if (!seen[opt_type]) {
-            seen[opt_type] = true;
-            continue;
-        }
-
-        // Already seen.
-        size_t& count = counts[opt_type];
-        if (count == 0) {
-            // Default value for size_t is 0 but this option was already seen.
-            count = 2;
-        } else {
-            ++count;
-        }
+        // Increment count.
+        count[opt_type] += 1;
     }
 
     // Fusing option buffers.
     unordered_map<uint8_t, OptionBuffer> fused;
+    unordered_map<uint8_t, uint32_t> seen;
 
     // Second pass.
     offset = 0;
@@ -612,16 +593,17 @@ LibDHCP::unpackOptions4(const OptionBuffer& buf, const string& option_space,
         offset += opt_len;
 
         // Concatenate multiple instance of an option.
-        if (!counts.empty() && (counts.count(opt_type) > 0)) {
-            size_t count = counts[opt_type];
+        uint32_t opt_count = count[opt_type];
+        if (opt_count > 1) {
             OptionBuffer& previous = fused[opt_type];
             previous.insert(previous.end(), obuf.begin(), obuf.end());
-            if (count <= 1) {
+            uint32_t& already_seen = seen[opt_type];
+            ++already_seen;
+            if (already_seen != opt_count) {
+                continue;
+            } else {
                 // last occurrence: build the option.
                 obuf = previous;
-            } else {
-                counts[opt_type] = count - 1;
-                continue;
             }
         }
 
