@@ -530,8 +530,7 @@ LibDHCP::unpackOptions4(const OptionBuffer& buf, const string& option_space,
     }
 
     // Fusing option buffers.
-    unordered_map<uint8_t, OptionBuffer> fused;
-    unordered_map<uint8_t, uint32_t> seen;
+    unordered_map<uint8_t, pair<OptionBuffer, uint32_t>> fused;
 
     // Second pass.
     offset = 0;
@@ -595,9 +594,9 @@ LibDHCP::unpackOptions4(const OptionBuffer& buf, const string& option_space,
         // Concatenate multiple instance of an option.
         uint32_t opt_count = count[opt_type];
         if (opt_count > 1) {
-            OptionBuffer& previous = fused[opt_type];
+            OptionBuffer& previous = fused[opt_type].first;
             previous.insert(previous.end(), obuf.begin(), obuf.end());
-            uint32_t& already_seen = seen[opt_type];
+            uint32_t& already_seen = fused[opt_type].second;
             ++already_seen;
             if (already_seen != opt_count) {
                 continue;
