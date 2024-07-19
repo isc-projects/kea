@@ -9,7 +9,7 @@
 #include <asiolink/interval_timer.h>
 #include <asiolink/tls_acceptor.h>
 #include <cc/data.h>
-#include <test_http_client.h>
+#include <http/testutils/test_http_client.h>
 #include <http/client.h>
 #include <http/http_types.h>
 #include <http/listener.h>

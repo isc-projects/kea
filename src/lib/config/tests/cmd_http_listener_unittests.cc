@@ -14,7 +14,7 @@
 #include <config/command_mgr.h>
 #include <http/response.h>
 #include <http/response_parser.h>
-#include <http/tests/test_http_client.h>
+#include <http/testutils/test_http_client.h>
 #include <util/multi_threading_mgr.h>
 #include <testutils/gtest_utils.h>
 
