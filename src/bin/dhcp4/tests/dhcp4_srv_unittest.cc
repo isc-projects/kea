@@ -2873,6 +2873,37 @@ void removeTlsParameters(ConstElementPtr elem) {
     }
 }
 
+/// @brief Remove authentication filess
+void removeAuthFiles(ConstElementPtr elem) {
+    if (!elem) {
+        return;
+    }
+    ConstElementPtr auth = elem->get("authentication");
+    if (!auth) {
+        return;
+    }
+    ConstElementPtr clients = auth->get("clients");
+    if (!clients || clients->empty()) {
+        return;
+    }
+    ElementPtr mutable_clients = boost::const_pointer_cast<Element>(clients);
+    for (;;) {
+        bool found = false;
+        for (int i = 0; i < clients->size(); ++i) {
+            ConstElementPtr client = clients->get(i);
+            if (client->contains("user-file") ||
+                client->contains("password-file")) {
+                mutable_clients->remove(i);
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            return;
+        }
+    }
+}
+
 void
 Dhcpv4SrvTest::loadConfigFile(const string& path) {
     CfgMgr::instance().clear();
@@ -2914,6 +2945,21 @@ Dhcpv4SrvTest::loadConfigFile(const string& path) {
             removeTlsParameters(host);
         }
     }
+    // Remove TLS parameters and authentication.
+    ConstElementPtr control_sockets = dhcp4->get("control-socket");
+    if (control_sockets) {
+        removeTlsParameters(control_sockets);
+        removeAuthFiles(control_sockets);
+    }
+    control_sockets = dhcp4->get("control-sockets");
+    if (control_sockets) {
+        for (int i = 0; i < control_sockets->size(); ++i) {
+            ConstElementPtr control_socket = control_sockets->get(i);
+            removeTlsParameters(control_socket);
+            removeAuthFiles(control_socket);
+        }
+    }
+
     ASSERT_NO_THROW(Dhcpv4SrvTest::configure(dhcp4->str(), true, true, true, true));
 
     LeaseMgrFactory::destroy();
