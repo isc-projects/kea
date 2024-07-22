@@ -76,7 +76,7 @@ D2Process::D2Process(const char* name, const asiolink::IOServicePtr& io_service)
 void
 D2Process::init() {
     using namespace isc::config;
-    // CommandMgr and HttpCommandMgr use IO service to run asynchronous socket operations.
+    // Command managers use IO service to run asynchronous socket operations.
     CommandMgr::instance().setIOService(getIOService());
     HttpCommandMgr::instance().setIOService(getIOService());
 
