@@ -63,7 +63,7 @@
            "socket-type": "http",
            "socket-address": "127.0.0.1",
            "socket-port": 8000,
-           
+
            // In authentication
            "authentication": {
                "comment": "basic HTTP authentication",

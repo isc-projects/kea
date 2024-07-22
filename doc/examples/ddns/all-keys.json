@@ -98,7 +98,7 @@
                     // This specifies an authorized client.
                     {
                         // The user id must not be empty or contain
-                        // the ':' character. It is a mandatoryparameter.
+                        // the ':' character. It is a mandatory parameter.
                         "user": "admin",
 
                         // If password is not specified an empty
