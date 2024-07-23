@@ -258,8 +258,8 @@ public:
     ///        placed.
     void sendHttpCommand(const string& command, string& response) {
         response = "";
-	IOServicePtr io_service = getIOService();
-	ASSERT_TRUE(io_service);
+        IOServicePtr io_service = getIOService();
+        ASSERT_TRUE(io_service);
         boost::scoped_ptr<TestHttpClient> client;
         client.reset(new TestHttpClient(io_service, SERVER_ADDRESS,
                                         SERVER_PORT));

@@ -998,6 +998,52 @@ TEST_F(TrailingCommasTest, tests) {
     testParser(txt, Parser6Context::PARSER_DHCP6, false);
 }
 
+/// @brief Tests control socket config conflicts.
+TEST(ParserTest, duplicateControlSocket) {
+    // Valid configuration.
+    string txt(R"({
+    "Dhcp6": {
+        "control-socket": {
+            "socket-type": "http",
+            "socket-address": "::1"
+        }
+     }
+})");
+    testParser(txt, Parser6Context::PARSER_DHCP6, false);
+
+    // Invalid configuration: both map and list.
+    string bad1(R"({
+    "Dhcp6": {
+        "control-socket": {
+            "socket-type": "http",
+            "socket-address": "::1"
+        },
+        "control-sockets": [ ]
+     }
+})");
+
+    ASSERT_NO_THROW(Element::fromJSON(bad1, true));
+    Parser6Context ctx1;
+    EXPECT_THROW(ctx1.parseString(bad1, Parser6Context::PARSER_DHCP6),
+                 Dhcp6ParseError);
+
+    // Invalid configuration: both name and address.
+    string bad2(R"({
+    "Dhcp6": {
+        "control-socket": {
+            "socket-type": "http",
+            "socket-address": "::1",
+            "socket-name": "127.0.0.1"
+        }
+     }
+})");
+
+    ASSERT_NO_THROW(Element::fromJSON(bad1, true));
+    Parser6Context ctx2;
+    EXPECT_THROW(ctx2.parseString(bad2, Parser6Context::PARSER_DHCP6),
+                 Dhcp6ParseError);
+}
+
 }  // namespace test
 }  // namespace dhcp
 }  // namespace isc

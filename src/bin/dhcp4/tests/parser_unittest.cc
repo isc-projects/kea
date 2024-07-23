@@ -1007,6 +1007,52 @@ TEST_F(TrailingCommasTest, tests) {
     testParser(txt, Parser4Context::PARSER_DHCP4, false);
 }
 
+/// @brief Tests control socket config conflicts.
+TEST(ParserTest, duplicateControlSocket) {
+    // Valid configuration.
+    string txt(R"({
+    "Dhcp4": {
+        "control-socket": {
+            "socket-type": "http",
+            "socket-address": "127.0.0.1"
+        }
+     }
+})");
+    testParser(txt, Parser4Context::PARSER_DHCP4, false);
+
+    // Invalid configuration: both map and list.
+    string bad1(R"({
+    "Dhcp4": {
+        "control-socket": {
+            "socket-type": "http",
+            "socket-address": "127.0.0.1"
+        },
+        "control-sockets": [ ]
+     }
+})");
+
+    ASSERT_NO_THROW(Element::fromJSON(bad1, true));
+    Parser4Context ctx1;
+    EXPECT_THROW(ctx1.parseString(bad1, Parser4Context::PARSER_DHCP4),
+                 Dhcp4ParseError);
+
+    // Invalid configuration: both name and address.
+    string bad2(R"({
+    "Dhcp4": {
+        "control-socket": {
+            "socket-type": "http",
+            "socket-address": "127.0.0.1",
+            "socket-name": "::1"
+        }
+     }
+})");
+
+    ASSERT_NO_THROW(Element::fromJSON(bad1, true));
+    Parser4Context ctx2;
+    EXPECT_THROW(ctx2.parseString(bad2, Parser4Context::PARSER_DHCP4),
+                 Dhcp4ParseError);
+}
+
 }  // namespace test
 }  // namespace dhcp
 }  // namespace isc

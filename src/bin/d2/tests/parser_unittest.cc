@@ -899,6 +899,52 @@ TEST_F(TrailingCommasTest, tests) {
     testParser(txt, D2ParserContext::PARSER_DHCPDDNS, false);
 }
 
+/// @brief Tests control socket config conflicts.
+TEST(ParserTest, duplicateControlSocket) {
+    // Valid configuration.
+    string txt(R"({
+    "DhcpDdns": {
+        "control-socket": {
+            "socket-type": "http",
+            "socket-address": "127.0.0.1"
+        }
+     }
+})");
+    testParser(txt, D2ParserContext::PARSER_DHCPDDNS, false);
+
+    // Invalid configuration: both map and list.
+    string bad1(R"({
+    "DhcpDdns": {
+        "control-socket": {
+            "socket-type": "http",
+            "socket-address": "127.0.0.1"
+        },
+        "control-sockets": [ ]
+     }
+})");
+
+    ASSERT_NO_THROW(Element::fromJSON(bad1, true));
+    D2ParserContext ctx1;
+    EXPECT_THROW(ctx1.parseString(bad1, D2ParserContext::PARSER_DHCPDDNS),
+                 D2ParseError);
+
+    // Invalid configuration: both name and address.
+    string bad2(R"({
+    "DhcpDdns": {
+        "control-socket": {
+            "socket-type": "http",
+            "socket-address": "127.0.0.1",
+            "socket-name": "::1"
+        }
+     }
+})");
+
+    ASSERT_NO_THROW(Element::fromJSON(bad1, true));
+    D2ParserContext ctx2;
+    EXPECT_THROW(ctx2.parseString(bad2, D2ParserContext::PARSER_DHCPDDNS),
+                 D2ParseError);
+}
+
 }  // namespace test
 }  // namespace d2
 }  // namespace isc
