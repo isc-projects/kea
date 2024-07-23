@@ -1,3 +1,10 @@
+2267.	[bug]		tmark
+	Corrected an issue in MySQL config back end that
+	causes preferred life time values to be overwritten
+	when updating client classes via remote-set-class6.
+	command.
+	(Gitlab #3469)
+
 2266.	[bug]		fdupont
 	Improved the code handling multiple instances of
 	the same v4 option according to RFC 3396.
