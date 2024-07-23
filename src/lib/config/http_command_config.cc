@@ -171,7 +171,7 @@ HttpCommandConfig::HttpCommandConfig(ConstElementPtr config)
         cert_required_ = cert_required->boolValue();
     }
 
-    // Check the TLS settup.
+    // Check the TLS setup.
     checkTlsSetup(socket_type_ == "https");
 
     // Get user context.

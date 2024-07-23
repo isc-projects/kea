@@ -102,7 +102,6 @@ HttpCommandMgrImpl::configure(HttpCommandConfigPtr config) {
     }
 
     // Last case: from no config, or address or port change.
-    /////
     current_config_ = config;
     IOAddress server_address = config->getSocketAddress();
     uint16_t server_port = config->getSocketPort();

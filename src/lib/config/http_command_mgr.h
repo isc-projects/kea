@@ -74,7 +74,7 @@ public:
     /// @brief Returns a const pointer to the HTTP listener.
     ///
     /// @return Const pointer to the currently used listener or null pointer if
-    /// we're not listening.
+    /// there is no listener.
     isc::http::ConstHttpListenerPtr getHttpListener() const;
 
 private:

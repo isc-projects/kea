@@ -146,7 +146,7 @@ public:
 
     /// @brief Returns emulate agent response flag.
     ///
-    /// @return True when responses for normal ommand outcomes are
+    /// @return True when responses for normal command outcomes are
     /// guaranteed to be wrapped in an Element::list. This emulates
     /// how kea-ctrl-agent forms responses. Defaults to true.
     bool getEmulateAgentResponse() const {

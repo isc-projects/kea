@@ -533,14 +533,14 @@ public:
 
     /// @brief Returns information about UNIX control socket
     ///
-    /// @return pointer to the Element that holds control-socket map
+    /// @return pointer to the UNIX control socket config
     const isc::data::ConstElementPtr getControlSocketInfo() const {
         return (unix_control_socket_);
     }
 
     /// @brief Sets information about the UNIX control socket
     ///
-    /// @param control_socket Element that holds control-socket map
+    /// @param control_socket UNIX control socket config
     void setControlSocketInfo(const isc::data::ConstElementPtr& control_socket) {
         unix_control_socket_ = control_socket;
     }
@@ -554,7 +554,7 @@ public:
 
     /// @brief Sets information about the HTTP/HTTPS control socket
     ///
-    /// @param control_socket HTTP/HTTPScontrol socket config
+    /// @param control_socket HTTP/HTTPS control socket config
     void setHttpControlSocketInfo(const isc::config::HttpCommandConfigPtr& control_socket) {
         http_control_socket_ = control_socket;
     }
@@ -1191,7 +1191,7 @@ private:
     /// DHCPv6.
     CfgHostOperationsPtr cfg_host_operations6_;
 
-    /// @brief Pointer to the UNIX control-socket information
+    /// @brief Pointer to the UNIX control socket configuration
     isc::data::ConstElementPtr unix_control_socket_;
 
     /// @brief Pointer to the HTTP/HTTPS control socket configuration

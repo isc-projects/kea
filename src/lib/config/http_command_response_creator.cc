@@ -32,7 +32,7 @@ struct HttpCommandHooks {
 
     /// Constructor that registers hook points.
     HttpCommandHooks() {
-        hook_index_http_auth_  = HooksManager::registerHook("http_auth");
+        hook_index_http_auth_ = HooksManager::registerHook("http_auth");
         hook_index_http_response_ = HooksManager::registerHook("http_response");
     }
 };
@@ -156,7 +156,7 @@ HttpCommandResponseCreator::createDynamicHttpResponse(HttpRequestPtr request) {
         return (createStockHttpResponse(request, HttpStatusCode::INTERNAL_SERVER_ERROR));
     }
 
-    // Normal Responses coming from the Kea Control Agent must always be wrapped in
+    // Normal Responses coming from the Kea server must always be wrapped in
     // a list as they may contain responses from multiple daemons.
     // If we're emulating that for backward compatibility, then we need to wrap
     // the answer in a list if it isn't in one already.
