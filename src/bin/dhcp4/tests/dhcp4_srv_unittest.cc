@@ -2945,18 +2945,15 @@ Dhcpv4SrvTest::loadConfigFile(const string& path) {
             removeTlsParameters(host);
         }
     }
-    // Remove TLS parameters and authentication.
+    // Remove authentication clients using files.
     ConstElementPtr control_sockets = dhcp4->get("control-socket");
     if (control_sockets) {
-        removeTlsParameters(control_sockets);
         removeAuthFiles(control_sockets);
     }
     control_sockets = dhcp4->get("control-sockets");
     if (control_sockets) {
         for (int i = 0; i < control_sockets->size(); ++i) {
-            ConstElementPtr control_socket = control_sockets->get(i);
-            removeTlsParameters(control_socket);
-            removeAuthFiles(control_socket);
+            removeAuthFiles(control_sockets->get(i));
         }
     }
 

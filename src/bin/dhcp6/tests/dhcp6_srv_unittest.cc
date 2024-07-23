@@ -309,18 +309,15 @@ Dhcpv6SrvTest::loadConfigFile(const string& path) {
             removeTlsParameters(host);
         }
     }
-    // Remove TLS parameters and authentication.
+    // Remove authentication clients using files.
     ConstElementPtr control_sockets = dhcp6->get("control-socket");
     if (control_sockets) {
-        removeTlsParameters(control_sockets);
         removeAuthFiles(control_sockets);
     }
     control_sockets = dhcp6->get("control-sockets");
     if (control_sockets) {
         for (int i = 0; i < control_sockets->size(); ++i) {
-            ConstElementPtr control_socket = control_sockets->get(i);
-            removeTlsParameters(control_socket);
-            removeAuthFiles(control_socket);
+            removeAuthFiles(control_sockets->get(i));
         }
     }
 
@@ -4040,7 +4037,7 @@ TEST_F(Dhcpv6SrvTest, generateFqdnUpdate) {
 
     // check that an IA_NA with an iaaddr was returned for the requested
     // address with lifetimes > 0.
-    boost::shared_ptr<Option6IAAddr> iaaddr = checkIA_NA(reply, 234, 1000, 2000); 
+    boost::shared_ptr<Option6IAAddr> iaaddr = checkIA_NA(reply, 234, 1000, 2000);
     ASSERT_TRUE(iaaddr);
     EXPECT_EQ(addr, iaaddr->getAddress());
     EXPECT_EQ(3000, iaaddr->getPreferred());
