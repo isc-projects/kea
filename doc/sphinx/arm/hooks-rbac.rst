@@ -1,15 +1,15 @@
-.. ischooklib:: libca_rbac.so
+.. ischooklib:: libdhcp_rbac.so
 .. _hooks-RBAC:
 
-``libca_rbac.so``: Role-Based Access Control
-============================================
+``libdhcp_rbac.so``: Role-Based Access Control
+==============================================
 
 .. _hooks-RBAC-overview:
 
 Role-Based Access Control (RBAC) Overview
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Before the processing of commands in received HTTP requests, :ischooklib:`libca_rbac.so`
+Before the processing of commands in received HTTP requests, :ischooklib:`libdhcp_rbac.so`
 takes specific parameters, e.g. the common-name part of the client
 certificate subject name, to assign a role to the request.
 The configuration associated with this role is used to accept or reject
@@ -33,9 +33,16 @@ Here is a summary of the steps in processing a response:
 
 .. note::
 
-    :ischooklib:`libca_rbac.so` is available only to ISC customers with
+    :ischooklib:`libdhcp_rbac.so` is available only to ISC customers with
     a paid support contract. For more information on subscription options,
     please complete the form at https://www.isc.org/contact.
+
+
+.. note::
+
+    Since Kea 1.7.x the RBAC is no longer limited to teh Control Agent:
+    it can be used by any other server supporting HTTP/HTTPS control
+    sockets e.g. DHCPv4, DHCPv6 and DDNS servers.
 
 .. _hooks-RBAC-config:
 
@@ -106,12 +113,12 @@ API Commands
 
 All commands of the REST API are described in files in the source directory
 ``src/share/api``, or in installed Kea
-in ``.../share/kea/api``. :ischooklib:`libca_rbac.so` reads these files to take the name,
+in ``.../share/kea/api``. :ischooklib:`libdhcp_rbac.so` reads these files to take the name,
 the access right (i.e. ``read`` or ``write``), and the hook name. The access right
-can be modified in the file but changes are only applied after the Control Agent
-restarts. Removing command definitions from ``.../share/kea/api`` has
+can be modified in the file but changes are only applied after the server or
+agent restarts. Removing command definitions from ``.../share/kea/api`` has
 consequences: if the access control list is based on ``read`` or ``write`` and
-the definition file is missing, the Control Agent always rejects such
+the definition file is missing, the server or agent always rejects such
 a command. If the access controls list is using ``commands`` to specify the
 name of a command and the definition file from ``.../share/kea/api`` of this
 particular command is missing, the Control Agent logs an error on startup
@@ -261,7 +268,7 @@ in the Kea source and is copied below.
         // Add hooks here.
         "hooks-libraries": [
         {
-            "library": "/opt/lib/libca_rbac.so",
+            "library": "/opt/lib/libdhcp_rbac.so",
             "parameters": {
                 // This section configures the RBAC hook library.
                 // Mandatory parameters.

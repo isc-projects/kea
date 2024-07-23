@@ -164,7 +164,7 @@ libraries), or hook libraries (open source or premium).
    |                                  |                                       | parsing, and sending           |
    |                                  |                                       | HTTP messages.                 |
    +----------------------------------+---------------------------------------+--------------------------------+
-   | ``kea-ctrl-agent.rbac-hooks``    | :ischooklib:`libca_rbac.so`           | Used to log messages related   |
+   | ``kea-ctrl-agent.rbac-hooks``    | :ischooklib:`libdhcp_rbac.so`         | Used to log messages related   |
    |                                  | enterprise hook library               | to the operation of the RBAC   |
    |                                  |                                       | hook library.                  |
    +----------------------------------+---------------------------------------+--------------------------------+
