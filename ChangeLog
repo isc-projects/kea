@@ -1,3 +1,8 @@
+2251.	[build]		razvan
+	The library version numbers have been bumped up for the Kea 2.6.1
+	stable release.
+	(Gitlab #3507)
+
 2250.	[bug]		tmark
 	Corrected an issue with overlapping enum values
 	for option definition data type.  This was causing
