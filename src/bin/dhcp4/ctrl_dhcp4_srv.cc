@@ -1086,7 +1086,7 @@ ControlledDhcpv4Srv::ControlledDhcpv4Srv(uint16_t server_port /*= DHCP4_SERVER_P
     HttpCommandMgr::instance().setIOService(getIOService());
 
     // Set the HTTP authentication default realm.
-    HttpCommandConfig::DefaultAuthenticationRealm = "kea-dhcpv4-server";
+    HttpCommandConfig::DEFAULT_AUTHENTICATION_REALM = "kea-dhcpv4-server";
 
     // DatabaseConnection uses IO service to run asynchronous timers.
     DatabaseConnection::setIOService(getIOService());

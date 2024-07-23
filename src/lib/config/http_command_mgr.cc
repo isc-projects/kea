@@ -85,16 +85,16 @@ HttpCommandMgrImpl::configure(HttpCommandConfigPtr config) {
     if (config && current_config_ &&
         (config->getSocketAddress() == current_config_->getSocketAddress()) &&
         (config->getSocketPort() == current_config_->getSocketPort())) {
-        // Overwrite the authentication setup in the response creator config.
-        current_config_->setAuthConfig(config->getAuthConfig());
-        // Overwrite the emulation flag in the response creator config.
-        current_config_->setEmulateAgentResponse(config->getEmulateAgentResponse());
         // Check if TLS setup changed.
         if ((config->getTrustAnchor() != current_config_->getTrustAnchor()) ||
             (config->getCertFile() != current_config_->getCertFile()) ||
             (config->getKeyFile() != current_config_->getKeyFile()) ||
             (config->getCertRequired() != current_config_->getCertRequired())) {
             LOG_WARN(command_logger, HTTP_COMMAND_MGR_IGNORED_TLS_SETUP_CHANGES);
+            // Overwrite the authentication setup and the emulation flag
+            //in the response creator config.
+            current_config_->setAuthConfig(config->getAuthConfig());
+            current_config_->setEmulateAgentResponse(config->getEmulateAgentResponse());
         } else {
             current_config_ = config;
         }

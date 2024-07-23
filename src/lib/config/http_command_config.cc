@@ -22,15 +22,15 @@ using namespace std;
 namespace isc {
 namespace config {
 
-IOAddress HttpCommandConfig::DefaultSocketAddress = IOAddress("127.0.0.1");
+IOAddress HttpCommandConfig::DEFAULT_SOCKET_ADDRESS = IOAddress("127.0.0.1");
 
-uint16_t HttpCommandConfig::DefaultSocketPort = 8000;
+uint16_t HttpCommandConfig::DEFAULT_SOCKET_PORT = 8000;
 
-string HttpCommandConfig::DefaultAuthenticationRealm = "";
+string HttpCommandConfig::DEFAULT_AUTHENTICATION_REALM = "";
 
 HttpCommandConfig::HttpCommandConfig(ConstElementPtr config)
-    : socket_type_("http"), socket_address_(DefaultSocketAddress),
-      socket_port_(DefaultSocketPort), auth_config_(),
+    : socket_type_("http"), socket_address_(DEFAULT_SOCKET_ADDRESS),
+      socket_port_(DEFAULT_SOCKET_PORT), auth_config_(),
       trust_anchor_(""), cert_file_(""), key_file_(""), cert_required_(true),
       emulate_agent_response_(true) {
     if (config->getType() != Element::map) {
@@ -119,7 +119,7 @@ HttpCommandConfig::HttpCommandConfig(ConstElementPtr config)
         ConstElementPtr realm = auth_config->get("realm");
         if (!realm) {
             mutable_auth_config->set("realm",
-                Element::create(DefaultAuthenticationRealm));
+                Element::create(DEFAULT_AUTHENTICATION_REALM));
         }
 
         BasicHttpAuthConfigPtr auth(new BasicHttpAuthConfig());

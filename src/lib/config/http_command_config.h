@@ -166,13 +166,13 @@ public:
     virtual isc::data::ElementPtr toElement() const;
 
     /// @brief Default socket address (127.0.0.1).
-    static isc::asiolink::IOAddress DefaultSocketAddress;
+    static isc::asiolink::IOAddress DEFAULT_SOCKET_ADDRESS;
 
     /// @brief Default socket port.
-    static uint16_t DefaultSocketPort;
+    static uint16_t DEFAULT_SOCKET_PORT;
 
     /// @brief Default HTTP authentication realm.
-    static std::string DefaultAuthenticationRealm;
+    static std::string DEFAULT_AUTHENTICATION_REALM;
 
 private:
     /// @brief Check TLS configuration.

@@ -27,16 +27,16 @@ class HttpCommandConfigTest : public ::testing::Test {
 public:
     /// @brief Constructor.
     HttpCommandConfigTest() : http_config_() {
-        HttpCommandConfig::DefaultSocketAddress = IOAddress("127.0.0.1");
-        HttpCommandConfig::DefaultSocketPort = 8000;
-        HttpCommandConfig::DefaultAuthenticationRealm = "";
+        HttpCommandConfig::DEFAULT_SOCKET_ADDRESS = IOAddress("127.0.0.1");
+        HttpCommandConfig::DEFAULT_SOCKET_PORT = 8000;
+        HttpCommandConfig::DEFAULT_AUTHENTICATION_REALM = "";
     }
 
     /// @brief Destructor.
     ~HttpCommandConfigTest() {
-        HttpCommandConfig::DefaultSocketAddress = IOAddress("127.0.0.1");
-        HttpCommandConfig::DefaultSocketPort = 8000;
-        HttpCommandConfig::DefaultAuthenticationRealm = "";
+        HttpCommandConfig::DEFAULT_SOCKET_ADDRESS = IOAddress("127.0.0.1");
+        HttpCommandConfig::DEFAULT_SOCKET_PORT = 8000;
+        HttpCommandConfig::DEFAULT_AUTHENTICATION_REALM = "";
     }
 
     /// @brief HTTP control socket configuration.
@@ -70,8 +70,8 @@ TEST_F(HttpCommandConfigTest, default) {
     runToElementTest(expected, *http_config_);
 
     // Change class defaults.
-    HttpCommandConfig::DefaultSocketAddress = IOAddress("::1");
-    HttpCommandConfig::DefaultSocketPort = 8080;
+    HttpCommandConfig::DEFAULT_SOCKET_ADDRESS = IOAddress("::1");
+    HttpCommandConfig::DEFAULT_SOCKET_PORT = 8080;
     ASSERT_NO_THROW_LOG(http_config_.reset(new HttpCommandConfig(json)));
     EXPECT_EQ("::1", http_config_->getSocketAddress().toText());
     EXPECT_EQ(8080, http_config_->getSocketPort());
@@ -250,7 +250,7 @@ TEST_F(HttpCommandConfigTest, authentication) {
     ASSERT_TRUE(auth);
 
     // Verify that default realm is applied.
-    HttpCommandConfig::DefaultAuthenticationRealm = "FOO";
+    HttpCommandConfig::DEFAULT_AUTHENTICATION_REALM = "FOO";
     ASSERT_NO_THROW(json = Element::fromJSON(config));
     ASSERT_NO_THROW(http_config_.reset(new HttpCommandConfig(json)));
     auth_config = http_config_->getAuthConfig();
