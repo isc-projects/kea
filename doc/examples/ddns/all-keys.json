@@ -52,8 +52,7 @@
             "socket-type": "https",
 
             // Address of the HTTPS socket the Kea DHCP-DDNS server should
-            // listen for incoming queries. In fact an alias of
-            // socket-name.
+            // listen for incoming queries.
             "socket-address": "127.0.0.1",
 
             // Port of the HTTPS socket the Kea DHCP-DDNS server

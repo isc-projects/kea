@@ -92,7 +92,7 @@ HttpCommandMgrImpl::configure(HttpCommandConfigPtr config) {
             (config->getCertRequired() != current_config_->getCertRequired())) {
             LOG_WARN(command_logger, HTTP_COMMAND_MGR_IGNORED_TLS_SETUP_CHANGES);
             // Overwrite the authentication setup and the emulation flag
-            //in the response creator config.
+            // in the response creator config.
             current_config_->setAuthConfig(config->getAuthConfig());
             current_config_->setEmulateAgentResponse(config->getEmulateAgentResponse());
         } else {

@@ -102,16 +102,9 @@ TEST_F(HttpCommandConfigTest, errors) {
             "unsupported 'socket-type' 'unix' not 'http' or 'https'"
         },
         {
-            "both socket-name and socket-address",
-            R"( { "socket-name": "::1", "socket-address": "::1" } )",
-            "specify both 'socket-name' and 'socket-address' "
-            "is forbidden"
-        },
-        {
-            "bad socket-name type",
-            R"( { "socket-name": 8000 } )",
-            "invalid type specified for parameter 'socket-name' "
-            "(<string>:1:19)"
+            "unsupported socket-name",
+            R"( { "socket-name": "::1" } )",
+            "parameter 'socket-name' is not supported by HTTP control sockets"
         },
         {
             "bad socket-address type",

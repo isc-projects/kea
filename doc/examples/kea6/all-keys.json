@@ -111,8 +111,7 @@
                 "socket-type": "https",
 
                 // Address of the HTTPS socket the Kea DHCPv6 server should
-                // listen for incoming queries. In fact an alias of
-                // socket-name.
+                // listen for incoming queries.
                 "socket-address": "::1",
 
                 // Port of the HTTPS socket the Kea DHCPv6 server

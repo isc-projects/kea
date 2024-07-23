@@ -844,6 +844,7 @@ control_socket_type_value:
 
 control_socket_name: SOCKET_NAME {
     ctx.unique("socket-name", ctx.loc2pos(@1));
+    ctx.unique("socket-address", ctx.loc2pos(@1));
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     ElementPtr name(new StringElement($4, ctx.loc2pos(@4)));
@@ -853,6 +854,7 @@ control_socket_name: SOCKET_NAME {
 
 control_socket_address: SOCKET_ADDRESS {
     ctx.unique("socket-address", ctx.loc2pos(@1));
+    ctx.unique("socket-name", ctx.loc2pos(@1));
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     ElementPtr address(new StringElement($4, ctx.loc2pos(@4)));

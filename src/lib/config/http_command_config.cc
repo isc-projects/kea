@@ -51,24 +51,18 @@ HttpCommandConfig::HttpCommandConfig(ConstElementPtr config)
                       << socket_type_ << "' not 'http' or 'https'");
         }
     }
-
-    // Get socket address.
-    ConstElementPtr socket_name = config->get("socket-name");
-    ConstElementPtr socket_address = config->get("socket-address");
-    if (socket_name) {
-        // socket-name is an alias of socket-address.
-        if (socket_address) {
-            isc_throw(DhcpConfigError,
-                      "specify both 'socket-name' and 'socket-address' "
-                      "is forbidden");
-        }
-        socket_address = socket_name;
+    // Reject UNIX only socket-name.
+    if (config->contains("socket-name")) {
+        isc_throw(DhcpConfigError,
+                  "parameter 'socket-name' is not supported by HTTP "
+                  "control sockets");
     }
+    // Get socket address.
+    ConstElementPtr socket_address = config->get("socket-address");
     if (socket_address) {
         if (socket_address->getType() != Element::string) {
             isc_throw(DhcpConfigError,
-                      "invalid type specified for parameter 'socket-"
-                      << (socket_name ? "name" : "address") << "' ("
+                      "invalid type specified for parameter 'socket-address' ("
                       << socket_address->getPosition() << ")");
         }
         try {
