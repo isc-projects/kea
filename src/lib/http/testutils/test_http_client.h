@@ -166,9 +166,10 @@ public:
             }
 
             // Remove the part of the request which has been sent.
-            if (bytes_transferred > 0 && (request.size() <= bytes_transferred)) {
-                request.erase(0, bytes_transferred);
+            if (bytes_transferred >= request.size()) {
+                bytes_transferred = request.size();
             }
+            request.erase(0, bytes_transferred);
 
             // Continue sending request data if there are still some data to be
             // sent.
@@ -212,9 +213,11 @@ public:
                                  buf_.data() + bytes_transferred);
             }
 
-            // Two consecutive new lines end the part of the response we're
-            // expecting.
-            if (response_.find("\r\n\r\n", 0) != std::string::npos) {
+            // Two consecutive new lines end headers, " } ]" sequence
+            // end large response we're expecting.
+            if ((response_.find("\r\n\r\n", 0) != std::string::npos) &&
+                ((response_.size() < 1000) ||
+                 (response_.rfind(" } ]") == (response_.size() - 4)))) {
                 receive_done_ = true;
                 io_service_->stop();
             } else {
@@ -430,9 +433,10 @@ public:
             }
 
             // Remove the part of the request which has been sent.
-            if (bytes_transferred > 0 && (request.size() <= bytes_transferred)) {
-                request.erase(0, bytes_transferred);
+            if (bytes_transferred >= request.size()) {
+                bytes_transferred = request.size();
             }
+            request.erase(0, bytes_transferred);
 
             // Continue sending request data if there are still some data to be
             // sent.
@@ -476,9 +480,11 @@ public:
                                  buf_.data() + bytes_transferred);
             }
 
-            // Two consecutive new lines end the part of the response we're
-            // expecting.
-            if (response_.find("\r\n\r\n", 0) != std::string::npos) {
+            // Two consecutive new lines end headers, " } ]" sequence
+            // end large response we're expecting.
+            if ((response_.find("\r\n\r\n", 0) != std::string::npos) &&
+                ((response_.size() < 1000) ||
+                 (response_.rfind(" } ]") == (response_.size() - 4)))) {
                 receive_done_ = true;
                 io_service_->stop();
             } else {
