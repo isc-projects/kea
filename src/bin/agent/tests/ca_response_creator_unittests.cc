@@ -389,15 +389,16 @@ TEST_F(CtrlAgentResponseCreatorTest, hookBasicAuth) {
 
     // Body: "list-commands" is natively supported by the command manager.
     // We add a random value in the extra entry:
-    //  - this proves that the auth callout can get the request argument
-    //  - this proves that the auth callout can modify the request argument
-    //    before the request is executed (the extra entry if still present
-    //    would make the command to be rejected as malformed)
-    //  - this proves that a value can be communicate between the auth
-    //    and response callout points
-    //  - this proves that the response callout can get the response argument
-    //  - this proves that the response callout can modify the response
-    //    argument
+    //  - this proves that the http_auth callout can get the request argument
+    //  - this proves that the http_auth callout can modify the request
+    //    argument before the request is executed (the extra entry
+    //    if still present would make the command to be rejected as malformed)
+    //  - this proves that a value can be communicate between the http_auth
+    //    and http_response callout points
+    //  - this proves that the http_response callout can get the
+    //    response argument
+    //  - this proves that the http_response callout can modify the
+    //    response argument
     auto r32 = isc::cryptolink::random(4);
     ASSERT_EQ(4, r32.size());
     int extra = r32[0];

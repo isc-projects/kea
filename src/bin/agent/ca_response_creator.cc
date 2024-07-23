@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -28,13 +28,13 @@ namespace {
 
 /// Structure that holds registered hook indexes.
 struct CtrlAgentHooks {
-    int hook_index_auth_;     ///< index of "auth" hook point.
-    int hook_index_response_; ///< index of "response" hook point.
+    int hook_index_http_auth_;     ///< index of "http_auth" hook point.
+    int hook_index_http_response_; ///< index of "http_response" hook point.
 
     /// Constructor that registers hook points.
     CtrlAgentHooks() {
-        hook_index_auth_ = HooksManager::registerHook("auth");
-        hook_index_response_ = HooksManager::registerHook("response");
+        hook_index_http_auth_ = HooksManager::registerHook("http_auth");
+        hook_index_http_response_ = HooksManager::registerHook("http_response");
     }
 };
 
@@ -116,9 +116,9 @@ createDynamicHttpResponse(HttpRequestPtr request) {
         }
     }
 
-    // Callout point for "auth".
+    // Callout point for "http_auth".
     bool reset_handle = false;
-    if (HooksManager::calloutsPresent(Hooks.hook_index_auth_)) {
+    if (HooksManager::calloutsPresent(Hooks.hook_index_http_auth_)) {
         // Get callout handle.
         CalloutHandlePtr callout_handle = request->getCalloutHandle();
         ScopedCalloutHandleState callout_handle_state(callout_handle);
@@ -128,7 +128,8 @@ createDynamicHttpResponse(HttpRequestPtr request) {
         callout_handle->setArgument("response", http_response);
 
         // Call callouts.
-        HooksManager::callCallouts(Hooks.hook_index_auth_, *callout_handle);
+        HooksManager::callCallouts(Hooks.hook_index_http_auth_,
+                                   *callout_handle);
         callout_handle->getArgument("request", request);
         callout_handle->getArgument("response", http_response);
 
@@ -180,8 +181,8 @@ createDynamicHttpResponse(HttpRequestPtr request) {
     http_response->setBodyAsJson(response);
     http_response->finalize();
 
-    // Callout point for "response".
-    if (HooksManager::calloutsPresent(Hooks.hook_index_response_)) {
+    // Callout point for "http_response".
+    if (HooksManager::calloutsPresent(Hooks.hook_index_http_response_)) {
         // Get callout handle.
         CalloutHandlePtr callout_handle = request->getCalloutHandle();
         ScopedCalloutHandleState callout_handle_state(callout_handle);
@@ -191,7 +192,7 @@ createDynamicHttpResponse(HttpRequestPtr request) {
         callout_handle->setArgument("response", http_response);
 
         // Call callouts.
-        HooksManager::callCallouts(Hooks.hook_index_response_,
+        HooksManager::callCallouts(Hooks.hook_index_http_response_,
                                    *callout_handle);
         callout_handle->getArgument("response", http_response);
 

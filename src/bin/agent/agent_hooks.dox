@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -23,7 +23,7 @@ command.
 
 @section agentHooksHookPoints Hooks in the Control Agent
 
- @subsection agentHooksAuth auth
+ @subsection agentHooksAuth http_auth
 
  - @b Arguments:
    - name: @b request, type: isc::http::HttpRequestPtr, direction: <b>in/out</b>
@@ -39,7 +39,7 @@ command.
    response is set the processing will stop and the response is returned.
    In particular the command is not forwarded.
 
- @subsection agentHooksResponse response
+ @subsection agentHooksResponse http_response
 
  - @b Arguments:
    - name: @b request, type: isc::http::HttpRequestPtr, direction: <b>in</b>
