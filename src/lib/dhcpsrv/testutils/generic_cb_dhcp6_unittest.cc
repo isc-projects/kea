@@ -4271,6 +4271,9 @@ GenericConfigBackendDHCPv6Test::getClientClass6Test() {
     EXPECT_EQ(30, client_class->getValid().getMin());
     EXPECT_EQ(60, client_class->getValid().get());
     EXPECT_EQ(90, client_class->getValid().getMax());
+    EXPECT_EQ(25, client_class->getPreferred().getMin());
+    EXPECT_EQ(55, client_class->getPreferred().get());
+    EXPECT_EQ(85, client_class->getPreferred().getMax());
 
     // Validate options belonging to this class.
     ASSERT_TRUE(client_class->getCfgOption());
@@ -4338,6 +4341,14 @@ GenericConfigBackendDHCPv6Test::createUpdateClientClass6OptionsTest() {
     ASSERT_NO_THROW_LOG(client_class = cbptr_->getClientClass6(ServerSelector::ALL(), class1->getName()));
     ASSERT_TRUE(client_class);
 
+    // Verify lifetime values.
+    EXPECT_EQ(30, client_class->getValid().getMin());
+    EXPECT_EQ(60, client_class->getValid().get());
+    EXPECT_EQ(90, client_class->getValid().getMax());
+    EXPECT_EQ(25, client_class->getPreferred().getMin());
+    EXPECT_EQ(55, client_class->getPreferred().get());
+    EXPECT_EQ(85, client_class->getPreferred().getMax());
+
     // Validate options belonging to the class.
     ASSERT_TRUE(client_class->getCfgOption());
     OptionDescriptor returned_opt_new_posix_timezone =
@@ -4382,6 +4393,14 @@ GenericConfigBackendDHCPv6Test::createUpdateClientClass6OptionsTest() {
     ASSERT_NO_THROW_LOG(cbptr_->createUpdateClientClass6(ServerSelector::ALL(), class1, ""));
     ASSERT_NO_THROW_LOG(client_class = cbptr_->getClientClass6(ServerSelector::ALL(), class1->getName()));
     ASSERT_TRUE(client_class);
+
+    // Re-check lifetime values. This ensure bindings line up.
+    EXPECT_EQ(30, client_class->getValid().getMin());
+    EXPECT_EQ(60, client_class->getValid().get());
+    EXPECT_EQ(90, client_class->getValid().getMax());
+    EXPECT_EQ(25, client_class->getPreferred().getMin());
+    EXPECT_EQ(55, client_class->getPreferred().get());
+    EXPECT_EQ(85, client_class->getPreferred().getMax());
 
     // Ensure that the first option definition is gone.
     ASSERT_TRUE(client_class->getCfgOptionDef());

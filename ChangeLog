@@ -1,3 +1,10 @@
+2252.	[bug]		tmark, razvan
+	Corrected an issue in MySQL config back end that
+	causes preferred life time values to be overwritten
+	when updating client classes via remote-set-class6.
+	command.
+	(Gitlab #3509, #3469)
+
 2251.	[build]		razvan
 	The library version numbers have been bumped up for the Kea 2.6.1
 	stable release.
@@ -17,6 +24,7 @@
 	sometimes not returned when they were specified at the subnet,
 	shared network or client class level.
 	(Gitlab #3485)
+
 2248.	[bug]		razvan
 	Fixed a file descriptor leak in the High Availability hook
 	library.

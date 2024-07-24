@@ -3118,7 +3118,7 @@ public:
                 // If position is not specified, leave the class at the same position.
                 // Remove the binding which specifies the position and use different
                 // query.
-                in_bindings.erase(in_bindings.begin() + 10, in_bindings.begin() + 11);
+                in_bindings.erase(in_bindings.begin() + 7, in_bindings.begin() + 8);
                 conn_.updateDeleteQuery(MySqlConfigBackendDHCPv6Impl::UPDATE_CLIENT_CLASS6_SAME_POSITION,
                                         in_bindings);
             } else {
