@@ -1,3 +1,5 @@
+Kea 2.6.1 (stable) released on July 31, 2024
+
 2252.	[bug]		tmark, razvan
 	Corrected an issue in MySQL config back end that
 	causes preferred life time values to be overwritten
