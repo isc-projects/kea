@@ -1,3 +1,8 @@
+2268.	[build]		ravan
+	The library version numbers have been bumped up for the Kea 2.7.1
+	development release.
+	(Gitlab #3515)
+
 2267.	[bug]		tmark
 	Corrected an issue in MySQL config back end that
 	causes preferred life time values to be overwritten
