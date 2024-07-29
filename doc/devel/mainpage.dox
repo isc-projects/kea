@@ -146,6 +146,7 @@
  *
  * @section miscellaneousTopics Miscellaneous Topics
  * - @subpage terminology
+ * - @subpage changelog
  * - @subpage parser
  * - @subpage logKeaLogging
  *   - @subpage logBasicIdeas
