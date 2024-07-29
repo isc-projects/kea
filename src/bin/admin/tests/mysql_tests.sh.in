@@ -864,7 +864,7 @@ mysql_upgrade_test() {
 
     # Verify that the upgraded schema reports the latest version.
     version=$("${kea_admin}" db-version mysql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}")
-    assert_str_eq "24.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
+    assert_str_eq "25.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
 
     # Let's check that the new tables are indeed there.
 
@@ -3375,8 +3375,8 @@ mysql_migrate_opt_record_type() {
     qry="select count(*) from dhcp6_option_def;"
     run_statement "#get 6_option_def_count before update" "$qry" 3
 
-    # Upgrade to schema 24.0
-    mysql_upgrade_schema_to_version 24.0
+    # Upgrade to schema 25.0
+    mysql_upgrade_schema_to_version 25.0
 
     # Verify the migrated records.
     qry="select type from dhcp4_option_def where name = 'foo';"
@@ -3438,8 +3438,8 @@ mysql_remove_control_socket_parameters_test() {
     qry="select count(*) from dhcp6_global_parameter where name like '%control-socket%';"
     run_statement "#get 6_global parameter count before update" "$qry" 2
 
-    # Upgrade to schema 24.0
-    mysql_upgrade_schema_to_version 24.0
+    # Upgrade to schema 25.0
+    mysql_upgrade_schema_to_version 25.0
 
     # Verify the record have been removed.
     qry="select count(*) from dhcp4_global_parameter where name like '%control-socket%';"
