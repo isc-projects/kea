@@ -34,7 +34,7 @@ ISC makes every effort to fix bugs on these platforms, but may be unable to
 do so quickly due to lack of hardware, less familiarity on the part of
 engineering staff, and other constraints.
 
-* macOS — 11, 12, 13
+* macOS — 13, 14
 
 Community-Maintained
 --------------------
