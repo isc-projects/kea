@@ -726,7 +726,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, configSet) {
     EXPECT_FALSE(fileExists(socket_path_));
 
     // With no command channel, should still receive the response.
-    // The config contains random socket name socket name
+    // The config contains random socket name
     // (/tmp/kea-<value-changing-each-time>/kea6.sock), so the hash will
     // be different each time. As such, we can do simplified checks:
     // - verify the "result": 0 is there

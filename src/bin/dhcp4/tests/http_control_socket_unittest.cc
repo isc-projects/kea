@@ -263,7 +263,7 @@ public:
     /// @param response_str a string containing the whole HTTP
     /// response received.
     ///
-    /// @return An HttpResponse constructed from parsing the response string.
+    /// @return An HttpResponse constructed by parsing the response string.
     HttpResponsePtr parseResponse(const std::string response_str) {
         HttpResponsePtr hr(new HttpResponse());
         HttpResponseParser parser(*hr);
@@ -299,8 +299,8 @@ public:
         ASSERT_TRUE(client);
 
         // Send the command. This will trigger server's handler which receives
-        // data over the HTTP socket. The server will start sending
-        // response to the client.
+        // data over the HTTP socket. The server will start sending response
+        // to the client.
         ASSERT_NO_THROW(client->startRequest(buildPostStr(command)));
         runIOService();
         ASSERT_TRUE(client->receiveDone());

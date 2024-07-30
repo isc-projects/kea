@@ -811,9 +811,10 @@ TEST_F(CtrlChannelDhcpv4SrvTest, configSet) {
     // Verify the control channel socket no longer exists.
     EXPECT_FALSE(fileExists(socket_path_));
 
-    // With no command channel, should still receive the response. The config contains random
-    // socket name (/tmp/kea-<value-changing-each-time>/kea4.sock), so the
-    // hash will be different each time. As such, we can do simplified checks:
+    // With no command channel, should still receive the response.
+    // The config contains random socket name
+    // (/tmp/kea-<value-changing-each-time>/kea4.sock), so the hash will
+    // be different each time. As such, we can do simplified checks:
     // - verify the "result": 0 is there
     // - verify the "text": "Configuration successful." is there
     EXPECT_NE(response.find("\"result\": 0"), std::string::npos);
@@ -868,7 +869,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, configHashGet) {
     int status;
     ConstElementPtr args = parseAnswer(status, rsp);
     EXPECT_EQ(CONTROL_RESULT_SUCCESS, status);
-    // the parseAnswer is trying to be smart with ignoring hash.
+    // The parseAnswer is trying to be smart with ignoring hash.
     // But this time we really want to see the hash, so we'll retrieve
     // the arguments manually.
     args = rsp->get(CONTROL_ARGUMENTS);
