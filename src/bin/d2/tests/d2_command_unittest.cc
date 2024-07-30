@@ -225,11 +225,11 @@ public:
     /// If successful, it then sends the given command and retrieves the
     /// server's response.  Note that it polls the server's I/O service
     /// where needed to cause the server to process IO events on
-    /// the control channel sockets
+    /// the control channel sockets.
     ///
     /// @param command the command text to execute in JSON form
     /// @param response variable into which the received response should be
-    ///        placed.
+    /// placed.
     void sendUnixCommand(const string& command, string& response) {
         response = "";
         boost::scoped_ptr<UnixControlClient> client;

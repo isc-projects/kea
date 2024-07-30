@@ -405,12 +405,13 @@ public:
         EXPECT_EQ(1, cnt) << "Command " << command << " not found";
     }
 
-    /// @brief Check if the answer for write-config command is correct.
+    /// @brief Check if the answer for config-write command is correct.
     ///
-    /// @param response_txt response in text form (as read from the control socket)
+    /// @param response_txt response in text form (as read from
+    /// the control socket)
     /// @param exp_status expected status (0 success, 1 failure)
     /// @param exp_txt for success cases this defines the expected filename,
-    ///                for failure cases this defines the expected error message
+    /// for failure cases this defines the expected error message.
     void checkConfigWrite(const std::string& response_txt, int exp_status,
                           const std::string& exp_txt = "") {
 
@@ -619,7 +620,7 @@ TEST_F(HttpCtrlChannelDhcpv4Test, controlChannelStats) {
     EXPECT_EQ("[ { \"result\": 1, \"text\": \"No 'bogus' statistic found\" } ]",
               response);
 
-    // Check statistic-remove-all (deprecated).
+    // Check statistic-remove-all (deprecated)
 
     // Check statistic-sample-age-set
     sendHttpCommand("{ \"command\" : \"statistic-sample-age-set\", "

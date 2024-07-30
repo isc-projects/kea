@@ -67,7 +67,7 @@ public:
         socket_port_ = socket_port;
     }
 
-    /// @nrief Returns HTTP authentication configuration.
+    /// @brief Returns HTTP authentication configuration.
     ///
     /// @note Only the basic HTTP authentication is supported.
     ///

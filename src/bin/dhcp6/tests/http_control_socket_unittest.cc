@@ -325,8 +325,8 @@ public:
         ASSERT_TRUE(client);
 
         // Send the command. This will trigger server's handler which receives
-        // data over the HTTP domain socket. The server will start sending
-        // response to the client.
+        // data over the HTTP socket. The server will start sending response
+        // to the client.
         ASSERT_NO_THROW(client->startRequest(buildPostStr(command)));
         runIOService();
         ASSERT_TRUE(client->receiveDone());
@@ -431,12 +431,13 @@ public:
         EXPECT_EQ(1, cnt) << "Command " << command << " not found";
     }
 
-    /// @brief Check if the answer for write-config command is correct.
+    /// @brief Check if the answer for config-write command is correct.
     ///
-    /// @param response_txt response in text form (as read from the control socket)
+    /// @param response_txt response in text form (as read from
+    /// the control socket)
     /// @param exp_status expected status (0 success, 1 failure)
     /// @param exp_txt for success cases this defines the expected filename,
-    ///                for failure cases this defines the expected error message
+    /// for failure cases this defines the expected error message.
     void checkConfigWrite(const std::string& response_txt, int exp_status,
                           const std::string& exp_txt = "") {
 

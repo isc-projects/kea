@@ -337,12 +337,13 @@ public:
         EXPECT_EQ(1, cnt) << "Command " << command << " not found";
     }
 
-    /// @brief Check if the answer for write-config command is correct
+    /// @brief Check if the answer for write-config command is correct.
     ///
-    /// @param response_txt response in text form (as read from the control socket)
+    /// @param response_txt response in text form (as read from
+    /// the control socket)
     /// @param exp_status expected status (0 success, 1 failure)
     /// @param exp_txt for success cases this defines the expected filename,
-    ///                for failure cases this defines the expected error message
+    /// for failure cases this defines the expected error message.
     void checkConfigWrite(const std::string& response_txt, int exp_status,
                           const std::string& exp_txt = "") {
 
@@ -724,9 +725,10 @@ TEST_F(CtrlChannelDhcpv6SrvTest, configSet) {
     // Verify the control channel socket no longer exists.
     EXPECT_FALSE(fileExists(socket_path_));
 
-    // Verify the configuration was successful. The config contains random
-    // socket name (/tmp/kea-<value-changing-each-time>/kea6.sock), so the
-    // hash will be different each time. As such, we can do simplified checks:
+    // With no command channel, should still receive the response.
+    // The config contains random socket name socket name
+    // (/tmp/kea-<value-changing-each-time>/kea6.sock), so the hash will
+    // be different each time. As such, we can do simplified checks:
     // - verify the "result": 0 is there
     // - verify the "text": "Configuration successful." is there
     EXPECT_NE(response.find("\"result\": 0"), std::string::npos);
