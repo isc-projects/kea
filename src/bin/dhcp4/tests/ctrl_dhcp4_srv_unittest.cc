@@ -248,9 +248,9 @@ public:
     ///
     /// This method connects to the given server over the given socket path.
     /// If successful, it then sends the given command and retrieves the
-    /// server's response.  Note that it calls the server's receivePacket()
-    /// method where needed to cause the server to process IO events on
-    /// control channel the control channel sockets.
+    /// server's response.  Note that it polls the server's I/O service
+    /// where needed to cause the server to process IO events on
+    /// the control channel sockets.
     ///
     /// @param command the command text to execute in JSON form
     /// @param response variable into which the received response should be
@@ -575,7 +575,6 @@ TEST_F(CtrlChannelDhcpv4SrvTest, controlChannelStats) {
         "v4-lease-reuses",
     };
 
-    // preparing the schema which check if all statistics are set to zero
     std::ostringstream s;
     s << "{ \"arguments\": { ";
     bool first = true;
@@ -1396,7 +1395,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, controlLeasesReclaimRemove) {
     ASSERT_FALSE(lease1);
 }
 
-// Tests that the server properly responds to shutdown command sent
+// Tests that the server properly responds to list-commands command sent
 // via ControlChannel
 TEST_F(CtrlChannelDhcpv4SrvTest, listCommands) {
     createUnixChannelServer();

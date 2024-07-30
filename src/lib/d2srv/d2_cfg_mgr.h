@@ -103,7 +103,7 @@ public:
 
     /// @brief Sets information about the UNIX control socket
     ///
-    /// @param ontrol_socket UNIX control socket config
+    /// @param control_socket UNIX control socket config
     void setControlSocketInfo(const isc::data::ConstElementPtr& control_socket) {
         unix_control_socket_ = control_socket;
     }

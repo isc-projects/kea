@@ -263,8 +263,7 @@ public:
     /// @param response_str a string containing the whole HTTP
     /// response received.
     ///
-    /// @return An HttpResponse constructed from by parsing the
-    /// response string.
+    /// @return An HttpResponse constructed from parsing the response string.
     HttpResponsePtr parseResponse(const std::string response_str) {
         HttpResponsePtr hr(new HttpResponse());
         HttpResponseParser parser(*hr);
@@ -279,13 +278,13 @@ public:
         return (hr);
     }
 
-    /// @brief Conducts a command/response exchange via HttpCommandSocket
+    /// @brief Conducts a command/response exchange via HttpCommandSocket.
     ///
     /// This method connects to the given server over the given address/port.
     /// If successful, it then sends the given command and retrieves the
-    /// server's response.  Note that it calls the server's receivePacket()
-    /// method where needed to cause the server to process IO events on
-    /// control channel the control channel sockets.
+    /// server's response.  Note that it polls the server's I/O service
+    /// where needed to cause the server to process IO events on
+    /// the control channel sockets.
     ///
     /// @param command the command text to execute in JSON form.
     /// @param response variable into which the received response should be
@@ -300,7 +299,7 @@ public:
         ASSERT_TRUE(client);
 
         // Send the command. This will trigger server's handler which receives
-        // data over the unix domain socket. The server will start sending
+        // data over the HTTP socket. The server will start sending
         // response to the client.
         ASSERT_NO_THROW(client->startRequest(buildPostStr(command)));
         runIOService();
@@ -320,7 +319,7 @@ public:
     /// @brief Parse list answer.
     ///
     /// Clone of parseAnswer but taking the answer as a list and
-    /// decapulating it.
+    /// decapsulating it.
     ///
     /// @param rcode Return code.
     /// @param msg_list The message to parse.
@@ -376,12 +375,12 @@ public:
         return (msg->get(CONTROL_TEXT));
     }
 
-    /// @brief Checks response for list-commands
+    /// @brief Checks response for list-commands.
     ///
     /// This method checks if the list-commands response is generally sane
     /// and whether specified command is mentioned in the response.
     ///
-    /// @param rsp response sent back by the server
+    /// @param rsp response sent back by the server.
     /// @param command command expected to be on the list.
     void checkListCommands(const ConstElementPtr& rsp, const std::string& command) {
         ConstElementPtr params;
@@ -395,8 +394,9 @@ public:
         for (size_t i = 0; i < params->size(); ++i) {
             string tmp = params->get(i)->stringValue();
             if (tmp == command) {
-                // Command found, but that's not enough. Need to continue working
-                // through the list to see if there are no duplicates.
+                // Command found, but that's not enough.
+                // Need to continue working through the list to see
+                // if there are no duplicates.
                 cnt++;
             }
         }
@@ -405,7 +405,7 @@ public:
         EXPECT_EQ(1, cnt) << "Command " << command << " not found";
     }
 
-    /// @brief Check if the answer for write-config command is correct
+    /// @brief Check if the answer for write-config command is correct.
     ///
     /// @param response_txt response in text form (as read from the control socket)
     /// @param exp_status expected status (0 success, 1 failure)
@@ -495,8 +495,8 @@ public:
     /// This handler generates a large response (over 4kB). It includes
     /// a list of randomly generated strings to make sure that the test
     /// can catch out of order delivery.
-    static ConstElementPtr longResponseHandler(const std::string&,
-                                               const ConstElementPtr&) {
+    static ConstElementPtr
+    longResponseHandler(const std::string&, const ConstElementPtr&) {
         ElementPtr arguments = Element::createList();
         for (unsigned i = 0; i < 800; ++i) { // was 80000 (400kB).
             std::ostringstream s;
@@ -531,6 +531,8 @@ TEST_F(HttpCtrlChannelDhcpv4Test, controlChannelShutdown) {
     sendHttpCommand("{ \"command\": \"shutdown\" }", response);
     EXPECT_EQ("[ { \"result\": 0, \"text\": \"Shutting down.\" } ]",
               response);
+
+    EXPECT_EQ(EXIT_SUCCESS, server_->getExitValue());
 }
 
 // Tests that the server properly responds to statistics commands.  Note this
@@ -577,7 +579,6 @@ TEST_F(HttpCtrlChannelDhcpv4Test, controlChannelStats) {
         "v4-lease-reuses",
     };
 
-    // preparing the schema which check if all statistics are set to zero
     std::ostringstream s;
     s << "[ { \"arguments\": { ";
     bool first = true;
@@ -861,7 +862,7 @@ TEST_F(HttpCtrlChannelDhcpv4Test, configHashGet) {
     int status;
     ConstElementPtr args = parseListAnswer(status, rsp);
     EXPECT_EQ(CONTROL_RESULT_SUCCESS, status);
-    // the parseListAnswer is trying to be smart with ignoring hash.
+    // The parseListAnswer is trying to be smart with ignoring hash.
     // But this time we really want to see the hash, so we'll retrieve
     // the arguments manually.
     args = rsp->get(0)->get(CONTROL_ARGUMENTS);
@@ -1016,6 +1017,7 @@ TEST_F(HttpCtrlChannelDhcpv4Test, configTest) {
     // Clean up after the test.
     CfgMgr::instance().clear();
 }
+
 // This test verifies that the DHCP server handles version-get commands
 TEST_F(HttpCtrlChannelDhcpv4Test, getVersion) {
     createHttpChannelServer();
@@ -1409,7 +1411,7 @@ TEST_F(HttpCtrlChannelDhcpv4Test, controlLeasesReclaimRemove) {
     ASSERT_FALSE(lease1);
 }
 
-// Tests that the server properly responds to shutdown command sent
+// Tests that the server properly responds to list-commands command sent
 // via ControlChannel
 TEST_F(HttpCtrlChannelDhcpv4Test, listCommands) {
     createHttpChannelServer();
@@ -2194,7 +2196,7 @@ TEST_F(HttpCtrlChannelDhcpv4Test, longResponse) {
 
     createHttpChannelServer();
 
-    // The entire response should be received but anayway check it.
+    // The entire response should be received but anyway check it.
     ConstElementPtr raw_response =
         longResponseHandler("foo", ConstElementPtr());
     ElementPtr json_response = Element::createList();

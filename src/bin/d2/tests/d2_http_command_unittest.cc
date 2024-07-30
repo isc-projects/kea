@@ -54,7 +54,9 @@ public:
         return (controller_ptr);
     }
 
-    virtual ~NakedD2Controller() { deregisterCommands(); }
+    virtual ~NakedD2Controller() {
+        deregisterCommands();
+    }
 
     using DControllerBase::getIOService;
     using DControllerBase::initProcess;
@@ -67,8 +69,8 @@ private:
     NakedD2Controller() { }
 };
 
-}; // namespace isc::d2
-}; // namespace isc
+} // namespace isc::d2
+} // namespace isc
 
 namespace {
 
@@ -118,7 +120,7 @@ public:
     /// @brief Returns pointer to the server's IO service.
     ///
     /// @return Pointer to the server's IO service or null pointer if the
-    /// hasn't been created server.
+    /// server hasn't been created.
     IOServicePtr getIOService() {
         return (server_ ? d2Controller()->getIOService() : IOServicePtr());
     }
@@ -229,8 +231,7 @@ public:
     /// @param response_str a string containing the whole HTTP
     /// response received.
     ///
-    /// @return An HttpResponse constructed from by parsing the
-    /// response string.
+    /// @return An HttpResponse constructed by parsing the response string.
     HttpResponsePtr parseResponse(const std::string response_str) {
         HttpResponsePtr hr(new HttpResponse());
         HttpResponseParser parser(*hr);
@@ -286,7 +287,7 @@ public:
     /// @brief Parse list answer.
     ///
     /// Clone of parseAnswer but taking the answer as a list and
-    /// decapulating it.
+    /// decapsulating it.
     ///
     /// @param rcode Return code.
     /// @param msg_list The message to parse.
@@ -374,12 +375,11 @@ public:
 
     /// @brief Check if the answer for config-write command is correct.
     ///
-    /// @param response_txt response in text form.
-    ///        (as read from the control socket)
-    /// @param exp_status expected status.
-    ///        (0 success, 1 failure)
+    /// @param response_txt response in text form (as read from
+    /// the control socket).
+    /// @param exp_status expected status (0 success, 1 failure).
     /// @param exp_txt for success cases this defines the expected filename,
-    ///        for failure cases this defines the expected error message.
+    /// for failure cases this defines the expected error message.
     void checkConfigWrite(const string& response_txt, int exp_status,
                           const string& exp_txt = "") {
 
@@ -455,7 +455,7 @@ public:
         // let's parse expected_command back to JSON to guarantee that
         // both structures are built using the same order.
         EXPECT_EQ(Element::fromJSON(expected_command)->str(),
-                 entire_command->str());
+                  entire_command->str());
         return (createAnswer(CONTROL_RESULT_SUCCESS, "long command received ok"));
     }
 
@@ -518,7 +518,7 @@ TEST_F(HttpCtrlChannelD2Test, shutdownExitValue) {
     EXPECT_EQ(77, server_->getExitValue());
 }
 
-// This test verifies that the DHCP server handles version-get commands.
+// This test verifies that the D2 server handles version-get commands.
 TEST_F(HttpCtrlChannelD2Test, getversion) {
     EXPECT_NO_THROW(createHttpChannelServer());
     string response;
@@ -563,13 +563,13 @@ TEST_F(HttpCtrlChannelD2Test, listCommands) {
     checkListCommands(rsp, "version-get");
 }
 
-// This test verifies that the D2 server handles status-get commands
+// This test verifies that the D2 server handles status-get commands.
 TEST_F(HttpCtrlChannelD2Test, statusGet) {
     EXPECT_NO_THROW(createHttpChannelServer());
 
     std::string response_txt;
 
-    // Send the version-get command
+    // Send the status-get command.
     sendHttpCommand("{ \"command\": \"status-get\" }", response_txt);
     ConstElementPtr response_list;
     ASSERT_NO_THROW(response_list = Element::fromJSON(response_txt));
@@ -646,7 +646,7 @@ TEST_F(HttpCtrlChannelD2Test, configHashGet) {
     int status;
     ConstElementPtr args = parseListAnswer(status, rsp);
     EXPECT_EQ(CONTROL_RESULT_SUCCESS, status);
-    // the parseListAnswer is trying to be smart with ignoring hash.
+    // The parseListAnswer is trying to be smart with ignoring hash.
     // But this time we really want to see the hash, so we'll retrieve
     // the arguments manually.
     ASSERT_NO_THROW(args = rsp->get(0)->get(CONTROL_ARGUMENTS));
@@ -706,7 +706,7 @@ TEST_F(HttpCtrlChannelD2Test, configTest) {
 
     ASSERT_TRUE(HttpCommandMgr::instance().getHttpListener());
 
-    // Create a config with malformed subnet that should fail to parse.
+    // Create a config with invalid content that should fail to parse.
     string config_test_txt =
         "{ \"command\": \"config-test\", \n"
         "  \"arguments\": { \n"
@@ -824,7 +824,7 @@ TEST_F(HttpCtrlChannelD2Test, configSet) {
 
     ASSERT_TRUE(HttpCommandMgr::instance().getHttpListener());
 
-    // Create a config with malformed subnet that should fail to parse.
+    // Create a config with invalid content that should fail to parse.
     string config_test_txt =
         "{ \"command\": \"config-set\", \n"
         "  \"arguments\": { \n"
@@ -929,6 +929,7 @@ TEST_F(HttpCtrlChannelD2Test, writeConfigFilename) {
     sendHttpCommand("{ \"command\": \"config-write\", "
                     "\"arguments\": { \"filename\": \"test2.json\" } }",
                     response);
+
     checkConfigWrite(response, CONTROL_RESULT_SUCCESS, "test2.json");
     ::remove("test2.json");
 }
@@ -972,7 +973,6 @@ TEST_F(HttpCtrlChannelD2Test, configReloadBrokenFile) {
 
     // Tell the server to reload its configuration. It should attempt to load
     // testbad.json (and fail, because the file is not valid JSON).
-    // does-not-exist.json (and fail, because the file is not there).
     sendHttpCommand("{ \"command\": \"config-reload\" }", response);
 
     // Verify the reload was rejected.
@@ -986,7 +986,7 @@ TEST_F(HttpCtrlChannelD2Test, configReloadBrokenFile) {
 }
 
 // Tests if config-reload attempts to reload a file and reports that the
-// file is missing.
+// file is loaded correctly.
 TEST_F(HttpCtrlChannelD2Test, configReloadFileValid) {
     EXPECT_NO_THROW(createHttpChannelServer());
     string response;
@@ -1161,7 +1161,7 @@ TEST_F(HttpCtrlChannelD2Test, longResponse) {
 
     createHttpChannelServer();
 
-    // The entire response should be received but anayway check it.
+    // The entire response should be received but anyway check it.
     ConstElementPtr raw_response =
         longResponseHandler("foo", ConstElementPtr());
     ElementPtr json_response = Element::createList();

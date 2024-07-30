@@ -215,8 +215,7 @@ public:
     /// @param response_str a string containing the whole HTTP
     /// response received.
     ///
-    /// @return An HttpResponse constructed from by parsing the
-    /// response string.
+    /// @return An HttpResponse constructed by parsing the response string.
     HttpResponsePtr parseResponse(const std::string response_str) {
         HttpResponsePtr hr(new HttpResponse());
         HttpResponseParser parser(*hr);

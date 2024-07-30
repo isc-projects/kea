@@ -112,6 +112,7 @@ public:
         // Get rid of any marker files.
         static_cast<void>(remove(LOAD_MARKER_FILE));
         static_cast<void>(remove(UNLOAD_MARKER_FILE));
+
         IfaceMgr::instance().deleteAllExternalSockets();
         CfgMgr::instance().clear();
     }
@@ -145,7 +146,7 @@ public:
             HttpCommandMgr::instance().close();
         }
         CommandMgr::instance().deregisterAll();
-        CommandMgr::instance().setConnectionTimeout(TIMEOUT_DHCP_SERVER_RECEIVE_COMMAND);
+        HttpCommandMgr::instance().setConnectionTimeout(TIMEOUT_DHCP_SERVER_RECEIVE_COMMAND);
 
         server_.reset();
         reset();
@@ -288,8 +289,7 @@ public:
     /// @param response_str a string containing the whole HTTP
     /// response received.
     ///
-    /// @return An HttpResponse constructed from by parsing the
-    /// response string.
+    /// @return An HttpResponse constructed by parsing the response string.
     HttpResponsePtr parseResponse(const std::string response_str) {
         HttpResponsePtr hr(new HttpResponse());
         HttpResponseParser parser(*hr);
@@ -304,13 +304,13 @@ public:
         return (hr);
     }
 
-    /// @brief Conducts a command/response exchange via HttpCommandSocket
+    /// @brief Conducts a command/response exchange via HttpCommandSocket.
     ///
     /// This method connects to the given server over the given address/port.
     /// If successful, it then sends the given command and retrieves the
-    /// server's response.  Note that it calls the server's receivePacket()
-    /// method where needed to cause the server to process IO events on
-    /// control channel the control channel sockets.
+    /// server's response.  Note that it polls the server's I/O service
+    /// where needed to cause the server to process IO events on
+    /// the control channel sockets.
     ///
     /// @param command the command text to execute in JSON form.
     /// @param response variable into which the received response should be
@@ -325,7 +325,7 @@ public:
         ASSERT_TRUE(client);
 
         // Send the command. This will trigger server's handler which receives
-        // data over the unix domain socket. The server will start sending
+        // data over the HTTP domain socket. The server will start sending
         // response to the client.
         ASSERT_NO_THROW(client->startRequest(buildPostStr(command)));
         runIOService();
@@ -345,7 +345,7 @@ public:
     /// @brief Parse list answer.
     ///
     /// Clone of parseAnswer but taking the answer as a list and
-    /// decapulating it.
+    /// decapsulating it.
     ///
     /// @param rcode Return code.
     /// @param msg_list The message to parse.
@@ -401,12 +401,12 @@ public:
         return (msg->get(CONTROL_TEXT));
     }
 
-    /// @brief Checks response for list-commands
+    /// @brief Checks response for list-commands.
     ///
     /// This method checks if the list-commands response is generally sane
     /// and whether specified command is mentioned in the response.
     ///
-    /// @param rsp response sent back by the server
+    /// @param rsp response sent back by the server.
     /// @param command command expected to be on the list.
     void checkListCommands(const ConstElementPtr& rsp, const std::string& command) {
         ConstElementPtr params;
@@ -420,8 +420,9 @@ public:
         for (size_t i = 0; i < params->size(); ++i) {
             string tmp = params->get(i)->stringValue();
             if (tmp == command) {
-                // Command found, but that's not enough. Need to continue working
-                // through the list to see if there are no duplicates.
+                // Command found, but that's not enough.
+                // Need to continue working through the list to see
+                // if there are no duplicates.
                 cnt++;
             }
         }
@@ -430,7 +431,7 @@ public:
         EXPECT_EQ(1, cnt) << "Command " << command << " not found";
     }
 
-    /// @brief Check if the answer for write-config command is correct
+    /// @brief Check if the answer for write-config command is correct.
     ///
     /// @param response_txt response in text form (as read from the control socket)
     /// @param exp_status expected status (0 success, 1 failure)
@@ -520,8 +521,8 @@ public:
     /// This handler generates a large response (over 4kB). It includes
     /// a list of randomly generated strings to make sure that the test
     /// can catch out of order delivery.
-    static ConstElementPtr longResponseHandler(const std::string&,
-                                               const ConstElementPtr&) {
+    static ConstElementPtr
+    longResponseHandler(const std::string&, const ConstElementPtr&) {
         ElementPtr arguments = Element::createList();
         for (unsigned i = 0; i < 800; ++i) { // was 80000 (400kB).
             std::ostringstream s;
@@ -554,7 +555,9 @@ TEST_F(HttpCtrlChannelDhcpv6Test, controlChannelShutdown) {
     std::string response;
 
     sendHttpCommand("{ \"command\": \"shutdown\" }", response);
-    EXPECT_EQ("[ { \"result\": 0, \"text\": \"Shutting down.\" } ]",response);
+    EXPECT_EQ("[ { \"result\": 0, \"text\": \"Shutting down.\" } ]", response);
+
+    EXPECT_EQ(EXIT_SUCCESS, server_->getExitValue());
 }
 
 // Check that the "config-set" command will replace current configuration
@@ -652,7 +655,6 @@ TEST_F(HttpCtrlChannelDhcpv6Test, configSet) {
     // Send the config-set command
     std::string response;
     sendHttpCommand(os.str(), response);
-
     EXPECT_EQ("[ { \"arguments\": { \"hash\": \"BCE3D0CC68CBBB49C3F5967E3FFCB4E44E55CBFB53814761B12ADB5C7CD95C1F\" }, \"result\": 0, \"text\": \"Configuration successful.\" } ]",
               response);
 
@@ -716,6 +718,7 @@ TEST_F(HttpCtrlChannelDhcpv6Test, configSet) {
     ASSERT_NO_THROW(HttpCommandMgr::instance().garbageCollectListeners());
     EXPECT_FALSE(HttpCommandMgr::instance().getHttpListener());
 
+    // With no command channel, should still receive the response.
     EXPECT_EQ("[ { \"arguments\": { \"hash\": \"48035E8F9CC25FC1F6175B78CCC6B8A673CACBA9E956C0ED3079C478BF1F2D1A\" }, \"result\": 0, \"text\": \"Configuration successful.\" } ]",
               response);
 
@@ -1443,7 +1446,7 @@ TEST_F(HttpCtrlChannelDhcpv6Test, controlChannelStats) {
               response);
 }
 
-// Tests that the server properly responds to shutdown command sent
+// Tests that the server properly responds to list-commands command sent
 // via ControlChannel
 TEST_F(HttpCtrlChannelDhcpv6Test, listCommands) {
     createHttpChannelServer();
@@ -1502,7 +1505,8 @@ TEST_F(HttpCtrlChannelDhcpv6Test, configWriteFilename) {
     std::string response;
 
     sendHttpCommand("{ \"command\": \"config-write\", "
-                    "\"arguments\": { \"filename\": \"test2.json\" } }", response);
+                    "\"arguments\": { \"filename\": \"test2.json\" } }",
+                    response);
 
     checkConfigWrite(response, CONTROL_RESULT_SUCCESS, "test2.json");
     ::remove("test2.json");
@@ -1589,8 +1593,6 @@ TEST_F(HttpCtrlChannelDhcpv6Test, configReloadValid) {
 
     EXPECT_EQ("[ { \"arguments\": { \"hash\": \"2D97C398AFE8414A818D9F04C9ADB62D493861EDD3689015D081880D6A85A3C3\" }, \"result\": 0, \"text\": \"Configuration successful.\" } ]",
               response);
-    EXPECT_NE(response.find("\"result\": 0"), std::string::npos);
-    EXPECT_NE(response.find("\"text\": \"Configuration successful.\""), std::string::npos);
 
     // Check that the config was indeed applied.
     const Subnet6Collection* subnets =
@@ -2227,7 +2229,7 @@ TEST_F(HttpCtrlChannelDhcpv6Test, longResponse) {
 
     createHttpChannelServer();
 
-    // The entire response should be received but anayway check it.
+    // The entire response should be received but anyway check it.
     ConstElementPtr raw_response =
         longResponseHandler("foo", ConstElementPtr());
     ElementPtr json_response = Element::createList();

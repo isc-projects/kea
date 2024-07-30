@@ -54,7 +54,9 @@ public:
         return (controller_ptr);
     }
 
-    virtual ~NakedD2Controller() { deregisterCommands(); }
+    virtual ~NakedD2Controller() {
+        deregisterCommands();
+    }
 
     using DControllerBase::getIOService;
     using DControllerBase::initProcess;
@@ -67,8 +69,8 @@ private:
     NakedD2Controller() { }
 };
 
-}; // namespace isc::d2
-}; // namespace isc
+} // namespace isc::d2
+} // namespace isc
 
 namespace {
 
@@ -148,7 +150,7 @@ public:
     /// @brief Returns pointer to the server's IO service.
     ///
     /// @return Pointer to the server's IO service or null pointer if the
-    /// hasn't been created server.
+    /// server hasn't been created.
     IOServicePtr getIOService() {
         return (server_ ? d2Controller()->getIOService() : IOServicePtr());
     }
@@ -288,12 +290,11 @@ public:
 
     /// @brief Check if the answer for config-write command is correct.
     ///
-    /// @param response_txt response in text form.
-    ///        (as read from the control socket)
-    /// @param exp_status expected status.
-    ///        (0 success, 1 failure)
+    /// @param response_txt response in text form (as read from
+    /// the control socket).
+    /// @param exp_status expected status (0 success, 1 failure).
     /// @param exp_txt for success cases this defines the expected filename,
-    ///        for failure cases this defines the expected error message.
+    /// for failure cases this defines the expected error message.
     void checkConfigWrite(const string& response_txt, int exp_status,
                           const string& exp_txt = "") {
 
@@ -572,7 +573,7 @@ TEST_F(CtrlChannelD2Test, shutdownExitValue) {
     EXPECT_EQ(77, server_->getExitValue());
 }
 
-// This test verifies that the DHCP server handles version-get commands.
+// This test verifies that the D2 server handles version-get commands.
 TEST_F(CtrlChannelD2Test, getversion) {
     EXPECT_NO_THROW(createUnixChannelServer());
     string response;
@@ -617,13 +618,13 @@ TEST_F(CtrlChannelD2Test, listCommands) {
     checkListCommands(rsp, "version-get");
 }
 
-// This test verifies that the D2 server handles status-get commands
+// This test verifies that the D2 server handles status-get commands.
 TEST_F(CtrlChannelD2Test, statusGet) {
     EXPECT_NO_THROW(createUnixChannelServer());
 
     std::string response_txt;
 
-    // Send the version-get command
+    // Send the status-get command.
     sendUnixCommand("{ \"command\": \"status-get\" }", response_txt);
     ConstElementPtr response;
     ASSERT_NO_THROW(response = Element::fromJSON(response_txt));
@@ -788,7 +789,7 @@ TEST_F(CtrlChannelD2Test, configTest) {
 
     ASSERT_GT(CommandMgr::instance().getControlSocketFD(), -1);
 
-    // Create a config with malformed subnet that should fail to parse.
+    // Create a config with invalid content that should fail to parse.
     os.str("");
     os << config_test_txt << ","
        << args_txt
@@ -927,7 +928,7 @@ TEST_F(CtrlChannelD2Test, configSet) {
 
     ASSERT_GT(CommandMgr::instance().getControlSocketFD(), -1);
 
-    // Create a config with malformed subnet that should fail to parse.
+    // Create a config with invalid content that should fail to parse.
     os.str("");
     os << config_set_txt << ","
        << args_txt
@@ -1013,6 +1014,7 @@ TEST_F(CtrlChannelD2Test, writeConfigFilename) {
     sendUnixCommand("{ \"command\": \"config-write\", "
                     "\"arguments\": { \"filename\": \"test2.json\" } }",
                     response);
+
     checkConfigWrite(response, CONTROL_RESULT_SUCCESS, "test2.json");
     ::remove("test2.json");
 }
@@ -1056,7 +1058,6 @@ TEST_F(CtrlChannelD2Test, configReloadBrokenFile) {
 
     // Tell the server to reload its configuration. It should attempt to load
     // testbad.json (and fail, because the file is not valid JSON).
-    // does-not-exist.json (and fail, because the file is not there).
     sendUnixCommand("{ \"command\": \"config-reload\" }", response);
 
     // Verify the reload was rejected.
@@ -1070,7 +1071,7 @@ TEST_F(CtrlChannelD2Test, configReloadBrokenFile) {
 }
 
 // Tests if config-reload attempts to reload a file and reports that the
-// file is missing.
+// file is loaded correctly.
 TEST_F(CtrlChannelD2Test, configReloadFileValid) {
     EXPECT_NO_THROW(createUnixChannelServer());
     string response;
