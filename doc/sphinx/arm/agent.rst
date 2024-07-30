@@ -37,6 +37,12 @@ The CA processes received commands according to the following algorithm:
 -  If the service is not specified or is an empty list, handle the
    command if the CA supports it.
 
+.. note::
+
+   The CA will be deprecated by a future Kea release: its function has
+   been moved to Kea servers since release 2.7.2, see the section about
+   migration from CA (:ref:`ctrl-channel-migration`).
+
 .. _agent-configuration:
 
 Configuration
@@ -131,8 +137,8 @@ configuration above, the CA connects to the DHCPv4 server via
 Obviously, the DHCPv4 server must be configured to listen to connections
 via this same socket. In other words, the command-socket configuration
 for the DHCPv4 server and the CA (for that server) must match. Consult
-:ref:`dhcp4-ctrl-channel`, :ref:`dhcp6-ctrl-channel`, and
-:ref:`d2-ctrl-channel` to learn how the socket configuration is
+:ref:`dhcp4-unix-ctrl-channel`, :ref:`dhcp6-unix-ctrl-channel`, and
+:ref:`d2-unix-ctrl-channel` to learn how the UNIX socket configuration is
 specified for the DHCPv4, DHCPv6, and D2 services.
 
 User contexts can store arbitrary data as long as they are in valid JSON

@@ -7363,25 +7363,26 @@ Statistics can be retrieved periodically to gain more insight into Kea operation
 leverages that capability is ISC Stork. See :ref:`stork` for details.
 
 
-.. _dhcp6-ctrl-channel:
+.. _dhcp6-ctrl-channels:
 
 Management API for the DHCPv6 Server
 ====================================
 
 The management API allows the issuing of specific management commands,
 such as statistics retrieval, reconfiguration, or shutdown. For more
-details, see :ref:`ctrl-channel`. Currently, the only supported
-communication channel type is the UNIX stream socket. By default there are
-no sockets open; to instruct Kea to open a socket, the following entry
-in the configuration file can be used:
+details, see :ref:`ctrl-channel`. By default there are no sockets
+open; to instruct Kea to open a socket, the following entry in the
+configuration file can be used:
 
 ::
 
    "Dhcp6": {
-       "control-socket": {
-           "socket-type": "unix",
-           "socket-name": "/path/to/the/unix/socket"
-       },
+       "control-socket": [
+           {
+               "socket-type": "unix",
+               "socket-name": "/path/to/the/unix/socket"
+           }
+       ],
 
        "subnet6": [
            {
@@ -7391,6 +7392,21 @@ in the configuration file can be used:
        ],
        ...
    }
+
+.. note:
+
+   For backward compatibility the ``control-socket`` keyword is still
+   recognized by Kea version newer than 2.7.2: a ``control-socket`` entry
+   is put into a ``control-sockets`` list by the configuration parser.
+
+.. _dhcp6-unix-ctrl-channel:
+
+UNIX Control Socket
+-------------------
+
+Until Kea server 2.7.2 the only supported communication channel type was
+the UNIX stream socket with ``socket-type`` set to ``unix`` and
+``socket-name`` to the file path of the UNIX/LOCAL socket.
 
 The length of the path specified by the ``socket-name`` parameter is
 restricted by the maximum length for the UNIX socket name on the administrator's
@@ -7437,6 +7453,96 @@ following statistics-related commands:
 - :isccmd:`statistic-sample-count-set`-all
 
 as described in :ref:`command-stats`.
+
+.. _dhcp6-http-ctrl-channel:
+
+HTTP/HTTPS Control Socket
+-------------------------
+
+The ``socket-type`` must be ``http`` or ``https`` (whe the type is ``https``
+TLS is required). The ``socket-address`` (default ``::1``) and
+``socket-port`` (default 8000) specify an IP address and port to which
+the HTTP service will be bound.
+
+The ``trust-anchor``, ``cert-file``, ``key-file``, and ``cert-required``
+parameters specify the TLS setup for HTTP, i.e. HTTPS. If these parameters
+are not specified, HTTP is used. The TLS/HTTPS support in Kea is
+described in :ref:`tls`.
+
+Basic HTTP authentication protects
+against unauthorized uses of the control agent by local users. For
+protection against remote attackers, HTTPS and reverse proxy of
+:ref:`agent-secure-connection` provide stronger security.
+
+The authentication is described in the ``authentication`` block
+with the mandatory ``type`` parameter, which selects the authentication.
+Currently only the basic HTTP authentication (type basic) is supported.
+
+The ``realm`` authentication parameter (default ``kea-dhcpv6-server``
+is used for error messages when the basic HTTP authentication is required
+but the client is not authorized.
+
+When the ``clients`` authentication list is configured and not empty,
+basic HTTP authentication is required. Each element of the list
+specifies a user ID and a password. The user ID is mandatory, must
+be not empty, and must not contain the colon (:) character. The
+password is optional; when it is not specified an empty password
+is used.
+
+.. note::
+
+   The basic HTTP authentication user ID and password are encoded
+   in UTF-8, but the current Kea JSON syntax only supports the Latin-1
+   (i.e. 0x00..0xff) Unicode subset.
+
+To avoid exposing the user ID and/or the associated
+password, these values can be read from files. The syntax is extended by:
+
+-  The ``directory`` authentication parameter, which handles the common
+   part of file paths. The default value is the empty string.
+
+-  The ``password-file`` client parameter, which, alongside the ``directory``
+   parameter, specifies the path of a file that can contain the password,
+   or when no user ID is given, the whole basic HTTP authentication secret.
+
+-  The ``user-file`` client parameter, which, with the ``directory`` parameter,
+   specifies the path of a file where the user ID can be read.
+
+When files are used, they are read when the configuration is loaded,
+to detect configuration errors as soon as possible.
+
+::
+
+   "Dhcp6": {
+       "control-sockets": [
+           {
+               "socket-type": "https",
+               "socket-name": "2010:30:40::50",
+               "socket-port": 8005,
+               "trust-anchor": "/path/to/the/ca-cert.pem",
+               "cert-file": "/path/to/the/agent-cert.pem",
+               "key-file": "/path/to/the/agent-key.pem",
+               "cert-required": true,
+               "authentication": {
+               "type": "basic",
+               "realm": "kea-control-agent",
+               "clients": [
+                   {
+                       "user": "admin",
+                       "password": "1234"
+                   } ]
+               }
+           }
+       ],
+
+       "subnet6": [
+           {
+               ...
+           },
+           ...
+       ],
+       ...
+   }
 
 .. _dhcp6-user-contexts:
 

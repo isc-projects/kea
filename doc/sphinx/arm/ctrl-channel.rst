@@ -21,7 +21,8 @@ status.
 
 The DHCPv4, DHCPv6, and D2 servers receive commands over the UNIX domain
 sockets. For details on how to configure these sockets, see
-:ref:`dhcp4-ctrl-channel` and :ref:`dhcp6-ctrl-channel`. While
+:ref:`dhcp4-unix-ctrl-channel`, :ref:`dhcp6-unix-ctrl-channel` and
+:ref:`d2-unix-ctrl-channel`. While
 it is possible to control the servers directly using UNIX domain sockets,
 that requires that the controlling client be running on the same machine
 as the server. SSH is usually used to connect remotely to the controlled
@@ -920,3 +921,39 @@ commands are handled by the CA and they relate to the CA process itself:
 -  :isccmd:`status-get`
 
 -  :isccmd:`version-get`
+
+.. _ctrl-channel-migration:
+
+Migration from the Control Agent
+================================
+
+Since Kea version 2.7.2 DHCP servers support HTTP/HTTPS control channels
+so the Control Agent (CA) is no longer needed.
+
+The DHCPv4, DHCPv6, and D2 servers extend the ``control-socket`` entry
+to ``control-sockets`` list. To migrate a CA configuration add an element
+to this list with:
+
+-  ``socket-type`` set to ``http`` or ``https``
+
+-  ``socket-address`` with the content of CA ``http-host``
+
+-  ``socket-port`` with the content of CA ``http-port``
+
+-  ``trust-anchor`` (unchanged)
+
+-  ``cert-file`` (unchanged)
+
+-  ``key-file`` (unchanged)
+
+-  ``cert-required`` (unchanged)
+
+-  ``authentication`` (unchanged)
+
+User context is supported too. Please look at respective HTTP control socket
+sections for defaults and other details (beware that two servers must use
+different address / port pairs): :ref:`dhcp4-http-ctrl-channel`,
+:ref:`dhcp6-http-ctrl-channel` and :ref:`d2-http-ctrl-channel`
+
+For compatibility the JSON result of these HTTP/HTTPS control sockets is
+still encapsulated into a list.
