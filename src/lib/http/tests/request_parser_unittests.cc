@@ -91,7 +91,7 @@ TEST_F(HttpRequestParserTest, postHttpRequestWithJson) {
     // Simulate receiving HTTP request in chunks.
     for (size_t i = 0; i < http_req.size(); i += http_req.size() / 10) {
         bool done = false;
-        // Get the size of the data chunk. 
+        // Get the size of the data chunk.
         size_t chunk = http_req.size() / 10;
         // When we're near the end of the data stream, the chunk length may
         // vary.

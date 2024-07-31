@@ -48,6 +48,11 @@ HttpListener::getNative() const {
 }
 
 void
+HttpListener::addExternalSockets(bool use_external) {
+    impl_->addExternalSockets(use_external);
+}
+
+void
 HttpListener::start() {
     impl_->start();
 }

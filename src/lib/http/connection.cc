@@ -79,7 +79,8 @@ HttpConnection::HttpConnection(const asiolink::IOServicePtr& io_service,
       acceptor_(acceptor),
       connection_pool_(connection_pool),
       response_creator_(response_creator),
-      acceptor_callback_(callback) {
+      acceptor_callback_(callback),
+      use_external_(false) {
     if (!tls_context) {
         tcp_socket_.reset(new asiolink::TCPSocket<SocketCallback>(io_service));
     } else {
@@ -90,6 +91,11 @@ HttpConnection::HttpConnection(const asiolink::IOServicePtr& io_service,
 
 HttpConnection::~HttpConnection() {
     close();
+}
+
+void
+HttpConnection::addExternalSockets(bool use_external) {
+    use_external_ = use_external;
 }
 
 void

@@ -62,6 +62,14 @@ public:
     /// @brief file descriptor of the underlying acceptor socket.
     int getNative() const;
 
+    /// @brief Use external sockets flag.
+    ///
+    /// Add sockets as external sockets of the interface manager
+    /// so available I/O on them makes a waiting select to return.
+    ///
+    /// @param use_external True add external sockets.
+    void addExternalSockets(bool use_external);
+
     /// @brief Starts accepting new connections.
     ///
     /// This method starts accepting and handling new HTTP connections on
@@ -130,6 +138,9 @@ protected:
     /// @brief Timeout after which idle persistent connection is closed by
     /// the server.
     long idle_timeout_;
+
+    /// @brief Use external sockets flag.
+    bool use_external_;
 };
 
 

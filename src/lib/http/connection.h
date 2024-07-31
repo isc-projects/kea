@@ -255,6 +255,14 @@ public:
     /// Closes current connection.
     virtual ~HttpConnection();
 
+    /// @brief Use external sockets flag.
+    ///
+    /// Add sockets as external sockets of the interface manager
+    /// so available I/O on them makes a waiting select to return.
+    ///
+    /// @param use_external True add external sockets (default false).
+    void addExternalSockets(bool use_external = false);
+
     /// @brief Asynchronously accepts new connection.
     ///
     /// When the connection is established successfully, the timeout timer is
@@ -424,6 +432,9 @@ protected:
 
     /// @brief External TCP acceptor callback.
     HttpAcceptorCallback acceptor_callback_;
+
+    /// @brief Use external sockets flag.
+    bool use_external_;
 };
 
 } // end of namespace isc::http
