@@ -67,6 +67,11 @@ HttpListenerImpl::getEndpoint() const {
     return (*endpoint_);
 }
 
+int
+HttpListenerImpl::getNative() const {
+    return (acceptor_ ? acceptor_->getNative() : -1);
+}
+
 void
 HttpListenerImpl::start() {
     try {

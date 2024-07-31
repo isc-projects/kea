@@ -42,6 +42,11 @@ HttpListener::getLocalPort() const {
     return (impl_->getEndpoint().getPort());
 }
 
+int
+HttpListener::getNative() const {
+    return (impl_->getNative());
+}
+
 void
 HttpListener::start() {
     impl_->start();

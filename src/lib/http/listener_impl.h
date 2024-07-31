@@ -59,6 +59,9 @@ public:
     /// @brief Returns reference to the current listener endpoint.
     const asiolink::TCPEndpoint& getEndpoint() const;
 
+    /// @brief file descriptor of the underlying acceptor socket.
+    int getNative() const;
+
     /// @brief Starts accepting new connections.
     ///
     /// This method starts accepting and handling new HTTP connections on

@@ -115,6 +115,9 @@ public:
     /// @brief Returns local port on which server is listening.
     uint16_t getLocalPort() const;
 
+    /// @brief file descriptor of the underlying acceptor socket.
+    int getNative() const;
+
     /// @brief Starts accepting new connections.
     ///
     /// This method starts accepting and handling new HTTP connections on
