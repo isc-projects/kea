@@ -12,6 +12,7 @@
 #include <http/http_acceptor.h>
 #include <http/request_parser.h>
 #include <http/response_creator_factory.h>
+#include <util/watch_socket.h>
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/system/error_code.hpp>
 #include <boost/shared_ptr.hpp>
@@ -398,8 +399,11 @@ protected:
     /// @brief Stops current connection.
     void stopThisConnection();
 
-    /// @brief returns remote address in textual form
+    /// @brief Returns remote address in textual form
     std::string getRemoteEndpointAddressAsText() const;
+
+    /// @brief Close the watch socket.
+    void closeWatchSocket();
 
     /// @brief Timer used to detect Request Timeout.
     asiolink::IntervalTimer request_timer_;
@@ -435,6 +439,10 @@ protected:
 
     /// @brief Use external sockets flag.
     bool use_external_;
+
+    /// @brief Pointer to watch socket instance used to signal that the socket
+    /// is ready for read or write when use external sockets is true.
+    util::WatchSocketPtr watch_socket_;
 };
 
 } // end of namespace isc::http
