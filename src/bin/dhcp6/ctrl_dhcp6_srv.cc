@@ -1109,6 +1109,9 @@ ControlledDhcpv6Srv::ControlledDhcpv6Srv(uint16_t server_port /*= DHCP6_SERVER_P
     CommandMgr::instance().setIOService(getIOService());
     HttpCommandMgr::instance().setIOService(getIOService());
 
+    // Set the HTTP default socket address to the IPv6 (vs IPv4) loopback.
+    HttpCommandConfig::DEFAULT_SOCKET_ADDRESS = IOAddress("::1");
+
     // Set the HTTP authentication default realm.
     HttpCommandConfig::DEFAULT_AUTHENTICATION_REALM = "kea-dhcpv6-server";
 
