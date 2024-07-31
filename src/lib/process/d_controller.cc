@@ -518,7 +518,7 @@ DControllerBase::configWriteHandler(const std::string&,
         size = writeConfigFile(filename, cfg);
     } catch (const isc::Exception& ex) {
         return (createAnswer(CONTROL_RESULT_ERROR,
-                             std::string("Error during write-config:")
+                             std::string("Error during config-write:")
                              + ex.what()));
     }
     if (size == 0) {

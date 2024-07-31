@@ -337,7 +337,7 @@ public:
         EXPECT_EQ(1, cnt) << "Command " << command << " not found";
     }
 
-    /// @brief Check if the answer for write-config command is correct.
+    /// @brief Check if the answer for config-write command is correct.
     ///
     /// @param response_txt response in text form (as read from
     /// the control socket)
