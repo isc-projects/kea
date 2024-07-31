@@ -167,6 +167,34 @@ HttpConnection::shutdown() {
 }
 
 void
+HttpConnection::markWatchSocketReady() {
+    if (!watch_socket_) {
+        /// Should not happen...
+        return;
+    }
+    try {
+        watch_socket_->markReady();
+    } catch (const std::exception& ex) {
+        LOG_ERROR(http_logger, HTTP_CONNECTION_WATCH_SOCKET_MARK_READY_ERROR)
+            .arg(ex.what());
+    }
+}
+
+void
+HttpConnection::clearWatchSocket() {
+    if (!watch_socket_) {
+        /// Should not happen...
+        return;
+    }
+    try {
+        watch_socket_->clearReady();
+    } catch (const std::exception& ex) {
+        LOG_ERROR(http_logger, HTTP_CONNECTION_WATCH_SOCKET_CLEAR_ERROR)
+            .arg(ex.what());
+    }
+}
+
+void
 HttpConnection::closeWatchSocket() {
     if (!watch_socket_) {
         /// Should not happen...
@@ -176,7 +204,8 @@ HttpConnection::closeWatchSocket() {
     // Close watch socket and log errors if occur.
     std::string watch_error;
     if (!watch_socket_->closeSocket(watch_error)) {
-        /// log
+        LOG_ERROR(http_logger, HTTP_CONNECTION_WATCH_SOCKET_CLOSE_ERROR)
+            .arg(watch_error);
     }
 }
 
@@ -283,10 +312,7 @@ HttpConnection::doHandshake() {
     try {
         tls_socket_->handshake(cb);
         if (use_external_) {
-            // Asynchronous handshake has been scheduled and we need to
-            // indicate this to break the synchronous select(). The handler
-            // should clear this status when invoked.
-            watch_socket_->markReady();
+            markWatchSocketReady();
         }
     } catch (const std::exception& ex) {
         isc_throw(HttpConnectionError, "unable to perform TLS handshake: "
@@ -348,11 +374,7 @@ HttpConnection::doWrite(HttpConnection::TransactionPtr transaction) {
                                        transaction->getOutputBufSize(),
                                        cb);
                 if (use_external_) {
-                    // Asynchronous send has been scheduled and we
-                    // need to indicate this to break the synchronous
-                    // select(). The handler should clear this status
-                    // when invoked.
-                    watch_socket_->markReady();
+                    markWatchSocketReady();
                 }
                 return;
             }
@@ -361,11 +383,7 @@ HttpConnection::doWrite(HttpConnection::TransactionPtr transaction) {
                                        transaction->getOutputBufSize(),
                                        cb);
                 if (use_external_) {
-                    // Asynchronous send has been scheduled and we
-                    // need to indicate this to break the synchronous
-                    // select(). The handler should clear this status
-                    // when invoked.
-                    watch_socket_->markReady();
+                    markWatchSocketReady();
                 }
                 return;
             }
@@ -432,13 +450,7 @@ HttpConnection::acceptorCallback(const boost::system::error_code& ec) {
 void
 HttpConnection::handshakeCallback(const boost::system::error_code& ec) {
     if (use_external_) {
-        // Clear the watch socket so as the future send operation can
-        // mark it again to interrupt the synchronous select() call.
-        try {
-            watch_socket_->clearReady();
-        } catch (const std::exception& ex) {
-            // log.
-        }
+        clearWatchSocket();
     }
     if (ec) {
         LOG_INFO(http_logger, HTTP_CONNECTION_HANDSHAKE_FAILED)
@@ -552,13 +564,7 @@ void
 HttpConnection::socketWriteCallback(HttpConnection::TransactionPtr transaction,
                                     boost::system::error_code ec, size_t length) {
     if (use_external_) {
-        // Clear the watch socket so as the future send operation can
-        // mark it again to interrupt the synchronous select() call.
-        try {
-            watch_socket_->clearReady();
-        } catch (const std::exception& ex) {
-            // log.
-        }
+        clearWatchSocket();
     }
     if (ec) {
         // IO service has been stopped and the connection is probably

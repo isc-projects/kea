@@ -26,6 +26,9 @@ extern const isc::log::MessageID HTTP_CONNECTION_SHUTDOWN = "HTTP_CONNECTION_SHU
 extern const isc::log::MessageID HTTP_CONNECTION_SHUTDOWN_FAILED = "HTTP_CONNECTION_SHUTDOWN_FAILED";
 extern const isc::log::MessageID HTTP_CONNECTION_STOP = "HTTP_CONNECTION_STOP";
 extern const isc::log::MessageID HTTP_CONNECTION_STOP_FAILED = "HTTP_CONNECTION_STOP_FAILED";
+extern const isc::log::MessageID HTTP_CONNECTION_WATCH_SOCKET_CLEAR_ERROR = "HTTP_CONNECTION_WATCH_SOCKET_CLEAR_ERROR";
+extern const isc::log::MessageID HTTP_CONNECTION_WATCH_SOCKET_CLOSE_ERROR = "HTTP_CONNECTION_WATCH_SOCKET_CLOSE_ERROR";
+extern const isc::log::MessageID HTTP_CONNECTION_WATCH_SOCKET_MARK_READY_ERROR = "HTTP_CONNECTION_WATCH_SOCKET_MARK_READY_ERROR";
 extern const isc::log::MessageID HTTP_DATA_RECEIVED = "HTTP_DATA_RECEIVED";
 extern const isc::log::MessageID HTTP_IDLE_CONNECTION_TIMEOUT_OCCURRED = "HTTP_IDLE_CONNECTION_TIMEOUT_OCCURRED";
 extern const isc::log::MessageID HTTP_PREMATURE_CONNECTION_TIMEOUT_OCCURRED = "HTTP_PREMATURE_CONNECTION_TIMEOUT_OCCURRED";
@@ -60,6 +63,9 @@ const char* values[] = {
     "HTTP_CONNECTION_SHUTDOWN_FAILED", "shutting down HTTP connection failed",
     "HTTP_CONNECTION_STOP", "stopping HTTP connection from %1",
     "HTTP_CONNECTION_STOP_FAILED", "stopping HTTP connection failed",
+    "HTTP_CONNECTION_WATCH_SOCKET_CLEAR_ERROR", "clearing connection watch socket failed: %1",
+    "HTTP_CONNECTION_WATCH_SOCKET_CLOSE_ERROR", "closing connection watch socket failed: %1",
+    "HTTP_CONNECTION_WATCH_SOCKET_MARK_READY_ERROR", "marking ready connection watch socket failed: %1",
     "HTTP_DATA_RECEIVED", "received %1 bytes from %2",
     "HTTP_IDLE_CONNECTION_TIMEOUT_OCCURRED", "closing persistent connection with %1 as a result of a timeout",
     "HTTP_PREMATURE_CONNECTION_TIMEOUT_OCCURRED", "premature connection timeout occurred: in transaction ? %1, transid: %2, current_transid: %3",

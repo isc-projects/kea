@@ -128,6 +128,21 @@ successful message exchange with a client.
 This error message is issued when an error occurred during closing a
 HTTP connection with a client.
 
+% HTTP_CONNECTION_WATCH_SOCKET_CLEAR_ERROR clearing connection watch socket failed: %1
+This error message is issued when an error occurred during clearing the
+watch socket associated with a HTTP connection with a client. The error
+is displayed.
+
+% HTTP_CONNECTION_WATCH_SOCKET_CLOSE_ERROR closing connection watch socket failed: %1
+This error message is issued when an error occurred during closing the
+watch socket associated with a HTTP connection with a client. The error
+is displayed.
+
+% HTTP_CONNECTION_WATCH_SOCKET_MARK_READY_ERROR marking ready connection watch socket failed: %1
+This error message is issued when an error occurred during marking as ready
+the watch socket associated with a HTTP connection with a client. The error
+is displayed.
+
 % HTTP_DATA_RECEIVED received %1 bytes from %2
 Logged at debug log level 55.
 This debug message is issued when the server receives a chunk of data from

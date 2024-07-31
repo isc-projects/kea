@@ -402,6 +402,19 @@ protected:
     /// @brief Returns remote address in textual form
     std::string getRemoteEndpointAddressAsText() const;
 
+    /// @brief Mark the watch socket as ready.
+    ///
+    /// Asynchronous handshake or send has been scheduled and we need to
+    /// indicate this to break the synchronous select(). The handler
+    /// should clear this status when invoked.
+    void markWatchSocketReady();
+
+    /// @brief Clear the watch socket's ready marker.
+    ///
+    /// Clear the watch socket so as the future send operation can
+    /// mark it again to interrupt the synchronous select() call.
+    void clearWatchSocket();
+
     /// @brief Close the watch socket.
     void closeWatchSocket();
 
