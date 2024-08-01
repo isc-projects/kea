@@ -18,7 +18,7 @@ unique for all merge requests.
 The content of the file should omit the entry number. The format is:
 
 @code{.unparsed}
-{category}{* if the changes are backward incompatible}		{author}
+[{category}]{* if the changes are backward incompatible}		{author}
 	{multi-line description, indented}
 	{GL issue number, indented}
 {empty line}
