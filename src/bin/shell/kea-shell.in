@@ -7,7 +7,7 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 """
-Text client for Control Agent process
+Text client for Kea servers over HTTP/HTTPS.
 """
 
 # First, let's import the right kea_connector.
@@ -48,7 +48,7 @@ def shell_body():
     """
     parser = argparse.ArgumentParser(description='kea-shell is a simple text '
                                      'client that uses REST interface to '
-                                     'connect to Kea Control Agent.')
+                                     'connect to Kea servers over HTTP/HTTPS.')
     parser.add_argument('--host', type=str, default='127.0.0.1',
                         help='hostname of the CA to connect to '
                         '(default:; 127.0.0.1)')
@@ -72,7 +72,7 @@ def shell_body():
                         'connect to CA (default: 10)')
     parser.add_argument('--service', nargs="?", action="append",
                         help='target specified service. If not specified,'
-                        'control agent will receive command.')
+                        'the destination itself will receive command.')
     parser.add_argument('--auth-user', type=str, default='',
                         help='Basic HTTP authentication user')
     parser.add_argument('--auth-password', type=str, default='',
@@ -144,7 +144,7 @@ def shell_body():
 
     # Ok, everything is ready. Let's send the command and get a response.
     try:
-        resp = kea_connector.send_to_control_agent(params)
+        resp = kea_connector.send_to_kea(params)
     except Exception as exc:
         print("Failed to run: " + str(exc))
         sys.exit(1)

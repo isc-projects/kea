@@ -1560,14 +1560,20 @@ AC_CONFIG_FILES([src/bin/shell/Makefile])
 AC_CONFIG_FILES([src/bin/shell/kea-shell],
                 [chmod +x src/bin/shell/kea-shell])
 AC_CONFIG_FILES([src/bin/shell/tests/Makefile])
-AC_CONFIG_FILES([src/bin/shell/tests/basic_auth_tests.sh],
-                [chmod +x src/bin/shell/tests/basic_auth_tests.sh])
-AC_CONFIG_FILES([src/bin/shell/tests/shell_process_tests.sh],
-                [chmod +x src/bin/shell/tests/shell_process_tests.sh])
+AC_CONFIG_FILES([src/bin/shell/tests/ca_basic_auth_tests.sh],
+                [chmod +x src/bin/shell/tests/ca_basic_auth_tests.sh])
+AC_CONFIG_FILES([src/bin/shell/tests/d2_basic_auth_tests.sh],
+                [chmod +x src/bin/shell/tests/d2_basic_auth_tests.sh])
+AC_CONFIG_FILES([src/bin/shell/tests/shell_ca_process_tests.sh],
+                [chmod +x src/bin/shell/tests/shell_ca_process_tests.sh])
+AC_CONFIG_FILES([src/bin/shell/tests/shell_d2_process_tests.sh],
+                [chmod +x src/bin/shell/tests/shell_d2_process_tests.sh])
 AC_CONFIG_FILES([src/bin/shell/tests/shell_unittest.py],
                 [chmod +x src/bin/shell/tests/shell_unittest.py])
 AC_CONFIG_FILES([src/bin/shell/tests/tls_ca_process_tests.sh],
                 [chmod +x src/bin/shell/tests/tls_ca_process_tests.sh])
+AC_CONFIG_FILES([src/bin/shell/tests/tls_d2_process_tests.sh],
+                [chmod +x src/bin/shell/tests/tls_d2_process_tests.sh])
 AC_CONFIG_FILES([src/hooks/Makefile])
 AC_CONFIG_FILES([src/hooks/dhcp/Makefile])
 AC_CONFIG_FILES([src/hooks/dhcp/bootp/Makefile])

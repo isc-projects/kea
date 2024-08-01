@@ -1,4 +1,7 @@
-/basic_auth_tests.sh
-/shell_process_tests.sh
+/ca_basic_auth_tests.sh
+/d2_basic_auth_tests.sh
+/shell_ca_process_tests.sh
+/shell_d2_process_tests.sh
 /shell_unittest.py
 /tls_ca_process_tests.sh
+/tls_d2_process_tests.sh

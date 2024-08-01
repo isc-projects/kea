@@ -16,19 +16,24 @@ set -eu
 # reason: used in dhcp_test_lib.sh.in
 CFG_FILE="@abs_top_builddir@/src/bin/shell/tests/test_config.json"
 
-# Path to the Control Agent log file.
+# Path to the D2 Server log file.
 LOG_FILE="@abs_top_builddir@/src/bin/shell/tests/test.log"
 
-# Control Agent configuration to be stored in the configuration file.
+# D2 Server configuration to be stored in the configuration file.
 # todo: use actual configuration once we support it.
 CONFIG="{
-    \"Control-agent\":
+    \"DhcpDdns\":
     {
-        \"http-host\": \"127.0.0.1\",
-        \"http-port\": 8081,
+        \"control-sockets\": [
+        {
+            \"socket-type\": \"http\",
+            \"socket-address\": \"127.0.0.1\",
+            \"socket-port\": 8081
+        }
+        ],
         \"loggers\": [
         {
-            \"name\": \"kea-ctrl-agent\",
+            \"name\": \"kea-dhcp-ddns\",
             \"output-options\": [
                 {
                     \"output\": \"$LOG_FILE\"
@@ -40,11 +45,11 @@ CONFIG="{
     }
 }"
 
-# In these tests we need to use two binaries: Control Agent and Kea shell.
+# In these tests we need to use two binaries: D2 Server and Kea shell.
 # Using bin and bin_path would be confusing, so we omit defining bin
 # and bin_path on purpose.
-ca_bin="kea-ctrl-agent"
-ca_bin_path="@abs_top_builddir@/src/bin/agent"
+d2_bin="kea-dhcp-ddns"
+d2_bin_path="@abs_top_builddir@/src/bin/d2"
 
 shell_bin="kea-shell"
 shell_bin_path="@abs_top_builddir@/src/bin/shell"
@@ -55,7 +60,7 @@ tmpfile_path="@abs_top_builddir@/src/bin/shell/tests"
 # shellcheck source=src/lib/testutils/dhcp_test_lib.sh.in
 . "@abs_top_builddir@/src/lib/testutils/dhcp_test_lib.sh"
 
-# This test verifies that Control Agent is shut down gracefully when it
+# This test verifies that D2 Server is shut down gracefully when it
 # receives a SIGINT or SIGTERM signal.
 shell_command_test() {
     test_name=${1}  # Test name
@@ -71,22 +76,22 @@ shell_command_test() {
     # Create new configuration file.
     create_config "${CONFIG}"
 
-    # Instruct Control Agent to log to the specific file.
+    # Instruct D2 Server to log to the specific file.
     set_logger
-    # Start Control Agent.
-    start_kea ${ca_bin_path}/${ca_bin}
-    # Wait up to 20s for Control Agent to start.
+    # Start D2 Server.
+    start_kea ${d2_bin_path}/${d2_bin}
+    # Wait up to 20s for D2 Server to start.
     wait_for_kea 20
     if [ "${_WAIT_FOR_KEA}" -eq 0 ]; then
-        printf "ERROR: timeout waiting for Control Agent to start.\n"
+        printf "ERROR: timeout waiting for D2 Server to start.\n"
         clean_exit 1
     fi
 
     # Check if it is still running. It could have terminated (e.g. as a result
     # of configuration failure).
-    get_pid "${ca_bin}"
+    get_pid "${d2_bin}"
     if [ "${_GET_PIDS_NUM}" -ne 1 ]; then
-        printf "ERROR: expected one Control Agent process to be started.\
+        printf "ERROR: expected one D2 Server process to be started.\
  Found %d processes started.\n" "${_GET_PIDS_NUM}"
         clean_exit 1
     fi
@@ -139,19 +144,19 @@ shell_command_test() {
     fi
     # Main test phase ends.
 
-    # Cleanup phase: shutdown CA
-    # Send SIGTERM signal to Control Agent
-    send_signal 15 ${ca_bin}
+    # Cleanup phase: shutdown D2
+    # Send SIGTERM signal to D2 Server
+    send_signal 15 ${d2_bin}
 
     # Now wait for process to log that it is exiting.
     wait_for_message 10 "DCTL_SHUTDOWN" 1
     if [ "${_WAIT_FOR_MESSAGE}" -eq 0 ]; then
-        printf "ERROR: Control Agent did not log shutdown.\n"
+        printf "ERROR: D2 Server did not log shutdown.\n"
         clean_exit 1
     fi
 
     # Make sure the server is down.
-    wait_for_server_down 5 ${ca_bin}
+    wait_for_server_down 5 ${d2_bin}
     assert_eq 1 "${_WAIT_FOR_SERVER_DOWN}" \
         "Expected wait_for_server_down return %d, returned %d"
 
@@ -178,17 +183,17 @@ version_test() {
 
 version_test "shell.version"
 shell_command_test "shell.list-commands" "list-commands" \
-    "[ { \"arguments\": [ \"build-report\", \"config-get\", \"config-hash-get\", \"config-reload\", \"config-set\", \"config-test\", \"config-write\", \"list-commands\", \"shutdown\", \"status-get\", \"version-get\" ], \"result\": 0 } ]" ""
+    "[ { \"arguments\": [ \"build-report\", \"config-get\", \"config-hash-get\", \"config-reload\", \"config-set\", \"config-test\", \"config-write\", \"list-commands\", \"shutdown\", \"statistic-get\", \"statistic-get-all\", \"statistic-reset\", \"statistic-reset-all\", \"status-get\", \"version-get\" ], \"result\": 0 } ]" ""
 shell_command_test "shell.bogus" "give-me-a-beer" \
-"[ { \"result\": 2, \"text\": \"'give-me-a-beer' command not supported. You did not include \\\"service\\\" parameter in the command, which indicates that Kea Control Agent should process this command rather than forward it to one or more Kea servers. If you aimed to send this command to one of the Kea servers you should include the \\\"service\\\" parameter in your request, e.g. \\\"service\\\": [ \\\"dhcp4\\\" ] to forward the command to the DHCPv4 server, or \\\"service\\\": [ \\\"dhcp4\\\", \\\"dhcp6\\\", \\\"d2\\\" ] to forward it to DHCPv4, DHCPv6 and D2 servers etc.\" } ]" ""
+"[ { \"result\": 2, \"text\": \"'give-me-a-beer' command not supported.\" } ]" ""
 shell_command_test "shell.empty-config-test" "config-test" \
     "[ { \"result\": 1, \"text\": \"Missing mandatory 'arguments' parameter.\" } ]" ""
 shell_command_test "shell.no-app-config-test" "config-test" \
-    "[ { \"result\": 1, \"text\": \"Missing mandatory 'Control-agent' parameter.\" } ]" \
+    "[ { \"result\": 1, \"text\": \"Missing mandatory 'DhcpDdns' parameter.\" } ]" \
     "\"FooBar\": { }"
 shell_command_test "shell.no-map-config-test" "config-test" \
-    "[ { \"result\": 1, \"text\": \"'Control-agent' parameter expected to be a map.\" } ]" \
-    "\"Control-agent\": [ ]"
+    "[ { \"result\": 1, \"text\": \"'DhcpDdns' parameter expected to be a map.\" } ]" \
+    "\"DhcpDdns\": [ ]"
 shell_command_test "shell.bad-value-config-test" "config-test" \
-    "[ { \"result\": 1, \"text\": \"out of range value (80000) specified for parameter 'http-port' (<string>:1:76)\" } ]" \
-    "\"Control-agent\": { \"http-port\": 80000 }"
+    "[ { \"result\": 1, \"text\": \"out of range value 80000 specified for parameter 'socket-port' (<string>:1:119)\" } ]" \
+    "\"DhcpDdns\": { \"control-sockets\": [ { \"socket-type\": \"http\", \"socket-port\": 80000 } ] }"
