@@ -18,11 +18,16 @@ unique for all merge requests.
 The content of the file should omit the entry number. The format is:
 
 @code{.unparsed}
-[category][* if the changes are backward incompatible]		[author]
-	[multi-line description, indented]
-	[GL issue number, indented]
-[optional empty line]
+{category}{* if the changes are backward incompatible}		{author}
+	{multi-line description, indented}
+	{GL issue number, indented}
+{empty line}
 @endcode
+
+The category must be surrounded by square brackets. The list of categories is
+available in the ChangeLog file. The backward incompatible change is marked by
+an asterisk. The author may contain multiple names delimited by a comma
+followed by a space.
 
 The GitLab issue number must be constructed as follows:
 
