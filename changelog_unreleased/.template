@@ -1,6 +1,3 @@
 [category]		author
-	Multiline description up to 70 columns ------------------------>|
-	Available categories: bug, build, doc, func, sec, perf.
-	Add * next to the category end bracket to mark change as backward
-	incompatible. Example: [func]*
+	description
 	(Gitlab #0000)
