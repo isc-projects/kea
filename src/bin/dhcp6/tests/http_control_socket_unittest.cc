@@ -23,7 +23,7 @@
 #include <hooks/hooks_manager.h>
 #include <http/response.h>
 #include <http/response_parser.h>
-#include <http/tests/test_http_client.h>
+#include <http/testutils/test_http_client.h>
 #include <log/logger_support.h>
 #include <stats/stats_mgr.h>
 #include <util/chrono_time_utils.h>

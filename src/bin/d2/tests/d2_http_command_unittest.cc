@@ -17,7 +17,7 @@
 #include <d2/parser_context.h>
 #include <http/response.h>
 #include <http/response_parser.h>
-#include <http/tests/test_http_client.h>
+#include <http/testutils/test_http_client.h>
 #include <gtest/gtest.h>
 #include <boost/pointer_cast.hpp>
 #include <atomic>
