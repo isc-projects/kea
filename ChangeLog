@@ -1,3 +1,12 @@
+2271.	[func]		func
+	Extended the control-socket entry taking a map
+	specifying a UNIX/LOCAL control socket for DHCPv4,
+	DHCPv6 and DHCP-DDNS servers to a control-sockets
+	list of maps taking also a HTTP/HTTPS control socket
+	with authentication and TLS parameters from the
+	Control Agent.
+	(Gitlab #3477)
+
 2270.	[bug]		andrei
 	Fixed flag -P|--port not working in kea-admin on mysql db-init,
 	mysql db-upgrade, pgsql db-upgrade, pgsql lease-dump.
