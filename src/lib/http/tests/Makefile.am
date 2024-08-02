@@ -43,7 +43,9 @@ libhttp_unittests_SOURCES += request_unittests.cc
 libhttp_unittests_SOURCES += response_unittests.cc
 libhttp_unittests_SOURCES += response_json_unittests.cc
 libhttp_unittests_SOURCES += run_unittests.cc
-libhttp_unittests_SOURCES += server_client_unittests.cc
+libhttp_unittests_SOURCES += http_tests.h
+libhttp_unittests_SOURCES += http_client_unittests.cc
+libhttp_unittests_SOURCES += http_server_unittests.cc
 if HAVE_OPENSSL
 libhttp_unittests_SOURCES += tls_server_unittests.cc
 libhttp_unittests_SOURCES += tls_client_unittests.cc

@@ -8,8 +8,8 @@
 #include <asiolink/asio_wrapper.h>
 #include <asiolink/interval_timer.h>
 #include <asiolink/tls_acceptor.h>
-#include <asiolink/testutils/test_tls.h>
 #include <cc/data.h>
+#include <http/testutils/test_http_client.h>
 #include <http/client.h>
 #include <http/http_types.h>
 #include <http/listener.h>
@@ -19,7 +19,6 @@
 #include <http/response_creator_factory.h>
 #include <http/response_json.h>
 #include <http/tests/response_test.h>
-#include <http/testutils/test_http_client.h>
 #include <http/url.h>
 #include <util/multi_threading_mgr.h>
 #include <http/tests/http_tests.h>
@@ -34,14 +33,13 @@
 #include <sstream>
 #include <string>
 
-using namespace boost::asio;
 using namespace boost::asio::ip;
 using namespace isc::asiolink;
-using namespace isc::asiolink::test;
 using namespace isc::data;
 using namespace isc::http;
 using namespace isc::http::test;
 using namespace isc::util;
+namespace ph = std::placeholders;
 
 namespace {
 
@@ -203,8 +201,6 @@ protected:
     /// @return Pointer to the created connection.
     virtual HttpConnectionPtr createConnection(const HttpResponseCreatorPtr& response_creator,
                                                const HttpAcceptorCallback& callback) {
-        TlsContextPtr tls_context;
-        configClient(tls_context);
         HttpConnectionPtr
             conn(new HttpConnectionType(io_service_, acceptor_,
                                         tls_context_, connections_,
@@ -317,7 +313,7 @@ public:
     /// @param io_service IO service to be used by the connection.
     /// @param acceptor Pointer to the TCP acceptor object used to listen for
     /// new HTTP connections.
-    /// @param tls_context TLS context.
+    /// @param context TLS tls_context.
     /// @param connection_pool Connection pool in which this connection is
     /// stored.
     /// @param response_creator Pointer to the response creator object used to
@@ -359,27 +355,27 @@ public:
     }
 };
 
+/// @brief Pointer to the TestHttpClient.
+typedef boost::shared_ptr<TestHttpClient> TestHttpClientPtr;
+
 /// @brief Test fixture class for @ref HttpListener.
-class HttpsListenerTest : public ::testing::Test {
+class HttpListenerTest : public ::testing::Test {
 public:
 
     /// @brief Constructor.
     ///
     /// Starts test timer which detects timeouts.
-    HttpsListenerTest()
+    HttpListenerTest()
         : io_service_(new IOService()), factory_(new TestHttpResponseCreatorFactory()),
-          test_timer_(io_service_), run_io_service_timer_(io_service_),
-          clients_(), server_context_(), client_context_() {
-        configServer(server_context_);
-        configClient(client_context_);
-        test_timer_.setup(std::bind(&HttpsListenerTest::timeoutHandler, this, true),
+          test_timer_(io_service_), run_io_service_timer_(io_service_), clients_() {
+        test_timer_.setup(std::bind(&HttpListenerTest::timeoutHandler, this, true),
                           TEST_TIMEOUT, IntervalTimer::ONE_SHOT);
     }
 
     /// @brief Destructor.
     ///
     /// Removes active HTTP clients.
-    virtual ~HttpsListenerTest() {
+    virtual ~HttpListenerTest() {
         for (auto const& client : clients_) {
             client->close();
         }
@@ -389,13 +385,12 @@ public:
 
     /// @brief Connect to the endpoint.
     ///
-    /// This method creates TestHttpsClient instance and retains it in the clients_
+    /// This method creates TestHttpClient instance and retains it in the clients_
     /// list.
     ///
     /// @param request String containing the HTTP request to be sent.
     void startRequest(const std::string& request) {
-        TestHttpsClientPtr client(new TestHttpsClient(io_service_,
-                                                      client_context_));
+        TestHttpClientPtr client(new TestHttpClient(io_service_));
         clients_.push_back(client);
         clients_.back()->startRequest(request);
     }
@@ -421,7 +416,7 @@ public:
         io_service_->restart();
 
         if (timeout > 0) {
-            run_io_service_timer_.setup(std::bind(&HttpsListenerTest::timeoutHandler,
+            run_io_service_timer_.setup(std::bind(&HttpListenerTest::timeoutHandler,
                                                   this, false),
                                         timeout, IntervalTimer::ONE_SHOT);
         }
@@ -456,14 +451,14 @@ public:
         // Open the listener with the Request Timeout of 1 sec and post the
         // partial request.
         HttpListener listener(io_service_, IOAddress(SERVER_ADDRESS),
-                              SERVER_PORT, server_context_,
+                              SERVER_PORT, TlsContextPtr(),
                               factory_, HttpListener::RequestTimeout(1000),
                               HttpListener::IdleTimeout(IDLE_TIMEOUT));
         ASSERT_NO_THROW(listener.start());
         ASSERT_NO_THROW(startRequest(request));
         ASSERT_NO_THROW(runIOService());
         ASSERT_EQ(1, clients_.size());
-        TestHttpsClientPtr client = *clients_.begin();
+        TestHttpClientPtr client = *clients_.begin();
         ASSERT_TRUE(client);
 
         // Build the reference response.
@@ -509,7 +504,7 @@ public:
         // Use custom listener and the specialized connection object.
         HttpListenerCustom<HttpConnectionType>
             listener(io_service_, IOAddress(SERVER_ADDRESS), SERVER_PORT,
-                     server_context_, factory_,
+                     TlsContextPtr(), factory_,
                      HttpListener::RequestTimeout(REQUEST_TIMEOUT),
                      HttpListener::IdleTimeout(IDLE_TIMEOUT));
 
@@ -522,7 +517,7 @@ public:
         ASSERT_NO_THROW(runIOService());
 
         ASSERT_EQ(1, clients_.size());
-        TestHttpsClientPtr client = *clients_.begin();
+        TestHttpClientPtr client = *clients_.begin();
         ASSERT_TRUE(client);
         EXPECT_EQ(httpOk(HttpVersion::HTTP_11()), client->getResponse());
     }
@@ -541,25 +536,19 @@ public:
     IntervalTimer run_io_service_timer_;
 
     /// @brief List of client connections.
-    std::list<TestHttpsClientPtr> clients_;
-
-    /// @brief Server TLS context.
-    TlsContextPtr server_context_;
-
-    /// @brief Client TLS context.
-    TlsContextPtr client_context_;
+    std::list<TestHttpClientPtr> clients_;
 };
 
 // This test verifies that HTTP connection can be established and used to
 // transmit HTTP request and receive a response.
-TEST_F(HttpsListenerTest, listen) {
+TEST_F(HttpListenerTest, listen) {
     const std::string request = "POST /foo/bar HTTP/1.1\r\n"
         "Content-Type: application/json\r\n"
         "Content-Length: 3\r\n\r\n"
         "{ }";
 
     HttpListener listener(io_service_, IOAddress(SERVER_ADDRESS), SERVER_PORT,
-                          server_context_, factory_,
+                          TlsContextPtr(), factory_,
                           HttpListener::RequestTimeout(REQUEST_TIMEOUT),
                           HttpListener::IdleTimeout(IDLE_TIMEOUT));
     ASSERT_NO_THROW(listener.start());
@@ -568,7 +557,7 @@ TEST_F(HttpsListenerTest, listen) {
     ASSERT_NO_THROW(startRequest(request));
     ASSERT_NO_THROW(runIOService());
     ASSERT_EQ(1, clients_.size());
-    TestHttpsClientPtr client = *clients_.begin();
+    TestHttpClientPtr client = *clients_.begin();
     ASSERT_TRUE(client);
     EXPECT_EQ(httpOk(HttpVersion::HTTP_11()), client->getResponse());
 
@@ -579,7 +568,7 @@ TEST_F(HttpsListenerTest, listen) {
 
 // This test verifies that persistent HTTP connection can be established when
 // "Connection: Keep-Alive" header value is specified.
-TEST_F(HttpsListenerTest, keepAlive) {
+TEST_F(HttpListenerTest, keepAlive) {
 
     // The first request contains the keep-alive header which instructs the server
     // to maintain the TCP connection after sending a response.
@@ -590,7 +579,7 @@ TEST_F(HttpsListenerTest, keepAlive) {
         "{ }";
 
     HttpListener listener(io_service_, IOAddress(SERVER_ADDRESS), SERVER_PORT,
-                          server_context_, factory_,
+                          TlsContextPtr(), factory_,
                           HttpListener::RequestTimeout(REQUEST_TIMEOUT),
                           HttpListener::IdleTimeout(IDLE_TIMEOUT));
 
@@ -600,7 +589,7 @@ TEST_F(HttpsListenerTest, keepAlive) {
     ASSERT_NO_THROW(startRequest(request));
     ASSERT_NO_THROW(runIOService());
     ASSERT_EQ(1, clients_.size());
-    TestHttpsClientPtr client = *clients_.begin();
+    TestHttpClientPtr client = *clients_.begin();
     ASSERT_TRUE(client);
     EXPECT_EQ(httpOk(HttpVersion::HTTP_10()), client->getResponse());
 
@@ -630,7 +619,7 @@ TEST_F(HttpsListenerTest, keepAlive) {
 
 // This test verifies that persistent HTTP connection is established by default
 // when HTTP/1.1 is in use.
-TEST_F(HttpsListenerTest, persistentConnection) {
+TEST_F(HttpListenerTest, persistentConnection) {
 
     // The HTTP/1.1 requests are by default persistent.
     std::string request = "POST /foo/bar HTTP/1.1\r\n"
@@ -639,7 +628,7 @@ TEST_F(HttpsListenerTest, persistentConnection) {
         "{ }";
 
     HttpListener listener(io_service_, IOAddress(SERVER_ADDRESS), SERVER_PORT,
-                          server_context_, factory_,
+                          TlsContextPtr(), factory_,
                           HttpListener::RequestTimeout(REQUEST_TIMEOUT),
                           HttpListener::IdleTimeout(IDLE_TIMEOUT));
 
@@ -649,7 +638,7 @@ TEST_F(HttpsListenerTest, persistentConnection) {
     ASSERT_NO_THROW(startRequest(request));
     ASSERT_NO_THROW(runIOService());
     ASSERT_EQ(1, clients_.size());
-    TestHttpsClientPtr client = *clients_.begin();
+    TestHttpClientPtr client = *clients_.begin();
     ASSERT_TRUE(client);
     EXPECT_EQ(httpOk(HttpVersion::HTTP_11()), client->getResponse());
 
@@ -679,7 +668,7 @@ TEST_F(HttpsListenerTest, persistentConnection) {
 
 // This test verifies that "keep-alive" connection is closed by the server after
 // an idle time.
-TEST_F(HttpsListenerTest, keepAliveTimeout) {
+TEST_F(HttpListenerTest, keepAliveTimeout) {
 
     // The first request contains the keep-alive header which instructs the server
     // to maintain the TCP connection after sending a response.
@@ -691,7 +680,7 @@ TEST_F(HttpsListenerTest, keepAliveTimeout) {
 
     // Specify the idle timeout of 500ms.
     HttpListener listener(io_service_, IOAddress(SERVER_ADDRESS), SERVER_PORT,
-                          server_context_, factory_,
+                          TlsContextPtr(), factory_,
                           HttpListener::RequestTimeout(REQUEST_TIMEOUT),
                           HttpListener::IdleTimeout(500));
 
@@ -701,7 +690,7 @@ TEST_F(HttpsListenerTest, keepAliveTimeout) {
     ASSERT_NO_THROW(startRequest(request));
     ASSERT_NO_THROW(runIOService());
     ASSERT_EQ(1, clients_.size());
-    TestHttpsClientPtr client = *clients_.begin();
+    TestHttpClientPtr client = *clients_.begin();
     ASSERT_TRUE(client);
     EXPECT_EQ(httpOk(HttpVersion::HTTP_10()), client->getResponse());
 
@@ -738,7 +727,7 @@ TEST_F(HttpsListenerTest, keepAliveTimeout) {
 
 // This test verifies that persistent connection is closed by the server after
 // an idle time.
-TEST_F(HttpsListenerTest, persistentConnectionTimeout) {
+TEST_F(HttpListenerTest, persistentConnectionTimeout) {
 
     // The HTTP/1.1 requests are by default persistent.
     std::string request = "POST /foo/bar HTTP/1.1\r\n"
@@ -748,7 +737,7 @@ TEST_F(HttpsListenerTest, persistentConnectionTimeout) {
 
     // Specify the idle timeout of 500ms.
     HttpListener listener(io_service_, IOAddress(SERVER_ADDRESS), SERVER_PORT,
-                          server_context_, factory_,
+                          TlsContextPtr(), factory_,
                           HttpListener::RequestTimeout(REQUEST_TIMEOUT),
                           HttpListener::IdleTimeout(500));
 
@@ -758,7 +747,7 @@ TEST_F(HttpsListenerTest, persistentConnectionTimeout) {
     ASSERT_NO_THROW(startRequest(request));
     ASSERT_NO_THROW(runIOService());
     ASSERT_EQ(1, clients_.size());
-    TestHttpsClientPtr client = *clients_.begin();
+    TestHttpClientPtr client = *clients_.begin();
     ASSERT_TRUE(client);
     EXPECT_EQ(httpOk(HttpVersion::HTTP_11()), client->getResponse());
 
@@ -795,7 +784,7 @@ TEST_F(HttpsListenerTest, persistentConnectionTimeout) {
 
 // This test verifies that HTTP/1.1 connection remains open even if there is an
 // error in the message body.
-TEST_F(HttpsListenerTest, persistentConnectionBadBody) {
+TEST_F(HttpListenerTest, persistentConnectionBadBody) {
 
     // The HTTP/1.1 requests are by default persistent.
     std::string request = "POST /foo/bar HTTP/1.1\r\n"
@@ -804,7 +793,7 @@ TEST_F(HttpsListenerTest, persistentConnectionBadBody) {
         "{ \"a\": abc }";
 
     HttpListener listener(io_service_, IOAddress(SERVER_ADDRESS), SERVER_PORT,
-                          server_context_, factory_,
+                          TlsContextPtr(), factory_,
                           HttpListener::RequestTimeout(REQUEST_TIMEOUT),
                           HttpListener::IdleTimeout(IDLE_TIMEOUT));
 
@@ -814,7 +803,7 @@ TEST_F(HttpsListenerTest, persistentConnectionBadBody) {
     ASSERT_NO_THROW(startRequest(request));
     ASSERT_NO_THROW(runIOService());
     ASSERT_EQ(1, clients_.size());
-    TestHttpsClientPtr client = *clients_.begin();
+    TestHttpClientPtr client = *clients_.begin();
     ASSERT_TRUE(client);
     EXPECT_EQ("HTTP/1.1 400 Bad Request\r\n"
               "Content-Length: 40\r\n"
@@ -847,9 +836,9 @@ TEST_F(HttpsListenerTest, persistentConnectionBadBody) {
 }
 
 // This test verifies that the HTTP listener can't be started twice.
-TEST_F(HttpsListenerTest, startTwice) {
+TEST_F(HttpListenerTest, startTwice) {
     HttpListener listener(io_service_, IOAddress(SERVER_ADDRESS), SERVER_PORT,
-                          server_context_, factory_,
+                          TlsContextPtr(), factory_,
                           HttpListener::RequestTimeout(REQUEST_TIMEOUT),
                           HttpListener::IdleTimeout(IDLE_TIMEOUT));
     ASSERT_NO_THROW(listener.start());
@@ -858,7 +847,7 @@ TEST_F(HttpsListenerTest, startTwice) {
 
 // This test verifies that Bad Request status is returned when the request
 // is malformed.
-TEST_F(HttpsListenerTest, badRequest) {
+TEST_F(HttpListenerTest, badRequest) {
     // Content-Type is wrong. This should result in Bad Request status.
     const std::string request = "POST /foo/bar HTTP/1.1\r\n"
         "Content-Type: foo\r\n"
@@ -866,14 +855,14 @@ TEST_F(HttpsListenerTest, badRequest) {
         "{ }";
 
     HttpListener listener(io_service_, IOAddress(SERVER_ADDRESS), SERVER_PORT,
-                          server_context_, factory_,
+                          TlsContextPtr(), factory_,
                           HttpListener::RequestTimeout(REQUEST_TIMEOUT),
                           HttpListener::IdleTimeout(IDLE_TIMEOUT));
     ASSERT_NO_THROW(listener.start());
     ASSERT_NO_THROW(startRequest(request));
     ASSERT_NO_THROW(runIOService());
     ASSERT_EQ(1, clients_.size());
-    TestHttpsClientPtr client = *clients_.begin();
+    TestHttpClientPtr client = *clients_.begin();
     ASSERT_TRUE(client);
     EXPECT_EQ("HTTP/1.1 400 Bad Request\r\n"
               "Content-Length: 40\r\n"
@@ -886,9 +875,9 @@ TEST_F(HttpsListenerTest, badRequest) {
 
 // This test verifies that NULL pointer can't be specified for the
 // HttpResponseCreatorFactory.
-TEST_F(HttpsListenerTest, invalidFactory) {
+TEST_F(HttpListenerTest, invalidFactory) {
     EXPECT_THROW(HttpListener(io_service_, IOAddress(SERVER_ADDRESS),
-                              SERVER_PORT, server_context_,
+                              SERVER_PORT, TlsContextPtr(),
                               HttpResponseCreatorFactoryPtr(),
                               HttpListener::RequestTimeout(REQUEST_TIMEOUT),
                               HttpListener::IdleTimeout(IDLE_TIMEOUT)),
@@ -897,9 +886,9 @@ TEST_F(HttpsListenerTest, invalidFactory) {
 
 // This test verifies that the timeout of 0 can't be specified for the
 // Request Timeout.
-TEST_F(HttpsListenerTest, invalidRequestTimeout) {
+TEST_F(HttpListenerTest, invalidRequestTimeout) {
     EXPECT_THROW(HttpListener(io_service_, IOAddress(SERVER_ADDRESS),
-                              SERVER_PORT, server_context_, factory_,
+                              SERVER_PORT, TlsContextPtr(), factory_,
                               HttpListener::RequestTimeout(0),
                               HttpListener::IdleTimeout(IDLE_TIMEOUT)),
                  HttpListenerError);
@@ -907,9 +896,9 @@ TEST_F(HttpsListenerTest, invalidRequestTimeout) {
 
 // This test verifies that the timeout of 0 can't be specified for the
 // idle persistent connection timeout.
-TEST_F(HttpsListenerTest, invalidIdleTimeout) {
+TEST_F(HttpListenerTest, invalidIdleTimeout) {
     EXPECT_THROW(HttpListener(io_service_, IOAddress(SERVER_ADDRESS),
-                              SERVER_PORT, server_context_, factory_,
+                              SERVER_PORT, TlsContextPtr(), factory_,
                               HttpListener::RequestTimeout(REQUEST_TIMEOUT),
                               HttpListener::IdleTimeout(0)),
                  HttpListenerError);
@@ -917,7 +906,7 @@ TEST_F(HttpsListenerTest, invalidIdleTimeout) {
 
 // This test verifies that listener can't be bound to the port to which
 // other server is bound.
-TEST_F(HttpsListenerTest, addressInUse) {
+TEST_F(HttpListenerTest, addressInUse) {
     tcp::acceptor acceptor(io_service_->getInternalIOService());
     // Use other port than SERVER_PORT to make sure that this TCP connection
     // doesn't affect subsequent tests.
@@ -929,7 +918,7 @@ TEST_F(HttpsListenerTest, addressInUse) {
     // Listener should report an error when we try to start it because another
     // acceptor is bound to that port and address.
     HttpListener listener(io_service_, IOAddress(SERVER_ADDRESS),
-                          SERVER_PORT + 1, server_context_, factory_,
+                          SERVER_PORT + 1, TlsContextPtr(), factory_,
                           HttpListener::RequestTimeout(REQUEST_TIMEOUT),
                           HttpListener::IdleTimeout(IDLE_TIMEOUT));
     EXPECT_THROW(listener.start(), HttpListenerError);
@@ -939,7 +928,7 @@ TEST_F(HttpsListenerTest, addressInUse) {
 // expected when the read part of the request contains the HTTP
 // version number. The timeout response should contain the same
 // HTTP version number as the partial request.
-TEST_F(HttpsListenerTest, requestTimeoutHttpVersionFound) {
+TEST_F(HttpListenerTest, requestTimeoutHttpVersionFound) {
     // The part of the request specified here is correct but it is not
     // a complete request.
     const std::string request = "POST /foo/bar HTTP/1.1\r\n"
@@ -953,7 +942,7 @@ TEST_F(HttpsListenerTest, requestTimeoutHttpVersionFound) {
 // expected when the read part of the request does not contain
 // the HTTP version number. The timeout response should by default
 // contain HTTP/1.0 version number.
-TEST_F(HttpsListenerTest, requestTimeoutHttpVersionNotFound) {
+TEST_F(HttpListenerTest, requestTimeoutHttpVersionNotFound) {
     // The part of the request specified here is correct but it is not
     // a complete request.
     const std::string request = "POST /foo/bar HTTP";
@@ -964,13 +953,13 @@ TEST_F(HttpsListenerTest, requestTimeoutHttpVersionNotFound) {
 // This test verifies that injecting length value greater than the
 // output buffer length to the socket write callback does not cause
 // an exception.
-TEST_F(HttpsListenerTest, tooLongWriteBuffer) {
+TEST_F(HttpListenerTest, tooLongWriteBuffer) {
     testWriteBufferIssues<HttpConnectionLongWriteBuffer>();
 }
 
 // This test verifies that changing the transaction before calling
 // the socket write callback does not cause an exception.
-TEST_F(HttpsListenerTest, transactionChangeDuringWrite) {
+TEST_F(HttpListenerTest, transactionChangeDuringWrite) {
     testWriteBufferIssues<HttpConnectionTransactionChange>();
 }
 
