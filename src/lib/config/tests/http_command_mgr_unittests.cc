@@ -12,6 +12,7 @@
 #include <cc/command_interpreter.h>
 #include <config/http_command_mgr.h>
 #include <config/command_mgr.h>
+#include <dhcp/iface_mgr.h>
 #include <http/response.h>
 #include <http/response_parser.h>
 #include <http/testutils/test_http_client.h>
@@ -80,6 +81,7 @@ public:
         }
         test_timer_.cancel();
         resetState();
+        IfaceMgr::instance().deleteAllExternalSockets();
     }
 
     /// @brief Resets state.
@@ -98,6 +100,7 @@ public:
             io_service_->stopAndPoll();
             HttpCommandMgr::instance().setIOService(IOServicePtr());
         }
+        HttpCommandMgr::instance().addExternalSockets(true);
     }
 
     /// @brief Constructs a complete HTTP POST given a request body.
@@ -203,7 +206,7 @@ public:
 
 /// Verifies the configure and close of HttpCommandMgr.
 TEST_F(HttpCommandMgrTest, basic) {
-    // Make sure we can confiugure one.
+    // Make sure we can configure one.
     ASSERT_NO_THROW_LOG(HttpCommandMgr::instance().configure(http_config_));
     auto listener = HttpCommandMgr::instance().getHttpListener();
     ASSERT_TRUE(listener);
@@ -228,6 +231,30 @@ TEST_F(HttpCommandMgrTest, basic) {
     EXPECT_TRUE(HttpCommandMgr::instance().getHttpListener());
     ASSERT_NO_THROW_LOG(HttpCommandMgr::instance().garbageCollectListeners());
     EXPECT_FALSE(HttpCommandMgr::instance().getHttpListener());
+}
+
+/// Verifies the use external socket flag of HttpCommandMgr.
+TEST_F(HttpCommandMgrTest, useExternal) {
+    // Default is to use external sockets.
+    ASSERT_NO_THROW_LOG(HttpCommandMgr::instance().configure(http_config_));
+    auto listener = HttpCommandMgr::instance().getHttpListener();
+    ASSERT_TRUE(listener);
+    int fd = listener->getNative();
+    EXPECT_NE(-1, fd);
+    EXPECT_TRUE(IfaceMgr::instance().isExternalSocket(fd));
+    ASSERT_NO_THROW_LOG(HttpCommandMgr::instance().close());
+
+    // Change to no external sockets.
+    HttpCommandMgr::instance().addExternalSockets(false);
+
+    // Retry: now the listener is not added as an external socket
+    // to the interface manager.
+    ASSERT_NO_THROW_LOG(HttpCommandMgr::instance().configure(http_config_));
+    listener = HttpCommandMgr::instance().getHttpListener();
+    ASSERT_TRUE(listener);
+    fd = listener->getNative();
+    EXPECT_NE(-1, fd);
+    EXPECT_FALSE(IfaceMgr::instance().isExternalSocket(fd));
 }
 
 /// Verifies the configure and close of HttpCommandMgr with TLS.
@@ -266,9 +293,65 @@ TEST_F(HttpCommandMgrTest, basicTls) {
     EXPECT_FALSE(HttpCommandMgr::instance().getHttpListener());
 }
 
+/// Verifies the use external socket flag of HttpCommandMgr with TLS.
+TEST_F(HttpCommandMgrTest, useExternalTls) {
+    string ca_dir(string(TEST_CA_DIR));
+    // Setup TLS for the manager.
+    http_config_->setSocketType("https");
+    http_config_->setTrustAnchor(ca_dir + string("/kea-ca.crt"));
+    http_config_->setCertFile(ca_dir + string("/kea-server.crt"));
+    http_config_->setKeyFile(ca_dir + string("/kea-server.key"));
+
+    // Default is to use external sockets.
+    ASSERT_NO_THROW_LOG(HttpCommandMgr::instance().configure(http_config_));
+    auto listener = HttpCommandMgr::instance().getHttpListener();
+    ASSERT_TRUE(listener);
+    int fd = listener->getNative();
+    EXPECT_NE(-1, fd);
+    EXPECT_TRUE(IfaceMgr::instance().isExternalSocket(fd));
+    ASSERT_NO_THROW_LOG(HttpCommandMgr::instance().close());
+
+    // Change to no external sockets.
+    HttpCommandMgr::instance().addExternalSockets(false);
+
+    // Retry: now the listener is not added as an external socket
+    // to the interface manager.
+    ASSERT_NO_THROW_LOG(HttpCommandMgr::instance().configure(http_config_));
+    listener = HttpCommandMgr::instance().getHttpListener();
+    ASSERT_TRUE(listener);
+    fd = listener->getNative();
+    EXPECT_NE(-1, fd);
+    EXPECT_FALSE(IfaceMgr::instance().isExternalSocket(fd));
+}
+
 // This test verifies that an HTTP connection can be established and used to
 // transmit an HTTP request and receive the response.
 TEST_F(HttpCommandMgrTest, command) {
+    // Configure.
+    ASSERT_NO_THROW_LOG(HttpCommandMgr::instance().configure(http_config_));
+    EXPECT_TRUE(HttpCommandMgr::instance().getHttpListener());
+
+    // Now let's send a "foo" command.  This should create a client, connect
+    // to our listener, post our request and retrieve our reply.
+    ASSERT_NO_THROW(startRequest("{\"command\": \"foo\"}"));
+    ASSERT_TRUE(client_);
+    ASSERT_NO_THROW(runIOService());
+    ASSERT_TRUE(client_);
+
+    // Parse the response into an HttpResponse.
+    HttpResponsePtr hr;
+    ASSERT_NO_THROW_LOG(hr = parseResponse(client_->getResponse()));
+
+    // We should have a response from our command handler.
+    EXPECT_EQ(hr->getBody(), "[ { \"arguments\": [ \"bar\" ], \"result\": 0 } ]");
+}
+
+// This test verifies that an HTTP connection can be established and used to
+// transmit an HTTP request and receive the response (no external sockets).
+TEST_F(HttpCommandMgrTest, commandNoExternal) {
+    // Change to no external sockets.
+    HttpCommandMgr::instance().addExternalSockets(false);
+
     // Configure.
     ASSERT_NO_THROW_LOG(HttpCommandMgr::instance().configure(http_config_));
     EXPECT_TRUE(HttpCommandMgr::instance().getHttpListener());

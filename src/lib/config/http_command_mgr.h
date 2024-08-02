@@ -48,6 +48,14 @@ public:
     /// @param timeout New connection timeout in milliseconds.
     void setIdleConnectionTimeout(const long timeout);
 
+    /// @brief Use external sockets flag.
+    ///
+    /// Add sockets as external sockets of the interface manager
+    /// so available I/O on them makes a waiting select to return.
+    ///
+    /// @param use_external True (default) add external sockets.
+    void addExternalSockets(bool use_external = true);
+
     /// @brief Configure control socket from configuration.
     ///
     /// @param config Configuration of the control socket.

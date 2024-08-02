@@ -82,6 +82,9 @@ D2Process::init() {
 
     // Set the HTTP authentication default realm.
     HttpCommandConfig::DEFAULT_AUTHENTICATION_REALM = "kea-dhcp-ddns-server";
+
+    // D2 server does not use the interface manager.
+    HttpCommandMgr::instance().addExternalSockets(false);
 };
 
 void

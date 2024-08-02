@@ -32,7 +32,8 @@ public:
     HttpCommandMgrImpl()
         : io_service_(), timeout_(TIMEOUT_AGENT_RECEIVE_COMMAND),
           idle_timeout_(TIMEOUT_AGENT_IDLE_CONNECTION_TIMEOUT),
-          current_config_(), http_listeners_(), active_(0) {
+          current_config_(), http_listeners_(), active_(0),
+          use_external_(true) {
     }
 
     /// @brief Configure control socket from configuration.
@@ -66,6 +67,9 @@ public:
 
     /// @brief Number of active listeners (0 or 1).
     size_t active_;
+
+    /// @brief Use external sockets flag.
+    bool use_external_;
 };
 
 void
@@ -116,10 +120,12 @@ HttpCommandMgrImpl::configure(HttpCommandConfigPtr config) {
                               config->getCertRequired());
         use_https = true;
     }
+
     // Create response creator factory first. It will be used to
     // generate response creators. Each response creator will be used
     // to generate answer to specific request.
     HttpResponseCreatorFactoryPtr rfc(new HttpCommandResponseCreatorFactory(config));
+
     // Create HTTP listener. It will open up a TCP socket and be
     // prepared to accept incoming connection.
     HttpListenerPtr http_listener
@@ -130,6 +136,10 @@ HttpCommandMgrImpl::configure(HttpCommandConfigPtr config) {
                           rfc,
                           HttpListener::RequestTimeout(timeout_),
                           HttpListener::IdleTimeout(idle_timeout_)));
+
+    // Pass the use external socket flag.
+    http_listener->addExternalSockets(use_external_);
+
     // Instruct the HTTP listener to actually open socket, install
     // callback and start listening.
     http_listener->start();
@@ -220,6 +230,11 @@ HttpCommandMgr::setConnectionTimeout(const long timeout) {
 void
 HttpCommandMgr::setIdleConnectionTimeout(const long timeout) {
     impl_->idle_timeout_ = timeout;
+}
+
+void
+HttpCommandMgr::addExternalSockets(bool use_external) {
+    impl_->use_external_ = use_external;
 }
 
 void

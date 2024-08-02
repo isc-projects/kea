@@ -278,17 +278,6 @@ HttpConnection::asyncAccept() {
             }
             tls_acceptor->asyncAccept(*tls_socket_, cb);
         }
-        if (use_external_) {
-            auto& iface_mgr = IfaceMgr::instance ();
-            if (tcp_socket_) {
-                iface_mgr.addExternalSocket(tcp_socket_->getNative(), 0);
-            }
-            if (tls_socket_) {
-                iface_mgr.addExternalSocket(tls_socket_->getNative(), 0);
-            }
-            watch_socket_.reset(new WatchSocket());
-            iface_mgr.addExternalSocket(watch_socket_->getSelectFd(), 0);
-        }
     } catch (const std::exception& ex) {
         isc_throw(HttpConnectionError, "unable to start accepting TCP "
                   "connections: " << ex.what());
@@ -440,6 +429,18 @@ HttpConnection::acceptorCallback(const boost::system::error_code& ec) {
                       HTTP_CONNECTION_HANDSHAKE_START)
                 .arg(getRemoteEndpointAddressAsText())
                 .arg(static_cast<unsigned>(request_timeout_/1000));
+        }
+
+        if (use_external_) {
+            auto& iface_mgr = IfaceMgr::instance ();
+            if (tcp_socket_) {
+                iface_mgr.addExternalSocket(tcp_socket_->getNative(), 0);
+            }
+            if (tls_socket_) {
+                iface_mgr.addExternalSocket(tls_socket_->getNative(), 0);
+            }
+            watch_socket_.reset(new WatchSocket());
+            iface_mgr.addExternalSocket(watch_socket_->getSelectFd(), 0);
         }
 
         setupRequestTimer();
