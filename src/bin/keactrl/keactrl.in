@@ -118,7 +118,8 @@ get_pid_from_file() {
 
     # Extract the name portion (from last slash to last dot) of the config file name.
     local conf_name
-    conf_name=$(basename -- "${kea_config_file}" | rev | cut -f2- -d'.' | rev)
+    conf_name=${kea_config_file##*/}
+    conf_name=${conf_name%.*}
 
     # Default the directory to --localstatedir / run
     local pid_file_dir
