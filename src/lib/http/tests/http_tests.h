@@ -4,8 +4,12 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+#ifndef HTTP_TEST_H
+#define HTTP_TEST_H
+
 namespace isc {
 namespace http {
+namespace test {
 
 /// @brief IP address to which HTTP service is bound.
 const std::string SERVER_ADDRESS = "127.0.0.1";
@@ -30,16 +34,18 @@ const long SHORT_IDLE_TIMEOUT = 200;
 const long TEST_TIMEOUT = 10000;
 
 /// @brief Test HTTP response.
-typedef test::TestHttpResponseBase<HttpResponseJson> Response;
+typedef TestHttpResponseBase<HttpResponseJson> Response;
 
 /// @brief Pointer to test HTTP response.
 typedef boost::shared_ptr<Response> ResponsePtr;
 
 /// @brief Generic test HTTP response.
-typedef test::TestHttpResponseBase<HttpResponse> GenericResponse;
+typedef TestHttpResponseBase<HttpResponse> GenericResponse;
 
 /// @brief Pointer to generic test HTTP response.
 typedef boost::shared_ptr<GenericResponse> GenericResponsePtr;
 
 }
 }
+}
+#endif // HTTP_TEST_H
