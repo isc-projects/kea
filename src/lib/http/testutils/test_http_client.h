@@ -334,7 +334,7 @@ private:
 typedef boost::shared_ptr<TestHttpClient> TestHttpClientPtr;
 
 /// @brief Entity which can connect to the HTTPS server endpoint.
-class TestHttpsClient : public boost::noncopyable {
+class TestHttpsClient : public BaseTestHttpClient {
 public:
 
     /// @brief Constructor.
