@@ -70,6 +70,11 @@ public:
         isc::Exception(file, line, what) { };
 };
 
+class OptionParseError : public Exception {
+public:
+    OptionParseError (const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) { };
+};
 
 class Option {
 public:

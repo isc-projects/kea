@@ -438,12 +438,24 @@ TEST_F(OptionCustomTest, fqdnData) {
     // This option should have one suboption.
     EXPECT_TRUE(hasV6Suboption(option.get()));
 
+    ASSERT_FALSE(Option::lenient_parsing_);
     // Check that the option with truncated data can't be created.
     EXPECT_THROW(
         option.reset(new OptionCustom(opt_def, Option::V6,
                                       buf.begin(), buf.begin() + 4)),
         isc::dhcp::BadDataTypeCast
     );
+
+    // Check lenient parsing mitigates a mal-formed option by throwing
+    // SkipThisOptionError.
+    Option::lenient_parsing_ = true;
+    EXPECT_THROW(
+        option.reset(new OptionCustom(opt_def, Option::V6,
+                                      buf.begin(), buf.begin() + 4)),
+        isc::dhcp::SkipThisOptionError
+    );
+
+    Option::lenient_parsing_ = false;
 }
 
 // The purpose of this test is to verify that the option definition comprising

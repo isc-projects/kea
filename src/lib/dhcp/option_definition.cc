@@ -856,6 +856,11 @@ OptionDefinition::factoryFqdnList(Option::Universe u,
                 out_buf.insert(out_buf.end(), label, label + read_len);
             }
         } catch (const isc::Exception& ex) {
+            if (Option::lenient_parsing_) {
+                    isc_throw(SkipThisOptionError,
+                              "invalid FQDN list content: " << ex.what());
+            }
+
             isc_throw(InvalidOptionValue, ex.what());
         }
     }

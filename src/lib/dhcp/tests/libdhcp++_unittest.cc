@@ -61,6 +61,7 @@ public:
     /// Removes runtime option definitions.
     LibDhcpTest() {
         LibDHCP::clearRuntimeOptionDefs();
+        Option::lenient_parsing_ = false;
     }
 
     /// @brief Destructor.
@@ -68,6 +69,7 @@ public:
     /// Removes runtime option definitions.
     virtual ~LibDhcpTest() {
         LibDHCP::clearRuntimeOptionDefs();
+        Option::lenient_parsing_ = false;
     }
 
     /// @brief Generic factory function to create any option.
@@ -3646,6 +3648,86 @@ TEST_F(LibDhcpTest, sw46options) {
     ASSERT_TRUE(portparam);
 
     EXPECT_EQ("type=00093, len=00004: 8 (uint8) len=6,psid=63 (psid)", portparam->toText());
+}
+
+// Verifies that V4 lenient parsing skips ill-formed OPT_TYPE_FQDN
+// and OPT_TYPE_FQDN lists.
+TEST_F(LibDhcpTest, unpackOptions4LenientFqdn) {
+    std::vector<uint8_t> bin = {
+        DHO_V4_LOST,                                  // invalid single FQDN
+        9, 3, 109, 121, 100, 111, 109, 97, 105, 110,
+        DHO_DOMAIN_SEARCH,                            // invalid FQDN list
+        2, 2, 56,
+        DHO_TIME_OFFSET,                              // Valid int option
+        4,0,0,0,77
+    };
+
+    // List of parsed options will be stored here.
+    isc::dhcp::OptionCollection options;
+
+    OptionBuffer buf(bin);
+    std::list<uint16_t> deferred_options;
+
+    // Parse with lenient parsing disabled.
+    ASSERT_FALSE(Option::lenient_parsing_);
+    ASSERT_THROW(LibDHCP::unpackOptions4(buf, DHCP4_OPTION_SPACE, options,
+                                        deferred_options), OptionParseError);
+    // There should be no parsed options.
+    EXPECT_EQ(0, options.size());
+
+    // Now parse with lenient parsing enabled.
+    Option::lenient_parsing_ = true;
+    ASSERT_NO_THROW(LibDHCP::unpackOptions4(buf, DHCP4_OPTION_SPACE, options,
+                                            deferred_options));
+
+    // We should have skipped DHO_V4_LOST and DHO_DOMAIN_SEARCH
+    // and parsed DHO_TIME_OFFSET.
+    EXPECT_EQ(1, options.size());
+    auto opt = options.find(DHO_TIME_OFFSET);
+    ASSERT_FALSE(opt == options.end());
+
+    auto offset = boost::dynamic_pointer_cast<OptionInt<int32_t>>(opt->second);
+    ASSERT_TRUE(offset);
+    EXPECT_EQ(77, offset->getValue());
+    Option::lenient_parsing_ = false;
+}
+
+// Verifies that V6 lenient parsing skips ill-formed OPT_TYPE_FQDN
+// and OPT_TYPE_FQDN lists.
+TEST_F(LibDhcpTest, unpackOptions6LenientFqdn) {
+    std::vector<uint8_t> bin = {
+        0, D6O_V6_LOST,                                 // Invalid single FQDN.
+        0, 9, 3, 109, 121, 100, 111, 109, 97, 105, 110,
+        0, D6O_SIP_SERVERS_DNS,                         // Invalid FQDN list
+        0, 2, 2, 56,
+        0, D6O_ELAPSED_TIME,                            // Valid uint16_t
+        0, 2, 0, 77
+    };
+
+    // List of parsed options will be stored here.
+    isc::dhcp::OptionCollection options;
+
+    OptionBuffer buf(bin);
+
+    // Parse with lenient parsing disabled.
+    ASSERT_FALSE(Option::lenient_parsing_);
+    EXPECT_THROW(LibDHCP::unpackOptions6(buf, DHCP6_OPTION_SPACE, options), OptionParseError);
+    EXPECT_EQ(0, options.size());
+
+    // There should be no parsed options.
+    Option::lenient_parsing_ = true;
+    ASSERT_NO_THROW(LibDHCP::unpackOptions6(buf, DHCP6_OPTION_SPACE, options));
+
+    // Now parse with lenient parsing enabled.
+    EXPECT_EQ(1, options.size());
+    auto opt = options.find(D6O_ELAPSED_TIME);
+    ASSERT_FALSE(opt == options.end());
+
+    // We should have skipped D6O_V6_LOST and D6O_SIP_SERVERS_DNS
+    // and parsed D6O_ELAPSED_TIME.
+    auto elapsed = boost::dynamic_pointer_cast<OptionInt<uint16_t>>(opt->second);
+    ASSERT_TRUE(elapsed);
+    EXPECT_EQ(77, elapsed->getValue());
 }
 
 }  // namespace

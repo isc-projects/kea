@@ -226,12 +226,21 @@ OptionCustom::bufferLength(const OptionDataType data_type, bool in_array,
         // to obtain the length of the data is to read the FQDN. The
         // utility function will return the size of the buffer on success.
         if (data_type == OPT_FQDN_TYPE) {
-            std::string fqdn =
-                OptionDataTypeUtil::readFqdn(OptionBuffer(begin, end));
-            // The size of the buffer holding an FQDN is always
-            // 1 byte larger than the size of the string
-            // representation of this FQDN.
-            data_size = fqdn.size() + 1;
+            try {
+                std::string fqdn =
+                    OptionDataTypeUtil::readFqdn(OptionBuffer(begin, end));
+                // The size of the buffer holding an FQDN is always
+                // 1 byte larger than the size of the string
+                // representation of this FQDN.
+                data_size = fqdn.size() + 1;
+            } catch (const std::exception& ex) {
+                if (Option::lenient_parsing_) {
+                    isc_throw(SkipThisOptionError, "failed to read "
+                              "partial domain-name from wire format");
+                }
+
+                throw;
+            }
         } else if (!definition_.getArrayType() &&
                    ((data_type == OPT_BINARY_TYPE) ||
                     (data_type == OPT_STRING_TYPE))) {

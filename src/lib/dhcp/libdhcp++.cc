@@ -442,6 +442,12 @@ LibDHCP::unpackOptions6(const OptionBuffer& buf, const string& option_space,
                                          buf.begin() + offset + opt_len);
             } catch (const SkipThisOptionError&) {
                 opt.reset();
+            } catch (const SkipRemainingOptionsError&) {
+                throw;
+            } catch (const std::exception& ex) {
+                isc_throw(OptionParseError, "opt_type: " << (uint16_t)(opt_type)
+                                            << ", opt_len " << (uint16_t)(opt_len)
+                                            << " error: " << ex.what());
             }
         }
 
@@ -673,6 +679,12 @@ LibDHCP::unpackOptions4(const OptionBuffer& buf, const string& option_space,
                 opt = def->optionFactory(Option::V4, opt_type, obuf);
             } catch (const SkipThisOptionError&) {
                 opt.reset();
+            } catch (const SkipRemainingOptionsError&) {
+                throw;
+            } catch (const std::exception& ex) {
+                isc_throw(OptionParseError, "opt_type: " << (uint16_t)(opt_type)
+                                            << ", opt_len: " << (uint16_t)(opt_len)
+                                            << " error: " << ex.what());
             }
         }
 
