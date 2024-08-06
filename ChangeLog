@@ -1,3 +1,9 @@
+2269.	[func]		tmark
+	Extended kea-dhcp4 and kea-dhcp6 lenient option parsing
+	to drop options which contain malformed FQDNs such as
+	DHO_V4_LOST_SERVER and D6O_V6_ACCESS_DOMAIN.
+	(Gitlab #3492)
+
 Kea 2.7.1 (development) released on July 31, 2024
 
 2268.	[build]		ravan
