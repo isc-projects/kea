@@ -1047,7 +1047,7 @@ TEST(ParserTest, duplicateControlSocket) {
      }
 })");
 
-    ASSERT_NO_THROW(Element::fromJSON(bad1, true));
+    ASSERT_NO_THROW(Element::fromJSON(bad2, true));
     Parser4Context ctx2;
     EXPECT_THROW(ctx2.parseString(bad2, Parser4Context::PARSER_DHCP4),
                  Dhcp4ParseError);

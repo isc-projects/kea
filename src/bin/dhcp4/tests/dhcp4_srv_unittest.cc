@@ -2873,7 +2873,7 @@ void removeTlsParameters(ConstElementPtr elem) {
     }
 }
 
-/// @brief Remove authentication filess
+/// @brief Remove authentication files.
 void removeAuthFiles(ConstElementPtr elem) {
     if (!elem) {
         return;

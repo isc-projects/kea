@@ -37,6 +37,8 @@ public:
     }
 
     /// @brief Configure control socket from configuration.
+    ///
+    /// @param config Configuration of the control socket.
     void configure(HttpCommandConfigPtr config);
 
     /// @brief Close control socket.

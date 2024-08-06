@@ -43,7 +43,7 @@ public:
 
     /// @brief Returns socket address.
     ///
-    /// @return IP address where the server's HTTP service is available.
+    /// @return IP address where the HTTP service is available.
     isc::asiolink::IOAddress getSocketAddress() const {
         return (socket_address_);
     }
@@ -56,6 +56,8 @@ public:
     }
 
     /// @brief Returns socket port.
+    ///
+    /// @return TCP port where the HTTP service is available.
     uint16_t getSocketPort() const {
         return (socket_port_);
     }

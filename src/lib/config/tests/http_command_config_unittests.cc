@@ -93,7 +93,7 @@ TEST_F(HttpCommandConfigTest, errors) {
         {
             "bad socket-type type",
             R"( { "socket-type": 1 } )",
-            "invalid type specified for parameter 'socket_type' "
+            "invalid type specified for parameter 'socket-type' "
             "(<string>:1:19)"
         },
         {

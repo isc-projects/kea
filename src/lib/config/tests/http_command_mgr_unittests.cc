@@ -180,7 +180,7 @@ public:
     /// @brief "foo" command handler.
     ///
     /// The command needs no arguments and returns a response
-    ///  with a body containing:
+    /// with a body containing:
     ///
     /// "[ { \"arguments\": [ \"bar\" ], \"result\": 0 } ]"
     ///
@@ -191,7 +191,7 @@ public:
         return (createAnswer(CONTROL_RESULT_SUCCESS, arguments));
     }
 
-    /// @brief IO service used in drive the test and test clients.
+    /// @brief IO service used to drive the test and test clients.
     IOServicePtr io_service_;
 
     /// @brief Asynchronous timer service to detect timeouts.
@@ -206,7 +206,7 @@ public:
 
 /// Verifies the configure and close of HttpCommandMgr.
 TEST_F(HttpCommandMgrTest, basic) {
-    // Make sure we can configure one.
+    // Make sure we can create one.
     ASSERT_NO_THROW_LOG(HttpCommandMgr::instance().configure(http_config_));
     auto listener = HttpCommandMgr::instance().getHttpListener();
     ASSERT_TRUE(listener);

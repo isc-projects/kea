@@ -157,7 +157,7 @@ to operate correctly.
 The warning message is issued when the HTTP/HTTPS control socket was
 reconfigured with a different TLS setup but keeping the address and port.
 These changes are ignored because they can't be applied without opening a new
-socket which will conflicts with the existing one.
+socket which will conflict with the existing one.
 
 % HTTP_COMMAND_MGR_SERVICE_STARTED started %1 service bound to address %2 port %3
 This informational message indicates that the server has started

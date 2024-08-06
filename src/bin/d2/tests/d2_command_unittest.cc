@@ -370,7 +370,7 @@ public:
         // let's parse expected_command back to JSON to guarantee that
         // both structures are built using the same order.
         EXPECT_EQ(Element::fromJSON(expected_command)->str(),
-                 entire_command->str());
+                  entire_command->str());
         return (createAnswer(CONTROL_RESULT_SUCCESS, "long command received ok"));
     }
 

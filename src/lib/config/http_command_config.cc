@@ -42,7 +42,7 @@ HttpCommandConfig::HttpCommandConfig(ConstElementPtr config)
     if (socket_type) {
         if (socket_type->getType() != Element::string) {
             isc_throw(DhcpConfigError,
-                      "invalid type specified for parameter 'socket_type' ("
+                      "invalid type specified for parameter 'socket-type' ("
                       << socket_type->getPosition() << ")");
         }
         socket_type_ = socket_type->stringValue();
