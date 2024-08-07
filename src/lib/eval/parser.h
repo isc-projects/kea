@@ -667,20 +667,24 @@ namespace isc { namespace eval {
         S_start = 71,                            // start
         S_expression = 72,                       // expression
         S_bool_expr = 73,                        // bool_expr
-        S_string_expr = 74,                      // string_expr
-        S_integer_expr = 75,                     // integer_expr
-        S_option_code = 76,                      // option_code
-        S_sub_option_code = 77,                  // sub_option_code
-        S_option_repr_type = 78,                 // option_repr_type
-        S_nest_level = 79,                       // nest_level
-        S_pkt_metadata = 80,                     // pkt_metadata
-        S_enterprise_id = 81,                    // enterprise_id
-        S_pkt4_field = 82,                       // pkt4_field
-        S_pkt6_field = 83,                       // pkt6_field
-        S_relay6_field = 84,                     // relay6_field
-        S_start_expr = 85,                       // start_expr
-        S_length_expr = 86,                      // length_expr
-        S_int_expr = 87                          // int_expr
+        S_74_1 = 74,                             // $@1
+        S_75_2 = 75,                             // $@2
+        S_string_expr = 76,                      // string_expr
+        S_77_3 = 77,                             // $@3
+        S_78_4 = 78,                             // $@4
+        S_integer_expr = 79,                     // integer_expr
+        S_option_code = 80,                      // option_code
+        S_sub_option_code = 81,                  // sub_option_code
+        S_option_repr_type = 82,                 // option_repr_type
+        S_nest_level = 83,                       // nest_level
+        S_pkt_metadata = 84,                     // pkt_metadata
+        S_enterprise_id = 85,                    // enterprise_id
+        S_pkt4_field = 86,                       // pkt4_field
+        S_pkt6_field = 87,                       // pkt6_field
+        S_relay6_field = 88,                     // relay6_field
+        S_start_expr = 89,                       // start_expr
+        S_length_expr = 90,                      // length_expr
+        S_int_expr = 91                          // int_expr
       };
     };
 
@@ -2515,8 +2519,8 @@ switch (yykind)
     /// Constants.
     enum
     {
-      yylast_ = 334,     ///< Last index in yytable_.
-      yynnts_ = 18,  ///< Number of nonterminal symbols.
+      yylast_ = 343,     ///< Last index in yytable_.
+      yynnts_ = 22,  ///< Number of nonterminal symbols.
       yyfinal_ = 46 ///< Termination state number.
     };
 
@@ -2772,7 +2776,7 @@ switch (yykind)
 
 #line 14 "parser.yy"
 } } // isc::eval
-#line 2776 "parser.h"
+#line 2780 "parser.h"
 
 
 
