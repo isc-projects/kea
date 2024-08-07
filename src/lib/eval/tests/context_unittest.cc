@@ -1333,6 +1333,31 @@ TEST_F(EvalContextTest, logicalOps) {
         boost::dynamic_pointer_cast<TokenNot>(token);
     EXPECT_TRUE(tnot);
 
+    // sand
+    EvalContext evala(Option::V4);
+    EXPECT_NO_THROW(parsed_ =
+        evala.parseString("option[123].exists sand option[123].exists"));
+    EXPECT_TRUE(parsed_);
+    ASSERT_EQ(3, evala.expression.size());
+    token = evala.expression.at(2);
+    ASSERT_TRUE(token);
+    boost::shared_ptr<TokenAnd> tand =
+        boost::dynamic_pointer_cast<TokenAnd>(token);
+    EXPECT_TRUE(tand);
+
+    // sor
+    EvalContext evalo(Option::V4);
+    EXPECT_NO_THROW(parsed_ =
+        evalo.parseString("option[123].exists sor option[123].exists"));
+    EXPECT_TRUE(parsed_);
+    ASSERT_EQ(3, evalo.expression.size());
+    token = evalo.expression.at(2);
+    ASSERT_TRUE(token);
+    boost::shared_ptr<TokenOr> tor =
+        boost::dynamic_pointer_cast<TokenOr>(token);
+    EXPECT_TRUE(tor);
+
+#if notyet
     // and
     EvalContext evala(Option::V4);
     EXPECT_NO_THROW(parsed_ =
@@ -1356,10 +1381,37 @@ TEST_F(EvalContextTest, logicalOps) {
     boost::shared_ptr<TokenOr> tor =
         boost::dynamic_pointer_cast<TokenOr>(token);
     EXPECT_TRUE(tor);
+#endif
 }
 
 // Test parsing of logical operators with precedence
 TEST_F(EvalContextTest, logicalPrecedence) {
+    // not precedence > and precedence
+    EvalContext evalna(Option::V4);
+    EXPECT_NO_THROW(parsed_ =
+        evalna.parseString("not option[123].exists sand option[123].exists"));
+    EXPECT_TRUE(parsed_);
+    ASSERT_EQ(4, evalna.expression.size());
+    TokenPtr token = evalna.expression.at(3);
+    ASSERT_TRUE(token);
+    boost::shared_ptr<TokenAnd> tand =
+        boost::dynamic_pointer_cast<TokenAnd>(token);
+    EXPECT_TRUE(tand);
+
+    // and precedence > or precedence
+    EvalContext evaloa(Option::V4);
+    EXPECT_NO_THROW(parsed_ =
+        evaloa.parseString("option[123].exists sor option[123].exists "
+                           "and option[123].exists"));
+    EXPECT_TRUE(parsed_);
+    ASSERT_EQ(5, evaloa.expression.size());
+    token = evaloa.expression.at(4);
+    ASSERT_TRUE(token);
+    boost::shared_ptr<TokenOr> tor =
+        boost::dynamic_pointer_cast<TokenOr>(token);
+    EXPECT_TRUE(tor);
+
+#if notyet
     // not precedence > and precedence
     EvalContext evalna(Option::V4);
     EXPECT_NO_THROW(parsed_ =
@@ -1384,11 +1436,38 @@ TEST_F(EvalContextTest, logicalPrecedence) {
     boost::shared_ptr<TokenOr> tor =
         boost::dynamic_pointer_cast<TokenOr>(token);
     EXPECT_TRUE(tor);
+#endif
 }
 
 // Test parsing of logical operators with parentheses (same than
 // with precedence but using parentheses to overwrite precedence)
 TEST_F(EvalContextTest, logicalParentheses) {
+    // not precedence > and precedence
+    EvalContext evalna(Option::V4);
+    EXPECT_NO_THROW(parsed_ =
+        evalna.parseString("not (option[123].exists sand option[123].exists)"));
+    EXPECT_TRUE(parsed_);
+    ASSERT_EQ(4, evalna.expression.size());
+    TokenPtr token = evalna.expression.at(3);
+    ASSERT_TRUE(token);
+    boost::shared_ptr<TokenNot> tnot =
+        boost::dynamic_pointer_cast<TokenNot>(token);
+    EXPECT_TRUE(tnot);
+
+    // and precedence > or precedence
+    EvalContext evaloa(Option::V4);
+    EXPECT_NO_THROW(parsed_ =
+        evaloa.parseString("(option[123].exists sor option[123].exists) "
+                           "sand option[123].exists"));
+    EXPECT_TRUE(parsed_);
+    ASSERT_EQ(5, evaloa.expression.size());
+    token = evaloa.expression.at(4);
+    ASSERT_TRUE(token);
+    boost::shared_ptr<TokenAnd> tand =
+        boost::dynamic_pointer_cast<TokenAnd>(token);
+    EXPECT_TRUE(tand);
+
+#if notyet
     // not precedence > and precedence
     EvalContext evalna(Option::V4);
     EXPECT_NO_THROW(parsed_ =
@@ -1413,6 +1492,7 @@ TEST_F(EvalContextTest, logicalParentheses) {
     boost::shared_ptr<TokenAnd> tand =
         boost::dynamic_pointer_cast<TokenAnd>(token);
     EXPECT_TRUE(tand);
+#endif
 }
 
 // Test the parsing of a substring expression
@@ -1519,7 +1599,28 @@ TEST_F(EvalContextTest, assocRightPlus) {
     checkTokenConcat(tmp5);
 }
 
+// Test the parsing of a sifelse expression
+TEST_F(EvalContextTest, strictIfElse) {
+    EvalContext eval(Option::V4);
+
+    EXPECT_NO_THROW(parsed_ =
+        eval.parseString("sifelse('foo' == 'bar', 'us', 'them') == 'you'"));
+
+    ASSERT_EQ(8, eval.expression.size());
+
+    TokenPtr tmp1 = eval.expression.at(2);
+    TokenPtr tmp2 = eval.expression.at(3);
+    TokenPtr tmp3 = eval.expression.at(4);
+    TokenPtr tmp4 = eval.expression.at(5);
+
+    checkTokenEq(tmp1);
+    checkTokenString(tmp2, "us");
+    checkTokenString(tmp3, "them");
+    checkTokenIfElse(tmp4);
+}
+
 // Test the parsing of an ifelse expression
+#if notyet
 TEST_F(EvalContextTest, ifElse) {
     EvalContext eval(Option::V4);
 
@@ -1538,8 +1639,38 @@ TEST_F(EvalContextTest, ifElse) {
     checkTokenString(tmp3, "them");
     checkTokenIfElse(tmp4);
 }
+#endif
+
+// Test the parsing of a plus operator and sifelse expression
+TEST_F(EvalContextTest, plusStrictIfElse) {
+    EvalContext eval(Option::V4);
+
+    EXPECT_NO_THROW(parsed_ =
+        eval.parseString("'foo' + sifelse('a' == 'a', 'bar', '') == 'foobar'"));
+
+    ASSERT_EQ(10, eval.expression.size());
+
+    TokenPtr tmp1 = eval.expression.at(0);
+    TokenPtr tmp2 = eval.expression.at(1);
+    TokenPtr tmp3 = eval.expression.at(2);
+    TokenPtr tmp4 = eval.expression.at(3);
+    TokenPtr tmp5 = eval.expression.at(4);
+    TokenPtr tmp6 = eval.expression.at(5);
+    TokenPtr tmp7 = eval.expression.at(6);
+    TokenPtr tmp8 = eval.expression.at(7);
+
+    checkTokenString(tmp1, "foo");
+    checkTokenString(tmp2, "a");
+    checkTokenString(tmp3, "a");
+    checkTokenEq(tmp4);
+    checkTokenString(tmp5, "bar");
+    checkTokenString(tmp6, "");
+    checkTokenIfElse(tmp7);
+    checkTokenConcat(tmp8);
+}
 
 // Test the parsing of a plus operator and ifelse expression
+#if notyet
 TEST_F(EvalContextTest, plusIfElse) {
     EvalContext eval(Option::V4);
 
@@ -1566,6 +1697,7 @@ TEST_F(EvalContextTest, plusIfElse) {
     checkTokenIfElse(tmp7);
     checkTokenConcat(tmp8);
 }
+#endif
 
 // Test the parsing of a hexstring expression
 TEST_F(EvalContextTest, toHexString) {

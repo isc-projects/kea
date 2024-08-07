@@ -47,9 +47,9 @@ using namespace isc::eval;
   RPAREN  ")"
   NOT "not"
   AND "and"
-  STRICT_AND "strict-and"
+  SAND "sand"
   OR "or"
-  STRICT_OR "strict-or"
+  SOR "sor"
   EQUAL "=="
   OPTION "option"
   RELAY4 "relay4"
@@ -83,7 +83,7 @@ using namespace isc::eval;
   CONCAT "concat"
   PLUS "+"
   IFELSE "ifelse"
-  STRICT_IFELSE "strict-ifelse"
+  SIFELSE "sifelse"
   TOHEXSTRING "hexstring"
   ADDRTOTEXT "addrtotext"
   INT8TOTEXT "int8totext"
@@ -126,9 +126,9 @@ using namespace isc::eval;
 %type <TokenPkt6::FieldType> pkt6_field
 
 %left PLUS
-%left STRICT_OR
+%left SOR
 %left OR
-%left STRICT_AND
+%left SAND
 %left AND
 %precedence NOT
 
@@ -161,7 +161,7 @@ bool_expr : "(" bool_expr ")"
                     TokenPtr neg(new TokenAnd());
                     ctx.expression.push_back(neg);
                 }
-          | bool_expr STRICT_AND bool_expr
+          | bool_expr SAND bool_expr
                 {
                     TokenPtr neg(new TokenAnd());
                     ctx.expression.push_back(neg);
@@ -171,7 +171,7 @@ bool_expr : "(" bool_expr ")"
                     TokenPtr neg(new TokenOr());
                     ctx.expression.push_back(neg);
                 }
-          | bool_expr STRICT_OR bool_expr
+          | bool_expr SOR bool_expr
                 {
                     TokenPtr neg(new TokenOr());
                     ctx.expression.push_back(neg);
@@ -423,7 +423,7 @@ string_expr : STRING
                       TokenPtr cond(new TokenIfElse());
                       ctx.expression.push_back(cond);
                   }
-            | STRICT_IFELSE "(" bool_expr "," string_expr "," string_expr ")"
+            | SIFELSE "(" bool_expr "," string_expr "," string_expr ")"
                   {
                       TokenPtr cond(new TokenIfElse());
                       ctx.expression.push_back(cond);

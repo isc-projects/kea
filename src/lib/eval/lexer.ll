@@ -221,7 +221,7 @@ addr6 [0-9a-fA-F]*\:[0-9a-fA-F]*\:[0-9a-fA-F:.]*
 "all"          return isc::eval::EvalParser::make_ALL(loc);
 "concat"       return isc::eval::EvalParser::make_CONCAT(loc);
 "ifelse"       return isc::eval::EvalParser::make_IFELSE(loc);
-"strict-ifelse"  return isc::eval::EvalParser::make_STRICT_IFELSE(loc);
+"sifelse"      return isc::eval::EvalParser::make_SIFELSE(loc);
 "hexstring"    return isc::eval::EvalParser::make_TOHEXSTRING(loc);
 "addrtotext"   return isc::eval::EvalParser::make_ADDRTOTEXT(loc);
 "int8totext"   return isc::eval::EvalParser::make_INT8TOTEXT(loc);
@@ -232,9 +232,9 @@ addr6 [0-9a-fA-F]*\:[0-9a-fA-F]*\:[0-9a-fA-F:.]*
 "uint32totext" return isc::eval::EvalParser::make_UINT32TOTEXT(loc);
 "not"          return isc::eval::EvalParser::make_NOT(loc);
 "and"          return isc::eval::EvalParser::make_AND(loc);
-"strict-and"   return isc::eval::EvalParser::make_STRICT_AND(loc);
+"sand"         return isc::eval::EvalParser::make_SAND(loc);
 "or"           return isc::eval::EvalParser::make_OR(loc);
-"strict-or"    return isc::eval::EvalParser::make_STRICT_OR(loc);
+"sor"          return isc::eval::EvalParser::make_SOR(loc);
 "member"       return isc::eval::EvalParser::make_MEMBER(loc);
 "match"        return isc::eval::EvalParser::make_MATCH(loc);
 "."            return isc::eval::EvalParser::make_DOT(loc);
