@@ -1441,7 +1441,7 @@ TEST_F(EvalContextTest, logicalOps) {
     EXPECT_NO_THROW(parsed_ =
         evalo.parseString("option[123].exists or option[123].exists"));
     EXPECT_TRUE(parsed_);
-    ASSERT_EQ(3, evalo.expression.size());
+    ASSERT_EQ(4, evalo.expression.size());
     token = evalo.expression.at(1);
     checkTokenPopOrBranchTrue(token, 1);
     token = evala.expression.at(3);
@@ -1492,10 +1492,12 @@ TEST_F(EvalContextTest, logicalPrecedence) {
         evaloa.parseString("option[123].exists or option[123].exists "
                            "and option[123].exists"));
     EXPECT_TRUE(parsed_);
-    ASSERT_EQ(5, evaloa.expression.size());
-    token = evaloa.expression.at(2);
-    checkTokenPopOrBranchFalse(token, 1);
-    token = evaloa.expression.at(4);
+    ASSERT_EQ(7, evaloa.expression.size());
+    token = evaloa.expression.at(1);
+    checkTokenPopOrBranchTrue(token, 1);
+    token = evaloa.expression.at(5);
+    checkTokenLabel(token, 2);
+    token = evaloa.expression.at(6);
     checkTokenLabel(token, 1);
 }
 
@@ -1745,7 +1747,7 @@ TEST_F(EvalContextTest, plusStrictIfElse) {
     checkTokenString(tmp6, "");
     checkTokenIfElse(tmp7);
     checkTokenConcat(tmp8);
-    checkTokenConcat(tmp9, "foobar");
+    checkTokenString(tmp9, "foobar");
     checkTokenEq(tmp10);
 }
 
@@ -1779,7 +1781,7 @@ TEST_F(EvalContextTest, plusIfElse) {
     checkTokenPopAndBranchFalse(tmp5, 1);
     checkTokenString(tmp6, "bar");
     checkTokenBranch(tmp7, 2);
-    checkTokenLabel(tmp8, 1)
+    checkTokenLabel(tmp8, 1);
     checkTokenString(tmp9, "");
     checkTokenLabel(tmp10, 2);
     checkTokenConcat(tmp11);

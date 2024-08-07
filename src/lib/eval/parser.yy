@@ -163,7 +163,8 @@ bool_expr : "(" bool_expr ")"
                     TokenPtr pobf(new TokenPopOrBranchFalse(target));
                     ctx.expression.push_back(pobf);
                 } bool_expr {
-                    unsigned target = ctx.labels.pop_back();
+                    unsigned target = ctx.labels.back();
+                    ctx.labels.pop_back();
                     TokenPtr lab(new TokenLabel(target));
                     ctx.expression.push_back(lab);
                 }
@@ -179,7 +180,8 @@ bool_expr : "(" bool_expr ")"
                     TokenPtr pobt(new TokenPopOrBranchTrue(target));
                     ctx.expression.push_back(pobt);
                 } bool_expr {
-                    unsigned target = ctx.labels.pop_back();
+                    unsigned target = ctx.labels.back();
+                    ctx.labels.pop_back();
                     TokenPtr lab(new TokenLabel(target));
                     ctx.expression.push_back(lab);
                 }
@@ -437,7 +439,8 @@ string_expr : STRING
                       TokenPtr pabf(new TokenPopAndBranchFalse(target));
                       ctx.expression.push_back(pabf);
                   } string_expr "," {
-                      unsigned target = ctx.labels.pop_back();
+                      unsigned target = ctx.labels.back();
+                      ctx.labels.pop_back();
                       unsigned target2 = ++ctx.label;
                       ctx.labels.push_back(target2);
                       TokenPtr branch(new TokenBranch(target2));
@@ -445,7 +448,8 @@ string_expr : STRING
                       TokenPtr lab(new TokenLabel(target));
                       ctx.expression.push_back(lab);
                   } string_expr ")" {
-                      unsigned target = ctx.labels.pop_back();
+                      unsigned target = ctx.labels.back();
+                      ctx.labels.pop_back();
                       TokenPtr lab(new TokenLabel(target));
                       ctx.expression.push_back(lab);
                   }

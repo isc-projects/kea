@@ -864,7 +864,8 @@ namespace isc { namespace eval {
   case 8: // bool_expr: bool_expr "and" $@1 bool_expr
 #line 165 "parser.yy"
                             {
-                    unsigned target = ctx.labels.pop_back();
+                    unsigned target = ctx.labels.back();
+		    ctx.labels.pop_back();
                     TokenPtr lab(new TokenLabel(target));
                     ctx.expression.push_back(lab);
                 }
@@ -894,7 +895,8 @@ namespace isc { namespace eval {
   case 11: // bool_expr: bool_expr "or" $@2 bool_expr
 #line 181 "parser.yy"
                             {
-                    unsigned target = ctx.labels.pop_back();
+                    unsigned target = ctx.labels.back();
+		    ctx.labels.pop_back();
                     TokenPtr lab(new TokenLabel(target));
                     ctx.expression.push_back(lab);
                 }
@@ -1269,7 +1271,8 @@ namespace isc { namespace eval {
   case 41: // $@4: %empty
 #line 439 "parser.yy"
                                     {
-                      unsigned target = ctx.labels.pop_back();
+                      unsigned target = ctx.labels.back();
+		      ctx.labels.pop_back();
                       unsigned target2 = ++ctx.label;
                       ctx.labels.push_back(target2);
                       TokenPtr branch(new TokenBranch(target2));
@@ -1283,7 +1286,8 @@ namespace isc { namespace eval {
   case 42: // string_expr: "ifelse" "(" bool_expr "," $@3 string_expr "," $@4 string_expr ")"
 #line 447 "parser.yy"
                                     {
-                      unsigned target = ctx.labels.pop_back();
+                      unsigned target = ctx.labels.back();
+		      ctx.labels.pop_back();
                       TokenPtr lab(new TokenLabel(target));
                       ctx.expression.push_back(lab);
                   }
