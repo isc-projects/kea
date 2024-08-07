@@ -49,6 +49,13 @@ public:
         isc::Exception(file, line, what) { };
 };
 
+/// @brief EvalBadLabel is thrown when a label can't be found.
+class EvalBadLabel : public Exception {
+public:
+    EvalBadLabel(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) { };
+};
+
 /// @brief Base class for all tokens
 ///
 /// It provides an interface for all tokens and storage for string representation
@@ -75,10 +82,18 @@ public:
     ///
     /// @param pkt - packet being classified
     /// @param values - stack of values with previously evaluated tokens
-    virtual void evaluate(Pkt& pkt, ValueStack& values) = 0;
+    /// @return next label or 0 when means evaluate next token if any.
+    virtual unsigned evaluate(Pkt& pkt, ValueStack& values) = 0;
 
     /// @brief Virtual destructor
     virtual ~Token() {}
+
+    /// @brief Return the label of this token.
+    ///
+    /// @return the label for a TokenLabel, 0 otherwise.
+    virtual unsigned getLabel() const {
+        return (0U);
+    }
 
     /// @brief Coverts a (string) value to a boolean
     ///
@@ -122,7 +137,7 @@ public:
     ///
     /// @param pkt (ignored)
     /// @param values (represented string will be pushed here)
-    void evaluate(Pkt& pkt, ValueStack& values);
+    virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 
 protected:
     std::string value_; ///< Constant value
@@ -147,7 +162,7 @@ public:
     ///
     /// @param pkt (ignored)
     /// @param values (represented string will be pushed here)
-    void evaluate(Pkt& pkt, ValueStack& values);
+    virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 
 protected:
     std::string value_; ///< Constant value
@@ -167,7 +182,7 @@ public:
     ///
     /// @param pkt (ignored)
     /// @param values (represented string will be pushed here)
-    void evaluate(Pkt& pkt, ValueStack& values);
+    virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 };
 
 /// @brief Token representing a constant upper case string
@@ -184,7 +199,7 @@ public:
     ///
     /// @param pkt (ignored)
     /// @param values (represented string will be pushed here)
-    void evaluate(Pkt& pkt, ValueStack& values);
+    virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 };
 
 /// @brief Token representing an unsigned 32 bit integer
@@ -232,7 +247,7 @@ public:
     ///
     /// @param pkt (ignored)
     /// @param values (represented IP address will be pushed here)
-    void evaluate(Pkt& pkt, ValueStack& values);
+    virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 
 protected:
     ///< Constant value (empty string if the IP address cannot be converted)
@@ -253,7 +268,7 @@ public:
     ///
     /// @param pkt (ignored)
     /// @param values (represented IP address as a string will be pushed here)
-    void evaluate(Pkt& pkt, ValueStack& values);
+    virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 };
 
 /// @brief Token representing an 8 bit integer as a string
@@ -271,7 +286,7 @@ public:
     /// @param pkt (ignored)
     /// @param values (represented 8 bit integer as a string will be pushed
     /// here)
-    void evaluate(Pkt& pkt, ValueStack& values);
+    virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 };
 
 /// @brief Token representing a 16 bit integer as a string
@@ -289,7 +304,7 @@ public:
     /// @param pkt (ignored)
     /// @param values (represented 16 bit integer as a string will be pushed
     /// here)
-    void evaluate(Pkt& pkt, ValueStack& values);
+    virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 };
 
 /// @brief Token representing a 32 bit integer as a string
@@ -307,7 +322,7 @@ public:
     /// @param pkt (ignored)
     /// @param values (represented 32 bit integer as a string will be pushed
     /// here)
-    void evaluate(Pkt& pkt, ValueStack& values);
+    virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 };
 
 /// @brief Token representing an 8 bit unsigned integer as a string
@@ -325,7 +340,7 @@ public:
     /// @param pkt (ignored)
     /// @param values (represented 8 bit unsigned integer as a string will be
     /// pushed here)
-    void evaluate(Pkt& pkt, ValueStack& values);
+    virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 };
 
 /// @brief Token representing a 16 bit unsigned integer as a string
@@ -343,7 +358,7 @@ public:
     /// @param pkt (ignored)
     /// @param values (represented 16 bit unsigned integer as a string will be
     /// pushed here)
-    void evaluate(Pkt& pkt, ValueStack& values);
+    virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 };
 
 /// @brief Token representing a 32 bit unsigned integer as a string
@@ -361,7 +376,7 @@ public:
     /// @param pkt (ignored)
     /// @param values (represented 32 bit unsigned integer as a string will be
     /// pushed here)
-    void evaluate(Pkt& pkt, ValueStack& values);
+    virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 };
 
 /// @brief Token that represents a value of an option
@@ -407,7 +422,7 @@ public:
     ///
     /// @param pkt specified option will be extracted from this packet (if present)
     /// @param values value of the option will be pushed here (or "")
-    void evaluate(Pkt& pkt, ValueStack& values);
+    virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 
     /// @brief Returns option-code
     ///
@@ -559,7 +574,7 @@ public:
     ///
     /// @param pkt - metadata will be extracted from here
     /// @param values - stack of values (1 result will be pushed)
-    void evaluate(Pkt& pkt, ValueStack& values);
+    virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 
     /// @brief Returns metadata type
     ///
@@ -616,7 +631,7 @@ public:
     ///
     /// @param pkt - fields will be extracted from here
     /// @param values - stack of values (1 result will be pushed)
-    void evaluate(Pkt& pkt, ValueStack& values);
+    virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 
     /// @brief Returns field type
     ///
@@ -662,7 +677,7 @@ public:
     ///
     /// @param pkt - packet from which to extract the fields
     /// @param values - stack of values, 1 result will be pushed
-    void evaluate(Pkt& pkt, ValueStack& values);
+    virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 
     /// @brief Returns field type
     ///
@@ -716,7 +731,7 @@ public:
     ///
     /// @param pkt fields will be extracted from here
     /// @param values - stack of values (1 result will be pushed)
-    void evaluate(Pkt& pkt, ValueStack& values);
+    virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 
     /// @brief Returns nest-level
     ///
@@ -766,7 +781,7 @@ public:
     /// @param pkt (unused)
     /// @param values - stack of values (2 arguments will be popped, 1 result
     ///        will be pushed)
-    void evaluate(Pkt& pkt, ValueStack& values);
+    virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 };
 
 /// @brief Token that represents the substring operator (returns a portion
@@ -823,7 +838,7 @@ public:
     /// @param pkt (unused)
     /// @param values - stack of values (3 arguments will be popped, 1 result
     ///        will be pushed)
-    void evaluate(Pkt& pkt, ValueStack& values);
+    virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 };
 
 class TokenSplit : public Token {
@@ -867,7 +882,7 @@ public:
     /// @param pkt (unused)
     /// @param values - stack of values (3 arguments will be popped, 1 result
     ///        will be pushed)
-    void evaluate(Pkt& pkt, ValueStack& values);
+    virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 };
 
 /// @brief Token that represents concat operator (concatenates two other tokens)
@@ -891,7 +906,7 @@ public:
     /// @param pkt (unused)
     /// @param values - stack of values (2 arguments will be popped, 1 result
     ///        will be pushed)
-    void evaluate(Pkt& pkt, ValueStack& values);
+    virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 };
 
 /// @brief Token that represents an alternative
@@ -922,7 +937,7 @@ public:
     ///
     /// @param pkt (unused)
     /// @param values - stack of values (two items are removed)
-    void evaluate(Pkt& pkt, ValueStack& values);
+    virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 };
 
 /// @brief Token that converts to hexadecimal string
@@ -961,7 +976,7 @@ public:
     /// @param pkt (unused)
     /// @param values - stack of values (2 arguments will be popped, 1 result
     ///        will be pushed)
-    void evaluate(Pkt& pkt, ValueStack& values);
+    virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 };
 
 /// @brief Token that represents logical negation operator
@@ -986,7 +1001,7 @@ public:
     ///
     /// @param pkt (unused)
     /// @param values - stack of values (logical top value negated)
-    void evaluate(Pkt& pkt, ValueStack& values);
+    virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 };
 
 /// @brief Token that represents logical and operator
@@ -1011,7 +1026,7 @@ public:
     /// @param pkt (unused)
     /// @param values - stack of values (2 arguments will be popped, 1 result
     ///        will be pushed)
-    void evaluate(Pkt& pkt, ValueStack& values);
+    virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 };
 
 /// @brief Token that represents logical or operator
@@ -1036,7 +1051,7 @@ public:
     /// @param pkt (unused)
     /// @param values - stack of values (2 arguments will be popped, 1 result
     ///        will be pushed)
-    void evaluate(Pkt& pkt, ValueStack& values);
+    virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 };
 
 /// @brief Token that represents client class membership
@@ -1056,7 +1071,7 @@ public:
     ///
     /// @param pkt the class name will be check from this packet's client classes
     /// @param values true (if found) or false (if not found) will be pushed here
-    void evaluate(Pkt& pkt, ValueStack& values);
+    virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 
     /// @brief Returns client class name
     ///
@@ -1155,7 +1170,7 @@ public:
     ///
     /// @param pkt - vendor options will be searched for here.
     /// @param values - the evaluated value will be pushed here.
-    virtual void evaluate(Pkt& pkt, ValueStack& values);
+    virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 
 protected:
     /// @brief Attempts to get a suboption.
@@ -1251,7 +1266,7 @@ protected:
     ///
     /// @param pkt - vendor options will be searched for here.
     /// @param values - the evaluated value will be pushed here.
-    void evaluate(Pkt& pkt, ValueStack& values);
+    virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 
     /// @brief Data chunk index.
     uint16_t index_;
@@ -1302,7 +1317,7 @@ public:
     ///
     /// @param pkt specified parent option will be extracted from this packet
     /// @param values value of the sub-option will be pushed here (or "")
-    virtual void evaluate(Pkt& pkt, ValueStack& values);
+    virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 
     /// @brief Returns sub-option-code
     ///
@@ -1344,7 +1359,7 @@ public:
     /// @param pkt (unused)
     /// @param values - stack of values (1 popped, 1 pushed)
     /// @throw EvalBadStack if there is no value on the stack
-    void evaluate(Pkt& pkt, ValueStack& values);
+    virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 
     /// @brief Returns regular expression.
     ///
@@ -1362,6 +1377,35 @@ private:
 
     /// @brief The regular expression
     std::regex reg_exp_;
+};
+
+/// @brief Token label i.e. target of branches.
+///
+/// For instance label(123): at evaluation when a branch returns 123
+/// remaining expression is scanned until label(123) is reached.
+class TokenLabel : public Token {
+public:
+    /// @brief Constructor
+    ///
+    /// @param label the label (unsigned > 0)
+    /// @throw EvalParseError when label is 0
+    TokenLabel(const unsigned label);
+
+    /// @brief Returns label.
+    ///
+    /// @return the label
+    virtual unsigned getLabel() const {
+        return (label_);
+    }
+
+    /// @brief Does nothing.
+    ///
+    /// @param pkt (unused)
+    /// @param values - stack of values (unused)
+    virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
+
+protected:
+    unsigned label_;
 };
 
 } // end of isc::dhcp namespace

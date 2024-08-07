@@ -36,7 +36,7 @@ using namespace std;
 
 using isc::util::encode::toHex;
 
-void
+unsigned
 TokenString::evaluate(Pkt& pkt, ValueStack& values) {
     // Literals only push, nothing to pop
     values.push(value_);
@@ -45,6 +45,8 @@ TokenString::evaluate(Pkt& pkt, ValueStack& values) {
     LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_STRING)
         .arg(pkt.getLabel())
         .arg('\'' + value_ + '\'');
+
+    return (0);
 }
 
 TokenHexString::TokenHexString(const string& str) : value_("") {
@@ -75,7 +77,7 @@ TokenHexString::TokenHexString(const string& str) : value_("") {
     memmove(&value_[0], &binary[0], binary.size());
 }
 
-void
+unsigned
 TokenHexString::evaluate(Pkt& pkt, ValueStack& values) {
     // Literals only push, nothing to pop
     values.push(value_);
@@ -84,9 +86,11 @@ TokenHexString::evaluate(Pkt& pkt, ValueStack& values) {
     LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_HEXSTRING)
         .arg(pkt.getLabel())
         .arg(toHex(value_));
+
+    return (0);
 }
 
-void
+unsigned
 TokenLowerCase::evaluate(Pkt& pkt, ValueStack& values) {
     if (values.size() == 0) {
         isc_throw(EvalBadStack, "Incorrect empty stack.");
@@ -103,9 +107,11 @@ TokenLowerCase::evaluate(Pkt& pkt, ValueStack& values) {
         .arg(pkt.getLabel())
         .arg('\'' + op + '\'')
         .arg('\'' + result + '\'');
+
+    return (0);
 }
 
-void
+unsigned
 TokenUpperCase::evaluate(Pkt& pkt, ValueStack& values) {
     if (values.size() == 0) {
         isc_throw(EvalBadStack, "Incorrect empty stack.");
@@ -122,6 +128,8 @@ TokenUpperCase::evaluate(Pkt& pkt, ValueStack& values) {
         .arg(pkt.getLabel())
         .arg('\'' + op + '\'')
         .arg('\'' + result + '\'');
+
+    return (0);
 }
 
 TokenIpAddress::TokenIpAddress(const string& addr) : value_("") {
@@ -139,7 +147,7 @@ TokenIpAddress::TokenIpAddress(const string& addr) : value_("") {
     memmove(&value_[0], &binary[0], binary.size());
 }
 
-void
+unsigned
 TokenIpAddress::evaluate(Pkt& pkt, ValueStack& values) {
     // Literals only push, nothing to pop
     values.push(value_);
@@ -148,9 +156,11 @@ TokenIpAddress::evaluate(Pkt& pkt, ValueStack& values) {
     LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_IPADDRESS)
         .arg(pkt.getLabel())
         .arg(toHex(value_));
+
+    return (0);
 }
 
-void
+unsigned
 TokenIpAddressToText::evaluate(Pkt& pkt, ValueStack& values) {
     if (values.size() == 0) {
         isc_throw(EvalBadStack, "Incorrect empty stack.");
@@ -160,7 +170,7 @@ TokenIpAddressToText::evaluate(Pkt& pkt, ValueStack& values) {
     size_t size = op.size();
 
     if (!size) {
-        return;
+        return (0);
     }
 
     values.pop();
@@ -183,9 +193,11 @@ TokenIpAddressToText::evaluate(Pkt& pkt, ValueStack& values) {
     LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_IPADDRESSTOTEXT)
         .arg(pkt.getLabel())
         .arg(op);
+
+    return (0);
 }
 
-void
+unsigned
 TokenInt8ToText::evaluate(Pkt& pkt, ValueStack& values) {
     if (values.size() == 0) {
         isc_throw(EvalBadStack, "Incorrect empty stack.");
@@ -195,7 +207,7 @@ TokenInt8ToText::evaluate(Pkt& pkt, ValueStack& values) {
     size_t size = op.size();
 
     if (!size) {
-        return;
+      return (0);
     }
 
     values.pop();
@@ -213,9 +225,11 @@ TokenInt8ToText::evaluate(Pkt& pkt, ValueStack& values) {
     LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_INT8TOTEXT)
         .arg(pkt.getLabel())
         .arg(op);
+
+    return (0);
 }
 
-void
+unsigned
 TokenInt16ToText::evaluate(Pkt& pkt, ValueStack& values) {
     if (values.size() == 0) {
         isc_throw(EvalBadStack, "Incorrect empty stack.");
@@ -225,7 +239,7 @@ TokenInt16ToText::evaluate(Pkt& pkt, ValueStack& values) {
     size_t size = op.size();
 
     if (!size) {
-        return;
+      return (0);
     }
 
     values.pop();
@@ -244,9 +258,11 @@ TokenInt16ToText::evaluate(Pkt& pkt, ValueStack& values) {
     LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_INT16TOTEXT)
         .arg(pkt.getLabel())
         .arg(op);
+
+    return (0);
 }
 
-void
+unsigned
 TokenInt32ToText::evaluate(Pkt& pkt, ValueStack& values) {
     if (values.size() == 0) {
         isc_throw(EvalBadStack, "Incorrect empty stack.");
@@ -256,7 +272,7 @@ TokenInt32ToText::evaluate(Pkt& pkt, ValueStack& values) {
     size_t size = op.size();
 
     if (!size) {
-        return;
+      return (0);
     }
 
     values.pop();
@@ -275,9 +291,11 @@ TokenInt32ToText::evaluate(Pkt& pkt, ValueStack& values) {
     LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_INT32TOTEXT)
         .arg(pkt.getLabel())
         .arg(op);
+
+    return (0);
 }
 
-void
+unsigned
 TokenUInt8ToText::evaluate(Pkt& pkt, ValueStack& values) {
     if (values.size() == 0) {
         isc_throw(EvalBadStack, "Incorrect empty stack.");
@@ -287,7 +305,7 @@ TokenUInt8ToText::evaluate(Pkt& pkt, ValueStack& values) {
     size_t size = op.size();
 
     if (!size) {
-        return;
+      return (0);
     }
 
     values.pop();
@@ -305,9 +323,11 @@ TokenUInt8ToText::evaluate(Pkt& pkt, ValueStack& values) {
     LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_UINT8TOTEXT)
         .arg(pkt.getLabel())
         .arg(op);
+
+    return (0);
 }
 
-void
+unsigned
 TokenUInt16ToText::evaluate(Pkt& pkt, ValueStack& values) {
     if (values.size() == 0) {
         isc_throw(EvalBadStack, "Incorrect empty stack.");
@@ -317,7 +337,7 @@ TokenUInt16ToText::evaluate(Pkt& pkt, ValueStack& values) {
     size_t size = op.size();
 
     if (!size) {
-        return;
+      return (0);
     }
 
     values.pop();
@@ -336,9 +356,11 @@ TokenUInt16ToText::evaluate(Pkt& pkt, ValueStack& values) {
     LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_UINT16TOTEXT)
         .arg(pkt.getLabel())
         .arg(op);
+
+    return (0);
 }
 
-void
+unsigned
 TokenUInt32ToText::evaluate(Pkt& pkt, ValueStack& values) {
     if (values.size() == 0) {
         isc_throw(EvalBadStack, "Incorrect empty stack.");
@@ -348,7 +370,7 @@ TokenUInt32ToText::evaluate(Pkt& pkt, ValueStack& values) {
     size_t size = op.size();
 
     if (!size) {
-        return;
+      return (0);
     }
 
     values.pop();
@@ -367,6 +389,8 @@ TokenUInt32ToText::evaluate(Pkt& pkt, ValueStack& values) {
     LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_UINT32TOTEXT)
         .arg(pkt.getLabel())
         .arg(op);
+
+    return (0);
 }
 
 OptionPtr
@@ -374,7 +398,7 @@ TokenOption::getOption(Pkt& pkt) {
     return (pkt.getOption(option_code_));
 }
 
-void
+unsigned
 TokenOption::evaluate(Pkt& pkt, ValueStack& values) {
     OptionPtr opt = getOption(pkt);
     std::string opt_str;
@@ -412,6 +436,8 @@ TokenOption::evaluate(Pkt& pkt, ValueStack& values) {
             .arg(option_code_)
             .arg('\'' + opt_str + '\'');
     }
+
+    return (0);
 }
 
 std::string
@@ -429,7 +455,8 @@ TokenRelay4Option::TokenRelay4Option(const uint16_t option_code,
     : TokenOption(option_code, rep_type) {
 }
 
-OptionPtr TokenRelay4Option::getOption(Pkt& pkt) {
+OptionPtr
+TokenRelay4Option::getOption(Pkt& pkt) {
     // Check if there is Relay Agent Option.
     OptionPtr rai = pkt.getOption(DHO_DHCP_AGENT_OPTIONS);
     if (!rai) {
@@ -440,7 +467,8 @@ OptionPtr TokenRelay4Option::getOption(Pkt& pkt) {
     return (rai->getOption(option_code_));
 }
 
-OptionPtr TokenRelay6Option::getOption(Pkt& pkt) {
+OptionPtr
+TokenRelay6Option::getOption(Pkt& pkt) {
     try {
         // Check if it's a Pkt6.  If it's not the dynamic_cast will
         // throw std::bad_cast.
@@ -475,7 +503,7 @@ OptionPtr TokenRelay6Option::getOption(Pkt& pkt) {
 
 }
 
-void
+unsigned
 TokenPkt::evaluate(Pkt& pkt, ValueStack& values) {
     string value;
     vector<uint8_t> binary;
@@ -524,9 +552,11 @@ TokenPkt::evaluate(Pkt& pkt, ValueStack& values) {
         .arg(pkt.getLabel())
         .arg(type_str)
         .arg(print_hex ? toHex(value) : value);
+
+    return (0);
 }
 
-void
+unsigned
 TokenPkt4::evaluate(Pkt& pkt, ValueStack& values) {
     vector<uint8_t> binary;
     string value;
@@ -603,9 +633,11 @@ TokenPkt4::evaluate(Pkt& pkt, ValueStack& values) {
         .arg(pkt.getLabel())
         .arg(type_str)
         .arg(toHex(value));
+
+    return (0);
 }
 
-void
+unsigned
 TokenPkt6::evaluate(Pkt& pkt, ValueStack& values) {
     string value;
     string type_str;
@@ -643,9 +675,11 @@ TokenPkt6::evaluate(Pkt& pkt, ValueStack& values) {
         .arg(pkt.getLabel())
         .arg(type_str)
         .arg(toHex(value));
+
+    return (0);
 }
 
-void
+unsigned
 TokenRelay6Field::evaluate(Pkt& pkt, ValueStack& values) {
     vector<uint8_t> binary;
     string type_str;
@@ -688,7 +722,7 @@ TokenRelay6Field::evaluate(Pkt& pkt, ValueStack& values) {
                 .arg(type_str)
                 .arg(int(nest_level_))
                 .arg("0x");
-            return;
+            return (0);
         }
     } catch (const std::bad_cast&) {
         isc_throw(EvalTypeError, "Specified packet is not Pkt6");
@@ -707,9 +741,11 @@ TokenRelay6Field::evaluate(Pkt& pkt, ValueStack& values) {
         .arg(type_str)
         .arg(int(nest_level_))
         .arg(toHex(value));
+
+    return (0);
 }
 
-void
+unsigned
 TokenEqual::evaluate(Pkt& pkt, ValueStack& values) {
     if (values.size() < 2) {
         isc_throw(EvalBadStack, "Incorrect stack order. Expected at least "
@@ -732,9 +768,11 @@ TokenEqual::evaluate(Pkt& pkt, ValueStack& values) {
         .arg(toHex(op1))
         .arg(toHex(op2))
         .arg('\'' + values.top() + '\'');
+
+    return (0);
 }
 
-void
+unsigned
 TokenSubstring::evaluate(Pkt& pkt, ValueStack& values) {
     if (values.size() < 3) {
         isc_throw(EvalBadStack, "Incorrect stack order. Expected at least "
@@ -759,7 +797,7 @@ TokenSubstring::evaluate(Pkt& pkt, ValueStack& values) {
             .arg(start_str)
             .arg("0x")
             .arg("0x");
-        return;
+        return (0);
     }
 
     // Convert the starting position and length from strings to numbers
@@ -800,7 +838,7 @@ TokenSubstring::evaluate(Pkt& pkt, ValueStack& values) {
             .arg(start_str)
             .arg(toHex(string_str))
             .arg("0x");
-        return;
+        return (0);
     }
 
     // Adjust the values to be something for substr.  We first figure out
@@ -830,9 +868,11 @@ TokenSubstring::evaluate(Pkt& pkt, ValueStack& values) {
         .arg(start_str)
         .arg(toHex(string_str))
         .arg(toHex(values.top()));
+
+    return (0);
 }
 
-void
+unsigned
 TokenSplit::evaluate(Pkt& pkt, ValueStack& values) {
     if (values.size() < 3) {
         isc_throw(EvalBadStack, "Incorrect stack order. Expected at least "
@@ -858,7 +898,7 @@ TokenSplit::evaluate(Pkt& pkt, ValueStack& values) {
             .arg(delim_str)
             .arg(string_str)
             .arg("0x");
-        return;
+        return (0);
     }
 
     // Convert the field position from string to number
@@ -883,7 +923,7 @@ TokenSplit::evaluate(Pkt& pkt, ValueStack& values) {
             .arg(delim_str)
             .arg(string_str)
             .arg(toHex(values.top()));
-        return;
+        return (0);
     }
 
     // Split the string into fields.
@@ -903,7 +943,7 @@ TokenSplit::evaluate(Pkt& pkt, ValueStack& values) {
             .arg(delim_str)
             .arg(string_str)
             .arg("0x");
-        return;
+        return (0);
     }
 
     // Push the desired field.
@@ -916,9 +956,11 @@ TokenSplit::evaluate(Pkt& pkt, ValueStack& values) {
             .arg(delim_str)
             .arg(string_str)
             .arg(toHex(values.top()));
+
+    return (0);
 }
 
-void
+unsigned
 TokenConcat::evaluate(Pkt& pkt, ValueStack& values) {
     if (values.size() < 2) {
         isc_throw(EvalBadStack, "Incorrect stack order. Expected at least "
@@ -939,9 +981,11 @@ TokenConcat::evaluate(Pkt& pkt, ValueStack& values) {
         .arg(toHex(op1))
         .arg(toHex(op2))
         .arg(toHex(values.top()));
+
+    return (0);
 }
 
-void
+unsigned
 TokenIfElse::evaluate(Pkt& pkt, ValueStack& values) {
     if (values.size() < 3) {
         isc_throw(EvalBadStack, "Incorrect stack order. Expected at least "
@@ -976,9 +1020,11 @@ TokenIfElse::evaluate(Pkt& pkt, ValueStack& values) {
             .arg(toHex(iftrue))
             .arg(toHex(iffalse));
     }
+
+    return (0);
 }
 
-void
+unsigned
 TokenToHexString::evaluate(Pkt& pkt, ValueStack& values) {
     if (values.size() < 2) {
         isc_throw(EvalBadStack, "Incorrect stack order. Expected at least "
@@ -1010,9 +1056,11 @@ TokenToHexString::evaluate(Pkt& pkt, ValueStack& values) {
         .arg(toHex(binary))
         .arg(separator)
         .arg(tmp.str());
+
+    return (0);
 }
 
-void
+unsigned
 TokenNot::evaluate(Pkt& pkt, ValueStack& values) {
     if (values.size() == 0) {
         isc_throw(EvalBadStack, "Incorrect empty stack.");
@@ -1033,9 +1081,11 @@ TokenNot::evaluate(Pkt& pkt, ValueStack& values) {
         .arg(pkt.getLabel())
         .arg('\'' + op + '\'')
         .arg('\'' + values.top() + '\'');
+
+    return (0);
 }
 
-void
+unsigned
 TokenAnd::evaluate(Pkt& pkt, ValueStack& values) {
     if (values.size() < 2) {
         isc_throw(EvalBadStack, "Incorrect stack order. Expected at least "
@@ -1061,9 +1111,11 @@ TokenAnd::evaluate(Pkt& pkt, ValueStack& values) {
         .arg('\'' + op1 + '\'')
         .arg('\'' + op2 + '\'')
         .arg('\'' + values.top() + '\'');
+
+    return (0);
 }
 
-void
+unsigned
 TokenOr::evaluate(Pkt& pkt, ValueStack& values) {
     if (values.size() < 2) {
         isc_throw(EvalBadStack, "Incorrect stack order. Expected at least "
@@ -1089,9 +1141,11 @@ TokenOr::evaluate(Pkt& pkt, ValueStack& values) {
         .arg('\'' + op1 + '\'')
         .arg('\'' + op2 + '\'')
         .arg('\'' + values.top() + '\'');
+
+    return (0);
 }
 
-void
+unsigned
 TokenMember::evaluate(Pkt& pkt, ValueStack& values) {
     if (pkt.inClass(client_class_)) {
         values.push("true");
@@ -1104,6 +1158,8 @@ TokenMember::evaluate(Pkt& pkt, ValueStack& values) {
         .arg(pkt.getLabel())
         .arg(client_class_)
         .arg('\'' + values.top() + '\'');
+
+    return (0);
 }
 
 TokenVendor::TokenVendor(Option::Universe u, uint32_t vendor_id, RepresentationType repr,
@@ -1120,15 +1176,18 @@ TokenVendor::TokenVendor(Option::Universe u, uint32_t vendor_id, FieldType field
     }
 }
 
-uint32_t TokenVendor::getVendorId() const {
+uint32_t
+TokenVendor::getVendorId() const {
     return (vendor_id_);
 }
 
-TokenVendor::FieldType TokenVendor::getField() const {
+TokenVendor::FieldType
+TokenVendor::getField() const {
     return (field_);
 }
 
-void TokenVendor::evaluate(Pkt& pkt, ValueStack& values) {
+unsigned
+TokenVendor::evaluate(Pkt& pkt, ValueStack& values) {
     // Get the option first.
     uint16_t code = 0;
     switch (universe_) {
@@ -1149,7 +1208,7 @@ void TokenVendor::evaluate(Pkt& pkt, ValueStack& values) {
             .arg(pkt.getLabel())
             .arg(code)
             .arg(txt);
-        return;
+        return (0);
     }
 
     if (vendor_id_ && (vendor_id_ != vendor->getVendorId())) {
@@ -1161,7 +1220,7 @@ void TokenVendor::evaluate(Pkt& pkt, ValueStack& values) {
             .arg(vendor_id_)
             .arg(vendor->getVendorId())
             .arg(txt);
-        return;
+        return (0);
     }
 
     switch (field_) {
@@ -1177,13 +1236,12 @@ void TokenVendor::evaluate(Pkt& pkt, ValueStack& values) {
             .arg(vendor->getVendorId())
             .arg(util::encode::encodeHex(std::vector<uint8_t>(txt.begin(),
                                                               txt.end())));
-        return;
+        break;
     }
     case SUBOPTION:
         /// This is vendor[X].option[Y].exists, let's try to
         /// extract the option
-        TokenOption::evaluate(pkt, values);
-        return;
+        return (TokenOption::evaluate(pkt, values));
     case EXISTS:
         // We already passed all the checks: the option is there and has specified
         // enterprise-id.
@@ -1192,15 +1250,18 @@ void TokenVendor::evaluate(Pkt& pkt, ValueStack& values) {
             .arg(vendor->getVendorId())
             .arg("true");
         values.push("true");
-        return;
+        break;
     case DATA:
         // This is for vendor-class option, we can skip it here.
         isc_throw(EvalTypeError, "Field None is not valid for vendor-class");
-        return;
+        break;
     }
+
+    return (0);
 }
 
-OptionPtr TokenVendor::getOption(Pkt& pkt) {
+OptionPtr
+TokenVendor::getOption(Pkt& pkt) {
    uint16_t code = 0;
     switch (universe_) {
     case Option::V4:
@@ -1233,11 +1294,13 @@ TokenVendorClass::TokenVendorClass(Option::Universe u, uint32_t vendor_id,
     field_ = field;
 }
 
-uint16_t TokenVendorClass::getDataIndex() const {
+uint16_t
+TokenVendorClass::getDataIndex() const {
     return (index_);
 }
 
-void TokenVendorClass::evaluate(Pkt& pkt, ValueStack& values) {
+unsigned
+TokenVendorClass::evaluate(Pkt& pkt, ValueStack& values) {
     // Get the option first.
     uint16_t code = 0;
     switch (universe_) {
@@ -1258,7 +1321,7 @@ void TokenVendorClass::evaluate(Pkt& pkt, ValueStack& values) {
             .arg(pkt.getLabel())
             .arg(code)
             .arg(txt);
-        return;
+        return (0);
     }
 
     if (vendor_id_ && (vendor_id_ != vendor->getVendorId())) {
@@ -1270,7 +1333,7 @@ void TokenVendorClass::evaluate(Pkt& pkt, ValueStack& values) {
             .arg(vendor_id_)
             .arg(vendor->getVendorId())
             .arg(txt);
-        return;
+        return (0);
     }
 
     switch (field_) {
@@ -1286,12 +1349,12 @@ void TokenVendorClass::evaluate(Pkt& pkt, ValueStack& values) {
             .arg(vendor->getVendorId())
             .arg(util::encode::encodeHex(std::vector<uint8_t>(txt.begin(),
                                                               txt.end())));
-        return;
+        break;
     }
     case SUBOPTION:
         // Extract sub-options
         isc_throw(EvalTypeError, "Field None is not valid for vendor-class");
-        return;
+        break;
     case EXISTS:
         // We already passed all the checks: the option is there and has specified
         // enterprise-id.
@@ -1300,7 +1363,7 @@ void TokenVendorClass::evaluate(Pkt& pkt, ValueStack& values) {
             .arg(vendor->getVendorId())
             .arg("true");
         values.push("true");
-        return;
+        break;
     case DATA:
     {
         size_t max = vendor->getTuplesNum();
@@ -1314,7 +1377,7 @@ void TokenVendorClass::evaluate(Pkt& pkt, ValueStack& values) {
                 .arg(max)
                 .arg("");
             values.push("");
-            return;
+            break;
         }
 
         OpaqueDataTuple tuple = vendor->getTuple(index_);
@@ -1328,11 +1391,13 @@ void TokenVendorClass::evaluate(Pkt& pkt, ValueStack& values) {
             .arg(txt);
 
         values.push(txt);
-        return;
+        break;
     }
     default:
         isc_throw(EvalTypeError, "Invalid field specified." << field_);
     }
+
+    return (0);
 }
 
 TokenInteger::TokenInteger(const uint32_t value)
@@ -1347,7 +1412,7 @@ TokenSubOption::getSubOption(const OptionPtr& parent) {
     return (parent->getOption(sub_option_code_));
 }
 
-void
+unsigned
 TokenSubOption::evaluate(Pkt& pkt, ValueStack& values) {
     OptionPtr parent = getOption(pkt);
     std::string txt;
@@ -1400,6 +1465,8 @@ TokenSubOption::evaluate(Pkt& pkt, ValueStack& values) {
             .arg(sub_option_code_)
             .arg('\'' + txt + '\'');
     }
+
+    return (0);
 }
 
 TokenMatch::TokenMatch(const std::string& reg_exp) : reg_exp_str_(reg_exp) {
@@ -1411,8 +1478,8 @@ TokenMatch::TokenMatch(const std::string& reg_exp) : reg_exp_str_(reg_exp) {
     }
 }
 
-void
-TokenMatch::evaluate(Pkt& pkt, ValueStack& values) {
+unsigned
+TokenMatch::evaluate(Pkt&, ValueStack& values) {
     if (values.size() == 0) {
         isc_throw(EvalBadStack, "Incorrect empty stack.");
     }
@@ -1435,4 +1502,17 @@ TokenMatch::evaluate(Pkt& pkt, ValueStack& values) {
             .arg(ex.what());
     }
     values.push(txt);
+
+    return (0);
+}
+
+TokenLabel::TokenLabel(const unsigned label) : label_(label) {
+    if (label == 0) {
+        isc_throw(EvalParseError, "label must be not zero");
+    }
+}
+
+unsigned
+TokenLabel::evaluate(Pkt&, ValueStack&) {
+    return (0);
 }

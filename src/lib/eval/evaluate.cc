@@ -11,10 +11,23 @@
 namespace isc {
 namespace dhcp {
 
-bool evaluateBool(const Expression& expr, Pkt& pkt) {
+bool
+evaluateBool(const Expression& expr, Pkt& pkt) {
     ValueStack values;
-    for (auto const& it : expr) {
-        it->evaluate(pkt, values);
+    for (auto it = expr.cbegin(); it != expr.cend(); ) {
+        unsigned label = (*it++)->evaluate(pkt, values);
+        if (label == 0) {
+            continue;
+        }
+        // Scan for the given label.
+        for (;;) {
+            if (it == expr.cend()) {
+                isc_throw(EvalBadLabel, "can't reach label " << label);
+            }
+            if ((*it++)->getLabel() == label) {
+                break;
+            }
+        }
     }
     if (values.size() != 1) {
         isc_throw(EvalBadStack, "Incorrect stack order. Expected exactly "
@@ -26,8 +39,20 @@ bool evaluateBool(const Expression& expr, Pkt& pkt) {
 std::string
 evaluateString(const Expression& expr, Pkt& pkt) {
     ValueStack values;
-    for (auto const& it : expr) {
-        it->evaluate(pkt, values);
+    for (auto it = expr.cbegin(); it != expr.cend(); ) {
+        unsigned label = (*it++)->evaluate(pkt, values);
+        if (label == 0) {
+            continue;
+        }
+        // Scan for the given label.
+        for (;;) {
+            if (it == expr.cend()) {
+                isc_throw(EvalBadLabel, "can't reach label " << label);
+            }
+            if ((*it++)->getLabel() == label) {
+                break;
+            }
+        }
     }
     if (values.size() != 1) {
         isc_throw(EvalBadStack, "Incorrect stack order. Expected exactly "

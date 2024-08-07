@@ -591,6 +591,7 @@ TEST_F(TokenTest, string4) {
 
     // Store constant string "foo" in the TokenString object.
     ASSERT_NO_THROW(t_.reset(new TokenString("foo")));
+    EXPECT_EQ(0, t_->getLabel());
 
     // Make sure that the token can be evaluated without exceptions.
     ASSERT_NO_THROW(t_->evaluate(*pkt4_, values_));
@@ -695,6 +696,7 @@ TEST_F(TokenTest, hexstring4) {
 
     // Store constant empty hexstring "" ("") in the TokenHexString object.
     ASSERT_NO_THROW(empty.reset(new TokenHexString("")));
+    EXPECT_EQ(0, empty->getLabel());
     // Store bad encoded hexstring "0abc" ("").
     ASSERT_NO_THROW(bad.reset(new TokenHexString("0abc")));
     // Store hexstring with no digits "0x" ("").
@@ -821,6 +823,7 @@ TEST_F(TokenTest, hexstring6) {
 // is not used)
 TEST_F(TokenTest, lcase) {
     ASSERT_NO_THROW(t_.reset(new TokenLowerCase()));
+    EXPECT_EQ(0, t_->getLabel());
     values_.push("LoWeR");
 
     // Make sure that the token can be evaluated without exceptions.
@@ -874,6 +877,7 @@ TEST_F(TokenTest, lcaseComplex) {
 // is not used)
 TEST_F(TokenTest, ucase) {
     ASSERT_NO_THROW(t_.reset(new TokenUpperCase()));
+    EXPECT_EQ(0, t_->getLabel());
     values_.push("uPpEr");
 
     // Make sure that the token can be evaluated without exceptions.
@@ -937,6 +941,7 @@ TEST_F(TokenTest, ipaddress) {
 
     // IP addresses
     ASSERT_NO_THROW(ip4.reset(new TokenIpAddress("10.0.0.1")));
+    EXPECT_EQ(0, ip4->getLabel());
     ASSERT_NO_THROW(ip6.reset(new TokenIpAddress("2001:db8::1")));
 
     // Make sure that tokens can be evaluated without exceptions.
@@ -982,6 +987,7 @@ TEST_F(TokenTest, ipaddress) {
 // (The actual packet is not used)
 TEST_F(TokenTest, addressToText) {
     TokenPtr address((new TokenIpAddressToText()));
+    EXPECT_EQ(0, address->getLabel());
     std::vector<uint8_t> bytes;
 
     std::string value = "10.0.0.1";
@@ -1041,11 +1047,17 @@ TEST_F(TokenTest, addressToText) {
 // (The actual packet is not used)
 TEST_F(TokenTest, integerToText) {
     TokenPtr int8token((new TokenInt8ToText()));
+    EXPECT_EQ(0, int8token->getLabel());
     TokenPtr int16token((new TokenInt16ToText()));
+    EXPECT_EQ(0, int16token->getLabel());
     TokenPtr int32token((new TokenInt32ToText()));
+    EXPECT_EQ(0, int32token->getLabel());
     TokenPtr uint8token((new TokenUInt8ToText()));
+    EXPECT_EQ(0, uint8token->getLabel());
     TokenPtr uint16token((new TokenUInt16ToText()));
+    EXPECT_EQ(0, uint16token->getLabel());
     TokenPtr uint32token((new TokenUInt32ToText()));
+    EXPECT_EQ(0, uint32token->getLabel());
 
     std::vector<uint8_t> bytes;
     std::string value = "0123456789";
@@ -1240,6 +1252,7 @@ TEST_F(TokenTest, optionString4) {
 
     // The packets we use have option 100 with a string in them.
     ASSERT_NO_THROW(found.reset(new TokenOption(100, TokenOption::TEXTUAL)));
+    EXPECT_EQ(0, found->getLabel());
     ASSERT_NO_THROW(not_found.reset(new TokenOption(101, TokenOption::TEXTUAL)));
 
     // This should evaluate to the content of the option 100 (i.e. "hundred4")
@@ -1469,6 +1482,7 @@ TEST_F(TokenTest, relay4OptionNoSuboption) {
 
     // Creating the token should be safe.
     ASSERT_NO_THROW(t_.reset(new TokenRelay4Option(15, TokenOption::TEXTUAL)));
+    EXPECT_EQ(0, t_->getLabel());
 
     // We should be able to evaluate it.
     EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
@@ -1668,6 +1682,7 @@ TEST_F(TokenTest, relay6Option) {
 TEST_F(TokenTest, relay6OptionError) {
     // Create a relay6 option token
     ASSERT_NO_THROW(t_.reset(new TokenRelay6Option(0, 13, TokenOption::TEXTUAL)));
+    EXPECT_EQ(0, t_->getLabel());
 
     // A DHCPv6 packet is required
     EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalTypeError);
@@ -1681,6 +1696,7 @@ TEST_F(TokenTest, pkt4MetaData) {
 
     // Check interface (expect eth0)
     ASSERT_NO_THROW(t_.reset(new TokenPkt(TokenPkt::IFACE)));
+    EXPECT_EQ(0, t_->getLabel());
     EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
     ASSERT_EQ(1, values_.size());
     ASSERT_EQ("eth0", values_.top());
@@ -1808,6 +1824,7 @@ TEST_F(TokenTest, pkt4Fields) {
 
     // Check hardware address field.
     ASSERT_NO_THROW(t_.reset(new TokenPkt4(TokenPkt4::CHADDR)));
+    EXPECT_EQ(0, t_->getLabel());
     EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
     ASSERT_EQ(1, values_.size());
     uint8_t expected_hw[] = { 1, 2, 3, 4, 5, 6, 7 };
@@ -1927,6 +1944,7 @@ TEST_F(TokenTest, pkt6Fields) {
 
     // Check the message type
     ASSERT_NO_THROW(t_.reset(new TokenPkt6(TokenPkt6::MSGTYPE)));
+    EXPECT_EQ(0, t_->getLabel());
     EXPECT_NO_THROW(t_->evaluate(*pkt6_, values_));
     ASSERT_EQ(1, values_.size());
     uint32_t expected = htonl(1);
@@ -2010,6 +2028,7 @@ TEST_F(TokenTest, relay6Field) {
     TokenPtr taddr;
     TokenPtr tequal;
     ASSERT_NO_THROW(trelay.reset(new TokenRelay6Field(1, TokenRelay6Field::LINKADDR)));
+    EXPECT_EQ(0, trelay->getLabel());
     ASSERT_NO_THROW(taddr.reset(new TokenIpAddress("1::1")));
     ASSERT_NO_THROW(tequal.reset(new TokenEqual()));
 
@@ -2083,6 +2102,7 @@ TEST_F(TokenTest, relay6Field) {
 TEST_F(TokenTest, relay6FieldError) {
     // Create a valid relay6 field token
     ASSERT_NO_THROW(t_.reset(new TokenRelay6Field(0, TokenRelay6Field::LINKADDR)));
+    EXPECT_EQ(0, t_->getLabel());
 
     // a DHCPv6 packet is required
     ASSERT_THROW(t_->evaluate(*pkt4_, values_), EvalTypeError);
@@ -2095,6 +2115,7 @@ TEST_F(TokenTest, relay6FieldError) {
 TEST_F(TokenTest, optionEqualInvalid) {
 
     ASSERT_NO_THROW(t_.reset(new TokenEqual()));
+    EXPECT_EQ(0, t_->getLabel());
 
     // CASE 1: There's not enough values on the stack. == is an operator that
     // takes two parameters. There are 0 on the stack.
@@ -2157,6 +2178,7 @@ TEST_F(TokenTest, optionEqualTrue) {
 // The actual packet is not used.
 TEST_F(TokenTest, substringNotEnoughValues) {
     ASSERT_NO_THROW(t_.reset(new TokenSubstring()));
+    EXPECT_EQ(0, t_->getLabel());
 
     // Substring requires three values on the stack, try
     // with 0, 1 and 2 all should throw an exception
@@ -2486,6 +2508,7 @@ TEST_F(TokenTest, substringEquals) {
 // The actual packet is not used.
 TEST_F(TokenTest, concat) {
     ASSERT_NO_THROW(t_.reset(new TokenConcat()));
+    EXPECT_EQ(0, t_->getLabel());
 
     // Concat requires two values on the stack, try
     // with 0 and 1 both should throw an exception
@@ -2515,6 +2538,7 @@ TEST_F(TokenTest, concat) {
 // The actual packet is not used.
 TEST_F(TokenTest, tohexstring) {
     ASSERT_NO_THROW(t_.reset(new TokenToHexString()));
+    EXPECT_EQ(0, t_->getLabel());
 
     // Hexstring requires two values on the stack, try
     // with 0 and 1 both should throw an exception
@@ -2544,6 +2568,7 @@ TEST_F(TokenTest, tohexstring) {
 // to select the branch following the condition.
 TEST_F(TokenTest, ifElse) {
     ASSERT_NO_THROW(t_.reset(new TokenIfElse()));
+    EXPECT_EQ(0, t_->getLabel());
 
     // Ifelse requires three values on the stack, try
     // with 0, 1 and 2 all should throw an exception
@@ -2584,6 +2609,7 @@ TEST_F(TokenTest, ifElse) {
 TEST_F(TokenTest, operatorNotInvalid) {
 
     ASSERT_NO_THROW(t_.reset(new TokenNot()));
+    EXPECT_EQ(0, t_->getLabel());
 
     // CASE 1: The stack is empty.
     EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalBadStack);
@@ -2624,6 +2650,7 @@ TEST_F(TokenTest, operatorNot) {
 TEST_F(TokenTest, operatorAndInvalid) {
 
     ASSERT_NO_THROW(t_.reset(new TokenAnd()));
+    EXPECT_EQ(0, t_->getLabel());
 
     // CASE 1: There's not enough values on the stack. and is an operator that
     // takes two parameters. There are 0 on the stack.
@@ -2704,6 +2731,7 @@ TEST_F(TokenTest, operatorAndTrue) {
 TEST_F(TokenTest, operatorOrInvalid) {
 
     ASSERT_NO_THROW(t_.reset(new TokenOr()));
+    EXPECT_EQ(0, t_->getLabel());
 
     // CASE 1: There's not enough values on the stack. or is an operator that
     // takes two parameters. There are 0 on the stack.
@@ -2783,6 +2811,7 @@ TEST_F(TokenTest, operatorOrTrue) {
 TEST_F(TokenTest, member) {
 
     ASSERT_NO_THROW(t_.reset(new TokenMember("foo")));
+    EXPECT_EQ(0, t_->getLabel());
 
     EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
 
@@ -2811,6 +2840,10 @@ TEST_F(TokenTest, member) {
 
 // This test verifies if expression vendor[4491].exists works properly in DHCPv4.
 TEST_F(TokenTest, vendor4SpecificVendorExists) {
+    ASSERT_NO_THROW(t_.reset(new TokenVendor(Option::V4, 4491,
+                                             TokenOption::EXISTS)));
+    EXPECT_EQ(0, t_->getLabel());
+
     // Case 1: no option, should evaluate to false
     testVendorExists(Option::V4, 4491, 0, "false");
 
@@ -3074,6 +3107,10 @@ TEST_F(TokenTest, vendor6SuboptionHex) {
 // This test verifies that "vendor-class[4491].exists" expression can be used
 // in DHCPv4.
 TEST_F(TokenTest, vendorClass4SpecificVendorExists) {
+    ASSERT_NO_THROW(t_.reset(new TokenVendorClass(Option::V4, 4491,
+                                                  TokenVendor::ENTERPRISE_ID)));
+    EXPECT_EQ(0, t_->getLabel());
+
     // Case 1: no option present, should fail
     testVendorClassExists(Option::V4, 4491, 0, "false");
 
@@ -3493,6 +3530,7 @@ TEST_F(TokenTest, subOption) {
 
     // Creating the token should be safe.
     ASSERT_NO_THROW(t_.reset(new TokenSubOption(DHO_DHCP_AGENT_OPTIONS, 13, TokenOption::TEXTUAL)));
+    EXPECT_EQ(0, t_->getLabel());
 
     // We should be able to evaluate it.
     EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
@@ -3643,6 +3681,9 @@ TEST_F(TokenTest, subOptionOptionOnly) {
 
 // Checks if various values can be represented as integer tokens
 TEST_F(TokenTest, integer) {
+    ASSERT_NO_THROW(t_.reset(new TokenInteger(0)));
+    EXPECT_EQ(0, t_->getLabel());
+
     testInteger(encode(0), 0);
     testInteger(encode(6), 6);
     testInteger(encode(255), 255);
@@ -3653,6 +3694,9 @@ TEST_F(TokenTest, integer) {
 
 // Verify TokenSplit::eval, single delimiter.
 TEST_F(TokenTest, split) {
+    ASSERT_NO_THROW(t_.reset(new TokenSplit()));
+    EXPECT_EQ(0, t_->getLabel());
+
     // Get the whole string
     std::string input(".two.three..five.");
     std::string delims(".");
@@ -3801,6 +3845,9 @@ TEST_F(TokenTest, invalidRegEx) {
 
 // Verify TokenMatch works as expected.
 TEST_F(TokenTest, match) {
+    ASSERT_NO_THROW(t_.reset(new TokenMatch("foo")));
+    EXPECT_EQ(0, t_->getLabel());
+
     testMatch("foo", "foo", true);
     // Full match is required.
     testMatch("foo", "foobar", false);
@@ -3828,6 +3875,21 @@ TEST_F(TokenTest, match) {
     testMatch("[[:alpha:]]{1,9}", "Foobar", true);
     testMatch("[[:alpha:]]{1,9}", "FoObar", true);
     testMatch("[[:alpha:]]{1,9}", "Fo0bar", false);
+}
+
+// Verify TokenLabel.
+TEST_F(TokenTest, label) {
+    // 0 is not a valid label.
+    ASSERT_THROW(t_.reset(new TokenLabel(0)), EvalParseError);
+
+    // Evaluation does and uses nothing.
+    ASSERT_NO_THROW(t_.reset(new TokenLabel(123)));
+    EXPECT_EQ(123, t_->getLabel());
+    clearStack(false);
+    unsigned next(345);
+    EXPECT_NO_THROW(next = t_->evaluate(*pkt4_, values_));
+    ASSERT_EQ(0, next);
+    ASSERT_TRUE(values_.empty());
 }
 
 }
