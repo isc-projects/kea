@@ -3012,6 +3012,7 @@ EvalContext::scanStringBegin(ParserType type)
     start_token_flag = true;
     start_token_value = type;
 
+    label = 0;
     loc.initialize(&file_);
     eval_flex_debug = trace_scanning_;
     YY_BUFFER_STATE buffer;

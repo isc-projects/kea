@@ -156,20 +156,32 @@ bool_expr : "(" bool_expr ")"
                     TokenPtr neg(new TokenNot());
                     ctx.expression.push_back(neg);
                 }
-          | bool_expr AND bool_expr
+          | bool_expr AND
                 {
-                    TokenPtr neg(new TokenAnd());
-                    ctx.expression.push_back(neg);
+                    unsigned target = ++ctx.label;
+                    ctx.labels.push_back(target);
+                    TokenPtr pobf(new TokenPopOrBranchFalse(target));
+                    ctx.expression.push_back(pobf);
+                } bool_expr {
+                    unsigned target = ctx.labels.pop_back();
+                    TokenPtr lab(new TokenLabel(target));
+                    ctx.expression.push_back(lab);
                 }
           | bool_expr SAND bool_expr
                 {
                     TokenPtr neg(new TokenAnd());
                     ctx.expression.push_back(neg);
                 }
-          | bool_expr OR bool_expr
+          | bool_expr OR
                 {
-                    TokenPtr neg(new TokenOr());
-                    ctx.expression.push_back(neg);
+                    unsigned target = ++ctx.label;
+                    ctx.labels.push_back(target);
+                    TokenPtr pobt(new TokenPopOrBranchTrue(target));
+                    ctx.expression.push_back(pobt);
+                } bool_expr {
+                    unsigned target = ctx.labels.pop_back();
+                    TokenPtr lab(new TokenLabel(target));
+                    ctx.expression.push_back(lab);
                 }
           | bool_expr SOR bool_expr
                 {
@@ -418,10 +430,24 @@ string_expr : STRING
                       TokenPtr ucase(new TokenUpperCase());
                       ctx.expression.push_back(ucase);
                   }
-            | IFELSE "(" bool_expr "," string_expr "," string_expr ")"
+            | IFELSE "(" bool_expr ","
                   {
-                      TokenPtr cond(new TokenIfElse());
-                      ctx.expression.push_back(cond);
+                      unsigned target = ++ctx.label;
+                      ctx.labels.push_back(target);
+                      TokenPtr pabf(new TokenPopAndBranchFalse(target));
+                      ctx.expression.push_back(pabf);
+                  } string_expr "," {
+                      unsigned target = ctx.labels.pop_back();
+                      unsigned target2 = ++ctx.label;
+                      ctx.labels.push_back(target2);
+                      TokenPtr branch(new TokenBranch(target2));
+                      ctx.expression.push_back(branch);
+                      TokenPtr lab(new TokenLabel(target));
+                      ctx.expression.push_back(lab);
+                  } string_expr ")" {
+                      unsigned target = ctx.labels.pop_back();
+                      TokenPtr lab(new TokenLabel(target));
+                      ctx.expression.push_back(lab);
                   }
             | SIFELSE "(" bool_expr "," string_expr "," string_expr ")"
                   {
@@ -675,6 +701,7 @@ length_expr : INTEGER
                      ctx.expression.push_back(str);
                  }
             ;
+
 int_expr : INTEGER
                  {
                      TokenPtr str(new TokenString($1));

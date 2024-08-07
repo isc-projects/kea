@@ -67,6 +67,9 @@ public:
     /// @brief Parsed expression (output tokens are stored here)
     isc::dhcp::Expression expression;
 
+    /// @brief Label counter.
+    unsigned label;
+
     /// @brief Label stack.
     std::vector<unsigned> labels;
 

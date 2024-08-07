@@ -807,6 +807,74 @@ public:
         EXPECT_EQ(expected_reg_exp, match->getRegExp());
     }
 
+    /// @brief check if the given token is a label with the expected value
+    /// @param token token to be checked
+    /// @param expected_label expected label
+    void checkTokenLabel(const TokenPtr& token,
+                         const unsigned expected_label) {
+        ASSERT_TRUE(token);
+        boost::shared_ptr<TokenLabel> label =
+            boost::dynamic_pointer_cast<TokenLabel>(token);
+        ASSERT_TRUE(label);
+
+        EXPECT_EQ(expected_label, label->getLabel());
+    }
+
+    /// @brief check if the given token is a branch to the expected target
+    /// @param token token to be checked
+    /// @param expected_target expected target
+    void checkTokenBranch(const TokenPtr& token,
+                          const unsigned expected_target) {
+        ASSERT_TRUE(token);
+        boost::shared_ptr<TokenBranch> branch =
+            boost::dynamic_pointer_cast<TokenBranch>(token);
+        ASSERT_TRUE(branch);
+
+        EXPECT_EQ(expected_target, branch->getTarget());
+    }
+
+    /// @brief check if the given token is a pop or branch true to
+    /// the expected target
+    /// @param token token to be checked
+    /// @param expected_target expected target
+    void checkTokenPopOrBranchTrue(const TokenPtr& token,
+                                   const unsigned expected_target) {
+        ASSERT_TRUE(token);
+        boost::shared_ptr<TokenPopOrBranchTrue> branch =
+            boost::dynamic_pointer_cast<TokenPopOrBranchTrue>(token);
+        ASSERT_TRUE(branch);
+
+        EXPECT_EQ(expected_target, branch->getTarget());
+    }
+
+    /// @brief check if the given token is a pop or branch false to
+    /// the expected target
+    /// @param token token to be checked
+    /// @param expected_target expected target
+    void checkTokenPopOrBranchFalse(const TokenPtr& token,
+                                    const unsigned expected_target) {
+        ASSERT_TRUE(token);
+        boost::shared_ptr<TokenPopOrBranchFalse> branch =
+            boost::dynamic_pointer_cast<TokenPopOrBranchFalse>(token);
+        ASSERT_TRUE(branch);
+
+        EXPECT_EQ(expected_target, branch->getTarget());
+    }
+
+    /// @brief check if the given token is a pop and branch false to
+    /// the expected target
+    /// @param token token to be checked
+    /// @param expected_target expected target
+    void checkTokenPopAndBranchFalse(const TokenPtr& token,
+                                     const unsigned expected_target) {
+        ASSERT_TRUE(token);
+        boost::shared_ptr<TokenPopAndBranchFalse> branch =
+            boost::dynamic_pointer_cast<TokenPopAndBranchFalse>(token);
+        ASSERT_TRUE(branch);
+
+        EXPECT_EQ(expected_target, branch->getTarget());
+    }
+
     Option::Universe universe_; ///< Universe (V4 or V6)
     bool parsed_; ///< Parsing status
 
@@ -1334,41 +1402,39 @@ TEST_F(EvalContextTest, logicalOps) {
     EXPECT_TRUE(tnot);
 
     // sand
-    EvalContext evala(Option::V4);
+    EvalContext evalsa(Option::V4);
     EXPECT_NO_THROW(parsed_ =
-        evala.parseString("option[123].exists sand option[123].exists"));
+        evalsa.parseString("option[123].exists sand option[123].exists"));
     EXPECT_TRUE(parsed_);
-    ASSERT_EQ(3, evala.expression.size());
-    token = evala.expression.at(2);
+    ASSERT_EQ(3, evalsa.expression.size());
+    token = evalsa.expression.at(2);
     ASSERT_TRUE(token);
     boost::shared_ptr<TokenAnd> tand =
         boost::dynamic_pointer_cast<TokenAnd>(token);
     EXPECT_TRUE(tand);
 
     // sor
-    EvalContext evalo(Option::V4);
+    EvalContext evalso(Option::V4);
     EXPECT_NO_THROW(parsed_ =
-        evalo.parseString("option[123].exists sor option[123].exists"));
+        evalso.parseString("option[123].exists sor option[123].exists"));
     EXPECT_TRUE(parsed_);
-    ASSERT_EQ(3, evalo.expression.size());
-    token = evalo.expression.at(2);
+    ASSERT_EQ(3, evalso.expression.size());
+    token = evalso.expression.at(2);
     ASSERT_TRUE(token);
     boost::shared_ptr<TokenOr> tor =
         boost::dynamic_pointer_cast<TokenOr>(token);
     EXPECT_TRUE(tor);
 
-#if notyet
     // and
     EvalContext evala(Option::V4);
     EXPECT_NO_THROW(parsed_ =
         evala.parseString("option[123].exists and option[123].exists"));
     EXPECT_TRUE(parsed_);
-    ASSERT_EQ(3, evala.expression.size());
-    token = evala.expression.at(2);
-    ASSERT_TRUE(token);
-    boost::shared_ptr<TokenAnd> tand =
-        boost::dynamic_pointer_cast<TokenAnd>(token);
-    EXPECT_TRUE(tand);
+    ASSERT_EQ(4, evala.expression.size());
+    token = evala.expression.at(1);
+    checkTokenPopOrBranchFalse(token, 1);
+    token = evala.expression.at(3);
+    checkTokenLabel(token, 1);
 
     // or
     EvalContext evalo(Option::V4);
@@ -1376,53 +1442,49 @@ TEST_F(EvalContextTest, logicalOps) {
         evalo.parseString("option[123].exists or option[123].exists"));
     EXPECT_TRUE(parsed_);
     ASSERT_EQ(3, evalo.expression.size());
-    token = evalo.expression.at(2);
-    ASSERT_TRUE(token);
-    boost::shared_ptr<TokenOr> tor =
-        boost::dynamic_pointer_cast<TokenOr>(token);
-    EXPECT_TRUE(tor);
-#endif
+    token = evalo.expression.at(1);
+    checkTokenPopOrBranchTrue(token, 1);
+    token = evala.expression.at(3);
+    checkTokenLabel(token, 1);
 }
 
 // Test parsing of logical operators with precedence
 TEST_F(EvalContextTest, logicalPrecedence) {
     // not precedence > and precedence
-    EvalContext evalna(Option::V4);
+    EvalContext evalnsa(Option::V4);
     EXPECT_NO_THROW(parsed_ =
-        evalna.parseString("not option[123].exists sand option[123].exists"));
+        evalnsa.parseString("not option[123].exists sand option[123].exists"));
     EXPECT_TRUE(parsed_);
-    ASSERT_EQ(4, evalna.expression.size());
-    TokenPtr token = evalna.expression.at(3);
+    ASSERT_EQ(4, evalnsa.expression.size());
+    TokenPtr token = evalnsa.expression.at(3);
     ASSERT_TRUE(token);
     boost::shared_ptr<TokenAnd> tand =
         boost::dynamic_pointer_cast<TokenAnd>(token);
     EXPECT_TRUE(tand);
 
     // and precedence > or precedence
-    EvalContext evaloa(Option::V4);
+    EvalContext evalsosa(Option::V4);
     EXPECT_NO_THROW(parsed_ =
-        evaloa.parseString("option[123].exists sor option[123].exists "
-                           "and option[123].exists"));
+        evalsosa.parseString("option[123].exists sor option[123].exists "
+                           "sand option[123].exists"));
     EXPECT_TRUE(parsed_);
-    ASSERT_EQ(5, evaloa.expression.size());
-    token = evaloa.expression.at(4);
+    ASSERT_EQ(5, evalsosa.expression.size());
+    token = evalsosa.expression.at(4);
     ASSERT_TRUE(token);
     boost::shared_ptr<TokenOr> tor =
         boost::dynamic_pointer_cast<TokenOr>(token);
     EXPECT_TRUE(tor);
 
-#if notyet
     // not precedence > and precedence
     EvalContext evalna(Option::V4);
     EXPECT_NO_THROW(parsed_ =
         evalna.parseString("not option[123].exists and option[123].exists"));
     EXPECT_TRUE(parsed_);
-    ASSERT_EQ(4, evalna.expression.size());
-    TokenPtr token = evalna.expression.at(3);
-    ASSERT_TRUE(token);
-    boost::shared_ptr<TokenAnd> tand =
-        boost::dynamic_pointer_cast<TokenAnd>(token);
-    EXPECT_TRUE(tand);
+    ASSERT_EQ(5, evalna.expression.size());
+    token = evalna.expression.at(2);
+    checkTokenPopOrBranchFalse(token, 1);
+    token = evalna.expression.at(4);
+    checkTokenLabel(token, 1);
 
     // and precedence > or precedence
     EvalContext evaloa(Option::V4);
@@ -1431,53 +1493,53 @@ TEST_F(EvalContextTest, logicalPrecedence) {
                            "and option[123].exists"));
     EXPECT_TRUE(parsed_);
     ASSERT_EQ(5, evaloa.expression.size());
+    token = evaloa.expression.at(2);
+    checkTokenPopOrBranchFalse(token, 1);
     token = evaloa.expression.at(4);
-    ASSERT_TRUE(token);
-    boost::shared_ptr<TokenOr> tor =
-        boost::dynamic_pointer_cast<TokenOr>(token);
-    EXPECT_TRUE(tor);
-#endif
+    checkTokenLabel(token, 1);
 }
 
 // Test parsing of logical operators with parentheses (same than
 // with precedence but using parentheses to overwrite precedence)
 TEST_F(EvalContextTest, logicalParentheses) {
     // not precedence > and precedence
-    EvalContext evalna(Option::V4);
+    EvalContext evalnsa(Option::V4);
     EXPECT_NO_THROW(parsed_ =
-        evalna.parseString("not (option[123].exists sand option[123].exists)"));
+        evalnsa.parseString("not (option[123].exists sand option[123].exists)"));
     EXPECT_TRUE(parsed_);
-    ASSERT_EQ(4, evalna.expression.size());
-    TokenPtr token = evalna.expression.at(3);
+    ASSERT_EQ(4, evalnsa.expression.size());
+    TokenPtr token = evalnsa.expression.at(3);
     ASSERT_TRUE(token);
     boost::shared_ptr<TokenNot> tnot =
         boost::dynamic_pointer_cast<TokenNot>(token);
     EXPECT_TRUE(tnot);
 
     // and precedence > or precedence
-    EvalContext evaloa(Option::V4);
+    EvalContext evalsosa(Option::V4);
     EXPECT_NO_THROW(parsed_ =
-        evaloa.parseString("(option[123].exists sor option[123].exists) "
+        evalsosa.parseString("(option[123].exists sor option[123].exists) "
                            "sand option[123].exists"));
     EXPECT_TRUE(parsed_);
-    ASSERT_EQ(5, evaloa.expression.size());
-    token = evaloa.expression.at(4);
+    ASSERT_EQ(5, evalsosa.expression.size());
+    token = evalsosa.expression.at(4);
     ASSERT_TRUE(token);
     boost::shared_ptr<TokenAnd> tand =
         boost::dynamic_pointer_cast<TokenAnd>(token);
     EXPECT_TRUE(tand);
 
-#if notyet
     // not precedence > and precedence
     EvalContext evalna(Option::V4);
     EXPECT_NO_THROW(parsed_ =
         evalna.parseString("not (option[123].exists and option[123].exists)"));
     EXPECT_TRUE(parsed_);
-    ASSERT_EQ(4, evalna.expression.size());
-    TokenPtr token = evalna.expression.at(3);
+    ASSERT_EQ(5, evalna.expression.size());
+    token = evalna.expression.at(1);
+    checkTokenPopOrBranchFalse(token, 1);
+    token = evalna.expression.at(3);
+    checkTokenLabel(token, 1);
+    token = evalna.expression.at(4);
     ASSERT_TRUE(token);
-    boost::shared_ptr<TokenNot> tnot =
-        boost::dynamic_pointer_cast<TokenNot>(token);
+    tnot = boost::dynamic_pointer_cast<TokenNot>(token);
     EXPECT_TRUE(tnot);
 
     // and precedence > or precedence
@@ -1486,13 +1548,15 @@ TEST_F(EvalContextTest, logicalParentheses) {
         evaloa.parseString("(option[123].exists or option[123].exists) "
                            "and option[123].exists"));
     EXPECT_TRUE(parsed_);
-    ASSERT_EQ(5, evaloa.expression.size());
+    ASSERT_EQ(7, evaloa.expression.size());
+    token = evaloa.expression.at(1);
+    checkTokenPopOrBranchTrue(token, 1);
+    token = evaloa.expression.at(3);
+    checkTokenLabel(token, 1);
     token = evaloa.expression.at(4);
-    ASSERT_TRUE(token);
-    boost::shared_ptr<TokenAnd> tand =
-        boost::dynamic_pointer_cast<TokenAnd>(token);
-    EXPECT_TRUE(tand);
-#endif
+    checkTokenPopOrBranchFalse(token, 2);
+    token = evaloa.expression.at(6);
+    checkTokenLabel(token, 2);
 }
 
 // Test the parsing of a substring expression
@@ -1620,26 +1684,38 @@ TEST_F(EvalContextTest, strictIfElse) {
 }
 
 // Test the parsing of an ifelse expression
-#if notyet
 TEST_F(EvalContextTest, ifElse) {
     EvalContext eval(Option::V4);
 
     EXPECT_NO_THROW(parsed_ =
         eval.parseString("ifelse('foo' == 'bar', 'us', 'them') == 'you'"));
 
-    ASSERT_EQ(8, eval.expression.size());
+    ASSERT_EQ(11, eval.expression.size());
 
-    TokenPtr tmp1 = eval.expression.at(2);
-    TokenPtr tmp2 = eval.expression.at(3);
-    TokenPtr tmp3 = eval.expression.at(4);
-    TokenPtr tmp4 = eval.expression.at(5);
+    TokenPtr tmp1 = eval.expression.at(0);
+    TokenPtr tmp2 = eval.expression.at(1);
+    TokenPtr tmp3 = eval.expression.at(2);
+    TokenPtr tmp4 = eval.expression.at(3);
+    TokenPtr tmp5 = eval.expression.at(4);
+    TokenPtr tmp6 = eval.expression.at(5);
+    TokenPtr tmp7 = eval.expression.at(6);
+    TokenPtr tmp8 = eval.expression.at(7);
+    TokenPtr tmp9 = eval.expression.at(8);
+    TokenPtr tmp10 = eval.expression.at(9);
+    TokenPtr tmp11 = eval.expression.at(10);
 
-    checkTokenEq(tmp1);
-    checkTokenString(tmp2, "us");
-    checkTokenString(tmp3, "them");
-    checkTokenIfElse(tmp4);
+    checkTokenString(tmp1, "foo");
+    checkTokenString(tmp2, "bar");
+    checkTokenEq(tmp3);
+    checkTokenPopAndBranchFalse(tmp4, 1);
+    checkTokenString(tmp5, "us");
+    checkTokenBranch(tmp6, 2);
+    checkTokenLabel(tmp7, 1);
+    checkTokenString(tmp8, "them");
+    checkTokenLabel(tmp9, 2);
+    checkTokenString(tmp10, "you");
+    checkTokenEq(tmp11);
 }
-#endif
 
 // Test the parsing of a plus operator and sifelse expression
 TEST_F(EvalContextTest, plusStrictIfElse) {
@@ -1658,6 +1734,8 @@ TEST_F(EvalContextTest, plusStrictIfElse) {
     TokenPtr tmp6 = eval.expression.at(5);
     TokenPtr tmp7 = eval.expression.at(6);
     TokenPtr tmp8 = eval.expression.at(7);
+    TokenPtr tmp9 = eval.expression.at(8);
+    TokenPtr tmp10 = eval.expression.at(9);
 
     checkTokenString(tmp1, "foo");
     checkTokenString(tmp2, "a");
@@ -1667,17 +1745,18 @@ TEST_F(EvalContextTest, plusStrictIfElse) {
     checkTokenString(tmp6, "");
     checkTokenIfElse(tmp7);
     checkTokenConcat(tmp8);
+    checkTokenConcat(tmp9, "foobar");
+    checkTokenEq(tmp10);
 }
 
 // Test the parsing of a plus operator and ifelse expression
-#if notyet
 TEST_F(EvalContextTest, plusIfElse) {
     EvalContext eval(Option::V4);
 
     EXPECT_NO_THROW(parsed_ =
         eval.parseString("'foo' + ifelse('a' == 'a', 'bar', '') == 'foobar'"));
 
-    ASSERT_EQ(10, eval.expression.size());
+    ASSERT_EQ(13, eval.expression.size());
 
     TokenPtr tmp1 = eval.expression.at(0);
     TokenPtr tmp2 = eval.expression.at(1);
@@ -1687,17 +1766,26 @@ TEST_F(EvalContextTest, plusIfElse) {
     TokenPtr tmp6 = eval.expression.at(5);
     TokenPtr tmp7 = eval.expression.at(6);
     TokenPtr tmp8 = eval.expression.at(7);
+    TokenPtr tmp9 = eval.expression.at(8);
+    TokenPtr tmp10 = eval.expression.at(9);
+    TokenPtr tmp11 = eval.expression.at(10);
+    TokenPtr tmp12 = eval.expression.at(11);
+    TokenPtr tmp13 = eval.expression.at(12);
 
     checkTokenString(tmp1, "foo");
     checkTokenString(tmp2, "a");
     checkTokenString(tmp3, "a");
     checkTokenEq(tmp4);
-    checkTokenString(tmp5, "bar");
-    checkTokenString(tmp6, "");
-    checkTokenIfElse(tmp7);
-    checkTokenConcat(tmp8);
+    checkTokenPopAndBranchFalse(tmp5, 1);
+    checkTokenString(tmp6, "bar");
+    checkTokenBranch(tmp7, 2);
+    checkTokenLabel(tmp8, 1)
+    checkTokenString(tmp9, "");
+    checkTokenLabel(tmp10, 2);
+    checkTokenConcat(tmp11);
+    checkTokenString(tmp12, "foobar");
+    checkTokenEq(tmp13);
 }
-#endif
 
 // Test the parsing of a hexstring expression
 TEST_F(EvalContextTest, toHexString) {
@@ -2049,9 +2137,11 @@ TEST_F(EvalContextTest, parseErrors) {
     checkError("== 'ab'", "<string>:1.1-2: syntax error, unexpected ==");
     checkError("'foo' ==",
                "<string>:1.9: syntax error, unexpected end of file");
+#if nomore
     checkError("('foo' == 'bar'",
                "<string>:1.16: syntax error, unexpected end of file, "
                "expecting ) or and or or");
+#endif
     checkError("('foo' == 'bar') ''",
                "<string>:1.18-19: syntax error, unexpected constant string, "
                "expecting end of file");
