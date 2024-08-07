@@ -512,66 +512,69 @@ namespace isc { namespace eval {
     TOKEN_RPAREN = 259,            // ")"
     TOKEN_NOT = 260,               // "not"
     TOKEN_AND = 261,               // "and"
-    TOKEN_OR = 262,                // "or"
-    TOKEN_EQUAL = 263,             // "=="
-    TOKEN_OPTION = 264,            // "option"
-    TOKEN_RELAY4 = 265,            // "relay4"
-    TOKEN_RELAY6 = 266,            // "relay6"
-    TOKEN_MEMBER = 267,            // "member"
-    TOKEN_PEERADDR = 268,          // "peeraddr"
-    TOKEN_LINKADDR = 269,          // "linkaddr"
-    TOKEN_LBRACKET = 270,          // "["
-    TOKEN_RBRACKET = 271,          // "]"
-    TOKEN_DOT = 272,               // "."
-    TOKEN_TEXT = 273,              // "text"
-    TOKEN_HEX = 274,               // "hex"
-    TOKEN_EXISTS = 275,            // "exists"
-    TOKEN_PKT = 276,               // "pkt"
-    TOKEN_IFACE = 277,             // "iface"
-    TOKEN_SRC = 278,               // "src"
-    TOKEN_DST = 279,               // "dst"
-    TOKEN_LEN = 280,               // "len"
-    TOKEN_PKT4 = 281,              // "pkt4"
-    TOKEN_CHADDR = 282,            // "mac"
-    TOKEN_HLEN = 283,              // "hlen"
-    TOKEN_HTYPE = 284,             // "htype"
-    TOKEN_CIADDR = 285,            // "ciaddr"
-    TOKEN_GIADDR = 286,            // "giaddr"
-    TOKEN_YIADDR = 287,            // "yiaddr"
-    TOKEN_SIADDR = 288,            // "siaddr"
-    TOKEN_SUBSTRING = 289,         // "substring"
-    TOKEN_SPLIT = 290,             // "split"
-    TOKEN_ALL = 291,               // "all"
-    TOKEN_COMA = 292,              // ","
-    TOKEN_CONCAT = 293,            // "concat"
-    TOKEN_PLUS = 294,              // "+"
-    TOKEN_IFELSE = 295,            // "ifelse"
-    TOKEN_TOHEXSTRING = 296,       // "hexstring"
-    TOKEN_ADDRTOTEXT = 297,        // "addrtotext"
-    TOKEN_INT8TOTEXT = 298,        // "int8totext"
-    TOKEN_INT16TOTEXT = 299,       // "int16totext"
-    TOKEN_INT32TOTEXT = 300,       // "int32totext"
-    TOKEN_UINT8TOTEXT = 301,       // "uint8totext"
-    TOKEN_UINT16TOTEXT = 302,      // "uint16totext"
-    TOKEN_UINT32TOTEXT = 303,      // "uint32totext"
-    TOKEN_LCASE = 304,             // "lcase"
-    TOKEN_UCASE = 305,             // "ucase"
-    TOKEN_PKT6 = 306,              // "pkt6"
-    TOKEN_MSGTYPE = 307,           // "msgtype"
-    TOKEN_TRANSID = 308,           // "transid"
-    TOKEN_VENDOR_CLASS = 309,      // "vendor-class"
-    TOKEN_VENDOR = 310,            // "vendor"
-    TOKEN_ANY = 311,               // "*"
-    TOKEN_DATA = 312,              // "data"
-    TOKEN_ENTERPRISE = 313,        // "enterprise"
-    TOKEN_MATCH = 314,             // "match"
-    TOKEN_TOPLEVEL_BOOL = 315,     // "top-level bool"
-    TOKEN_TOPLEVEL_STRING = 316,   // "top-level string"
-    TOKEN_STRING = 317,            // "constant string"
-    TOKEN_INTEGER = 318,           // "integer"
-    TOKEN_HEXSTRING = 319,         // "constant hexstring"
-    TOKEN_OPTION_NAME = 320,       // "option name"
-    TOKEN_IP_ADDRESS = 321         // "ip address"
+    TOKEN_SAND = 262,              // "sand"
+    TOKEN_OR = 263,                // "or"
+    TOKEN_SOR = 264,               // "sor"
+    TOKEN_EQUAL = 265,             // "=="
+    TOKEN_OPTION = 266,            // "option"
+    TOKEN_RELAY4 = 267,            // "relay4"
+    TOKEN_RELAY6 = 268,            // "relay6"
+    TOKEN_MEMBER = 269,            // "member"
+    TOKEN_PEERADDR = 270,          // "peeraddr"
+    TOKEN_LINKADDR = 271,          // "linkaddr"
+    TOKEN_LBRACKET = 272,          // "["
+    TOKEN_RBRACKET = 273,          // "]"
+    TOKEN_DOT = 274,               // "."
+    TOKEN_TEXT = 275,              // "text"
+    TOKEN_HEX = 276,               // "hex"
+    TOKEN_EXISTS = 277,            // "exists"
+    TOKEN_PKT = 278,               // "pkt"
+    TOKEN_IFACE = 279,             // "iface"
+    TOKEN_SRC = 280,               // "src"
+    TOKEN_DST = 281,               // "dst"
+    TOKEN_LEN = 282,               // "len"
+    TOKEN_PKT4 = 283,              // "pkt4"
+    TOKEN_CHADDR = 284,            // "mac"
+    TOKEN_HLEN = 285,              // "hlen"
+    TOKEN_HTYPE = 286,             // "htype"
+    TOKEN_CIADDR = 287,            // "ciaddr"
+    TOKEN_GIADDR = 288,            // "giaddr"
+    TOKEN_YIADDR = 289,            // "yiaddr"
+    TOKEN_SIADDR = 290,            // "siaddr"
+    TOKEN_SUBSTRING = 291,         // "substring"
+    TOKEN_SPLIT = 292,             // "split"
+    TOKEN_ALL = 293,               // "all"
+    TOKEN_COMA = 294,              // ","
+    TOKEN_CONCAT = 295,            // "concat"
+    TOKEN_PLUS = 296,              // "+"
+    TOKEN_IFELSE = 297,            // "ifelse"
+    TOKEN_SIFELSE = 298,           // "sifelse"
+    TOKEN_TOHEXSTRING = 299,       // "hexstring"
+    TOKEN_ADDRTOTEXT = 300,        // "addrtotext"
+    TOKEN_INT8TOTEXT = 301,        // "int8totext"
+    TOKEN_INT16TOTEXT = 302,       // "int16totext"
+    TOKEN_INT32TOTEXT = 303,       // "int32totext"
+    TOKEN_UINT8TOTEXT = 304,       // "uint8totext"
+    TOKEN_UINT16TOTEXT = 305,      // "uint16totext"
+    TOKEN_UINT32TOTEXT = 306,      // "uint32totext"
+    TOKEN_LCASE = 307,             // "lcase"
+    TOKEN_UCASE = 308,             // "ucase"
+    TOKEN_PKT6 = 309,              // "pkt6"
+    TOKEN_MSGTYPE = 310,           // "msgtype"
+    TOKEN_TRANSID = 311,           // "transid"
+    TOKEN_VENDOR_CLASS = 312,      // "vendor-class"
+    TOKEN_VENDOR = 313,            // "vendor"
+    TOKEN_ANY = 314,               // "*"
+    TOKEN_DATA = 315,              // "data"
+    TOKEN_ENTERPRISE = 316,        // "enterprise"
+    TOKEN_MATCH = 317,             // "match"
+    TOKEN_TOPLEVEL_BOOL = 318,     // "top-level bool"
+    TOKEN_TOPLEVEL_STRING = 319,   // "top-level string"
+    TOKEN_STRING = 320,            // "constant string"
+    TOKEN_INTEGER = 321,           // "integer"
+    TOKEN_HEXSTRING = 322,         // "constant hexstring"
+    TOKEN_OPTION_NAME = 323,       // "option name"
+    TOKEN_IP_ADDRESS = 324         // "ip address"
       };
       /// Backward compatibility alias (Bison 3.6).
       typedef token_kind_type yytokentype;
@@ -588,7 +591,7 @@ namespace isc { namespace eval {
     {
       enum symbol_kind_type
       {
-        YYNTOKENS = 67, ///< Number of tokens.
+        YYNTOKENS = 70, ///< Number of tokens.
         S_YYEMPTY = -2,
         S_YYEOF = 0,                             // "end of file"
         S_YYerror = 1,                           // error
@@ -597,84 +600,87 @@ namespace isc { namespace eval {
         S_RPAREN = 4,                            // ")"
         S_NOT = 5,                               // "not"
         S_AND = 6,                               // "and"
-        S_OR = 7,                                // "or"
-        S_EQUAL = 8,                             // "=="
-        S_OPTION = 9,                            // "option"
-        S_RELAY4 = 10,                           // "relay4"
-        S_RELAY6 = 11,                           // "relay6"
-        S_MEMBER = 12,                           // "member"
-        S_PEERADDR = 13,                         // "peeraddr"
-        S_LINKADDR = 14,                         // "linkaddr"
-        S_LBRACKET = 15,                         // "["
-        S_RBRACKET = 16,                         // "]"
-        S_DOT = 17,                              // "."
-        S_TEXT = 18,                             // "text"
-        S_HEX = 19,                              // "hex"
-        S_EXISTS = 20,                           // "exists"
-        S_PKT = 21,                              // "pkt"
-        S_IFACE = 22,                            // "iface"
-        S_SRC = 23,                              // "src"
-        S_DST = 24,                              // "dst"
-        S_LEN = 25,                              // "len"
-        S_PKT4 = 26,                             // "pkt4"
-        S_CHADDR = 27,                           // "mac"
-        S_HLEN = 28,                             // "hlen"
-        S_HTYPE = 29,                            // "htype"
-        S_CIADDR = 30,                           // "ciaddr"
-        S_GIADDR = 31,                           // "giaddr"
-        S_YIADDR = 32,                           // "yiaddr"
-        S_SIADDR = 33,                           // "siaddr"
-        S_SUBSTRING = 34,                        // "substring"
-        S_SPLIT = 35,                            // "split"
-        S_ALL = 36,                              // "all"
-        S_COMA = 37,                             // ","
-        S_CONCAT = 38,                           // "concat"
-        S_PLUS = 39,                             // "+"
-        S_IFELSE = 40,                           // "ifelse"
-        S_TOHEXSTRING = 41,                      // "hexstring"
-        S_ADDRTOTEXT = 42,                       // "addrtotext"
-        S_INT8TOTEXT = 43,                       // "int8totext"
-        S_INT16TOTEXT = 44,                      // "int16totext"
-        S_INT32TOTEXT = 45,                      // "int32totext"
-        S_UINT8TOTEXT = 46,                      // "uint8totext"
-        S_UINT16TOTEXT = 47,                     // "uint16totext"
-        S_UINT32TOTEXT = 48,                     // "uint32totext"
-        S_LCASE = 49,                            // "lcase"
-        S_UCASE = 50,                            // "ucase"
-        S_PKT6 = 51,                             // "pkt6"
-        S_MSGTYPE = 52,                          // "msgtype"
-        S_TRANSID = 53,                          // "transid"
-        S_VENDOR_CLASS = 54,                     // "vendor-class"
-        S_VENDOR = 55,                           // "vendor"
-        S_ANY = 56,                              // "*"
-        S_DATA = 57,                             // "data"
-        S_ENTERPRISE = 58,                       // "enterprise"
-        S_MATCH = 59,                            // "match"
-        S_TOPLEVEL_BOOL = 60,                    // "top-level bool"
-        S_TOPLEVEL_STRING = 61,                  // "top-level string"
-        S_STRING = 62,                           // "constant string"
-        S_INTEGER = 63,                          // "integer"
-        S_HEXSTRING = 64,                        // "constant hexstring"
-        S_OPTION_NAME = 65,                      // "option name"
-        S_IP_ADDRESS = 66,                       // "ip address"
-        S_YYACCEPT = 67,                         // $accept
-        S_start = 68,                            // start
-        S_expression = 69,                       // expression
-        S_bool_expr = 70,                        // bool_expr
-        S_string_expr = 71,                      // string_expr
-        S_integer_expr = 72,                     // integer_expr
-        S_option_code = 73,                      // option_code
-        S_sub_option_code = 74,                  // sub_option_code
-        S_option_repr_type = 75,                 // option_repr_type
-        S_nest_level = 76,                       // nest_level
-        S_pkt_metadata = 77,                     // pkt_metadata
-        S_enterprise_id = 78,                    // enterprise_id
-        S_pkt4_field = 79,                       // pkt4_field
-        S_pkt6_field = 80,                       // pkt6_field
-        S_relay6_field = 81,                     // relay6_field
-        S_start_expr = 82,                       // start_expr
-        S_length_expr = 83,                      // length_expr
-        S_int_expr = 84                          // int_expr
+        S_SAND = 7,                              // "sand"
+        S_OR = 8,                                // "or"
+        S_SOR = 9,                               // "sor"
+        S_EQUAL = 10,                            // "=="
+        S_OPTION = 11,                           // "option"
+        S_RELAY4 = 12,                           // "relay4"
+        S_RELAY6 = 13,                           // "relay6"
+        S_MEMBER = 14,                           // "member"
+        S_PEERADDR = 15,                         // "peeraddr"
+        S_LINKADDR = 16,                         // "linkaddr"
+        S_LBRACKET = 17,                         // "["
+        S_RBRACKET = 18,                         // "]"
+        S_DOT = 19,                              // "."
+        S_TEXT = 20,                             // "text"
+        S_HEX = 21,                              // "hex"
+        S_EXISTS = 22,                           // "exists"
+        S_PKT = 23,                              // "pkt"
+        S_IFACE = 24,                            // "iface"
+        S_SRC = 25,                              // "src"
+        S_DST = 26,                              // "dst"
+        S_LEN = 27,                              // "len"
+        S_PKT4 = 28,                             // "pkt4"
+        S_CHADDR = 29,                           // "mac"
+        S_HLEN = 30,                             // "hlen"
+        S_HTYPE = 31,                            // "htype"
+        S_CIADDR = 32,                           // "ciaddr"
+        S_GIADDR = 33,                           // "giaddr"
+        S_YIADDR = 34,                           // "yiaddr"
+        S_SIADDR = 35,                           // "siaddr"
+        S_SUBSTRING = 36,                        // "substring"
+        S_SPLIT = 37,                            // "split"
+        S_ALL = 38,                              // "all"
+        S_COMA = 39,                             // ","
+        S_CONCAT = 40,                           // "concat"
+        S_PLUS = 41,                             // "+"
+        S_IFELSE = 42,                           // "ifelse"
+        S_SIFELSE = 43,                          // "sifelse"
+        S_TOHEXSTRING = 44,                      // "hexstring"
+        S_ADDRTOTEXT = 45,                       // "addrtotext"
+        S_INT8TOTEXT = 46,                       // "int8totext"
+        S_INT16TOTEXT = 47,                      // "int16totext"
+        S_INT32TOTEXT = 48,                      // "int32totext"
+        S_UINT8TOTEXT = 49,                      // "uint8totext"
+        S_UINT16TOTEXT = 50,                     // "uint16totext"
+        S_UINT32TOTEXT = 51,                     // "uint32totext"
+        S_LCASE = 52,                            // "lcase"
+        S_UCASE = 53,                            // "ucase"
+        S_PKT6 = 54,                             // "pkt6"
+        S_MSGTYPE = 55,                          // "msgtype"
+        S_TRANSID = 56,                          // "transid"
+        S_VENDOR_CLASS = 57,                     // "vendor-class"
+        S_VENDOR = 58,                           // "vendor"
+        S_ANY = 59,                              // "*"
+        S_DATA = 60,                             // "data"
+        S_ENTERPRISE = 61,                       // "enterprise"
+        S_MATCH = 62,                            // "match"
+        S_TOPLEVEL_BOOL = 63,                    // "top-level bool"
+        S_TOPLEVEL_STRING = 64,                  // "top-level string"
+        S_STRING = 65,                           // "constant string"
+        S_INTEGER = 66,                          // "integer"
+        S_HEXSTRING = 67,                        // "constant hexstring"
+        S_OPTION_NAME = 68,                      // "option name"
+        S_IP_ADDRESS = 69,                       // "ip address"
+        S_YYACCEPT = 70,                         // $accept
+        S_start = 71,                            // start
+        S_expression = 72,                       // expression
+        S_bool_expr = 73,                        // bool_expr
+        S_string_expr = 74,                      // string_expr
+        S_integer_expr = 75,                     // integer_expr
+        S_option_code = 76,                      // option_code
+        S_sub_option_code = 77,                  // sub_option_code
+        S_option_repr_type = 78,                 // option_repr_type
+        S_nest_level = 79,                       // nest_level
+        S_pkt_metadata = 80,                     // pkt_metadata
+        S_enterprise_id = 81,                    // enterprise_id
+        S_pkt4_field = 82,                       // pkt4_field
+        S_pkt6_field = 83,                       // pkt6_field
+        S_relay6_field = 84,                     // relay6_field
+        S_start_expr = 85,                       // start_expr
+        S_length_expr = 86,                      // length_expr
+        S_int_expr = 87                          // int_expr
       };
     };
 
@@ -1237,6 +1243,21 @@ switch (yykind)
 #if 201103L <= YY_CPLUSPLUS
       static
       symbol_type
+      make_SAND (location_type l)
+      {
+        return symbol_type (token::TOKEN_SAND, std::move (l));
+      }
+#else
+      static
+      symbol_type
+      make_SAND (const location_type& l)
+      {
+        return symbol_type (token::TOKEN_SAND, l);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
       make_OR (location_type l)
       {
         return symbol_type (token::TOKEN_OR, std::move (l));
@@ -1247,6 +1268,21 @@ switch (yykind)
       make_OR (const location_type& l)
       {
         return symbol_type (token::TOKEN_OR, l);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
+      make_SOR (location_type l)
+      {
+        return symbol_type (token::TOKEN_SOR, std::move (l));
+      }
+#else
+      static
+      symbol_type
+      make_SOR (const location_type& l)
+      {
+        return symbol_type (token::TOKEN_SOR, l);
       }
 #endif
 #if 201103L <= YY_CPLUSPLUS
@@ -1747,6 +1783,21 @@ switch (yykind)
 #if 201103L <= YY_CPLUSPLUS
       static
       symbol_type
+      make_SIFELSE (location_type l)
+      {
+        return symbol_type (token::TOKEN_SIFELSE, std::move (l));
+      }
+#else
+      static
+      symbol_type
+      make_SIFELSE (const location_type& l)
+      {
+        return symbol_type (token::TOKEN_SIFELSE, l);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
       make_TOHEXSTRING (location_type l)
       {
         return symbol_type (token::TOKEN_TOHEXSTRING, std::move (l));
@@ -2164,7 +2215,7 @@ switch (yykind)
 
 
     /// Stored state numbers (used for stacks).
-    typedef unsigned char state_type;
+    typedef short state_type;
 
     /// The arguments of the error message.
     int yy_syntax_error_arguments_ (const context& yyctx,
@@ -2220,7 +2271,7 @@ switch (yykind)
     // YYTABLE[YYPACT[STATE-NUM]] -- What to do in state STATE-NUM.  If
     // positive, shift that token.  If negative, reduce the rule whose
     // number is the opposite.  If YYTABLE_NINF, syntax error.
-    static const unsigned char yytable_[];
+    static const short yytable_[];
 
     static const short yycheck_[];
 
@@ -2464,9 +2515,9 @@ switch (yykind)
     /// Constants.
     enum
     {
-      yylast_ = 309,     ///< Last index in yytable_.
+      yylast_ = 334,     ///< Last index in yytable_.
       yynnts_ = 18,  ///< Number of nonterminal symbols.
-      yyfinal_ = 45 ///< Termination state number.
+      yyfinal_ = 46 ///< Termination state number.
     };
 
 
@@ -2517,10 +2568,10 @@ switch (yykind)
       35,    36,    37,    38,    39,    40,    41,    42,    43,    44,
       45,    46,    47,    48,    49,    50,    51,    52,    53,    54,
       55,    56,    57,    58,    59,    60,    61,    62,    63,    64,
-      65,    66
+      65,    66,    67,    68,    69
     };
     // Last valid token kind.
-    const int code_max = 321;
+    const int code_max = 324;
 
     if (t <= 0)
       return symbol_kind::S_YYEOF;
@@ -2721,7 +2772,7 @@ switch (yykind)
 
 #line 14 "parser.yy"
 } } // isc::eval
-#line 2725 "parser.h"
+#line 2776 "parser.h"
 
 
 
