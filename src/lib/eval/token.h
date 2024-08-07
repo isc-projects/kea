@@ -1408,7 +1408,34 @@ protected:
     unsigned label_;
 };
 
+/// @brief Token unconditional branch.
+///
+/// Unconditionally branch to a forward target.
+class TokenBranch : public Token {
+public:
+    /// @brief Constructor
+    ///
+    /// @param target the label to branch to
+    /// @throw EvalParseError when target is 0
+    TokenBranch(const unsigned target);
+
+    /// @brief Returns branchtarget
+    ///
+    /// @return the label of the branch target
+    unsigned getTarget() const {
+        return (target_);
+    }
+
+    /// @brief Only return the target
+    ///
+    /// @param pkt (unused)
+    /// @param values - stack of values (unused)
+    virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
+
+protected:
+    unsigned target_;
+};
+
 } // end of isc::dhcp namespace
 } // end of isc namespace
-
 #endif

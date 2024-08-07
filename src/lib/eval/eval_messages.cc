@@ -8,6 +8,7 @@ namespace isc {
 namespace dhcp {
 
 extern const isc::log::MessageID EVAL_DEBUG_AND = "EVAL_DEBUG_AND";
+extern const isc::log::MessageID EVAL_DEBUG_BRANCH = "EVAL_DEBUG_BRANCH";
 extern const isc::log::MessageID EVAL_DEBUG_CONCAT = "EVAL_DEBUG_CONCAT";
 extern const isc::log::MessageID EVAL_DEBUG_EQUAL = "EVAL_DEBUG_EQUAL";
 extern const isc::log::MessageID EVAL_DEBUG_HEXSTRING = "EVAL_DEBUG_HEXSTRING";
@@ -64,6 +65,7 @@ namespace {
 
 const char* values[] = {
     "EVAL_DEBUG_AND", "%1: Popping %2 and %3 pushing %4",
+    "EVAL_DEBUG_BRANCH", "Branching to %1",
     "EVAL_DEBUG_CONCAT", "%1: Popping %2 and %3 pushing %4",
     "EVAL_DEBUG_EQUAL", "%1: Popping %2 and %3 pushing result %4",
     "EVAL_DEBUG_HEXSTRING", "%1: Pushing hex string %2",

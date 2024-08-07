@@ -512,4 +512,71 @@ TEST_F(ExpressionsTest, evaluateString) {
     testExpressionString(Option::V4, "hexstring(0xf01234,'..')", "f0..12..34");
 }
 
+// Tests the not found label.
+TEST_F(ExpressionsTest, notFoundLabel) {
+    TokenPtr branch;
+    ASSERT_NO_THROW(branch.reset(new TokenBranch(123)));
+    e_.push_back(branch);
+    ValueStack values;
+    ASSERT_THROW(evaluateRaw(e_, *pkt4_, values), EvalBadLabel);
+
+    // Add a different label and a string.
+    TokenPtr label;
+    ASSERT_NO_THROW(label.reset(new TokenLabel(111)));
+    e_.push_back(label);
+    TokenPtr foo;
+    ASSERT_NO_THROW(foo.reset(new TokenString("foo")));
+    e_.push_back(foo);
+    ASSERT_THROW(evaluateRaw(e_, *pkt4_, values), EvalBadLabel);
+}
+
+// Tests the backward label.
+TEST_F(ExpressionsTest, backwardLabel) {
+    // Add the label before the branch.
+    TokenPtr label;
+    ASSERT_NO_THROW(label.reset(new TokenLabel(123)));
+    e_.push_back(label);
+
+    TokenPtr branch;
+    ASSERT_NO_THROW(branch.reset(new TokenBranch(123)));
+    e_.push_back(branch);
+    ValueStack values;
+    ASSERT_THROW(evaluateRaw(e_, *pkt4_, values), EvalBadLabel);
+
+    // Add a different label and a string.
+    TokenPtr label2;
+    ASSERT_NO_THROW(label2.reset(new TokenLabel(111)));
+    e_.push_back(label2);
+    TokenPtr foo;
+    ASSERT_NO_THROW(foo.reset(new TokenString("foo")));
+    e_.push_back(foo);
+    ASSERT_THROW(evaluateRaw(e_, *pkt4_, values), EvalBadLabel);
+}
+
+// Tests the found label.
+TEST_F(ExpressionsTest, label) {
+    TokenPtr branch;
+    ASSERT_NO_THROW(branch.reset(new TokenBranch(123)));
+    e_.push_back(branch);
+    TokenPtr label;
+    ASSERT_NO_THROW(label.reset(new TokenLabel(123)));
+    e_.push_back(label);
+    TokenPtr foo;
+    ASSERT_NO_THROW(foo.reset(new TokenString("foo")));
+    e_.push_back(foo);
+    string result;
+    ASSERT_NO_THROW(result = evaluateString(e_, *pkt6_));
+    EXPECT_EQ("foo", result);
+
+    // The branch is to the first occurence (of course the parser
+    // produces only one).
+    e_.push_back(label);
+    TokenPtr bar;
+    ASSERT_NO_THROW(bar.reset(new TokenString("bar")));
+    e_.push_back(bar);
+    ValueStack values;
+    ASSERT_NO_THROW(evaluateRaw(e_, *pkt4_, values));
+    EXPECT_EQ(2, values.size());
+}
+
 };

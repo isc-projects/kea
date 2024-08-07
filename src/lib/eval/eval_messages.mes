@@ -14,6 +14,12 @@ This debug message indicates that two values are popped from
 the value stack.  Then are then combined via logical and and
 the result is pushed onto the value stack.
 
+# For use with TokenBranch
+% EVAL_DEBUG_BRANCH Branching to %1
+Logged at debug log level 55.
+This debug message indicates that an unconditional branch is performed
+to the displayed target.
+
 # For use with TokenConcat
 
 % EVAL_DEBUG_CONCAT %1: Popping %2 and %3 pushing %4

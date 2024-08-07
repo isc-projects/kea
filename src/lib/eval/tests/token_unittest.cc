@@ -3902,4 +3902,18 @@ TEST_F(TokenTest, label) {
     ASSERT_TRUE(values_.empty());
 }
 
+// Verify TokenBranch.
+TEST_F(TokenTest, branch) {
+    // 0 is not a valid branch.
+    ASSERT_THROW(t_.reset(new TokenBranch(0)), EvalParseError);
+
+    // Evaluation does and uses nothing.
+    ASSERT_NO_THROW(t_.reset(new TokenBranch(123)));
+    EXPECT_EQ(0, t_->getLabel());
+    unsigned next(0);
+    ASSERT_NO_THROW(next = t_->evaluate(*pkt4_, values_));
+    EXPECT_EQ(123, next);
+    ASSERT_TRUE(values_.empty());
+}
+
 }

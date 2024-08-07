@@ -9,6 +9,7 @@ namespace isc {
 namespace dhcp {
 
 extern const isc::log::MessageID EVAL_DEBUG_AND;
+extern const isc::log::MessageID EVAL_DEBUG_BRANCH;
 extern const isc::log::MessageID EVAL_DEBUG_CONCAT;
 extern const isc::log::MessageID EVAL_DEBUG_EQUAL;
 extern const isc::log::MessageID EVAL_DEBUG_HEXSTRING;

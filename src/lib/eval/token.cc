@@ -1516,3 +1516,16 @@ unsigned
 TokenLabel::evaluate(Pkt&, ValueStack&) {
     return (0);
 }
+
+TokenBranch::TokenBranch(const unsigned target) : target_(target) {
+    if (target == 0) {
+        isc_throw(EvalParseError, "target must be not zero");
+    }
+}
+
+unsigned
+TokenBranch::evaluate(Pkt&, ValueStack&) {
+    LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_BRANCH)
+        .arg(target_);
+    return (target_);
+}
