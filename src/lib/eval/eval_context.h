@@ -8,6 +8,7 @@
 #define EVAL_CONTEXT_H
 #include <string>
 #include <map>
+#include <vector>
 #include <eval/parser.h>
 #include <eval/eval_context_decl.h>
 #include <exceptions/exceptions.h>
@@ -65,6 +66,9 @@ public:
 
     /// @brief Parsed expression (output tokens are stored here)
     isc::dhcp::Expression expression;
+
+    /// @brief Label stack.
+    std::vector<unsigned> labels;
 
     /// @brief Method called before scanning starts on a string.
     ///
