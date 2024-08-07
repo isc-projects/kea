@@ -669,7 +669,6 @@ LibDHCP::unpackOptions4(const OptionBuffer& buf, const string& option_space,
                       " is implemented");
         } else if (num_defs == 0) {
             opt = OptionPtr(new Option(Option::V4, opt_type, obuf));
-            opt->setEncapsulatedSpace(DHCP4_OPTION_SPACE);
         } else {
             try {
                 // The option definition has been found. Use it to create
