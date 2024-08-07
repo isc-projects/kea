@@ -3659,7 +3659,7 @@ TEST_F(LibDhcpTest, unpackOptions4LenientFqdn) {
         DHO_DOMAIN_SEARCH,                            // invalid FQDN list
         2, 2, 56,
         DHO_TIME_OFFSET,                              // Valid int option
-        4,0,0,0,77
+        4, 0, 0, 0, 77
     };
 
     // List of parsed options will be stored here.

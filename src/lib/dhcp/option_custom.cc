@@ -236,7 +236,8 @@ OptionCustom::bufferLength(const OptionDataType data_type, bool in_array,
             } catch (const std::exception& ex) {
                 if (Option::lenient_parsing_) {
                     isc_throw(SkipThisOptionError, "failed to read "
-                              "partial domain-name from wire format");
+                              "domain-name from wire format: "
+                              << ex.what());
                 }
 
                 throw;

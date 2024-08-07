@@ -445,8 +445,8 @@ LibDHCP::unpackOptions6(const OptionBuffer& buf, const string& option_space,
             } catch (const SkipRemainingOptionsError&) {
                 throw;
             } catch (const std::exception& ex) {
-                isc_throw(OptionParseError, "opt_type: " << (uint16_t)(opt_type)
-                                            << ", opt_len " << (uint16_t)(opt_len)
+                isc_throw(OptionParseError, "opt_type: " << static_cast<uint16_t>(opt_type)
+                                            << ", opt_len " << static_cast<uint16_t>(opt_len)
                                             << " error: " << ex.what());
             }
         }

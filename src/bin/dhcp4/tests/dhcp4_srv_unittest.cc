@@ -6808,7 +6808,7 @@ TEST_F(StashAgentOptionTest, badRelayAgentInfo) {
     sub_options_ = Element::create(content);
     relay_agent_info_->set("sub-options", sub_options_);
 
-    EXPECT_THROW(srv_.recoverStashedAgentOption(query_), InvalidOptionValue);
+    EXPECT_THROW(srv_.recoverStashedAgentOption(query_), OptionParseError);
     EXPECT_FALSE(query_->inClass("STASH_AGENT_OPTIONS"));
 }
 
