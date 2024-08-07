@@ -1006,6 +1006,8 @@ public:
 
 /// @brief Token that represents logical and operator
 ///
+/// @note Strict version i.e. evaluating right branch even left is false
+///
 /// For example "option[10].exists and option[11].exists"
 class TokenAnd : public Token {
 public:
@@ -1030,6 +1032,8 @@ public:
 };
 
 /// @brief Token that represents logical or operator
+///
+/// @note Strict version i.e. evaluating right branch even left is right
 ///
 /// For example "option[10].exists or option[11].exists"
 class TokenOr : public Token {
@@ -1408,9 +1412,10 @@ protected:
     unsigned label_;
 };
 
-/// @brief Token unconditional branch.
+/// @brief Token that represents unconditional branch.
 ///
 /// Unconditionally branch to a forward target.
+/// Also the base class of branch tokens.
 class TokenBranch : public Token {
 public:
     /// @brief Constructor
@@ -1434,6 +1439,77 @@ public:
 
 protected:
     unsigned target_;
+};
+
+/// @brief Token that represents pop or branch if true.
+///
+/// Branch to a forward target when the top value is true else pop it.
+/// Can be used to implement the left "or" boolean operator.
+class TokenPopOrBranchTrue : public TokenBranch {
+public:
+    /// @brief Constructor
+    ///
+    /// @param target the label to branch to
+    /// @throw EvalParseError when target is 0
+    TokenPopOrBranchTrue(const unsigned target);
+
+    /// @brief Looks at the top of stack which must be "false" or "true".
+    /// On "false" pops it and returns 0, on "true" return the branch target.
+    ///
+    /// @param pkt (unused)
+    /// @param values - stack of values (use/pop boolean top of stack)
+    /// @throw EvalBadStack if there are less than 1 value on stack
+    /// @throw EvalTypeError if the top value on the stack is not either
+    ///        "true" or "false"
+    virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
+};
+
+/// @brief Token that represents pop or branch if false.
+///
+/// Branch to a forward target when the top value is false else pop it.
+/// Can be used to implement the left "and" boolean operator.
+class TokenPopOrBranchFalse : public TokenBranch {
+public:
+    /// @brief Constructor
+    ///
+    /// @param target the label to branch to
+    /// @throw EvalParseError when target is 0
+    TokenPopOrBranchFalse(const unsigned target);
+
+    /// @brief Looks at the top of stack which must be "false" or "true".
+    /// On "true" pops it and returns 0, on "false" return the branch target.
+    ///
+    /// @param pkt (unused)
+    /// @param values - stack of values (use/pop boolean top of stack)
+    /// @throw EvalBadStack if there are less than 1 value on stack
+    /// @throw EvalTypeError if the top value on the stack is not either
+    ///        "true" or "false"
+    virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
+};
+
+/// @brief Token that represents pop and branch if false.
+///
+/// Pop the op value, branch to a forward target when false.
+/// Can be used to implement the lazy "if" boolean operator i.e.
+/// evaluating either "then" or "else" branches (vs. strict the version
+/// which evaluates both).
+class TokenPopAndBranchFalse : public TokenBranch {
+public:
+    /// @brief Constructor
+    ///
+    /// @param target the label to branch to
+    /// @throw EvalParseError when target is 0
+    TokenPopAndBranchFalse(const unsigned target);
+
+    /// @brief Pops the top of stack which must be "false" or "true".
+    /// On "true" returns 0, on "false" return the branch target.
+    ///
+    /// @param pkt (unused)
+    /// @param values - stack of values (pop the boolean top value)
+    /// @throw EvalBadStack if there are less than 1 value on stack
+    /// @throw EvalTypeError if the top value on the stack is not either
+    ///        "true" or "false"
+    virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 };
 
 } // end of isc::dhcp namespace

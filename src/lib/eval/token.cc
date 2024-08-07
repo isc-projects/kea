@@ -1529,3 +1529,72 @@ TokenBranch::evaluate(Pkt&, ValueStack&) {
         .arg(target_);
     return (target_);
 }
+
+TokenPopOrBranchTrue::TokenPopOrBranchTrue(const unsigned target)
+    : TokenBranch(target) {
+}
+
+unsigned
+TokenPopOrBranchTrue::evaluate(Pkt&, ValueStack& values) {
+    if (values.size() == 0) {
+        isc_throw(EvalBadStack, "Incorrect empty stack.");
+    }
+
+    string op = values.top();
+    bool val = toBool(op);
+
+    if (!val) {
+        values.pop();
+        return (0);
+    }
+
+    LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_POP_OR_BRANCH_TRUE)
+        .arg(target_);
+    return (target_);
+}
+
+TokenPopOrBranchFalse::TokenPopOrBranchFalse(const unsigned target)
+    : TokenBranch(target) {
+}
+
+unsigned
+TokenPopOrBranchFalse::evaluate(Pkt&, ValueStack& values) {
+    if (values.size() == 0) {
+        isc_throw(EvalBadStack, "Incorrect empty stack.");
+    }
+
+    string op = values.top();
+    bool val = toBool(op);
+
+    if (val) {
+        values.pop();
+        return (0);
+    }
+
+    LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_POP_OR_BRANCH_FALSE)
+        .arg(target_);
+    return (target_);
+}
+
+TokenPopAndBranchFalse::TokenPopAndBranchFalse(const unsigned target)
+    : TokenBranch(target) {
+}
+
+unsigned
+TokenPopAndBranchFalse::evaluate(Pkt&, ValueStack& values) {
+    if (values.size() == 0) {
+        isc_throw(EvalBadStack, "Incorrect empty stack.");
+    }
+
+    string op = values.top();
+    values.pop();
+    bool val = toBool(op);
+
+    if (val) {
+        return (0);
+    }
+
+    LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_POP_AND_BRANCH_FALSE)
+        .arg(target_);
+    return (target_);
+}

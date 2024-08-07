@@ -579,4 +579,144 @@ TEST_F(ExpressionsTest, label) {
     EXPECT_EQ(2, values.size());
 }
 
-};
+// Tests the pop or branch when true / left or.
+TEST_F(ExpressionsTest, popOrBranchTrue) {
+    // The left or can be implemented as <left><P|BT-L><right><L>.
+    // Do the complete table.
+    TokenPtr branch;
+    ASSERT_NO_THROW(branch.reset(new TokenPopOrBranchTrue(123)));
+    TokenPtr label;
+    ASSERT_NO_THROW(label.reset(new TokenLabel(123)));
+    TokenPtr left;
+    TokenPtr right;
+    bool result_(false);
+
+    // False or false == false.
+    ASSERT_NO_THROW(left.reset(new TokenString("false")));
+    ASSERT_NO_THROW(right.reset(new TokenString("false")));
+    e_.push_back(left);
+    e_.push_back(branch);
+    e_.push_back(right);
+    e_.push_back(label);
+    ASSERT_NO_THROW(result_ = evaluateBool(e_, *pkt4_));
+    EXPECT_FALSE(result_);
+    e_.clear();
+
+    // False or true == true.
+    ASSERT_NO_THROW(left.reset(new TokenString("false")));
+    ASSERT_NO_THROW(right.reset(new TokenString("true")));
+    e_.push_back(left);
+    e_.push_back(branch);
+    e_.push_back(right);
+    e_.push_back(label);
+    ASSERT_NO_THROW(result_ = evaluateBool(e_, *pkt4_));
+    EXPECT_TRUE(result_);
+    e_.clear();
+
+    // True or any thing == true.
+    ASSERT_NO_THROW(left.reset(new TokenString("true")));
+    ASSERT_NO_THROW(right.reset(new TokenString("any thing")));
+    e_.push_back(left);
+    e_.push_back(branch);
+    e_.push_back(right);
+    e_.push_back(label);
+    EXPECT_NO_THROW(result_ = evaluateBool(e_, *pkt6_));
+    EXPECT_TRUE(result_);
+}
+
+// Tests the pop or branch when false / left and.
+TEST_F(ExpressionsTest, popOrBranchFalse) {
+    // The left and can be implemented as <left><P|BF-L><right><L>.
+    // Do the complete table.
+    TokenPtr branch;
+    ASSERT_NO_THROW(branch.reset(new TokenPopOrBranchFalse(123)));
+    TokenPtr label;
+    ASSERT_NO_THROW(label.reset(new TokenLabel(123)));
+    TokenPtr left;
+    TokenPtr right;
+    bool result_(false);
+
+    // True and true == true.
+    ASSERT_NO_THROW(left.reset(new TokenString("true")));
+    ASSERT_NO_THROW(right.reset(new TokenString("true")));
+    e_.push_back(left);
+    e_.push_back(branch);
+    e_.push_back(right);
+    e_.push_back(label);
+    ASSERT_NO_THROW(result_ = evaluateBool(e_, *pkt4_));
+    EXPECT_TRUE(result_);
+    e_.clear();
+
+    // True and false == false.
+    ASSERT_NO_THROW(left.reset(new TokenString("true")));
+    ASSERT_NO_THROW(right.reset(new TokenString("false")));
+    e_.push_back(left);
+    e_.push_back(branch);
+    e_.push_back(right);
+    e_.push_back(label);
+    ASSERT_NO_THROW(result_ = evaluateBool(e_, *pkt4_));
+    EXPECT_FALSE(result_);
+    e_.clear();
+
+    // False and any thing == false.
+    ASSERT_NO_THROW(left.reset(new TokenString("false")));
+    ASSERT_NO_THROW(right.reset(new TokenString("any thing")));
+    e_.push_back(left);
+    e_.push_back(branch);
+    e_.push_back(right);
+    e_.push_back(label);
+    EXPECT_NO_THROW(result_ = evaluateBool(e_, *pkt6_));
+    EXPECT_FALSE(result_);
+}
+
+// Tests the pop and branch when false / lazy if.
+TEST_F(ExpressionsTest, popAndBranchFalse) {
+    // The lazy can be implemented as:
+    // <test><P&BF-L1><then><B-L2><L1><else><L2>>.
+    // Do the complete table.
+    TokenPtr brancht;
+    ASSERT_NO_THROW(brancht.reset(new TokenPopAndBranchFalse(123)));
+    TokenPtr branchu;
+    ASSERT_NO_THROW(branchu.reset(new TokenBranch(567)));
+    TokenPtr label1;
+    ASSERT_NO_THROW(label1.reset(new TokenLabel(123)));
+    TokenPtr label2;
+    ASSERT_NO_THROW(label2.reset(new TokenLabel(567)));
+    TokenPtr test;
+    TokenPtr foo;
+    ASSERT_NO_THROW(foo.reset(new TokenString("foo")));
+    TokenPtr bar;
+    ASSERT_NO_THROW(bar.reset(new TokenString("bar")));
+    TokenPtr extra;
+    ASSERT_NO_THROW(extra.reset(new TokenString("extra token")));
+    string result_("");
+
+    // if true then foo else bar == foo
+    ASSERT_NO_THROW(test.reset(new TokenString("true")));
+    e_.push_back(test);
+    e_.push_back(brancht);
+    e_.push_back(foo);
+    e_.push_back(branchu);
+    e_.push_back(label1);
+    e_.push_back(bar);
+    e_.push_back(extra);
+    e_.push_back(label2);
+    ASSERT_NO_THROW(result_ = evaluateString(e_, *pkt4_));
+    EXPECT_EQ("foo", result_);
+    e_.clear();
+
+    // if false then foo else bar == bar
+    ASSERT_NO_THROW(test.reset(new TokenString("false")));
+    e_.push_back(test);
+    e_.push_back(brancht);
+    e_.push_back(foo);
+    e_.push_back(extra);
+    e_.push_back(branchu);
+    e_.push_back(label1);
+    e_.push_back(bar);
+    e_.push_back(label2);
+    ASSERT_NO_THROW(result_ = evaluateString(e_, *pkt6_));
+    EXPECT_EQ("bar", result_);
+}
+
+}

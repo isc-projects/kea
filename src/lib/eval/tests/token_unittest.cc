@@ -3916,4 +3916,104 @@ TEST_F(TokenTest, branch) {
     ASSERT_TRUE(values_.empty());
 }
 
+// Verify TokenPopOrBranchTrue.
+TEST_F(TokenTest, popOrBranchTrue) {
+    // 0 is not a valid branch.
+    ASSERT_THROW(t_.reset(new TokenPopOrBranchTrue(0)), EvalParseError);
+
+    ASSERT_NO_THROW(t_.reset(new TokenPopOrBranchTrue(123)));
+    EXPECT_EQ(0, t_->getLabel());
+
+    // CASE 1: The stack is empty.
+    EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalBadStack);
+
+    // CASE 2: The top value is not a boolen.
+    values_.push("foo");
+    EXPECT_THROW(t_->evaluate(*pkt6_, values_), EvalTypeError);
+
+    // CASE 3: The top value is true.
+    clearStack(false);
+    values_.push("true");
+    ASSERT_EQ(1, values_.size());
+    unsigned next(0);
+    ASSERT_NO_THROW(next = t_->evaluate(*pkt4_, values_));
+    EXPECT_EQ(123, next);
+    ASSERT_EQ(1, values_.size());
+    string result = values_.top();
+    EXPECT_EQ("true", result);
+
+    // CASE 4: The top value is false.
+    clearStack(false);
+    values_.push("false");
+    ASSERT_EQ(1, values_.size());
+    testEvaluate(t_, *pkt6_, values_);
+    EXPECT_TRUE(values_.empty());
+}
+
+// Verify TokenPopOrBranchFalse.
+TEST_F(TokenTest, popOrBranchFalse) {
+    // 0 is not a valid branch.
+    ASSERT_THROW(t_.reset(new TokenPopOrBranchFalse(0)), EvalParseError);
+
+    ASSERT_NO_THROW(t_.reset(new TokenPopOrBranchFalse(123)));
+    EXPECT_EQ(0, t_->getLabel());
+
+    // CASE 1: The stack is empty.
+    EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalBadStack);
+
+    // CASE 2: The top value is not a boolen.
+    values_.push("foo");
+    EXPECT_THROW(t_->evaluate(*pkt6_, values_), EvalTypeError);
+
+    // CASE 3: The top value is true.
+    clearStack(false);
+    values_.push("true");
+    ASSERT_EQ(1, values_.size());
+    testEvaluate(t_, *pkt6_, values_);
+    EXPECT_TRUE(values_.empty());
+
+    // CASE 4: The top value is false.
+    clearStack(false);
+    values_.push("false");
+    ASSERT_EQ(1, values_.size());
+    unsigned next(0);
+    ASSERT_NO_THROW(next = t_->evaluate(*pkt4_, values_));
+    EXPECT_EQ(123, next);
+    ASSERT_EQ(1, values_.size());
+    string result = values_.top();
+    EXPECT_EQ("false", result);
+}
+
+// Verify TokenPopAndBranchFalse.
+TEST_F(TokenTest, popAndBranchFalse) {
+    // 0 is not a valid branch.
+    ASSERT_THROW(t_.reset(new TokenPopAndBranchFalse(0)), EvalParseError);
+
+    ASSERT_NO_THROW(t_.reset(new TokenPopAndBranchFalse(123)));
+    EXPECT_EQ(0, t_->getLabel());
+
+    // CASE 1: The stack is empty.
+    EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalBadStack);
+
+    // CASE 2: The top value is not a boolen.
+    values_.push("foo");
+    EXPECT_THROW(t_->evaluate(*pkt6_, values_), EvalTypeError);
+
+    // CASE 3: The top value is true.
+    clearStack(false);
+    values_.push("true");
+    ASSERT_EQ(1, values_.size());
+    testEvaluate(t_, *pkt6_, values_);
+    EXPECT_TRUE(values_.empty());
+
+    // CASE 4: The top value is false.
+    clearStack(false);
+    values_.push("false");
+    ASSERT_EQ(1, values_.size());
+    unsigned next(0);
+    ASSERT_NO_THROW(next = t_->evaluate(*pkt4_, values_));
+    EXPECT_EQ(123, next);
+    EXPECT_TRUE(values_.empty());
+}
+
 }

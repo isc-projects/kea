@@ -29,6 +29,9 @@ extern const isc::log::MessageID EVAL_DEBUG_OR = "EVAL_DEBUG_OR";
 extern const isc::log::MessageID EVAL_DEBUG_PKT = "EVAL_DEBUG_PKT";
 extern const isc::log::MessageID EVAL_DEBUG_PKT4 = "EVAL_DEBUG_PKT4";
 extern const isc::log::MessageID EVAL_DEBUG_PKT6 = "EVAL_DEBUG_PKT6";
+extern const isc::log::MessageID EVAL_DEBUG_POP_AND_BRANCH_FALSE = "EVAL_DEBUG_POP_AND_BRANCH_FALSE";
+extern const isc::log::MessageID EVAL_DEBUG_POP_OR_BRANCH_FALSE = "EVAL_DEBUG_POP_OR_BRANCH_FALSE";
+extern const isc::log::MessageID EVAL_DEBUG_POP_OR_BRANCH_TRUE = "EVAL_DEBUG_POP_OR_BRANCH_TRUE";
 extern const isc::log::MessageID EVAL_DEBUG_RELAY6 = "EVAL_DEBUG_RELAY6";
 extern const isc::log::MessageID EVAL_DEBUG_RELAY6_RANGE = "EVAL_DEBUG_RELAY6_RANGE";
 extern const isc::log::MessageID EVAL_DEBUG_SPLIT = "EVAL_DEBUG_SPLIT";
@@ -86,6 +89,9 @@ const char* values[] = {
     "EVAL_DEBUG_PKT", "%1: Pushing PKT meta data %2 with value %3",
     "EVAL_DEBUG_PKT4", "%1: Pushing PKT4 field %2 with value %3",
     "EVAL_DEBUG_PKT6", "%1: Pushing PKT6 field %2 with value %3",
+    "EVAL_DEBUG_POP_AND_BRANCH_FALSE", "Value is false: branching to %1",
+    "EVAL_DEBUG_POP_OR_BRANCH_FALSE", "Value is false: keeping it and branching to %1",
+    "EVAL_DEBUG_POP_OR_BRANCH_TRUE", "Value is true: keeping it and branching to %1",
     "EVAL_DEBUG_RELAY6", "%1: Pushing PKT6 relay field %2 nest %3 with value %4",
     "EVAL_DEBUG_RELAY6_RANGE", "%1: Pushing PKT6 relay field %2 nest %3 with value %4",
     "EVAL_DEBUG_SPLIT", "%1: Popping field %2, delimiters %3, string %4, pushing result %5",

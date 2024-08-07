@@ -128,6 +128,24 @@ This debug message indicates that the first value is popped from
 the value stack, negated and then pushed onto the value stack.
 The string is displayed in text.
 
+# For use with TokenPopAndBranchFalse
+% EVAL_DEBUG_POP_AND_BRANCH_FALSE Value is false: branching to %1
+Logged at debug log level 55.
+This debug message indicates that a branch on false condition is performed
+to the displayed target.
+
+# For use with TokenPopOrBranchFalse
+% EVAL_DEBUG_POP_OR_BRANCH_FALSE Value is false: keeping it and branching to %1
+Logged at debug log level 55.
+This debug message indicates that a branch on false condition is performed
+to the displayed target.
+
+# For use with TokenPopOrBranchTrue
+% EVAL_DEBUG_POP_OR_BRANCH_TRUE Value is true: keeping it and branching to %1
+Logged at debug log level 55.
+This debug message indicates that a branch on true condition is performed
+to the displayed target.
+
 # For use with TokenOption based classes.  These include TokenOption,
 # TokenRelay4Option and TokenRelay6Option.
 
