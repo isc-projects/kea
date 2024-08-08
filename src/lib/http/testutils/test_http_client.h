@@ -10,6 +10,7 @@
 #include <cc/data.h>
 #include <http/client.h>
 #include <http/http_types.h>
+#include <http/response_parser.h>
 
 #include <boost/asio/read.hpp>
 #include <boost/asio/buffer.hpp>
@@ -18,6 +19,7 @@
 
 using namespace boost::asio::ip;
 using namespace isc::asiolink;
+using namespace isc::http;
 
 /// @brief Common base for test HTTP/HTTPS clients.
 class BaseTestHttpClient : public boost::noncopyable {
@@ -210,12 +212,29 @@ public:
                                  buf_.data() + bytes_transferred);
             }
 
-            // Two consecutive new lines end headers, " } ]" sequence
-            // end large response we're expecting.
-            if ((response_.find("\r\n\r\n", 0) != std::string::npos) &&
-                ((response_.size() < 1000) ||
-                 (response_.rfind(" } ]") == (response_.size() - 4)))) {
-                receive_done_ = true;
+            // Two consecutive new lines end the part of the response we're
+            // expecting.
+            bool need_data(true);
+            if (response_.find("\r\n\r\n", 0) != std::string::npos) {
+                // Try to parse the response.
+                try {
+                    HttpResponse hr;
+                    HttpResponseParser parser(hr);
+                    parser.initModel();
+                    parser.postBuffer(&response_[0], response_.size());
+                    parser.poll();
+                    if (!parser.needData()) {
+                        need_data = false;
+                        if (parser.httpParseOk()) {
+                            receive_done_ = true;
+                        }
+                    }
+                } catch (const std::exception& ex) {
+                    need_data = false;
+                    ADD_FAILURE() << "error parsing response: " << ex.what();
+                }
+            }
+            if (!need_data) {
                 io_service_->stop();
             } else {
                 receivePartialResponse();
@@ -474,12 +493,29 @@ public:
                                  buf_.data() + bytes_transferred);
             }
 
-            // Two consecutive new lines end headers, " } ]" sequence
-            // end large response we're expecting.
-            if ((response_.find("\r\n\r\n", 0) != std::string::npos) &&
-                ((response_.size() < 1000) ||
-                 (response_.rfind(" } ]") == (response_.size() - 4)))) {
-                receive_done_ = true;
+            // Two consecutive new lines end the part of the response we're
+            // expecting.
+            bool need_data(true);
+            if (response_.find("\r\n\r\n", 0) != std::string::npos) {
+                // Try to parse the response.
+                try {
+                    HttpResponse hr;
+                    HttpResponseParser parser(hr);
+                    parser.initModel();
+                    parser.postBuffer(&response_[0], response_.size());
+                    parser.poll();
+                    if (!parser.needData()) {
+                        need_data = false;
+                        if (parser.httpParseOk()) {
+                            receive_done_ = true;
+                        }
+                    }
+                } catch (const std::exception& ex) {
+                    need_data = false;
+                    ADD_FAILURE() << "error parsing response: " << ex.what();
+                }
+            }
+            if (!need_data) {
                 io_service_->stop();
             } else {
                 receivePartialResponse();
