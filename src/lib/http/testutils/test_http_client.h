@@ -166,9 +166,6 @@ public:
             }
 
             // Remove the part of the request which has been sent.
-            if (bytes_transferred >= request.size()) {
-                bytes_transferred = request.size();
-            }
             request.erase(0, bytes_transferred);
 
             // Continue sending request data if there are still some data to be
@@ -433,9 +430,6 @@ public:
             }
 
             // Remove the part of the request which has been sent.
-            if (bytes_transferred >= request.size()) {
-                bytes_transferred = request.size();
-            }
             request.erase(0, bytes_transferred);
 
             // Continue sending request data if there are still some data to be
@@ -490,7 +484,6 @@ public:
             } else {
                 receivePartialResponse();
             }
-
         });
     }
 
@@ -561,6 +554,9 @@ public:
         stream_.lowest_layer().close();
     }
 
+    /// @brief Returns the HTTP response string.
+    ///
+    /// @return string containing the response.
     virtual std::string getResponse() const {
         return (response_);
     }
