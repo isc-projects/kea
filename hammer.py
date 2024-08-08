@@ -1956,14 +1956,22 @@ def install_packages_local(system, revision, features, check_times, ignore_error
                 packages.extend(['mysql80-server', 'mysql80-client'])
 
         if 'pgsql' in features:
-            # Install the latest postgresql-client and postgresql-server.
-            _, output = execute("pkg search postgresql | grep -E 'postgresql[0-9]+-client' | tail -n 1 | "
-                                "cut -d ' ' -f 1 | cut -d '-' -f 1-2", capture=True)
-            postgresql_client = output.strip()
-            _, output = execute("pkg search postgresql | grep -E 'postgresql[0-9]+-server' | tail -n 1 | "
-                                "cut -d ' ' -f 1 | cut -d '-' -f 1-2", capture=True)
-            postgresql_server = output.strip()
-            packages.extend([postgresql_client, postgresql_server])
+            # Install the latest postgresql-client and postgresql-server,
+            # unless any postgresql-client or postgresql-server version is already installed.
+            for i in ['client', 'server']:
+                # Check if already installed.
+                _, output = execute('pkg info', capture=True)
+                m = re.search(f'postgresql[0-9]+-{i}', output)
+                if m is None:
+                    # If not, go ahead and install.
+                    _, output = execute('pkg search postgresql', capture=True)
+                    found = re.findall(f'postgresql[0-9]+-{i}', output)
+                    if len(found) == 0:
+                        print(f'No postgresql[0-9]+-{i} found?')
+                        sys.exit(1)
+                    # There may be more matches. Results are sorted by pkg.
+                    # Choose the last from the list which should be the latest version.
+                    packages.append(found[-1])
 
         if 'gssapi' in features:
             packages.extend(['krb5-devel'])
