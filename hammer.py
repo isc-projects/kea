@@ -1371,6 +1371,15 @@ ssl_key = {cert_dir}/kea-client.key
         execute('sudo sed -i "/^skip-networking$/d" /etc/my.cnf.d/mariadb-server.cnf')
         execute('sudo rc-update add mariadb')
         execute('sudo /etc/init.d/mariadb setup', raise_error=False)
+
+        # Wait for setup command to complete.
+        for i in range(10):
+            exit_code = execute('sudo pidof mysqld_safe', raise_error=False)
+            if exit_code != 0:
+                # Process exited or there was no process to begin with.
+                break
+            time.sleep(1)
+
         execute('sudo /etc/init.d/mariadb restart')
 
     cmd = "echo 'DROP DATABASE IF EXISTS keatest;' | sudo mysql -u root"
