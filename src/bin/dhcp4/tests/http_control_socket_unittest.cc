@@ -493,13 +493,13 @@ public:
 
     /// @brief Command handler which generates long response
     ///
-    /// This handler generates a large response (over 4kB). It includes
+    /// This handler generates a large response (over 400kB). It includes
     /// a list of randomly generated strings to make sure that the test
     /// can catch out of order delivery.
     static ConstElementPtr
     longResponseHandler(const std::string&, const ConstElementPtr&) {
         ElementPtr arguments = Element::createList();
-        for (unsigned i = 0; i < 800; ++i) { // was 80000 (400kB).
+        for (unsigned i = 0; i < 80000; ++i) {
             std::ostringstream s;
             s << std::setw(5) << i;
             arguments->add(Element::create(s.str()));
@@ -2140,9 +2140,9 @@ TEST_F(HttpCtrlChannelDhcpv4Test, longCommand) {
 
     ostringstream command;
 
-    // This is the desired size of the command sent to the server (100kB).
+    // This is the desired size of the command sent to the server (1MB).
     // The actual size sent will be slightly greater than that.
-    const size_t command_size = 1024 * 100; // was 1024 * 1000 (1MB).
+    const size_t command_size = 1024 * 1000;
 
     while (command.tellp() < command_size) {
 

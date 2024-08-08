@@ -130,8 +130,10 @@ public:
         std::string request_str = buildPostStr(request_body);
 
         // Instantiate the client.
-        client_.reset(new TestHttpClient(io_service_, SERVER_ADDRESS,
-                                         SERVER_PORT));
+        if (!client_) {
+            client_.reset(new TestHttpClient(io_service_, SERVER_ADDRESS,
+                                             SERVER_PORT));
+        }
 
         // Start the request.  Note, nothing happens until the IOService runs.
         client_->startRequest(request_str);
@@ -198,7 +200,7 @@ public:
     IntervalTimer test_timer_;
 
     /// @brief Client connection.
-    TestHttpClientPtr client_;
+    boost::shared_ptr<BaseTestHttpClient> client_;
 
     /// @brief HTTP control socket config.
     HttpCommandConfigPtr http_config_;
@@ -259,8 +261,8 @@ TEST_F(HttpCommandMgrTest, useExternal) {
 
 /// Verifies the configure and close of HttpCommandMgr with TLS.
 TEST_F(HttpCommandMgrTest, basicTls) {
-    string ca_dir(string(TEST_CA_DIR));
     // Setup TLS for the manager.
+    string ca_dir(string(TEST_CA_DIR));
     http_config_->setSocketType("https");
     http_config_->setTrustAnchor(ca_dir + string("/kea-ca.crt"));
     http_config_->setCertFile(ca_dir + string("/kea-server.crt"));
@@ -355,6 +357,79 @@ TEST_F(HttpCommandMgrTest, commandNoExternal) {
     // Configure.
     ASSERT_NO_THROW_LOG(HttpCommandMgr::instance().configure(http_config_));
     EXPECT_TRUE(HttpCommandMgr::instance().getHttpListener());
+
+    // Now let's send a "foo" command.  This should create a client, connect
+    // to our listener, post our request and retrieve our reply.
+    ASSERT_NO_THROW(startRequest("{\"command\": \"foo\"}"));
+    ASSERT_TRUE(client_);
+    ASSERT_NO_THROW(runIOService());
+    ASSERT_TRUE(client_);
+
+    // Parse the response into an HttpResponse.
+    HttpResponsePtr hr;
+    ASSERT_NO_THROW_LOG(hr = parseResponse(client_->getResponse()));
+
+    // We should have a response from our command handler.
+    EXPECT_EQ(hr->getBody(), "[ { \"arguments\": [ \"bar\" ], \"result\": 0 } ]");
+}
+
+// This test verifies that an HTTPS connection can be established and used to
+// transmit an HTTPS request and receive the response.
+TEST_F(HttpCommandMgrTest, commandTls) {
+    // Setup TLS for the manager.
+    string ca_dir(string(TEST_CA_DIR));
+    http_config_->setSocketType("https");
+    http_config_->setTrustAnchor(ca_dir + string("/kea-ca.crt"));
+    http_config_->setCertFile(ca_dir + string("/kea-server.crt"));
+    http_config_->setKeyFile(ca_dir + string("/kea-server.key"));
+
+    // Configure.
+    ASSERT_NO_THROW_LOG(HttpCommandMgr::instance().configure(http_config_));
+    EXPECT_TRUE(HttpCommandMgr::instance().getHttpListener());
+
+    // Create a HTTPS test client.
+    TlsContextPtr client_tls_context;
+    configClient(client_tls_context);
+    client_.reset(new TestHttpsClient(io_service_, client_tls_context,
+                                      SERVER_ADDRESS, SERVER_PORT));
+
+    // Now let's send a "foo" command.  This should create a client, connect
+    // to our listener, post our request and retrieve our reply.
+    ASSERT_NO_THROW(startRequest("{\"command\": \"foo\"}"));
+    ASSERT_TRUE(client_);
+    ASSERT_NO_THROW(runIOService());
+    ASSERT_TRUE(client_);
+
+    // Parse the response into an HttpResponse.
+    HttpResponsePtr hr;
+    ASSERT_NO_THROW_LOG(hr = parseResponse(client_->getResponse()));
+
+    // We should have a response from our command handler.
+    EXPECT_EQ(hr->getBody(), "[ { \"arguments\": [ \"bar\" ], \"result\": 0 } ]");
+}
+
+// This test verifies that an HTTPS connection can be established and used to
+// transmit an HTTPS request and receive the response (no external sockets).
+TEST_F(HttpCommandMgrTest, commandNoExternalTls) {
+    // Change to no external sockets.
+    HttpCommandMgr::instance().addExternalSockets(false);
+
+    // Setup TLS for the manager.
+    string ca_dir(string(TEST_CA_DIR));
+    http_config_->setSocketType("https");
+    http_config_->setTrustAnchor(ca_dir + string("/kea-ca.crt"));
+    http_config_->setCertFile(ca_dir + string("/kea-server.crt"));
+    http_config_->setKeyFile(ca_dir + string("/kea-server.key"));
+
+    // Configure.
+    ASSERT_NO_THROW_LOG(HttpCommandMgr::instance().configure(http_config_));
+    EXPECT_TRUE(HttpCommandMgr::instance().getHttpListener());
+
+    // Create a HTTPS test client.
+    TlsContextPtr client_tls_context;
+    configClient(client_tls_context);
+    client_.reset(new TestHttpsClient(io_service_, client_tls_context,
+                                      SERVER_ADDRESS, SERVER_PORT));
 
     // Now let's send a "foo" command.  This should create a client, connect
     // to our listener, post our request and retrieve our reply.
