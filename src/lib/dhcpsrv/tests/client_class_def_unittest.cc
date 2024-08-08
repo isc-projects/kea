@@ -575,7 +575,7 @@ TEST(ClientClassDictionary, initMatchExpr) {
     EXPECT_FALSE(classes[0]->getMatchExpr());
 
     EXPECT_TRUE(classes[1]->getMatchExpr());
-    EXPECT_EQ(3, classes[1]->getMatchExpr()->size());
+    EXPECT_EQ(4, classes[1]->getMatchExpr()->size());
 
     EXPECT_TRUE(classes[2]->getMatchExpr());
     EXPECT_EQ(6, classes[2]->getMatchExpr()->size());
