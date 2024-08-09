@@ -8,6 +8,7 @@
 
 #include <asiolink/interval_timer.h>
 #include <asiolink/io_service.h>
+#include <asiolink/testutils/test_tls.h>
 #include <cc/command_interpreter.h>
 #include <config/command_mgr.h>
 #include <config/http_command_mgr.h>
@@ -47,6 +48,7 @@
 using namespace std;
 using namespace isc;
 using namespace isc::asiolink;
+using namespace isc::asiolink::test;
 using namespace isc::config;
 using namespace isc::data;
 using namespace isc::dhcp;
@@ -80,8 +82,8 @@ public:
     using Dhcpv4Srv::network_state_;
 };
 
-/// @brief Fixture class intended for testing HTTP control channel.
-class HttpCtrlChannelDhcpv4Test : public ::testing::Test {
+/// @brief Base fixture class intended for testing HTTP/HTTPS control channel.
+class BaseCtrlChannelDhcpv4Test : public ::testing::Test {
 public:
 
     /// @brief List of interfaces (defaults to "*").
@@ -93,7 +95,7 @@ public:
     /// @brief Default constructor
     ///
     /// Sets socket path to its default value.
-    HttpCtrlChannelDhcpv4Test() : interfaces_("\"*\"") {
+    BaseCtrlChannelDhcpv4Test() : interfaces_("\"*\"") {
         reset();
         IfaceMgr::instance().setTestMode(false);
         IfaceMgr::instance().setDetectCallback(std::bind(&IfaceMgr::checkDetectIfaces,
@@ -101,7 +103,7 @@ public:
     }
 
     /// @brief Destructor
-    ~HttpCtrlChannelDhcpv4Test() {
+    virtual ~BaseCtrlChannelDhcpv4Test() {
         LeaseMgrFactory::destroy();
         StatsMgr::instance().removeAll();
 
@@ -146,7 +148,7 @@ public:
         IOServicePtr io_service = getIOService();
         ASSERT_TRUE(io_service);
         IntervalTimer test_timer(io_service);
-        test_timer.setup(std::bind(&HttpCtrlChannelDhcpv4Test::timeoutHandler,
+        test_timer.setup(std::bind(&BaseCtrlChannelDhcpv4Test::timeoutHandler,
                                    this, true),
                          TEST_TIMEOUT, IntervalTimer::ONE_SHOT);
         // Run until the client stops the service or an error occurs.
@@ -159,72 +161,7 @@ public:
     }
 
     /// @brief Create a server with a HTTP command channel.
-    void createHttpChannelServer() {
-        // Just a simple config. The important part here is the socket
-        // location information.
-        std::string header =
-            "{"
-            "    \"interfaces-config\": {"
-            "        \"interfaces\": [";
-
-        std::string body = "]"
-            "    },"
-            "    \"expired-leases-processing\": {"
-            "         \"reclaim-timer-wait-time\": 60,"
-            "         \"hold-reclaimed-time\": 500,"
-            "         \"flush-reclaimed-timer-wait-time\": 60"
-            "    },"
-            "    \"rebind-timer\": 2000, "
-            "    \"renew-timer\": 1000, "
-            "    \"subnet4\": [ ],"
-            "    \"valid-lifetime\": 4000,"
-            "    \"control-socket\": {"
-            "        \"socket-type\": \"http\","
-            "        \"socket-address\": \"127.0.0.1\","
-            "        \"socket-port\": 18124"
-            "    },"
-            "    \"lease-database\": {"
-            "       \"type\": \"memfile\", \"persist\": false },"
-            "    \"loggers\": [ {"
-            "       \"name\": \"kea-dhcp4\","
-            "       \"severity\": \"INFO\","
-            "       \"debuglevel\": 0"
-            "       } ]"
-            "}";
-
-        std::string config_txt = header + interfaces_ + body;
-        ASSERT_NO_THROW(server_.reset(new NakedControlledDhcpv4Srv()));
-
-        ConstElementPtr config;
-        ASSERT_NO_THROW(config = parseDHCP4(config_txt));
-
-        // Parse the logger configuration explicitly into the staging config.
-        // Note this does not alter the current loggers, they remain in
-        // effect until we apply the logging config below.  If no logging
-        // is supplied logging will revert to default logging.
-        server_->configureLogger(config, CfgMgr::instance().getStagingCfg());
-
-        // Let's apply the new logging. We do it early, so we'll be able to print
-        // out what exactly is wrong with the new config in case of problems.
-        CfgMgr::instance().getStagingCfg()->applyLoggingCfg();
-
-        ConstElementPtr answer = server_->processConfig(config);
-
-        // Commit the configuration so any subsequent reconfigurations
-        // will only close the command channel if its configuration has
-        // changed.
-        CfgMgr::instance().commit();
-
-        ASSERT_TRUE(answer);
-
-        int status = 0;
-        ConstElementPtr txt = isc::config::parseAnswer(status, answer);
-        // This should succeed. If not, print the error message.
-        ASSERT_EQ(0, status) << txt->str();
-
-        // Now check that the socket was indeed open.
-        ASSERT_TRUE(HttpCommandMgr::instance().getHttpListener());
-    }
+    virtual void createHttpChannelServer() = 0;
 
     /// @brief Reset hooks data
     ///
@@ -289,32 +226,8 @@ public:
     /// @param command the command text to execute in JSON form.
     /// @param response variable into which the received response should be
     /// placed.
-    void sendHttpCommand(const std::string& command, std::string& response) {
-        response = "";
-        IOServicePtr io_service = getIOService();
-        ASSERT_TRUE(io_service);
-        boost::scoped_ptr<TestHttpClient> client;
-        client.reset(new TestHttpClient(io_service, SERVER_ADDRESS,
-                                        SERVER_PORT));
-        ASSERT_TRUE(client);
-
-        // Send the command. This will trigger server's handler which receives
-        // data over the HTTP socket. The server will start sending response
-        // to the client.
-        ASSERT_NO_THROW(client->startRequest(buildPostStr(command)));
-        runIOService();
-        ASSERT_TRUE(client->receiveDone());
-
-        // Read the response generated by the server.
-        HttpResponsePtr hr;
-        ASSERT_NO_THROW(hr = parseResponse(client->getResponse()));
-        response = hr->getBody();
-
-        // Now close client.
-        client->close();
-
-        ASSERT_NO_THROW(io_service->poll());
-    }
+    virtual void sendHttpCommand(const std::string& command,
+                                 std::string& response) = 0;
 
     /// @brief Parse list answer.
     ///
@@ -506,11 +419,356 @@ public:
         }
         return (createAnswer(CONTROL_RESULT_SUCCESS, arguments));
     }
+
+    // Tests that the server properly responds to invalid commands sent
+    // via ControlChannel.
+    void testControlChannelNegative();
+
+    // Tests that the server properly responds to shutdown command sent
+    // via ControlChannel.
+    void testControlChannelShutdown();
+
+    // Tests that the server properly responds to statistics commands.
+    void testControlChannelStats();
+
+    // Tests if the server returns its configuration using config-get.
+    void testConfigGet();
+
+    // Tests if the server returns the hash of its configuration using
+    // config-hash-get.
+    void testConfigHashGet();
+
+    // This test verifies that the DHCP server handles version-get commands.
+    void testGetVersion();
+
+    // This test verifies that the DHCP server handles server-tag-get command.
+    void testServerTagGet();
+
+    // This test verifies that the DHCP server handles status-get commands.
+    void testStatusGet();
+
+    // Check that status is returned even if LeaseMgr and HostMgr are
+    // not created.
+    void testNoManagers();
+
+    // Checks that socket status exists in status-get responses.
+    void testStatusGetSockets();
+
+    // Checks that socket status includes errors in status-get responses.
+    void testStatusGetSocketsErrors();
+
+    // This test verifies that the DHCP server handles
+    // config-backend-pull command.
+    void testConfigBackendPull();
+
+    // This test verifies that the DHCP server immediately reclaims expired
+    // leases on leases-reclaim command.
+    void testControlLeasesReclaim();
+
+    // This test verifies that the DHCP server immediately reclaims expired
+    // leases on leases-reclaim command with remove = true.
+    void testControlLeasesReclaimRemove();
+
+    // Tests that the server properly responds to list-commands command sent
+    // via ControlChannel.
+    void testListCommands();
+
+    // Tests if config-write can be called without any parameters.
+    void testConfigWriteNoFilename();
+
+    // Tests if config-write can be called with a valid filename as parameter.
+    void testConfigWriteFilename();
+
+    // Tests if config-reload attempts to reload a file and reports that the
+    // file is missing.
+    void testConfigReloadMissingFile();
+
+    // Tests if config-reload attempts to reload a file and reports that the
+    // file is not a valid JSON.
+    void testConfigReloadBrokenFile();
+
+    // Tests if config-reload attempts to reload a file and reports that the
+    // file is loaded correctly.
+    void testConfigReloadValid();
+
+    // Tests if config-reload attempts to reload a file and reports that the
+    // file is loaded correctly.
+    void testConfigReloadDetectInterfaces();
+
+    // This test verifies that disable DHCP service command performs
+    // sanity check on parameters.
+    void testDhcpDisableBadParam();
+
+    // This test verifies if it is possible to disable DHCP service
+    // via command.
+    void testDhcpDisable();
+
+    // This test verifies if it is possible to disable DHCP service using
+    // the origin-id.
+    void testDhcpDisableOriginId();
+
+    // This test verifies that it is possible to disable DHCP service
+    // for a short period of time, after which the service is
+    // automatically enabled.
+    void testDhcpDisableTemporarily();
+
+    // This test verifies that enable DHCP service command performs
+    // sanity check on parameters.
+    void testDhcpEnableBadParam();
+
+    // This test verifies if it is possible to enable DHCP service via command.
+    void testDhcpEnable();
+
+    // This test verifies if it is possible to enable DHCP service using
+    // the origin-id.
+    void testDhcpEnableOriginId();
+
+    // This test verifies that the server can receive and process a
+    // large command.
+    void testLongCommand();
+
+    // This test verifies that the server can send long response to the client.
+    void testLongResponse();
+
+    // This test verifies that the server signals timeout if the transmission
+    // takes too long, having received no data from the client.
+    void testConnectionTimeoutNoData();
+};
+
+/// @brief Fixture class intended for testing HTTP control channel.
+class HttpCtrlChannelDhcpv4Test : public BaseCtrlChannelDhcpv4Test {
+public:
+
+    /// @brief Create a server with a HTTP command channel.
+    virtual void createHttpChannelServer() override {
+        // Just a simple config. The important part here is the socket
+        // location information.
+        std::string header =
+            "{"
+            "    \"interfaces-config\": {"
+            "        \"interfaces\": [";
+
+        std::string body = "]"
+            "    },"
+            "    \"expired-leases-processing\": {"
+            "         \"reclaim-timer-wait-time\": 60,"
+            "         \"hold-reclaimed-time\": 500,"
+            "         \"flush-reclaimed-timer-wait-time\": 60"
+            "    },"
+            "    \"rebind-timer\": 2000, "
+            "    \"renew-timer\": 1000, "
+            "    \"subnet4\": [ ],"
+            "    \"valid-lifetime\": 4000,"
+            "    \"control-socket\": {"
+            "        \"socket-type\": \"http\","
+            "        \"socket-address\": \"127.0.0.1\","
+            "        \"socket-port\": 18124"
+            "    },"
+            "    \"lease-database\": {"
+            "       \"type\": \"memfile\", \"persist\": false },"
+            "    \"loggers\": [ {"
+            "       \"name\": \"kea-dhcp4\","
+            "       \"severity\": \"INFO\","
+            "       \"debuglevel\": 0"
+            "       } ]"
+            "}";
+
+        std::string config_txt = header + interfaces_ + body;
+        ASSERT_NO_THROW(server_.reset(new NakedControlledDhcpv4Srv()));
+
+        ConstElementPtr config;
+        ASSERT_NO_THROW(config = parseDHCP4(config_txt));
+
+        // Parse the logger configuration explicitly into the staging config.
+        // Note this does not alter the current loggers, they remain in
+        // effect until we apply the logging config below.  If no logging
+        // is supplied logging will revert to default logging.
+        server_->configureLogger(config, CfgMgr::instance().getStagingCfg());
+
+        // Let's apply the new logging. We do it early, so we'll be able to print
+        // out what exactly is wrong with the new config in case of problems.
+        CfgMgr::instance().getStagingCfg()->applyLoggingCfg();
+
+        ConstElementPtr answer = server_->processConfig(config);
+
+        // Commit the configuration so any subsequent reconfigurations
+        // will only close the command channel if its configuration has
+        // changed.
+        CfgMgr::instance().commit();
+
+        ASSERT_TRUE(answer);
+
+        int status = 0;
+        ConstElementPtr txt = isc::config::parseAnswer(status, answer);
+        // This should succeed. If not, print the error message.
+        ASSERT_EQ(0, status) << txt->str();
+
+        // Now check that the socket was indeed open.
+        ASSERT_TRUE(HttpCommandMgr::instance().getHttpListener());
+    }
+
+    /// @brief Conducts a command/response exchange via HttpCommandSocket.
+    ///
+    /// This method connects to the given server over the given address/port.
+    /// If successful, it then sends the given command and retrieves the
+    /// server's response.  Note that it polls the server's I/O service
+    /// where needed to cause the server to process IO events on
+    /// the control channel sockets.
+    ///
+    /// @param command the command text to execute in JSON form.
+    /// @param response variable into which the received response should be
+    /// placed.
+    virtual void sendHttpCommand(const std::string& command,
+                                 std::string& response) override {
+        response = "";
+        IOServicePtr io_service = getIOService();
+        ASSERT_TRUE(io_service);
+        boost::scoped_ptr<TestHttpClient> client;
+        client.reset(new TestHttpClient(io_service, SERVER_ADDRESS,
+                                        SERVER_PORT));
+        ASSERT_TRUE(client);
+
+        // Send the command. This will trigger server's handler which receives
+        // data over the HTTP socket. The server will start sending response
+        // to the client.
+        ASSERT_NO_THROW(client->startRequest(buildPostStr(command)));
+        runIOService();
+        ASSERT_TRUE(client->receiveDone());
+
+        // Read the response generated by the server.
+        HttpResponsePtr hr;
+        ASSERT_NO_THROW(hr = parseResponse(client->getResponse()));
+        response = hr->getBody();
+
+        // Now close client.
+        client->close();
+
+        ASSERT_NO_THROW(io_service->poll());
+    }
+};
+
+/// @brief Fixture class intended for testing HTTPS control channel.
+class HttpsCtrlChannelDhcpv4Test : public BaseCtrlChannelDhcpv4Test {
+public:
+
+    /// @brief Create a server with a HTTP command channel.
+    virtual void createHttpChannelServer() override {
+        // Just a simple config. The important part here is the socket
+        // location information.
+        string ca_dir(string(TEST_CA_DIR));
+        ostringstream config_st;
+        config_st
+            << "{"
+            << "    \"interfaces-config\": {"
+            << "        \"interfaces\": ["
+            << interfaces_
+            << "]"
+            << "    },"
+            << "    \"expired-leases-processing\": {"
+            << "         \"reclaim-timer-wait-time\": 60,"
+            << "         \"hold-reclaimed-time\": 500,"
+            << "         \"flush-reclaimed-timer-wait-time\": 60"
+            << "    },"
+            << "    \"rebind-timer\": 2000, "
+            << "    \"renew-timer\": 1000, "
+            << "    \"subnet4\": [ ],"
+            << "    \"valid-lifetime\": 4000,"
+            << "    \"control-socket\": {"
+            << "        \"socket-type\": \"http\","
+            << "        \"socket-address\": \"127.0.0.1\","
+            << "        \"socket-port\": 18124,"
+            << "        \"trust-anchor\": \"" << ca_dir << "/kea-ca.crt\","
+            << "        \"cert-file\": \"" << ca_dir << "/kea-server.crt\","
+            << "        \"key-file\": \"" << ca_dir << "/kea-server.key\""
+            << "    },"
+            << "    \"lease-database\": {"
+            << "       \"type\": \"memfile\", \"persist\": false },"
+            << "    \"loggers\": [ {"
+            << "       \"name\": \"kea-dhcp4\","
+            << "       \"severity\": \"INFO\","
+            << "       \"debuglevel\": 0"
+            << "       } ]"
+            << "}";
+
+        ASSERT_NO_THROW(server_.reset(new NakedControlledDhcpv4Srv()));
+
+        ConstElementPtr config;
+        ASSERT_NO_THROW(config = parseDHCP4(config_st.str()));
+
+        // Parse the logger configuration explicitly into the staging config.
+        // Note this does not alter the current loggers, they remain in
+        // effect until we apply the logging config below.  If no logging
+        // is supplied logging will revert to default logging.
+        server_->configureLogger(config, CfgMgr::instance().getStagingCfg());
+
+        // Let's apply the new logging. We do it early, so we'll be able to print
+        // out what exactly is wrong with the new config in case of problems.
+        CfgMgr::instance().getStagingCfg()->applyLoggingCfg();
+
+        ConstElementPtr answer = server_->processConfig(config);
+
+        // Commit the configuration so any subsequent reconfigurations
+        // will only close the command channel if its configuration has
+        // changed.
+        CfgMgr::instance().commit();
+
+        ASSERT_TRUE(answer);
+
+        int status = 0;
+        ConstElementPtr txt = isc::config::parseAnswer(status, answer);
+        // This should succeed. If not, print the error message.
+        ASSERT_EQ(0, status) << txt->str();
+
+        // Now check that the socket was indeed open.
+        ASSERT_TRUE(HttpCommandMgr::instance().getHttpListener());
+    }
+
+    /// @brief Conducts a command/response exchange via HttpCommandSocket.
+    ///
+    /// This method connects to the given server over the given address/port.
+    /// If successful, it then sends the given command and retrieves the
+    /// server's response.  Note that it polls the server's I/O service
+    /// where needed to cause the server to process IO events on
+    /// the control channel sockets.
+    ///
+    /// @param command the command text to execute in JSON form.
+    /// @param response variable into which the received response should be
+    /// placed.
+    virtual void sendHttpCommand(const std::string& command,
+                                 std::string& response) override {
+        response = "";
+        IOServicePtr io_service = getIOService();
+        ASSERT_TRUE(io_service);
+        boost::scoped_ptr<TestHttpsClient> client;
+        TlsContextPtr client_tls_context;
+        configClient(client_tls_context);
+        client.reset(new TestHttpsClient(io_service, client_tls_context,
+                                         SERVER_ADDRESS, SERVER_PORT));
+        ASSERT_TRUE(client);
+
+        // Send the command. This will trigger server's handler which receives
+        // data over the HTTP socket. The server will start sending response
+        // to the client.
+        ASSERT_NO_THROW(client->startRequest(buildPostStr(command)));
+        runIOService();
+        ASSERT_TRUE(client->receiveDone());
+
+        // Read the response generated by the server.
+        HttpResponsePtr hr;
+        ASSERT_NO_THROW(hr = parseResponse(client->getResponse()));
+        response = hr->getBody();
+
+        // Now close client.
+        client->close();
+
+        ASSERT_NO_THROW(io_service->poll());
+    }
 };
 
 // Tests that the server properly responds to invalid commands sent
-// via ControlChannel
-TEST_F(HttpCtrlChannelDhcpv4Test, controlChannelNegative) {
+// via ControlChannel.
+void
+BaseCtrlChannelDhcpv4Test::testControlChannelNegative() {
     createHttpChannelServer();
     std::string response;
 
@@ -523,9 +781,18 @@ TEST_F(HttpCtrlChannelDhcpv4Test, controlChannelNegative) {
     EXPECT_EQ("{ \"result\": 400, \"text\": \"Bad Request\" }", response);
 }
 
+TEST_F(HttpCtrlChannelDhcpv4Test, controlChannelNegative) {
+    testControlChannelNegative();
+}
+
+TEST_F(HttpsCtrlChannelDhcpv4Test, controlChannelNegative) {
+    testControlChannelNegative();
+}
+
 // Tests that the server properly responds to shutdown command sent
-// via ControlChannel
-TEST_F(HttpCtrlChannelDhcpv4Test, controlChannelShutdown) {
+// via ControlChannel.
+void
+BaseCtrlChannelDhcpv4Test::testControlChannelShutdown() {
     createHttpChannelServer();
     std::string response;
 
@@ -536,11 +803,20 @@ TEST_F(HttpCtrlChannelDhcpv4Test, controlChannelShutdown) {
     EXPECT_EQ(EXIT_SUCCESS, server_->getExitValue());
 }
 
+TEST_F(HttpCtrlChannelDhcpv4Test, controlChannelShutdown) {
+    testControlChannelShutdown();
+}
+
+TEST_F(HttpsCtrlChannelDhcpv4Test, controlChannelShutdown) {
+    testControlChannelShutdown();
+}
+
 // Tests that the server properly responds to statistics commands.  Note this
 // is really only intended to verify that the appropriate Statistics handler
 // is called based on the command.  It is not intended to be an exhaustive
 // test of Dhcpv4 statistics.
-TEST_F(HttpCtrlChannelDhcpv4Test, controlChannelStats) {
+void
+BaseCtrlChannelDhcpv4Test::testControlChannelStats() {
     createHttpChannelServer();
     std::string response;
 
@@ -651,6 +927,14 @@ TEST_F(HttpCtrlChannelDhcpv4Test, controlChannelStats) {
     EXPECT_EQ("[ { \"result\": 0, \"text\": "
               "\"All statistics count limit are set.\" } ]",
               response);
+}
+
+TEST_F(HttpCtrlChannelDhcpv4Test, controlChannelStats) {
+    testControlChannelStats();
+}
+
+TEST_F(HttpsCtrlChannelDhcpv4Test, controlChannelStats) {
+    testControlChannelStats();
 }
 
 // Check that the "config-set" command will replace current configuration
@@ -822,10 +1106,181 @@ TEST_F(HttpCtrlChannelDhcpv4Test, configSet) {
     CfgMgr::instance().clear();
 }
 
+// Check that the "config-set" command will replace current configuration
+///////////// TODO
+TEST_F(HttpsCtrlChannelDhcpv4Test, DISABLED_configSet) {
+    createHttpChannelServer();
+
+    // Define strings to permutate the config arguments
+    // (Note the line feeds makes errors easy to find)
+    string set_config_txt = "{ \"command\": \"config-set\" \n";
+    string args_txt = " \"arguments\": { \n";
+    string dhcp4_cfg_txt =
+        "    \"Dhcp4\": { \n"
+        "        \"interfaces-config\": { \n"
+        "            \"interfaces\": [\"*\"] \n"
+        "        },   \n"
+        "        \"valid-lifetime\": 4000, \n"
+        "        \"renew-timer\": 1000, \n"
+        "        \"rebind-timer\": 2000, \n"
+        "        \"lease-database\": { \n"
+        "           \"type\": \"memfile\", \n"
+        "           \"persist\":false, \n"
+        "           \"lfc-interval\": 0  \n"
+        "        }, \n"
+        "        \"expired-leases-processing\": { \n"
+        "            \"reclaim-timer-wait-time\": 0, \n"
+        "            \"hold-reclaimed-time\": 0, \n"
+        "            \"flush-reclaimed-timer-wait-time\": 0 \n"
+        "        },"
+        "        \"subnet4\": [ \n";
+    string subnet1 =
+        "               {\"subnet\": \"192.2.0.0/24\", \"id\": 1, \n"
+        "                \"pools\": [{ \"pool\": \"192.2.0.1-192.2.0.50\" }]}\n";
+    string subnet2 =
+        "               {\"subnet\": \"192.2.1.0/24\", \"id\": 2, \n"
+        "                \"pools\": [{ \"pool\": \"192.2.1.1-192.2.1.50\" }]}\n";
+    string bad_subnet =
+        "               {\"comment\": \"192.2.2.0/24\", \"id\": 10, \n"
+        "                \"pools\": [{ \"pool\": \"192.2.2.1-192.2.2.50\" }]}\n";
+    string subnet_footer =
+        "          ] \n";
+    string option_def =
+        "    ,\"option-def\": [\n"
+        "    {\n"
+        "        \"name\": \"foo\",\n"
+        "        \"code\": 163,\n"
+        "        \"type\": \"uint32\",\n"
+        "        \"array\": false,\n"
+        "        \"record-types\": \"\",\n"
+        "        \"space\": \"dhcp4\",\n"
+        "        \"encapsulate\": \"\"\n"
+        "    }\n"
+        "]\n";
+    string option_data =
+        "    ,\"option-data\": [\n"
+        "    {\n"
+        "        \"name\": \"foo\",\n"
+        "        \"code\": 163,\n"
+        "        \"space\": \"dhcp4\",\n"
+        "        \"csv-format\": true,\n"
+        "        \"data\": \"12345\"\n"
+        "    }\n"
+        "]\n";
+    string control_socket =
+        "    ,\"control-socket\": { \n"
+        "       \"socket-type\": \"http\", \n"
+        "       \"socket-address\": \"127.0.0.1\", \n"
+        "       \"socket-port\": 18124 \n"
+        "    } \n";
+    string logger_txt =
+        "       ,\"loggers\": [ { \n"
+        "            \"name\": \"kea\", \n"
+        "            \"severity\": \"FATAL\", \n"
+        "            \"output-options\": [{ \n"
+        "                \"output\": \"/dev/null\", \n"
+        "                \"maxsize\": 0"
+        "            }] \n"
+        "        }] \n";
+
+    std::ostringstream os;
+
+    // Create a valid config with all the parts should parse
+    os << set_config_txt << ","
+        << args_txt
+        << dhcp4_cfg_txt
+        << subnet1
+        << subnet_footer
+        << option_def
+        << option_data
+        << control_socket
+        << logger_txt
+        << "}\n"                      // close dhcp4
+        << "}}";
+
+    // Send the config-set command
+    std::string response;
+    sendHttpCommand(os.str(), response);
+    EXPECT_EQ("[ { \"arguments\": { \"hash\": \"F6137301FF10D81585E041FD5FD8E91347ACADDE64F92ED03432FB100874DE02\" }, \"result\": 0, \"text\": \"Configuration successful.\" } ]",
+              response);
+
+    // Check that the config was indeed applied.
+    const Subnet4Collection* subnets =
+        CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
+    EXPECT_EQ(1, subnets->size());
+
+    OptionDefinitionPtr def =
+        LibDHCP::getRuntimeOptionDef(DHCP4_OPTION_SPACE, 163);
+    ASSERT_TRUE(def);
+
+    // Create a config with malformed subnet that should fail to parse.
+    os.str("");
+    os << set_config_txt << ","
+        << args_txt
+        << dhcp4_cfg_txt
+        << bad_subnet
+        << subnet_footer
+        << control_socket
+        << "}\n"                      // close dhcp4
+        << "}}";
+
+    // Send the config-set command
+    sendHttpCommand(os.str(), response);
+
+    // Should fail with a syntax error
+    EXPECT_EQ("[ { \"result\": 1, "
+              "\"text\": \"subnet configuration failed: mandatory 'subnet' "
+              "parameter is missing for a subnet being configured "
+              "(<string>:20:17)\" } ]",
+              response);
+
+    // Check that the config was not lost
+    subnets = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
+    EXPECT_EQ(1, subnets->size());
+
+    def = LibDHCP::getRuntimeOptionDef(DHCP4_OPTION_SPACE, 163);
+    ASSERT_TRUE(def);
+
+    // Create a valid config with two subnets and no command channel.
+    // It should succeed, client should still receive the response
+    os.str("");
+    os << set_config_txt << ","
+        << args_txt
+        << dhcp4_cfg_txt
+        << subnet1
+        << ",\n"
+        << subnet2
+        << subnet_footer
+        << "}\n"                      // close dhcp4
+        << "}}";
+
+    // Verify the HTTP control channel socket exists.
+    EXPECT_TRUE(HttpCommandMgr::instance().getHttpListener());
+
+    // Send the config-set command.
+    sendHttpCommand(os.str(), response);
+
+    // Verify the HTTP control channel socket no longer exists.
+    ASSERT_NO_THROW(HttpCommandMgr::instance().garbageCollectListeners());
+    EXPECT_FALSE(HttpCommandMgr::instance().getHttpListener());
+
+    // With no command channel, should still receive the response.
+    EXPECT_EQ("[ { \"arguments\": { \"hash\": \"04D35DF3CE1A558C6CCA9EA48B0F355C392CA9071B08E90E80A34F33C5939507\" }, \"result\": 0, \"text\": \"Configuration successful.\" } ]",
+              response);
+
+    // Check that the config was not lost
+    subnets = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
+    EXPECT_EQ(2, subnets->size());
+
+    // Clean up after the test.
+    CfgMgr::instance().clear();
+}
+
 // Tests if the server returns its configuration using config-get.
 // Note there are separate tests that verify if toElement() called by the
 // config-get handler are actually converting the configuration correctly.
-TEST_F(HttpCtrlChannelDhcpv4Test, configGet) {
+void
+BaseCtrlChannelDhcpv4Test::testConfigGet() {
     createHttpChannelServer();
     std::string response;
 
@@ -847,9 +1302,18 @@ TEST_F(HttpCtrlChannelDhcpv4Test, configGet) {
     EXPECT_TRUE(cfg->get("Dhcp4")->get("loggers"));
 }
 
+TEST_F(HttpCtrlChannelDhcpv4Test, configGet) {
+    testConfigGet();
+}
+
+TEST_F(HttpsCtrlChannelDhcpv4Test, configGet) {
+    testConfigGet();
+}
+
 // Tests if the server returns the hash of its configuration using
 // config-hash-get.
-TEST_F(HttpCtrlChannelDhcpv4Test, configHashGet) {
+void
+BaseCtrlChannelDhcpv4Test::testConfigHashGet() {
     createHttpChannelServer();
     std::string response;
 
@@ -876,6 +1340,14 @@ TEST_F(HttpCtrlChannelDhcpv4Test, configHashGet) {
     ASSERT_EQ(Element::string, hash->getType());
     // SHA-256 -> 64 hex digits.
     EXPECT_EQ(64, hash->stringValue().size());
+}
+
+TEST_F(HttpCtrlChannelDhcpv4Test, configHashGet) {
+    testConfigHashGet();
+}
+
+TEST_F(HttpsCtrlChannelDhcpv4Test, configHashGet) {
+    testConfigHashGet();
 }
 
 // Verify that the "config-test" command will do what we expect.
@@ -1019,8 +1491,151 @@ TEST_F(HttpCtrlChannelDhcpv4Test, configTest) {
     CfgMgr::instance().clear();
 }
 
-// This test verifies that the DHCP server handles version-get commands
-TEST_F(HttpCtrlChannelDhcpv4Test, getVersion) {
+// Verify that the "config-test" command will do what we expect.
+//////// TODO
+TEST_F(HttpsCtrlChannelDhcpv4Test, DISABLED_configTest) {
+    createHttpChannelServer();
+
+    // Define strings to permutate the config arguments
+    // (Note the line feeds makes errors easy to find)
+    string set_config_txt = "{ \"command\": \"config-set\" \n";
+    string config_test_txt = "{ \"command\": \"config-test\" \n";
+    string args_txt = " \"arguments\": { \n";
+    string dhcp4_cfg_txt =
+        "    \"Dhcp4\": { \n"
+        "        \"interfaces-config\": { \n"
+        "            \"interfaces\": [\"*\"] \n"
+        "        },   \n"
+        "        \"valid-lifetime\": 4000, \n"
+        "        \"renew-timer\": 1000, \n"
+        "        \"rebind-timer\": 2000, \n"
+        "        \"lease-database\": { \n"
+        "           \"type\": \"memfile\", \n"
+        "           \"persist\":false, \n"
+        "           \"lfc-interval\": 0  \n"
+        "        }, \n"
+        "        \"expired-leases-processing\": { \n"
+        "            \"reclaim-timer-wait-time\": 0, \n"
+        "            \"hold-reclaimed-time\": 0, \n"
+        "            \"flush-reclaimed-timer-wait-time\": 0 \n"
+        "        },"
+        "        \"subnet4\": [ \n";
+    string subnet1 =
+        "               {\"subnet\": \"192.2.0.0/24\", \"id\": 1, \n"
+        "                \"pools\": [{ \"pool\": \"192.2.0.1-192.2.0.50\" }]}\n";
+    string subnet2 =
+        "               {\"subnet\": \"192.2.1.0/24\", \"id\": 2, \n"
+        "                \"pools\": [{ \"pool\": \"192.2.1.1-192.2.1.50\" }]}\n";
+    string bad_subnet =
+        "               {\"comment\": \"192.2.2.0/24\", \"id\": 10, \n"
+        "                \"pools\": [{ \"pool\": \"192.2.2.1-192.2.2.50\" }]}\n";
+    string subnet_footer =
+        "          ] \n";
+    string control_socket =
+        "    ,\"control-socket\": { \n"
+        "       \"socket-type\": \"http\", \n"
+        "       \"socket-address\": \"127.0.0.1\", \n"
+        "       \"socket-port\": 18124 \n"
+        "    } \n";
+    string logger_txt =
+        "       ,\"loggers\": [ { \n"
+        "            \"name\": \"kea\", \n"
+        "            \"severity\": \"FATAL\", \n"
+        "            \"output-options\": [{ \n"
+        "                \"output\": \"/dev/null\", \n"
+        "                \"maxsize\": 0"
+        "            }] \n"
+        "        }] \n";
+
+    std::ostringstream os;
+
+    // Create a valid config with all the parts should parse
+    os << set_config_txt << ","
+        << args_txt
+        << dhcp4_cfg_txt
+        << subnet1
+        << subnet_footer
+        << control_socket
+        << logger_txt
+        << "}\n"                      // close dhcp4
+        << "}}";
+
+    // Send the config-set command
+    std::string response;
+    sendHttpCommand(os.str(), response);
+
+    EXPECT_EQ("[ { \"arguments\": { \"hash\": \"16940B601E652CAAC99B643AB6DF18D3FE6216DD22F535EE0676FB28A5ED40C9\" }, \"result\": 0, \"text\": \"Configuration successful.\" } ]",
+              response);
+
+    // Check that the config was indeed applied.
+    const Subnet4Collection* subnets =
+        CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
+    EXPECT_EQ(1, subnets->size());
+
+    // Create a config with malformed subnet that should fail to parse.
+    os.str("");
+    os << config_test_txt << ","
+        << args_txt
+        << dhcp4_cfg_txt
+        << bad_subnet
+        << subnet_footer
+        << control_socket
+        << "}\n"                      // close dhcp4
+        << "}}";
+
+    // Send the config-test command
+    sendHttpCommand(os.str(), response);
+
+    // Should fail with a syntax error
+    EXPECT_EQ("[ { \"result\": 1, "
+              "\"text\": \"subnet configuration failed: mandatory 'subnet' "
+              "parameter is missing for a subnet being configured "
+              "(<string>:20:17)\" } ]",
+              response);
+
+    // Check that the config was not lost
+    subnets = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
+    EXPECT_EQ(1, subnets->size());
+
+    // Create a valid config with two subnets and no command channel.
+    os.str("");
+    os << config_test_txt << ","
+        << args_txt
+        << dhcp4_cfg_txt
+        << subnet1
+        << ",\n"
+        << subnet2
+        << subnet_footer
+        << "}\n"                      // close dhcp4
+        << "}}";
+
+    // Verify the HTTP control channel socket exists.
+    EXPECT_TRUE(HttpCommandMgr::instance().getHttpListener());
+
+    // Send the config-test command.
+    sendHttpCommand(os.str(), response);
+
+    // Verify the HTTP control channel socket still exists.
+    ASSERT_NO_THROW(HttpCommandMgr::instance().garbageCollectListeners());
+    EXPECT_TRUE(HttpCommandMgr::instance().getHttpListener());
+
+    // Verify the configuration was successful.
+    EXPECT_EQ("[ { \"result\": 0, \"text\": \"Configuration seems sane. "
+              "Control-socket, hook-libraries, and D2 configuration were "
+              "sanity checked, but not applied.\" } ]",
+              response);
+
+    // Check that the config was not applied.
+    subnets = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
+    EXPECT_EQ(1, subnets->size());
+
+    // Clean up after the test.
+    CfgMgr::instance().clear();
+}
+
+// This test verifies that the DHCP server handles version-get commands.
+void
+BaseCtrlChannelDhcpv4Test::testGetVersion() {
     createHttpChannelServer();
 
     std::string response;
@@ -1037,8 +1652,17 @@ TEST_F(HttpCtrlChannelDhcpv4Test, getVersion) {
     EXPECT_TRUE(response.find("GTEST_VERSION") != string::npos);
 }
 
-// This test verifies that the DHCP server handles server-tag-get command
-TEST_F(HttpCtrlChannelDhcpv4Test, serverTagGet) {
+TEST_F(HttpCtrlChannelDhcpv4Test, getVersion) {
+    testGetVersion();
+}
+
+TEST_F(HttpsCtrlChannelDhcpv4Test, getVersion) {
+    testGetVersion();
+}
+
+// This test verifies that the DHCP server handles server-tag-get command.
+void
+BaseCtrlChannelDhcpv4Test::testServerTagGet() {
     createHttpChannelServer();
 
     std::string response;
@@ -1060,8 +1684,17 @@ TEST_F(HttpCtrlChannelDhcpv4Test, serverTagGet) {
     EXPECT_EQ(expected, response);
 }
 
-// This test verifies that the DHCP server handles status-get commands
-TEST_F(HttpCtrlChannelDhcpv4Test, statusGet) {
+TEST_F(HttpCtrlChannelDhcpv4Test, serverTagGet) {
+    testServerTagGet();
+}
+
+TEST_F(HttpsCtrlChannelDhcpv4Test, serverTagGet) {
+    testServerTagGet();
+}
+
+// This test verifies that the DHCP server handles status-get commands.
+void
+BaseCtrlChannelDhcpv4Test::testStatusGet() {
     createHttpChannelServer();
 
     // start_ is initialized by init.
@@ -1178,8 +1811,17 @@ TEST_F(HttpCtrlChannelDhcpv4Test, statusGet) {
     EXPECT_EQ(3, found_queue_stats->size());
 }
 
+TEST_F(HttpCtrlChannelDhcpv4Test, statusGet) {
+    testStatusGet();
+}
+
+TEST_F(HttpsCtrlChannelDhcpv4Test, statusGet) {
+    testStatusGet();
+}
+
 // Check that status is returned even if LeaseMgr and HostMgr are not created.
-TEST_F(HttpCtrlChannelDhcpv4Test, noManagers) {
+void
+BaseCtrlChannelDhcpv4Test::testNoManagers() {
     // Send the status-get command.
     createHttpChannelServer();
     LeaseMgrFactory::destroy();
@@ -1203,8 +1845,17 @@ TEST_F(HttpCtrlChannelDhcpv4Test, noManagers) {
     ASSERT_EQ(Element::map, arguments->getType());
 }
 
+TEST_F(HttpCtrlChannelDhcpv4Test, noManagers) {
+    testNoManagers();
+}
+
+TEST_F(HttpsCtrlChannelDhcpv4Test, noManagers) {
+    testNoManagers();
+}
+
 // Checks that socket status exists in status-get responses.
-TEST_F(HttpCtrlChannelDhcpv4Test, statusGetSockets) {
+void
+BaseCtrlChannelDhcpv4Test::testStatusGetSockets() {
     // Create dummy interfaces to test socket status.
     isc::dhcp::test::IfaceMgrTestConfig test_config(true);
 
@@ -1241,8 +1892,17 @@ TEST_F(HttpCtrlChannelDhcpv4Test, statusGetSockets) {
     ASSERT_FALSE(errors);
 }
 
+TEST_F(HttpCtrlChannelDhcpv4Test, statusGetSockets) {
+    testStatusGetSockets();
+}
+
+TEST_F(HttpsCtrlChannelDhcpv4Test, statusGetSockets) {
+    testStatusGetSockets();
+}
+
 // Checks that socket status includes errors in status-get responses.
-TEST_F(HttpCtrlChannelDhcpv4Test, statusGetSocketsErrors) {
+void
+BaseCtrlChannelDhcpv4Test::testStatusGetSocketsErrors() {
     // Create dummy interfaces to test socket status and add custom down and no-address interfaces.
     isc::dhcp::test::IfaceMgrTestConfig test_config(true);
     test_config.addIface("down_interface", 4);
@@ -1297,8 +1957,17 @@ TEST_F(HttpCtrlChannelDhcpv4Test, statusGetSocketsErrors) {
               error->stringValue());
 }
 
-// This test verifies that the DHCP server handles config-backend-pull command
-TEST_F(HttpCtrlChannelDhcpv4Test, configBackendPull) {
+TEST_F(HttpCtrlChannelDhcpv4Test, statusGetSocketsErrors) {
+    testStatusGetSocketsErrors();
+}
+
+TEST_F(HttpsCtrlChannelDhcpv4Test, statusGetSocketsErrors) {
+    testStatusGetSocketsErrors();
+}
+
+// This test verifies that the DHCP server handles config-backend-pull command.
+void
+BaseCtrlChannelDhcpv4Test::testConfigBackendPull() {
     createHttpChannelServer();
 
     std::string response;
@@ -1310,9 +1979,18 @@ TEST_F(HttpCtrlChannelDhcpv4Test, configBackendPull) {
     EXPECT_EQ(expected, response);
 }
 
+TEST_F(HttpCtrlChannelDhcpv4Test, configBackendPull) {
+    testConfigBackendPull();
+}
+
+TEST_F(HttpsCtrlChannelDhcpv4Test, configBackendPull) {
+    testConfigBackendPull();
+}
+
 // This test verifies that the DHCP server immediately reclaims expired
-// leases on leases-reclaim command
-TEST_F(HttpCtrlChannelDhcpv4Test, controlLeasesReclaim) {
+// leases on leases-reclaim command.
+void
+BaseCtrlChannelDhcpv4Test::testControlLeasesReclaim() {
     createHttpChannelServer();
 
     // Create expired leases. Leases are expired by 40 seconds ago
@@ -1372,9 +2050,18 @@ TEST_F(HttpCtrlChannelDhcpv4Test, controlLeasesReclaim) {
     EXPECT_TRUE(lease1->stateExpiredReclaimed());
 }
 
+TEST_F(HttpCtrlChannelDhcpv4Test, controlLeasesReclaim) {
+    testControlLeasesReclaim();
+}
+
+TEST_F(HttpsCtrlChannelDhcpv4Test, controlLeasesReclaim) {
+    testControlLeasesReclaim();
+}
+
 // This test verifies that the DHCP server immediately reclaims expired
-// leases on leases-reclaim command with remove = true
-TEST_F(HttpCtrlChannelDhcpv4Test, controlLeasesReclaimRemove) {
+// leases on leases-reclaim command with remove = true.
+void
+BaseCtrlChannelDhcpv4Test::testControlLeasesReclaimRemove() {
     createHttpChannelServer();
 
     // Create expired leases. Leases are expired by 40 seconds ago
@@ -1412,9 +2099,18 @@ TEST_F(HttpCtrlChannelDhcpv4Test, controlLeasesReclaimRemove) {
     ASSERT_FALSE(lease1);
 }
 
+TEST_F(HttpCtrlChannelDhcpv4Test, controlLeasesReclaimRemove) {
+    testControlLeasesReclaimRemove();
+}
+
+TEST_F(HttpsCtrlChannelDhcpv4Test, controlLeasesReclaimRemove) {
+    testControlLeasesReclaimRemove();
+}
+
 // Tests that the server properly responds to list-commands command sent
-// via ControlChannel
-TEST_F(HttpCtrlChannelDhcpv4Test, listCommands) {
+// via ControlChannel.
+void
+BaseCtrlChannelDhcpv4Test::testListCommands() {
     createHttpChannelServer();
     std::string response;
 
@@ -1449,8 +2145,17 @@ TEST_F(HttpCtrlChannelDhcpv4Test, listCommands) {
     checkListCommands(rsp, "statistic-sample-count-set-all");
 }
 
+TEST_F(HttpCtrlChannelDhcpv4Test, listCommands) {
+    testListCommands();
+}
+
+TEST_F(HttpsCtrlChannelDhcpv4Test, listCommands) {
+    testListCommands();
+}
+
 // Tests if config-write can be called without any parameters.
-TEST_F(HttpCtrlChannelDhcpv4Test, configWriteNoFilename) {
+void
+BaseCtrlChannelDhcpv4Test::testConfigWriteNoFilename() {
     createHttpChannelServer();
     std::string response;
 
@@ -1465,8 +2170,17 @@ TEST_F(HttpCtrlChannelDhcpv4Test, configWriteNoFilename) {
     ::remove("test1.json");
 }
 
+TEST_F(HttpCtrlChannelDhcpv4Test, configWriteNoFilename) {
+    testConfigWriteNoFilename();
+}
+
+TEST_F(HttpsCtrlChannelDhcpv4Test, configWriteNoFilename) {
+    testConfigWriteNoFilename();
+}
+
 // Tests if config-write can be called with a valid filename as parameter.
-TEST_F(HttpCtrlChannelDhcpv4Test, configWriteFilename) {
+void
+BaseCtrlChannelDhcpv4Test::testConfigWriteFilename() {
     createHttpChannelServer();
     std::string response;
 
@@ -1478,9 +2192,18 @@ TEST_F(HttpCtrlChannelDhcpv4Test, configWriteFilename) {
     ::remove("test2.json");
 }
 
+TEST_F(HttpCtrlChannelDhcpv4Test, configWriteFilename) {
+    testConfigWriteFilename();
+}
+
+TEST_F(HttpsCtrlChannelDhcpv4Test, configWriteFilename) {
+    testConfigWriteFilename();
+}
+
 // Tests if config-reload attempts to reload a file and reports that the
 // file is missing.
-TEST_F(HttpCtrlChannelDhcpv4Test, configReloadMissingFile) {
+void
+BaseCtrlChannelDhcpv4Test::testConfigReloadMissingFile() {
     createHttpChannelServer();
     std::string response;
 
@@ -1499,9 +2222,18 @@ TEST_F(HttpCtrlChannelDhcpv4Test, configReloadMissingFile) {
               response);
 }
 
+TEST_F(HttpCtrlChannelDhcpv4Test, configReloadMissingFile) {
+    testConfigReloadMissingFile();
+}
+
+TEST_F(HttpsCtrlChannelDhcpv4Test, configReloadMissingFile) {
+    testConfigReloadMissingFile();
+}
+
 // Tests if config-reload attempts to reload a file and reports that the
 // file is not a valid JSON.
-TEST_F(HttpCtrlChannelDhcpv4Test, configReloadBrokenFile) {
+void
+BaseCtrlChannelDhcpv4Test::testConfigReloadBrokenFile() {
     createHttpChannelServer();
     std::string response;
 
@@ -1527,9 +2259,18 @@ TEST_F(HttpCtrlChannelDhcpv4Test, configReloadBrokenFile) {
     ::remove("test7.json");
 }
 
+TEST_F(HttpCtrlChannelDhcpv4Test, configReloadBrokenFile) {
+    testConfigReloadBrokenFile();
+}
+
+TEST_F(HttpsCtrlChannelDhcpv4Test, configReloadBrokenFile) {
+    testConfigReloadBrokenFile();
+}
+
 // Tests if config-reload attempts to reload a file and reports that the
 // file is loaded correctly.
-TEST_F(HttpCtrlChannelDhcpv4Test, configReloadValid) {
+void
+BaseCtrlChannelDhcpv4Test::testConfigReloadValid() {
     createHttpChannelServer();
     std::string response;
 
@@ -1569,9 +2310,18 @@ TEST_F(HttpCtrlChannelDhcpv4Test, configReloadValid) {
     ::remove("test8.json");
 }
 
+TEST_F(HttpCtrlChannelDhcpv4Test, configReloadValid) {
+    testConfigReloadValid();
+}
+
+TEST_F(HttpsCtrlChannelDhcpv4Test, configReloadValid) {
+    testConfigReloadValid();
+}
+
 // Tests if config-reload attempts to reload a file and reports that the
 // file is loaded correctly.
-TEST_F(HttpCtrlChannelDhcpv4Test, configReloadDetectInterfaces) {
+void
+BaseCtrlChannelDhcpv4Test::testConfigReloadDetectInterfaces() {
     interfaces_ = "\"eth0\"";
     IfacePtr eth0 = IfaceMgrTestConfig::createIface("eth0", ETH0_INDEX,
                                                     "11:22:33:44:55:66");
@@ -1640,9 +2390,18 @@ TEST_F(HttpCtrlChannelDhcpv4Test, configReloadDetectInterfaces) {
     ::remove("test8.json");
 }
 
-// This test verifies that disable DHCP service command performs sanity check on
-// parameters.
-TEST_F(HttpCtrlChannelDhcpv4Test, dhcpDisableBadParam) {
+TEST_F(HttpCtrlChannelDhcpv4Test, configReloadDetectInterfaces) {
+    testConfigReloadDetectInterfaces();
+}
+
+TEST_F(HttpsCtrlChannelDhcpv4Test, configReloadDetectInterfaces) {
+    testConfigReloadDetectInterfaces();
+}
+
+// This test verifies that disable DHCP service command performs
+// sanity check on parameters.
+void
+BaseCtrlChannelDhcpv4Test::testDhcpDisableBadParam() {
     createHttpChannelServer();
     std::string response;
 
@@ -1723,8 +2482,17 @@ TEST_F(HttpCtrlChannelDhcpv4Test, dhcpDisableBadParam) {
               response);
 }
 
+TEST_F(HttpCtrlChannelDhcpv4Test, dhcpDisableBadParam) {
+    testDhcpDisableBadParam();
+}
+
+TEST_F(HttpsCtrlChannelDhcpv4Test, dhcpDisableBadParam) {
+    testDhcpDisableBadParam();
+}
+
 // This test verifies if it is possible to disable DHCP service via command.
-TEST_F(HttpCtrlChannelDhcpv4Test, dhcpDisable) {
+void
+BaseCtrlChannelDhcpv4Test::testDhcpDisable() {
     createHttpChannelServer();
     std::string response;
 
@@ -1806,9 +2574,18 @@ TEST_F(HttpCtrlChannelDhcpv4Test, dhcpDisable) {
     EXPECT_TRUE(server_->network_state_->isServiceEnabled());
 }
 
+TEST_F(HttpCtrlChannelDhcpv4Test, dhcpDisable) {
+    testDhcpDisable();
+}
+
+TEST_F(HttpsCtrlChannelDhcpv4Test, dhcpDisable) {
+    testDhcpDisable();
+}
+
 // This test verifies if it is possible to disable DHCP service using
 // the origin-id.
-TEST_F(HttpCtrlChannelDhcpv4Test, dhcpDisableOriginId) {
+void
+BaseCtrlChannelDhcpv4Test::testDhcpDisableOriginId() {
     createHttpChannelServer();
     std::string response;
 
@@ -1839,9 +2616,18 @@ TEST_F(HttpCtrlChannelDhcpv4Test, dhcpDisableOriginId) {
     EXPECT_TRUE(server_->network_state_->isServiceEnabled());
 }
 
+TEST_F(HttpCtrlChannelDhcpv4Test, dhcpDisableOriginId) {
+    testDhcpDisableOriginId();
+}
+
+TEST_F(HttpsCtrlChannelDhcpv4Test, dhcpDisableOriginId) {
+    testDhcpDisableOriginId();
+}
+
 // This test verifies that it is possible to disable DHCP service for a short
 // period of time, after which the service is automatically enabled.
-TEST_F(HttpCtrlChannelDhcpv4Test, dhcpDisableTemporarily) {
+void
+BaseCtrlChannelDhcpv4Test::testDhcpDisableTemporarily() {
     createHttpChannelServer();
     std::string response;
 
@@ -1869,9 +2655,18 @@ TEST_F(HttpCtrlChannelDhcpv4Test, dhcpDisableTemporarily) {
     EXPECT_TRUE(server_->network_state_->isDelayedEnableService());
 }
 
+TEST_F(HttpCtrlChannelDhcpv4Test, dhcpDisableTemporarily) {
+    testDhcpDisableTemporarily();
+}
+
+TEST_F(HttpsCtrlChannelDhcpv4Test, dhcpDisableTemporarily) {
+    testDhcpDisableTemporarily();
+}
+
 // This test verifies that enable DHCP service command performs sanity check on
 // parameters.
-TEST_F(HttpCtrlChannelDhcpv4Test, dhcpEnableBadParam) {
+void
+BaseCtrlChannelDhcpv4Test::testDhcpEnableBadParam() {
     createHttpChannelServer();
     std::string response;
     ConstElementPtr rsp;
@@ -1937,8 +2732,17 @@ TEST_F(HttpCtrlChannelDhcpv4Test, dhcpEnableBadParam) {
               response);
 }
 
+TEST_F(HttpCtrlChannelDhcpv4Test, dhcpEnableBadParam) {
+    testDhcpEnableBadParam();
+}
+
+TEST_F(HttpsCtrlChannelDhcpv4Test, dhcpEnableBadParam) {
+    testDhcpEnableBadParam();
+}
+
 // This test verifies if it is possible to enable DHCP service via command.
-TEST_F(HttpCtrlChannelDhcpv4Test, dhcpEnable) {
+void
+BaseCtrlChannelDhcpv4Test::testDhcpEnable() {
     createHttpChannelServer();
     std::string response;
 
@@ -2016,9 +2820,18 @@ TEST_F(HttpCtrlChannelDhcpv4Test, dhcpEnable) {
     EXPECT_TRUE(server_->network_state_->isServiceEnabled());
 }
 
+TEST_F(HttpCtrlChannelDhcpv4Test, dhcpEnable) {
+    testDhcpEnable();
+}
+
+TEST_F(HttpsCtrlChannelDhcpv4Test, dhcpEnable) {
+    testDhcpEnable();
+}
+
 // This test verifies if it is possible to enable DHCP service using
 // the origin-id.
-TEST_F(HttpCtrlChannelDhcpv4Test, dhcpEnableOriginId) {
+void
+BaseCtrlChannelDhcpv4Test::testDhcpEnableOriginId() {
     createHttpChannelServer();
     std::string response;
 
@@ -2069,6 +2882,14 @@ TEST_F(HttpCtrlChannelDhcpv4Test, dhcpEnableOriginId) {
 
     // The service should be enabled.
     EXPECT_TRUE(server_->network_state_->isServiceEnabled());
+}
+
+TEST_F(HttpCtrlChannelDhcpv4Test, dhcpEnableOriginId) {
+    testDhcpEnableOriginId();
+}
+
+TEST_F(HttpsCtrlChannelDhcpv4Test, dhcpEnableOriginId) {
+    testDhcpEnableOriginId();
 }
 
 /// Verify that concurrent connections over the HTTP control channel can be
@@ -2135,8 +2956,74 @@ TEST_F(HttpCtrlChannelDhcpv4Test, concurrentConnections) {
     }
 }
 
+/// Verify that concurrent connections over the HTTPS control channel can be
+/// established.
+////////// TODO
+TEST_F(HttpsCtrlChannelDhcpv4Test, DISABLED_concurrentConnections) {
+    EXPECT_NO_THROW(createHttpChannelServer());
+
+    const size_t NB = 5;
+    vector<IOServicePtr> io_services;
+    vector<TestHttpClientPtr> clients;
+
+    // Create clients.
+    for (size_t i = 0; i < NB; ++i) {
+        IOServicePtr io_service(new IOService());
+        io_services.push_back(io_service);
+        TestHttpClientPtr client(new TestHttpClient(io_service, SERVER_ADDRESS,
+                                                    SERVER_PORT));
+        clients.push_back(client);
+    }
+    ASSERT_EQ(NB, io_services.size());
+    ASSERT_EQ(NB, clients.size());
+
+    // Send requests and receive responses.
+    atomic<size_t> terminated;
+    terminated = 0;
+    vector<thread> threads;
+    const string command = "{ \"command\": \"list-commands\" }";
+    for (size_t i = 0; i < NB; ++i) {
+        threads.push_back(thread([&, i] () {
+            TestHttpClientPtr client = clients[i];
+            ASSERT_TRUE(client);
+            client->startRequest(buildPostStr(command));
+            IOServicePtr io_service = io_services[i];
+            ASSERT_TRUE(io_service);
+            io_service->run();
+            ASSERT_TRUE(client->receiveDone());
+            HttpResponsePtr hr;
+            ASSERT_NO_THROW(hr = parseResponse(client->getResponse()));
+            string response = hr->getBody();
+            EXPECT_TRUE(response.find("\"result\": 0") != std::string::npos);
+            client->close();
+            ++terminated;
+        }));
+    }
+    ASSERT_EQ(NB, threads.size());
+
+    // Run the service IO services with a timeout.
+    IntervalTimer test_timer(getIOService());
+    bool timeout = false;
+    test_timer.setup([&timeout] () { timeout = true; },
+                     TEST_TIMEOUT, IntervalTimer::ONE_SHOT);
+    while (!timeout && (terminated < NB)) {
+        getIOService()->poll();
+    }
+    test_timer.cancel();
+    EXPECT_FALSE(timeout);
+
+    // Cleanup clients.
+    for (IOServicePtr io_service : io_services) {
+        io_service->stopAndPoll();
+    }
+    for (auto th = threads.begin(); th != threads.end(); ++th) {
+        th->join();
+    }
+}
+
 // This test verifies that the server can receive and process a large command.
-TEST_F(HttpCtrlChannelDhcpv4Test, longCommand) {
+void
+BaseCtrlChannelDhcpv4Test::testLongCommand() {
 
     ostringstream command;
 
@@ -2184,8 +3071,17 @@ TEST_F(HttpCtrlChannelDhcpv4Test, longCommand) {
               response);
 }
 
+TEST_F(HttpCtrlChannelDhcpv4Test, longCommand) {
+    testLongCommand();
+}
+
+TEST_F(HttpsCtrlChannelDhcpv4Test, longCommand) {
+    testLongCommand();
+}
+
 // This test verifies that the server can send long response to the client.
-TEST_F(HttpCtrlChannelDhcpv4Test, longResponse) {
+void
+BaseCtrlChannelDhcpv4Test::testLongResponse() {
     // We need to generate large response. The simplest way is to create
     // a command and a handler which will generate some static response
     // of a desired size.
@@ -2212,9 +3108,18 @@ TEST_F(HttpCtrlChannelDhcpv4Test, longResponse) {
     EXPECT_EQ(reference_response, response);
 }
 
+TEST_F(HttpCtrlChannelDhcpv4Test, longResponse) {
+    testLongResponse();
+}
+
+TEST_F(HttpsCtrlChannelDhcpv4Test, longResponse) {
+    testLongResponse();
+}
+
 // This test verifies that the server signals timeout if the transmission
 // takes too long, having received no data from the client.
-TEST_F(HttpCtrlChannelDhcpv4Test, connectionTimeoutNoData) {
+void
+BaseCtrlChannelDhcpv4Test::testConnectionTimeoutNoData() {
     // Set connection timeout to 2s to prevent long waiting time for the
     // timeout during this test.
     const unsigned short timeout = 2000;
@@ -2226,6 +3131,14 @@ TEST_F(HttpCtrlChannelDhcpv4Test, connectionTimeoutNoData) {
     ASSERT_NO_THROW(sendHttpCommand("{ \"command\": ", response));
 
     EXPECT_EQ("{ \"result\": 400, \"text\": \"Bad Request\" }", response);
+}
+
+TEST_F(HttpCtrlChannelDhcpv4Test, connectionTimeoutNoData) {
+    testConnectionTimeoutNoData();
+}
+
+TEST_F(HttpsCtrlChannelDhcpv4Test, connectionTimeoutNoData) {
+    testConnectionTimeoutNoData();
 }
 
 } // End of anonymous namespace

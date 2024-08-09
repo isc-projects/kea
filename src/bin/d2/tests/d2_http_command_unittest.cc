@@ -480,13 +480,6 @@ const char* BaseCtrlChannelD2Test::CFG_TEST_FILE = "d2-http-test-config.json";
 class HttpCtrlChannelD2Test : public BaseCtrlChannelD2Test {
 public:
 
-    /// @brief Constructor.
-    HttpCtrlChannelD2Test() : BaseCtrlChannelD2Test() {
-    }
-
-    /// @brief Destructor.
-    virtual ~HttpCtrlChannelD2Test() = default;
-
     /// @brief Create a server with a HTTP command channel.
     virtual void createHttpChannelServer() override {
         // Just a simple config. The important part here is the socket
@@ -568,13 +561,6 @@ public:
 /// @brief Fixture class intended for testing HTTPS control channel in D2.
 class HttpsCtrlChannelD2Test : public BaseCtrlChannelD2Test {
 public:
-
-    /// @brief Constructor.
-    HttpsCtrlChannelD2Test() : BaseCtrlChannelD2Test() {
-    }
-
-    /// @brief Destructor.
-    virtual ~HttpsCtrlChannelD2Test() = default;
 
     /// @brief Create a server with a HTTP command channel.
     virtual void createHttpChannelServer() override {

@@ -25,6 +25,7 @@ AM_CPPFLAGS += -DINSTALL_PROG=\"$(abs_top_srcdir)/install-sh\"
 AM_CPPFLAGS += -DCFG_EXAMPLES=\"$(abs_top_srcdir)/doc/examples/kea4\"
 AM_CPPFLAGS += -DSYNTAX_FILE=\"$(abs_srcdir)/../dhcp4_parser.yy\"
 AM_CPPFLAGS += -DKEA_LFC_EXECUTABLE=\"$(abs_top_builddir)/src/bin/lfc/kea-lfc\"
+AM_CPPFLAGS += -DTEST_CA_DIR=\"$(srcdir)/../../lib/asiolink/testutils/ca\"
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 
@@ -160,6 +161,7 @@ dhcp4_unittests_LDADD += $(top_builddir)/src/lib/database/testutils/libdatabaset
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/database/libkea-database.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/testutils/libkea-testutils.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
+dhcp4_unittests_LDADD += $(top_builddir)/src/lib/asiolink/testutils/libasiolinktest.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/dns/libkea-dns++.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
