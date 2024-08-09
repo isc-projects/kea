@@ -25,7 +25,7 @@ AM_CPPFLAGS += -DINSTALL_PROG=\"$(abs_top_srcdir)/install-sh\"
 AM_CPPFLAGS += -DCFG_EXAMPLES=\"$(abs_top_srcdir)/doc/examples/kea6\"
 AM_CPPFLAGS += -DSYNTAX_FILE=\"$(abs_srcdir)/../dhcp6_parser.yy\"
 AM_CPPFLAGS += -DKEA_LFC_EXECUTABLE=\"$(abs_top_builddir)/src/bin/lfc/kea-lfc\"
-AM_CPPFLAGS += -DTEST_CA_DIR=\"$(srcdir)/../../lib/asiolink/testutils/ca\"
+AM_CPPFLAGS += -DTEST_CA_DIR=\"$(abs_top_srcdir)/src/lib/asiolink/testutils/ca\"
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 

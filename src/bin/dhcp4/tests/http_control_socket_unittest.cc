@@ -1206,8 +1206,14 @@ TEST_F(HttpsCtrlChannelDhcpv4Test, configSet) {
     // Send the config-set command
     std::string response;
     sendHttpCommand(os.str(), response);
-    EXPECT_EQ("[ { \"arguments\": { \"hash\": \"B95F3C56211CF07A9A5D8C173568CEC1DE74C6B6E3DAF3EDD4381841CED4A255\" }, \"result\": 0, \"text\": \"Configuration successful.\" } ]",
-              response);
+    // Verify the configuration was successful. The config contains random
+    // file paths (CA directory), so the hash will be different each time.
+    // As such, we can do simplified checks:
+    // - verify the "result": 0 is there
+    // - verify the "text": "Configuration successful." is there
+    EXPECT_NE(response.find("\"result\": 0"), std::string::npos);
+    EXPECT_NE(response.find("\"text\": \"Configuration successful.\""),
+              std::string::npos);
 
     // Check that the config was indeed applied.
     const Subnet4Collection* subnets =
@@ -1579,8 +1585,14 @@ TEST_F(HttpsCtrlChannelDhcpv4Test, configTest) {
     std::string response;
     sendHttpCommand(os.str(), response);
 
-    EXPECT_EQ("[ { \"arguments\": { \"hash\": \"E3369C069976A5EB4CD70B625752E709E855107D49527DEDED8636FCD0F78451\" }, \"result\": 0, \"text\": \"Configuration successful.\" } ]",
-              response);
+    // Verify the configuration was successful. The config contains random
+    // file paths (CA directory), so the hash will be different each time.
+    // As such, we can do simplified checks:
+    // - verify the "result": 0 is there
+    // - verify the "text": "Configuration successful." is there
+    EXPECT_NE(response.find("\"result\": 0"), std::string::npos);
+    EXPECT_NE(response.find("\"text\": \"Configuration successful.\""),
+              std::string::npos);
 
     // Check that the config was indeed applied.
     const Subnet4Collection* subnets =

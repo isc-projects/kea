@@ -1055,8 +1055,15 @@ TEST_F(HttpsCtrlChannelD2Test, configTest) {
     ASSERT_TRUE(proc);
     ConstElementPtr answer = proc->configure(config, false);
     ASSERT_TRUE(answer);
-    EXPECT_EQ("{ \"arguments\": { \"hash\": \"A6E28D3F41B4502EC72F3599E34D2785442D60C6F4FABAC3D1C4A4C49FE3D3C2\" }, \"result\": 0, \"text\": \"Configuration applied successfully.\" }",
-              answer->str());
+    // Verify the configuration was successful. The config contains random
+    // file paths (CA directory), so the hash will be different each time.
+    // As such, we can do simplified checks:
+    // - verify the "result": 0 is there
+    // - verify the "text": "Configuration applied successfully." is there
+    string answer_txt = answer->str();
+    EXPECT_NE(answer_txt.find("\"result\": 0"), std::string::npos);
+    EXPECT_NE(answer_txt.find("\"text\": \"Configuration applied successfully.\""),
+              std::string::npos);
     ASSERT_NO_THROW(d2Controller()->registerCommands());
 
     // Check that the config was indeed applied.
@@ -1303,8 +1310,15 @@ TEST_F(HttpsCtrlChannelD2Test, configSet) {
     ASSERT_TRUE(proc);
     ConstElementPtr answer = proc->configure(config, false);
     ASSERT_TRUE(answer);
-    EXPECT_EQ("{ \"arguments\": { \"hash\": \"A6E28D3F41B4502EC72F3599E34D2785442D60C6F4FABAC3D1C4A4C49FE3D3C2\" }, \"result\": 0, \"text\": \"Configuration applied successfully.\" }",
-              answer->str());
+    // Verify the configuration was successful. The config contains random
+    // file paths (CA directory), so the hash will be different each time.
+    // As such, we can do simplified checks:
+    // - verify the "result": 0 is there
+    // - verify the "text": "Configuration applied successfully." is there
+    string answer_txt = answer->str();
+    EXPECT_NE(answer_txt.find("\"result\": 0"), std::string::npos);
+    EXPECT_NE(answer_txt.find("\"text\": \"Configuration applied successfully.\""),
+              std::string::npos);
     ASSERT_NO_THROW(d2Controller()->registerCommands());
 
     // Check that the config was indeed applied.
