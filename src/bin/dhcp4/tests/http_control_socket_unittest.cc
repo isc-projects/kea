@@ -1017,16 +1017,16 @@ TEST_F(HttpCtrlChannelDhcpv4Test, configSet) {
 
     // Create a valid config with all the parts should parse
     os << set_config_txt << ","
-        << args_txt
-        << dhcp4_cfg_txt
-        << subnet1
-        << subnet_footer
-        << option_def
-        << option_data
-        << control_socket
-        << logger_txt
-        << "}\n"                      // close dhcp4
-        << "}}";
+       << args_txt
+       << dhcp4_cfg_txt
+       << subnet1
+       << subnet_footer
+       << option_def
+       << option_data
+       << control_socket
+       << logger_txt
+       << "}\n"                      // close dhcp4
+       << "}}";
 
     // Send the config-set command
     std::string response;
@@ -1046,13 +1046,13 @@ TEST_F(HttpCtrlChannelDhcpv4Test, configSet) {
     // Create a config with malformed subnet that should fail to parse.
     os.str("");
     os << set_config_txt << ","
-        << args_txt
-        << dhcp4_cfg_txt
-        << bad_subnet
-        << subnet_footer
-        << control_socket
-        << "}\n"                      // close dhcp4
-        << "}}";
+       << args_txt
+       << dhcp4_cfg_txt
+       << bad_subnet
+       << subnet_footer
+       << control_socket
+       << "}\n"                      // close dhcp4
+       << "}}";
 
     // Send the config-set command
     sendHttpCommand(os.str(), response);
@@ -1075,14 +1075,14 @@ TEST_F(HttpCtrlChannelDhcpv4Test, configSet) {
     // It should succeed, client should still receive the response
     os.str("");
     os << set_config_txt << ","
-        << args_txt
-        << dhcp4_cfg_txt
-        << subnet1
-        << ",\n"
-        << subnet2
-        << subnet_footer
-        << "}\n"                      // close dhcp4
-        << "}}";
+       << args_txt
+       << dhcp4_cfg_txt
+       << subnet1
+       << ",\n"
+       << subnet2
+       << subnet_footer
+       << "}\n"                      // close dhcp4
+       << "}}";
 
     // Verify the HTTP control channel socket exists.
     EXPECT_TRUE(HttpCommandMgr::instance().getHttpListener());
@@ -1107,12 +1107,12 @@ TEST_F(HttpCtrlChannelDhcpv4Test, configSet) {
 }
 
 // Check that the "config-set" command will replace current configuration
-///////////// TODO
-TEST_F(HttpsCtrlChannelDhcpv4Test, DISABLED_configSet) {
+TEST_F(HttpsCtrlChannelDhcpv4Test, configSet) {
     createHttpChannelServer();
 
     // Define strings to permutate the config arguments
     // (Note the line feeds makes errors easy to find)
+    string ca_dir(string(TEST_CA_DIR));
     string set_config_txt = "{ \"command\": \"config-set\" \n";
     string args_txt = " \"arguments\": { \n";
     string dhcp4_cfg_txt =
@@ -1167,11 +1167,12 @@ TEST_F(HttpsCtrlChannelDhcpv4Test, DISABLED_configSet) {
         "        \"data\": \"12345\"\n"
         "    }\n"
         "]\n";
-    string control_socket =
+    string control_socket_header =
         "    ,\"control-socket\": { \n"
         "       \"socket-type\": \"http\", \n"
         "       \"socket-address\": \"127.0.0.1\", \n"
-        "       \"socket-port\": 18124 \n"
+        "       \"socket-port\": 18124, \n";
+    string control_socket_footer =
         "    } \n";
     string logger_txt =
         "       ,\"loggers\": [ { \n"
@@ -1187,21 +1188,25 @@ TEST_F(HttpsCtrlChannelDhcpv4Test, DISABLED_configSet) {
 
     // Create a valid config with all the parts should parse
     os << set_config_txt << ","
-        << args_txt
-        << dhcp4_cfg_txt
-        << subnet1
-        << subnet_footer
-        << option_def
-        << option_data
-        << control_socket
-        << logger_txt
-        << "}\n"                      // close dhcp4
-        << "}}";
+       << args_txt
+       << dhcp4_cfg_txt
+       << subnet1
+       << subnet_footer
+       << option_def
+       << option_data
+       << control_socket_header
+       << "        \"trust-anchor\": \"" << ca_dir << "/kea-ca.crt\", \n"
+       << "        \"cert-file\": \"" << ca_dir << "/kea-server.crt\", \n"
+       << "        \"key-file\": \"" << ca_dir << "/kea-server.key\" \n"
+       << control_socket_footer
+       << logger_txt
+       << "}\n"                      // close dhcp4
+       << "}}";
 
     // Send the config-set command
     std::string response;
     sendHttpCommand(os.str(), response);
-    EXPECT_EQ("[ { \"arguments\": { \"hash\": \"F6137301FF10D81585E041FD5FD8E91347ACADDE64F92ED03432FB100874DE02\" }, \"result\": 0, \"text\": \"Configuration successful.\" } ]",
+    EXPECT_EQ("[ { \"arguments\": { \"hash\": \"B95F3C56211CF07A9A5D8C173568CEC1DE74C6B6E3DAF3EDD4381841CED4A255\" }, \"result\": 0, \"text\": \"Configuration successful.\" } ]",
               response);
 
     // Check that the config was indeed applied.
@@ -1216,13 +1221,17 @@ TEST_F(HttpsCtrlChannelDhcpv4Test, DISABLED_configSet) {
     // Create a config with malformed subnet that should fail to parse.
     os.str("");
     os << set_config_txt << ","
-        << args_txt
-        << dhcp4_cfg_txt
-        << bad_subnet
-        << subnet_footer
-        << control_socket
-        << "}\n"                      // close dhcp4
-        << "}}";
+       << args_txt
+       << dhcp4_cfg_txt
+       << bad_subnet
+       << subnet_footer
+       << control_socket_header
+       << "        \"trust-anchor\": \"" << ca_dir << "/kea-ca.crt\", \n"
+       << "        \"cert-file\": \"" << ca_dir << "/kea-server.crt\", \n"
+       << "        \"key-file\": \"" << ca_dir << "/kea-server.key\" \n"
+       << control_socket_footer
+       << "}\n"                      // close dhcp4
+       << "}}";
 
     // Send the config-set command
     sendHttpCommand(os.str(), response);
@@ -1245,14 +1254,14 @@ TEST_F(HttpsCtrlChannelDhcpv4Test, DISABLED_configSet) {
     // It should succeed, client should still receive the response
     os.str("");
     os << set_config_txt << ","
-        << args_txt
-        << dhcp4_cfg_txt
-        << subnet1
-        << ",\n"
-        << subnet2
-        << subnet_footer
-        << "}\n"                      // close dhcp4
-        << "}}";
+       << args_txt
+       << dhcp4_cfg_txt
+       << subnet1
+       << ",\n"
+       << subnet2
+       << subnet_footer
+       << "}\n"                      // close dhcp4
+       << "}}";
 
     // Verify the HTTP control channel socket exists.
     EXPECT_TRUE(HttpCommandMgr::instance().getHttpListener());
@@ -1409,14 +1418,14 @@ TEST_F(HttpCtrlChannelDhcpv4Test, configTest) {
 
     // Create a valid config with all the parts should parse
     os << set_config_txt << ","
-        << args_txt
-        << dhcp4_cfg_txt
-        << subnet1
-        << subnet_footer
-        << control_socket
-        << logger_txt
-        << "}\n"                      // close dhcp4
-        << "}}";
+       << args_txt
+       << dhcp4_cfg_txt
+       << subnet1
+       << subnet_footer
+       << control_socket
+       << logger_txt
+       << "}\n"                      // close dhcp4
+       << "}}";
 
     // Send the config-set command
     std::string response;
@@ -1433,13 +1442,13 @@ TEST_F(HttpCtrlChannelDhcpv4Test, configTest) {
     // Create a config with malformed subnet that should fail to parse.
     os.str("");
     os << config_test_txt << ","
-        << args_txt
-        << dhcp4_cfg_txt
-        << bad_subnet
-        << subnet_footer
-        << control_socket
-        << "}\n"                      // close dhcp4
-        << "}}";
+       << args_txt
+       << dhcp4_cfg_txt
+       << bad_subnet
+       << subnet_footer
+       << control_socket
+       << "}\n"                      // close dhcp4
+       << "}}";
 
     // Send the config-test command
     sendHttpCommand(os.str(), response);
@@ -1458,14 +1467,14 @@ TEST_F(HttpCtrlChannelDhcpv4Test, configTest) {
     // Create a valid config with two subnets and no command channel.
     os.str("");
     os << config_test_txt << ","
-        << args_txt
-        << dhcp4_cfg_txt
-        << subnet1
-        << ",\n"
-        << subnet2
-        << subnet_footer
-        << "}\n"                      // close dhcp4
-        << "}}";
+       << args_txt
+       << dhcp4_cfg_txt
+       << subnet1
+       << ",\n"
+       << subnet2
+       << subnet_footer
+       << "}\n"                      // close dhcp4
+       << "}}";
 
     // Verify the HTTP control channel socket exists.
     EXPECT_TRUE(HttpCommandMgr::instance().getHttpListener());
@@ -1493,11 +1502,12 @@ TEST_F(HttpCtrlChannelDhcpv4Test, configTest) {
 
 // Verify that the "config-test" command will do what we expect.
 //////// TODO
-TEST_F(HttpsCtrlChannelDhcpv4Test, DISABLED_configTest) {
+TEST_F(HttpsCtrlChannelDhcpv4Test, configTest) {
     createHttpChannelServer();
 
     // Define strings to permutate the config arguments
     // (Note the line feeds makes errors easy to find)
+    string ca_dir(string(TEST_CA_DIR));
     string set_config_txt = "{ \"command\": \"config-set\" \n";
     string config_test_txt = "{ \"command\": \"config-test\" \n";
     string args_txt = " \"arguments\": { \n";
@@ -1531,11 +1541,12 @@ TEST_F(HttpsCtrlChannelDhcpv4Test, DISABLED_configTest) {
         "                \"pools\": [{ \"pool\": \"192.2.2.1-192.2.2.50\" }]}\n";
     string subnet_footer =
         "          ] \n";
-    string control_socket =
+    string control_socket_header =
         "    ,\"control-socket\": { \n"
         "       \"socket-type\": \"http\", \n"
         "       \"socket-address\": \"127.0.0.1\", \n"
-        "       \"socket-port\": 18124 \n"
+        "       \"socket-port\": 18124, \n";
+    string control_socket_footer =
         "    } \n";
     string logger_txt =
         "       ,\"loggers\": [ { \n"
@@ -1551,20 +1562,24 @@ TEST_F(HttpsCtrlChannelDhcpv4Test, DISABLED_configTest) {
 
     // Create a valid config with all the parts should parse
     os << set_config_txt << ","
-        << args_txt
-        << dhcp4_cfg_txt
-        << subnet1
-        << subnet_footer
-        << control_socket
-        << logger_txt
-        << "}\n"                      // close dhcp4
-        << "}}";
+       << args_txt
+       << dhcp4_cfg_txt
+       << subnet1
+       << subnet_footer
+       << control_socket_header
+       << "        \"trust-anchor\": \"" << ca_dir << "/kea-ca.crt\", \n"
+       << "        \"cert-file\": \"" << ca_dir << "/kea-server.crt\", \n"
+       << "        \"key-file\": \"" << ca_dir << "/kea-server.key\" \n"
+       << control_socket_footer
+       << logger_txt
+       << "}\n"                      // close dhcp4
+       << "}}";
 
     // Send the config-set command
     std::string response;
     sendHttpCommand(os.str(), response);
 
-    EXPECT_EQ("[ { \"arguments\": { \"hash\": \"16940B601E652CAAC99B643AB6DF18D3FE6216DD22F535EE0676FB28A5ED40C9\" }, \"result\": 0, \"text\": \"Configuration successful.\" } ]",
+    EXPECT_EQ("[ { \"arguments\": { \"hash\": \"E3369C069976A5EB4CD70B625752E709E855107D49527DEDED8636FCD0F78451\" }, \"result\": 0, \"text\": \"Configuration successful.\" } ]",
               response);
 
     // Check that the config was indeed applied.
@@ -1575,13 +1590,17 @@ TEST_F(HttpsCtrlChannelDhcpv4Test, DISABLED_configTest) {
     // Create a config with malformed subnet that should fail to parse.
     os.str("");
     os << config_test_txt << ","
-        << args_txt
-        << dhcp4_cfg_txt
-        << bad_subnet
-        << subnet_footer
-        << control_socket
-        << "}\n"                      // close dhcp4
-        << "}}";
+       << args_txt
+       << dhcp4_cfg_txt
+       << bad_subnet
+       << subnet_footer
+       << control_socket_header
+       << "        \"trust-anchor\": \"" << ca_dir << "/kea-ca.crt\", \n"
+       << "        \"cert-file\": \"" << ca_dir << "/kea-server.crt\", \n"
+       << "        \"key-file\": \"" << ca_dir << "/kea-server.key\" \n"
+       << control_socket_footer
+       << "}\n"                      // close dhcp4
+       << "}}";
 
     // Send the config-test command
     sendHttpCommand(os.str(), response);
@@ -1600,14 +1619,14 @@ TEST_F(HttpsCtrlChannelDhcpv4Test, DISABLED_configTest) {
     // Create a valid config with two subnets and no command channel.
     os.str("");
     os << config_test_txt << ","
-        << args_txt
-        << dhcp4_cfg_txt
-        << subnet1
-        << ",\n"
-        << subnet2
-        << subnet_footer
-        << "}\n"                      // close dhcp4
-        << "}}";
+       << args_txt
+       << dhcp4_cfg_txt
+       << subnet1
+       << ",\n"
+       << subnet2
+       << subnet_footer
+       << "}\n"                      // close dhcp4
+       << "}}";
 
     // Verify the HTTP control channel socket exists.
     EXPECT_TRUE(HttpCommandMgr::instance().getHttpListener());
@@ -2958,20 +2977,25 @@ TEST_F(HttpCtrlChannelDhcpv4Test, concurrentConnections) {
 
 /// Verify that concurrent connections over the HTTPS control channel can be
 /// established.
-////////// TODO
-TEST_F(HttpsCtrlChannelDhcpv4Test, DISABLED_concurrentConnections) {
+TEST_F(HttpsCtrlChannelDhcpv4Test, concurrentConnections) {
     EXPECT_NO_THROW(createHttpChannelServer());
 
     const size_t NB = 5;
     vector<IOServicePtr> io_services;
-    vector<TestHttpClientPtr> clients;
+    vector<TestHttpsClientPtr> clients;
+    vector<TlsContextPtr> tls_contexts;
 
     // Create clients.
     for (size_t i = 0; i < NB; ++i) {
         IOServicePtr io_service(new IOService());
         io_services.push_back(io_service);
-        TestHttpClientPtr client(new TestHttpClient(io_service, SERVER_ADDRESS,
-                                                    SERVER_PORT));
+        TlsContextPtr tls_context;
+        configClient(tls_context);
+        tls_contexts.push_back(tls_context);
+        TestHttpsClientPtr client(new TestHttpsClient(io_service,
+                                                      tls_context,
+                                                      SERVER_ADDRESS,
+                                                      SERVER_PORT));
         clients.push_back(client);
     }
     ASSERT_EQ(NB, io_services.size());
@@ -2984,7 +3008,7 @@ TEST_F(HttpsCtrlChannelDhcpv4Test, DISABLED_concurrentConnections) {
     const string command = "{ \"command\": \"list-commands\" }";
     for (size_t i = 0; i < NB; ++i) {
         threads.push_back(thread([&, i] () {
-            TestHttpClientPtr client = clients[i];
+            TestHttpsClientPtr client = clients[i];
             ASSERT_TRUE(client);
             client->startRequest(buildPostStr(command));
             IOServicePtr io_service = io_services[i];
