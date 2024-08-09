@@ -30,6 +30,7 @@ AM_CPPFLAGS += -DTEST_DATA_BUILDDIR=\"$(abs_top_builddir)/src/bin/d2/tests\"
 AM_CPPFLAGS += -DINSTALL_PROG=\"$(abs_top_srcdir)/install-sh\"
 AM_CPPFLAGS += -DCFG_EXAMPLES=\"$(abs_top_srcdir)/doc/examples/ddns\"
 AM_CPPFLAGS += -DSYNTAX_FILE=\"$(abs_srcdir)/../d2_parser.yy\"
+AM_CPPFLAGS += -DTEST_CA_DIR=\"$(srcdir)/../../lib/asiolink/testutils/ca\"
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 
@@ -82,6 +83,7 @@ d2_unittests_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 d2_unittests_LDADD += $(top_builddir)/src/lib/database/libkea-database.la
 d2_unittests_LDADD += $(top_builddir)/src/lib/testutils/libkea-testutils.la
 d2_unittests_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
+d2_unittests_LDADD += $(top_builddir)/src/lib/asiolink/testutils/libasiolinktest.la
 d2_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 d2_unittests_LDADD += $(top_builddir)/src/lib/dns/libkea-dns++.la
 d2_unittests_LDADD += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
