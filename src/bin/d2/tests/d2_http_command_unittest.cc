@@ -1772,13 +1772,11 @@ BaseCtrlChannelD2Test::testLongCommand() {
               response);
 }
 
-// Because of a bug where a segment is repeated from time to time
-// disable this test.
-TEST_F(HttpCtrlChannelD2Test, DISABLED_longCommand) {
+TEST_F(HttpCtrlChannelD2Test, longCommand) {
     testLongCommand();
 }
 
-TEST_F(HttpsCtrlChannelD2Test, DISABLED_longCommand) {
+TEST_F(HttpsCtrlChannelD2Test, longCommand) {
     testLongCommand();
 }
 

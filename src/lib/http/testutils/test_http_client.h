@@ -21,6 +21,9 @@ using namespace boost::asio::ip;
 using namespace isc::asiolink;
 using namespace isc::http;
 
+/// @brief Sending chuck size.
+const size_t TEST_HTTP_CHUCK_SIZE = 8 * 1024;
+
 /// @brief Common base for test HTTP/HTTPS clients.
 class BaseTestHttpClient : public boost::noncopyable {
 public:
@@ -146,7 +149,8 @@ public:
     ///
     /// @param request part of the HTTP request to be sent.
     virtual void sendPartialRequest(std::string request) {
-        socket_.async_send(boost::asio::buffer(request.data(), request.size()),
+        size_t chuck_size = std::min(TEST_HTTP_CHUCK_SIZE, request.size());
+        socket_.async_send(boost::asio::buffer(request.data(), chuck_size),
                            [this, request](const boost::system::error_code& ec,
                                            std::size_t bytes_transferred) mutable {
             if (ec) {
@@ -426,8 +430,9 @@ public:
     ///
     /// @param request part of the HTTP request to be sent.
     virtual void sendPartialRequest(std::string request) {
+        size_t chuck_size = std::min(TEST_HTTP_CHUCK_SIZE, request.size());
         boost::asio::async_write(stream_,
-                boost::asio::buffer(request.data(), request.size()),
+                boost::asio::buffer(request.data(), chuck_size),
                 [this, request](const boost::system::error_code& ec,
                                 std::size_t bytes_transferred) mutable {
             if (ec) {
