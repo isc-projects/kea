@@ -24,6 +24,15 @@ be run manually.
 
 Kea 1.9.0 introduced basic HTTP authentication support.
 
+.. note::
+
+   Kea version 2.7.2 introduces direct support of HTTP/HTTPS control channel
+   by Kea servers (:iscman:`kea-dhcp4`, :iscman:`kea-dhcp6` and
+   :iscman:`kea-dhcp-ddns`). The :iscman:`kea-shell` can be used with
+   these servers, the only difference is the ``--service`` argument becomes
+   useless and is ignored by Kea servers. Note the result is encapsulated
+   in a list for :iscman:`kea-ctrl-agent` compatibility.
+
 Shell Usage
 ===========
 
