@@ -2248,13 +2248,19 @@ def _build_binaries_and_run_ut(system, revision, features, tarball_path, env, ch
 
 def _check_installed_rpm_or_debs(services_list):
     for svc in services_list:
-        execute('sudo systemctl stop %s' % svc)
+        execute(f'sudo systemctl stop {svc}')
         now = datetime.datetime.now()
         timestamp = now.strftime('%Y-%m-%d%H:%M:%S')
-        execute('sudo systemctl start %s' % svc)
-        time.sleep(3)
-        cmd = "sudo journalctl --since %s -u %s | grep '_STARTED Kea'" % (timestamp, svc)
-        execute(cmd, attempts=10, sleep_time_after_attempt=1)
+        execute(f'sudo systemctl start {svc}')
+        logs = ''
+        for _ in range(10):
+            _, logs = execute(f'sudo journalctl --since {timestamp} -u {svc}', capture=True)
+            if '_STARTED Kea' in logs:
+                break
+            time.sleep(1)
+        if '_STARTED Kea' not in logs:
+            print(logs)
+            raise UnexpectedError('_STARTED Kea not in logs')
 
 
 def _build_rpm(system, revision, features, tarball_path, env, check_times, dry_run,
@@ -2429,15 +2435,19 @@ def _build_alpine_apk(revision, features, tarball_path, check_times, dry_run,
 
         # check if kea services can be started
         for svc in ['kea-dhcp4', 'kea-dhcp6', 'kea-ctrl-agent', 'kea-dhcp-ddns']:
-            execute('sudo rc-service %s start' % svc)
-            time.sleep(3)
+            execute(f'sudo rc-service {svc} start')
             if svc == 'kea-dhcp-ddns':
                 svc = 'kea-ddns'
-            log_path = '/var/log/kea/%s.log' % svc
-            if revision == '3.10':
-                log_path = '/var/log/%s.log' % svc
-            cmd = "sudo cat %s | grep '_STARTED Kea'" % log_path
-            execute(cmd, attempts=10, sleep_time_after_attempt=1)
+            logs = ''
+            log_path = f'/var/log/kea/{svc}.log'
+            for _ in range(10):
+                _, logs = execute(f'sudo cat {log_path}', capture=True)
+                if '_STARTED Kea' in logs:
+                    break
+                time.sleep(1)
+            if '_STARTED Kea' not in logs:
+                print(logs)
+                raise UnexpectedError('_STARTED Kea not in logs')
 
 
 def _build_native_pkg(system, revision, features, tarball_path, env, check_times, dry_run, ccache_dir,
