@@ -21,7 +21,7 @@ m4_define([serial_tests], [
 ])
 AM_INIT_AUTOMAKE(foreign serial_tests)
 
-m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])dnl be backward compatible
+AM_SILENT_RULES([yes])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIR([m4macros])
 
@@ -440,7 +440,7 @@ for extra in $werror_extras; do
                 [AC_MSG_ERROR([$CXX does not support $extra"])])
 done
 
-fi                              dnl GXX = yes
+fi  # if test "X$GXX" = "Xyes"
 
 # allow building programs with static link.  we need to make it selective
 # because loadable modules cannot be statically linked.
@@ -1468,9 +1468,9 @@ AX_GSS_API
 AC_DEFINE([CONFIG_H_WAS_INCLUDED], [1], [config.h inclusion marker])
 
 # Autoconf 2.70 has runstatedir.
-m4_version_prereq([2.70], [], [dnl
-    AC_ARG_VAR(runstatedir, [$localstatedir/run for autoconf < 2.70])dnl
-    AC_SUBST(runstatedir)dnl
+m4_version_prereq([2.70], [], [
+    AC_ARG_VAR(runstatedir, [$localstatedir/run for autoconf < 2.70])
+    AC_SUBST(runstatedir)
 ])
 if test "x$runstatedir" = "x"; then
     runstatedir="$localstatedir/run"

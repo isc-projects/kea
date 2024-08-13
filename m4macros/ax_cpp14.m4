@@ -250,4 +250,4 @@ for retry in "none" "--std=c++14" "--std=c++1y" "fail"; do
         break
 done
 
-])dnl AX_ISC_CPP14
+])
