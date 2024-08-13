@@ -1,3 +1,9 @@
+2270.	[bug]		andrei
+	Fixed flag -P|--port not working in kea-admin on mysql db-init,
+	mysql db-upgrade, pgsql db-upgrade, pgsql lease-dump.
+	pgsql db-upgrade now properly reports an upgrade failure instead
+	of attempting to upgrade to subsequent schema versions.
+
 2269.	[func]		tmark
 	Extended kea-dhcp4 and kea-dhcp6 lenient option parsing
 	to drop FQDN options such as v4-lost and v6-access-domain
