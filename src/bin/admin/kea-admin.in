@@ -264,19 +264,17 @@ mysql_init() {
     printf "Verifying create permissions for %s\n" "$db_user"
     mysql_can_create
 
-    printf "Initializing database using script %s\n" "${SCRIPTS_DIR}/mysql/dhcpdb_create.mysql"
-    mysql -B --host="${db_host}" --user="${db_user}" \
-    --password="${db_password}" \
-    "${db_name}" ${extra_arguments} < "${SCRIPTS_DIR}/mysql/dhcpdb_create.mysql"
-
-    printf "mysql returned status code %s\n" "${EXIT_CODE}"
-
-    if [ "${EXIT_CODE}" -eq 0 ]; then
-        version=$(checked_mysql_version)
-        printf 'Schema version reported after initialization: %s\n' "${version}"
+    init_script="${SCRIPTS_DIR}/mysql/dhcpdb_create.mysql"
+    printf 'Initializing database using script %s\n' "${init_script}"
+    run_command \
+        mysql_execute_script "${init_script}"
+    if [ "${EXIT_CODE}" != 0 ]; then
+        log_error "Database initialization failed, status code: ${EXIT_CODE}?"
+        exit 1
     fi
 
-    exit "${EXIT_CODE}"
+    version=$(checked_mysql_version)
+    printf 'Schema version reported after initialization: %s\n' "${version}"
 }
 
 pgsql_init() {
@@ -301,9 +299,9 @@ pgsql_init() {
     fi
 
     init_script="${SCRIPTS_DIR}/pgsql/dhcpdb_create.pgsql"
-    printf "Initializing database using script %s\n" $init_script
+    printf "Initializing database using script %s\n" "${init_script}"
     run_command \
-        pgsql_execute_script $init_script
+        pgsql_execute_script "${init_script}"
     if [ "${EXIT_CODE}" -ne 0 ]; then
         log_error "Database initialization failed, status code: ${EXIT_CODE}?"
         exit 1
@@ -375,8 +373,9 @@ mysql_upgrade() {
     for script in ${upgrade_scripts}
     do
         echo "Processing $script file..."
-        "${script}" --host="${db_host}" --user="${db_user}" \
-        --password="${db_password}" "${db_name}" ${extra_arguments}
+        "${script}" -N -B --host="${db_host}" ${db_port_full_parameter-} \
+        --database="${db_name}" --user="${db_user}" \
+        --password="${db_password}" ${extra_arguments}
     done
 
     version=$(checked_mysql_version)
@@ -423,7 +422,8 @@ pgsql_upgrade() {
     for script in ${upgrade_scripts}
     do
         echo "Processing $script file..."
-        "${script}" -U "${db_user}" -h "${db_host}" \
+        "${script}" --set ON_ERROR_STOP=1 -A -t \
+        -h "${db_host}" ${db_port_full_parameter-} -q -U "${db_user}" \
         -d "${db_name}" ${extra_arguments}
     done
 
@@ -577,7 +577,6 @@ pgsql_dump() {
         log_error "you must specify an output file for lease-dump"
         usage
         exit 1
-
     fi
 
     # If output file exists, notify user, allow them a chance to bail
@@ -588,12 +587,7 @@ pgsql_dump() {
 
     # Call psql and redirect output to the dump file. We don't use psql "to csv"
     # as it can only be run as db superuser. Check for errors.
-    if ! (
-        echo "${dump_qry}" | \
-            psql --set ON_ERROR_STOP=1 -t -h "${db_host}" -q --user="${db_user}" \
-            --dbname="${db_name}" -w --no-align --field-separator=',' \
-            ${extra_arguments} > "${dump_file}"
-    ); then
+    if ! pgsql_execute "${dump_qry}" -w --no-align --field-separator=',' > "${dump_file}"; then
         log_error "lease-dump: psql call failed, exit code: ${?}"
         exit 1
     fi
