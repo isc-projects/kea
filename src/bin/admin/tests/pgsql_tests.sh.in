@@ -1980,12 +1980,15 @@ pgsql_unused_subnet_id_test() {
 
     run_statement "insert options" "$qry"
 
-    # Let's upgrade it to the latest version.
-    run_command \
-        "${kea_admin}" db-upgrade pgsql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}"
+    # We have a 4.0 database with hosts and options. Let's upgrade it to 6.2.
+    # For versions higher than 6.2 some new constraints fail to be added
+    # with the not empty tables, for instance the 6.2 -> 7.0 upgrade script
+    # can raise a key constraing violation for fk_dhcp6_options_subnet.
+    pgsql_upgrade_schema_to_version 6.2
 
-    # Upgrade should succeed
-    assert_eq 0 "${EXIT_CODE}" "upgrade failed"
+    # Version should be new 6.2
+    version=$("${kea_admin}" db-version pgsql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}")
+    assert_str_eq "6.2" "${version}" "Expected kea-admin to return %s, returned value was %s"
 
     # Two hosts should have null v4 subnet ids
     qry="select count(host_id) from hosts where dhcp4_subnet_id is null"
