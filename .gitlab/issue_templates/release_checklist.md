@@ -172,12 +172,12 @@ Now it's time to publish the code.
 ## Marketing
 
 1. [ ] Publish links to downloads on ISC website.
-1. [ ] Update the supported versions document in the Salesforce portal (if there are stable versions released), and update the Kea document in the portal.
 1. [ ] If it is a new `major.minor` version, SWENG will have created a new repo in Cloudsmith, which will need the customer tokens migrated from an existing repo. Verify that the KB on installing from Cloudsmith has also been updated, then update the Kea document in the SF portal and notify support customers that this new private repo exists.
 1. [ ] If a new Cloudsmith repository is used, make sure that the Zapier scripts are updated.
    * If those are not updated, there was an error made during preparation for new stable release. Please contact QA team and coordinate fix.
 1. [ ] Upload Premium hooks tarball to SendOwl. Create a new product if a new branch, otherwise update existing product. Send notifications to existing subscribers of the new version.
 1. [ ] Write release email to _kea-announce_.
+1. [ ] Announce release to support subscribers using the read-only Kea Announce queue, if a major version or other significant change to stable version.
 1. [ ] Write email to _kea-users_ (if a major release).
 1. [ ] Announce on social media.
 1. [ ] Update [Wikipedia entry for Kea](https://en.wikipedia.org/wiki/Kea\_(software)).
