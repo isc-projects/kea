@@ -119,6 +119,16 @@ used to indicate a placeholder for data that is provided by the Kea code during 
         rst += ''.join([line + '\n' for line in msg_descr])
         rst += '\n'
 
+    rst += '''.. _kea-debug-messages:
+
+*******************************
+Kea Debug Messages By Log Level
+*******************************
+
+'''
+    rst += '.. include:: debug-messages.rst'
+    rst += '\n'
+
     return rst
 
 

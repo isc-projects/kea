@@ -146,6 +146,24 @@ def check_placeholder_ids(messages):
     return failure
 
 
+def generate_page_with_messages_printed_on_each_debug_level(messages, debug_levels):
+    content = []
+    for log_level in sorted(set(debug_levels.values())):
+        subtitle = f'Messages printed on debuglevel {log_level}'
+        content.append(subtitle)
+        content.append('=' * len(subtitle))
+        content.append('\n')
+        for message_id, message in sorted(messages.items()):
+            if message['debug_log_level_line'] == f'Logged at debug log level {log_level}.':
+                content.append(f'- {message_id}')
+        content.append('\n')
+    parent_dir = os.path.dirname(os.path.realpath(os.path.abspath(sys.argv[0])))
+    with open(f'{parent_dir}/../doc/sphinx/debug-messages.rst', 'w', encoding='utf-8') as f:
+        for i in content:
+            f.write(i)
+            f.write('\n')
+
+
 def remove_message_definition(message, file):
     new_lines = []
     removing = False
@@ -329,6 +347,9 @@ def main():
 
     # 7. Checks that the placeholder ids are consecutive, starting with 1, and unique in the same message definition.
     failure |= check_placeholder_ids(messages)
+
+    if args.autofix:
+        generate_page_with_messages_printed_on_each_debug_level(messages, debug_levels)
 
     if failure:
         sys.exit(1)
