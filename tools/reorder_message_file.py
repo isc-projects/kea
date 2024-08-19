@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 # Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
