@@ -29,12 +29,17 @@ This script does several verifications regarding logged messages:
 def check_duplicate_occurences(occurences):
     exhonerated = {}
     parent_dir = os.path.dirname(os.path.realpath(os.path.abspath(sys.argv[0])))
-    with open(f'{parent_dir}/exhonerated-duplicate-messages.txt', 'r', encoding='utf-8') as f:
-        lines = f.read().splitlines()
-        for line in lines:
-            message_id = line.split('%')[1].split(':')[0].strip()
-            max_allowed = line.split(':')[1].strip()
-            exhonerated[message_id] = int(max_allowed)
+    for exh_txt in [
+        f'{parent_dir}/exhonerated-duplicate-messages.txt',
+        f'{parent_dir}/../premium/tools/exhonerated-duplicate-messages.txt',
+    ]:
+        if pathlib.Path(exh_txt).is_file():
+            with open(exh_txt, 'r', encoding='utf-8') as f:
+                lines = f.read().splitlines()
+                for line in lines:
+                    message_id = line.split('%')[1].split(':')[0].strip()
+                    max_allowed = line.split(':')[1].strip()
+                    exhonerated[message_id] = int(max_allowed)
 
     failure = False
     duplicate_occurences = {k: v for k, v in occurences.items() if v > 1}
