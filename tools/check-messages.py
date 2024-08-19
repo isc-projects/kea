@@ -119,7 +119,7 @@ def check_that_debug_log_levels_are_documented(messages, debug_levels, log_lines
                 file = message['file']
                 # If line is already there, remove it.
                 if message['debug_log_level_line'].startswith('Logged at debug log level '):
-                    line_number = run(fr'grep -En "\b{message_id}\b" "{file}" | cut -d ":" -f 1')
+                    line_number = run(fr'grep -En "^% \b{message_id}\b" "{file}" | cut -d ":" -f 1')
                     line_number = int(line_number) + 1
                     run(f'sed "{line_number}d" "{file}" > "{file}.tmp"')
                     run(f'mv "{file}.tmp" "{file}"')
@@ -245,6 +245,10 @@ def main():
     h_files = sorted(pathlib.Path('.').glob('**/*.h'))
     cpp_files = cc_files + h_files
     for cpp_file in cpp_files:
+        # Skip test files.
+        if any(i in cpp_file.parts for i in ['tests', 'testutils', 'unittests']):
+            continue
+
         with open(cpp_file, 'r', encoding='utf-8') as f:
             lines = f.read().splitlines()
             current_log_line = ''

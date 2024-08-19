@@ -15,13 +15,11 @@
 $NAMESPACE isc::log
 
 % LOG_BAD_DESTINATION unrecognized log destination: %1
-Logged at debug log level 0.
-A logger destination value was given that was not recognized. The
+This error message is printed when a logger destination value was given that was not recognized. The
 destination should be one of "console", "file", or "syslog".
 
 % LOG_BAD_SEVERITY unrecognized log severity: %1
-Logged at debug log level 25.
-A logger severity value was given that was not recognized. The severity
+This error message is printed when a logger severity value was given that was not recognized. The severity
 should be one of "DEBUG", "INFO", "WARN", "ERROR", "FATAL" or "NONE".
 
 % LOG_BAD_STREAM bad log console output stream: %1
@@ -123,7 +121,6 @@ Note: the $PREFIX directive is deprecated and will be removed in a future
 version of Kea.
 
 % LOG_READING_LOCAL_FILE reading local message file %1
-Logged at debug log level 0.
 This is an informational message output by Kea when it starts to read
 a local message file.  (A local message file may replace the text of
 one or more messages; the ID of the message will not be changed though.)
