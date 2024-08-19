@@ -88,9 +88,9 @@ void LogConfigParser::parseConfigEntry(isc::data::ConstElementPtr entry) {
                 isc_throw(BadValue, "");
             }
         } catch (...) {
-            isc_throw(BadValue, "Unsupported debuglevel value '"
-                      << debuglevel_ptr->stringValue()
-                      << "', expected 0-99 ("
+            isc_throw(BadValue, "Unsupported debuglevel value "
+                      << debuglevel_ptr->intValue()
+                      << ", expected 0-99 ("
                       << debuglevel_ptr->getPosition() << ")");
         }
     }
