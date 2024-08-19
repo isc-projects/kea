@@ -98,7 +98,7 @@ mask in the response:
 The Flexible Option library supports both DHCPv4 and DHCPv6.
 
 The ``add`` and ``supersede`` actions take an optional
-```csv-format``` boolean parameter. If not specified or set to ``false``, the
+``csv-format`` boolean parameter. If not specified or set to ``false``, the
 option data is set using the raw value of the evaluated expression. When it is
 configured to ``true``, this value is parsed using the option definition from
 the option data specified in the configuration file. This eases option setting
