@@ -46,7 +46,7 @@ namespace asiodns {
 
 const int DBG_IMPORTANT = DBGLVL_TRACE_BASIC;
 const int DBG_COMMON = DBGLVL_TRACE_DETAIL;
-const int DBG_ALL = DBGLVL_TRACE_DETAIL + 20;
+const int DBG_ALL = DBGLVL_TRACE_ALL;
 
 /// @brief IOFetch Data
 ///
