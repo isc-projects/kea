@@ -22,7 +22,6 @@ SRC_DIR = os.path.abspath(os.path.dirname(__file__))
 sys.path.append(SRC_DIR)
 
 import api2doc  # noqa  # pylint: disable=wrong-import-position
-import mes2doc  # noqa  # pylint: disable=wrong-import-position
 
 # -- Project information -----------------------------------------------------
 
@@ -259,11 +258,6 @@ def run_generate_docs(_):
         api_files = af.read().split()
     api_files = [os.path.abspath(os.path.join(SRC_DIR, '../..', af)) for af in api_files]
     api2doc.generate(api_files, os.path.join(SRC_DIR, 'api.rst'))
-
-    with open(os.path.join(SRC_DIR, 'mes-files.txt'), encoding='utf-8') as mf:
-        mes_files = mf.read().split()
-    mes_files = [os.path.abspath(os.path.join(SRC_DIR, '../..', mf)) for mf in mes_files]
-    mes2doc.generate(mes_files, os.path.join(SRC_DIR, 'kea-messages.rst'))
 
     # Sphinx has some limitations. It can't import files from outside its directory, which
     # in our case is src/sphinx. On the other hand, we need to have platforms.rst file

@@ -1,0 +1,25697 @@
+.. _kea-messages:
+
+###################
+Kea Messages Manual
+###################
+
+Kea is an open source implementation of the Dynamic Host Configuration
+Protocol (DHCP) servers, developed and maintained by Internet Systems
+Consortium (ISC).
+
+This is the reference guide for Kea version |release|.
+Links to the most up-to-date version of this document (in PDF, HTML,
+and plain text formats), along with other useful information about
+Kea, can be found in ISC's `Knowledgebase <https://kea.readthedocs.io>`_.
+
+Please note that in the messages below, the percent sign (``%``) followed by a number is
+used to indicate a placeholder for data that is provided by the Kea code during its operation.
+
+
+.. toctree::
+   :numbered:
+   :maxdepth: 5
+
+*****
+ALLOC
+*****
+
+ALLOC_ENGINE_IGNORING_UNSUITABLE_GLOBAL_ADDRESS
+===============================================
+
+.. code-block:: text
+
+    %1: ignoring globally reserved address %2, it falls outside %3
+
+Logged at debug log level 40.
+This debug message is issued when the allocation engine determines that
+the globally reserved address falls outside the selected subnet or
+shared-network.  The server should ignore the reserved address and
+attempt a dynamic allocation.
+
+ALLOC_ENGINE_IGNORING_UNSUITABLE_GLOBAL_ADDRESS6
+================================================
+
+.. code-block:: text
+
+    %1: ignoring globally reserved address %2, it falls outside %3
+
+Logged at debug log level 40.
+This debug message is issued when the allocation engine determines that
+the globally reserved address falls outside the selected subnet or
+shared-network.  The server should ignore the reserved address and
+attempt a dynamic allocation.
+
+ALLOC_ENGINE_LEASE_RECLAIMED
+============================
+
+.. code-block:: text
+
+    successfully reclaimed lease %1
+
+Logged at debug log level 40.
+This debug message is logged when the allocation engine successfully
+reclaims a lease. The lease is now available for assignment.
+
+ALLOC_ENGINE_V4_ALLOC_ERROR
+===========================
+
+.. code-block:: text
+
+    %1: error during attempt to allocate an IPv4 address: %2
+
+An error occurred during an attempt to allocate an IPv4 address, the
+reason for the failure being contained in the message.  The server will
+return a message to the client refusing a lease. The first argument
+includes the client identification information.
+
+ALLOC_ENGINE_V4_ALLOC_FAIL
+==========================
+
+.. code-block:: text
+
+    %1: failed to allocate an IPv4 address after %2 attempt(s)
+
+This is an old warning message issued when the allocation engine fails to allocate a
+lease for a client. This message includes a number of lease allocation attempts
+that the engine made before giving up. If the number of attempts is 0 because the
+engine was unable to use any of the address pools for the particular client, this
+message is not logged. Even though, several more detailed logs precede this message,
+it was left for backward compatibility.
+This message may indicate that your address pool is too small for the
+number of clients you are trying to service and should be expanded.
+Alternatively, if the you know that the number of concurrently active
+clients is less than the addresses you have available, you may want to
+consider reducing the lease lifetime. This way, addresses allocated
+to clients that are no longer active on the network will become available
+sooner.
+
+ALLOC_ENGINE_V4_ALLOC_FAIL_CLASSES
+==================================
+
+.. code-block:: text
+
+    %1: Failed to allocate an IPv4 address for client with classes: %2
+
+This warning message is printed when Kea failed to allocate an address
+and the client's packet belongs to one or more classes. There may be several
+reasons why a lease was not assigned. One of them may be a case when all
+pools require packet to belong to certain classes and the incoming packet
+didn't belong to any of them. Another case where this information may be
+useful is to point out that the pool reserved to a given class has ran
+out of addresses. When you see this message, you may consider checking your
+pool size and your classification definitions.
+
+ALLOC_ENGINE_V4_ALLOC_FAIL_NO_POOLS
+===================================
+
+.. code-block:: text
+
+    %1: no pools were available for the address allocation
+
+This warning message is issued when the allocation engine fails to
+allocate a lease because it could not use any configured pools for the
+particular client. It is also possible that all of the subnets from
+which the allocation engine attempted to assign an address lack address
+pools. In this case, it should be considered misconfiguration if an
+operator expects that some clients should be assigned dynamic addresses.
+A subnet may lack any pools only when all clients should be assigned
+reserved IP addresses.
+Suppose the subnets connected to a shared network or a single subnet to
+which the client belongs have pools configured. In that case, this
+message is an indication that none of the pools could be used for the
+client because the client does not belong to appropriate client classes.
+
+ALLOC_ENGINE_V4_ALLOC_FAIL_SHARED_NETWORK
+=========================================
+
+.. code-block:: text
+
+    %1: failed to allocate an IPv4 address in the shared network %2: %3 subnets have no available addresses, %4 subnets have no matching pools
+
+This warning message is issued when the allocation engine fails to allocate
+a lease for a client connected to a shared network. The shared network should
+contain at least one subnet, but typically it aggregates multiple subnets.
+This log message indicates that the allocation engine could not find and
+allocate any suitable lease in any of the subnets within the shared network.
+The first argument includes the client identification information. The
+second argument specifies the shared network name. The remaining two
+arguments provide additional information useful for debugging why the
+allocation engine could not assign a lease. The allocation engine tries
+to allocate addresses from different subnets in the shared network, and
+it may fail for some subnets because there are no leases available in
+those subnets or the free leases are reserved to other clients. The
+number of such subnets is specified in the third argument. For other
+subnets the allocation may fail because their pools may not be available
+to the particular client. These pools are guarded by client classes that
+the client does not belong to. The fourth argument specifies the number
+of such subnets. By looking at the values in the third and fourth argument,
+an operator can identify the situations when there are no addresses left
+in some of the pools. He or she can also identify a client classification
+misconfigurations causing some clients to be refused the service.
+
+ALLOC_ENGINE_V4_ALLOC_FAIL_SUBNET
+=================================
+
+.. code-block:: text
+
+    %1: failed to allocate an IPv4 lease in the subnet %2, subnet-id %3, shared network %4
+
+This warning message is issued when the allocation engine fails to allocate
+a lease for a client connected to a subnet. The first argument includes the
+client identification information. The second and third arguments identify
+the subnet. The fourth argument specifies the shared network, if the subnet
+belongs to a shared network.
+There are many reasons for failing lease allocations. One of them may be the
+pools exhaustion or existing reservations for the free leases. However, in
+some cases, the allocation engine may fail to find a suitable pool for the
+client when the pools are only available to certain client classes, but the
+requesting client does not belong to them. Further log messages provide more
+information to distinguish between these different cases.
+
+ALLOC_ENGINE_V4_DECLINED_RECOVERED
+==================================
+
+.. code-block:: text
+
+    IPv4 address %1 was recovered after %2 seconds of probation-period
+
+This informational message indicates that the specified address was reported
+as duplicate (client sent DECLINE) and the server marked this address as
+unavailable for a period of time. This time now has elapsed and the address
+has been returned to the available pool. This step concludes the decline recovery
+process.
+
+ALLOC_ENGINE_V4_DISCOVER_ADDRESS_CONFLICT
+=========================================
+
+.. code-block:: text
+
+    %1: conflicting reservation for address %2 with existing lease %3
+
+This warning message is issued when the DHCP server finds that the
+address reserved for the client can't be offered because this address
+is currently allocated to another client. The server will try to allocate
+a different address to the client to use until the conflict is resolved.
+The first argument includes the client identification information.
+
+ALLOC_ENGINE_V4_DISCOVER_HR
+===========================
+
+.. code-block:: text
+
+    client %1 sending DHCPDISCOVER has reservation for the address %2
+
+Logged at debug log level 40.
+This message is issued when the allocation engine determines that the
+client sending the DHCPDISCOVER has a reservation for the specified
+address. The allocation engine will try to offer this address to
+the client.
+
+ALLOC_ENGINE_V4_LEASES_RECLAMATION_COMPLETE
+===========================================
+
+.. code-block:: text
+
+    reclaimed %1 leases in %2
+
+Logged at debug log level 40.
+This debug message is logged when the allocation engine completes
+reclamation of a set of expired leases. The maximum number of leases
+to be reclaimed in a single pass of the lease reclamation routine
+is configurable using 'max-reclaim-leases' parameter. However,
+the number of reclaimed leases may also be limited by the timeout
+value, configured with 'max-reclaim-time'. The message includes the
+number of reclaimed leases and the total time.
+
+ALLOC_ENGINE_V4_LEASES_RECLAMATION_FAILED
+=========================================
+
+.. code-block:: text
+
+    reclamation of expired leases failed: %1
+
+This error message is issued when the reclamation of the expired leases failed.
+The error message is displayed.
+
+ALLOC_ENGINE_V4_LEASES_RECLAMATION_SLOW
+=======================================
+
+.. code-block:: text
+
+    expired leases still exist after %1 reclamations
+
+This warning message is issued when the server has been unable to
+reclaim all expired leases in a specified number of consecutive
+attempts. This indicates that the value of "reclaim-timer-wait-time"
+may be too high. However, if this is just a short burst of leases'
+expirations the value does not have to be modified and the server
+should deal with this in subsequent reclamation attempts. If this
+is a result of a permanent increase of the server load, the value
+of "reclaim-timer-wait-time" should be decreased, or the
+values of "max-reclaim-leases" and "max-reclaim-time" should be
+increased to allow processing more leases in a single cycle.
+Alternatively, these values may be set to 0 to remove the
+limitations on the number of leases and duration. However, this
+may result in longer periods of server's unresponsiveness to
+DHCP packets, while it processes the expired leases.
+
+ALLOC_ENGINE_V4_LEASES_RECLAMATION_START
+========================================
+
+.. code-block:: text
+
+    starting reclamation of expired leases (limit = %1 leases or %2 milliseconds)
+
+Logged at debug log level 40.
+This debug message is issued when the allocation engine starts the
+reclamation of the expired leases. The maximum number of leases to
+be reclaimed and the timeout is included in the message. If any of
+these values is 0, it means "unlimited".
+
+ALLOC_ENGINE_V4_LEASES_RECLAMATION_TIMEOUT
+==========================================
+
+.. code-block:: text
+
+    timeout of %1 ms reached while reclaiming IPv4 leases
+
+Logged at debug log level 40.
+This debug message is issued when the allocation engine hits the
+timeout for performing reclamation of the expired leases. The
+reclamation will now be interrupted and all leases which haven't
+been reclaimed, because of the timeout, will be reclaimed when the
+next scheduled reclamation is started. The argument is the timeout
+value expressed in milliseconds.
+
+ALLOC_ENGINE_V4_LEASE_RECLAIM
+=============================
+
+.. code-block:: text
+
+    %1: reclaiming expired lease for address %2
+
+Logged at debug log level 40.
+This debug message is issued when the server begins reclamation of the
+expired DHCPv4 lease. The first argument specifies the client identification
+information. The second argument holds the leased IPv4 address.
+
+ALLOC_ENGINE_V4_LEASE_RECLAMATION_FAILED
+========================================
+
+.. code-block:: text
+
+    failed to reclaim the lease %1: %2
+
+This error message is logged when the allocation engine fails to
+reclaim an expired lease. The reason for the failure is included in the
+message. The error may be triggered in the lease expiration hook or
+while performing the operation on the lease database.
+
+ALLOC_ENGINE_V4_NO_MORE_EXPIRED_LEASES
+======================================
+
+.. code-block:: text
+
+    all expired leases have been reclaimed
+
+Logged at debug log level 40.
+This debug message is issued when the server reclaims all expired
+DHCPv4 leases in the database.
+
+ALLOC_ENGINE_V4_OFFER_EXISTING_LEASE
+====================================
+
+.. code-block:: text
+
+    allocation engine will try to offer existing lease to the client %1
+
+Logged at debug log level 40.
+This message is issued when the allocation engine determines that
+the client has a lease in the lease database, it doesn't have
+reservation for any other lease, and the leased address is not
+reserved for any other client. The allocation engine will try
+to offer the same lease to the client.
+
+ALLOC_ENGINE_V4_OFFER_NEW_LEASE
+===============================
+
+.. code-block:: text
+
+    allocation engine will try to offer new lease to the client %1
+
+Logged at debug log level 40.
+This message is issued when the allocation engine will try to
+offer a new lease to the client. This is the case when the
+client doesn't have any existing lease, it has no reservation
+or the existing or reserved address is leased to another client.
+Also, the client didn't specify a hint, or the address in
+the hint is in use.
+
+ALLOC_ENGINE_V4_OFFER_REQUESTED_LEASE
+=====================================
+
+.. code-block:: text
+
+    allocation engine will try to offer requested lease %1 to the client %2
+
+Logged at debug log level 40.
+This message is issued when the allocation engine will try to
+offer the lease specified in the hint. This situation may occur
+when: (a) client doesn't have any reservations, (b) client has
+reservation but the reserved address is leased to another client.
+
+ALLOC_ENGINE_V4_RECLAIMED_LEASES_DELETE
+=======================================
+
+.. code-block:: text
+
+    begin deletion of reclaimed leases expired more than %1 seconds ago
+
+Logged at debug log level 40.
+This debug message is issued when the allocation engine begins
+deletion of the reclaimed leases which have expired more than
+a specified number of seconds ago. This operation is triggered
+periodically according to the "flush-reclaimed-timer-wait-time"
+parameter. The "hold-reclaimed-time" parameter defines a number
+of seconds for which the leases are stored before they are
+removed.
+
+ALLOC_ENGINE_V4_RECLAIMED_LEASES_DELETE_COMPLETE
+================================================
+
+.. code-block:: text
+
+    successfully deleted %1 expired-reclaimed leases
+
+Logged at debug log level 40.
+This debug message is issued when the server successfully deletes
+"expired-reclaimed" leases from the lease database. The number of
+deleted leases is included in the log message.
+
+ALLOC_ENGINE_V4_RECLAIMED_LEASES_DELETE_FAILED
+==============================================
+
+.. code-block:: text
+
+    deletion of expired-reclaimed leases failed: %1
+
+This error message is issued when the deletion of "expired-reclaimed"
+leases from the database failed. The error message is appended to
+the log message.
+
+ALLOC_ENGINE_V4_REQUEST_ADDRESS_RESERVED
+========================================
+
+.. code-block:: text
+
+    %1: requested address %2 is reserved
+
+Logged at debug log level 40.
+This message is issued when the allocation engine refused to
+allocate address requested by the client because this
+address is reserved for another client. The first argument
+includes the client identification information.
+
+ALLOC_ENGINE_V4_REQUEST_ALLOC_REQUESTED
+=======================================
+
+.. code-block:: text
+
+    %1: trying to allocate requested address %2
+
+Logged at debug log level 40.
+This message is issued when the allocation engine is trying
+to allocate (or reuse an expired) address which has been
+requested by the client. The first argument includes the
+client identification information.
+
+ALLOC_ENGINE_V4_REQUEST_EXTEND_LEASE
+====================================
+
+.. code-block:: text
+
+    %1: extending lifetime of the lease for address %2
+
+Logged at debug log level 40.
+This message is issued when the allocation engine determines
+that the client already has a lease whose lifetime can be
+extended, and which can be returned to the client.
+The first argument includes the client identification information.
+
+ALLOC_ENGINE_V4_REQUEST_INVALID
+===============================
+
+.. code-block:: text
+
+    client %1 having a reservation for address %2 is requesting invalid address %3
+
+Logged at debug log level 40.
+This message is logged when the client, having a reservation for
+one address, is requesting a different address. The client is
+only allowed to do this when the reserved address is in use by
+another client. However, the allocation engine has
+determined that the reserved address is available and the
+client should request the reserved address.
+
+ALLOC_ENGINE_V4_REQUEST_IN_USE
+==============================
+
+.. code-block:: text
+
+    %1: requested address %2 is in use
+
+Logged at debug log level 40.
+This message is issued when the client is requesting or has a
+reservation for an address which is in use. The first argument
+includes the client identification information.
+
+ALLOC_ENGINE_V4_REQUEST_OUT_OF_POOL
+===================================
+
+.. code-block:: text
+
+    client %1, which doesn't have a reservation, requested address %2 out of the dynamic pool
+
+Logged at debug log level 40.
+This message is issued when the client has requested allocation
+of the address which doesn't belong to any address pool from
+which addresses are dynamically allocated. The client also
+doesn't have reservation for this address. This address
+could only be allocated if the client had reservation for it.
+
+ALLOC_ENGINE_V4_REQUEST_PICK_ADDRESS
+====================================
+
+.. code-block:: text
+
+    client %1 hasn't specified an address - picking available address from the pool
+
+Logged at debug log level 40.
+This message is logged when the client hasn't specified any
+preferred address (the client should always do it, but Kea
+tries to be forgiving). The allocation engine will try to pick an available
+address from the dynamic pool and allocate it to the client.
+
+ALLOC_ENGINE_V4_REQUEST_REMOVE_LEASE
+====================================
+
+.. code-block:: text
+
+    %1: removing previous client's lease %2
+
+Logged at debug log level 40.
+This message is logged when the allocation engine removes previous
+lease for the client because the client has been allocated new one.
+
+ALLOC_ENGINE_V4_REQUEST_USE_HR
+==============================
+
+.. code-block:: text
+
+    client %1 hasn't requested specific address, using reserved address %2
+
+Logged at debug log level 40.
+This message is issued when the client is not requesting any specific
+address but the allocation engine has determined that there is a
+reservation for this client. The allocation engine will try to
+allocate the reserved address.
+
+ALLOC_ENGINE_V4_REUSE_EXPIRED_LEASE_DATA
+========================================
+
+.. code-block:: text
+
+    %1: reusing expired lease, updated lease information: %2
+
+Logged at debug log level 55.
+This message is logged when the allocation engine is reusing
+an existing lease. The details of the updated lease are
+printed. The first argument includes the client identification
+information.
+
+ALLOC_ENGINE_V6_ALLOC_ERROR
+===========================
+
+.. code-block:: text
+
+    %1: error during attempt to allocate an IPv6 address: %2
+
+An error occurred during an attempt to allocate an IPv6 address, the
+reason for the failure being contained in the message.  The server will
+return a message to the client refusing a lease. The first argument
+includes the client identification information.
+
+ALLOC_ENGINE_V6_ALLOC_FAIL
+==========================
+
+.. code-block:: text
+
+    %1: failed to allocate an IPv6 lease after %2 attempt(s)
+
+This is an old warning message issued when the allocation engine fails to allocate a
+lease for a client. This message includes a number of lease allocation attempts
+that the engine made before giving up. If the number of attempts is 0 because the
+engine was unable to use any of the pools for the particular client, this message
+is not logged. Even though, several more detailed logs precede this message, it was
+left for backward compatibility.
+This message may indicate that your pool is too small for the number of clients
+you are trying to service and should be expanded. Alternatively, if the you know
+that the number of concurrently active clients is less than the leases you have
+available, you may want to consider reducing the lease lifetime. This way, leases
+allocated to clients that are no longer active on the network will become available
+sooner.
+
+ALLOC_ENGINE_V6_ALLOC_FAIL_CLASSES
+==================================
+
+.. code-block:: text
+
+    %1: Failed to allocate an IPv6 address for client with classes: %2
+
+This warning message is printed when Kea failed to allocate an address
+and the client's packet belongs to one or more classes. There may be several
+reasons why a lease was not assigned. One of them may be a case when all
+pools require packet to belong to certain classes and the incoming packet
+didn't belong to any of them. Another case where this information may be
+useful is to point out that the pool reserved to a given class has ran
+out of addresses. When you see this message, you may consider checking your
+pool size and your classification definitions.
+
+ALLOC_ENGINE_V6_ALLOC_FAIL_NO_POOLS
+===================================
+
+.. code-block:: text
+
+    %1: no pools were available for the lease allocation
+
+This warning message is issued when the allocation engine fails to
+allocate a lease because it could not use any configured pools for the
+particular client. It is also possible that all of the subnets from
+which the allocation engine attempted to assign an address lack address
+pools. In this case, it should be considered misconfiguration if an
+operator expects that some clients should be assigned dynamic addresses.
+A subnet may lack any pools only when all clients should be assigned
+reserved leases.
+Suppose the subnets connected to a shared network or a single subnet to
+which the client belongs have pools configured. In that case, this
+message is an indication that none of the pools could be used for the
+client because the client does not belong to appropriate client classes.
+
+ALLOC_ENGINE_V6_ALLOC_FAIL_SHARED_NETWORK
+=========================================
+
+.. code-block:: text
+
+    %1: failed to allocate a lease in the shared network %2: %3 subnets have no available leases, %4 subnets have no matching pools
+
+This warning message is issued when the allocation engine fails to allocate
+a lease for a client connected to a shared network. The shared network should
+contain at least one subnet, but typically it aggregates multiple subnets.
+This log message indicates that the allocation engine could not find and
+allocate any suitable lease in any of the subnets within the shared network.
+The first argument includes the client identification information. The
+second argument specifies the shared network name. The remaining two
+arguments provide additional information useful for debugging why the
+allocation engine could not assign a lease. The allocation engine tries
+to allocate leases from different subnets in the shared network, and
+it may fail for some subnets because there are no leases available in
+those subnets or the free leases are reserved to other clients. The
+number of such subnets is specified in the third argument. For other
+subnets the allocation may fail because their pools may not be available
+to the particular client. These pools are guarded by client classes that
+the client does not belong to. The fourth argument specifies the number
+of such subnets. By looking at the values in the third and fourth argument,
+an operator can identify the situations when there are no leases left
+in some of the pools. He or she can also identify client classification
+misconfigurations causing some clients to be refused the service.
+
+ALLOC_ENGINE_V6_ALLOC_FAIL_SUBNET
+=================================
+
+.. code-block:: text
+
+    %1: failed to allocate an IPv6 lease in the subnet %2, subnet-id %3, shared network %4
+
+This warning message is issued when the allocation engine fails to allocate
+a lease for a client connected to a subnet. The first argument includes the
+client identification information. The second and third arguments identify
+the subnet. The fourth argument specifies the shared network, if the subnet
+belongs to a shared network.
+There are many reasons for failing lease allocations. One of them may be the
+pools exhaustion or existing reservations for the free leases. However, in
+some cases, the allocation engine may fail to find a suitable pool for the
+client when the pools are only available to certain client classes, but the
+requesting client does not belong to them. Further log messages provide more
+information to distinguish between these different cases.
+
+ALLOC_ENGINE_V6_ALLOC_HR_LEASE_EXISTS
+=====================================
+
+.. code-block:: text
+
+    %1: lease type %2 for reserved address/prefix %3 already exists
+
+Logged at debug log level 40.
+This debug message is issued when the allocation engine determines that
+the lease for the IPv6 address or prefix has already been allocated
+for the client and the client can continue using it. The first argument
+includes the client identification information.
+
+ALLOC_ENGINE_V6_ALLOC_LEASES_HR
+===============================
+
+.. code-block:: text
+
+    leases and static reservations found for client %1
+
+Logged at debug log level 40.
+This message is logged when the allocation engine is in the process of
+allocating leases for the client, it found existing leases and static
+reservations for the client. The allocation engine will verify if
+existing leases match reservations. Those leases that are reserved for
+other clients and those that are not reserved for the client will
+be removed. All leases matching the reservations will be renewed
+and returned.
+
+ALLOC_ENGINE_V6_ALLOC_LEASES_NO_HR
+==================================
+
+.. code-block:: text
+
+    no reservations found but leases exist for client %1
+
+Logged at debug log level 40.
+This message is logged when the allocation engine is in the process if
+allocating leases for the client, there are no static reservations,
+but lease(s) exist for the client. The allocation engine will remove
+leases which are reserved for other clients, and return all
+remaining leases to the client.
+
+ALLOC_ENGINE_V6_ALLOC_NO_LEASES_HR
+==================================
+
+.. code-block:: text
+
+    no leases found but reservations exist for client %1
+
+Logged at debug log level 40.
+This message is logged when the allocation engine is in the process of
+allocating leases for the client. It hasn't found any existing leases
+for this client, but the client appears to have static reservations.
+The allocation engine will try to allocate the reserved resources for
+the client.
+
+ALLOC_ENGINE_V6_ALLOC_NO_V6_HR
+==============================
+
+.. code-block:: text
+
+    %1: unable to allocate reserved leases - no IPv6 reservations
+
+Logged at debug log level 40.
+This message is logged when the allocation engine determines that the
+client has no IPv6 reservations and thus the allocation engine will have
+to try to allocate allocating leases from the dynamic pool or stop
+the allocation process if none can be allocated. The first argument
+includes the client identification information.
+
+ALLOC_ENGINE_V6_ALLOC_UNRESERVED
+================================
+
+.. code-block:: text
+
+    no static reservations available - trying to dynamically allocate leases for client %1
+
+Logged at debug log level 40.
+This debug message is issued when the allocation engine will attempt
+to allocate leases from the dynamic pools.  This may be due to one of
+(a) there are no reservations for this client, (b) there are
+reservations for the client but they are not usable because the addresses
+are in use by another client or (c) we had a reserved lease but that
+has now been allocated to another client.
+
+ALLOC_ENGINE_V6_CALCULATED_PREFERRED_LIFETIME
+=============================================
+
+.. code-block:: text
+
+    %1: using a calculated preferred-lifetime of %2
+
+Logged at debug log level 40.
+This debug message indicates that the preferred-lifetime being returned
+to the client is defaulting to 62.5% of the valid-lifetime.  This may
+occur if either the preferred-lifetime has not been explicitly configured,
+or the configured value is larger than the valid-lifetime.  The arguments
+detail the client and the preferred-lifetime that will be used.
+
+ALLOC_ENGINE_V6_DECLINED_RECOVERED
+==================================
+
+.. code-block:: text
+
+    IPv6 address %1 was recovered after %2 seconds of probation-period
+
+This informational message indicates that the specified address was reported
+as duplicate (client sent DECLINE) and the server marked this address as
+unavailable for a period of time. This time now has elapsed and the address
+has been returned to the available pool. This step concludes the decline recovery
+process.
+
+ALLOC_ENGINE_V6_EXPIRED_HINT_RESERVED
+=====================================
+
+.. code-block:: text
+
+    %1: expired lease for the client's hint %2 is reserved for another client
+
+Logged at debug log level 40.
+This message is logged when the allocation engine finds that the
+expired lease for the client's hint can't be reused because it
+is reserved for another client. The first argument includes the
+client identification information.
+
+ALLOC_ENGINE_V6_EXTEND_ALLOC_UNRESERVED
+=======================================
+
+.. code-block:: text
+
+    allocate new (unreserved) leases for the renewing client %1
+
+Logged at debug log level 40.
+This debug message is issued when the allocation engine is trying to
+allocate new leases for the renewing client because it was unable to
+renew any of the existing client's leases, e.g. because leases are
+reserved for another client or for any other reason.
+
+ALLOC_ENGINE_V6_EXTEND_ERROR
+============================
+
+.. code-block:: text
+
+    %1: allocation engine experienced error with attempting to extend lease lifetime: %2
+
+This error message indicates that an error was experienced during Renew
+or Rebind processing. Additional explanation is provided with this
+message. Depending on its nature, manual intervention may be required to
+continue processing messages from this particular client; other clients
+will be unaffected. The first argument includes the client identification
+information.
+
+ALLOC_ENGINE_V6_EXTEND_LEASE
+============================
+
+.. code-block:: text
+
+    %1: extending lifetime of the lease type %2, address %3
+
+Logged at debug log level 50.
+This debug message is issued when the allocation engine is trying
+to extend lifetime of the lease. The first argument includes the
+client identification information.
+
+ALLOC_ENGINE_V6_EXTEND_LEASE_DATA
+=================================
+
+.. code-block:: text
+
+    %1: detailed information about the lease being extended: %2
+
+Logged at debug log level 55.
+This debug message prints detailed information about the lease which
+lifetime is being extended (renew or rebind). The first argument
+includes the client identification information.
+
+ALLOC_ENGINE_V6_EXTEND_NEW_LEASE_DATA
+=====================================
+
+.. code-block:: text
+
+    %1: new lease information for the lease being extended: %2
+
+Logged at debug log level 55.
+This debug message prints updated information about the lease to be
+extended. If the lease update is successful, the information printed
+by this message will be stored in the database. The first argument
+includes the client identification information.
+
+ALLOC_ENGINE_V6_HINT_RESERVED
+=============================
+
+.. code-block:: text
+
+    %1: lease for the client's hint %2 is reserved for another client
+
+Logged at debug log level 40.
+This message is logged when the allocation engine cannot allocate
+the lease using the client's hint because the lease for this hint
+is reserved for another client. The first argument includes the
+client identification information.
+
+ALLOC_ENGINE_V6_HR_ADDR_GRANTED
+===============================
+
+.. code-block:: text
+
+    reserved address %1 was assigned to client %2
+
+This informational message signals that the specified client was assigned the address
+reserved for it.
+
+ALLOC_ENGINE_V6_HR_PREFIX_GRANTED
+=================================
+
+.. code-block:: text
+
+    reserved prefix %1/%2 was assigned to client %3
+
+This informational message signals that the specified client was assigned the prefix
+reserved for it.
+
+ALLOC_ENGINE_V6_LEASES_RECLAMATION_COMPLETE
+===========================================
+
+.. code-block:: text
+
+    reclaimed %1 leases in %2
+
+Logged at debug log level 40.
+This debug message is logged when the allocation engine completes
+reclamation of a set of expired leases. The maximum number of leases
+to be reclaimed in a single pass of the lease reclamation routine
+is configurable using 'max-reclaim-leases' parameter. However,
+the number of reclaimed leases may also be limited by the timeout
+value, configured with 'max-reclaim-time'. The message includes the
+number of reclaimed leases and the total time.
+
+ALLOC_ENGINE_V6_LEASES_RECLAMATION_FAILED
+=========================================
+
+.. code-block:: text
+
+    reclamation of expired leases failed: %1
+
+This error message is issued when the reclamation of the expired leases failed.
+The error message is displayed.
+
+ALLOC_ENGINE_V6_LEASES_RECLAMATION_SLOW
+=======================================
+
+.. code-block:: text
+
+    expired leases still exist after %1 reclamations
+
+This warning message is issued when the server has been unable to
+reclaim all expired leases in a specified number of consecutive
+attempts. This indicates that the value of "reclaim-timer-wait-time"
+may be too high. However, if this is just a short burst of leases'
+expirations the value does not have to be modified and the server
+should deal with this in subsequent reclamation attempts. If this
+is a result of a permanent increase of the server load, the value
+of "reclaim-timer-wait-time" should be decreased, or the
+values of "max-reclaim-leases" and "max-reclaim-time" should be
+increased to allow processing more leases in a single cycle.
+Alternatively, these values may be set to 0 to remove the
+limitations on the number of leases and duration. However, this
+may result in longer periods of server's unresponsiveness to
+DHCP packets, while it processes the expired leases.
+
+ALLOC_ENGINE_V6_LEASES_RECLAMATION_START
+========================================
+
+.. code-block:: text
+
+    starting reclamation of expired leases (limit = %1 leases or %2 milliseconds)
+
+Logged at debug log level 40.
+This debug message is issued when the allocation engine starts the
+reclamation of the expired leases. The maximum number of leases to
+be reclaimed and the timeout is included in the message. If any of
+these values is 0, it means "unlimited".
+
+ALLOC_ENGINE_V6_LEASES_RECLAMATION_TIMEOUT
+==========================================
+
+.. code-block:: text
+
+    timeout of %1 ms reached while reclaiming IPv6 leases
+
+Logged at debug log level 40.
+This debug message is issued when the allocation engine hits the
+timeout for performing reclamation of the expired leases. The
+reclamation will now be interrupted and all leases which haven't
+been reclaimed, because of the timeout, will be reclaimed when the
+next scheduled reclamation is started. The argument is the timeout
+value expressed in milliseconds.
+
+ALLOC_ENGINE_V6_LEASE_RECLAIM
+=============================
+
+.. code-block:: text
+
+    %1: reclaiming expired lease for prefix %2/%3
+
+Logged at debug log level 40.
+This debug message is issued when the server begins reclamation of the
+expired DHCPv6 lease. The reclaimed lease may either be an address lease
+or delegated prefix. The first argument provides the client identification
+information. The other arguments specify the prefix and the prefix length
+for the lease. The prefix length for address lease is equal to 128.
+
+ALLOC_ENGINE_V6_LEASE_RECLAMATION_FAILED
+========================================
+
+.. code-block:: text
+
+    failed to reclaim the lease %1: %2
+
+This error message is logged when the allocation engine fails to
+reclaim an expired lease. The reason for the failure is included in the
+message. The error may be triggered in the lease expiration hook or
+while performing the operation on the lease database.
+
+ALLOC_ENGINE_V6_NO_MORE_EXPIRED_LEASES
+======================================
+
+.. code-block:: text
+
+    all expired leases have been reclaimed
+
+Logged at debug log level 40.
+This debug message is issued when the server reclaims all expired
+DHCPv6 leases in the database.
+
+ALLOC_ENGINE_V6_RECLAIMED_LEASES_DELETE
+=======================================
+
+.. code-block:: text
+
+    begin deletion of reclaimed leases expired more than %1 seconds ago
+
+Logged at debug log level 40.
+This debug message is issued when the allocation engine begins
+deletion of the reclaimed leases which have expired more than
+a specified number of seconds ago. This operation is triggered
+periodically according to the "flush-reclaimed-timer-wait-time"
+parameter. The "hold-reclaimed-time" parameter defines a number
+of seconds for which the leases are stored before they are
+removed.
+
+ALLOC_ENGINE_V6_RECLAIMED_LEASES_DELETE_COMPLETE
+================================================
+
+.. code-block:: text
+
+    successfully deleted %1 expired-reclaimed leases
+
+Logged at debug log level 40.
+This debug message is issued when the server successfully deletes
+"expired-reclaimed" leases from the lease database. The number of
+deleted leases is included in the log message.
+
+ALLOC_ENGINE_V6_RECLAIMED_LEASES_DELETE_FAILED
+==============================================
+
+.. code-block:: text
+
+    deletion of expired-reclaimed leases failed: %1
+
+This error message is issued when the deletion of "expired-reclaimed"
+leases from the database failed. The error message is appended to
+the log message.
+
+ALLOC_ENGINE_V6_RENEW_HR
+========================
+
+.. code-block:: text
+
+    allocating leases reserved for the client %1 as a result of Renew
+
+Logged at debug log level 40.
+This debug message is issued when the allocation engine tries to
+allocate reserved leases for the client sending a Renew message.
+The server will also remove any leases that the client is trying
+to renew that are not reserved for the client.
+
+ALLOC_ENGINE_V6_RENEW_REMOVE_RESERVED
+=====================================
+
+.. code-block:: text
+
+    %1: checking if existing client's leases are reserved for another client
+
+Logged at debug log level 40.
+This message is logged when the allocation engine finds leases for
+the client and will check if these leases are reserved for another
+client. If they are, they will not be renewed for the client
+requesting their renewal. The first argument includes the client
+identification information.
+
+ALLOC_ENGINE_V6_REUSE_EXPIRED_LEASE_DATA
+========================================
+
+.. code-block:: text
+
+    %1: reusing expired lease, updated lease information: %2
+
+Logged at debug log level 55.
+This message is logged when the allocation engine is reusing
+an existing lease. The details of the updated lease are
+printed. The first argument includes the client identification
+information.
+
+ALLOC_ENGINE_V6_REVOKED_ADDR_LEASE
+==================================
+
+.. code-block:: text
+
+    %1: address %2 was revoked from client %3 as it is reserved for client %4
+
+This informational message is an indication that the specified IPv6
+address was used by client A but it is now reserved for client B. Client
+A has been told to stop using it so that it can be leased to client B.
+This is a normal occurrence during conflict resolution, which can occur
+in cases such as the system administrator adding a reservation for an
+address that is currently in use by another client.  The server will fully
+recover from this situation, but clients will change their addresses.
+
+ALLOC_ENGINE_V6_REVOKED_PREFIX_LEASE
+====================================
+
+.. code-block:: text
+
+    %1: prefix %2/%3 was revoked from client %4 as it is reserved for client %5
+
+This informational message is an indication that the specified IPv6
+prefix was used by client A but it is now reserved for client B. Client
+A has been told to stop using it so that it can be leased to client B.
+This is a normal occurrence during conflict resolution, which can occur
+in cases such as the system administrator adding a reservation for an
+address that is currently in use by another client.  The server will fully
+recover from this situation, but clients will change their prefixes.
+
+ALLOC_ENGINE_V6_REVOKED_SHARED_ADDR_LEASE
+=========================================
+
+.. code-block:: text
+
+    %1: address %2 was revoked from client %3 as it is reserved for %4 other clients
+
+This informational message is an indication that the specified IPv6
+address was used by client A but it is now reserved for multiple other
+clients. Client A has been told to stop using it so that it can be
+leased to one of the clients having the reservation for it. This is a
+normal occurrence during conflict resolution, which can occur in cases
+such as the system administrator adding reservations for an address
+that is currently in use by another client.  The server will fully
+recover from this situation, but clients will change their addresses.
+
+*******
+ASIODNS
+*******
+
+ASIODNS_FETCH_COMPLETED
+=======================
+
+.. code-block:: text
+
+    upstream fetch to %1(%2) has now completed
+
+Logged at debug log level 70.
+A debug message, this records that the upstream fetch (a query made by the
+resolver on behalf of its client) to the specified address has completed.
+
+ASIODNS_FETCH_STOPPED
+=====================
+
+.. code-block:: text
+
+    upstream fetch to %1(%2) has been stopped
+
+Logged at debug log level 40.
+An external component has requested the halting of an upstream fetch.  This
+is an allowed operation, and the message should only appear if debug is
+enabled.
+
+ASIODNS_OPEN_SOCKET
+===================
+
+.. code-block:: text
+
+    error %1 opening %2 socket to %3(%4)
+
+The asynchronous I/O code encountered an error when trying to open a socket
+of the specified protocol in order to send a message to the target address.
+The number of the system error that caused the problem is given in the
+message.
+
+ASIODNS_READ_DATA
+=================
+
+.. code-block:: text
+
+    error %1 reading %2 data from %3(%4)
+
+The asynchronous I/O code encountered an error when trying to read data from
+the specified address on the given protocol.  The number of the system
+error that caused the problem is given in the message.
+
+ASIODNS_READ_TIMEOUT
+====================
+
+.. code-block:: text
+
+    receive timeout while waiting for data from %1(%2)
+
+Logged at debug log level 50.
+An upstream fetch from the specified address timed out.  This may happen for
+any number of reasons and is most probably a problem at the remote server
+or a problem on the network.  The message will only appear if debug is
+enabled.
+
+ASIODNS_SEND_DATA
+=================
+
+.. code-block:: text
+
+    error %1 sending data using %2 to %3(%4)
+
+The asynchronous I/O code encountered an error when trying to send data to
+the specified address on the given protocol.  The number of the system
+error that caused the problem is given in the message.
+
+ASIODNS_UNKNOWN_ORIGIN
+======================
+
+.. code-block:: text
+
+    unknown origin for ASIO error code %1 (protocol: %2, address %3)
+
+An internal consistency check on the origin of a message from the
+asynchronous I/O module failed. This may indicate an internal error;
+please submit a bug report.
+
+***
+BAD
+***
+
+BAD_CLIENT_CREDENTIALS
+======================
+
+.. code-block:: text
+
+    bad client credentials: %1
+
+This error message is issued when the client credential processing failed,
+including when the credential remaining lifetime is shorter than the
+TKEY lifetime. The argument details the error.
+
+*****
+BOOTP
+*****
+
+BOOTP_BOOTP_QUERY
+=================
+
+.. code-block:: text
+
+    recognized a BOOTP query: %1
+
+Logged at debug log level 40.
+This debug message is printed when the BOOTP query was recognized. The
+BOOTP client class was added and the message type set to DHCPREQUEST.
+The query client and transaction identification are displayed.
+
+BOOTP_LOAD
+==========
+
+.. code-block:: text
+
+    Bootp hooks library has been loaded
+
+This info message indicates that the Bootp hooks library has been loaded.
+
+BOOTP_PACKET_OPTIONS_SKIPPED
+============================
+
+.. code-block:: text
+
+    an error unpacking an option, caused subsequent options to be skipped: %1
+
+Logged at debug log level 40.
+A debug message issued when an option failed to unpack correctly, making it
+impossible to unpack the remaining options in the DHCPv4 query. The server
+will still attempt to service the packet. The sole argument provides a
+reason for unpacking error.
+
+BOOTP_PACKET_PACK
+=================
+
+.. code-block:: text
+
+    %1: preparing on-wire format of the packet to be sent
+
+Logged at debug log level 40.
+This debug message is issued when the server starts preparing the on-wire
+format of the packet to be sent back to the client. The argument specifies
+the client and the transaction identification information.
+
+BOOTP_PACKET_PACK_FAIL
+======================
+
+.. code-block:: text
+
+    %1: preparing on-wire-format of the packet to be sent failed %2
+
+This error message is issued when preparing an on-wire format of the
+packet has failed. The first argument identifies the client and the
+BOOTP transaction.  The second argument includes the error string.
+
+BOOTP_PACKET_UNPACK_FAILED
+==========================
+
+.. code-block:: text
+
+    failed to parse query from %1 to %2, received over interface %3, reason: %4
+
+Logged at debug log level 40.
+This debug message is issued when received DHCPv4 query is malformed and
+can't be parsed by the buffer4_receive callout. The query will be
+dropped by the server. The first three arguments specify source IP address,
+destination IP address and the interface. The last argument provides a
+reason for failure.
+
+****
+BULK
+****
+
+BULK_LEASE_QUERY4_UNSUPPORTED_MSG_TYPE
+======================================
+
+.. code-block:: text
+
+    Dropping packet with an unsupported DHCPv4 message type %1 received from: %2
+
+This error message is issued when a DHCPv4 packet type that the lease
+query hook does not support has been received. The first argument is
+the unsupported message type, the second the remote address of the
+connection which will be closed.
+
+BULK_LEASE_QUERY6_UNSUPPORTED_MSG_TYPE
+======================================
+
+.. code-block:: text
+
+    Dropping packet with an unsupported DHCPv6 message type %1 received from: %2
+
+This error message is issued when a DHCPv6 packet type that the lease
+query hook does not support has been received. The first argument is
+the unsupported message type, the second the remote address of the
+connection which will be closed.
+
+BULK_LEASE_QUERY_AT_MAX_CONCURRENT_QUERIES
+==========================================
+
+.. code-block:: text
+
+    Queuing query from: %1, details: %2, connection already has %3 queries in progress
+
+Logged at debug log level 40.
+This debug message is issued when a requester sends a bulk lease query
+on a connection that already has the maximum number of queries allowed
+in progress. The first argument is the requester's address, the second
+details the query which has been queued, and the third is the value
+of max-concurrent-queries.
+
+BULK_LEASE_QUERY_DEQUEUED
+=========================
+
+.. code-block:: text
+
+    A query from %1, details: %2, dequeued.
+
+Logged at debug log level 40.
+This debug message is issued when a query has been dequeued and will be
+processed. The first argument is the requester's address, the second
+details the query which has been dequeued.
+
+BULK_LEASE_QUERY_DUPLICATE_XID
+==============================
+
+.. code-block:: text
+
+    Dropping query from: %1, transaction id %2 is a duplicate
+
+This warning message is issued when a requester sends a bulk lease query with
+the same transaction id while that requester already has a query with t
+the same transaction id in-progress. The first argument is the requester's
+address, the second the duplicated transaction id.
+
+BULK_LEASE_QUERY_EMPTY_REQUEST
+==============================
+
+.. code-block:: text
+
+    A bulk lease query packet received from %1 is empty.
+
+This error message is issued when received bulk lease query packet with no
+payload. The argument contains the remote address of the connection which
+will be closed.
+
+BULK_LEASE_QUERY_INVALID_REQUEST
+================================
+
+.. code-block:: text
+
+    A bulk lease query packet received from %1 is invalid, query: %2, error: %3
+
+This error message is issued when received invalid bulk lease query packet.
+The first argument is the remote address of the connection which will be
+closed, the second is the query, the last one is the error message.
+
+BULK_LEASE_QUERY_LISTENER_START_FAILED
+======================================
+
+.. code-block:: text
+
+    Bulk lease query listener thread pool could not be started, error %1
+
+This error message is emitted when the bulk lease query listener's could
+(re)started following a reconfiguration event. This most likely cause
+would be a runtime configuration error, such an IP address that is invalid
+or already in-use as the service address. The argument details the error.
+
+BULK_LEASE_QUERY_PAUSE_CHECK_PERMISSIONS_FAILED
+===============================================
+
+.. code-block:: text
+
+    An unexpected error occurred while checking pause permissions, error %1
+
+This error message is emitted when attempting to pause Bulk Lease Query's
+listener. This error is highly unlikely and indicates a programmatic
+issue that should be reported as a defect.
+
+BULK_LEASE_QUERY_PAUSE_LISTENER_FAILED
+======================================
+
+.. code-block:: text
+
+    Listener could not be paused, error %1
+
+This error message is emitted when attempting to pause Bulk Lease Query's
+listener. This error is highly unlikely and indicates a programmatic
+issue that should be reported as a defect.
+
+BULK_LEASE_QUERY_PAUSE_LISTENER_ILLEGAL
+=======================================
+
+.. code-block:: text
+
+    Pausing multi-threaded processing failed: %1
+
+This error message is emitted when attempting to pause the bulk lease query
+listener's thread pool from a worker thread. This error indicates that an
+action attempted on listener thread is trying to use a critical section which
+would result in a dead-lock. This error is highly unlikely and indicates a
+programmatic issue that should be reported as a defect.
+
+BULK_LEASE_QUERY_PROCESSING_UNEXPECTED_FAILURE
+==============================================
+
+.. code-block:: text
+
+    A bulk lease query packet processing throws unexpected exception: %1
+
+This error message is issued when bulk lease query processing throws.
+The exception is displayed.
+
+BULK_LEASE_QUERY_QUERY_RECEIVED
+===============================
+
+.. code-block:: text
+
+    A bulk lease query packet received from %1, details: %2
+
+Logged at debug log level 40.
+This debug message is issued when a bulk lease query query has
+been received. The first argument is the address that sent the packet,
+the second details the packet.
+
+BULK_LEASE_QUERY_REJECTED_CONNECTION
+====================================
+
+.. code-block:: text
+
+    A new bulk lease query connection from %1 was rejected: %2
+
+This debug message is issued when a new bulk lease query connection was
+rejected. The client address and the error message are displayed.
+
+BULK_LEASE_QUERY_RESPONSE_SEND_ERROR
+====================================
+
+.. code-block:: text
+
+    A bulk lease query response could not be sent to: %1, response: %2, error: %3
+
+This debug message is issued when the server when an attempt to send
+a query response failed. The first argument is there address to which
+the response was destined, the second contains the response details,
+the third is the error explanation.
+
+BULK_LEASE_QUERY_RESPONSE_SENT
+==============================
+
+.. code-block:: text
+
+    A bulk lease query response sent to %1, details: %2
+
+Logged at debug log level 40.
+This debug message is issued when a bulk lease query response has been sent.
+The first argument is the address that the packet has been sent to,
+the second details the packet.
+
+BULK_LEASE_QUERY_RESUME_LISTENER_FAILED
+=======================================
+
+.. code-block:: text
+
+    Listener could not be resumed, error %1
+
+This error message is emitted when attempting to resume Bulk Lease Query's
+listener. This error is highly unlikely and indicates a programmatic
+issue that should be reported as a defect.
+
+BULK_LEASE_QUERY_UNPACK_ERROR
+=============================
+
+.. code-block:: text
+
+    A bulk lease query packet received from %1, could not be unpacked, error: %2
+
+This error message is issued when received bulk lease query is malformed and
+could not be unpacked. The first argument is the remote address of the
+connection which will be closed, the second is the error explanation.
+
+**
+CB
+**
+
+CB_CMDS_CLASS4_DEL_HANDLER_FAILED
+=================================
+
+.. code-block:: text
+
+    remote-class4-del command failed: %1
+
+This error message is issued to indicate that the remote-class4-del command
+handler failed while processing the command. The argument provides the reason
+for failure.
+
+CB_CMDS_CLASS4_GET_ALL_HANDLER_FAILED
+=====================================
+
+.. code-block:: text
+
+    remote-class4-get-all command failed: %1
+
+This error message is issued to indicate that the remote-class4-get-all
+command handler failed while processing the command. The argument provides
+the reason for failure.
+
+CB_CMDS_CLASS4_GET_HANDLER_FAILED
+=================================
+
+.. code-block:: text
+
+    remote-class4-get command failed: %1
+
+This error message is issued to indicate that the remote-class4-get command
+handler failed while processing the command. The argument provides the reason
+for failure.
+
+CB_CMDS_CLASS4_SET_HANDLER_FAILED
+=================================
+
+.. code-block:: text
+
+    remote-class4-set command failed: %1
+
+This error message is issued to indicate that the remote-class4-set command
+handler failed while processing the command. The argument provides the reason
+for failure.
+
+CB_CMDS_CLASS6_DEL_HANDLER_FAILED
+=================================
+
+.. code-block:: text
+
+    remote-class6-del command failed: %1
+
+This error message is issued to indicate that the remote-class6-del command
+handler failed while processing the command. The argument provides the reason
+for failure.
+
+CB_CMDS_CLASS6_GET_ALL_HANDLER_FAILED
+=====================================
+
+.. code-block:: text
+
+    remote-class6-get-all command failed: %1
+
+This error message is issued to indicate that the remote-class6-get-all
+command handler failed while processing the command. The argument provides
+the reason for failure.
+
+CB_CMDS_CLASS6_GET_HANDLER_FAILED
+=================================
+
+.. code-block:: text
+
+    remote-class6-get command failed: %1
+
+This error message is issued to indicate that the remote-class6-get command
+handler failed while processing the command. The argument provides the reason
+for failure.
+
+CB_CMDS_CLASS6_SET_HANDLER_FAILED
+=================================
+
+.. code-block:: text
+
+    remote-class6-set command failed: %1
+
+This error message is issued to indicate that the remote-class6-set command
+handler failed while processing the command. The argument provides the reason
+for failure.
+
+CB_CMDS_DEINIT_OK
+=================
+
+.. code-block:: text
+
+    unloading cb_cmds hooks library successful
+
+This informational message indicates that the Config Commands hooks library has
+been unloaded successfully.
+
+CB_CMDS_GLOBAL_PARAMETER4_DEL_HANDLER_FAILED
+============================================
+
+.. code-block:: text
+
+    remote-global-parameter4-del command failed: %1
+
+This error message is issued to indicate that the remote-global-parameter4-del
+command handler failed while processing the command. The argument provides the
+reason for failure.
+
+CB_CMDS_GLOBAL_PARAMETER4_GET_ALL_HANDLER_FAILED
+================================================
+
+.. code-block:: text
+
+    remote-global-parameter4-get-all command failed: %1
+
+This error message is issued to indicate that the
+remote-global-parameter4-get-all command handler failed while processing
+the command. The argument provides the reason for failure.
+
+CB_CMDS_GLOBAL_PARAMETER4_GET_HANDLER_FAILED
+============================================
+
+.. code-block:: text
+
+    remote-global-parameter4-get command failed: %1
+
+This error message is issued to indicate that the remote-global-parameter4-get
+command handler failed while processing the command. The argument provides the
+reason for failure.
+
+CB_CMDS_GLOBAL_PARAMETER4_SET_HANDLER_FAILED
+============================================
+
+.. code-block:: text
+
+    remote-global-parameter4-set command failed: %1
+
+This error message is issued to indicate that the remote-global-parameter4-set
+command handler failed while processing the command. The argument provides the
+reason for failure.
+
+CB_CMDS_GLOBAL_PARAMETER6_DEL_HANDLER_FAILED
+============================================
+
+.. code-block:: text
+
+    remote-global-parameter6-del command failed: %1
+
+This error message is issued to indicate that the remote-global-parameter6-del
+command handler failed while processing the command. The argument provides the
+reason for failure.
+
+CB_CMDS_GLOBAL_PARAMETER6_GET_ALL_HANDLER_FAILED
+================================================
+
+.. code-block:: text
+
+    remote-global-parameter6-get-all command failed: %1
+
+This error message is issued to indicate that the
+remote-global-parameter6-get-all command handler failed while processing
+the command. The argument provides the reason for failure.
+
+CB_CMDS_GLOBAL_PARAMETER6_GET_HANDLER_FAILED
+============================================
+
+.. code-block:: text
+
+    remote-global-parameter6-get command failed: %1
+
+This error message is issued to indicate that the remote-global-parameter6-get
+command handler failed while processing the command. The argument provides the
+reason for failure.
+
+CB_CMDS_GLOBAL_PARAMETER6_SET_HANDLER_FAILED
+============================================
+
+.. code-block:: text
+
+    remote-global-parameter6-set command failed: %1
+
+This error message is issued to indicate that the remote-global-parameter6-set
+command handler failed while processing the command. The argument provides the
+reason for failure.
+
+CB_CMDS_INIT_OK
+===============
+
+.. code-block:: text
+
+    loading cb_cmds hooks library successful
+
+This informational message indicates that the Config Commands hooks library has
+been loaded successfully. Enjoy!
+
+CB_CMDS_NETWORK4_DEL_HANDLER_FAILED
+===================================
+
+.. code-block:: text
+
+    remote-network4-del command failed: %1
+
+This error message is issued to indicate that the remote-network4-del command
+handler failed while processing the command. The argument provides the reason
+for failure.
+
+CB_CMDS_NETWORK4_GET_HANDLER_FAILED
+===================================
+
+.. code-block:: text
+
+    remote-network4-get command failed: %1
+
+This error message is issued to indicate that the remote-network4-get command
+handler failed while processing the command. The argument provides the reason
+for failure.
+
+CB_CMDS_NETWORK4_LIST_HANDLER_FAILED
+====================================
+
+.. code-block:: text
+
+    remote-network4-list command failed: %1
+
+This error message is issued to indicate that the remote-network4-list
+command handler failed while processing the command. The argument provides
+the reason for failure.
+
+CB_CMDS_NETWORK4_SET_HANDLER_FAILED
+===================================
+
+.. code-block:: text
+
+    remote-network4-set command failed: %1
+
+This error message is issued to indicate that the remote-network4-set command
+handler failed while processing the command. The argument provides the reason
+for failure.
+
+CB_CMDS_NETWORK6_DEL_HANDLER_FAILED
+===================================
+
+.. code-block:: text
+
+    remote-network6-del command failed: %1
+
+This error message is issued to indicate that the remote-network6-del command
+handler failed while processing the command. The argument provides the reason
+for failure.
+
+CB_CMDS_NETWORK6_GET_HANDLER_FAILED
+===================================
+
+.. code-block:: text
+
+    remote-network6-get command failed: %1
+
+This error message is issued to indicate that the remote-network6-get command
+handler failed while processing the command. The argument provides the reason
+for failure.
+
+CB_CMDS_NETWORK6_LIST_HANDLER_FAILED
+====================================
+
+.. code-block:: text
+
+    remote-network6-list command failed: %1
+
+This error message is issued to indicate that the remote-network6-list
+command handler failed while processing the command. The argument provides
+the reason for failure.
+
+CB_CMDS_NETWORK6_SET_HANDLER_FAILED
+===================================
+
+.. code-block:: text
+
+    remote-network6-set command failed: %1
+
+This error message is issued to indicate that the remote-network6-set command
+handler failed while processing the command. The argument provides the reason
+for failure.
+
+CB_CMDS_OPTION4_GLOBAL_DEL_HANDLER_FAILED
+=========================================
+
+.. code-block:: text
+
+    remote-global-option4-del command failed: %1
+
+This error message is issued to indicate that the remote-global-option4-del command
+handler failed while processing the command. The argument provides the reason
+for failure.
+
+CB_CMDS_OPTION4_GLOBAL_GET_ALL_HANDLER_FAILED
+=============================================
+
+.. code-block:: text
+
+    remote-global-option4-get-all command failed: %1
+
+This error message is issued to indicate that the remote-global-option4-get-all
+command handler failed while processing the command. The argument provides
+the reason for failure.
+
+CB_CMDS_OPTION4_GLOBAL_GET_HANDLER_FAILED
+=========================================
+
+.. code-block:: text
+
+    remote-global-option4-get command failed: %1
+
+This error message is issued to indicate that the remote-global-option4-get command
+handler failed while processing the command. The argument provides the reason
+for failure.
+
+CB_CMDS_OPTION4_GLOBAL_SET_HANDLER_FAILED
+=========================================
+
+.. code-block:: text
+
+    remote-global-option4-set command failed: %1
+
+This error message is issued to indicate that the remote-global-option4-set command
+handler failed while processing the command. The argument provides the reason
+for failure.
+
+CB_CMDS_OPTION4_NETWORK_DEL_HANDLER_FAILED
+==========================================
+
+.. code-block:: text
+
+    remote-network-option4-del command failed: %1
+
+This error message is issued to indicate that the remote-network-option4-del command
+handler failed while processing the command. The argument provides the reason
+for failure.
+
+CB_CMDS_OPTION4_NETWORK_SET_HANDLER_FAILED
+==========================================
+
+.. code-block:: text
+
+    remote-network-option4-set command failed: %1
+
+This error message is issued to indicate that the remote-network-option4-set command
+handler failed while processing the command. The argument provides the reason
+for failure.
+
+CB_CMDS_OPTION4_POOL_DEL_HANDLER_FAILED
+=======================================
+
+.. code-block:: text
+
+    remote-pool-option4-del command failed: %1
+
+This error message is issued to indicate that the remote-pool-option4-del command
+handler failed while processing the command. The argument provides the reason
+for failure.
+
+CB_CMDS_OPTION4_POOL_SET_HANDLER_FAILED
+=======================================
+
+.. code-block:: text
+
+    remote-pool-option4-set command failed: %1
+
+This error message is issued to indicate that the remote-pool-option4-set command
+handler failed while processing the command. The argument provides the reason
+for failure.
+
+CB_CMDS_OPTION4_SUBNET_DEL_HANDLER_FAILED
+=========================================
+
+.. code-block:: text
+
+    remote-subnet-option4-del command failed: %1
+
+This error message is issued to indicate that the remote-subnet-option4-del command
+handler failed while processing the command. The argument provides the reason
+for failure.
+
+CB_CMDS_OPTION4_SUBNET_SET_HANDLER_FAILED
+=========================================
+
+.. code-block:: text
+
+    remote-subnet-option4-set command failed: %1
+
+This error message is issued to indicate that the remote-subnet-option4-set command
+handler failed while processing the command. The argument provides the reason
+for failure.
+
+CB_CMDS_OPTION6_GLOBAL_DEL_HANDLER_FAILED
+=========================================
+
+.. code-block:: text
+
+    remote-global-option6-del command failed: %1
+
+This error message is issued to indicate that the remote-global-option6-del command
+handler failed while processing the command. The argument provides the reason
+for failure.
+
+CB_CMDS_OPTION6_GLOBAL_GET_ALL_HANDLER_FAILED
+=============================================
+
+.. code-block:: text
+
+    remote-global-option6-get-all command failed: %1
+
+This error message is issued to indicate that the remote-global-option6-get-all
+command handler failed while processing the command. The argument provides
+the reason for failure.
+
+CB_CMDS_OPTION6_GLOBAL_GET_HANDLER_FAILED
+=========================================
+
+.. code-block:: text
+
+    remote-global-option6-get command failed: %1
+
+This error message is issued to indicate that the remote-global-option6-get command
+handler failed while processing the command. The argument provides the reason
+for failure.
+
+CB_CMDS_OPTION6_GLOBAL_SET_HANDLER_FAILED
+=========================================
+
+.. code-block:: text
+
+    remote-global-option6-set command failed: %1
+
+This error message is issued to indicate that the remote-global-option6-set command
+handler failed while processing the command. The argument provides the reason
+for failure.
+
+CB_CMDS_OPTION6_NETWORK_DEL_HANDLER_FAILED
+==========================================
+
+.. code-block:: text
+
+    remote-network-option6-del command failed: %1
+
+This error message is issued to indicate that the remote-network-option6-del command
+handler failed while processing the command. The argument provides the reason
+for failure.
+
+CB_CMDS_OPTION6_NETWORK_SET_HANDLER_FAILED
+==========================================
+
+.. code-block:: text
+
+    remote-network-option6-set command failed: %1
+
+This error message is issued to indicate that the remote-network-option6-set command
+handler failed while processing the command. The argument provides the reason
+for failure.
+
+CB_CMDS_OPTION6_PD_POOL_DEL_HANDLER_FAILED
+==========================================
+
+.. code-block:: text
+
+    remote-pd-pool-option6-del command failed: %1
+
+This error message is issued to indicate that the remote-pd-pool-option6-del command
+handler failed while processing the command. The argument provides the reason
+for failure.
+
+CB_CMDS_OPTION6_PD_POOL_SET_HANDLER_FAILED
+==========================================
+
+.. code-block:: text
+
+    remote-pd-pool-option6-set command failed: %1
+
+This error message is issued to indicate that the remote-pd-pool-option6-set command
+handler failed while processing the command. The argument provides the reason
+for failure.
+
+CB_CMDS_OPTION6_POOL_DEL_HANDLER_FAILED
+=======================================
+
+.. code-block:: text
+
+    remote-pool-option6-del command failed: %1
+
+This error message is issued to indicate that the remote-pool-option6-del command
+handler failed while processing the command. The argument provides the reason
+for failure.
+
+CB_CMDS_OPTION6_POOL_SET_HANDLER_FAILED
+=======================================
+
+.. code-block:: text
+
+    remote-pool-option6-set command failed: %1
+
+This error message is issued to indicate that the remote-pool-option6-set command
+handler failed while processing the command. The argument provides the reason
+for failure.
+
+CB_CMDS_OPTION6_SUBNET_DEL_HANDLER_FAILED
+=========================================
+
+.. code-block:: text
+
+    remote-subnet-option6-del command failed: %1
+
+This error message is issued to indicate that the remote-subnet-option6-del command
+handler failed while processing the command. The argument provides the reason
+for failure.
+
+CB_CMDS_OPTION6_SUBNET_SET_HANDLER_FAILED
+=========================================
+
+.. code-block:: text
+
+    remote-subnet-option6-set command failed: %1
+
+This error message is issued to indicate that the remote-subnet-option6-set command
+handler failed while processing the command. The argument provides the reason
+for failure.
+
+CB_CMDS_OPTION_DEF4_DEL_HANDLER_FAILED
+======================================
+
+.. code-block:: text
+
+    remote-option-def4-del command failed: %1
+
+This error message is issued to indicate that the remote-option-def4-del command
+handler failed while processing the command. The argument provides the reason
+for failure.
+
+CB_CMDS_OPTION_DEF4_GET_ALL_HANDLER_FAILED
+==========================================
+
+.. code-block:: text
+
+    remote-option-def4-get-all command failed: %1
+
+This error message is issued to indicate that the remote-option-def4-get-all
+command handler failed while processing the command. The argument provides
+the reason for failure.
+
+CB_CMDS_OPTION_DEF4_GET_HANDLER_FAILED
+======================================
+
+.. code-block:: text
+
+    remote-option-def4-get command failed: %1
+
+This error message is issued to indicate that the remote-option-def4-get command
+handler failed while processing the command. The argument provides the reason
+for failure.
+
+CB_CMDS_OPTION_DEF4_SET_HANDLER_FAILED
+======================================
+
+.. code-block:: text
+
+    remote-option-def4-set command failed: %1
+
+This error message is issued to indicate that the remote-option-def4-set command
+handler failed while processing the command. The argument provides the reason
+for failure.
+
+CB_CMDS_OPTION_DEF6_DEL_HANDLER_FAILED
+======================================
+
+.. code-block:: text
+
+    remote-option-def6-del command failed: %1
+
+This error message is issued to indicate that the remote-option-def6-del command
+handler failed while processing the command. The argument provides the reason
+for failure.
+
+CB_CMDS_OPTION_DEF6_GET_ALL_HANDLER_FAILED
+==========================================
+
+.. code-block:: text
+
+    remote-option-def6-get-all command failed: %1
+
+This error message is issued to indicate that the remote-option-def6-get-all
+command handler failed while processing the command. The argument provides
+the reason for failure.
+
+CB_CMDS_OPTION_DEF6_GET_HANDLER_FAILED
+======================================
+
+.. code-block:: text
+
+    remote-option-def6-get command failed: %1
+
+This error message is issued to indicate that the remote-option-def6-get command
+handler failed while processing the command. The argument provides the reason
+for failure.
+
+CB_CMDS_OPTION_DEF6_SET_HANDLER_FAILED
+======================================
+
+.. code-block:: text
+
+    remote-option-def6-set command failed: %1
+
+This error message is issued to indicate that the remote-option-def6-set command
+handler failed while processing the command. The argument provides the reason
+for failure.
+
+CB_CMDS_SERVER4_DEL_HANDLER_FAILED
+==================================
+
+.. code-block:: text
+
+    remote-server4-del command failed: %1
+
+This error message is issued to indicate that the remote-server4-del
+command handler failed while processing the command. The argument
+provides the reason for failure.
+
+CB_CMDS_SERVER4_GET_ALL_HANDLER_FAILED
+======================================
+
+.. code-block:: text
+
+    remote-server4-get-all command failed: %1
+
+This error message is issued to indicate that the remote-server4-get-all
+command handler failed while processing the command. The argument
+provides the reason for failure.
+
+CB_CMDS_SERVER4_GET_HANDLER_FAILED
+==================================
+
+.. code-block:: text
+
+    remote-server4-get command failed: %1
+
+This error message is issued to indicate that the remote-server4-get
+command handler failed while processing the command. The argument
+provides the reason for failure.
+
+CB_CMDS_SERVER4_SET_HANDLER_FAILED
+==================================
+
+.. code-block:: text
+
+    remote-server4-set command failed: %1
+
+This error message is issued to indicate that the remote-server4-set
+command handler failed while processing the command. The argument
+provides the reason for failure.
+
+CB_CMDS_SERVER6_DEL_HANDLER_FAILED
+==================================
+
+.. code-block:: text
+
+    remote-server6-del command failed: %1
+
+This error message is issued to indicate that the remote-server6-del
+command handler failed while processing the command. The argument
+provides the reason for failure.
+
+CB_CMDS_SERVER6_GET_ALL_HANDLER_FAILED
+======================================
+
+.. code-block:: text
+
+    remote-server6-get-all command failed: %1
+
+This error message is issued to indicate that the remote-server6-get-all
+command handler failed while processing the command. The argument
+provides the reason for failure.
+
+CB_CMDS_SERVER6_GET_HANDLER_FAILED
+==================================
+
+.. code-block:: text
+
+    remote-server6-get command failed: %1
+
+This error message is issued to indicate that the remote-server6-get
+command handler failed while processing the command. The argument
+provides the reason for failure.
+
+CB_CMDS_SERVER6_SET_HANDLER_FAILED
+==================================
+
+.. code-block:: text
+
+    remote-server6-set command failed: %1
+
+This error message is issued to indicate that the remote-server6-set
+command handler failed while processing the command. The argument
+provides the reason for failure.
+
+CB_CMDS_SUBNET4_DEL_BY_ID_HANDLER_FAILED
+========================================
+
+.. code-block:: text
+
+    remote-subnet4-del-by-id command failed: %1
+
+This error message is issued to indicate that the remote-subnet4-del-by-id
+command handler failed while processing the command. The argument
+provides the reason for failure.
+
+CB_CMDS_SUBNET4_DEL_BY_PREFIX_HANDLER_FAILED
+============================================
+
+.. code-block:: text
+
+    remote-subnet4-del-by-prefix command failed: %1
+
+This error message is issued to indicate that the remote-subnet4-del-by-prefix
+command handler failed while processing the command. The argument
+provides the reason for failure.
+
+CB_CMDS_SUBNET4_GET_BY_ID_HANDLER_FAILED
+========================================
+
+.. code-block:: text
+
+    remote-subnet4-get-by-id command failed: %1
+
+This error message is issued to indicate that the remote-subnet4-get-by-id
+command handler failed while processing the command. The argument
+provides the reason for failure.
+
+CB_CMDS_SUBNET4_GET_BY_PREFIX_HANDLER_FAILED
+============================================
+
+.. code-block:: text
+
+    remote-subnet4-get-by-prefix command failed: %1
+
+This error message is issued to indicate that the remote-subnet4-get-by-prefix
+command handler failed while processing the command. The argument
+provides the reason for failure.
+
+CB_CMDS_SUBNET4_LIST_HANDLER_FAILED
+===================================
+
+.. code-block:: text
+
+    remote-subnet4-list command failed: %1
+
+This error message is issued to indicate that the remote-subnet4-list
+command handler failed while processing the command. The argument
+provides the reason for failure.
+
+CB_CMDS_SUBNET4_SET_HANDLER_FAILED
+==================================
+
+.. code-block:: text
+
+    remote-subnet4-set command failed: %1
+
+This error message is issued to indicate that the remote-subnet4-set command
+handler failed while processing the command. The argument provides the reason
+for failure.
+
+CB_CMDS_SUBNET6_DEL_BY_ID_HANDLER_FAILED
+========================================
+
+.. code-block:: text
+
+    remote-subnet6-del-by-id command failed: %1
+
+This error message is issued to indicate that the remote-subnet6-del-by-id
+command handler failed while processing the command. The argument
+provides the reason for failure.
+
+CB_CMDS_SUBNET6_DEL_BY_PREFIX_HANDLER_FAILED
+============================================
+
+.. code-block:: text
+
+    remote-subnet6-del-by-prefix command failed: %1
+
+This error message is issued to indicate that the remote-subnet6-del-by-prefix
+command handler failed while processing the command. The argument
+provides the reason for failure.
+
+CB_CMDS_SUBNET6_GET_BY_ID_HANDLER_FAILED
+========================================
+
+.. code-block:: text
+
+    remote-subnet6-get-by-id command failed: %1
+
+This error message is issued to indicate that the remote-subnet6-get-by-id
+command handler failed while processing the command. The argument
+provides the reason for failure.
+
+CB_CMDS_SUBNET6_GET_BY_PREFIX_HANDLER_FAILED
+============================================
+
+.. code-block:: text
+
+    remote-subnet6-get-by-prefix command failed: %1
+
+This error message is issued to indicate that the remote-subnet6-get-by-prefix
+command handler failed while processing the command. The argument
+provides the reason for failure.
+
+CB_CMDS_SUBNET6_LIST_HANDLER_FAILED
+===================================
+
+.. code-block:: text
+
+    remote-subnet6-list command failed: %1
+
+This error message is issued to indicate that the remote-subnet6-list
+command handler failed while processing the command. The argument
+provides the reason for failure.
+
+*****
+CLASS
+*****
+
+CLASS_CMDS_CLASS_ADD
+====================
+
+.. code-block:: text
+
+    class added: %1
+
+The class-add command has been successful. Definition of the added
+class is logged.
+
+CLASS_CMDS_CLASS_ADD_FAILED
+===========================
+
+.. code-block:: text
+
+    failed to add a new class: %1
+
+The class-add command has failed. The reason for failure is provided
+within the error message.
+
+CLASS_CMDS_CLASS_ADD_HANDLER_FAILED
+===================================
+
+.. code-block:: text
+
+    failed to run handler for 'class-add' command
+
+This error message is logged when the class_cmds hooks library experiences
+an unexpected error when 'class-add' command handler fails to execute.
+
+CLASS_CMDS_CLASS_DEL
+====================
+
+.. code-block:: text
+
+    class deleted: %1
+
+The class-del command has been successful. The name of the deleted class
+is logged.
+
+CLASS_CMDS_CLASS_DEL_EMPTY
+==========================
+
+.. code-block:: text
+
+    class not deleted (not found): %1
+
+The class-del command found no matching class. The name of the to be
+deleted class is logged.
+
+CLASS_CMDS_CLASS_DEL_FAILED
+===========================
+
+.. code-block:: text
+
+    failed to delete a class: %1
+
+The class-del command has failed. The reason for failure is provided
+within the error message.
+
+CLASS_CMDS_CLASS_DEL_HANDLER_FAILED
+===================================
+
+.. code-block:: text
+
+    failed to run handler for 'class-del' command
+
+This error message is logged when the class_cmds hooks library experiences
+an unexpected error when 'class-del' command handler fails to execute.
+
+CLASS_CMDS_CLASS_GET
+====================
+
+.. code-block:: text
+
+    successfully retrieved a class: %1
+
+The class-get command has been successful. The name of the retrieved class
+is logged.
+
+CLASS_CMDS_CLASS_GET_EMPTY
+==========================
+
+.. code-block:: text
+
+    specified class was not found: %1
+
+The class-get command found no matching class. The name of the searched
+class is logged.
+
+CLASS_CMDS_CLASS_GET_FAILED
+===========================
+
+.. code-block:: text
+
+    failed to retrieve a class: %1
+
+The class-get command has failed. The reason for failure is provided
+within the error message.
+
+CLASS_CMDS_CLASS_GET_HANDLER_FAILED
+===================================
+
+.. code-block:: text
+
+    failed to run handler for 'class-get' command
+
+This error message is logged when the class_cmds hooks library experiences
+an unexpected error when 'class-get' command handler fails to execute.
+
+CLASS_CMDS_CLASS_LIST
+=====================
+
+.. code-block:: text
+
+    successfully retrieved classes names
+
+The class-list command has been successful.
+
+CLASS_CMDS_CLASS_LIST_EMPTY
+===========================
+
+.. code-block:: text
+
+    no class was found
+
+The class-list command found no class.
+
+CLASS_CMDS_CLASS_LIST_FAILED
+============================
+
+.. code-block:: text
+
+    failed to retrieve classes names: %1
+
+The class-list command has failed. The reason for failure is provided
+within the error message.
+
+CLASS_CMDS_CLASS_LIST_HANDLER_FAILED
+====================================
+
+.. code-block:: text
+
+    failed to run handler for 'class-list' command
+
+This error message is logged when the class_cmds hooks library experiences
+an unexpected error when 'class-list' command handler fails to execute.
+
+CLASS_CMDS_CLASS_UPDATE
+=======================
+
+.. code-block:: text
+
+    class updated: %1
+
+The class-update command has been successful. Parameters of the updated
+class are logged.
+
+CLASS_CMDS_CLASS_UPDATE_EMPTY
+=============================
+
+.. code-block:: text
+
+    class not updated (not found): %1
+
+The class-update command found no matching class. The name of the to be
+updated class is logged.
+
+CLASS_CMDS_CLASS_UPDATE_FAILED
+==============================
+
+.. code-block:: text
+
+    failed to update a class: %1
+
+The class-update command has failed. The reason for failure is provided
+within the error message.
+
+CLASS_CMDS_CLASS_UPDATE_HANDLER_FAILED
+======================================
+
+.. code-block:: text
+
+    failed to run handler for 'class-update' command
+
+This error message is logged when the class_cmds hooks library experiences
+an unexpected error when 'class-update' command handler fails to execute.
+
+CLASS_CMDS_DEINIT_OK
+====================
+
+.. code-block:: text
+
+    unloading Class Commands hooks library successful
+
+This info message indicates that the Class Commands hooks library has been
+removed successfully.
+
+CLASS_CMDS_INIT_FAILED
+======================
+
+.. code-block:: text
+
+    loading Class Commands hooks library failed: %1
+
+This error message indicates an error during loading the Class Commands
+hooks library. The details of the error are provided as argument of
+the log message.
+
+*******
+COMMAND
+*******
+
+COMMAND_ACCEPTOR_START
+======================
+
+.. code-block:: text
+
+    Starting to accept connections via unix domain socket bound to %1
+
+This informational message is issued when the Kea server starts an acceptor
+via which it is going to accept new control connections. The acceptor is
+bound to the endpoint associated with the filename provided as an argument.
+If starting the acceptor fails, subsequent error messages will provide a
+reason for failure.
+
+COMMAND_DEREGISTERED
+====================
+
+.. code-block:: text
+
+    Command %1 deregistered
+
+Logged at debug log level 10.
+This debug message indicates that the daemon stopped supporting specified
+command. This command can no longer be issued. If the command socket is
+open and this command is issued, the daemon will not be able to process it.
+
+COMMAND_EXTENDED_REGISTERED
+===========================
+
+.. code-block:: text
+
+    Command %1 registered
+
+Logged at debug log level 10.
+This debug message indicates that the daemon started supporting specified
+command. The handler for the registered command includes a parameter holding
+entire command to be processed.
+
+COMMAND_HTTP_LISTENER_COMMAND_REJECTED
+======================================
+
+.. code-block:: text
+
+    Command HTTP listener rejected command '%1' from '%2'
+
+Logged at debug log level 10.
+This debug messages is issued when a command is rejected. Arguments detail
+the command and the address the request was received from.
+
+COMMAND_HTTP_LISTENER_STARTED
+=============================
+
+.. code-block:: text
+
+    Command HTTP listener started with %1 threads, listening on %2:%3, use TLS: %4
+
+Logged at debug log level 10.
+This debug messages is issued when an HTTP listener has been started to
+accept connections from Command API clients through which commands can be
+received and responses sent.  Arguments detail the number of threads
+that the listener is using, the address and port at which it is listening,
+and if HTTPS/TLS is used or not.
+
+COMMAND_HTTP_LISTENER_STOPPED
+=============================
+
+.. code-block:: text
+
+    Command HTTP listener for %1:%2 stopped.
+
+Logged at debug log level 10.
+This debug messages is issued when the Command HTTP listener, listening
+at the given address and port, has completed shutdown.
+
+COMMAND_HTTP_LISTENER_STOPPING
+==============================
+
+.. code-block:: text
+
+    Stopping Command HTTP listener for %1:%2
+
+Logged at debug log level 10.
+This debug messages is issued when the Command HTTP listener, listening
+at the given address and port, has begun to shutdown.
+
+COMMAND_PROCESS_ERROR1
+======================
+
+.. code-block:: text
+
+    Error while processing command: %1
+
+This warning message indicates that the server encountered an error while
+processing received command. Additional information will be provided, if
+available. Additional log messages may provide more details.
+
+COMMAND_PROCESS_ERROR2
+======================
+
+.. code-block:: text
+
+    Error while processing command: %1
+
+This warning message indicates that the server encountered an error while
+processing received command. The difference, compared to COMMAND_PROCESS_ERROR1
+is that the initial command was well formed and the error occurred during
+logic processing, not the command parsing. Additional information will be
+provided, if available. Additional log messages may provide more details.
+
+COMMAND_RECEIVED
+================
+
+.. code-block:: text
+
+    Received command '%1'
+
+This informational message indicates that a command was received over command
+socket. The nature of this command and its possible results will be logged
+with separate messages.
+
+COMMAND_REGISTERED
+==================
+
+.. code-block:: text
+
+    Command %1 registered
+
+Logged at debug log level 10.
+This debug message indicates that the daemon started supporting specified
+command. If the command socket is open, this command can now be issued.
+
+COMMAND_RESPONSE_ERROR
+======================
+
+.. code-block:: text
+
+    Server failed to generate response for command: %1
+
+This error message indicates that the server failed to generate response for
+specified command. This likely indicates a server logic error, as the server
+is expected to generate valid responses for all commands, even malformed
+ones.
+
+COMMAND_SOCKET_ACCEPT_FAIL
+==========================
+
+.. code-block:: text
+
+    Failed to accept incoming connection on command socket %1: %2
+
+This error indicates that the server detected incoming connection and executed
+accept system call on said socket, but this call returned an error. Additional
+information may be provided by the system as second parameter.
+
+COMMAND_SOCKET_CLOSED_BY_FOREIGN_HOST
+=====================================
+
+.. code-block:: text
+
+    Closed command socket %1 by foreign host, %2
+
+This is an information message indicating that the command connection has been
+closed by a command control client, and whether any partially read data
+was discarded.
+
+COMMAND_SOCKET_CONNECTION_CANCEL_FAIL
+=====================================
+
+.. code-block:: text
+
+    Failed to cancel read operation on socket %1: %2
+
+This error message is issued to indicate an error to cancel asynchronous read
+of the control command over the control socket. The cancel operation is performed
+when the timeout occurs during communication with a client. The error message
+includes details about the reason for failure.
+
+COMMAND_SOCKET_CONNECTION_CLOSED
+================================
+
+.. code-block:: text
+
+    Closed socket %1 for existing command connection
+
+Logged at debug log level 10.
+This is a debug message indicating that the socket created for handling
+client's connection is closed. This usually means that the client disconnected,
+but may also mean a timeout.
+
+COMMAND_SOCKET_CONNECTION_CLOSE_FAIL
+====================================
+
+.. code-block:: text
+
+    Failed to close command connection: %1
+
+This error message is issued when an error occurred when closing a
+command connection and/or removing it from the connections pool. The
+detailed error is provided as an argument.
+
+COMMAND_SOCKET_CONNECTION_OPENED
+================================
+
+.. code-block:: text
+
+    Opened socket %1 for incoming command connection
+
+Logged at debug log level 10.
+This is a debug message indicating that a new incoming command connection was
+detected and a dedicated socket was opened for that connection.
+
+COMMAND_SOCKET_CONNECTION_SHUTDOWN_FAIL
+=======================================
+
+.. code-block:: text
+
+    Encountered error %1 while trying to gracefully shutdown socket
+
+This message indicates an error while trying to gracefully shutdown command
+connection. The type of the error is included in the message.
+
+COMMAND_SOCKET_CONNECTION_TIMEOUT
+=================================
+
+.. code-block:: text
+
+    Timeout occurred for connection over socket %1
+
+This is an informational message that indicates that the timeout has
+occurred for one of the command channel connections. The response
+sent by the server indicates a timeout and is then closed.
+
+COMMAND_SOCKET_READ
+===================
+
+.. code-block:: text
+
+    Received %1 bytes over command socket %2
+
+Logged at debug log level 10.
+This debug message indicates that specified number of bytes was received
+over command socket identified by specified file descriptor.
+
+COMMAND_SOCKET_READ_FAIL
+========================
+
+.. code-block:: text
+
+    Encountered error %1 while reading from command socket %2
+
+This error message indicates that an error was encountered while
+reading from command socket.
+
+COMMAND_SOCKET_WRITE
+====================
+
+.. code-block:: text
+
+    Sent response of %1 bytes (%2 bytes left to send) over command socket %3
+
+Logged at debug log level 10.
+This debug message indicates that the specified number of bytes was sent
+over command socket identifier by the specified file descriptor.
+
+COMMAND_SOCKET_WRITE_FAIL
+=========================
+
+.. code-block:: text
+
+    Error while writing to command socket %1 : %2
+
+This error message indicates that an error was encountered while
+attempting to send a response to the command socket.
+
+COMMAND_WATCH_SOCKET_CLEAR_ERROR
+================================
+
+.. code-block:: text
+
+    watch socket failed to clear: %1
+
+This error message is issued when the command manager was unable to reset
+the ready status after completing a send. This is a programmatic error
+that should be reported. The command manager may or may not continue
+to operate correctly.
+
+COMMAND_WATCH_SOCKET_CLOSE_ERROR
+================================
+
+.. code-block:: text
+
+    watch socket failed to close: %1
+
+This error message is issued when command manager attempted to close the
+socket used for indicating the ready status for send operations. This
+should not have any negative impact on the operation of the command
+manager as it happens when the connection is being terminated.
+
+COMMAND_WATCH_SOCKET_MARK_READY_ERROR
+=====================================
+
+.. code-block:: text
+
+    watch socket failed to mark ready: %1
+
+This error message is issued when the command manager was unable to set
+ready status after scheduling asynchronous send. This is programmatic error
+that should be reported. The command manager may or may not continue
+to operate correctly.
+
+****
+CTRL
+****
+
+CTRL_AGENT_COMMAND_FORWARDED
+============================
+
+.. code-block:: text
+
+    command %1 successfully forwarded to the service %2 from remote address %3
+
+This informational message is issued when the CA successfully forwards
+the control message to the specified Kea service and receives a response.
+
+CTRL_AGENT_COMMAND_FORWARD_BEGIN
+================================
+
+.. code-block:: text
+
+    begin forwarding command %1 to service %2
+
+Logged at debug log level 10.
+This debug message is issued when the Control Agent starts forwarding a
+received command to one of the Kea servers.
+
+CTRL_AGENT_COMMAND_FORWARD_FAILED
+=================================
+
+.. code-block:: text
+
+    failed forwarding command %1: %2
+
+Logged at debug log level 10.
+This debug message is issued when the Control Agent failed forwarding a
+received command to one of the Kea servers. The second argument provides
+the details of the error.
+
+CTRL_AGENT_COMMAND_RECEIVED
+===========================
+
+.. code-block:: text
+
+    command %1 received from remote address %2
+
+This informational message is issued when the CA receives a control message,
+whether it is destined to the control agent itself, or to be forwarded on.
+
+CTRL_AGENT_CONFIG_CHECK_FAIL
+============================
+
+.. code-block:: text
+
+    Control Agent configuration check failed: %1
+
+This error message indicates that the CA had failed configuration
+check. Details are provided. Additional details may be available
+in earlier log entries, possibly on lower levels.
+
+CTRL_AGENT_CONFIG_FAIL
+======================
+
+.. code-block:: text
+
+    Control Agent configuration failed: %1
+
+This error message indicates that the CA had failed configuration
+attempt. Details are provided. Additional details may be available
+in earlier log entries, possibly on lower levels.
+
+CTRL_AGENT_CONFIG_SYNTAX_WARNING
+================================
+
+.. code-block:: text
+
+    Control Agent configuration syntax warning: %1
+
+This warning message indicates that the CA configuration had a minor syntax
+error. The error was displayed and the configuration parsing resumed.
+
+CTRL_AGENT_FAILED
+=================
+
+.. code-block:: text
+
+    application experienced a fatal error: %1
+
+This is a fatal error message issued when the Control Agent application
+encounters an unrecoverable error from within the event loop.
+
+CTRL_AGENT_HTTPS_SERVICE_STARTED
+================================
+
+.. code-block:: text
+
+    HTTPS service bound to address %1:%2
+
+This informational message indicates that the server has started HTTPS service
+on the specified address and port. All control commands should be sent to this
+address and port over a TLS channel.
+
+CTRL_AGENT_HTTP_SERVICE_STARTED
+===============================
+
+.. code-block:: text
+
+    HTTP service bound to address %1:%2
+
+This informational message indicates that the server has started HTTP service
+on the specified address and port. All control commands should be sent to this
+address and port.
+
+CTRL_AGENT_RUN_EXIT
+===================
+
+.. code-block:: text
+
+    application is exiting the event loop
+
+Logged at debug log level 0.
+This is a debug message issued when the Control Agent exits its
+event loop.
+
+********
+DATABASE
+********
+
+DATABASE_INVALID_ACCESS
+=======================
+
+.. code-block:: text
+
+    invalid database access string: %1
+
+This is logged when an attempt has been made to parse a database access string
+and the attempt ended in error.  The access string in question - which
+should be of the form 'keyword=value keyword=value...' is included in
+the message.
+
+DATABASE_MYSQL_COMMIT
+=====================
+
+.. code-block:: text
+
+    committing to MySQL database
+
+The code has issued a commit call.  All outstanding transactions will be
+committed to the database.  Note that depending on the MySQL settings,
+the committal may not include a write to disk.
+
+DATABASE_MYSQL_FATAL_ERROR
+==========================
+
+.. code-block:: text
+
+    Unrecoverable MySQL error occurred: %1 for <%2>, reason: %3 (error code: %4).
+
+An error message indicating that communication with the MySQL database server
+has been lost.  If automatic recovery has been enabled,  then the server will
+attempt to recover connectivity.  If not, then the server will exit with a
+non-zero exit code.  The cause of such an error is most likely a network issue
+or the MySQL server has gone down.
+
+DATABASE_MYSQL_INITIALIZE_SCHEMA
+================================
+
+.. code-block:: text
+
+    Initializing the MySQL schema with command: %1.
+
+This is logged before running the kea-admin command to automatically initialize the schema from Kea
+after getting the schema version initially failed. The full kea-admin command is shown.
+
+DATABASE_MYSQL_ROLLBACK
+=======================
+
+.. code-block:: text
+
+    rolling back MySQL database
+
+The code has issued a rollback call.  All outstanding transaction will
+be rolled back and not committed to the database.
+
+DATABASE_MYSQL_START_TRANSACTION
+================================
+
+.. code-block:: text
+
+    starting new MySQL transaction
+
+A debug message issued when a new MySQL transaction is being started.
+This message is typically not issued when inserting data into a
+single table because the server doesn't explicitly start
+transactions in this case. This message is issued when data is
+inserted into multiple tables with multiple INSERT statements
+and there may be a need to rollback the whole transaction if
+any of these INSERT statements fail.
+
+DATABASE_PGSQL_COMMIT
+=====================
+
+.. code-block:: text
+
+    committing to PostgreSQL database
+
+The code has issued a commit call.  All outstanding transactions will be
+committed to the database.  Note that depending on the PostgreSQL settings,
+the committal may not include a write to disk.
+
+DATABASE_PGSQL_CREATE_SAVEPOINT
+===============================
+
+.. code-block:: text
+
+    creating a new PostgreSQL savepoint: %1
+
+The code is issuing a call to create a savepoint within the current
+transaction.  Database modifications made up to this point will be preserved
+should a subsequent call to rollback to this savepoint occurs prior to the
+transaction being committed.
+
+DATABASE_PGSQL_DEALLOC_ERROR
+============================
+
+.. code-block:: text
+
+    An error occurred deallocating SQL statements while closing the PostgreSQL lease database: %1
+
+This is an error message issued when a DHCP server (either V4 or V6) experienced
+and error freeing database SQL resources as part of closing its connection to
+the PostgreSQL database.  The connection is closed as part of normal server
+shutdown.  This error is most likely a programmatic issue that is highly
+unlikely to occur or negatively impact server operation.
+
+DATABASE_PGSQL_FATAL_ERROR
+==========================
+
+.. code-block:: text
+
+    Unrecoverable PostgreSQL error occurred: Statement: <%1>, reason: %2 (error code: %3).
+
+An error message indicating that communication with the PostgreSQL database server
+has been lost.  If automatic recovery has been enabled,  then the server will
+attempt to recover the connectivity.  If not, then the server will exit with a
+non-zero exit code.  The cause of such an error is most likely a network issue
+or the PostgreSQL server has gone down.
+
+DATABASE_PGSQL_INITIALIZE_SCHEMA
+================================
+
+.. code-block:: text
+
+    Initializing the PostgreSQL schema with command: %1.
+
+This is logged before running the kea-admin command to automatically initialize the schema from Kea
+after getting the schema version initially failed. The full kea-admin command is shown.
+
+DATABASE_PGSQL_ROLLBACK
+=======================
+
+.. code-block:: text
+
+    rolling back PostgreSQL database
+
+The code has issued a rollback call.  All outstanding transaction will
+be rolled back and not committed to the database.
+
+DATABASE_PGSQL_ROLLBACK_SAVEPOINT
+=================================
+
+.. code-block:: text
+
+    rolling back PostgreSQL database to savepoint: $1
+
+The code is issuing a call to rollback to the given savepoint.  Any database
+modifications that were made after the savepoint was created will be rolled back
+and not committed to the database.
+
+DATABASE_PGSQL_START_TRANSACTION
+================================
+
+.. code-block:: text
+
+    starting a new PostgreSQL transaction
+
+A debug message issued when a new PostgreSQL transaction is being started.
+This message is typically not issued when inserting data into a
+single table because the server doesn't explicitly start
+transactions in this case. This message is issued when data is
+inserted into multiple tables with multiple INSERT statements
+and there may be a need to rollback the whole transaction if
+any of these INSERT statements fail.
+
+DATABASE_PGSQL_TCP_USER_TIMEOUT_UNSUPPORTED
+===========================================
+
+.. code-block:: text
+
+    tcp_user_timeout is not supported in this PostgreSQL version
+
+This warning message is issued when a user has configured the tcp_user_timeout
+parameter in the connection to the PostgreSQL database but the installed database
+does not support this parameter. It is supported by the PostgreSQL version 12 or later.
+The parameter setting will be ignored.
+
+DATABASE_TO_JSON_BOOLEAN_ERROR
+==============================
+
+.. code-block:: text
+
+    Internal logic error: invalid boolean value found in database connection parameters: %1=%2
+
+This error message is printed when conversion to JSON of the internal state is requested,
+but the connection string contains a boolean parameter with invalid value. It is a programming
+error. The software will continue operation, but the returned JSON data will be syntactically
+valid, but incomplete. The culprit parameter will not be converted.
+
+DATABASE_TO_JSON_INTEGER_ERROR
+==============================
+
+.. code-block:: text
+
+    Internal logic error: invalid integer value found in database connection parameters: %1=%2
+
+This error message is printed when conversion to JSON of the internal state is requested,
+but the connection string contains the integer parameter with a wrong value. It is a programming
+error. The software will continue operation, but the returned JSON data will be syntactically
+valid, but incomplete. The culprit parameter will not be converted.
+
+****
+DCTL
+****
+
+DCTL_ALREADY_RUNNING
+====================
+
+.. code-block:: text
+
+    %1 already running? %2
+
+This is an error message that occurs when a module encounters a pre-existing
+PID file which contains the PID of a running process.  This most likely
+indicates an attempt to start a second instance of a module using the
+same configuration file.  It is possible, though unlikely, that the PID file
+is a remnant left behind by a server crash or power failure and the PID
+it contains refers to a process other than Kea process.  In such an event,
+it would be necessary to manually remove the PID file.  The first argument is
+the process name, the second contains the PID and PID file.
+
+DCTL_CFG_FILE_RELOAD_ERROR
+==========================
+
+.. code-block:: text
+
+    configuration reload failed: %1, reverting to current configuration.
+
+This is an error message indicating that the application attempted to reload
+its configuration from file and encountered an error.  This is likely due to
+invalid content in the configuration file.  The application should continue
+to operate under its current configuration.
+
+DCTL_CFG_FILE_RELOAD_SIGNAL_RECVD
+=================================
+
+.. code-block:: text
+
+    OS signal %1 received, reloading configuration from file: %2
+
+This is an informational message indicating the application has received a signal
+instructing it to reload its configuration from file.
+
+DCTL_CONFIG_CHECK_COMPLETE
+==========================
+
+.. code-block:: text
+
+    server has completed configuration check: %1, result: %2
+
+This is an informational message announcing the successful processing of a
+new configuration check is complete. The result of that check is printed.
+This informational message is printed when configuration check is requested.
+
+DCTL_CONFIG_COMPLETE
+====================
+
+.. code-block:: text
+
+    server has completed configuration: %1
+
+This is an informational message announcing the successful processing of a
+new configuration. It is output during server startup, and when an updated
+configuration is committed by the administrator.  Additional information
+may be provided.
+
+DCTL_CONFIG_DEPRECATED
+======================
+
+.. code-block:: text
+
+    server configuration includes a deprecated object: %1
+
+This error message is issued when the configuration includes a deprecated
+object (i.e. a top level element) which will be ignored.
+
+DCTL_CONFIG_FETCH
+=================
+
+.. code-block:: text
+
+    Fetching configuration data from config backends.
+
+This is an informational message emitted when the Kea server is about to begin
+retrieving configuration data from one or more configuration backends.
+
+DCTL_CONFIG_FILE_LOAD_FAIL
+==========================
+
+.. code-block:: text
+
+    %1 reason: %2
+
+This fatal error message indicates that the application attempted to load its
+initial configuration from file and has failed. The service will exit.
+
+DCTL_CONFIG_START
+=================
+
+.. code-block:: text
+
+    parsing new configuration: %1
+
+Logged at debug log level 10.
+A debug message indicating that the application process has received an
+updated configuration and has passed it to its configuration manager
+for parsing.
+
+DCTL_DB_OPEN_CONNECTION_WITH_RETRY_FAILED
+=========================================
+
+.. code-block:: text
+
+    Failed to connect to database: %1 with error: %2
+
+This is an informational message issued when the server failed to connect to
+the configuration database. The operation started a retry to connect procedure.
+The database access string with password redacted is logged, along with the
+error and details for the reconnect procedure.
+
+DCTL_DEVELOPMENT_VERSION
+========================
+
+.. code-block:: text
+
+    This software is a development branch of Kea. It is not recommended for production use.
+
+This warning message is displayed when the version is a development
+(vs stable) one: the second number of the version is odd.
+
+DCTL_INIT_PROCESS
+=================
+
+.. code-block:: text
+
+    %1 initializing the application
+
+Logged at debug log level 0.
+This debug message is issued just before the controller attempts
+to create and initialize its application instance.
+
+DCTL_INIT_PROCESS_FAIL
+======================
+
+.. code-block:: text
+
+    %1 application initialization failed: %2
+
+This error message is issued if the controller could not initialize the
+application and will exit.
+
+DCTL_NOT_RUNNING
+================
+
+.. code-block:: text
+
+    %1 application instance is not running
+
+A warning message is issued when an attempt is made to shut down the
+application when it is not running.
+
+DCTL_OPEN_CONFIG_DB
+===================
+
+.. code-block:: text
+
+    Opening configuration database: %1
+
+This message is printed when the Kea server is attempting to open a
+configuration database.  The database access string with password redacted
+is logged.
+
+DCTL_PARSER_FAIL
+================
+
+.. code-block:: text
+
+    Parser error: %1
+
+On receipt of a new configuration, the server failed to create a parser to
+decode the contents of the named configuration element, or the creation
+succeeded but the parsing actions and committal of changes failed.
+The reason for the failure is given in the message.
+
+DCTL_PID_FILE_ERROR
+===================
+
+.. code-block:: text
+
+    %1 could not create a PID file: %2
+
+This is an error message that occurs when the server is unable to create
+its PID file.  The log message should contain details sufficient to
+determine the underlying cause.  The most likely culprits are that
+some portion of the pathname does not exist or a permissions issue. The
+default path is determined by --localstatedir or --runstatedir configure
+parameters but may be overridden by setting environment variable,
+KEA_PIDFILE_DIR.  The first argument is the process name.
+
+DCTL_PROCESS_FAILED
+===================
+
+.. code-block:: text
+
+    %1 application execution failed: %2
+
+The controller has encountered a fatal error while running the
+application and is terminating. The reason for the failure is
+included in the message.
+
+DCTL_RUN_PROCESS
+================
+
+.. code-block:: text
+
+    %1 starting application event loop
+
+Logged at debug log level 0.
+This debug message is issued just before the controller invokes
+the application run method.
+
+DCTL_SHUTDOWN
+=============
+
+.. code-block:: text
+
+    %1 has shut down, pid: %2, version: %3
+
+Logged at debug log level 0.
+This is an informational message indicating that the service has shut
+down. The argument specifies a name of the service.
+
+DCTL_SHUTDOWN_SIGNAL_RECVD
+==========================
+
+.. code-block:: text
+
+    OS signal %1 received, starting shutdown
+
+Logged at debug log level 0.
+This is a debug message indicating the application has received a signal
+instructing it to shutdown.
+
+DCTL_STANDALONE
+===============
+
+.. code-block:: text
+
+    %1 skipping message queue, running standalone
+
+Logged at debug log level 0.
+This is a debug message indicating that the controller is running in the
+application in standalone mode. This means it will not connected to the Kea
+message queue. Standalone mode is only useful during program development,
+and should not be used in a production environment.
+
+DCTL_STARTING
+=============
+
+.. code-block:: text
+
+    %1 starting, pid: %2, version: %3 (%4)
+
+This is an informational message issued when controller for the
+service first starts. Version is also reported.
+
+DCTL_UNLOAD_LIBRARIES_ERROR
+===========================
+
+.. code-block:: text
+
+    error unloading hooks libraries during shutdown: %1
+
+This error message indicates that during shutdown, unloading hooks
+libraries failed to close them. If the list of libraries is empty it is
+a programmatic error in the server code. If it is not empty it could be
+a programmatic error in one of the hooks libraries which could lead to
+a crash during finalization.
+
+****
+DDNS
+****
+
+DDNS_TUNING4_CALCULATED_HOSTNAME
+================================
+
+.. code-block:: text
+
+    Replacing host name: %1, with calculated host name: %2, for query: %3
+
+Logged at debug log level 40.
+This debug message is emitted when the DDNS Tuning hooks library has
+calculated a new host name for the given client query.  The original
+host name and the calculated host name are provided
+
+DDNS_TUNING4_PROCESS_ERROR
+==========================
+
+.. code-block:: text
+
+    An error occurred processing query %1: %2
+
+This error message indicates an error during processing of a query
+by the DDNS Tuning hooks library. The client identification information
+from the query and the details of the error are provided as arguments
+of the log message.
+
+DDNS_TUNING4_SKIPPING_DDNS
+==========================
+
+.. code-block:: text
+
+    Client is a member matches SKIP_DDNS class, skipping DDNS updates, query: %1
+
+Logged at debug log level 40.
+This debug message is emitted when during the ddns4-update callout, if the
+Client query matches the SKIP_DDNS class.  The kea-dhcp4 server will not send
+DDNS update requests to kea-dhcp-ddns for this query.  The query is shown
+in the log message.
+
+DDNS_TUNING6_CALCULATED_HOSTNAME
+================================
+
+.. code-block:: text
+
+    Replacing host name: %1, with calculated host name: %2, for query: %3
+
+Logged at debug log level 40.
+This debug message is emitted when the DDNS Tuning hooks library has
+calculated a new host name for the given client query.  The original
+host name and the calculated host name are provided
+
+DDNS_TUNING6_PROCESS_ERROR
+==========================
+
+.. code-block:: text
+
+    An error occurred processing query %1: %2
+
+This error message indicates an error during processing of a query
+by the DDNS Tuning hooks library. The client identification information
+from the query and the details of the error are provided as arguments
+of the log message.
+
+DDNS_TUNING6_SKIPPING_DDNS
+==========================
+
+.. code-block:: text
+
+    Client is a member matches SKIP_DDNS class, skipping DDNS updates, query: %1
+
+Logged at debug log level 40.
+This debug message is emitted when during the ddns6-update callout, if the
+Client query matches the SKIP_DDNS class.  The kea-dhcp6 server will not send
+DDNS update requests to kea-dhcp-ddns for this query.  The query is shown
+in the log message.
+
+DDNS_TUNING_GLOBAL_EXPR_SET
+===========================
+
+.. code-block:: text
+
+    Global hostname expression set to: %1
+
+This message indicates that the global hostname expression has been set and
+will be used everywhere, unless overridden by subnet level parameters.
+
+DDNS_TUNING_LOAD_ERROR
+======================
+
+.. code-block:: text
+
+    loading DDNS Tuning hooks library failed: %1
+
+This error message indicates an error during loading the DDNS Tuning
+hooks library. The details of the error are provided as argument of
+the log message.
+
+DDNS_TUNING_LOAD_OK
+===================
+
+.. code-block:: text
+
+    DDNS Tuning hooks library loaded successfully.
+
+This info message indicates that the DDNS Tuning hooks library has
+been loaded successfully.
+
+DDNS_TUNING_SUBNET_EXPRESSION_PARSE
+===================================
+
+.. code-block:: text
+
+    Parsing subnet expression (%1) for for subnet %2
+
+Logged at debug log level 40.
+This debug message is emitted when the DDNS Tuning hooks library is attempting
+to parse the hostname expression for a subnet.  Parsing occurs after configuration
+events (e.g. reconfigure command, config back end updates, subnet command updates).
+
+DDNS_TUNING_SUBNET_EXPRESSION_PARSE_ERROR
+=========================================
+
+.. code-block:: text
+
+    An error occurred while parsing the hostname expression for subnet %1, %2
+
+This error indicates that the hostname expression assigned to a subnet
+is not a valid expression.  DHCP service will continue as though
+the subnet did not specify an expression.  The subnet and the parsing
+error are included in the log message.
+
+DDNS_TUNING_SUBNET_EXPR_CACHED
+==============================
+
+.. code-block:: text
+
+    Using subnet expression stored in a cache for subnet %1
+
+Logged at debug log level 40.
+The expression for this subnet has previously been used and cached. Using the
+cached version.
+
+*****
+DHCP4
+*****
+
+DHCP4_ALREADY_RUNNING
+=====================
+
+.. code-block:: text
+
+    %1 already running? %2
+
+This is an error message that occurs when the DHCPv4 server encounters
+a pre-existing PID file which contains the PID of a running process.
+This most likely indicates an attempt to start a second instance of
+the server using the same configuration file.  It is possible, though
+unlikely that the PID file is a remnant left behind by a server crash or
+power failure and the PID it contains refers to a process other than
+the server.  In such an event, it would be necessary to manually remove
+the PID file.  The first argument is the DHCPv4 process name, the
+second contains the PID and PID file.
+
+DHCP4_BUFFER_RECEIVED
+=====================
+
+.. code-block:: text
+
+    received buffer from %1:%2 to %3:%4 over interface %5
+
+Logged at debug log level 40.
+This debug message is logged when the server has received a packet
+over the socket. When the message is logged the contents of the received
+packet hasn't been parsed yet. The only available information is the
+interface and the source and destination IPv4 addresses/ports.
+
+DHCP4_BUFFER_RECEIVE_FAIL
+=========================
+
+.. code-block:: text
+
+    error on attempt to receive packet: %1
+
+The DHCPv4 server tried to receive a packet but an error
+occurred during this attempt. The reason for the error is included in
+the message.
+
+DHCP4_BUFFER_UNPACK
+===================
+
+.. code-block:: text
+
+    parsing buffer received from %1 to %2 over interface %3
+
+Logged at debug log level 50.
+This debug message is issued when the server starts parsing the received
+buffer holding the DHCPv4 message. The arguments specify the source and
+destination IPv4 addresses as well as the interface over which the buffer has
+been received.
+
+DHCP4_BUFFER_WAIT_SIGNAL
+========================
+
+.. code-block:: text
+
+    signal received while waiting for next packet
+
+Logged at debug log level 50.
+This debug message is issued when the server was waiting for the
+packet, but the wait has been interrupted by the signal received
+by the process. The signal will be handled before the server starts
+waiting for next packets.
+
+DHCP4_CB_ON_DEMAND_FETCH_UPDATES_FAIL
+=====================================
+
+.. code-block:: text
+
+    error on demand attempt to fetch configuration updates from the configuration backend(s): %1
+
+This error message is issued when the server attempted to fetch
+configuration updates from the database and this on demand attempt failed.
+The sole argument which is returned to the config-backend-pull command
+caller too contains the reason for failure.
+
+DHCP4_CB_PERIODIC_FETCH_UPDATES_FAIL
+====================================
+
+.. code-block:: text
+
+    error on periodic attempt to fetch configuration updates from the configuration backend(s): %1
+
+This error message is issued when the server attempted to fetch
+configuration updates from the database and this periodic attempt failed.
+The server will re-try according to the configured value of the
+config-fetch-wait-time parameter. The sole argument contains the
+reason for failure.
+
+DHCP4_CB_PERIODIC_FETCH_UPDATES_RETRIES_EXHAUSTED
+=================================================
+
+.. code-block:: text
+
+    maximum number of configuration fetch attempts: 10, has been exhausted without success
+
+This error indicates that the server has made a number of unsuccessful
+periodic attempts to fetch configuration updates from a configuration backend.
+The server will continue to operate but won't make any further attempts
+to fetch configuration updates. The administrator must fix the configuration
+in the database and reload (or restart) the server.
+
+DHCP4_CLASSES_ASSIGNED
+======================
+
+.. code-block:: text
+
+    %1: client packet has been assigned on %2 message to the following classes: %3
+
+Logged at debug log level 40.
+This debug message informs that incoming packet has been assigned to specified
+classes. This is a normal behavior and indicates successful operation.
+The first argument specifies the client and transaction identification
+information. The second argument specifies the DHCPv4 message type. The third
+argument includes all classes to which the packet has been assigned.
+
+DHCP4_CLASSES_ASSIGNED_AFTER_SUBNET_SELECTION
+=============================================
+
+.. code-block:: text
+
+    %1: client packet has been assigned to the following classes: %2
+
+Logged at debug log level 40.
+This debug message informs that incoming packet has been assigned to specified
+classes. This is a normal behavior and indicates successful operation.
+The first argument specifies the client and transaction identification
+information. The second argument includes all classes to which the packet has
+been assigned.
+
+DHCP4_CLASS_ASSIGNED
+====================
+
+.. code-block:: text
+
+    %1: client packet has been assigned to the following class: %2
+
+Logged at debug log level 40.
+This debug message informs that incoming packet has been assigned to specified
+class. This is a normal behavior and indicates successful operation.
+The first argument specifies the client and transaction identification
+information. The second argument includes the new class to which the
+packet has been assigned.
+
+DHCP4_CLASS_UNCONFIGURED
+========================
+
+.. code-block:: text
+
+    %1: client packet belongs to an unconfigured class: %2
+
+Logged at debug log level 40.
+This debug message informs that incoming packet belongs to a class
+which cannot be found in the configuration. Either a hook written
+before the classification was added to Kea is used, or class naming is
+inconsistent.
+
+DHCP4_CLASS_UNDEFINED
+=====================
+
+.. code-block:: text
+
+    required class %1 has no definition
+
+Logged at debug log level 40.
+This debug message informs that a class is listed for required evaluation but
+has no definition.
+
+DHCP4_CLASS_UNTESTABLE
+======================
+
+.. code-block:: text
+
+    required class %1 has no test expression
+
+Logged at debug log level 40.
+This debug message informs that a class was listed for required evaluation but
+its definition does not include a test expression to evaluate.
+
+DHCP4_CLIENTID_IGNORED_FOR_LEASES
+=================================
+
+.. code-block:: text
+
+    %1: not using client identifier for lease allocation for subnet %2
+
+Logged at debug log level 50.
+This debug message is issued when the server is processing the DHCPv4 message
+for which client identifier will not be used when allocating new lease or
+renewing existing lease. The server is explicitly configured to not use
+client identifier to lookup existing leases for the client and will not
+record client identifier in the lease database. This mode of operation
+is useful when clients don't use stable client identifiers, e.g. multi
+stage booting. The first argument includes the client and transaction
+identification information. The second argument specifies the identifier
+of the subnet where the client is connected and for which this mode of
+operation is configured on the server.
+
+DHCP4_CLIENT_FQDN_DATA
+======================
+
+.. code-block:: text
+
+    %1: Client sent FQDN option: %2
+
+Logged at debug log level 55.
+This debug message includes the detailed information extracted from the
+Client FQDN option sent in the query. The first argument includes the
+client and transaction identification information. The second argument
+specifies the detailed information about the FQDN option received
+by the server.
+
+DHCP4_CLIENT_FQDN_PROCESS
+=========================
+
+.. code-block:: text
+
+    %1: processing Client FQDN option
+
+Logged at debug log level 50.
+This debug message is issued when the server starts processing the Client
+FQDN option sent in the client's query. The argument includes the
+client and transaction identification information.
+
+DHCP4_CLIENT_HOSTNAME_DATA
+==========================
+
+.. code-block:: text
+
+    %1: client sent Hostname option: %2
+
+Logged at debug log level 55.
+This debug message includes the detailed information extracted from the
+Hostname option sent in the query. The first argument includes the
+client and transaction identification information. The second argument
+specifies the hostname carried in the Hostname option sent by the
+client.
+
+DHCP4_CLIENT_HOSTNAME_MALFORMED
+===============================
+
+.. code-block:: text
+
+    %1: client hostname option malformed: %2
+
+Logged at debug log level 50.
+This debug message is issued when the DHCP server was unable to process the
+the hostname option sent by the client because the content is malformed.
+The first argument includes the client and transaction identification
+information. The second argument contains a description of the data error.
+
+DHCP4_CLIENT_HOSTNAME_PROCESS
+=============================
+
+.. code-block:: text
+
+    %1: processing client's Hostname option
+
+Logged at debug log level 50.
+This debug message is issued when the server starts processing the Hostname
+option sent in the client's query. The argument includes the client and
+transaction identification information.
+
+DHCP4_CLIENT_NAME_PROC_FAIL
+===========================
+
+.. code-block:: text
+
+    %1: failed to process the fqdn or hostname sent by a client: %2
+
+Logged at debug log level 55.
+This debug message is issued when the DHCP server was unable to process the
+FQDN or Hostname option sent by a client. This is likely because the client's
+name was malformed or due to internal server error. The first argument
+contains the client and transaction identification information. The
+second argument holds the detailed description of the error.
+
+DHCP4_CONFIG_COMPLETE
+=====================
+
+.. code-block:: text
+
+    DHCPv4 server has completed configuration: %1
+
+This is an informational message announcing the successful processing of a
+new configuration. It is output during server startup, and when an updated
+configuration is committed by the administrator.  Additional information
+may be provided.
+
+DHCP4_CONFIG_LOAD_FAIL
+======================
+
+.. code-block:: text
+
+    configuration error using file: %1, reason: %2
+
+This error message indicates that the DHCPv4 configuration has failed.
+If this is an initial configuration (during server's startup) the server
+will fail to start. If this is a dynamic reconfiguration attempt the
+server will continue to use an old configuration.
+
+DHCP4_CONFIG_PACKET_QUEUE
+=========================
+
+.. code-block:: text
+
+    DHCPv4 packet queue info after configuration: %1
+
+This informational message is emitted during DHCPv4 server configuration,
+immediately after configuring the DHCPv4 packet queue.  The information
+shown depends upon the packet queue type selected.
+
+DHCP4_CONFIG_RECEIVED
+=====================
+
+.. code-block:: text
+
+    received configuration %1
+
+Logged at debug log level 10.
+A debug message listing the configuration received by the DHCPv4 server.
+The source of that configuration depends on used configuration backend.
+
+DHCP4_CONFIG_START
+==================
+
+.. code-block:: text
+
+    DHCPv4 server is processing the following configuration: %1
+
+Logged at debug log level 10.
+This is a debug message that is issued every time the server receives a
+configuration. That happens at start up and also when a server configuration
+change is committed by the administrator.
+
+DHCP4_CONFIG_SYNTAX_WARNING
+===========================
+
+.. code-block:: text
+
+    configuration syntax warning: %1
+
+This warning message indicates that the DHCPv4 configuration had a minor
+syntax error. The error was displayed and the configuration parsing resumed.
+
+DHCP4_CONFIG_UNRECOVERABLE_ERROR
+================================
+
+.. code-block:: text
+
+    DHCPv4 server new configuration failed with an error which cannot be recovered
+
+This fatal error message is issued when a new configuration raised an error
+which cannot be recovered. A correct configuration must be applied as soon
+as possible as the server is no longer working.
+The configuration can be fixed in several ways. If the control channel
+is open, config-set with a valid configuration can be
+used. Alternatively, the original config file on disk could be fixed
+and SIGHUP signal could be sent (or the config-reload command
+issued). Finally, the server could be restarted completely.
+
+DHCP4_CONFIG_UNSUPPORTED_OBJECT
+===============================
+
+.. code-block:: text
+
+    DHCPv4 server configuration includes an unsupported object: %1
+
+This error message is issued when the configuration includes an unsupported
+object (i.e. a top level element).
+
+DHCP4_DB_RECONNECT_DISABLED
+===========================
+
+.. code-block:: text
+
+    database reconnect is disabled: max-reconnect-tries %1, reconnect-wait-time %2
+
+This is an informational message indicating that connectivity to either the
+lease or host database or both and that automatic reconnect is not enabled.
+
+DHCP4_DB_RECONNECT_FAILED
+=========================
+
+.. code-block:: text
+
+    maximum number of database reconnect attempts: %1, has been exhausted without success
+
+This error indicates that the server failed to reconnect to the lease and/or
+host database(s) after making the maximum configured number of reconnect
+attempts. This might cause the server to shut down as specified in the
+configuration. Loss of connectivity is typically a network or database server
+issue.
+
+DHCP4_DB_RECONNECT_LOST_CONNECTION
+==================================
+
+.. code-block:: text
+
+    database connection lost.
+
+This info message indicates that the connection has been lost and the dhcp
+service might have been disabled, as specified in the configuration, in order to
+try to recover the connection.
+
+DHCP4_DB_RECONNECT_NO_DB_CTL
+============================
+
+.. code-block:: text
+
+    unexpected error in database reconnect
+
+This is an error message indicating a programmatic error that should not
+occur. It prohibits the server from attempting to reconnect to its
+databases if connectivity is lost, and the server exits. This error
+should be reported.
+
+DHCP4_DB_RECONNECT_SUCCEEDED
+============================
+
+.. code-block:: text
+
+    database connection recovered.
+
+This info message indicates that the connection has been recovered and the dhcp
+service has been restored.
+
+DHCP4_DDNS_REQUEST_SEND_FAILED
+==============================
+
+.. code-block:: text
+
+    failed sending a request to kea-dhcp-ddns, error: %1,  ncr: %2
+
+This error message indicates that DHCP4 server attempted to send a DDNS
+update request to the DHCP-DDNS server.  This is most likely a configuration or
+networking error.
+
+DHCP4_DECLINE_FAIL
+==================
+
+.. code-block:: text
+
+    %1: error on decline lease for address %2: %3
+
+This error message indicates that the software failed to decline a
+lease from the lease database due to an error during a database
+operation. The first argument includes the client and the transaction
+identification information. The second argument holds the IPv4 address
+which decline was attempted. The last one contains the reason for
+failure.
+
+DHCP4_DECLINE_LEASE
+===================
+
+.. code-block:: text
+
+    Received DHCPDECLINE for addr %1 from client %2. The lease will be unavailable for %3 seconds.
+
+This informational message is printed when a client received an address, but
+discovered that it is being used by some other device and notified the server by
+sending a DHCPDECLINE message. The server checked that this address really was
+leased to the client and marked this address as unusable for a certain
+amount of time. This message may indicate a misconfiguration in a network,
+as there is either a buggy client or more likely a device that is using an
+address that it is not supposed to. The server will fully recover from this
+situation, but if the underlying problem of a misconfigured or rogue device
+is not solved, this address may be declined again in the future.
+
+DHCP4_DECLINE_LEASE_MISMATCH
+============================
+
+.. code-block:: text
+
+    Received DHCPDECLINE for addr %1 from client %2, but the data doesn't match: received hwaddr: %3, lease hwaddr: %4, received client-id: %5, lease client-id: %6
+
+This informational message means that a client attempted to report his address
+as declined (i.e. used by unknown entity). The server has information about
+a lease for that address, but the client's hardware address or client identifier
+does not match the server's stored information. The client's request will be ignored.
+
+DHCP4_DECLINE_LEASE_NOT_FOUND
+=============================
+
+.. code-block:: text
+
+    Received DHCPDECLINE for addr %1 from client %2, but no such lease found.
+
+This warning message indicates that a client reported that his address was
+detected as a duplicate (i.e. another device in the network is using this address).
+However, the server does not have a record for this address. This may indicate
+a client's error or a server's purged database.
+
+DHCP4_DEFERRED_OPTION_MISSING
+=============================
+
+.. code-block:: text
+
+    %1: cannot find deferred option code %2 in the query
+
+Logged at debug log level 50.
+This debug message is printed when a deferred option cannot be found in
+the query.
+
+DHCP4_DEFERRED_OPTION_UNPACK_FAIL
+=================================
+
+.. code-block:: text
+
+    %1: An error unpacking the deferred option %2: %3
+
+Logged at debug log level 50.
+A debug message issued when deferred unpacking of an option failed, making it
+to be left unpacked in the packet. The first argument is the option code,
+the second the error.
+
+DHCP4_DEVELOPMENT_VERSION
+=========================
+
+.. code-block:: text
+
+    This software is a development branch of Kea. It is not recommended for production use.
+
+This warning message is displayed when the version is a development
+(vs stable) one: the second number of the version is odd.
+
+DHCP4_DHCP4O6_BAD_PACKET
+========================
+
+.. code-block:: text
+
+    %1: received malformed DHCPv4o6 packet: %2
+
+Logged at debug log level 50.
+A malformed DHCPv4o6 packet was received.
+
+DHCP4_DHCP4O6_HOOK_SUBNET4_SELECT_DROP
+======================================
+
+.. code-block:: text
+
+    %1: packet was dropped, because a callout set the next step to 'drop'
+
+Logged at debug log level 40.
+This debug message is printed when a callout installed on the
+subnet4_select hook point sets the next step to 'drop' value. For this particular hook
+point, the setting to that value instructs the server to drop the received
+packet. The argument specifies the client and transaction identification
+information.
+
+DHCP4_DHCP4O6_HOOK_SUBNET4_SELECT_SKIP
+======================================
+
+.. code-block:: text
+
+    %1: no subnet was selected, because a callout set the next skip flag
+
+Logged at debug log level 40.
+This debug message is printed when a callout installed on the
+subnet4_select hook point sets the next step to SKIP value. For this particular hook
+point, the setting of the flag instructs the server not to choose a
+subnet, an action that severely limits further processing; the server
+will be only able to offer global options - no addresses will be assigned.
+The argument specifies the client and transaction identification
+information.
+
+DHCP4_DHCP4O6_PACKET_RECEIVED
+=============================
+
+.. code-block:: text
+
+    received DHCPv4o6 packet from DHCPv4 server (type %1) for %2 on interface %3
+
+Logged at debug log level 40.
+This debug message is printed when the server is receiving a DHCPv4o6
+from the DHCPv4 server over inter-process communication.
+
+DHCP4_DHCP4O6_PACKET_SEND
+=========================
+
+.. code-block:: text
+
+    %1: trying to send packet %2 (type %3) to %4 port %5 on interface %6 encapsulating %7: %8 (type %9)
+
+Logged at debug log level 40.
+The arguments specify the client identification information (HW address
+and client identifier), DHCPv6 message name and type, source IPv6
+address and port, and interface name, DHCPv4 client identification,
+message name and type.
+
+DHCP4_DHCP4O6_PACKET_SEND_FAIL
+==============================
+
+.. code-block:: text
+
+    %1: failed to send DHCPv4o6 packet: %2
+
+This error is output if the IPv4 DHCP server fails to send an
+DHCPv4o6 message to the IPv6 DHCP server. The reason for the
+error is included in the message.
+
+DHCP4_DHCP4O6_RECEIVE_FAIL
+==========================
+
+.. code-block:: text
+
+    failed to receive DHCPv4o6: %1
+
+Logged at debug log level 50.
+This debug message indicates the inter-process communication with the
+DHCPv6 server failed. The reason for the error is included in
+the message.
+
+DHCP4_DHCP4O6_RECEIVING
+=======================
+
+.. code-block:: text
+
+    receiving DHCPv4o6 packet from DHCPv6 server
+
+Logged at debug log level 50.
+This debug message is printed when the server is receiving a DHCPv4o6
+from the DHCPv6 server over inter-process communication socket.
+
+DHCP4_DHCP4O6_RESPONSE_DATA
+===========================
+
+.. code-block:: text
+
+    %1: responding with packet %2 (type %3), packet details: %4
+
+Logged at debug log level 55.
+A debug message including the detailed data about the packet being
+sent to the DHCPv6 server to be forwarded to the client. The first
+argument contains the client and the transaction identification
+information. The second and third argument contains the packet name
+and type respectively. The fourth argument contains detailed packet
+information.
+
+DHCP4_DHCP4O6_SUBNET_DATA
+=========================
+
+.. code-block:: text
+
+    %1: the selected subnet details: %2
+
+Logged at debug log level 55.
+This debug message includes the details of the subnet selected for
+the client. The first argument includes the client and the
+transaction identification information. The second arguments
+includes the subnet details.
+
+DHCP4_DHCP4O6_SUBNET_SELECTED
+=============================
+
+.. code-block:: text
+
+    %1: the subnet with ID %2 was selected for client assignments
+
+Logged at debug log level 45.
+This is a debug message noting the selection of a subnet to be used for
+address and option assignment. Subnet selection is one of the early
+steps in the processing of incoming client message. The first
+argument includes the client and the transaction identification
+information. The second argument holds the selected subnet id.
+
+DHCP4_DHCP4O6_SUBNET_SELECTION_FAILED
+=====================================
+
+.. code-block:: text
+
+    %1: failed to select subnet for the client
+
+Logged at debug log level 50.
+This debug message indicates that the server failed to select the
+subnet for the client which has sent a message to the server.
+The server will not be able to offer any lease to the client and
+will drop its message if the received message was DHCPDISCOVER,
+and will send DHCPNAK if the received message was DHCPREQUEST.
+The argument includes the client and the transaction identification
+information.
+
+DHCP4_DISCOVER
+==============
+
+.. code-block:: text
+
+    %1: server is processing DHCPDISCOVER with hint=%2
+
+Logged at debug log level 50.
+This is a debug message that indicates the processing of a received DHCPDISCOVER
+message. The first argument contains the client and the transaction
+identification information. The second argument may hold the hint for the server
+about the address that the client would like to have allocated.
+If there is no hint, the argument should provide the text indicating
+that the hint hasn't been sent.
+
+DHCP4_DYNAMIC_RECONFIGURATION
+=============================
+
+.. code-block:: text
+
+    initiate server reconfiguration using file: %1, after receiving SIGHUP signal or config-reload command
+
+This is the info message logged when the DHCPv4 server starts reconfiguration
+as a result of receiving SIGHUP signal or config-reload command.
+
+DHCP4_DYNAMIC_RECONFIGURATION_FAIL
+==================================
+
+.. code-block:: text
+
+    dynamic server reconfiguration failed with file: %1
+
+This is a fatal error message logged when the dynamic reconfiguration of the
+DHCP server failed.
+
+DHCP4_DYNAMIC_RECONFIGURATION_SUCCESS
+=====================================
+
+.. code-block:: text
+
+    dynamic server reconfiguration succeeded with file: %1
+
+This is info message logged when the dynamic reconfiguration of the DHCP server
+succeeded.
+
+DHCP4_EMPTY_HOSTNAME
+====================
+
+.. code-block:: text
+
+    %1: received empty hostname from the client, skipping processing of this option
+
+Logged at debug log level 50.
+This debug message is issued when the server received an empty Hostname option
+from a client. Server does not process empty Hostname options and therefore
+option is skipped. The argument holds the client and transaction identification
+information.
+
+DHCP4_FLEX_ID
+=============
+
+.. code-block:: text
+
+    %1: flexible identifier generated for incoming packet: %2
+
+Logged at debug log level 40.
+This debug message is printed when host reservation type is set to flexible identifier
+and the expression specified in its configuration generated (was evaluated to)
+an identifier for incoming packet. This debug message is mainly intended as a
+debugging assistance for flexible identifier.
+
+DHCP4_GENERATE_FQDN
+===================
+
+.. code-block:: text
+
+    %1: client did not send a FQDN or hostname; FQDN will be generated for the client
+
+Logged at debug log level 55.
+This debug message is issued when the server did not receive a Hostname option
+from the client and hostname generation is enabled.  This provides a means to
+create DNS entries for unsophisticated clients.
+
+DHCP4_HOOK_BUFFER_RCVD_DROP
+===========================
+
+.. code-block:: text
+
+    received buffer from %1 to %2 over interface %3 was dropped because a callout set the drop flag
+
+Logged at debug log level 15.
+This debug message is printed when a callout installed on buffer4_receive
+hook point set the drop flag. For this particular hook point, the
+setting of the flag by a callout instructs the server to drop the packet.
+The arguments specify the source and destination IPv4 address as well as
+the name of the interface over which the buffer has been received.
+
+DHCP4_HOOK_BUFFER_RCVD_SKIP
+===========================
+
+.. code-block:: text
+
+    received buffer from %1 to %2 over interface %3 is not parsed because a callout set the next step to SKIP.
+
+Logged at debug log level 50.
+This debug message is printed when a callout installed on
+buffer4_receive hook point set the next step to SKIP. For this particular hook
+point, this value set by a callout instructs the server to
+not parse the buffer because it was already parsed by the hook. The
+arguments specify the source and destination IPv4 address as well as
+the name of the interface over which the buffer has been received.
+
+DHCP4_HOOK_BUFFER_SEND_SKIP
+===========================
+
+.. code-block:: text
+
+    %1: prepared response is dropped because a callout set the next step to SKIP.
+
+Logged at debug log level 40.
+This debug message is printed when a callout installed on buffer4_send
+hook point set the next step to SKIP. For this particular hook point, the
+SKIP value set by a callout instructs the server to drop the packet.
+Server completed all the processing (e.g. may have assigned, updated
+or released leases), but the response will not be send to the client.
+
+DHCP4_HOOK_DDNS_UPDATE
+======================
+
+.. code-block:: text
+
+    A hook has updated the DDNS parameters: hostname %1=>%2, forward update %3=>%4, reverse update %5=>%6
+
+Logged at debug log level 15.
+This message indicates that there was a hook called on ddns4_update hook point
+and that hook updated the DDNS update parameters: hostname, or whether to
+conduct forward (A record) or reverse (PTR record) DDNS updates.
+
+DHCP4_HOOK_DECLINE_SKIP
+=======================
+
+.. code-block:: text
+
+    Decline4 hook callouts set status to DROP, ignoring packet.
+
+Logged at debug log level 15.
+This message indicates that the server received DHCPDECLINE message, it was verified
+to be correct and matching server's lease information. The server called hooks
+for decline4 hook point and one of the callouts set next step status to DROP.
+The server will now abort processing of the packet as if it was never
+received. The lease will continue to be assigned to this client.
+
+DHCP4_HOOK_LEASE4_OFFER_ARGUMENT_MISSING
+========================================
+
+.. code-block:: text
+
+    hook callouts did not set an argument as expected %1 for %2
+
+This error message is printed when none of the callouts installed on the
+lease4_offer hook point set an expected argument in the callout status.
+This is a programming error in the installed hook libraries.  Details of
+the argument and the query in process at the time are provided log arguments.
+
+DHCP4_HOOK_LEASE4_OFFER_DROP
+============================
+
+.. code-block:: text
+
+    %1: packet is dropped, because a callout set the next step to DROP
+
+This debug message is printed when a callout installed on the lease4_offer
+hook point sets the next step to DROP.
+
+DHCP4_HOOK_LEASE4_OFFER_PARK
+============================
+
+.. code-block:: text
+
+    %1: packet is parked, because a callout set the next step to PARK
+
+This debug message is printed when a callout installed on the lease4_offer
+hook point sets the next step to PARK.
+
+DHCP4_HOOK_LEASE4_OFFER_PARKING_LOT_FULL
+========================================
+
+.. code-block:: text
+
+    The parked-packet-limit %1, has been reached, dropping query: %2
+
+This debug message occurs when the parking lot used to hold client queries
+while the hook library work for them completes has reached or exceeded the
+limit set by the parked-packet-limit global parameter. This can occur when
+kea-dhcp4 is using hook libraries (e.g. ping-check) that implement the
+"lease4_offer" callout and client queries are arriving faster than
+those callouts can fulfill them.
+
+DHCP4_HOOK_LEASE4_RELEASE_SKIP
+==============================
+
+.. code-block:: text
+
+    %1: lease was not released because a callout set the next step to SKIP
+
+Logged at debug log level 15.
+This debug message is printed when a callout installed on lease4_release
+hook point set the next step status to SKIP. For this particular hook point, the
+value set by a callout instructs the server to not release a lease.
+
+DHCP4_HOOK_LEASES4_COMMITTED_DROP
+=================================
+
+.. code-block:: text
+
+    %1: packet is dropped, because a callout set the next step to DROP
+
+This debug message is printed when a callout installed on the leases4_committed
+hook point sets the next step to DROP.
+
+DHCP4_HOOK_LEASES4_COMMITTED_PARK
+=================================
+
+.. code-block:: text
+
+    %1: packet is parked, because a callout set the next step to PARK
+
+This debug message is printed when a callout installed on the leases4_committed
+hook point sets the next step to PARK.
+
+DHCP4_HOOK_LEASES4_COMMITTED_PARKING_LOT_FULL
+=============================================
+
+.. code-block:: text
+
+    The parked-packet-limit %1, has been reached, dropping query: %2
+
+This debug message occurs when the parking lot used to hold client queries
+while the hook library work for them completes has reached or exceeded the
+limit set by the parked-packet-limit global parameter. This can occur when
+kea-dhcp4 is using hook libraries (e.g. HA) that implement the
+"leases4-committed" callout and client queries are arriving faster than
+those callouts can fulfill them.
+
+DHCP4_HOOK_PACKET_RCVD_SKIP
+===========================
+
+.. code-block:: text
+
+    %1: packet is dropped, because a callout set the next step to SKIP
+
+Logged at debug log level 40.
+This debug message is printed when a callout installed on the pkt4_receive
+hook point sets the next step to SKIP. For this particular hook point, the
+value setting of the flag instructs the server to drop the packet.
+
+DHCP4_HOOK_PACKET_SEND_DROP
+===========================
+
+.. code-block:: text
+
+    %1: prepared DHCPv4 response was not sent because a callout set the next ste to DROP
+
+Logged at debug log level 15.
+This debug message is printed when a callout installed on the pkt4_send
+hook point set the next step to DROP. For this particular hook point, the setting
+of the value by a callout instructs the server to drop the packet. This
+effectively means that the client will not get any response, even though
+the server processed client's request and acted on it (e.g. possibly
+allocated a lease). The argument specifies the client and transaction
+identification information.
+
+DHCP4_HOOK_PACKET_SEND_SKIP
+===========================
+
+.. code-block:: text
+
+    %1: prepared response is not sent, because a callout set the next stp to SKIP
+
+Logged at debug log level 40.
+This debug message is printed when a callout installed on the pkt4_send
+hook point sets the next step to SKIP. For this particular hook point, this
+setting instructs the server to drop the packet. This means that
+the client will not get any response, even though the server processed
+client's request and acted on it (e.g. possibly allocated a lease).
+
+DHCP4_HOOK_SUBNET4_SELECT_4O6_PARKING_LOT_FULL
+==============================================
+
+.. code-block:: text
+
+    The parked-packet-limit %1, has been reached, dropping query: %2
+
+Logged at debug log level 15.
+This debug message occurs when the parking lot used to hold client queries
+while the hook library work for them completes has reached or exceeded the
+limit set by the parked-packet-limit global parameter. This can occur when
+kea-dhcp4 is using hook libraries (e.g. radius) that implement the
+"subnet4_select" callout and DHCP4O6 client queries are arriving faster than
+those callouts can fulfill them.
+
+DHCP4_HOOK_SUBNET4_SELECT_DROP
+==============================
+
+.. code-block:: text
+
+    %1: packet was dropped, because a callout set the next step to 'drop'
+
+Logged at debug log level 40.
+This debug message is printed when a callout installed on the
+subnet4_select hook point sets the next step to 'drop' value. For this particular hook
+point, the setting to that value instructs the server to drop the received
+packet. The argument specifies the client and transaction identification
+information.
+
+DHCP4_HOOK_SUBNET4_SELECT_PARK
+==============================
+
+.. code-block:: text
+
+    %1: packet was parked
+
+Logged at debug log level 40.
+This debug message is printed when a callout installed on the
+subnet4_select hook point set the park flag. The argument holds the
+client and transaction identification information.
+
+DHCP4_HOOK_SUBNET4_SELECT_PARKING_LOT_FULL
+==========================================
+
+.. code-block:: text
+
+    The parked-packet-limit %1, has been reached, dropping query: %2
+
+Logged at debug log level 15.
+This debug message occurs when the parking lot used to hold client queries
+while the hook library work for them completes has reached or exceeded the
+limit set by the parked-packet-limit global parameter. This can occur when
+kea-dhcp4 is using hook libraries (e.g. radius) that implement the
+"subnet4_select" callout and client queries are arriving faster than
+those callouts can fulfill them.
+
+DHCP4_HOOK_SUBNET4_SELECT_SKIP
+==============================
+
+.. code-block:: text
+
+    %1: no subnet was selected, because a callout set the next skip flag
+
+Logged at debug log level 40.
+This debug message is printed when a callout installed on the
+subnet4_select hook point sets the next step to SKIP value. For this particular hook
+point, the setting of the flag instructs the server not to choose a
+subnet, an action that severely limits further processing; the server
+will be only able to offer global options - no addresses will be assigned.
+The argument specifies the client and transaction identification
+information.
+
+DHCP4_HOOK_SUBNET6_SELECT_PARKING_LOT_FULL
+==========================================
+
+.. code-block:: text
+
+    The parked-packet-limit %1, has been reached, dropping query: %2
+
+Logged at debug log level 15.
+This debug message occurs when the parking lot used to hold client queries
+while the hook library work for them completes has reached or exceeded the
+limit set by the parked-packet-limit global parameter. This can occur when
+kea-dhcp4 is using hook libraries (e.g. radius) that implement the
+"subnet6_select" callout and client queries are arriving faster than
+those callouts can fulfill them.
+
+DHCP4_INFORM_DIRECT_REPLY
+=========================
+
+.. code-block:: text
+
+    %1: DHCPACK in reply to the DHCPINFORM will be sent directly to %2 over %3
+
+Logged at debug log level 50.
+This debug message is issued when the DHCPACK will be sent directly to the
+client, rather than via a relay. The first argument contains the client
+and transaction identification information. The second argument contains
+the client's IPv4 address to which the response will be sent. The third
+argument contains the local interface name.
+
+DHCP4_INIT_FAIL
+===============
+
+.. code-block:: text
+
+    failed to initialize Kea server: %1
+
+The server has failed to initialize. This may be because the configuration
+was not successful, or it encountered any other critical error on startup.
+Attached error message provides more details about the issue.
+
+DHCP4_INIT_REBOOT
+=================
+
+.. code-block:: text
+
+    %1: client is in INIT-REBOOT state and requests address %2
+
+This informational message is issued when the client is in the INIT-REBOOT
+state and is requesting an IPv4 address it is using to be allocated for it.
+The first argument includes the client and transaction identification
+information. The second argument specifies the requested IPv4 address.
+
+DHCP4_LEASE_ALLOC
+=================
+
+.. code-block:: text
+
+    %1: lease %2 has been allocated for %3 seconds
+
+This informational message indicates that the server successfully granted a
+lease in response to client's DHCPREQUEST message. The lease information will
+be sent to the client in the DHCPACK message. The first argument contains the
+client and the transaction identification information. The second argument
+contains the allocated IPv4 address. The third argument is the validity
+lifetime.
+
+DHCP4_LEASE_OFFER
+=================
+
+.. code-block:: text
+
+    %1: lease %2 will be offered
+
+This informational message indicates that the server has found the lease to be
+offered to the client. It is up to the client to choose one server out of
+those which offered leases and continue allocation with that server.
+The first argument specifies the client and the transaction identification
+information. The second argument specifies the IPv4 address to be offered.
+
+DHCP4_LEASE_QUERY_PACKET_PACK_FAILED
+====================================
+
+.. code-block:: text
+
+    preparing on-wire-format of the packet to be sent: %1, failed %2
+
+This error message is issued when preparing an on-wire format of the
+packet has failed. The first argument provides packet details. the
+second the second explains the nature of the error.
+
+DHCP4_LEASE_QUERY_PACKET_UNPACK_FAILED
+======================================
+
+.. code-block:: text
+
+    failed to parse query from %1 to %2, received over interface %3, reason: %4
+
+Logged at debug log level 40.
+This debug message is issued when received DHCPLEASEQUERY is malformed and
+can't be parsed by the buffer4_receive callout. The query will be
+dropped by the server. The first three arguments specify source IP address,
+destination IP address and the interface. The last argument provides a
+reason for failure.
+
+DHCP4_LEASE_QUERY_PROCESS_FAILED
+================================
+
+.. code-block:: text
+
+    processing failed for lease query: %1, reason: %2
+
+Logged at debug log level 40.
+This error message is issued when the server encountered an error processing
+a DHCPLEASEQUERY. The first argument provides query details, the second
+an explanation of the error.
+
+DHCP4_LEASE_QUERY_RECEIVED
+==========================
+
+.. code-block:: text
+
+    received query: %1
+
+Logged at debug log level 40.
+This debug message is printed when a DHCPLEASEQUERY query has been
+received. The argument provides query details.
+
+DHCP4_LEASE_QUERY_RESPONSE_SENT
+===============================
+
+.. code-block:: text
+
+    response: %1, sent to %2:%3
+
+Logged at debug log level 40.
+This debug message is printed when a response to a DHCPLEASEQUERY has
+been sent to a requester. The first argument provides response details,
+the second and third arguments are the IP address and port to which
+the response was sent.
+
+DHCP4_LEASE_QUERY_SEND_FAILED
+=============================
+
+.. code-block:: text
+
+    unable to send response: %1, iface: %2, address %3:%4 error: %5
+
+This error message is issued when the server was unable to send a lease
+query response back to the requester. a DHCPLEASEQUERY. The first
+argument provides query details, followed by the output interface,
+IP address and port, and finally the error itself.
+
+DHCP4_LEASE_REUSE
+=================
+
+.. code-block:: text
+
+    %1: lease %2 has been reused for %3 seconds
+
+This informational message indicates that the server successfully reused a
+lease in response to client's message. The lease information will
+be sent to the client in the DHCPACK message. The first argument contains the
+client and the transaction identification information. The second argument
+contains the allocated IPv4 address. The third argument is the validity
+lifetime.
+
+DHCP4_MULTI_THREADING_INFO
+==========================
+
+.. code-block:: text
+
+    enabled: %1, number of threads: %2, queue size: %3
+
+This is a message listing some information about the multi-threading parameters
+with which the server is running.
+
+DHCP4_NCR_CREATION_FAILED
+=========================
+
+.. code-block:: text
+
+    %1: failed to generate name change requests for DNS: %2
+
+This message indicates that server was unable to generate NameChangeRequests
+which should be sent to the kea-dhcp_ddns module to create
+new DNS records for the lease being acquired or to update existing records
+for the renewed lease. The first argument contains the client and transaction
+identification information. The second argument includes the reason for the
+failure.
+
+DHCP4_NOT_RUNNING
+=================
+
+.. code-block:: text
+
+    DHCPv4 server is not running
+
+A warning message is issued when an attempt is made to shut down the
+DHCPv4 server but it is not running.
+
+DHCP4_NO_LEASE_INIT_REBOOT
+==========================
+
+.. code-block:: text
+
+    %1: no lease for address %2 requested by INIT-REBOOT client
+
+Logged at debug log level 50.
+This debug message is issued when the client being in the INIT-REBOOT state
+requested an IPv4 address but this client is unknown. The server will not
+respond. The first argument includes the client and the transaction id
+identification information. The second argument includes the IPv4 address
+requested by the client.
+
+DHCP4_OPEN_SOCKET
+=================
+
+.. code-block:: text
+
+    opening service sockets on port %1
+
+Logged at debug log level 0.
+A debug message issued during startup, this indicates that the DHCPv4
+server is about to open sockets on the specified port.
+
+DHCP4_OPEN_SOCKETS_FAILED
+=========================
+
+.. code-block:: text
+
+    maximum number of open service sockets attempts: %1, has been exhausted without success
+
+This error indicates that the server failed to bind service sockets after making
+the maximum configured number of reconnect attempts. This might cause the server
+to shut down as specified in the configuration.
+
+DHCP4_OPEN_SOCKETS_NO_RECONNECT_CTL
+===================================
+
+.. code-block:: text
+
+    unexpected error in bind service sockets.
+
+This is an error message indicating a programmatic error that should not occur.
+It prohibits the server from attempting to bind to its service sockets if they
+are unavailable, and the server exits. This error should be reported.
+
+DHCP4_PACKET_DROP_0001
+======================
+
+.. code-block:: text
+
+    %1: failed to parse packet from %2 to %3, received over interface %4, reason: %5, %6
+
+Logged at debug log level 15.
+The DHCPv4 server has received a packet that it is unable to
+interpret. The reason why the packet is invalid is included in the message.
+
+DHCP4_PACKET_DROP_0002
+======================
+
+.. code-block:: text
+
+    %1, from interface %2: no suitable subnet configured for a direct client
+
+Logged at debug log level 15.
+This info message is logged when received a message from a directly connected
+client but there is no suitable subnet configured for the interface on
+which this message has been received. The IPv4 address assigned on this
+interface must belong to one of the configured subnets. Otherwise
+received message is dropped.
+
+DHCP4_PACKET_DROP_0003
+======================
+
+.. code-block:: text
+
+    %1, from interface %2: it contains a foreign server identifier
+
+Logged at debug log level 15.
+This debug message is issued when received DHCPv4 message is dropped because
+it is addressed to a different server, i.e. a server identifier held by
+this message doesn't match the identifier used by our server. The arguments
+of this message hold the name of the transaction id and interface on which
+the message has been received.
+
+DHCP4_PACKET_DROP_0004
+======================
+
+.. code-block:: text
+
+    %1, from interface %2: missing msg-type option
+
+Logged at debug log level 15.
+This is a debug message informing that incoming DHCPv4 packet did not
+have mandatory DHCP message type option and thus was dropped. The
+arguments specify the client and transaction identification information,
+as well as the interface on which the message has been received.
+
+DHCP4_PACKET_DROP_0005
+======================
+
+.. code-block:: text
+
+    %1: unrecognized type %2 in option 53
+
+Logged at debug log level 15.
+This debug message indicates that the message type carried in DHCPv4 option
+53 is unrecognized by the server. The valid message types are listed
+on the IANA website: http://www.iana.org/assignments/bootp-dhcp-parameters/bootp-dhcp-parameters.xhtml#message-type-53.
+The message will not be processed by the server. The arguments specify
+the client and transaction identification information, as well as the
+received message type.
+
+DHCP4_PACKET_DROP_0006
+======================
+
+.. code-block:: text
+
+    %1: unsupported DHCPv4 message type %2
+
+Logged at debug log level 15.
+This debug message indicates that the message type carried in DHCPv4 option
+53 is valid but the message will not be processed by the server. This includes
+messages being normally sent by the server to the client, such as DHCPOFFER,
+DHCPACK, DHCPNAK etc. The first argument specifies the client and transaction
+identification information. The second argument specifies the message type.
+
+DHCP4_PACKET_DROP_0007
+======================
+
+.. code-block:: text
+
+    %1: failed to process packet: %2
+
+Logged at debug log level 15.
+This is a general catch-all message indicating that the processing of a
+received packet failed.  The reason is given in the message.  The server
+will not send a response but will instead ignore the packet. The first
+argument contains the client and transaction identification information.
+The second argument includes the details of the error.
+
+DHCP4_PACKET_DROP_0008
+======================
+
+.. code-block:: text
+
+    %1: DHCP service is globally disabled
+
+Logged at debug log level 15.
+This debug message is issued when a packet is dropped because the DHCP service
+has been temporarily disabled. This affects all received DHCP packets. The
+service may be enabled by the "dhcp-enable" control command or automatically
+after a specified amount of time since receiving "dhcp-disable" command.
+
+DHCP4_PACKET_DROP_0009
+======================
+
+.. code-block:: text
+
+    %1: Option 53 missing (no DHCP message type), is this a BOOTP packet?
+
+Logged at debug log level 15.
+This debug message is issued when a packet is dropped because it did contain
+option 53 and thus has no DHCP message type. The most likely explanation is
+that it was BOOTP packet.
+
+DHCP4_PACKET_DROP_0010
+======================
+
+.. code-block:: text
+
+    dropped as member of the special class 'DROP': %1, %2
+
+Logged at debug log level 15.
+This debug message is emitted when an incoming packet was classified
+into the special class 'DROP' and dropped. The packet details are displayed.
+
+DHCP4_PACKET_DROP_0011
+======================
+
+.. code-block:: text
+
+    dropped as sent by the same client than a packet being processed by another thread: dropped %1, %2 by thread %3 as duplicate of %4, %5 processed by %6
+
+Logged at debug log level 15.
+Currently multi-threading processing avoids races between packets sent by
+a client using the same client id option by dropping new packets until
+processing is finished.
+Packet details and thread identifiers are included for both packets in
+this warning message.
+
+DHCP4_PACKET_DROP_0012
+======================
+
+.. code-block:: text
+
+    dropped as sent by the same client than a packet being processed by another thread: dropped %1, %2 by thread %3 as duplicate of %4, %5 processed by %6
+
+Logged at debug log level 15.
+Currently multi-threading processing avoids races between packets sent by
+a client using the same hardware address by dropping new packets until
+processing is finished.
+Packet details and thread identifiers are included for both packets in
+this warning message.
+
+DHCP4_PACKET_DROP_0013
+======================
+
+.. code-block:: text
+
+    dropped as member of the special class 'DROP' after host reservation lookup: %1, %2
+
+Logged at debug log level 15.
+This debug message is emitted when an incoming packet was classified
+after host reservation lookup into the special class 'DROP' and dropped.
+The packet details are displayed.
+
+DHCP4_PACKET_DROP_0014
+======================
+
+.. code-block:: text
+
+    dropped as member of the special class 'DROP' after early global host reservations lookup: %1, %2
+
+Logged at debug log level 15.
+This debug message is emitted when an incoming packet was classified
+after early global host reservations lookup into the special class 'DROP'
+and dropped. The packet details are displayed.
+
+DHCP4_PACKET_NAK_0001
+=====================
+
+.. code-block:: text
+
+    %1: failed to select a subnet for incoming packet, src %2, type %3
+
+This error message is output when a packet was received from a subnet
+for which the DHCPv4 server has not been configured. The most probable
+cause is a misconfiguration of the server. The first argument contains
+the client and transaction identification information. The second argument
+contains the source IPv4 address of the packet. The third argument contains
+the name of the received packet.
+
+DHCP4_PACKET_NAK_0002
+=====================
+
+.. code-block:: text
+
+    %1: invalid address %2 requested by INIT-REBOOT
+
+Logged at debug log level 50.
+This debug message is issued when the client being in the INIT-REBOOT state
+requested an IPv4 address which is not assigned to him. The server will respond
+to this client with DHCPNAK. The first argument contains the client and
+the transaction identification information. The second arguments holds the
+IPv4 address requested by the client.
+
+DHCP4_PACKET_NAK_0003
+=====================
+
+.. code-block:: text
+
+    %1: failed to advertise a lease, client sent ciaddr %2, requested-ip-address %3
+
+Logged at debug log level 50.
+This message indicates that the server has failed to offer a lease to
+the specified client after receiving a DISCOVER message from it. There are
+many possible reasons for such a failure. The first argument contains
+the client and the transaction identification information. The second
+argument contains the IPv4 address in the ciaddr field. The third
+argument contains the IPv4 address in the requested-ip-address option
+(if present).
+
+DHCP4_PACKET_NAK_0004
+=====================
+
+.. code-block:: text
+
+    %1: failed to grant a lease, client sent ciaddr %2, requested-ip-address %3
+
+Logged at debug log level 50.
+This message indicates that the server failed to grant a lease to the
+specified client after receiving a REQUEST message from it.  There are many
+possible reasons for such a failure. Additional messages will indicate the
+reason. The first argument contains the client and the transaction
+identification information. The second argument contains the IPv4 address
+in the ciaddr field. The third argument contains the IPv4 address in the
+requested-ip-address option (if present).
+
+DHCP4_PACKET_OPTIONS_SKIPPED
+============================
+
+.. code-block:: text
+
+    %1: An error unpacking an option, caused subsequent options to be skipped: %2
+
+Logged at debug log level 50.
+A debug message issued when an option failed to unpack correctly, making it
+impossible to unpack the remaining options in the packet.  The server will
+server will still attempt to service the packet.
+
+DHCP4_PACKET_PACK
+=================
+
+.. code-block:: text
+
+    %1: preparing on-wire format of the packet to be sent
+
+Logged at debug log level 50.
+This debug message is issued when the server starts preparing the on-wire
+format of the packet to be sent back to the client. The argument specifies
+the client and the transaction identification information.
+
+DHCP4_PACKET_PACK_FAIL
+======================
+
+.. code-block:: text
+
+    %1: preparing on-wire-format of the packet to be sent failed %2
+
+This error message is issued when preparing an on-wire format of the packet
+has failed. The first argument identifies the client and the DHCP transaction.
+The second argument includes the error string.
+
+DHCP4_PACKET_PROCESS_EXCEPTION
+==============================
+
+.. code-block:: text
+
+    %1: exception occurred during packet processing
+
+This error message indicates that a non-standard exception was raised
+during packet processing that was not caught by other, more specific
+exception handlers. This packet will be dropped and the server will
+continue operation.
+
+DHCP4_PACKET_PROCESS_EXCEPTION_MAIN
+===================================
+
+.. code-block:: text
+
+    exception occurred during packet processing
+
+This error message indicates that a non-standard exception was raised
+during packet processing that was not caught by other, more specific
+exception handlers. This packet will be dropped and the server will
+continue operation. This error message may appear in main server processing
+loop.
+
+DHCP4_PACKET_PROCESS_STD_EXCEPTION
+==================================
+
+.. code-block:: text
+
+    %1: exception occurred during packet processing: %2
+
+This error message indicates that a standard exception was raised
+during packet processing that was not caught by other, more specific
+exception handlers. This packet will be dropped and the server will
+continue operation.
+
+DHCP4_PACKET_PROCESS_STD_EXCEPTION_MAIN
+=======================================
+
+.. code-block:: text
+
+    exception occurred during packet processing: %1
+
+This error message indicates that a standard exception was raised
+during packet processing that was not caught by other, more specific
+exception handlers. This packet will be dropped and the server will
+continue operation. This error message may appear in main server processing
+loop.
+
+DHCP4_PACKET_QUEUE_FULL
+=======================
+
+.. code-block:: text
+
+    multi-threading packet queue is full
+
+Logged at debug log level 40.
+A debug message noting that the multi-threading packet queue is full so
+the oldest packet of the queue was dropped to make room for the received one.
+
+DHCP4_PACKET_RECEIVED
+=====================
+
+.. code-block:: text
+
+    %1: %2 (type %3) received from %4 to %5 on interface %6
+
+An INFO message noting that the server has received the specified type of
+packet on the specified interface. The first argument specifies the
+client and transaction identification information. The second and third
+argument specify the name of the DHCPv4 message and its numeric type
+respectively. The remaining arguments specify the source IPv4 address,
+destination IPv4 address and the name of the interface on which the
+message has been received.
+
+DHCP4_PACKET_SEND
+=================
+
+.. code-block:: text
+
+    %1: trying to send packet %2 (type %3) from %4:%5 to %6:%7 on interface %8
+
+An INFO message noting that the server is attempting to send the specified
+type of packet.  The arguments specify the client identification information
+(HW address and client identifier), DHCP message name and type, source IPv4
+address and port, destination IPv4 address and port and the interface name.
+This debug message is issued when the server is trying to send the
+response to the client. When the server is using an UDP socket
+to send the packet there are cases when this operation may be
+unsuccessful and no error message will be displayed. One such situation
+occurs when the server is unicasting the response to the 'ciaddr' of
+a DHCPINFORM message. This often requires broadcasting an ARP
+message to obtain the link layer address of the unicast destination.
+If broadcast ARP messages are blocked in the network, according to
+the firewall policy, the ARP message will not cause a response.
+Consequently, the response to the DHCPINFORM will not be sent.
+Since the ARP communication is under the OS control, Kea is not
+notified about the drop of the packet which it is trying to send
+and it has no means to display an error message.
+
+DHCP4_PACKET_SEND_FAIL
+======================
+
+.. code-block:: text
+
+    %1: failed to send DHCPv4 packet: %2
+
+This error is output if the DHCPv4 server fails to send an assembled
+DHCP message to a client. The first argument includes the client and
+the transaction identification information. The second argument includes
+the reason for failure.
+
+DHCP4_PARSER_COMMIT_EXCEPTION
+=============================
+
+.. code-block:: text
+
+    parser failed to commit changes
+
+On receipt of message containing details to a change of the DHCPv4
+server configuration, a set of parsers were successfully created, but one
+of them failed to commit its changes due to a low-level system exception
+being raised.  Additional messages may be output indicating the reason.
+
+DHCP4_PARSER_COMMIT_FAIL
+========================
+
+.. code-block:: text
+
+    parser failed to commit changes: %1
+
+On receipt of message containing details to a change of the DHCPv4
+server configuration, a set of parsers were successfully created, but
+one of them failed to commit its changes.  The reason for the failure
+is given in the message.
+
+DHCP4_PARSER_EXCEPTION
+======================
+
+.. code-block:: text
+
+    failed to create or run parser for configuration element %1
+
+On receipt of message containing details to a change of its configuration,
+the DHCPv4 server failed to create a parser to decode the contents of
+the named configuration element, or the creation succeeded but the parsing
+actions and committal of changes failed.  The message has been output in
+response to a non-Kea exception being raised.  Additional messages
+may give further information.
+
+DHCP4_PARSER_FAIL
+=================
+
+.. code-block:: text
+
+    failed to create or run parser for configuration element %1: %2
+
+On receipt of message containing details to a change of its configuration,
+the DHCPv4 server failed to create a parser to decode the contents
+of the named configuration element, or the creation succeeded but the
+parsing actions and committal of changes failed.  The reason for the
+failure is given in the message.
+
+DHCP4_POST_ALLOCATION_NAME_UPDATE_FAIL
+======================================
+
+.. code-block:: text
+
+    %1: failed to update hostname %2 in a lease after address allocation: %3
+
+This message indicates the failure when trying to update the lease and/or
+options in the server's response with the hostname generated by the server
+or reserved for the client belonging to a shared network. The latter is
+the case when the server dynamically switches to another subnet (than
+initially selected for allocation) from the same shared network.
+
+DHCP4_QUERY_DATA
+================
+
+.. code-block:: text
+
+    %1, packet details: %2
+
+Logged at debug log level 55.
+A debug message printing the details of the received packet. The first
+argument includes the client and the transaction identification
+information.
+
+DHCP4_QUERY_LABEL
+=================
+
+.. code-block:: text
+
+    received query: %1
+
+This information message indicates that a query was received. It displays
+the client and the transaction identification information.
+
+DHCP4_RECLAIM_EXPIRED_LEASES_FAIL
+=================================
+
+.. code-block:: text
+
+    failed to reclaim expired leases: %1
+
+This error message indicates that the reclaim expired leases operation failed
+and provides the cause of failure.
+
+DHCP4_RECOVERED_STASHED_RELAY_AGENT_INFO
+========================================
+
+.. code-block:: text
+
+    recovered for query %1 relay agent option from lease %2: %3
+
+Logged at debug log level 55.
+This debug message indicates that agent options were stashed in the lease for
+the client address of the request and were recovered. The first argument
+includes the request information, the second the client address and the last
+argument the content of the dhcp-agent-options option.
+
+DHCP4_RELEASE
+=============
+
+.. code-block:: text
+
+    %1: address %2 was released properly.
+
+Logged at debug log level 50.
+This informational message indicates that an address was released properly. It
+is a normal operation during client shutdown. The first argument includes
+the client and transaction identification information. The second argument
+includes the released IPv4 address.
+
+DHCP4_RELEASE_DELETED
+=====================
+
+.. code-block:: text
+
+    %1: address %2 was deleted on release.
+
+This informational message indicates that an address was deleted on release. It
+is a normal operation during client shutdown. The first argument includes the
+client and transaction identification information. The second argument includes
+the released IPv4 address.
+
+DHCP4_RELEASE_EXCEPTION
+=======================
+
+.. code-block:: text
+
+    %1: while trying to release address %2 an exception occurred: %3
+
+This message is output when an error was encountered during an attempt
+to process a DHCPRELEASE message. The error will not affect the client,
+which does not expect any response from the server for DHCPRELEASE
+messages. Depending on the nature of problem, it may affect future
+server operation. The first argument includes the client and the
+transaction identification information. The second argument
+includes the IPv4 address which release was attempted. The last
+argument includes the detailed error description.
+
+DHCP4_RELEASE_EXPIRED
+=====================
+
+.. code-block:: text
+
+    %1: address %2 expired on release.
+
+This informational message indicates that an address expired on release. It is
+a normal operation during client shutdown. The first argument includes the
+client and transaction identification information. The second argument includes
+the released IPv4 address.
+
+DHCP4_RELEASE_FAIL
+==================
+
+.. code-block:: text
+
+    %1: failed to remove lease for address %2
+
+Logged at debug log level 50.
+This error message indicates that the software failed to remove a
+lease from the lease database. It is probably due to an error during a
+database operation: resolution will most likely require administrator
+intervention (e.g. check if DHCP process has sufficient privileges to
+update the database). It may also be triggered if a lease was manually
+removed from the database during RELEASE message processing. The
+first argument includes the client and the transaction identification
+information. The second argument holds the IPv4 address which release
+was attempted.
+
+DHCP4_RELEASE_FAIL_NO_LEASE
+===========================
+
+.. code-block:: text
+
+    %1: client is trying to release non-existing lease %2
+
+Logged at debug log level 50.
+This debug message is printed when client attempts to release a lease,
+but no such lease is known to the server. The first argument contains
+the client and transaction identification information. The second
+argument contains the IPv4 address which the client is trying to
+release.
+
+DHCP4_RELEASE_FAIL_WRONG_CLIENT
+===============================
+
+.. code-block:: text
+
+    %1: client is trying to release the lease %2 which belongs to a different client
+
+Logged at debug log level 50.
+This debug message is issued when a client is trying to release the
+lease for the address which is currently used by another client, i.e.
+the 'client identifier' or 'chaddr' doesn't match between the client
+and the lease. The first argument includes the client and the
+transaction identification information. The second argument specifies
+the leased address.
+
+DHCP4_REQUEST
+=============
+
+.. code-block:: text
+
+    %1: server is processing DHCPREQUEST with hint=%2
+
+Logged at debug log level 50.
+This is a debug message that indicates the processing of a received DHCPREQUEST
+message. The first argument contains the client and the transaction
+identification information. The second argument may hold the hint for the server
+about the address that the client would like to have allocated.
+If there is no hint, the argument should provide the text indicating
+that the hint hasn't been sent.
+
+DHCP4_REQUIRED_CLASS_EVAL_ERROR
+===============================
+
+.. code-block:: text
+
+    %1: Expression '%2' evaluated to %3
+
+This error message indicates that there a problem was encountered while
+evaluating an expression of a client class that was marked as required.
+A description of the problem is printed.
+
+DHCP4_REQUIRED_CLASS_EVAL_RESULT
+================================
+
+.. code-block:: text
+
+    %1: Expression '%2' evaluated to %3
+
+Logged at debug log level 50.
+This debug message indicates that the expression of a client class has been
+successfully evaluated. The client class name and the result value of the
+evaluation are printed.
+
+DHCP4_RESERVATIONS_LOOKUP_FIRST_ENABLED
+=======================================
+
+.. code-block:: text
+
+    Multi-threading is enabled and host reservations lookup is always performed first.
+
+This is a message informing that host reservations lookup is performed before
+lease lookup when multi-threading is enabled overwriting configured value.
+
+DHCP4_RESERVED_HOSTNAME_ASSIGNED
+================================
+
+.. code-block:: text
+
+    %1: server assigned reserved hostname %2
+
+Logged at debug log level 55.
+This debug message is issued when the server found a hostname reservation
+for a client and uses this reservation in a hostname option sent back
+to this client. The reserved hostname is qualified with a value
+of 'ddns-qualifying-suffix' parameter, if this parameter is specified.
+
+DHCP4_RESPONSE_DATA
+===================
+
+.. code-block:: text
+
+    %1: responding with packet %2 (type %3), packet details: %4
+
+Logged at debug log level 55.
+A debug message including the detailed data about the packet being sent
+to the client. The first argument contains the client and the transaction
+identification information. The second and third argument contains the
+packet name and type respectively. The fourth argument contains detailed
+packet information.
+
+DHCP4_RESPONSE_FQDN_DATA
+========================
+
+.. code-block:: text
+
+    %1: including FQDN option in the server's response: %2
+
+Logged at debug log level 55.
+This debug message is issued when the server is adding the Client FQDN
+option in its response to the client. The first argument includes the
+client and transaction identification information. The second argument
+includes the details of the FQDN option being included. Note that the
+name carried in the FQDN option may be modified by the server when
+the lease is acquired for the client.
+
+DHCP4_RESPONSE_HOSTNAME_DATA
+============================
+
+.. code-block:: text
+
+    %1: including Hostname option in the server's response: %2
+
+Logged at debug log level 55.
+This debug message is issued when the server is adding the Hostname
+option in its response to the client. The first argument includes the
+client and transaction identification information. The second argument
+includes the details of the FQDN option being included. Note that the
+name carried in the Hostname option may be modified by the server when
+the lease is acquired for the client.
+
+DHCP4_RESPONSE_HOSTNAME_GENERATE
+================================
+
+.. code-block:: text
+
+    %1: server has generated hostname %2 for the client
+
+Logged at debug log level 50.
+This debug message includes the auto-generated hostname which will be used
+for the client which message is processed. Hostnames may need to be generated
+when required by the server's configuration or when the client hasn't
+supplied its hostname. The first argument includes the client and the
+transaction identification information. The second argument holds the
+generated hostname.
+
+DHCP4_SERVER_FAILED
+===================
+
+.. code-block:: text
+
+    server failed: %1
+
+The DHCPv4 server has encountered a fatal error and is terminating.
+The reason for the failure is included in the message.
+
+DHCP4_SERVER_INITIATED_DECLINE
+==============================
+
+.. code-block:: text
+
+    %1: Lease for addr %2 has been found to be already in use. The lease will be unavailable for %3 seconds.
+
+This informational message is printed when the server has detected via
+ICMP ECHO (i.e. ping check) or other means that a lease which should be
+free to offer is actually in use. This message may indicate a misconfiguration
+in a network or more likely a device that is using an address that it is not
+supposed to use. The server will fully recover from this situation, but if
+the underlying problem of a misconfigured or rogue device is not solved, this
+address may be declined again in the future.
+
+DHCP4_SERVER_INITIATED_DECLINE_ADD_FAILED
+=========================================
+
+.. code-block:: text
+
+    %1: error adding a lease for address %2
+
+This error message indicates that the server failed to add a DECLINED lease to
+the lease store. The first argument includes the client and the transaction
+identification information. The second argument holds the IPv4 address for which
+the decline was attempted.
+
+DHCP4_SERVER_INITIATED_DECLINE_RESOURCE_BUSY
+============================================
+
+.. code-block:: text
+
+    %1: error declining a lease for address %2
+
+This error message indicates that while one server thread was attempting to mark
+a lease as DECLINED, it was already locked by another thread. The first argument
+includes the client and the transaction identification information.  The second
+argument holds the IPv4 address for which the decline was attempted.
+
+DHCP4_SERVER_INITIATED_DECLINE_UPDATE_FAILED
+============================================
+
+.. code-block:: text
+
+    %1: error updating lease for address %2
+
+This error message indicates that the server failed to update a lease in the
+lease store to the DECLINED state. The first argument includes the client and
+the transaction identification information. The second argument holds the IPv4
+address for which the decline was attempted.
+
+DHCP4_SHUTDOWN
+==============
+
+.. code-block:: text
+
+    server shutdown
+
+Logged at debug log level 40.
+The DHCPv4 server has terminated normally.
+
+DHCP4_SHUTDOWN_REQUEST
+======================
+
+.. code-block:: text
+
+    shutdown of server requested
+
+Logged at debug log level 40.
+This debug message indicates that a shutdown of the DHCPv4 server has
+been requested via a call to the 'shutdown' method of the core Dhcpv4Srv
+object.
+
+DHCP4_SRV_CONSTRUCT_ERROR
+=========================
+
+.. code-block:: text
+
+    error creating Dhcpv4Srv object, reason: %1
+
+This error message indicates that during startup, the construction of a
+core component within the DHCPv4 server (the Dhcpv4 server object)
+has failed.  As a result, the server will exit.  The reason for the
+failure is given within the message.
+
+DHCP4_SRV_D2STOP_ERROR
+======================
+
+.. code-block:: text
+
+    error stopping IO with DHCP_DDNS during shutdown: %1
+
+This error message indicates that during shutdown, an error occurred while
+stopping IO between the DHCPv4 server and the DHCP_DDNS server.  This is
+probably due to a programmatic error is not likely to impact either server
+upon restart.  The reason for the failure is given within the message.
+
+DHCP4_SRV_DHCP4O6_ERROR
+=======================
+
+.. code-block:: text
+
+    error stopping IO with DHCPv4o6 during shutdown: %1
+
+This error message indicates that during shutdown, an error occurred while
+stopping IO between the DHCPv4 server and the DHCPv4o6 server.  This is
+probably due to a programmatic error is not likely to impact either server
+upon restart.  The reason for the failure is given within the message.
+
+DHCP4_SRV_UNLOAD_LIBRARIES_ERROR
+================================
+
+.. code-block:: text
+
+    error unloading hooks libraries during shutdown: %1
+
+This error message indicates that during shutdown, unloading hooks
+libraries failed to close them. If the list of libraries is empty it is
+a programmatic error in the server code. If it is not empty it could be
+a programmatic error in one of the hooks libraries which could lead to
+a crash during finalization.
+
+DHCP4_STARTED
+=============
+
+.. code-block:: text
+
+    Kea DHCPv4 server version %1 started
+
+This informational message indicates that the DHCPv4 server has
+processed all configuration information and is ready to process
+DHCPv4 packets.  The version is also printed.
+
+DHCP4_STARTING
+==============
+
+.. code-block:: text
+
+    Kea DHCPv4 server version %1 (%2) starting
+
+This informational message indicates that the DHCPv4 server has
+processed any command-line switches and is starting. The version
+is also printed.
+
+DHCP4_START_INFO
+================
+
+.. code-block:: text
+
+    pid: %1, server port: %2, client port: %3, verbose: %4
+
+Logged at debug log level 0.
+This is a debug message issued during the DHCPv4 server startup.
+It lists some information about the parameters with which the server
+is running.
+
+DHCP4_SUBNET_DATA
+=================
+
+.. code-block:: text
+
+    %1: the selected subnet details: %2
+
+Logged at debug log level 55.
+This debug message includes the details of the subnet selected for
+the client. The first argument includes the client and the
+transaction identification information. The second arguments
+includes the subnet details.
+
+DHCP4_SUBNET_DYNAMICALLY_CHANGED
+================================
+
+.. code-block:: text
+
+    %1: changed selected subnet %2 to subnet %3 from shared network %4 for client assignments
+
+Logged at debug log level 45.
+This debug message indicates that the server is using another subnet
+than initially selected for client assignments. This newly selected
+subnet belongs to the same shared network as the original subnet.
+Some reasons why the new subnet was selected include: address pool
+exhaustion in the original subnet or the fact that the new subnet
+includes some static reservations for this client.
+
+DHCP4_SUBNET_SELECTED
+=====================
+
+.. code-block:: text
+
+    %1: the subnet with ID %2 was selected for client assignments
+
+Logged at debug log level 45.
+This is a debug message noting the selection of a subnet to be used for
+address and option assignment. Subnet selection is one of the early
+steps in the processing of incoming client message. The first
+argument includes the client and the transaction identification
+information. The second argument holds the selected subnet id.
+
+DHCP4_SUBNET_SELECTION_FAILED
+=============================
+
+.. code-block:: text
+
+    %1: failed to select subnet for the client
+
+Logged at debug log level 50.
+This debug message indicates that the server failed to select the
+subnet for the client which has sent a message to the server.
+The server will not be able to offer any lease to the client and
+will drop its message if the received message was DHCPDISCOVER,
+and will send DHCPNAK if the received message was DHCPREQUEST.
+The argument includes the client and the transaction identification
+information.
+
+DHCP4_TESTING_MODE_SEND_TO_SOURCE_ENABLED
+=========================================
+
+.. code-block:: text
+
+    All packets will be send to source address of an incoming packet - use only for testing
+
+This message is printed then KEA_TEST_SEND_RESPONSES_TO_SOURCE
+environment variable is set. It's causing Kea to send packets to
+source address of incoming packet. Usable just in testing environment
+to simulate multiple subnet traffic from single source.
+
+DHCP4_UNKNOWN_ADDRESS_REQUESTED
+===============================
+
+.. code-block:: text
+
+    %1: client requested an unknown address, client sent ciaddr %2, requested-ip-address %3
+
+Logged at debug log level 50.
+This message indicates that the client requested an address that does
+not belong to any dynamic pools managed by this server.  The first argument
+contains the client and the transaction identification information.
+The second argument contains the IPv4 address in the ciaddr field. The
+third argument contains the IPv4 address in the requested-ip-address
+option (if present).
+
+DHCP4_V6_ONLY_PREFERRED_MISSING_IN_ACK
+======================================
+
+.. code-block:: text
+
+    v6-only-preferred option missing in 0.0.0.0 reply to query: %1
+
+An DHCPACK for the 0.0.0.0 address was generated for a client requesting
+the v6-only-preferred (108) option but the option is not in the response as
+expected: the erroneous response is dropped, the request query is displayed.
+
+*****
+DHCP6
+*****
+
+DHCP6_ADD_GLOBAL_STATUS_CODE
+============================
+
+.. code-block:: text
+
+    %1: adding Status Code to DHCPv6 packet: %2
+
+Logged at debug log level 50.
+This message is logged when the server is adding the top-level
+Status Code option. The first argument includes the client and the
+transaction identification information. The second argument includes
+the details of the status code.
+
+DHCP6_ADD_STATUS_CODE_FOR_IA
+============================
+
+.. code-block:: text
+
+    %1: adding Status Code to IA with iaid=%2: %3
+
+Logged at debug log level 50.
+This message is logged when the server is adding the Status Code
+option to an IA. The first argument includes the client and the
+transaction identification information. The second argument specifies
+the IAID. The third argument includes the details of the status code.
+
+DHCP6_ALREADY_RUNNING
+=====================
+
+.. code-block:: text
+
+    %1 already running? %2
+
+This is an error message that occurs when the DHCPv6 server encounters
+a pre-existing PID file which contains the PID of a running process.
+This most likely indicates an attempt to start a second instance of
+the server using the same configuration file.  It is possible, though
+unlikely that the PID file is a remnant left behind by a server crash or
+power failure and the PID it contains refers to a process other than
+the server.  In such an event, it would be necessary to manually remove
+the PID file.  The first argument is the DHCPv6 process name, the second
+contains the PID and PID file.
+
+DHCP6_BUFFER_RECEIVED
+=====================
+
+.. code-block:: text
+
+    received buffer from %1:%2 to %3:%4 over interface %5
+
+Logged at debug log level 40.
+This debug message is logged when the server has received a packet
+over the socket. When the message is logged the contents of the received
+packet hasn't been parsed yet. The only available information is the
+interface and the source and destination addresses/ports.
+
+DHCP6_BUFFER_UNPACK
+===================
+
+.. code-block:: text
+
+    parsing buffer received from %1 to %2 over interface %3
+
+Logged at debug log level 50.
+This debug message is issued when the server starts parsing the received
+buffer holding the DHCPv6 message. The arguments specify the source and
+destination addresses as well as the interface over which the buffer has
+been received.
+
+DHCP6_BUFFER_WAIT_SIGNAL
+========================
+
+.. code-block:: text
+
+    signal received while waiting for next packet
+
+Logged at debug log level 50.
+This debug message is issued when the server was waiting for the
+packet, but the wait has been interrupted by the signal received
+by the process. The signal will be handled before the server starts
+waiting for next packets.
+
+DHCP6_CB_ON_DEMAND_FETCH_UPDATES_FAIL
+=====================================
+
+.. code-block:: text
+
+    error on demand attempt to fetch configuration updates from the configuration backend(s): %1
+
+This error message is issued when the server attempted to fetch
+configuration updates from the database and this on demand attempt failed.
+The sole argument which is returned to the config-backend-pull command
+caller too contains the reason for failure.
+
+DHCP6_CB_PERIODIC_FETCH_UPDATES_FAIL
+====================================
+
+.. code-block:: text
+
+    error on periodic attempt to fetch configuration updates from the configuration backend(s): %1
+
+This error message is issued when the server attempted to fetch
+configuration updates from the database and this periodic attempt failed.
+The server will re-try according to the configured value of the
+config-fetch-wait-time parameter. The sole argument contains the
+reason for failure.
+
+DHCP6_CB_PERIODIC_FETCH_UPDATES_RETRIES_EXHAUSTED
+=================================================
+
+.. code-block:: text
+
+    maximum number of configuration fetch attempts: 10, has been exhausted without success
+
+This error indicates that the server has made a number of unsuccessful
+periodic attempts to fetch configuration updates from a configuration backend.
+The server will continue to operate but won't make any further attempts
+to fetch configuration updates. The administrator must fix the configuration
+in the database and reload (or restart) the server.
+
+DHCP6_CLASSES_ASSIGNED
+======================
+
+.. code-block:: text
+
+    %1: client packet has been assigned on %2 message to the following classes: %3
+
+Logged at debug log level 40.
+This debug message informs that incoming packet has been assigned to specified
+classes. This is a normal behavior and indicates successful operation.
+The first argument specifies the client and transaction identification
+information. The second argument specifies the DHCPv6 message type. The third
+argument includes all classes to which the packet has been assigned.
+
+DHCP6_CLASSES_ASSIGNED_AFTER_SUBNET_SELECTION
+=============================================
+
+.. code-block:: text
+
+    %1: client packet has been assigned to the following classes: %2
+
+Logged at debug log level 40.
+This debug message informs that incoming packet has been assigned to specified
+classes. This is a normal behavior and indicates successful operation.
+The first argument specifies the client and transaction identification
+information. The second argument includes all classes to which the packet has
+been assigned.
+
+DHCP6_CLASS_ASSIGNED
+====================
+
+.. code-block:: text
+
+    %1: client packet has been assigned to the following class: %2
+
+Logged at debug log level 40.
+This debug message informs that incoming packet has been assigned to specified
+class. This is a normal behavior and indicates successful operation.
+The first argument specifies the client and transaction identification
+information. The second argument includes the new class to which the
+packet has been assigned.
+
+DHCP6_CLASS_UNCONFIGURED
+========================
+
+.. code-block:: text
+
+    %1: client packet belongs to an unconfigured class: %2
+
+Logged at debug log level 40.
+This debug message informs that incoming packet belongs to a class
+which cannot be found in the configuration. Either a hook written
+before the classification was added to Kea is used, or class naming is
+inconsistent.
+
+DHCP6_CLASS_UNDEFINED
+=====================
+
+.. code-block:: text
+
+    required class %1 has no definition
+
+Logged at debug log level 40.
+This debug message informs that a class is listed for required evaluation but
+has no definition.
+
+DHCP6_CLASS_UNTESTABLE
+======================
+
+.. code-block:: text
+
+    required class %1 has no test expression
+
+Logged at debug log level 40.
+This debug message informs that a class was listed for required evaluation but
+its definition does not include a test expression to evaluate.
+
+DHCP6_CONFIG_COMPLETE
+=====================
+
+.. code-block:: text
+
+    DHCPv6 server has completed configuration: %1
+
+This is an informational message announcing the successful processing of a
+new configuration. it is output during server startup, and when an updated
+configuration is committed by the administrator.  Additional information
+may be provided.
+
+DHCP6_CONFIG_LOAD_FAIL
+======================
+
+.. code-block:: text
+
+    configuration error using file: %1, reason: %2
+
+This error message indicates that the DHCPv6 configuration has failed.
+If this is an initial configuration (during server's startup) the server
+will fail to start. If this is a dynamic reconfiguration attempt the
+server will continue to use an old configuration.
+
+DHCP6_CONFIG_PACKET_QUEUE
+=========================
+
+.. code-block:: text
+
+    DHCPv6 packet queue info after configuration: %1
+
+This informational message is emitted during DHCPv6 server configuration,
+immediately after configuring the DHCPv6 packet queue.  The information
+shown depends upon the packet queue type selected.
+
+DHCP6_CONFIG_RECEIVED
+=====================
+
+.. code-block:: text
+
+    received configuration: %1
+
+Logged at debug log level 10.
+A debug message listing the configuration received by the DHCPv6 server.
+The source of that configuration depends on used configuration backend.
+
+DHCP6_CONFIG_START
+==================
+
+.. code-block:: text
+
+    DHCPv6 server is processing the following configuration: %1
+
+Logged at debug log level 10.
+This is a debug message that is issued every time the server receives a
+configuration. That happens start up and also when a server configuration
+change is committed by the administrator.
+
+DHCP6_CONFIG_SYNTAX_WARNING
+===========================
+
+.. code-block:: text
+
+    configuration syntax warning: %1
+
+This warning message indicates that the DHCPv6 configuration had a minor
+syntax error. The error was displayed and the configuration parsing resumed.
+
+DHCP6_CONFIG_UNRECOVERABLE_ERROR
+================================
+
+.. code-block:: text
+
+    DHCPv6 server new configuration failed with an error which cannot be recovered
+
+This fatal error message is issued when a new configuration raised an error
+which cannot be recovered. A correct configuration must be applied as soon
+as possible as the server is no longer working.
+The configuration can be fixed in several ways. If the control channel
+is open, config-set with a valid configuration can be
+used. Alternatively, the original config file on disk could be fixed
+and SIGHUP signal could be sent (or the config-reload command
+issued). Finally, the server could be restarted completely.
+
+DHCP6_CONFIG_UNSUPPORTED_OBJECT
+===============================
+
+.. code-block:: text
+
+    DHCPv6 server configuration includes an unsupported object: %1
+
+This error message is issued when the configuration includes an unsupported
+object (i.e. a top level element).
+
+DHCP6_DB_RECONNECT_DISABLED
+===========================
+
+.. code-block:: text
+
+    database reconnect is disabled: max-reconnect-tries %1, reconnect-wait-time %2
+
+This is an informational message indicating that connectivity to either the
+lease or host database or both and that automatic reconnect is not enabled.
+
+DHCP6_DB_RECONNECT_FAILED
+=========================
+
+.. code-block:: text
+
+    maximum number of database reconnect attempts: %1, has been exhausted without success
+
+This error indicates that the server failed to reconnect to the lease and/or
+host database(s) after making the maximum configured number of reconnect
+attempts. This might cause the server to shut down as specified in the
+configuration. Loss of connectivity is typically a network or database server
+issue.
+
+DHCP6_DB_RECONNECT_LOST_CONNECTION
+==================================
+
+.. code-block:: text
+
+    database connection lost.
+
+This info message indicates that the connection has been lost and the dhcp
+service might have been disabled, as specified in the configuration, in order to
+try to recover the connection.
+
+DHCP6_DB_RECONNECT_NO_DB_CTL
+============================
+
+.. code-block:: text
+
+    unexpected error in database reconnect
+
+This is an error message indicating a programmatic error that should not
+occur. It prohibits the server from attempting to reconnect to its
+databases if connectivity is lost, and the server exits. This error
+should be reported.
+
+DHCP6_DB_RECONNECT_SUCCEEDED
+============================
+
+.. code-block:: text
+
+    database connection recovered.
+
+This info message indicates that the connection has been recovered and the dhcp
+service has been restored.
+
+DHCP6_DDNS_CREATE_ADD_NAME_CHANGE_REQUEST
+=========================================
+
+.. code-block:: text
+
+    %1: created name change request: %2
+
+Logged at debug log level 50.
+This debug message is logged when the new NameChangeRequest has been created
+to perform the DNS Update, which adds new RRs.
+
+DHCP6_DDNS_FQDN_GENERATED
+=========================
+
+.. code-block:: text
+
+    %1: generated FQDN for the client: %2
+
+Logged at debug log level 55.
+This debug message is logged when the server generated FQDN (name)
+for the client which message is processed. The names may be
+generated by the server when required by the server's policy or
+when the client doesn't provide any specific FQDN in its message
+to the server. The first argument includes the client and
+transaction identification information. The second argument includes
+the generated FQDN.
+
+DHCP6_DDNS_GENERATED_FQDN_UPDATE_FAIL
+=====================================
+
+.. code-block:: text
+
+    %1: failed to update the lease using address %2, after generating FQDN for a client, reason: %3
+
+This message indicates the failure when trying to update the lease and/or
+options in the server's response with the hostname generated by the server
+from the acquired address. The first argument includes the client and the
+transaction identification information. The second argument is a leased
+address. The third argument includes the reason for the failure.
+
+DHCP6_DDNS_GENERATE_FQDN
+========================
+
+.. code-block:: text
+
+    %1: client did not send a FQDN option; FQDN will be
+
+Logged at debug log level 50.
+generated for the client.
+This debug message is issued when the server did not receive a FQDN option
+from the client and client name replacement is enabled.  This provides a means
+to create DNS entries for unsophisticated clients.
+
+DHCP6_DDNS_RECEIVE_FQDN
+=======================
+
+.. code-block:: text
+
+    %1: received DHCPv6 Client FQDN option: %2
+
+Logged at debug log level 50.
+This debug message is logged when server has found the DHCPv6 Client FQDN Option
+sent by a client and started processing it. The first argument includes the
+client and transaction identification information. The second argument
+includes the received FQDN.
+
+DHCP6_DDNS_REMOVE_OLD_LEASE_FQDN
+================================
+
+.. code-block:: text
+
+    %1: FQDN for a lease: %2 has changed. New values: hostname = %3, reverse mapping = %4, forward mapping = %5
+
+Logged at debug log level 50.
+This debug message is logged during lease renewal when an old lease that is
+no longer being offered has a different FQDN than the renewing lease. Thus
+the old DNS entries need to be removed.  The first argument includes the client
+and the transaction identification information. The second argument holds the
+details about the lease for which the FQDN information and/or mappings have
+changed. The remaining arguments hold the new FQDN information and flags for
+mappings.
+
+DHCP6_DDNS_REQUEST_SEND_FAILED
+==============================
+
+.. code-block:: text
+
+    failed sending a request to kea-dhcp-ddns, error: %1,  ncr: %2
+
+This error message indicates that IPv6 DHCP server failed to send a DDNS
+update request to the DHCP-DDNS server. This is most likely a configuration or
+networking error.
+
+DHCP6_DDNS_RESPONSE_FQDN_DATA
+=============================
+
+.. code-block:: text
+
+    %1: including FQDN option in the server's response: %2
+
+Logged at debug log level 50.
+This debug message is issued when the server is adding the Client FQDN
+option in its response to the client. The first argument includes the
+client and transaction identification information. The second argument
+includes the details of the FQDN option being included. Note that the
+name carried in the FQDN option may be modified by the server when
+the lease is acquired for the client.
+
+DHCP6_DECLINE_FAIL
+==================
+
+.. code-block:: text
+
+    %1: error on decline lease for address %2: %3
+
+This error message indicates that the software failed to decline a
+lease from the lease database due to an error during a database
+operation. The first argument includes the client and the transaction
+identification information. The second argument holds the IPv6 address
+which decline was attempted. The last one contains the reason for
+failure.
+
+DHCP6_DECLINE_FAIL_DUID_MISMATCH
+================================
+
+.. code-block:: text
+
+    Client %1 sent DECLINE for address %2, but it belongs to client with DUID %3
+
+This informational message is printed when a client attempts to decline
+a lease, but that lease belongs to a different client. The decline request
+will be rejected.
+
+DHCP6_DECLINE_FAIL_IAID_MISMATCH
+================================
+
+.. code-block:: text
+
+    Client %1 sent DECLINE for address %2, but used a wrong IAID (%3), instead of expected %4
+
+This informational message is printed when a client attempts to decline
+a lease. The server has a lease for this address, it belongs to this client,
+but the recorded IAID does not match what client has sent. This means
+the server will reject this Decline.
+
+DHCP6_DECLINE_FAIL_LEASE_WITHOUT_DUID
+=====================================
+
+.. code-block:: text
+
+    Client %1 sent DECLINE for address %2, but the associated lease has no DUID
+
+This error condition likely indicates database corruption, as every IPv6
+lease is supposed to have a DUID, even if it is an empty one.
+
+DHCP6_DECLINE_FAIL_NO_LEASE
+===========================
+
+.. code-block:: text
+
+    Client %1 sent DECLINE for address %2, but there's no lease for it
+
+This informational message is printed when a client tried to decline an address,
+but the server has no lease for said address. This means that the server's
+and client's perception of the leases are different. The likely causes
+of this could be: a confused (e.g. skewed clock) or broken client (e.g. client
+moved to a different location and didn't notice) or possibly an attack
+(a rogue client is trying to decline random addresses). The server will
+inform the client that his decline request was rejected and client should
+be able to recover from that.
+
+DHCP6_DECLINE_LEASE
+===================
+
+.. code-block:: text
+
+    Client %1 sent DECLINE for address %2 and the server marked it as declined. The lease will be recovered in %3 seconds.
+
+This informational message indicates that the client leased an address, but
+discovered that it is being used by some other device and reported this to the
+server by sending a Decline message. The server marked the lease as
+declined. This likely indicates a misconfiguration in the network. Either
+the server is configured with an incorrect pool or there are devices that have
+statically assigned addresses that are supposed to be assigned by the DHCP
+server. Both client (will request a different address) and server (will recover
+the lease after decline-probation-time elapses) will recover automatically.
+However, if the underlying problem is not solved, the conditions leading
+to this message may reappear.
+
+DHCP6_DECLINE_PROCESS_IA
+========================
+
+.. code-block:: text
+
+    Processing of IA (IAID: %1) from client %2 started.
+
+Logged at debug log level 50.
+This debug message is printed when the server starts processing an IA_NA option
+received in Decline message. It's expected that the option will contain an
+address that is being declined. Specific information will be printed in a
+separate message.
+
+DHCP6_DEVELOPMENT_VERSION
+=========================
+
+.. code-block:: text
+
+    This software is a development branch of Kea. It is not recommended for production use.
+
+This warning message is displayed when the version is a development
+(vs stable) one: the second number of the version is odd.
+
+DHCP6_DHCP4O6_PACKET_RECEIVED
+=============================
+
+.. code-block:: text
+
+    received DHCPv4o6 packet from DHCPv4 server (type %1) for %2 port %3 on interface %4
+
+Logged at debug log level 40.
+This debug message is printed when the server is receiving a DHCPv4o6
+from the DHCPv4 server over inter-process communication.
+
+DHCP6_DHCP4O6_RECEIVE_FAIL
+==========================
+
+.. code-block:: text
+
+    failed to receive DHCPv4o6: %1
+
+Logged at debug log level 50.
+This debug message indicates the inter-process communication with the
+DHCPv4 server failed. The reason for the error is included in
+the message.
+
+DHCP6_DHCP4O6_RECEIVING
+=======================
+
+.. code-block:: text
+
+    receiving DHCPv4o6 packet from DHCPv4 server
+
+Logged at debug log level 50.
+This debug message is printed when the server is receiving a DHCPv4o6
+from the DHCPv4 server over inter-process communication socket.
+
+DHCP6_DHCP4O6_RESPONSE_DATA
+===========================
+
+.. code-block:: text
+
+    %1: responding with packet %2 (type %3), packet details: %4
+
+Logged at debug log level 55.
+A debug message including the detailed data about the packet being sent
+to the client. The first argument contains the client and the transaction
+identification information. The second and third argument contains the
+packet name and type respectively. The fourth argument contains detailed
+packet information.
+
+DHCP6_DHCP4O6_SEND_FAIL
+=======================
+
+.. code-block:: text
+
+    %1: failed to send DHCPv4o6 packet: %2
+
+This error is output if the IPv6 DHCP server fails to send an assembled
+DHCPv4o6 message to a client. The reason for the error is included in the
+message.
+
+DHCP6_DYNAMIC_RECONFIGURATION
+=============================
+
+.. code-block:: text
+
+    initiate server reconfiguration using file: %1, after receiving SIGHUP signal or config-reload command
+
+This is the info message logged when the DHCPv6 server starts reconfiguration
+as a result of receiving SIGHUP signal or config-reload command.
+
+DHCP6_DYNAMIC_RECONFIGURATION_FAIL
+==================================
+
+.. code-block:: text
+
+    dynamic server reconfiguration failed with file: %1
+
+This is a fatal error message logged when the dynamic reconfiguration of the
+DHCP server failed.
+
+DHCP6_DYNAMIC_RECONFIGURATION_SUCCESS
+=====================================
+
+.. code-block:: text
+
+    dynamic server reconfiguration succeeded with file: %1
+
+This is info message logged when the dynamic reconfiguration of the DHCP server
+succeeded.
+
+DHCP6_FLEX_ID
+=============
+
+.. code-block:: text
+
+    %1: flexible identifier generated for incoming packet: %2
+
+Logged at debug log level 40.
+This debug message is printed when host reservation type is set to flexible identifier
+and the expression specified in its configuration generated (was evaluated to)
+an identifier for incoming packet. This debug message is mainly intended as a
+debugging assistance for flexible identifier.
+
+DHCP6_HOOK_BUFFER_RCVD_DROP
+===========================
+
+.. code-block:: text
+
+    received buffer from %1 to %2 over interface %3 was dropped because a callout set the drop flag
+
+Logged at debug log level 15.
+This debug message is printed when a callout installed on buffer6_receive
+hook point set the drop flag. For this particular hook point, the
+setting of the flag by a callout instructs the server to drop the packet.
+The arguments specify the source and destination address as well as
+the name of the interface over which the buffer has been received.
+
+DHCP6_HOOK_BUFFER_RCVD_SKIP
+===========================
+
+.. code-block:: text
+
+    received buffer from %1 to %2 over interface %3 is not parsed because a callout set the next step to SKIP
+
+Logged at debug log level 50.
+This debug message is printed when a callout installed on
+buffer6_receive hook point set the next step status to skip. For this particular
+hook point, this value set by a callout instructs the server to
+not parse the buffer because it was already parsed by the hook. The
+arguments specify the source and destination address as well as the
+name of the interface over which the buffer has been received.
+
+DHCP6_HOOK_BUFFER_SEND_SKIP
+===========================
+
+.. code-block:: text
+
+    %1: prepared DHCPv6 response was dropped because a callout set the next step to SKIP
+
+Logged at debug log level 40.
+This debug message is printed when a callout installed on buffer6_send
+hook point set the next step to SKIP value. For this particular hook point, the
+SKIP setting a callout instructs the server to drop the packet.
+Server completed all the processing (e.g. may have assigned, updated
+or released leases), but the response will not be send to the client.
+The argument includes the client and transaction identification
+information.
+
+DHCP6_HOOK_DDNS_UPDATE
+======================
+
+.. code-block:: text
+
+    A hook has updated the DDNS parameters: hostname %1=>%2, forward update %3=>%4, reverse update %5=>%6
+
+Logged at debug log level 15.
+This message indicates that there was a hook called on ddns6_update hook point
+and that hook updated the DDNS update parameters: hostname, or whether to
+conduct forward (A record) or reverse (PTR record) DDNS updates.
+
+DHCP6_HOOK_DECLINE_DROP
+=======================
+
+.. code-block:: text
+
+    During Decline processing (client=%1, interface=%2, addr=%3) hook callout set next step to DROP, dropping packet.
+
+Logged at debug log level 15.
+This message indicates that the server received DECLINE message, it was verified
+to be correct and matching server's lease information. The server called hooks
+for the lease6_decline hook point and one of the callouts set next step status to DROP.
+The server will now abort processing of the packet as if it was never
+received. The lease will continue to be assigned to this client.
+
+DHCP6_HOOK_DECLINE_SKIP
+=======================
+
+.. code-block:: text
+
+    During Decline processing (client=%1, interface=%2, addr=%3) hook callout set status to SKIP, skipping decline.
+
+Logged at debug log level 50.
+This message indicates that the server received DECLINE message, it was verified
+to be correct and matching server's lease information. The server called hooks
+for the lease6_decline hook point and one of the callouts set next step status to SKIP.
+The server will skip the operation of moving the lease to the declined state and
+will continue processing the packet. In particular, it will send a REPLY message
+as if the decline actually took place.
+
+DHCP6_HOOK_LEASE6_RELEASE_NA_SKIP
+=================================
+
+.. code-block:: text
+
+    %1: DHCPv6 address lease was not released because a callout set the next step to SKIP
+
+Logged at debug log level 40.
+This debug message is printed when a callout installed on the
+lease6_release hook point set the next step to SKIP. For this particular hook
+point, this setting by a callout instructs the server to not
+release a lease. If a client requested the release of multiples leases
+(by sending multiple IA options), the server will retain this particular
+lease and proceed with other releases as usual. The argument holds the
+client and transaction identification information.
+
+DHCP6_HOOK_LEASE6_RELEASE_PD_SKIP
+=================================
+
+.. code-block:: text
+
+    %1: prefix lease was not released because a callout set the next step to SKIP
+
+Logged at debug log level 40.
+This debug message is printed when a callout installed on lease6_release
+hook point set the next step to SKIP value. For this particular hook point, that
+setting by a callout instructs the server to not release
+a lease. If client requested release of multiples leases (by sending
+multiple IA options), the server will retains this particular lease and
+will proceed with other renewals as usual. The argument holds the
+client and transaction identification information.
+
+DHCP6_HOOK_LEASES6_COMMITTED_DROP
+=================================
+
+.. code-block:: text
+
+    %1: packet is dropped, because a callout set the next step to DROP
+
+Logged at debug log level 15.
+This debug message is printed when a callout installed on the leases6_committed
+hook point sets the next step to DROP.
+
+DHCP6_HOOK_LEASES6_COMMITTED_PARK
+=================================
+
+.. code-block:: text
+
+    %1: packet is parked, because a callout set the next step to PARK
+
+Logged at debug log level 40.
+This debug message is printed when a callout installed on the leases6_committed
+hook point sets the next step to PARK.
+
+DHCP6_HOOK_LEASES6_PARKING_LOT_FULL
+===================================
+
+.. code-block:: text
+
+    The parked-packet-limit %1, has been reached, dropping query: %2
+
+Logged at debug log level 15.
+This debug message occurs when the parking lot used to hold client queries
+while the hook library work for them completes has reached or exceeded the
+limit set by the parked-packet-limit global parameter. This can occur when
+kea-dhcp6 is using hook libraries (e.g. HA) that implement the
+"leases6-committed" callout and client queries are arriving faster than
+those callouts can fulfill them.
+
+DHCP6_HOOK_PACKET_RCVD_SKIP
+===========================
+
+.. code-block:: text
+
+    %1: packet is dropped, because a callout set the next step to SKIP
+
+Logged at debug log level 40.
+This debug message is printed when a callout installed on the pkt6_receive
+hook point sets the next step to SKIP. For this particular hook point, the
+value setting instructs the server to drop the packet.
+
+DHCP6_HOOK_PACKET_SEND_DROP
+===========================
+
+.. code-block:: text
+
+    %1: prepared DHCPv6 response was not sent because a callout set the next ste to DROP
+
+Logged at debug log level 15.
+This debug message is printed when a callout installed on the pkt6_send
+hook point set the next step to DROP. For this particular hook point, the setting
+of the value by a callout instructs the server to drop the packet. This
+effectively means that the client will not get any response, even though
+the server processed client's request and acted on it (e.g. possibly
+allocated a lease). The argument specifies the client and transaction
+identification information.
+
+DHCP6_HOOK_PACKET_SEND_SKIP
+===========================
+
+.. code-block:: text
+
+    %1: prepared DHCPv6 response is not built because a callout set the next step to SKIP
+
+Logged at debug log level 40.
+This debug message is printed when a callout installed on the
+pkt6_send hook point set the next step to SKIP. For this particular hook
+point, the setting of the value by a callout instructs the server to
+not build the wire data (pack) because it was already done by the
+book. The argument specifies the client and transaction identification
+information.
+
+DHCP6_HOOK_SUBNET6_SELECT_DROP
+==============================
+
+.. code-block:: text
+
+    %1: packet was dropped because a callout set the drop flag
+
+Logged at debug log level 40.
+This debug message is printed when a callout installed on the
+subnet6_select hook point set the drop flag. For this particular hook
+point, the setting of the flag instructs the server to drop the
+received packet. The argument holds the client and transaction
+identification information.
+
+DHCP6_HOOK_SUBNET6_SELECT_PARK
+==============================
+
+.. code-block:: text
+
+    %1: packet was parked
+
+Logged at debug log level 40.
+This debug message is printed when a callout installed on the
+subnet6_select hook point set the park flag. The argument holds the
+client and transaction identification information.
+
+DHCP6_HOOK_SUBNET6_SELECT_SKIP
+==============================
+
+.. code-block:: text
+
+    %1: no subnet was selected because a callout set the next step to SKIP
+
+Logged at debug log level 40.
+This debug message is printed when a callout installed on the
+subnet6_select hook point set the next step to SKIP value. For this particular hook
+point, the setting of this value instructs the server not to choose a
+subnet, an action that severely limits further processing; the server
+will be only able to offer global options - no addresses or prefixes
+will be assigned. The argument holds the client and transaction
+identification information.
+
+DHCP6_INIT_FAIL
+===============
+
+.. code-block:: text
+
+    failed to initialize Kea server: %1
+
+The server has failed to establish communication with the rest of Kea,
+failed to read JSON configuration file or encountered any other critical
+issue that prevents it from starting up properly. Attached error message
+provides more details about the issue.
+
+DHCP6_LEASE_ADVERT
+==================
+
+.. code-block:: text
+
+    %1: lease for address %2 and iaid=%3 will be advertised
+
+Logged at debug log level 50.
+This informational message indicates that the server will advertise an
+address to the client in the ADVERTISE message. The client will
+request allocation of this address with the REQUEST message sent
+in the next message exchange. The first argument includes the client
+and transaction identification information. The remaining arguments
+hold the allocated address and IAID.
+
+DHCP6_LEASE_ADVERT_FAIL
+=======================
+
+.. code-block:: text
+
+    %1: failed to advertise an address lease for iaid=%2
+
+Logged at debug log level 50.
+This message indicates that in response to a received SOLICIT, the server
+failed to advertise a non-temporary lease for a given client. There may
+be many reasons for such failure. Each failure is logged in a separate
+log entry. The first argument holds the client and transaction identification
+information. The second argument holds the IAID.
+
+DHCP6_LEASE_ALLOC
+=================
+
+.. code-block:: text
+
+    %1: lease for address %2 and iaid=%3 has been allocated for %4 seconds
+
+Logged at debug log level 50.
+This informational message indicates that in response to a client's REQUEST
+message, the server successfully granted a non-temporary address
+lease. This is a normal behavior and indicates successful operation.
+The first argument includes the client and transaction identification
+information. The remaining arguments hold the allocated address,
+IAID and validity lifetime.
+
+DHCP6_LEASE_ALLOC_FAIL
+======================
+
+.. code-block:: text
+
+    %1: failed to grant an address lease for iaid=%2
+
+Logged at debug log level 50.
+This message indicates that in response to a received REQUEST, the server
+failed to grant a non-temporary address lease for the client. There may
+be many reasons for such failure. Each failure is logged in a separate
+log entry. The first argument holds the client and transaction identification
+information. The second argument holds the IAID.
+
+DHCP6_LEASE_DATA
+================
+
+.. code-block:: text
+
+    %1: detailed lease information for iaid=%2: %3
+
+Logged at debug log level 55.
+This debug message is used to print the detailed information about the
+allocated lease or a lease which will be advertised to the client.
+The first argument holds the client and the transaction identification
+information. The second argument holds the IAID. The third argument
+holds the detailed lease information.
+
+DHCP6_LEASE_NA_WITHOUT_DUID
+===========================
+
+.. code-block:: text
+
+    %1: address lease for address %2 does not have a DUID
+
+This error message indicates a database consistency problem. The lease
+database has an entry indicating that the given address is in use,
+but the lease does not contain any client identification. This is most
+likely due to a software error: please raise a bug report. As a temporary
+workaround, manually remove the lease entry from the database. The first
+argument includes the client and transaction identification information.
+The second argument holds the address to be released.
+
+DHCP6_LEASE_PD_WITHOUT_DUID
+===========================
+
+.. code-block:: text
+
+    %1: lease for prefix %2/%3 does not have a DUID
+
+This error message indicates a database consistency failure. The lease
+database has an entry indicating that the given prefix is in use,
+but the lease does not contain any client identification. This is most
+likely due to a software error: please raise a bug report. As a temporary
+workaround, manually remove the lease entry from the database. The
+first argument includes client and transaction identification
+information. The second and third argument hold the prefix and the
+prefix length.
+
+DHCP6_LEASE_QUERY_ERROR_GETTING_RELAY_INFO
+==========================================
+
+.. code-block:: text
+
+    failed to get relay information for lease: %1, reason: %2
+
+This is warning message that indicates the server was unable to use the relay
+information stored in the lease's user-context to construct the lq-relay-data
+option for the DHCPV6_LEASEQUERY_REPLY. The server will still send the reply
+with to the requester but without the lq-relay-data option. The most likely
+cause for this would be either a corrupted lease file or a programmatic error
+and it should be reported. The first argument is the lease detail, the second
+argument is the specific error.
+
+DHCP6_LEASE_QUERY_PACKET_PACK
+=============================
+
+.. code-block:: text
+
+    %1: preparing on-wire format of the packet to be sent
+
+This debug message is issued when the server starts preparing the on-wire
+format of the packet to be sent back to the client. The argument specifies
+the client and the transaction identification information.
+
+DHCP6_LEASE_QUERY_PACKET_PACK_FAILED
+====================================
+
+.. code-block:: text
+
+    %1: preparing on-wire-format of the packet to be sent failed %2
+
+This error message is issued when preparing an on-wire format of the
+packet has failed. The first argument identifies the client and the
+
+DHCP6_LEASE_QUERY_PACKET_UNPACK_FAILED
+======================================
+
+.. code-block:: text
+
+    failed to parse query from %1 to %2, received over interface %3, reason: %4
+
+Logged at debug log level 40.
+This debug message is issued when the received DHCPV6_LEASEQUERY is malformed and
+can't be parsed by the buffer6_receive callout. The query will be
+dropped by the server. The first three arguments specify source IP address,
+destination IP address and the interface. The last argument provides a
+reason for failure.
+
+DHCP6_LEASE_QUERY_PREFIX_LENGTH_LIST
+====================================
+
+.. code-block:: text
+
+    the list of prefix lengths to use when searching will be: %1
+
+Logged at debug log level 40.
+This debug message is emitted after a (re)configuration event to display
+the list of delegated prefix lengths that will be used when searching for a
+delegated prefix to which the query address belongs.  The argument is the
+list of prefix lengths in the order they will be used during searches.
+
+DHCP6_LEASE_QUERY_PROCESS_FAILED
+================================
+
+.. code-block:: text
+
+    processing failed for lease query: %1, reason: %2
+
+Logged at debug log level 40.
+This error message is issued when the server encountered an error processing
+a DHCPV6_LEASEQUERY. The first argument provides query details, the second
+an explanation of the error.
+
+DHCP6_LEASE_QUERY_RECEIVED
+==========================
+
+.. code-block:: text
+
+    received query: %1
+
+Logged at debug log level 40.
+This debug message is printed when the DHCPV6_LEASEQUERY query has been
+received.
+
+DHCP6_LEASE_QUERY_REPLY_SEND_FAILED
+===================================
+
+.. code-block:: text
+
+    unable to send response: %1, iface: %2, address %3:%4 error: %5
+
+This error message is issued when the server was unable to send a lease
+query reply back to the requester. The first argument provides query details,
+followed by the output interface, IP address and port, and finally the error
+itself.
+
+DHCP6_LEASE_QUERY_REPLY_SENT
+============================
+
+.. code-block:: text
+
+    response: %1, sent to %2:%3
+
+Logged at debug log level 40.
+This debug message is printed when a response to a DHCPV6_LEASEQUERY has
+been sent to a requester. The first argument provides response details,
+the second and third arguments are the IP address and port to which
+the response was sent.
+
+DHCP6_LEASE_RENEW
+=================
+
+.. code-block:: text
+
+    %1: lease for address %2 and iaid=%3 has been allocated
+
+This informational message indicates that in response to a client's REQUEST
+message, the server successfully renewed a non-temporary address
+lease. This is a normal behavior and indicates successful operation.
+The first argument includes the client and transaction identification
+information. The remaining arguments hold the allocated address and
+IAID.
+
+DHCP6_LEASE_REUSE
+=================
+
+.. code-block:: text
+
+    %1: lease for address %2 and iaid=%3 has been reused for %4 seconds
+
+This informational message indicates that in response to a client's
+message, the server successfully reused a non-temporary address
+lease. This is a normal behavior and indicates successful operation.
+The first argument includes the client and transaction identification
+information. The remaining arguments hold the allocated address,
+IAID and validity lifetime.
+
+DHCP6_MULTI_THREADING_INFO
+==========================
+
+.. code-block:: text
+
+    enabled: %1, number of threads: %2, queue size: %3
+
+This is a message listing some information about the multi-threading parameters
+with which the server is running.
+
+DHCP6_NOT_RUNNING
+=================
+
+.. code-block:: text
+
+    IPv6 DHCP server is not running
+
+A warning message is issued when an attempt is made to shut down the
+IPv6 DHCP server but it is not running.
+
+DHCP6_NO_INTERFACES
+===================
+
+.. code-block:: text
+
+    failed to detect any network interfaces
+
+During startup the IPv6 DHCP server failed to detect any network
+interfaces and is therefore shutting down.
+
+DHCP6_OPEN_SOCKET
+=================
+
+.. code-block:: text
+
+    opening service sockets on port %1
+
+Logged at debug log level 0.
+A debug message issued during startup, this indicates that the IPv6 DHCP
+server is about to open sockets on the specified port.
+
+DHCP6_OPEN_SOCKETS_FAILED
+=========================
+
+.. code-block:: text
+
+    maximum number of open service sockets attempts: %1, has been exhausted without success
+
+This error indicates that the server failed to bind service sockets after making
+the maximum configured number of reconnect attempts. This might cause the server
+to shut down as specified in the configuration.
+
+DHCP6_OPEN_SOCKETS_NO_RECONNECT_CTL
+===================================
+
+.. code-block:: text
+
+    unexpected error in bind service sockets.
+
+This is an error message indicating a programmatic error that should not occur.
+It prohibits the server from attempting to bind to its service sockets if they
+are unavailable, and the server exits. This error should be reported.
+
+DHCP6_PACKET_DROP_DHCP_DISABLED
+===============================
+
+.. code-block:: text
+
+    %1: DHCP service is globally disabled
+
+Logged at debug log level 15.
+This debug message is issued when a packet is dropped because the DHCP service
+has been temporarily disabled. This affects all received DHCP packets. The
+service may be enabled by the "dhcp-enable" control command or automatically
+after a specified amount of time since receiving "dhcp-disable" command.
+
+DHCP6_PACKET_DROP_DROP_CLASS
+============================
+
+.. code-block:: text
+
+    dropped as member of the special class 'DROP': %1 %2
+
+Logged at debug log level 15.
+This debug message is emitted when an incoming packet was classified
+into the special class 'DROP' and dropped. The packet details are displayed.
+
+DHCP6_PACKET_DROP_DROP_CLASS2
+=============================
+
+.. code-block:: text
+
+    dropped as member of the special class 'DROP' after host reservation lookup: %1 %2
+
+Logged at debug log level 15.
+This debug message is emitted when an incoming packet was classified
+after host reservation lookup into the special class 'DROP' and dropped.
+The packet details are displayed.
+
+DHCP6_PACKET_DROP_DROP_CLASS_EARLY
+==================================
+
+.. code-block:: text
+
+    dropped as member of the special class 'DROP' after early global host reservations lookup: %1 %2
+
+Logged at debug log level 15.
+This debug message is emitted when an incoming packet was classified
+after early global host reservations lookup into the special class 'DROP'
+and dropped. The packet details are displayed.
+
+DHCP6_PACKET_DROP_DUPLICATE
+===========================
+
+.. code-block:: text
+
+    dropped as sent by the same client than a packet being processed by another thread: dropped %1 %2 by thread %3 as duplicate of %4 %5 processed by %6
+
+Logged at debug log level 15.
+Currently multi-threading processing avoids races between packets sent by
+the same client by dropping new packets until processing is finished.
+Packet details and thread identifiers are included for both packets in
+this warning message.
+
+DHCP6_PACKET_DROP_PARSE_FAIL
+============================
+
+.. code-block:: text
+
+    %1: failed to parse packet from %2 to %3, received over interface %4, reason: %5, %6
+
+Logged at debug log level 15.
+The DHCPv6 server has received a packet that it is unable to
+interpret. The reason why the packet is invalid is included in the message.
+
+DHCP6_PACKET_DROP_SERVERID_MISMATCH
+===================================
+
+.. code-block:: text
+
+    %1: dropping packet with server identifier: %2, server is using: %3
+
+Logged at debug log level 15.
+A debug message noting that server has received message with server identifier
+option that not matching server identifier that server is using.
+
+DHCP6_PACKET_DROP_UNICAST
+=========================
+
+.. code-block:: text
+
+    %1: dropping unicast %2 packet as this packet should be sent to multicast
+
+Logged at debug log level 15.
+This debug message is issued when the server drops the unicast packet,
+because packets of this type must be sent to multicast. The first argument
+specifies the client and transaction identification information, the
+second argument specifies packet type.
+
+DHCP6_PACKET_OPTIONS_SKIPPED
+============================
+
+.. code-block:: text
+
+    %1: An error unpacking an option, caused subsequent options to be skipped: %2
+
+Logged at debug log level 50.
+A debug message issued when an option failed to unpack correctly, making it
+impossible to unpack the remaining options in the packet.  The server will
+server will still attempt to service the packet.
+
+DHCP6_PACKET_PROCESS_EXCEPTION
+==============================
+
+.. code-block:: text
+
+    %1: exception occurred during packet processing
+
+This error message indicates that a non-standard exception was raised
+during packet processing that was not caught by other, more specific
+exception handlers. This packet will be dropped and the server will
+continue operation.
+
+DHCP6_PACKET_PROCESS_EXCEPTION_MAIN
+===================================
+
+.. code-block:: text
+
+    exception occurred during packet processing
+
+This error message indicates that a non-standard exception was raised
+during packet processing that was not caught by other, more specific
+exception handlers. This packet will be dropped and the server will
+continue operation. This error message may appear in main server processing
+loop.
+
+DHCP6_PACKET_PROCESS_FAIL
+=========================
+
+.. code-block:: text
+
+    %1: processing of %2 message received from %3 failed: %4
+
+Logged at debug log level 40.
+This is a general catch-all message indicating that the processing of the
+specified packet type from the indicated address failed.  The reason is given in the
+message.  The server will not send a response but will instead ignore the packet.
+
+DHCP6_PACKET_PROCESS_STD_EXCEPTION
+==================================
+
+.. code-block:: text
+
+    %1: exception occurred during packet processing: %2
+
+This error message indicates that a standard exception was raised
+during packet processing that was not caught by other, more specific
+exception handlers. This packet will be dropped and the server will
+continue operation.
+
+DHCP6_PACKET_PROCESS_STD_EXCEPTION_MAIN
+=======================================
+
+.. code-block:: text
+
+    exception occurred during packet processing: %1
+
+This error message indicates that a standard exception was raised
+during packet processing that was not caught by other, more specific
+exception handlers. This packet will be dropped and the server will
+continue operation. This error message may appear in main server processing
+loop.
+
+DHCP6_PACKET_QUEUE_FULL
+=======================
+
+.. code-block:: text
+
+    multi-threading packet queue is full
+
+Logged at debug log level 40.
+A debug message noting that the multi-threading packet queue is full so
+the oldest packet of the queue was dropped to make room for the received one.
+
+DHCP6_PACKET_RECEIVED
+=====================
+
+.. code-block:: text
+
+    %1: %2 (type %3) received from %4 to %5 on interface %6
+
+An INFO message noting that the server has received the specified type of
+packet on the specified interface. The first argument specifies the
+client and transaction identification information. The second and third
+argument specify the name of the DHCPv6 message and its numeric type
+respectively. The remaining arguments specify the source address,
+destination IP address and the name of the interface on which the
+message has been received.
+
+DHCP6_PACKET_RECEIVE_FAIL
+=========================
+
+.. code-block:: text
+
+    error on attempt to receive packet: %1
+
+The IPv6 DHCP server tried to receive a packet but an error
+occurred during this attempt. The reason for the error is included in
+the message.
+
+DHCP6_PACKET_SEND
+=================
+
+.. code-block:: text
+
+    %1: trying to send packet %2 (type %3) from [%4]:%5 to [%6]:%7 on interface %8
+
+An INFO message noting that the server is attempting to send the
+specified type of packet. The arguments specify the client
+identification information (HW address and client identifier),
+DHCP message name and type, source IPv6 address and port,
+destination IPv6 address and port and the interface name.
+
+DHCP6_PACKET_SEND_FAIL
+======================
+
+.. code-block:: text
+
+    %1: failed to send DHCPv6 packet: %2
+
+This error is output if the IPv6 DHCP server fails to send an assembled
+DHCP message to a client. The reason for the error is included in the
+message.
+
+DHCP6_PACK_FAIL
+===============
+
+.. code-block:: text
+
+    %1: failed to assemble response correctly: %2
+
+This error is output if the server failed to assemble the data to be
+returned to the client into a valid packet.  The reason is most likely
+to be to a programming error: please raise a bug report.
+
+DHCP6_PARSER_COMMIT_EXCEPTION
+=============================
+
+.. code-block:: text
+
+    parser failed to commit changes
+
+On receipt of message containing details to a change of the IPv6 DHCP
+server configuration, a set of parsers were successfully created, but one
+of them failed to commit its changes due to a low-level system exception
+being raised.  Additional messages may be output indicating the reason.
+
+DHCP6_PARSER_COMMIT_FAIL
+========================
+
+.. code-block:: text
+
+    parser failed to commit changes: %1
+
+On receipt of message containing details to a change of the IPv6 DHCP
+server configuration, a set of parsers were successfully created, but
+one of them failed to commit its changes.  The reason for the failure
+is given in the message.
+
+DHCP6_PARSER_EXCEPTION
+======================
+
+.. code-block:: text
+
+    failed to create or run parser for configuration element %1
+
+On receipt of message containing details to a change of its configuration,
+the IPv6 DHCP server failed to create a parser to decode the contents of
+the named configuration element, or the creation succeeded but the parsing
+actions and committal of changes failed.  The message has been output in
+response to a non-Kea exception being raised.  Additional messages
+may give further information.
+The most likely cause of this is that the specification file for the
+server (which details the allowable contents of the configuration) is
+not correct for this version of Kea.  This may be the result of an
+interrupted installation of an update to Kea.
+
+DHCP6_PARSER_FAIL
+=================
+
+.. code-block:: text
+
+    failed to create or run parser for configuration element %1: %2
+
+On receipt of message containing details to a change of its configuration,
+the IPv6 DHCP server failed to create a parser to decode the contents
+of the named configuration element, or the creation succeeded but the
+parsing actions and committal of changes failed.  The reason for the
+failure is given in the message.
+
+DHCP6_PD_LEASE_ADVERT
+=====================
+
+.. code-block:: text
+
+    %1: lease for prefix %2/%3 and iaid=%4 will be advertised
+
+Logged at debug log level 50.
+This informational message indicates that the server will advertise a
+prefix to the client in the ADVERTISE message. The client will
+request allocation of this prefix with the REQUEST message sent
+in the next message exchange. The first argument includes the client
+and transaction identification information. The remaining arguments
+hold the allocated prefix, prefix length and IAID.
+
+DHCP6_PD_LEASE_ADVERT_FAIL
+==========================
+
+.. code-block:: text
+
+    %1: failed to advertise a prefix lease for iaid=%2
+
+Logged at debug log level 50.
+This message indicates that in response to a received SOLICIT, the
+server failed to advertise a prefix lease for a given client. There may
+be many reasons for such failure. Each failure is logged in a separate
+log entry. The first argument holds the client and transaction identification
+information. The second argument holds the IAID.
+
+DHCP6_PD_LEASE_ALLOC
+====================
+
+.. code-block:: text
+
+    %1: lease for prefix %2/%3 and iaid=%4 has been allocated for %5 seconds
+
+Logged at debug log level 50.
+This informational message indicates that in response to a client's REQUEST
+message, the server successfully granted a prefix lease.
+This is a normal behavior and indicates successful operation.
+The first argument includes the client and transaction identification
+information. The remaining arguments hold the allocated prefix,
+prefix length, IAID and validity lifetime.
+
+DHCP6_PD_LEASE_ALLOC_FAIL
+=========================
+
+.. code-block:: text
+
+    %1: failed to grant a prefix lease for iaid=%2
+
+Logged at debug log level 50.
+This message indicates that in response to a received REQUEST, the server
+failed to grant a prefix lease for the client. There may be many reasons
+for such failure. Each failure is logged in a separate log entry. The first
+argument holds the client and transaction identification information.
+The second argument holds the IAID.
+
+DHCP6_PD_LEASE_RENEW
+====================
+
+.. code-block:: text
+
+    %1: lease for prefix %2/%3 and iaid=%4 has been allocated
+
+This informational message indicates that in response to a client's REQUEST
+message, the server successfully renewed a prefix lease.
+This is a normal behavior and indicates successful operation.
+The first argument includes the client and transaction identification
+information. The remaining arguments hold the allocated prefix,
+prefix length and IAID.
+
+DHCP6_PD_LEASE_REUSE
+====================
+
+.. code-block:: text
+
+    %1: lease for prefix %2/%3 and iaid=%4 has been reused for %5 seconds
+
+This informational message indicates that in response to a client's
+message, the server successfully reused a prefix lease.
+This is a normal behavior and indicates successful operation.
+The first argument includes the client and transaction identification
+information. The remaining arguments hold the allocated prefix,
+prefix length, IAID and validity lifetime.
+
+DHCP6_PROCESS_IA_NA_EXTEND
+==========================
+
+.. code-block:: text
+
+    %1: extending lease lifetime for IA_NA option with iaid=%2
+
+Logged at debug log level 50.
+This message is logged when the server is starting to extend the lifetime
+of the address lease associated with the particular IAID. The first argument
+includes the client and transaction identification information. The second
+argument contains the IAID.
+
+DHCP6_PROCESS_IA_NA_RELEASE
+===========================
+
+.. code-block:: text
+
+    %1: releasing lease for IA_NA option with iaid=%2
+
+Logged at debug log level 50.
+This message is logged when the server is trying to release the client's
+as a result of receiving the RELEASE message. The first argument
+includes the client and transaction identification information. The second
+argument contains the IAID.
+
+DHCP6_PROCESS_IA_NA_REQUEST
+===========================
+
+.. code-block:: text
+
+    %1: server is processing IA_NA option with iaid=%2 and hint=%3
+
+Logged at debug log level 50.
+This is a debug message that indicates the processing of a received
+IA_NA option. The first argument contains the client and the transaction
+identification information. The second argument holds the IAID of the
+IA_NA option. The third argument may hold the hint for the server
+about the address that the client would like to have allocated.
+If there is no hint, the argument should provide the text indicating
+that the hint hasn't been sent.
+
+DHCP6_PROCESS_IA_NA_SOLICIT
+===========================
+
+.. code-block:: text
+
+    %1: server is processing IA_NA option with iaid=%2 and hint=%3
+
+Logged at debug log level 50.
+This is a debug message that indicates the processing of a received
+IA_NA option. The first argument contains the client and the transaction
+identification information. The second argument holds the IAID of the
+IA_NA option. The third argument may hold the hint for the server
+about the address that the client would like to have allocated.
+If there is no hint, the argument should provide the text indicating
+that the hint hasn't been sent.
+
+DHCP6_PROCESS_IA_PD_EXTEND
+==========================
+
+.. code-block:: text
+
+    %1: extending lease lifetime for IA_PD option with iaid=%2
+
+Logged at debug log level 50.
+This message is logged when the server is starting to extend the lifetime
+of the prefix lease associated with the particular IAID. The first argument
+includes the client and transaction identification information. The second
+argument contains the IAID.
+
+DHCP6_PROCESS_IA_PD_REQUEST
+===========================
+
+.. code-block:: text
+
+    %1: server is processing IA_PD option with iaid=%2 and hint=%3
+
+Logged at debug log level 50.
+This is a debug message that indicates a processing of received IA_PD
+option. The first argument contains the client and the transaction
+identification information. The second argument holds the IAID of the
+IA_PD option. The third argument may hold the hint for the server
+about the prefix that the client would like to have allocated.
+If there is no hint, the argument should provide the text indicating
+that the hint hasn't been sent.
+
+DHCP6_PROCESS_IA_PD_SOLICIT
+===========================
+
+.. code-block:: text
+
+    %1: server is processing IA_PD option with iaid=%2 and hint=%3
+
+Logged at debug log level 50.
+This is a debug message that indicates a processing of received IA_PD
+option. The first argument contains the client and the transaction
+identification information. The second argument holds the IAID of the
+IA_PD option. The third argument may hold the hint for the server
+about the prefix that the client would like to have allocated.
+If there is no hint, the argument should provide the text indicating
+that the hint hasn't been sent.
+
+DHCP6_QUERY_DATA
+================
+
+.. code-block:: text
+
+    %1, packet details: %2
+
+Logged at debug log level 55.
+A debug message printing the details of the received packet. The first
+argument includes the client and the transaction identification
+information.
+
+DHCP6_QUERY_LABEL
+=================
+
+.. code-block:: text
+
+    received query: %1
+
+This information message indicates that a query was received. It displays
+the client and the transaction identification information.
+
+DHCP6_RAPID_COMMIT
+==================
+
+.. code-block:: text
+
+    %1: Rapid Commit option received, following 2-way exchange
+
+Logged at debug log level 50.
+This debug message is issued when the server found a Rapid Commit option
+in the client's message and 2-way exchanges are supported by the
+server for the subnet on which the client is connected. The argument
+specifies the client and transaction identification information.
+
+DHCP6_RECLAIM_EXPIRED_LEASES_FAIL
+=================================
+
+.. code-block:: text
+
+    failed to reclaim expired leases: %1
+
+This error message indicates that the reclaim expired leases operation failed
+and provides the cause of failure.
+
+DHCP6_RELEASE_NA
+================
+
+.. code-block:: text
+
+    %1: binding for address %2 and iaid=%3 was released properly
+
+This informational message indicates that an address was released properly. It
+is a normal operation during client shutdown. The first argument includes
+the client and transaction identification information. The second and third
+argument hold the released IPv6 address and IAID respectively.
+
+DHCP6_RELEASE_NA_DELETED
+========================
+
+.. code-block:: text
+
+    %1: binding for address %2 and iaid=%3 was deleted on release
+
+This informational message indicates that an address was deleted on release. It
+is a normal operation during client shutdown. The first argument includes the
+client and transaction identification information. The second and third argument
+hold the released IPv6 address and IAID respectively.
+
+DHCP6_RELEASE_NA_EXPIRED
+========================
+
+.. code-block:: text
+
+    %1: binding for address %2 and iaid=%3 expired on release
+
+This informational message indicates that an address expired on release. It is a
+normal operation during client shutdown. The first argument includes the client
+and transaction identification information. The second and third argument hold
+the released IPv6 address and IAID respectively.
+
+DHCP6_RELEASE_NA_FAIL
+=====================
+
+.. code-block:: text
+
+    %1: failed to remove address lease for address %2 and iaid=%3
+
+This error message indicates that the software failed to remove an address
+lease from the lease database.  It probably due to an error during a
+database operation: resolution will most likely require administrator
+intervention (e.g. check if DHCP process has sufficient privileges to
+update the database). It may also be triggered if a lease was manually
+removed from the database during RELEASE message processing. The first
+argument holds the client and transaction identification information.
+The second and third argument hold the released address and IAID
+respectively.
+
+DHCP6_RELEASE_NA_FAIL_WRONG_DUID
+================================
+
+.. code-block:: text
+
+    %1: client tried to release address %2, but it belongs to another client using duid=%3
+
+This warning message indicates that a client tried to release an address
+that belongs to a different client. This should not happen in normal
+circumstances and may indicate a misconfiguration of the client.  However,
+since the client releasing the address will stop using it anyway, there
+is a good chance that the situation will correct itself.
+
+DHCP6_RELEASE_NA_FAIL_WRONG_IAID
+================================
+
+.. code-block:: text
+
+    %1: client tried to release address %2, but it used wrong IAID (expected %3, but got %4)
+
+This warning message indicates that client tried to release an address
+that does belong to it, but the address was expected to be in a different
+IA (identity association) container. This probably means that the client's
+support for multiple addresses is flawed.
+
+DHCP6_RELEASE_PD
+================
+
+.. code-block:: text
+
+    %1: prefix %2/%3 for iaid=%4 was released properly
+
+This informational message indicates that a prefix was released properly. It
+is a normal operation during client shutdown. The first argument holds
+the client and transaction identification information. The second and
+third argument hold the prefix and its length. The fourth argument holds IAID.
+
+DHCP6_RELEASE_PD_DELETED
+========================
+
+.. code-block:: text
+
+    %1: prefix %2/%3 for iaid=%4 was deleted on release
+
+This informational message indicates that a prefix was deleted on release. It is
+a normal operation during client shutdown. The first argument holds the client
+and transaction identification information. The second and third argument hold
+the prefix and its length. The fourth argument holds IAID.
+
+DHCP6_RELEASE_PD_EXPIRED
+========================
+
+.. code-block:: text
+
+    %1: prefix %2/%3 for iaid=%4 expired on release
+
+This informational message indicates that a prefix expired on release. It is a
+normal operation during client shutdown. The first argument holds the client and
+transaction identification information. The second and third argument hold the
+prefix and its length. The fourth argument holds IAID.
+
+DHCP6_RELEASE_PD_FAIL
+=====================
+
+.. code-block:: text
+
+    %1: failed to release prefix %2/%3 for iaid=%4
+
+This error message indicates that the software failed to remove a prefix
+lease from the lease database.  It probably due to an error during a
+database operation: resolution will most likely require administrator
+intervention (e.g. check if DHCP process has sufficient privileges to
+update the database). It may also be triggered if a lease was manually
+removed from the database during RELEASE message processing. The
+first argument hold the client and transaction identification
+information. The second and third argument define the prefix and
+its length. The fourth argument holds the IAID.
+
+DHCP6_RELEASE_PD_FAIL_WRONG_DUID
+================================
+
+.. code-block:: text
+
+    %1: client tried to release prefix %2/%3, but it belongs to another client (duid=%4)
+
+This warning message indicates that client tried to release a prefix
+that belongs to a different client. This should not happen in normal
+circumstances and may indicate a misconfiguration of the client.  However,
+since the client releasing the prefix will stop using it anyway, there
+is a good chance that the situation will correct itself. The first
+argument includes the client and the transaction identification
+information. The second and third argument include the prefix and
+prefix length. The last argument holds the DUID of the client holding
+the lease.
+
+DHCP6_RELEASE_PD_FAIL_WRONG_IAID
+================================
+
+.. code-block:: text
+
+    %1: client tried to release prefix %2/%3, but it used wrong IAID (expected %4, but got %5)
+
+This warning message indicates that client tried to release a prefix
+that does belong to it, but the address was expected to be in a different
+IA (identity association) container. This probably means that the client's
+support for multiple prefixes is flawed. The first argument includes the
+client and transaction identification information. The second and third
+argument identify the prefix. The fourth and fifth argument hold the
+expected IAID and IAID found respectively.
+
+DHCP6_REQUIRED_CLASS_EVAL_ERROR
+===============================
+
+.. code-block:: text
+
+    %1: Expression '%2' evaluated to %3
+
+This error message indicates that there a problem was encountered while
+evaluating an expression of a client class that was marked as required.
+A description of the problem is printed.
+
+DHCP6_REQUIRED_CLASS_EVAL_RESULT
+================================
+
+.. code-block:: text
+
+    %1: Expression '%2' evaluated to %3
+
+Logged at debug log level 50.
+This debug message indicates that the expression of a client class has been
+successfully evaluated. The client class name and the result value of the
+evaluation are printed.
+
+DHCP6_REQUIRED_OPTIONS_CHECK_FAIL
+=================================
+
+.. code-block:: text
+
+    %1: %2 message received from %3 failed the following check: %4
+
+Logged at debug log level 40.
+This message indicates that received DHCPv6 packet is invalid.  This may be due
+to a number of reasons, e.g. the mandatory client-id option is missing,
+the server-id forbidden in that particular type of message is present,
+there is more than one instance of client-id or server-id present,
+etc. The exact reason for rejecting the packet is included in the message.
+
+DHCP6_RESERVATIONS_LOOKUP_FIRST_ENABLED
+=======================================
+
+.. code-block:: text
+
+    Multi-threading is enabled and host reservations lookup is always performed first.
+
+This is a message informing that host reservations lookup is performed before
+lease lookup when multi-threading is enabled overwriting configured value.
+
+DHCP6_RESPONSE_DATA
+===================
+
+.. code-block:: text
+
+    %1: responding with packet %2 (type %3), packet details: %4
+
+Logged at debug log level 55.
+A debug message including the detailed data about the packet being sent
+to the client. The first argument contains the client and the transaction
+identification information. The second and third argument contains the
+packet name and type respectively. The fourth argument contains detailed
+packet information.
+
+DHCP6_SERVER_FAILED
+===================
+
+.. code-block:: text
+
+    server failed: %1
+
+The IPv6 DHCP server has encountered a fatal error and is terminating.
+The reason for the failure is included in the message.
+
+DHCP6_SHUTDOWN
+==============
+
+.. code-block:: text
+
+    server shutdown
+
+Logged at debug log level 40.
+The IPv6 DHCP server has terminated normally.
+
+DHCP6_SHUTDOWN_REQUEST
+======================
+
+.. code-block:: text
+
+    shutdown of server requested
+
+Logged at debug log level 40.
+This debug message indicates that a shutdown of the IPv6 server has
+been requested via a call to the 'shutdown' method of the core Dhcpv6Srv
+object.
+
+DHCP6_SRV_CONSTRUCT_ERROR
+=========================
+
+.. code-block:: text
+
+    error creating Dhcpv6Srv object, reason: %1
+
+This error message indicates that during startup, the construction of a
+core component within the IPv6 DHCP server (the Dhcpv6 server object)
+has failed.  As a result, the server will exit.  The reason for the
+failure is given within the message.
+
+DHCP6_SRV_D2STOP_ERROR
+======================
+
+.. code-block:: text
+
+    error stopping IO with DHCP_DDNS during shutdown: %1
+
+This error message indicates that during shutdown, an error occurred while
+stopping IO between the DHCPv6 server and the DHCP_DDNS server.  This is
+probably due to a programmatic error is not likely to impact either server
+upon restart.  The reason for the failure is given within the message.
+
+DHCP6_SRV_UNLOAD_LIBRARIES_ERROR
+================================
+
+.. code-block:: text
+
+    error unloading hooks libraries during shutdown: %1
+
+This error message indicates that during shutdown, unloading hooks
+libraries failed to close them. If the list of libraries is empty it is
+a programmatic error in the server code. If it is not empty it could be
+a programmatic error in one of the hooks libraries which could lead to
+a crash during finalization.
+
+DHCP6_STARTED
+=============
+
+.. code-block:: text
+
+    Kea DHCPv6 server version %1 started
+
+This informational message indicates that the IPv6 DHCP server has
+processed all configuration information and is ready to process
+DHCPv6 packets.  The version is also printed.
+
+DHCP6_STARTING
+==============
+
+.. code-block:: text
+
+    Kea DHCPv6 server version %1 (%2) starting
+
+This informational message indicates that the IPv6 DHCP server has
+processed any command-line switches and is starting. The version
+is also printed.
+
+DHCP6_START_INFO
+================
+
+.. code-block:: text
+
+    pid: %1, server port: %2, client port: %3, verbose: %4
+
+Logged at debug log level 0.
+This is a debug message issued during the IPv6 DHCP server startup.
+It lists some information about the parameters with which the server
+is running.
+
+DHCP6_SUBNET_DATA
+=================
+
+.. code-block:: text
+
+    %1: the selected subnet details: %2
+
+Logged at debug log level 55.
+This debug message includes the details of the subnet selected for
+the client. The first argument includes the client and the
+transaction identification information. The second argument
+includes the subnet details.
+
+DHCP6_SUBNET_DYNAMICALLY_CHANGED
+================================
+
+.. code-block:: text
+
+    %1: changed selected subnet %2 to subnet %3 from shared network %4 for client assignments
+
+Logged at debug log level 45.
+This debug message indicates that the server is using another subnet
+than initially selected for client assignments. This newly selected
+subnet belongs to the same shared network as the original subnet.
+Some reasons why the new subnet was selected include: address pool
+exhaustion in the original subnet or the fact that the new subnet
+includes some static reservations for this client.
+
+DHCP6_SUBNET_SELECTED
+=====================
+
+.. code-block:: text
+
+    %1: the subnet with ID %2 was selected for client assignments
+
+Logged at debug log level 45.
+This is a debug message noting the selection of a subnet to be used for
+address and option assignment. Subnet selection is one of the early
+steps in the processing of incoming client message. The first
+argument includes the client and the transaction identification
+information. The second argument holds the selected subnet id.
+
+DHCP6_SUBNET_SELECTION_FAILED
+=============================
+
+.. code-block:: text
+
+    %1: failed to select subnet for the client
+
+Logged at debug log level 50.
+This debug message indicates that the server failed to select the
+subnet for the client which has sent a message to the server.
+The cause is likely due to a misconfiguration of the server. The packet
+processing will continue, but the response will only contain generic
+configuration and no addresses or prefixes. The argument includes
+the client and the transaction identification information.
+
+DHCP6_UNKNOWN_MSG_RECEIVED
+==========================
+
+.. code-block:: text
+
+    %1: received unknown message (type %2) on interface %3
+
+Logged at debug log level 40.
+This debug message is printed when server receives a message of unknown type.
+That could either mean missing functionality or invalid or broken relay or client.
+The list of formally defined message types is available here:
+http://www.iana.org/assignments/dhcpv6-parameters.
+
+*******
+DHCPSRV
+*******
+
+DHCPSRV_CFGMGR_ADD_IFACE
+========================
+
+.. code-block:: text
+
+    listening on interface %1
+
+An info message issued when a new interface is being added to the collection of
+interfaces on which the server listens to DHCP messages.
+
+DHCPSRV_CFGMGR_ADD_SUBNET4
+==========================
+
+.. code-block:: text
+
+    adding subnet %1
+
+Logged at debug log level 40.
+A debug message reported when the DHCP configuration manager is adding the
+specified IPv4 subnet to its database.
+
+DHCPSRV_CFGMGR_ADD_SUBNET6
+==========================
+
+.. code-block:: text
+
+    adding subnet %1
+
+Logged at debug log level 40.
+A debug message reported when the DHCP configuration manager is adding the
+specified IPv6 subnet to its database.
+
+DHCPSRV_CFGMGR_ALL_IFACES_ACTIVE
+================================
+
+.. code-block:: text
+
+    enabling listening on all interfaces
+
+Logged at debug log level 40.
+A debug message issued when the server is being configured to listen on all
+interfaces.
+
+DHCPSRV_CFGMGR_CFG_DHCP_DDNS
+============================
+
+.. code-block:: text
+
+    Setting DHCP-DDNS configuration to: %1
+
+Logged at debug log level 40.
+A debug message issued when the server's DHCP-DDNS settings are changed.
+
+DHCPSRV_CFGMGR_CONFIG4_MERGED
+=============================
+
+.. code-block:: text
+
+    Configuration backend data has been merged.
+
+This is an informational message emitted when the DHCPv4 server has
+successfully merged configuration data retrieved from its configuration
+backends into the current configuration.
+
+DHCPSRV_CFGMGR_CONFIG6_MERGED
+=============================
+
+.. code-block:: text
+
+    Configuration backend data has been merged.
+
+This is an informational message emitted when the DHCPv6 server has
+successfully merged configuration data retrieved from its configuration
+backends into the current configuration.
+
+DHCPSRV_CFGMGR_CONFIGURE_SERVERID
+=================================
+
+.. code-block:: text
+
+    server configuration includes specification of a server identifier
+
+This warning message is issued when the server specified configuration of
+a server identifier. If this new configuration overrides an existing
+server identifier, this will affect existing bindings of the clients.
+Clients will use old server identifier when they renew their bindings.
+The server will not respond to those renews, and the clients will
+eventually transition to rebinding state. The server should reassign
+existing bindings and the clients will subsequently use new server
+identifier. It is recommended to not modify the server identifier, unless
+there is a good reason for it, to avoid increased number of renewals and
+a need for rebinding (increase of multicast traffic, which may be received
+by multiple servers).
+
+DHCPSRV_CFGMGR_DEL_SUBNET4
+==========================
+
+.. code-block:: text
+
+    IPv4 subnet %1 removed
+
+Logged at debug log level 40.
+This debug message is issued when a subnet is successfully removed from the
+server configuration. The argument identifies the removed subnet.
+
+DHCPSRV_CFGMGR_DEL_SUBNET6
+==========================
+
+.. code-block:: text
+
+    IPv6 subnet %1 removed
+
+Logged at debug log level 40.
+This debug message is issued when a subnet is successfully removed from the
+server configuration. The argument identifies the removed subnet.
+
+DHCPSRV_CFGMGR_FLQ_POPULATE_FREE_ADDRESS_LEASES
+===============================================
+
+.. code-block:: text
+
+    populating free address leases for the FLQ allocator in subnet %1; it can take a while!
+
+This informational message is issued when the server begins building a queue
+of free address leases for the given subnet. It can take a considerable amount
+of time, depending on the size of the address pools.
+
+DHCPSRV_CFGMGR_FLQ_POPULATE_FREE_ADDRESS_LEASES_DONE
+====================================================
+
+.. code-block:: text
+
+    populated %1 free address leases for the FLQ allocator in subnet %2 in %3
+
+This informational message is issued when the server ends building a queue
+of free address leases for a given subnet. The first argument logs the
+number of free leases, the second argument logs the subnet, and the third
+argument logs a duration.
+
+DHCPSRV_CFGMGR_FLQ_POPULATE_FREE_PREFIX_LEASES
+==============================================
+
+.. code-block:: text
+
+    populating free prefix leases for the FLQ allocator in subnet %1; it can take a while!
+
+This informational message is issued when the server begins building a queue
+of free leases for the given subnet. It can take a considerable amount of
+time, depending on the size of the delegated prefix pools.
+
+DHCPSRV_CFGMGR_FLQ_POPULATE_FREE_PREFIX_LEASES_DONE
+===================================================
+
+.. code-block:: text
+
+    populated %1 free prefix leases for the FLQ allocator in subnet %2 completed in %3
+
+This informational message is issued when the server ends building a queue
+of free prefix leases for a given subnet. The first argument logs the
+number of free leases, the second argument logs the subnet, and the third
+argument logs a duration.
+
+DHCPSRV_CFGMGR_IPV4_RESERVATIONS_NON_UNIQUE_IGNORED
+===================================================
+
+.. code-block:: text
+
+    ignoring "ip-reservations-unique" setting because at least one of the host database backends does not support non-unique IP reservations in a subnet
+
+This warning message is issued when the server failed to use the new setting
+of the ip-reservations-unique global parameter configured via the configuration
+backend. Some host database backends used apparently do not support specifying
+several reservations for the same IP address in a subnet. The administrator
+should either stop using the backend that does not support this setting or set
+the value of the ip-reservations-unique to true to resolve the configuration
+issue.
+
+DHCPSRV_CFGMGR_IPV6_RESERVATIONS_NON_UNIQUE_IGNORED
+===================================================
+
+.. code-block:: text
+
+    ignoring "ip-reservations-unique" setting because at least one of the host database backends does not support non unique IP reservations in a subnet
+
+This warning message is issued when the server failed to use the new setting
+of the ip-reservations-unique global parameter configured via the configuration
+backend. Some host database backends used apparently do not support specifying
+several reservations for the same IP address or delegated prefix in a subnet.
+The administrator should either stop using the backend that does not support
+this setting or set the value of the ip-reservations-unique to true to resolve
+the configuration issue.
+
+DHCPSRV_CFGMGR_IP_RESERVATIONS_UNIQUE_DUPLICATES_DETECTED
+=========================================================
+
+.. code-block:: text
+
+    the "ip-reservations-unique" flag is set to true and multiple reservations for the IP address %1 in subnet %2 are not allowed causing error: %3
+
+This warning message is issued when the DHCP server is configured to not allow
+multiple reservations for the same IP address. However, the host database
+backend contains multiple reservations for the IP address logged as the first
+argument, in the subnet logged as second argument, causing problems with lease
+allocation logged as third argument.
+
+DHCPSRV_CFGMGR_IP_RESERVATIONS_UNIQUE_DUPLICATES_POSSIBLE
+=========================================================
+
+.. code-block:: text
+
+    setting "ip-reservations-unique" from false to true poses a risk that some host backends may still contain multiple reservations for the same IP address
+
+This warning message is issued when the DHCP server is configured to not allow
+multiple reservations for the same IP address. However, the host database
+backends may still contain multiple reservations for the same IP addresses
+causing problems with lease allocation for certain addresses. Please ensure
+that all such duplicates are removed.
+
+DHCPSRV_CFGMGR_NEW_SUBNET4
+==========================
+
+.. code-block:: text
+
+    a new subnet has been added to configuration: %1
+
+This is an informational message reporting that the configuration has
+been extended to include the specified IPv4 subnet.
+
+DHCPSRV_CFGMGR_NEW_SUBNET6
+==========================
+
+.. code-block:: text
+
+    a new subnet has been added to configuration: %1
+
+This is an informational message reporting that the configuration has
+been extended to include the specified subnet.
+
+DHCPSRV_CFGMGR_OPTION_DUPLICATE
+===============================
+
+.. code-block:: text
+
+    multiple options with the code: %1 added to the subnet: %2
+
+This warning message is issued on an attempt to configure multiple options with the
+same option code for the particular subnet. Adding multiple options is uncommon
+for DHCPv6, but it is not prohibited.
+
+DHCPSRV_CFGMGR_RENEW_GTR_REBIND
+===============================
+
+.. code-block:: text
+
+    in %1, the value of renew-timer %2 is greater than the value of rebind-timer %3, ignoring renew-timer
+
+A warning message that indicates the configured renew-timer is greater
+than the configured rebind-timer. The server will ignore the renew
+timer value and send the rebind timer value only. This is considered
+a non-fatal configuration error.
+
+DHCPSRV_CFGMGR_SOCKET_RAW_UNSUPPORTED
+=====================================
+
+.. code-block:: text
+
+    use of raw sockets is unsupported on this OS, UDP sockets will be used
+
+This warning message is logged when the user specified that the
+DHCPv4 server should use the raw sockets to receive the DHCP
+messages and respond to the clients, but the use of raw sockets
+is not supported on the particular environment. The raw sockets
+are useful when the server must respond to the directly connected
+clients which don't have an address yet. If the raw sockets are
+not supported by Kea on the particular platform, Kea will fall
+back to use of the IP/UDP sockets. The responses to
+the directly connected clients will be broadcast. The responses
+to relayed clients will be unicast as usual.
+
+DHCPSRV_CFGMGR_SOCKET_TYPE_DEFAULT
+==================================
+
+.. code-block:: text
+
+    "dhcp-socket-type" not specified , using default socket type %1
+
+This informational message is logged when the administrator hasn't
+specified the "dhcp-socket-type" parameter in configuration for interfaces.
+In such case, the default socket type will be used.
+
+DHCPSRV_CFGMGR_SOCKET_TYPE_SELECT
+=================================
+
+.. code-block:: text
+
+    using socket type %1
+
+This informational message is logged when the DHCPv4 server selects the
+socket type to be used for all sockets that will be opened on the
+interfaces. Typically, the socket type is specified by the server
+administrator. If the socket type hasn't been specified, the raw
+socket will be selected. If the raw socket has been selected but
+Kea doesn't support the use of raw sockets on the particular
+OS, it will use an UDP socket instead.
+
+DHCPSRV_CFGMGR_SUBNET4
+======================
+
+.. code-block:: text
+
+    retrieved subnet %1 for address hint %2
+
+Logged at debug log level 40.
+This is a debug message reporting that the DHCP configuration manager has
+returned the specified IPv4 subnet when given the address hint specified
+as the address is within the subnet.
+
+DHCPSRV_CFGMGR_SUBNET4_ADDR
+===========================
+
+.. code-block:: text
+
+    selected subnet %1 for packet received by matching address %2
+
+Logged at debug log level 40.
+This is a debug message reporting that the DHCP configuration manager
+has returned the specified IPv4 subnet for a received packet. This particular
+subnet was selected, because an IPv4 address was matched which belonged to that
+subnet.
+
+DHCPSRV_CFGMGR_SUBNET4_IFACE
+============================
+
+.. code-block:: text
+
+    selected subnet %1 for packet received over interface %2
+
+Logged at debug log level 40.
+This is a debug message reporting that the DHCP configuration manager
+has returned the specified IPv4 subnet for a packet received over
+the given interface. This particular subnet was selected, because it
+was specified as being directly reachable over the given interface. (see
+'interface' parameter in the subnet4 definition).
+
+DHCPSRV_CFGMGR_SUBNET4_RELAY
+============================
+
+.. code-block:: text
+
+    selected subnet %1, because of matching relay addr %2
+
+Logged at debug log level 40.
+This is a debug message reporting that the DHCP configuration manager has
+returned the specified IPv4 subnet, because detected relay agent address
+matches value specified for this subnet.
+
+DHCPSRV_CFGMGR_SUBNET6
+======================
+
+.. code-block:: text
+
+    retrieved subnet %1 for address hint %2
+
+Logged at debug log level 40.
+This is a debug message reporting that the DHCP configuration manager has
+returned the specified IPv6 subnet when given the address hint specified
+as the address is within the subnet.
+
+DHCPSRV_CFGMGR_SUBNET6_IFACE
+============================
+
+.. code-block:: text
+
+    selected subnet %1 for packet received over interface %2
+
+Logged at debug log level 40.
+This is a debug message reporting that the DHCP configuration manager
+has returned the specified IPv6 subnet for a packet received over
+given interface. This particular subnet was selected, because it
+was specified as being directly reachable over given interface. (see
+'interface' parameter in the subnet6 definition).
+
+DHCPSRV_CFGMGR_SUBNET6_IFACE_ID
+===============================
+
+.. code-block:: text
+
+    selected subnet %1 (interface-id match) for incoming packet
+
+Logged at debug log level 40.
+This is a debug message reporting that the DHCP configuration manager
+has returned the specified IPv6 subnet for a received packet. This particular
+subnet was selected, because value of interface-id option matched what was
+configured in the server's interface-id option for that selected subnet6.
+(see 'interface-id' parameter in the subnet6 definition).
+
+DHCPSRV_CFGMGR_SUBNET6_RELAY
+============================
+
+.. code-block:: text
+
+    selected subnet %1, because of matching relay addr %2
+
+Logged at debug log level 40.
+This is a debug message reporting that the DHCP configuration manager has
+returned the specified IPv6 subnet, because detected relay agent address
+matches value specified for this subnet.
+
+DHCPSRV_CFGMGR_UNICAST_LINK_LOCAL
+=================================
+
+.. code-block:: text
+
+    specified link local address %1 for unicast traffic on interface %2
+
+This warning message is logged when user specified a link-local address to
+receive unicast traffic. The warning message is issued because it is an
+uncommon use.
+
+DHCPSRV_CFGMGR_UPDATE_SUBNET4
+=============================
+
+.. code-block:: text
+
+    updating subnet %1 (result %2)
+
+Logged at debug log level 40.
+A debug message reported when the DHCP configuration manager is updating the
+specified IPv4 subnet in its current configuration. Subnet ID and result
+(expected to be true) are displayed.
+
+DHCPSRV_CFGMGR_UPDATE_SUBNET6
+=============================
+
+.. code-block:: text
+
+    updating subnet %1 (result %2)
+
+Logged at debug log level 40.
+A debug message reported when the DHCP configuration manager is replacing the
+specified IPv6 subnet in its current configuration. Subnet ID and result
+(expected to be true) are displayed.
+
+DHCPSRV_CFGMGR_USE_ADDRESS
+==========================
+
+.. code-block:: text
+
+    listening on address %1, on interface %2
+
+A message issued when the server is configured to listen on the explicitly specified
+IP address on the given interface.
+
+DHCPSRV_CFGMGR_USE_ALLOCATOR
+============================
+
+.. code-block:: text
+
+    using the %1 allocator for %2 leases in subnet %3
+
+A message issued when the configuration manager starts using a given allocator
+for a subnet.
+
+DHCPSRV_CFGMGR_USE_UNICAST
+==========================
+
+.. code-block:: text
+
+    listening on unicast address %1, on interface %2
+
+An info message issued when configuring the DHCP server to listen on the unicast
+address on the specific interface.
+
+DHCPSRV_CLOSE_DB
+================
+
+.. code-block:: text
+
+    closing currently open %1 database
+
+Logged at debug log level 40.
+This is a debug message, issued when the DHCP server closes the currently
+open lease database. It is issued at program shutdown and whenever
+the database access parameters are changed: in the latter case, the
+server closes the currently open database, and opens a database using
+the new parameters.
+
+DHCPSRV_DDNS_TTL_PERCENT_TOO_SMALL
+==================================
+
+.. code-block:: text
+
+    ddns-ttl-percent %1 of lease lifetime %2 is too small, ignoring it
+
+Logged at debug log level 55.
+A debug message issued when the DDNS TTL value calculated using the
+ddns-ttl-percent is zero.  Kea will ignore the value and calculate
+the DDNS TTL as though ddsn-ttl-percent were not specified. The
+value of ddns-ttl-percent and the lease lifetime are shown in
+the message details.
+
+DHCPSRV_DHCP4O6_RECEIVED_BAD_PACKET
+===================================
+
+.. code-block:: text
+
+    received bad DHCPv4o6 packet: %1
+
+A bad DHCPv4o6 packet was received.
+
+DHCPSRV_DHCP_DDNS_ERROR_EXCEPTION
+=================================
+
+.. code-block:: text
+
+    error handler for DHCP_DDNS IO generated an expected exception: %1
+
+This is an error message that occurs when an attempt to send a request to
+kea-dhcp-ddns fails there registered error handler threw an uncaught exception.
+This is a programmatic error which should not occur. By convention, the error
+handler should not propagate exceptions. Please report this error.
+
+DHCPSRV_DHCP_DDNS_HANDLER_NULL
+==============================
+
+.. code-block:: text
+
+    error handler for DHCP_DDNS IO is not set.
+
+This is an error message that occurs when an attempt to send a request to
+kea-dhcp-ddns fails and there is no registered error handler. This is a
+programmatic error which should never occur and should be reported.
+
+DHCPSRV_DHCP_DDNS_NCR_REJECTED
+==============================
+
+.. code-block:: text
+
+    NameChangeRequest rejected by the sender: %1, ncr: %2
+
+This is an error message indicating that NameChangeSender used to deliver DDNS
+update requests to kea-dhcp-ddns rejected the request. This most likely cause
+is the sender's queue has reached maximum capacity. This would imply that
+requests are being generated faster than they can be delivered.
+
+DHCPSRV_DHCP_DDNS_NCR_SENT
+==========================
+
+.. code-block:: text
+
+    NameChangeRequest sent to kea-dhcp-ddns: %1
+
+Logged at debug log level 50.
+A debug message issued when a NameChangeRequest has been successfully sent to
+kea-dhcp-ddns.
+
+DHCPSRV_DHCP_DDNS_SENDER_STARTED
+================================
+
+.. code-block:: text
+
+    NameChangeRequest sender has been started: %1
+
+An informational message issued when a communication with kea-dhcp-ddns has
+been successfully started.
+
+DHCPSRV_DHCP_DDNS_SENDER_STOPPED
+================================
+
+.. code-block:: text
+
+    NameChangeRequest sender has been stopped.
+
+An informational message issued when a communication with kea-dhcp-ddns has
+been stopped. This normally occurs during reconfiguration and as part of normal
+shutdown. It may occur if kea-dhcp-ddns communications break down.
+
+DHCPSRV_DHCP_DDNS_SUSPEND_UPDATES
+=================================
+
+.. code-block:: text
+
+    DHCP_DDNS updates are being suspended.
+
+This is a warning message indicating the DHCP_DDNS updates have been turned
+off. This should only occur if IO errors communicating with kea-dhcp-ddns
+have been experienced. Any such errors should have preceding entries in the
+log with details. No further attempts to communicate with kea-dhcp-ddns will
+be made without intervention.
+
+DHCPSRV_EVAL_ERROR
+==================
+
+.. code-block:: text
+
+    %1: Expression '%2' evaluated to %3
+
+This error message indicates that there a problem was encountered while
+evaluating an expression of a client class.
+A description of the problem is printed.
+
+DHCPSRV_EVAL_RESULT
+===================
+
+.. code-block:: text
+
+    %1: Expression '%2' evaluated to %3
+
+Logged at debug log level 50.
+This debug message indicates that the expression of a client class has been
+successfully evaluated. The client class name and the result value of the
+evaluation are printed.
+
+DHCPSRV_HOOK_LEASE4_RECOVER_SKIP
+================================
+
+.. code-block:: text
+
+    DHCPv4 lease %1 was not recovered from the declined state because a callout set the skip status.
+
+Logged at debug log level 40.
+This debug message is printed when a callout installed on lease4_recover
+hook point set the next step status to SKIP. For this particular hook point, this
+indicates that the server should not recover the lease from declined state.
+The server will leave the lease as it is, in the declined state. The
+server will attempt to recover it the next time decline recovery procedure
+takes place.
+
+DHCPSRV_HOOK_LEASE4_RENEW_SKIP
+==============================
+
+.. code-block:: text
+
+    DHCPv4 lease was not renewed because a callout set the skip flag.
+
+Logged at debug log level 40.
+This debug message is printed when a callout installed on lease4_renew
+hook point set the skip flag. For this particular hook point, the setting
+of the flag by a callout instructs the server to not renew a lease. The
+server will use existing lease as it is, without extending its lifetime.
+
+DHCPSRV_HOOK_LEASE4_SELECT_SKIP
+===============================
+
+.. code-block:: text
+
+    Lease4 creation was skipped, because of callout skip flag.
+
+Logged at debug log level 40.
+This debug message is printed when a callout installed on lease4_select
+hook point sets the skip flag. It means that the server was told that
+no lease4 should be assigned. The server will not put that lease in its
+database and the client will get a NAK packet.
+
+DHCPSRV_HOOK_LEASE6_EXTEND_SKIP
+===============================
+
+.. code-block:: text
+
+    DHCPv6 lease lifetime was not extended because a callout set the skip flag for message %1
+
+Logged at debug log level 40.
+This debug message is printed when a callout installed on lease6_renew
+or the lease6_rebind hook point set the skip flag. For this particular hook
+point, the setting of the flag by a callout instructs the server to not
+extend the lifetime for a lease. If the client requested renewal of multiple
+leases (by sending multiple IA options), the server will skip the renewal
+of the one in question and will proceed with other renewals as usual.
+
+DHCPSRV_HOOK_LEASE6_RECOVER_SKIP
+================================
+
+.. code-block:: text
+
+    DHCPv6 lease %1 was not recovered from declined state because a callout set the skip status.
+
+Logged at debug log level 40.
+This debug message is printed when a callout installed on lease6_recover
+hook point set the next step status to SKIP. For this particular hook point, this
+indicates that the server should not recover the lease from declined state.
+The server will leave the lease as it is, in the declined state. The
+server will attempt to recover it the next time decline recovery procedure
+takes place.
+
+DHCPSRV_HOOK_LEASE6_SELECT_SKIP
+===============================
+
+.. code-block:: text
+
+    Lease6 (non-temporary) creation was skipped, because of callout skip flag.
+
+Logged at debug log level 40.
+This debug message is printed when a callout installed on lease6_select
+hook point sets the skip flag. It means that the server was told that
+no lease6 should be assigned. The server will not put that lease in its
+database and the client will get a NoAddrsAvail for that IA_NA option.
+
+DHCPSRV_HOST_MGR_DB_OPEN_CONNECTION_WITH_RETRY_FAILED
+=====================================================
+
+.. code-block:: text
+
+    Failed to connect to database: %1 with error: %2
+
+This is an informational message issued when the server failed to connect to
+the host database. The operation started a retry to connect procedure.
+The database access string with password redacted is logged, along with the
+error and details for the reconnect procedure.
+
+DHCPSRV_LEASE4_EXTENDED_INFO_SANITY_FAIL
+========================================
+
+.. code-block:: text
+
+    extended info for lease %1 failed checks (%2)
+
+This error message is printed when a lease extended info failed to
+pass sanity checks. The detail of the found problem was displayed and
+the extended info deleted from the lease user context.
+
+DHCPSRV_LEASE4_EXTENDED_INFO_UPGRADED
+=====================================
+
+.. code-block:: text
+
+    extended info for lease %1 was upgraded
+
+Logged at debug log level 40.
+This debug message is printed when a lease extended info was upgraded.
+
+DHCPSRV_LEASE6_EXTENDED_INFO_SANITY_FAIL
+========================================
+
+.. code-block:: text
+
+    extended info for lease %1 failed checks (%2)
+
+This error message is printed when a lease extended info failed to
+pass sanity checks. The detail of the found problem was displayed and
+the extended info deleted from the lease user context.
+
+DHCPSRV_LEASE6_EXTENDED_INFO_UPGRADED
+=====================================
+
+.. code-block:: text
+
+    extended info for lease %1 was upgraded
+
+Logged at debug log level 40.
+This debug message is printed when a lease extended info was upgraded.
+
+DHCPSRV_LEASE_MGR_CALLBACK_EXCEPTION
+====================================
+
+.. code-block:: text
+
+    exception occurred in a lease manager callback for callback type %1, subnet id %2, and lease %3: %4
+
+This warning message is printed when one of the callback functions registered
+in the lease manager causes an error. The callback functions can serve
+different purposes and they likely log the detailed error messages. This
+error message possibly indicates an unhandled error. The first argument
+indicates a callback type. The second argument prints the subnet id.
+The third argument prints the lease for which the error has occurred.
+The last argument prints the error text.
+
+DHCPSRV_LEASE_MGR_CALLBACK_UNKNOWN_EXCEPTION
+============================================
+
+.. code-block:: text
+
+    unknown exception occurred in a lease manager callback for callback type %1, subnet id %2, and lease %3
+
+This warning message is printed when one of the callback functions registered
+in the lease manager causes an unknown error. The callback functions can serve
+different purposes and they likely log the detailed error messages. This
+error message possibly indicates an unhandled error. The first argument
+indicates a callback type. The second argument prints the subnet id.
+The third argument prints the lease for which the error has occurred.
+This log message variant contains no error text because it is triggered
+by an unknown exception.
+
+DHCPSRV_LEASE_MGR_DB_OPEN_CONNECTION_WITH_RETRY_FAILED
+======================================================
+
+.. code-block:: text
+
+    Failed to connect to database: %1 with error: %2
+
+This is an informational message issued when the server failed to connect to
+the lease database. The operation started a retry to connect procedure.
+The database access string with password redacted is logged, along with the
+error and details for the reconnect procedure.
+
+DHCPSRV_LEASE_SANITY_FAIL
+=========================
+
+.. code-block:: text
+
+    The lease %1 with subnet-id %2 failed subnet-id checks (%3).
+
+This warning message is printed when the lease being loaded does not match the
+configuration. Due to lease-checks value, the lease will be loaded, but
+it will most likely be unused by Kea, as there is no subnet that matches
+the IP address associated with the lease.
+
+DHCPSRV_LEASE_SANITY_FAIL_DISCARD
+=================================
+
+.. code-block:: text
+
+    The lease %1 with subnet-id %2 failed subnet-id checks (%3) and was dropped.
+
+This warning message is printed when a lease was loaded, but Kea was told
+(by setting lease-checks parameter) to discard leases with inconsistent
+data. The lease was discarded, because either there is no subnet configured
+with matching subnet-id or the address of the lease does not belong to the
+subnet.
+
+DHCPSRV_LEASE_SANITY_FIXED
+==========================
+
+.. code-block:: text
+
+    The lease %1 with subnet-id %2 failed subnet-id checks, but was corrected to subnet-id %3.
+
+This informational message is printed when a lease was loaded, but had
+incorrect subnet-id value. The lease-checks parameter was set to a value
+that told Kea to try to correct the problem. There is a matching subnet,
+so Kea updated subnet-id and loaded the lease successfully.
+
+DHCPSRV_MEMFILE_ADD_ADDR4
+=========================
+
+.. code-block:: text
+
+    adding IPv4 lease with address %1
+
+Logged at debug log level 50.
+A debug message issued when the server is about to add an IPv4 lease
+with the specified address to the memory file backend database.
+
+DHCPSRV_MEMFILE_ADD_ADDR6
+=========================
+
+.. code-block:: text
+
+    adding IPv6 lease with address %1
+
+Logged at debug log level 50.
+A debug message issued when the server is about to add an IPv6 lease
+with the specified address to the memory file backend database.
+
+DHCPSRV_MEMFILE_BEGIN_BUILD_EXTENDED_INFO_TABLES6
+=================================================
+
+.. code-block:: text
+
+    building extended info tables with %1 sanity check level, tables %2
+
+Logged at debug log level 40.
+A debug message issued when the server is building extended info tables.
+The extended info sanity check level and the fact tables are enabled
+or disabled are displayed.
+
+DHCPSRV_MEMFILE_BEGIN_EXTRACT_EXTENDED_INFO4
+============================================
+
+.. code-block:: text
+
+    extract extended info with %1 sanity check level%2
+
+Logged at debug log level 40.
+A debug message issued when the server is extracting extended info.
+The extended info sanity check level and update in file when requested
+are displayed.
+
+DHCPSRV_MEMFILE_BUILD_EXTENDED_INFO_TABLES6
+===========================================
+
+.. code-block:: text
+
+    building extended info tables saw %1 leases, extended info sanity checks modified %2 leases and %3 leases were entered into tables
+
+Extended info tables build was finished. Some statistics are displayed, the
+updated in database is returned to the command interface.
+
+DHCPSRV_MEMFILE_BUILD_EXTENDED_INFO_TABLES6_ERROR
+=================================================
+
+.. code-block:: text
+
+    building extended info tables got an exception on the lease for %1: %2
+
+An error message issued when the server is building extended info tables and
+receives an exception processing a lease.
+
+DHCPSRV_MEMFILE_COMMIT
+======================
+
+.. code-block:: text
+
+    committing to memory file database
+
+Logged at debug log level 50.
+The code has issued a commit call. For the memory file database this is
+a no-op.
+
+DHCPSRV_MEMFILE_CONVERTING_LEASE_FILES
+======================================
+
+.. code-block:: text
+
+    running LFC now to convert lease files to the current schema: %1.%2
+
+A warning message issued when the server has detected lease files that need
+to be either upgraded or downgraded to match the server's schema, and that
+the server is automatically running the LFC process to perform the conversion.
+This should only occur the first time the server is launched following a Kea
+installation upgrade (or downgrade).
+
+DHCPSRV_MEMFILE_DB
+==================
+
+.. code-block:: text
+
+    opening memory file lease database: %1
+
+This informational message is logged when a DHCP server (either V4 or
+V6) is about to open a memory file lease database. The parameters of
+the connection including database name and username needed to access it
+(but not the password if any) are logged.
+
+DHCPSRV_MEMFILE_DELETE_ADDR
+===========================
+
+.. code-block:: text
+
+    deleting lease for address %1
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to delete a lease
+for the specified address from the memory file database for the specified
+address.
+
+DHCPSRV_MEMFILE_DELETE_EXPIRED_RECLAIMED4
+=========================================
+
+.. code-block:: text
+
+    deleting reclaimed IPv4 leases that expired more than %1 seconds ago
+
+Logged at debug log level 50.
+A debug message issued when the server is removing reclaimed DHCPv4
+leases which have expired longer than a specified period of time.
+The argument is the amount of time Kea waits after a reclaimed
+lease expires before considering its removal.
+
+DHCPSRV_MEMFILE_DELETE_EXPIRED_RECLAIMED6
+=========================================
+
+.. code-block:: text
+
+    deleting reclaimed IPv6 leases that expired more than %1 seconds ago
+
+Logged at debug log level 50.
+A debug message issued when the server is removing reclaimed DHCPv6
+leases which have expired longer than a specified period of time.
+The argument is the amount of time Kea waits after a reclaimed
+lease expires before considering its removal.
+
+DHCPSRV_MEMFILE_DELETE_EXPIRED_RECLAIMED_START
+==============================================
+
+.. code-block:: text
+
+    starting deletion of %1 expired-reclaimed leases
+
+Logged at debug log level 50.
+A debug message issued when the server has found expired-reclaimed
+leases to be removed. The number of leases to be removed is logged
+in the message.
+
+DHCPSRV_MEMFILE_EXTRACT_EXTENDED_INFO4
+======================================
+
+.. code-block:: text
+
+    extracting extended info saw %1 leases, extended info sanity checks modified %2 / updated %3 leases and %4 leases have relay or remote id
+
+Logged at debug log level 40.
+Extended info extraction was finished. Some statistics are displayed, the
+updated in database is returned to the command interface.
+
+DHCPSRV_MEMFILE_EXTRACT_EXTENDED_INFO4_ERROR
+============================================
+
+.. code-block:: text
+
+    extracting extended info got an exception on the lease for %1: %2
+
+Logged at debug log level 40.
+A debug message issued when the server is extracting extended info and
+receives an exception processing a lease.
+
+DHCPSRV_MEMFILE_GET4
+====================
+
+.. code-block:: text
+
+    obtaining all IPv4 leases
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain all IPv4
+leases from the memory file database.
+
+DHCPSRV_MEMFILE_GET6
+====================
+
+.. code-block:: text
+
+    obtaining all IPv6 leases
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain all IPv6
+leases from the memory file database.
+
+DHCPSRV_MEMFILE_GET6_DUID
+=========================
+
+.. code-block:: text
+
+    obtaining IPv6 leases for DUID %1
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain IPv6
+leases from the memory file database for the DUID.
+
+DHCPSRV_MEMFILE_GET_ADDR4
+=========================
+
+.. code-block:: text
+
+    obtaining IPv4 lease for address %1
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain an IPv4
+lease from the memory file database for the specified address.
+
+DHCPSRV_MEMFILE_GET_ADDR6
+=========================
+
+.. code-block:: text
+
+    obtaining IPv6 lease for address %1 and lease type %2
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain an IPv6
+lease from the memory file database for the specified address.
+
+DHCPSRV_MEMFILE_GET_CLIENTID
+============================
+
+.. code-block:: text
+
+    obtaining IPv4 leases for client ID %1
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain a set of
+IPv4 leases from the memory file database for a client with the specified
+client identification.
+
+DHCPSRV_MEMFILE_GET_EXPIRED4
+============================
+
+.. code-block:: text
+
+    obtaining maximum %1 of expired IPv4 leases
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain expired
+IPv4 leases to reclaim them. The maximum number of leases to be retrieved
+is logged in the message.
+
+DHCPSRV_MEMFILE_GET_EXPIRED6
+============================
+
+.. code-block:: text
+
+    obtaining maximum %1 of expired IPv6 leases
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain expired
+IPv6 leases to reclaim them. The maximum number of leases to be retrieved
+is logged in the message.
+
+DHCPSRV_MEMFILE_GET_HOSTNAME4
+=============================
+
+.. code-block:: text
+
+    obtaining IPv4 leases for hostname %1
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain a set of
+IPv4 leases from the memory file database for a client with the specified
+hostname.
+
+DHCPSRV_MEMFILE_GET_HOSTNAME6
+=============================
+
+.. code-block:: text
+
+    obtaining IPv6 leases for hostname %1
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain a set of
+IPv6 leases from the memory file database for a client with the specified
+hostname.
+
+DHCPSRV_MEMFILE_GET_HWADDR
+==========================
+
+.. code-block:: text
+
+    obtaining IPv4 leases for hardware address %1
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain a set of
+IPv4 leases from the memory file database for a client with the specified
+hardware address.
+
+DHCPSRV_MEMFILE_GET_IAID_DUID
+=============================
+
+.. code-block:: text
+
+    obtaining IPv6 leases for IAID %1 and DUID %2 and lease type %3
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain a set of IPv6
+leases from the memory file database for a client with the specified IAID
+(Identity Association ID) and DUID (DHCP Unique Identifier).
+
+DHCPSRV_MEMFILE_GET_IAID_SUBID_DUID
+===================================
+
+.. code-block:: text
+
+    obtaining IPv6 leases for IAID %1, Subnet ID %2, DUID %3 and lease type %4
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain an IPv6
+lease from the memory file database for a client with the specified IAID
+(Identity Association ID), Subnet ID and DUID (DHCP Unique Identifier).
+
+DHCPSRV_MEMFILE_GET_PAGE4
+=========================
+
+.. code-block:: text
+
+    obtaining at most %1 IPv4 leases starting from address %2
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain a page
+of leases beginning with the specified address.
+
+DHCPSRV_MEMFILE_GET_PAGE6
+=========================
+
+.. code-block:: text
+
+    obtaining at most %1 IPv6 leases starting from address %2
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain a page
+of leases beginning with the specified address.
+
+DHCPSRV_MEMFILE_GET_RELAYID4
+============================
+
+.. code-block:: text
+
+    obtaining at most %1 IPv4 leases starting from address %2 with relay id %3 and cltt between %4 and %5
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain a page of
+IPv4 leases beginning with the specified address with a relay id and client
+transaction time between start and end dates.
+
+DHCPSRV_MEMFILE_GET_RELAYID6
+============================
+
+.. code-block:: text
+
+    obtaining at most %1 IPv6 leases starting from address %2 with relay id %3
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain a page of
+IPv6 leases beginning with the specified address with a relay id.
+
+DHCPSRV_MEMFILE_GET_REMOTEID4
+=============================
+
+.. code-block:: text
+
+    obtaining at most %1 IPv4 leases starting from address %2 with remote id %3 and cltt between %4 and %5
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain a page of
+IPv4 leases beginning with the specified address with a remote id and
+client transaction time between start and end dates.
+
+DHCPSRV_MEMFILE_GET_REMOTEID6
+=============================
+
+.. code-block:: text
+
+    obtaining at most %1 IPv6 leases starting from address %2 with remote id %3
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain a page of
+IPv6 leases beginning with the specified address with a remote id.
+
+DHCPSRV_MEMFILE_GET_SUBID4
+==========================
+
+.. code-block:: text
+
+    obtaining IPv4 leases for subnet ID %1
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain all IPv4
+leases for a given subnet identifier from the memory file database.
+
+DHCPSRV_MEMFILE_GET_SUBID6
+==========================
+
+.. code-block:: text
+
+    obtaining IPv6 leases for subnet ID %1
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain all IPv6
+leases for a given subnet identifier from the memory file database.
+
+DHCPSRV_MEMFILE_GET_SUBID_CLIENTID
+==================================
+
+.. code-block:: text
+
+    obtaining IPv4 lease for subnet ID %1 and client ID %2
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain an IPv4
+lease from the memory file database for a client with the specified
+subnet ID and client ID.
+
+DHCPSRV_MEMFILE_GET_SUBID_HWADDR
+================================
+
+.. code-block:: text
+
+    obtaining IPv4 lease for subnet ID %1 and hardware address %2
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain an IPv4
+lease from the memory file database for a client with the specified
+subnet ID and hardware address.
+
+DHCPSRV_MEMFILE_GET_SUBID_PAGE6
+===============================
+
+.. code-block:: text
+
+    obtaining at most %1 IPv6 leases starting from address %2 for subnet ID %3
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain a page of
+IPv6 leases from the memory file database beginning with the specified
+address for a given subnet identifier.
+
+DHCPSRV_MEMFILE_LEASE_FILE_LOAD
+===============================
+
+.. code-block:: text
+
+    loading leases from file %1
+
+An info message issued when the server is about to start reading DHCP leases
+from the lease file. All leases currently held in the memory will be
+replaced by those read from the file.
+
+DHCPSRV_MEMFILE_LEASE_LOAD
+==========================
+
+.. code-block:: text
+
+    loading lease %1
+
+Logged at debug log level 55.
+A debug message issued when DHCP lease is being loaded from the file to memory.
+
+DHCPSRV_MEMFILE_LEASE_LOAD_ROW_ERROR
+====================================
+
+.. code-block:: text
+
+    discarding row %1, error: %2
+
+An error message issued if the DHCP lease being loaded from the given row of
+the lease file fails. The log message should contain the specific reason the
+row was discarded. The server continues loading the remaining data.
+This may indicate a corrupt lease file.
+
+DHCPSRV_MEMFILE_LFC_EXECUTE
+===========================
+
+.. code-block:: text
+
+    executing Lease File Cleanup using: %1
+
+An informational message issued when the memfile lease database backend
+starts a new process to perform Lease File Cleanup.
+
+DHCPSRV_MEMFILE_LFC_LEASE_FILE_RENAME_FAIL
+==========================================
+
+.. code-block:: text
+
+    failed to rename the current lease file %1 to %2, reason: %3
+
+An error message logged when the memfile lease database backend fails to
+move the current lease file to a new file on which the cleanup should
+be performed. This effectively means that the lease file cleanup
+does not take place.
+
+DHCPSRV_MEMFILE_LFC_LEASE_FILE_REOPEN_FAIL
+==========================================
+
+.. code-block:: text
+
+    failed to reopen lease file %1 after preparing input file for lease file cleanup, reason: %2, new leases will not persist!
+
+An error message logged when the memfile lease database backend
+failed to re-open or re-create the lease file after renaming the
+lease file for lease file cleanup. The server continues to
+operate but leases do not persist to disk.
+
+DHCPSRV_MEMFILE_LFC_SETUP
+=========================
+
+.. code-block:: text
+
+    setting up the Lease File Cleanup interval to %1 sec
+
+An informational message logged when the memfile lease database backend
+configures the LFC to be executed periodically. The argument holds the
+interval in seconds in which the LFC will be executed.
+
+DHCPSRV_MEMFILE_LFC_SPAWN_FAIL
+==============================
+
+.. code-block:: text
+
+    lease file cleanup failed to run because kea-lfc process couldn't be spawned
+
+This error message is logged when the Kea server fails to run kea-lfc,
+the program that cleans up the lease file. The server will try again the
+next time a lease file cleanup is scheduled. Although this message should
+not appear and the reason why it did investigated, the occasional failure
+to start the lease file cleanup will not impact operations. Should the
+failure persist however, the size of the lease file will increase without bound.
+
+DHCPSRV_MEMFILE_LFC_START
+=========================
+
+.. code-block:: text
+
+    starting Lease File Cleanup
+
+An informational message issued when the Memfile lease database backend
+starts the periodic Lease File Cleanup.
+
+DHCPSRV_MEMFILE_LFC_UNREGISTER_TIMER_FAILED
+===========================================
+
+.. code-block:: text
+
+    failed to unregister timer 'memfile-lfc': %1
+
+Logged at debug log level 40.
+This debug message is logged when Memfile backend fails to unregister
+timer used for lease file cleanup scheduling. There are several reasons
+why this could occur, although the most likely cause is that the system
+is being shut down and some other component has unregistered the timer.
+The message includes the reason for this error.
+
+DHCPSRV_MEMFILE_NEEDS_DOWNGRADING
+=================================
+
+.. code-block:: text
+
+    version of lease file: %1 schema is later than version %2
+
+A warning message issued when the schema of the lease file loaded by the server
+is newer than the memfile schema of the server. The server converts the lease
+data from newer schemas to its schema as it is read, therefore the lease
+information in use by the server will be correct. Note though, that any data
+stored in newer schema fields will be dropped. What remains is for the
+file itself to be rewritten using the current schema.
+
+DHCPSRV_MEMFILE_NEEDS_UPGRADING
+===============================
+
+.. code-block:: text
+
+    version of lease file: %1 schema is earlier than version %2
+
+A warning message issued when the schema of the lease file loaded by the server
+pre-dates the memfile schema of the server. Note that the server converts the
+lease data from older schemas to the current schema as it is read, therefore
+the lease information in use by the server will be correct. What remains is
+for the file itself to be rewritten using the current schema.
+
+DHCPSRV_MEMFILE_NO_STORAGE
+==========================
+
+.. code-block:: text
+
+    running in non-persistent mode, leases will be lost after restart
+
+A warning message issued when writes of leases to disk have been disabled
+in the configuration. This mode is useful for some kinds of performance
+testing but should not be enabled in normal circumstances. Non-persistence
+mode is enabled when 'persist4=no persist6=no' parameters are specified
+in the database access string.
+
+DHCPSRV_MEMFILE_READ_HWADDR_FAIL
+================================
+
+.. code-block:: text
+
+    failed to read hardware address from lease file: %1
+
+A warning message issued when read attempt of the hardware address stored in
+a disk file failed. The parameter should provide the exact nature of the failure.
+The database read will continue, but that particular lease will no longer
+have hardware address associated with it.
+
+DHCPSRV_MEMFILE_ROLLBACK
+========================
+
+.. code-block:: text
+
+    rolling back memory file database
+
+Logged at debug log level 50.
+The code has issued a rollback call. For the memory file database this is
+a no-op.
+
+DHCPSRV_MEMFILE_UPDATE_ADDR4
+============================
+
+.. code-block:: text
+
+    updating IPv4 lease for address %1
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to update IPv4
+lease from the memory file database for the specified address.
+
+DHCPSRV_MEMFILE_UPDATE_ADDR6
+============================
+
+.. code-block:: text
+
+    updating IPv6 lease for address %1
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to update IPv6
+lease from the memory file database for the specified address.
+
+DHCPSRV_MEMFILE_WIPE_LEASES4
+============================
+
+.. code-block:: text
+
+    removing all IPv4 leases from subnet %1
+
+This informational message is printed when removal of all leases from
+specified IPv4 subnet is commencing. This is a result of receiving administrative
+command.
+
+DHCPSRV_MEMFILE_WIPE_LEASES4_FINISHED
+=====================================
+
+.. code-block:: text
+
+    removing all IPv4 leases from subnet %1 finished, removed %2 leases
+
+This informational message is printed when removal of all leases from
+a specified IPv4 subnet has finished. The number of removed leases is
+printed.
+
+DHCPSRV_MEMFILE_WIPE_LEASES6
+============================
+
+.. code-block:: text
+
+    removing all IPv6 leases from subnet %1
+
+This informational message is printed when removal of all leases from
+specified IPv6 subnet is commencing. This is a result of receiving administrative
+command.
+
+DHCPSRV_MEMFILE_WIPE_LEASES6_FINISHED
+=====================================
+
+.. code-block:: text
+
+    removing all IPv6 leases from subnet %1 finished, removed %2 leases
+
+This informational message is printed when removal of all leases from
+a specified IPv6 subnet has finished. The number of removed leases is
+printed.
+
+DHCPSRV_MT_DISABLED_QUEUE_CONTROL
+=================================
+
+.. code-block:: text
+
+    disabling dhcp queue control when multi-threading is enabled.
+
+This warning message is issued when dhcp queue control is disabled automatically
+if multi-threading is enabled. These two options are incompatible and can not
+both be enabled at the same time.
+
+DHCPSRV_MULTIPLE_RAW_SOCKETS_PER_IFACE
+======================================
+
+.. code-block:: text
+
+    current configuration will result in opening multiple broadcast capable sockets on some interfaces and some DHCP messages may be duplicated
+
+A warning message issued when the current configuration indicates that multiple
+sockets, capable of receiving broadcast traffic, will be opened on some of the
+interfaces. It must be noted that this may lead to receiving and processing
+the same DHCP message multiple times, as it will be received by each socket
+individually.
+
+DHCPSRV_MYSQL_ADD_ADDR4
+=======================
+
+.. code-block:: text
+
+    adding IPv4 lease with address %1
+
+Logged at debug log level 50.
+A debug message issued when the server is about to add an IPv4 lease
+with the specified address to the MySQL backend database.
+
+DHCPSRV_MYSQL_ADD_ADDR6
+=======================
+
+.. code-block:: text
+
+    adding IPv6 lease with address %1, lease type %2
+
+Logged at debug log level 50.
+A debug message issued when the server is about to add an IPv6 lease
+with the specified address to the MySQL backend database.
+
+DHCPSRV_MYSQL_COMMIT
+====================
+
+.. code-block:: text
+
+    committing to MySQL database
+
+Logged at debug log level 50.
+The code has issued a commit call. All outstanding transactions will be
+committed to the database. Note that depending on the MySQL settings,
+the commit may not include a write to disk.
+
+DHCPSRV_MYSQL_DB
+================
+
+.. code-block:: text
+
+    opening MySQL lease database: %1
+
+This informational message is logged when a DHCP server (either V4 or
+V6) is about to open a MySQL lease database. The parameters of the
+connection including database name and username needed to access it
+(but not the password if any) are logged.
+
+DHCPSRV_MYSQL_DELETED_EXPIRED_RECLAIMED
+=======================================
+
+.. code-block:: text
+
+    deleted %1 reclaimed leases from the database
+
+Logged at debug log level 50.
+A debug message issued when the server has removed a number of reclaimed
+leases from the database. The number of removed leases is included in the
+message.
+
+DHCPSRV_MYSQL_DELETE_ADDR
+=========================
+
+.. code-block:: text
+
+    deleting lease for address %1
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to delete a lease for
+the specified address from the MySQL database for the specified address.
+
+DHCPSRV_MYSQL_DELETE_EXPIRED_RECLAIMED4
+=======================================
+
+.. code-block:: text
+
+    deleting reclaimed IPv4 leases that expired more than %1 seconds ago
+
+Logged at debug log level 50.
+A debug message issued when the server is removing reclaimed DHCPv4
+leases which have expired longer than a specified period of time.
+The argument is the amount of time Kea waits after a reclaimed
+lease expires before considering its removal.
+
+DHCPSRV_MYSQL_DELETE_EXPIRED_RECLAIMED6
+=======================================
+
+.. code-block:: text
+
+    deleting reclaimed IPv6 leases that expired more than %1 seconds ago
+
+Logged at debug log level 50.
+A debug message issued when the server is removing reclaimed DHCPv6
+leases which have expired longer than a specified period of time.
+The argument is the amount of time Kea waits after a reclaimed
+lease expires before considering its removal.
+
+DHCPSRV_MYSQL_GET4
+==================
+
+.. code-block:: text
+
+    obtaining all IPv4 leases
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain all IPv4
+leases from the MySQL database.
+
+DHCPSRV_MYSQL_GET6
+==================
+
+.. code-block:: text
+
+    obtaining all IPv6 leases
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain all IPv6
+leases from the MySQL database.
+
+DHCPSRV_MYSQL_GET_ADDR4
+=======================
+
+.. code-block:: text
+
+    obtaining IPv4 lease for address %1
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain an IPv4
+lease from the MySQL database for the specified address.
+
+DHCPSRV_MYSQL_GET_ADDR6
+=======================
+
+.. code-block:: text
+
+    obtaining IPv6 lease for address %1, lease type %2
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain an IPv6
+lease from the MySQL database for the specified address.
+
+DHCPSRV_MYSQL_GET_CLIENTID
+==========================
+
+.. code-block:: text
+
+    obtaining IPv4 leases for client ID %1
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain a set
+of IPv4 leases from the MySQL database for a client with the specified
+client identification.
+
+DHCPSRV_MYSQL_GET_DUID
+======================
+
+.. code-block:: text
+
+    obtaining IPv6 lease for duid %1,
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain an IPv6
+lease from the MySQL database for the specified duid.
+
+DHCPSRV_MYSQL_GET_EXPIRED4
+==========================
+
+.. code-block:: text
+
+    obtaining maximum %1 of expired IPv4 leases
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain expired
+IPv4 leases to reclaim them. The maximum number of leases to be retrieved
+is logged in the message.
+
+DHCPSRV_MYSQL_GET_EXPIRED6
+==========================
+
+.. code-block:: text
+
+    obtaining maximum %1 of expired IPv6 leases
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain expired
+IPv6 leases to reclaim them. The maximum number of leases to be retrieved
+is logged in the message.
+
+DHCPSRV_MYSQL_GET_HOSTNAME4
+===========================
+
+.. code-block:: text
+
+    obtaining IPv4 leases for hostname %1
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain a set
+of IPv4 leases from the MySQL database for a client with the specified
+hostname.
+
+DHCPSRV_MYSQL_GET_HOSTNAME6
+===========================
+
+.. code-block:: text
+
+    obtaining IPv6 leases for hostname %1
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain a set
+of IPv6 leases from the MySQL database for a client with the specified
+hostname.
+
+DHCPSRV_MYSQL_GET_HWADDR
+========================
+
+.. code-block:: text
+
+    obtaining IPv4 leases for hardware address %1
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain a set
+of IPv4 leases from the MySQL database for a client with the specified
+hardware address.
+
+DHCPSRV_MYSQL_GET_IAID_DUID
+===========================
+
+.. code-block:: text
+
+    obtaining IPv6 leases for IAID %1, DUID %2, lease type %3
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain a set of IPv6
+leases from the MySQL database for a client with the specified IAID (Identity
+Association ID) and DUID (DHCP Unique Identifier).
+
+DHCPSRV_MYSQL_GET_IAID_SUBID_DUID
+=================================
+
+.. code-block:: text
+
+    obtaining IPv6 leases for IAID %1, Subnet ID %2, DUID %3, lease type %4
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain an IPv6
+lease from the MySQL database for a client with the specified IAID
+(Identity Association ID), Subnet ID and DUID (DHCP Unique Identifier).
+
+DHCPSRV_MYSQL_GET_PAGE4
+=======================
+
+.. code-block:: text
+
+    obtaining at most %1 IPv4 leases starting from address %2
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain a page
+of leases beginning with the specified address.
+
+DHCPSRV_MYSQL_GET_PAGE6
+=======================
+
+.. code-block:: text
+
+    obtaining at most %1 IPv6 leases starting from address %2
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain a page
+of leases beginning with the specified address.
+
+DHCPSRV_MYSQL_GET_RELAYID4
+==========================
+
+.. code-block:: text
+
+    obtaining at most %1 IPv4 leases starting from address %2 with relay id %3 and cltt between %4 and %5
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain a page of
+IPv4 leases beginning with the specified address with a relay id and client
+transaction time between start and end dates.
+
+DHCPSRV_MYSQL_GET_RELAYID6
+==========================
+
+.. code-block:: text
+
+    obtaining at most %1 IPv6 leases starting from address %2 with relay id %3
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain a page of
+IPv6 leases beginning with the specified address with a relay id.
+
+DHCPSRV_MYSQL_GET_REMOTEID4
+===========================
+
+.. code-block:: text
+
+    obtaining at most %1 IPv4 leases starting from address %2 with remote id %3 and cltt between %4 and %5
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain a page of
+IPv4 leases beginning with the specified address with a remote id and client
+transaction time between start and end dates.
+
+DHCPSRV_MYSQL_GET_REMOTEID6
+===========================
+
+.. code-block:: text
+
+    obtaining at most %1 IPv6 leases starting from address %2 with remote id %3
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain a page of
+IPv6 leases beginning with the specified address with a remote id.
+
+DHCPSRV_MYSQL_GET_SUBID4
+========================
+
+.. code-block:: text
+
+    obtaining IPv4 leases for subnet ID %1
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain all IPv4
+leases for a given subnet identifier from the MySQL database.
+
+DHCPSRV_MYSQL_GET_SUBID6
+========================
+
+.. code-block:: text
+
+    obtaining IPv6 leases for subnet ID %1
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain all IPv6
+leases for a given subnet identifier from the MySQL database.
+
+DHCPSRV_MYSQL_GET_SUBID_CLIENTID
+================================
+
+.. code-block:: text
+
+    obtaining IPv4 lease for subnet ID %1 and client ID %2
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain an IPv4
+lease from the MySQL database for a client with the specified subnet ID
+and client ID.
+
+DHCPSRV_MYSQL_GET_SUBID_HWADDR
+==============================
+
+.. code-block:: text
+
+    obtaining IPv4 lease for subnet ID %1 and hardware address %2
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain an IPv4
+lease from the MySQL database for a client with the specified subnet ID
+and hardware address.
+
+DHCPSRV_MYSQL_GET_SUBID_PAGE6
+=============================
+
+.. code-block:: text
+
+    obtaining at most %1 IPv6 leases starting from address %2 for subnet ID %3
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain a page of
+IPv6 leases from the MySQL database beginning with the specified address
+for the specified subnet identifier.
+
+DHCPSRV_MYSQL_GET_VERSION
+=========================
+
+.. code-block:: text
+
+    obtaining schema version information
+
+Logged at debug log level 50.
+A debug message issued when the server is about to obtain schema version
+information from the MySQL database.
+
+DHCPSRV_MYSQL_HOST_DB
+=====================
+
+.. code-block:: text
+
+    opening MySQL hosts database: %1
+
+Logged at debug log level 50.
+This informational message is logged when a DHCP server (either V4 or
+V6) is about to open a MySQL hosts database. The parameters of the
+connection including database name and username needed to access it
+(but not the password if any) are logged.
+
+DHCPSRV_MYSQL_HOST_DB_GET_VERSION
+=================================
+
+.. code-block:: text
+
+    obtaining schema version information for the MySQL hosts database
+
+Logged at debug log level 50.
+A debug message issued when the server is about to obtain schema version
+information from the MySQL hosts database.
+
+DHCPSRV_MYSQL_HOST_DB_READONLY
+==============================
+
+.. code-block:: text
+
+    MySQL host database opened for read access only
+
+This informational message is issued when the user has configured the MySQL
+database in read-only mode. Kea will not be able to insert or modify
+host reservations but will be able to retrieve existing ones and
+assign them to the clients communicating with the server.
+
+DHCPSRV_MYSQL_HOST_DB_RECONNECT_ATTEMPT_FAILED
+==============================================
+
+.. code-block:: text
+
+    database reconnect failed: %1
+
+An error message issued when an attempt to reconnect has failed.
+
+DHCPSRV_MYSQL_HOST_DB_RECONNECT_ATTEMPT_SCHEDULE
+================================================
+
+.. code-block:: text
+
+    scheduling attempt %1 of %2 in %3 milliseconds
+
+An info message issued when the server is scheduling the next attempt to reconnect
+to the database. This occurs when the server has lost database connectivity and
+is attempting to reconnect automatically.
+
+DHCPSRV_MYSQL_HOST_DB_RECONNECT_FAILED
+======================================
+
+.. code-block:: text
+
+    maximum number of database reconnect attempts: %1, has been exhausted without success
+
+An error message issued when the server failed to reconnect. Loss of connectivity
+is typically a network or database server issue.
+
+DHCPSRV_MYSQL_LEASE_DB_RECONNECT_ATTEMPT_FAILED
+===============================================
+
+.. code-block:: text
+
+    database reconnect failed: %1
+
+An error message issued when an attempt to reconnect has failed.
+
+DHCPSRV_MYSQL_LEASE_DB_RECONNECT_ATTEMPT_SCHEDULE
+=================================================
+
+.. code-block:: text
+
+    scheduling attempt %1 of %2 in %3 milliseconds
+
+An info message issued when the server is scheduling the next attempt to reconnect
+to the database. This occurs when the server has lost database connectivity and
+is attempting to reconnect automatically.
+
+DHCPSRV_MYSQL_LEASE_DB_RECONNECT_FAILED
+=======================================
+
+.. code-block:: text
+
+    maximum number of database reconnect attempts: %1, has been exhausted without success
+
+An error message issued when the server failed to reconnect. Loss of connectivity
+is typically a network or database server issue.
+
+DHCPSRV_MYSQL_NEGATIVE_LEASES_STAT
+==================================
+
+.. code-block:: text
+
+    recount of leases returned a negative value
+
+This warning message is issued when the recount of leases using counters
+in the MySQL database returned a negative value. This shows a problem
+which can be fixed only by an offline direct recount on the database.
+This message is issued only once.
+
+DHCPSRV_MYSQL_NO_TLS
+====================
+
+.. code-block:: text
+
+    TLS was required but is not used
+
+This error message is issued when TLS for the connection was required but
+TLS is not used.
+
+DHCPSRV_MYSQL_ROLLBACK
+======================
+
+.. code-block:: text
+
+    rolling back MySQL database
+
+Logged at debug log level 50.
+The code has issued a rollback call. All outstanding transaction will
+be rolled back and not committed to the database.
+
+DHCPSRV_MYSQL_TLS_CIPHER
+========================
+
+.. code-block:: text
+
+    TLS cipher: %1
+
+Logged at debug log level 40.
+A debug message issued when a new MySQL connected is created with TLS.
+The TLS cipher name is logged.
+
+DHCPSRV_MYSQL_UPDATE_ADDR4
+==========================
+
+.. code-block:: text
+
+    updating IPv4 lease for address %1
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to update IPv4
+lease from the MySQL database for the specified address.
+
+DHCPSRV_MYSQL_UPDATE_ADDR6
+==========================
+
+.. code-block:: text
+
+    updating IPv6 lease for address %1, lease type %2
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to update IPv6
+lease from the MySQL database for the specified address.
+
+DHCPSRV_MYSQL_UPGRADE_EXTENDED_INFO4
+====================================
+
+.. code-block:: text
+
+    upgrading IPv4 leases done in %1 pages with %2 updated leases
+
+Logged at debug log level 40.
+The server upgraded extended info. The number of pages and the final count of
+updated leases are displayed.
+
+DHCPSRV_MYSQL_UPGRADE_EXTENDED_INFO4_ERROR
+==========================================
+
+.. code-block:: text
+
+    upgrading extending info for IPv4 lease at %1 failed with %2
+
+Logged at debug log level 40.
+A debug message issued when the server failed to upgrade an extended info.
+The address of the lease and the error message are displayed.
+
+DHCPSRV_MYSQL_UPGRADE_EXTENDED_INFO4_PAGE
+=========================================
+
+.. code-block:: text
+
+    upgrading IPv4 lease extended info at page %1 starting at %2 (updated %3)
+
+Logged at debug log level 50.
+A debug message issued when the server upgrades IPv4 lease extended info.
+The page number and started address, and the count of already updated leases
+are displayed.
+
+DHCPSRV_MYSQL_UPGRADE_EXTENDED_INFO6
+====================================
+
+.. code-block:: text
+
+    upgrading IPv6 leases done in %1 pages with %2 updated leases
+
+Logged at debug log level 40.
+The server upgraded extended info. The number of pages and the final count of
+updated leases are displayed.
+
+DHCPSRV_MYSQL_UPGRADE_EXTENDED_INFO6_ERROR
+==========================================
+
+.. code-block:: text
+
+    upgrading extending info for IPv6 lease at %1 failed with %2
+
+Logged at debug log level 40.
+A debug message issued when the server failed to upgrade the extended info
+for a lease. The address of the lease and the error message are displayed.
+
+DHCPSRV_MYSQL_UPGRADE_EXTENDED_INFO6_PAGE
+=========================================
+
+.. code-block:: text
+
+    upgrading IPv6 lease extended info at page %1 starting at %2 (updated %3)
+
+Logged at debug log level 50.
+A debug message issued when the server upgrades IPv6 lease extended info.
+The page number and started address, and the count of already updated leases
+are displayed.
+
+DHCPSRV_NOTYPE_DB
+=================
+
+.. code-block:: text
+
+    no 'type' keyword to determine database backend: %1
+
+This is an error message, logged when an attempt has been made to access
+a database backend, but where no 'type' keyword has been included in
+the access string. The access string (less any passwords) is included
+in the message.
+
+DHCPSRV_NO_SOCKETS_OPEN
+=======================
+
+.. code-block:: text
+
+    no interface configured to listen to DHCP traffic
+
+This warning message is issued when the current server configuration specifies
+no interfaces that the server should listen on, or when the specified interfaces are not
+configured to receive the traffic.
+
+DHCPSRV_OPEN_SOCKET_FAIL
+========================
+
+.. code-block:: text
+
+    failed to open socket: %1
+
+A warning message issued when IfaceMgr fails to open and bind a socket.
+The reason for the failure is appended as an argument of the log message.
+
+DHCPSRV_PGSQL_ADD_ADDR4
+=======================
+
+.. code-block:: text
+
+    adding IPv4 lease with address %1
+
+Logged at debug log level 50.
+A debug message issued when the server is about to add an IPv4 lease
+with the specified address to the PostgreSQL backend database.
+
+DHCPSRV_PGSQL_ADD_ADDR6
+=======================
+
+.. code-block:: text
+
+    adding IPv6 lease with address %1, lease type %2
+
+Logged at debug log level 50.
+A debug message issued when the server is about to add an IPv6 lease
+with the specified address to the PostgreSQL backend database.
+
+DHCPSRV_PGSQL_COMMIT
+====================
+
+.. code-block:: text
+
+    committing to PostgreSQL database
+
+Logged at debug log level 50.
+The code has issued a commit call. All outstanding transactions will be
+committed to the database. Note that depending on the PostgreSQL settings,
+the commit may not include a write to disk.
+
+DHCPSRV_PGSQL_DB
+================
+
+.. code-block:: text
+
+    opening PostgreSQL lease database: %1
+
+This informational message is logged when a DHCP server (either V4 or
+V6) is about to open a PostgreSQL lease database. The parameters of the
+connection including database name and username needed to access it
+(but not the password if any) are logged.
+
+DHCPSRV_PGSQL_DELETE_ADDR
+=========================
+
+.. code-block:: text
+
+    deleting lease for address %1
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to delete a lease for
+the specified address from the PostgreSQL database for the specified address.
+
+DHCPSRV_PGSQL_DELETE_EXPIRED_RECLAIMED4
+=======================================
+
+.. code-block:: text
+
+    deleting reclaimed IPv4 leases that expired more than %1 seconds ago
+
+Logged at debug log level 50.
+A debug message issued when the server is removing reclaimed DHCPv4
+leases which have expired longer than a specified period of time.
+The argument is the amount of time Kea waits after a reclaimed
+lease expires before considering its removal.
+
+DHCPSRV_PGSQL_DELETE_EXPIRED_RECLAIMED6
+=======================================
+
+.. code-block:: text
+
+    deleting reclaimed IPv6 leases that expired more than %1 seconds ago
+
+Logged at debug log level 50.
+A debug message issued when the server is removing reclaimed DHCPv6
+leases which have expired longer than a specified period of time.
+The argument is the amount of time Kea waits after a reclaimed
+lease expires before considering its removal.
+
+DHCPSRV_PGSQL_GET4
+==================
+
+.. code-block:: text
+
+    obtaining all IPv4 leases
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain all IPv4
+leases from the PostgreSQL database.
+
+DHCPSRV_PGSQL_GET6
+==================
+
+.. code-block:: text
+
+    obtaining all IPv6 leases
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain all IPv6
+leases from the PostgreSQL database.
+
+DHCPSRV_PGSQL_GET_ADDR4
+=======================
+
+.. code-block:: text
+
+    obtaining IPv4 lease for address %1
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain an IPv4
+lease from the PostgreSQL database for the specified address.
+
+DHCPSRV_PGSQL_GET_ADDR6
+=======================
+
+.. code-block:: text
+
+    obtaining IPv6 lease for address %1 (lease type %2)
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain an IPv6
+lease from the PostgreSQL database for the specified address.
+
+DHCPSRV_PGSQL_GET_CLIENTID
+==========================
+
+.. code-block:: text
+
+    obtaining IPv4 leases for client ID %1
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain a set
+of IPv4 leases from the PostgreSQL database for a client with the specified
+client identification.
+
+DHCPSRV_PGSQL_GET_DUID
+======================
+
+.. code-block:: text
+
+    obtaining IPv6 leases for DUID %1,
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain a set of IPv6
+leases from the PostgreSQL database for a client with the specified DUID (DHCP Unique Identifier).
+
+DHCPSRV_PGSQL_GET_EXPIRED4
+==========================
+
+.. code-block:: text
+
+    obtaining maximum %1 of expired IPv4 leases
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain expired
+IPv4 leases to reclaim them. The maximum number of leases to be retrieved
+is logged in the message.
+
+DHCPSRV_PGSQL_GET_EXPIRED6
+==========================
+
+.. code-block:: text
+
+    obtaining maximum %1 of expired IPv6 leases
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain expired
+IPv6 leases to reclaim them. The maximum number of leases to be retrieved
+is logged in the message.
+
+DHCPSRV_PGSQL_GET_HOSTNAME4
+===========================
+
+.. code-block:: text
+
+    obtaining IPv4 leases for hostname %1
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain a set
+of IPv4 leases from the PostgreSQL database for a client with the specified
+hostname.
+
+DHCPSRV_PGSQL_GET_HOSTNAME6
+===========================
+
+.. code-block:: text
+
+    obtaining IPv6 leases for hostname %1
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain a set
+of IPv6 leases from the PostgreSQL database for a client with the specified
+hostname.
+
+DHCPSRV_PGSQL_GET_HWADDR
+========================
+
+.. code-block:: text
+
+    obtaining IPv4 leases for hardware address %1
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain a set
+of IPv4 leases from the PostgreSQL database for a client with the specified
+hardware address.
+
+DHCPSRV_PGSQL_GET_IAID_DUID
+===========================
+
+.. code-block:: text
+
+    obtaining IPv4 leases for IAID %1 and DUID %2, lease type %3
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain a set of IPv6
+leases from the PostgreSQL database for a client with the specified IAID
+(Identity Association ID) and DUID (DHCP Unique Identifier).
+
+DHCPSRV_PGSQL_GET_IAID_SUBID_DUID
+=================================
+
+.. code-block:: text
+
+    obtaining IPv4 leases for IAID %1, Subnet ID %2, DUID %3, and lease type %4
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain an IPv6
+lease from the PostgreSQL database for a client with the specified IAID
+(Identity Association ID), Subnet ID and DUID (DHCP Unique Identifier).
+
+DHCPSRV_PGSQL_GET_PAGE4
+=======================
+
+.. code-block:: text
+
+    obtaining at most %1 IPv4 leases starting from address %2
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain a page
+of leases beginning with the specified address.
+
+DHCPSRV_PGSQL_GET_PAGE6
+=======================
+
+.. code-block:: text
+
+    obtaining at most %1 IPv6 leases starting from address %2
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain a page
+of leases beginning with the specified address.
+
+DHCPSRV_PGSQL_GET_RELAYID4
+==========================
+
+.. code-block:: text
+
+    obtaining at most %1 IPv4 leases starting from address %2 with relay id %3 and cltt between %4 and %5
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain a page of
+IPv4 leases beginning with the specified address with a relay id and client
+transaction time between start and end dates.
+
+DHCPSRV_PGSQL_GET_RELAYID6
+==========================
+
+.. code-block:: text
+
+    obtaining at most %1 IPv6 leases starting from address %2 with relay id %3
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain a page of
+IPv6 leases beginning with the specified address with a relay id.
+
+DHCPSRV_PGSQL_GET_REMOTEID4
+===========================
+
+.. code-block:: text
+
+    obtaining at most %1 IPv4 leases starting from address %2 with remote id %3 and cltt between %4 and %5
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain a page of
+IPv4 leases beginning with the specified address with a remote id and client
+transaction time between start and end dates.
+
+DHCPSRV_PGSQL_GET_REMOTEID6
+===========================
+
+.. code-block:: text
+
+    obtaining at most %1 IPv6 leases starting from address %2 with remote id %3
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain a page of
+IPv6 leases beginning with the specified address with a remote id.
+
+DHCPSRV_PGSQL_GET_SUBID4
+========================
+
+.. code-block:: text
+
+    obtaining IPv4 leases for subnet ID %1
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain all IPv4
+leases for a given subnet identifier from the PostgreSQL database.
+
+DHCPSRV_PGSQL_GET_SUBID6
+========================
+
+.. code-block:: text
+
+    obtaining IPv6 leases for subnet ID %1
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain all IPv6
+leases for a given subnet identifier from the PostgreSQL database.
+
+DHCPSRV_PGSQL_GET_SUBID_CLIENTID
+================================
+
+.. code-block:: text
+
+    obtaining IPv4 lease for subnet ID %1 and client ID %2
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain an IPv4
+lease from the PostgreSQL database for a client with the specified subnet ID
+and client ID.
+
+DHCPSRV_PGSQL_GET_SUBID_HWADDR
+==============================
+
+.. code-block:: text
+
+    obtaining IPv4 lease for subnet ID %1 and hardware address %2
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain an IPv4
+lease from the PostgreSQL database for a client with the specified subnet ID
+and hardware address.
+
+DHCPSRV_PGSQL_GET_SUBID_PAGE6
+=============================
+
+.. code-block:: text
+
+    obtaining at most %1 IPv6 leases starting from address %2 for subnet ID %3
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain a page of
+IPv6 leases from the PostgreSQL database beginning with the specified address
+for the specified subnet identifier.
+
+DHCPSRV_PGSQL_GET_VERSION
+=========================
+
+.. code-block:: text
+
+    obtaining schema version information
+
+Logged at debug log level 50.
+A debug message issued when the server is about to obtain schema version
+information from the PostgreSQL database.
+
+DHCPSRV_PGSQL_HOST_DB
+=====================
+
+.. code-block:: text
+
+    opening PostgreSQL hosts database: %1
+
+Logged at debug log level 50.
+This informational message is logged when a DHCP server (either V4 or
+V6) is about to open a PostgreSQL hosts database. The parameters of the
+connection including database name and username needed to access it
+(but not the password if any) are logged.
+
+DHCPSRV_PGSQL_HOST_DB_GET_VERSION
+=================================
+
+.. code-block:: text
+
+    obtaining schema version information for the PostgreSQL hosts database
+
+Logged at debug log level 50.
+A debug message issued when the server is about to obtain schema version
+information from the PostgreSQL hosts database.
+
+DHCPSRV_PGSQL_HOST_DB_READONLY
+==============================
+
+.. code-block:: text
+
+    PostgreSQL host database opened for read access only
+
+This informational message is issued when the user has configured the PostgreSQL
+database in read-only mode. Kea will not be able to insert or modify
+host reservations but will be able to retrieve existing ones and
+assign them to the clients communicating with the server.
+
+DHCPSRV_PGSQL_HOST_DB_RECONNECT_ATTEMPT_FAILED
+==============================================
+
+.. code-block:: text
+
+    database reconnect failed: %1
+
+An error message issued when an attempt to reconnect has failed.
+
+DHCPSRV_PGSQL_HOST_DB_RECONNECT_ATTEMPT_SCHEDULE
+================================================
+
+.. code-block:: text
+
+    scheduling attempt %1 of %2 in %3 milliseconds
+
+An info message issued when the server is scheduling the next attempt to reconnect
+to the database. This occurs when the server has lost database connectivity and
+is attempting to reconnect automatically.
+
+DHCPSRV_PGSQL_HOST_DB_RECONNECT_FAILED
+======================================
+
+.. code-block:: text
+
+    maximum number of database reconnect attempts: %1, has been exhausted without success
+
+An error message issued when the server failed to reconnect. Loss of connectivity
+is typically a network or database server issue.
+
+DHCPSRV_PGSQL_LEASE_DB_RECONNECT_ATTEMPT_FAILED
+===============================================
+
+.. code-block:: text
+
+    database reconnect failed: %1
+
+An error message issued when an attempt to reconnect has failed.
+
+DHCPSRV_PGSQL_LEASE_DB_RECONNECT_ATTEMPT_SCHEDULE
+=================================================
+
+.. code-block:: text
+
+    scheduling attempt %1 of %2 in %3 milliseconds
+
+An info message issued when the server is scheduling the next attempt to reconnect
+to the database. This occurs when the server has lost database connectivity and
+is attempting to reconnect automatically.
+
+DHCPSRV_PGSQL_LEASE_DB_RECONNECT_FAILED
+=======================================
+
+.. code-block:: text
+
+    maximum number of database reconnect attempts: %1, has been exhausted without success
+
+An error message issued when the server failed to reconnect. Loss of connectivity
+is typically a network or database server issue.
+
+DHCPSRV_PGSQL_NEGATIVE_LEASES_STAT
+==================================
+
+.. code-block:: text
+
+    recount of leases returned a negative value
+
+This warning message is issued when the recount of leases using counters
+in the PostgreSQL database returned a negative value. This shows a problem
+which can be fixed only by an offline direct recount on the database.
+This message is issued only once.
+
+DHCPSRV_PGSQL_NO_TLS_SUPPORT
+============================
+
+.. code-block:: text
+
+    Attempt to configure TLS (unsupported for PostgreSQL): %1
+
+This error message is printed when TLS support was required in the Kea
+configuration: Kea was built with this feature disabled for PostgreSQL.
+The parameters of the connection are logged.
+
+DHCPSRV_PGSQL_ROLLBACK
+======================
+
+.. code-block:: text
+
+    rolling back PostgreSQL database
+
+Logged at debug log level 50.
+The code has issued a rollback call. All outstanding transaction will
+be rolled back and not committed to the database.
+
+DHCPSRV_PGSQL_TLS_SUPPORT
+=========================
+
+.. code-block:: text
+
+    Attempt to configure TLS: %1
+
+This informational message is printed when TLS support was required in
+the Kea configuration: The TLS support in PostgreSQL will be initialized but
+its configuration is fully managed outside the C API.
+The parameters of the connection are logged.
+
+DHCPSRV_PGSQL_UPDATE_ADDR4
+==========================
+
+.. code-block:: text
+
+    updating IPv4 lease for address %1
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to update IPv4
+lease from the PostgreSQL database for the specified address.
+
+DHCPSRV_PGSQL_UPDATE_ADDR6
+==========================
+
+.. code-block:: text
+
+    updating IPv6 lease for address %1, lease type %2
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to update IPv6
+lease from the PostgreSQL database for the specified address.
+
+DHCPSRV_PGSQL_UPGRADE_EXTENDED_INFO4
+====================================
+
+.. code-block:: text
+
+    upgrading IPv4 leases done in %1 pages with %2 updated leases
+
+Logged at debug log level 40.
+The server upgraded extended info. The number of pages and the final count of
+updated leases are displayed.
+
+DHCPSRV_PGSQL_UPGRADE_EXTENDED_INFO4_ERROR
+==========================================
+
+.. code-block:: text
+
+    upgrading extending info for IPv4 lease at %1 failed with %2
+
+Logged at debug log level 40.
+A debug message issued when the server failed to upgrade an extended info.
+The address of the lease and the error message are displayed.
+
+DHCPSRV_PGSQL_UPGRADE_EXTENDED_INFO4_PAGE
+=========================================
+
+.. code-block:: text
+
+    upgrading IPv4 lease extended info at page %1 starting at %2 (updated %3)
+
+Logged at debug log level 50.
+A debug message issued when the server upgrades IPv4 lease extended info.
+The page number and started address, and the count of already updated leases
+are displayed.
+
+DHCPSRV_PGSQL_UPGRADE_EXTENDED_INFO6
+====================================
+
+.. code-block:: text
+
+    upgrading IPv6 leases done in %1 pages with %2 updated leases
+
+Logged at debug log level 40.
+The server upgraded extended info. The number of pages and the final count of
+updated leases are displayed.
+
+DHCPSRV_PGSQL_UPGRADE_EXTENDED_INFO6_ERROR
+==========================================
+
+.. code-block:: text
+
+    upgrading extending info for IPv6 lease at %1 failed with %2
+
+Logged at debug log level 40.
+A debug message issued when the server failed to upgrade the extended info
+for a lease. The address of the lease and the error message are displayed.
+
+DHCPSRV_PGSQL_UPGRADE_EXTENDED_INFO6_PAGE
+=========================================
+
+.. code-block:: text
+
+    upgrading IPv6 lease extended info at page %1 starting at %2 (updated %3)
+
+Logged at debug log level 50.
+A debug message issued when the server upgrades IPv6 lease extended info.
+The page number and started address, and the count of already updated leases
+are displayed.
+
+DHCPSRV_QUEUE_NCR
+=================
+
+.. code-block:: text
+
+    %1: Name change request to %2 DNS entry queued: %3
+
+Logged at debug log level 50.
+A debug message which is logged when the NameChangeRequest to add or remove
+a DNS entries for a particular lease has been queued. The first argument
+includes the client identification information. The second argument
+indicates whether the DNS entry is to be added or removed. The third
+argument carries the details of the NameChangeRequest.
+
+DHCPSRV_QUEUE_NCR_FAILED
+========================
+
+.. code-block:: text
+
+    %1: queuing %2 name change request failed for lease %3: %4
+
+This error message is logged when sending a NameChangeRequest
+to DHCP DDNS failed. The first argument includes the client identification
+information. The second argument indicates whether the DNS entry is to be
+added or removed. The third argument specifies the leased address. The
+last argument provides the reason for failure.
+
+DHCPSRV_QUEUE_NCR_SKIP
+======================
+
+.. code-block:: text
+
+    %1: skip queuing name change request for lease: %2
+
+Logged at debug log level 50.
+This debug message is issued when the server decides to not queue the name
+change request because the lease doesn't include the FQDN, the forward and
+reverse update is disabled for this lease or the DNS updates are disabled
+in the configuration. The first argument includes the client identification
+information. The second argument includes the leased address.
+
+DHCPSRV_SUBNET4O6_SELECT_FAILED
+===============================
+
+.. code-block:: text
+
+    Failed to select any subnet for the DHCPv4o6 packet
+
+Logged at debug log level 40.
+A debug message issued when the server was unable to select any subnet for the
+DHCPv4o6 packet.
+
+DHCPSRV_SUBNET4_SELECT_BY_ADDRESS_NO_MATCH
+==========================================
+
+.. code-block:: text
+
+    No subnet matches address: %1
+
+Logged at debug log level 40.
+A debug message issued when the server was unable to select a subnet using
+the specified address.
+
+DHCPSRV_SUBNET4_SELECT_BY_INTERFACE_NO_MATCH
+============================================
+
+.. code-block:: text
+
+    No subnet matches interface: %1
+
+Logged at debug log level 40.
+A debug message issued when the server was unable to select a subnet using
+the specified interface name.
+
+DHCPSRV_SUBNET4_SELECT_BY_RELAY_ADDRESS_NO_MATCH
+================================================
+
+.. code-block:: text
+
+    No subnet matches relay address: %1
+
+Logged at debug log level 40.
+A debug message issued when the server was unable to select a subnet using
+the specified relay address.
+
+DHCPSRV_SUBNET4_SELECT_NO_RAI_OPTIONS
+=====================================
+
+.. code-block:: text
+
+    No RAI options found to use for subnet selection.
+
+Logged at debug log level 40.
+A debug message issued by the server when the client query does not include RAI
+options suitable for use with subnet selection.
+
+DHCPSRV_SUBNET4_SELECT_NO_RELAY_ADDRESS
+=======================================
+
+.. code-block:: text
+
+    Relay address (giaddr) in client packet is empty.
+
+Logged at debug log level 40.
+A debug message issued when no relay address was specified to use for subnet
+selection.
+
+DHCPSRV_SUBNET4_SELECT_NO_USABLE_ADDRESS
+========================================
+
+.. code-block:: text
+
+    No subnet selected because no suitable address to use for subnet selection was found.
+
+Logged at debug log level 40.
+A debug message issued when the server was find a suitable address to use for
+subnet selection.
+
+DHCPSRV_SUBNET6_SELECT_BY_ADDRESS_NO_MATCH
+==========================================
+
+.. code-block:: text
+
+    No subnet matches address: %1
+
+Logged at debug log level 40.
+A debug message issued when the server was unable to select a subnet using
+the specified address.
+
+DHCPSRV_SUBNET6_SELECT_BY_INTERFACE_ID_NO_MATCH
+===============================================
+
+.. code-block:: text
+
+    No subnet matches interface id: %1
+
+Logged at debug log level 40.
+A debug message issued when the server was unable to select a subnet using
+the specified interface id.
+
+DHCPSRV_SUBNET6_SELECT_BY_INTERFACE_NO_MATCH
+============================================
+
+.. code-block:: text
+
+    No subnet matches interface: %1
+
+Logged at debug log level 40.
+A debug message issued when the server was unable to select a subnet using
+the specified interface name.
+
+DHCPSRV_TEMPLATE_EVAL_ERROR
+===========================
+
+.. code-block:: text
+
+    %1: Expression '%2' evaluated to %3
+
+This error message indicates that there a problem was encountered while
+evaluating an expression of a template client class.
+A description of the problem is printed.
+
+DHCPSRV_TEMPLATE_EVAL_RESULT
+============================
+
+.. code-block:: text
+
+    %1: Expression '%2' evaluated to %3
+
+Logged at debug log level 50.
+This debug message indicates that the expression of a template client class has
+been successfully evaluated. The client class name and the result value of the
+evaluation are printed.
+
+DHCPSRV_TIMERMGR_CALLBACK_FAILED
+================================
+
+.. code-block:: text
+
+    running handler for timer %1 caused exception: %2
+
+This error message is emitted when the timer elapsed and the
+operation associated with this timer has thrown an exception.
+The timer name and the reason for exception is logged.
+
+DHCPSRV_TIMERMGR_REGISTER_TIMER
+===============================
+
+.. code-block:: text
+
+    registering timer: %1, using interval: %2 ms
+
+Logged at debug log level 40.
+A debug message issued when the new interval timer is registered in
+the Timer Manager. This timer will have a callback function
+associated with it, and this function will be executed according
+to the interval specified. The unique name of the timer and the
+interval at which the callback function will be executed is
+included in the message.
+
+DHCPSRV_TIMERMGR_RUN_TIMER_OPERATION
+====================================
+
+.. code-block:: text
+
+    running operation for timer: %1
+
+Logged at debug log level 50.
+A debug message issued when the Timer Manager is about to
+run a periodic operation associated with the given timer.
+An example of such operation is a periodic cleanup of
+expired leases. The name of the timer is included in the
+message.
+
+DHCPSRV_TIMERMGR_START_TIMER
+============================
+
+.. code-block:: text
+
+    starting timer: %1
+
+Logged at debug log level 40.
+A debug message issued when the registered interval timer is
+being started. If this operation is successful the timer will
+periodically execute the operation associated with it. The
+name of the started timer is included in the message.
+
+DHCPSRV_TIMERMGR_STOP_TIMER
+===========================
+
+.. code-block:: text
+
+    stopping timer: %1
+
+Logged at debug log level 40.
+A debug message issued when the registered interval timer is
+being stopped. The timer remains registered and can be restarted
+if necessary. The name of the timer is included in the message.
+
+DHCPSRV_TIMERMGR_UNREGISTER_ALL_TIMERS
+======================================
+
+.. code-block:: text
+
+    unregistering all timers
+
+Logged at debug log level 40.
+A debug message issued when all registered interval timers are
+being unregistered from the Timer Manager.
+
+DHCPSRV_TIMERMGR_UNREGISTER_TIMER
+=================================
+
+.. code-block:: text
+
+    unregistering timer: %1
+
+Logged at debug log level 40.
+A debug message issued when one of the registered interval timers
+is unregistered from the Timer Manager. The name of the timer is
+included in the message.
+
+****
+DHCP
+****
+
+DHCP_DDNS_ADD_FAILED
+====================
+
+.. code-block:: text
+
+    DHCP_DDNS Request ID %1: Transaction outcome %2
+
+This is an error message issued after DHCP_DDNS attempts to submit DNS mapping
+entry additions have failed.  The precise reason for the failure should be
+documented in preceding log entries.
+
+DHCP_DDNS_ADD_SUCCEEDED
+=======================
+
+.. code-block:: text
+
+    DHCP_DDNS Request ID %1: successfully added the DNS mapping addition for this request: %2
+
+This is an informational message issued after DHCP_DDNS has submitted DNS
+mapping additions which were received and accepted by an appropriate DNS server.
+
+DHCP_DDNS_AT_MAX_TRANSACTIONS
+=============================
+
+.. code-block:: text
+
+    application has %1 queued requests but has reached maximum number of %2 concurrent transactions
+
+Logged at debug log level 55.
+This is a debug message that indicates that the application has DHCP_DDNS
+requests in the queue but is working as many concurrent requests as allowed.
+
+DHCP_DDNS_CLEARED_FOR_SHUTDOWN
+==============================
+
+.. code-block:: text
+
+    application has met shutdown criteria for shutdown type: %1
+
+Logged at debug log level 0.
+This is a debug message issued when the application has been instructed
+to shutdown and has met the required criteria to exit.
+
+DHCP_DDNS_CONFIGURE
+===================
+
+.. code-block:: text
+
+    configuration %1 received: %2
+
+Logged at debug log level 40.
+This is a debug message issued when the DHCP-DDNS application configure method
+has been invoked.
+
+DHCP_DDNS_CONFIGURED_CALLOUT_DROP
+=================================
+
+.. code-block:: text
+
+    configuration was rejected because a callout set the next step to 'drop': %1
+
+This error message indicates that the DHCP-DDNS had failed configuration
+attempt because the next step of the configured callout was set to 'drop'
+by a hook library. The error message provided by the hook library is displayed.
+
+DHCP_DDNS_CONFIG_CHECK_FAIL
+===========================
+
+.. code-block:: text
+
+    DHCP-DDNS server configuration check failed: %1
+
+This error message indicates that the DHCP-DDNS had failed configuration
+check. Details are provided. Additional details may be available
+in earlier log entries, possibly on lower levels.
+
+DHCP_DDNS_CONFIG_FAIL
+=====================
+
+.. code-block:: text
+
+    DHCP-DDNS server configuration failed: %1
+
+This error message indicates that the DHCP-DDNS had failed configuration
+attempt. Details are provided. Additional details may be available
+in earlier log entries, possibly on lower levels.
+
+DHCP_DDNS_CONFIG_SYNTAX_WARNING
+===============================
+
+.. code-block:: text
+
+    DHCP-DDNS server configuration syntax warning: %1
+
+This warning message indicates that the DHCP-DDNS configuration had a minor
+syntax error. The error was displayed and the configuration parsing resumed.
+
+DHCP_DDNS_FAILED
+================
+
+.. code-block:: text
+
+    application experienced a fatal error: %1
+
+This is a debug message issued when the DHCP-DDNS application encounters an
+unrecoverable error from within the event loop.
+
+DHCP_DDNS_FORWARD_ADD_BAD_DNSCLIENT_STATUS
+==========================================
+
+.. code-block:: text
+
+    DHCP_DDNS Request ID %1: received an unknown DNSClient status: %2, while adding a forward address mapping for FQDN %3 to DNS server %4
+
+This is an error message issued when DNSClient returns an unrecognized status
+while DHCP_DDNS was adding a forward address mapping.  The request will be
+aborted.  This is most likely a programmatic issue and should be reported.
+
+DHCP_DDNS_FORWARD_ADD_BUILD_FAILURE
+===================================
+
+.. code-block:: text
+
+    DNS Request ID %1:  update message to add a forward DNS entry could not be constructed for this request: %2, reason: %3
+
+This is an error message issued when an error occurs attempting to construct
+the server bound packet requesting a forward address addition.  This is due
+to invalid data contained in the NameChangeRequest. The request will be aborted.
+This is most likely a configuration issue.
+
+DHCP_DDNS_FORWARD_ADD_IO_ERROR
+==============================
+
+.. code-block:: text
+
+    DHCP_DDNS Request ID %1: encountered an IO error sending a forward mapping add for FQDN %2 to DNS server %3
+
+This is an error message issued when a communication error occurs while
+DHCP_DDNS is carrying out a forward address add.  The application will
+retry against the same server or others as appropriate.
+
+DHCP_DDNS_FORWARD_ADD_REJECTED
+==============================
+
+.. code-block:: text
+
+    DNS Request ID %1: Server, %2, rejected a DNS update request to add the address mapping for FQDN, %3, with an RCODE: %4
+
+This is an error message issued when an update was rejected by the DNS server
+it was sent to for the reason given by the RCODE. The rcode values are defined
+in RFC 2136.
+
+DHCP_DDNS_FORWARD_ADD_RESP_CORRUPT
+==================================
+
+.. code-block:: text
+
+    DHCP_DDNS Request ID %1: received a corrupt response from the DNS server, %2, while adding forward address mapping for FQDN, %3
+
+This is an error message issued when the response received by DHCP_DDNS, to a
+update request to add a forward address mapping,  is mangled or malformed.
+The application will retry against the same server or others as appropriate.
+
+DHCP_DDNS_FORWARD_ADD_TIMEOUT
+=============================
+
+.. code-block:: text
+
+    DHCP_DDNS Request ID %1: timed out waiting for a response to forward mapping add for FQDN %2 to DNS server %3
+
+This is an error message issued when no response is received from the DNS
+server before exceeding dns-server-timeout while DHCP_DDNS is carrying out
+a forward address add.  The application will retry against the same
+server or others as appropriate.
+
+DHCP_DDNS_FORWARD_REMOVE_ADDRS_BAD_DNSCLIENT_STATUS
+===================================================
+
+.. code-block:: text
+
+    DHCP_DDNS Request ID %1: received an unknown DNSClient status: %2, while removing a forward address mapping for FQDN %3 to DNS server %4
+
+This is an error message issued when DNSClient returns an unrecognized status
+while DHCP_DDNS was removing a forward address mapping.  The request will be
+aborted.  This is most likely a programmatic issue and should be reported.
+
+DHCP_DDNS_FORWARD_REMOVE_ADDRS_BUILD_FAILURE
+============================================
+
+.. code-block:: text
+
+    DNS Request ID %1: update message to remove a forward DNS Address entry could not be constructed for this request: %2, reason: %3
+
+This is an error message issued when an error occurs attempting to construct
+the server bound packet requesting a forward address (A or AAAA) removal.  This
+is due to invalid data contained in the NameChangeRequest. The request will be
+aborted.  This is most likely a configuration issue.
+/*sar*/
+
+DHCP_DDNS_FORWARD_REMOVE_ADDRS_IO_ERROR
+=======================================
+
+.. code-block:: text
+
+    DHCP_DDNS Request ID %1: encountered an IO error sending a forward mapping address removal for FQDN %2 to DNS server %3
+
+This is an error message issued when a communication error occurs while
+DHCP_DDNS is carrying out a forward address remove.  The application will retry
+against the same server or others as appropriate.
+
+DHCP_DDNS_FORWARD_REMOVE_ADDRS_REJECTED
+=======================================
+
+.. code-block:: text
+
+    DNS Request ID %1: Server, %2, rejected a DNS update request to remove the forward address mapping for FQDN, %3, with an RCODE: %4
+
+This is an error message issued when an update was rejected by the DNS server
+it was sent to for the reason given by the RCODE. The rcode values are defined
+in RFC 2136.
+
+DHCP_DDNS_FORWARD_REMOVE_ADDRS_RESP_CORRUPT
+===========================================
+
+.. code-block:: text
+
+    DHCP_DDNS Request ID %1: received a corrupt response from the DNS server, %2, while removing forward address mapping for FQDN, %3
+
+This is an error message issued when the response received by DHCP_DDNS, to a
+update request to remove a forward address mapping, is mangled or malformed.
+The application will retry against the same server or others as appropriate.
+
+DHCP_DDNS_FORWARD_REMOVE_ADDRS_TIMEOUT
+======================================
+
+.. code-block:: text
+
+    DHCP_DDNS Request ID %1: timed out waiting for a response to forward mapping address removal for FQDN %2 to DNS server %3
+
+This is an error message issued when no response is received from the DNS
+server before exceeding dns-server-timeout while DHCP_DDNS is carrying out
+a forward mapping address removal.  The application will retry against the same
+server or others as appropriate.
+
+DHCP_DDNS_FORWARD_REMOVE_RRS_BAD_DNSCLIENT_STATUS
+=================================================
+
+.. code-block:: text
+
+    DHCP_DDNS Request ID %1: received an unknown DNSClient status: %2, while removing forward RRs for FQDN %3 to DNS server %4
+
+This is an error message issued when DNSClient returns an unrecognized status
+while DHCP_DDNS was removing forward RRs.  The request will be aborted. This is
+most likely a programmatic issue and should be reported.
+
+DHCP_DDNS_FORWARD_REMOVE_RRS_BUILD_FAILURE
+==========================================
+
+.. code-block:: text
+
+    DNS Request ID %1: update message to remove forward DNS RR entries could not be constructed for this request: %2,  reason: %3
+
+This is an error message issued when an error occurs attempting to construct
+the server bound packet requesting forward RR (DHCID RR) removal.  This is due
+to invalid data contained in the NameChangeRequest. The request will be aborted.
+This is most likely a configuration issue.
+
+DHCP_DDNS_FORWARD_REMOVE_RRS_IO_ERROR
+=====================================
+
+.. code-block:: text
+
+    DHCP_DDNS Request ID %1: encountered an IO error sending a forward RR removal for FQDN %2 to DNS server %3
+
+This is an error message issued when a communication error occurs while
+DHCP_DDNS is carrying out a forward RR remove.  The application will retry
+against the same server.
+
+DHCP_DDNS_FORWARD_REMOVE_RRS_REJECTED
+=====================================
+
+.. code-block:: text
+
+    DNS Request ID %1: Server, %2, rejected a DNS update request to remove forward RR entries for FQDN, %3, with an RCODE: %4
+
+This is an error message issued when an update was rejected by the DNS server
+it was sent to for the reason given by the RCODE. The rcode values are defined
+in RFC 2136.
+
+DHCP_DDNS_FORWARD_REMOVE_RRS_RESP_CORRUPT
+=========================================
+
+.. code-block:: text
+
+    DHCP_DDNS Request ID %1: received a corrupt response from the DNS server, %2, while removing forward RRs for FQDN, %3
+
+This is an error message issued when the response received by DHCP_DDNS, to a
+update request to remove forward RRs mapping, is mangled or malformed.
+The application will retry against the same server or others as appropriate.
+/*sar*/
+
+DHCP_DDNS_FORWARD_REMOVE_RRS_TIMEOUT
+====================================
+
+.. code-block:: text
+
+    DHCP_DDNS Request ID %1: timed out waiting for response to forward RR removal for FQDN %2 to DNS server %3
+
+This is an error message issued when no response is received from the DNS
+server before exceeding dns-server-timeout while DHCP_DDNS is carrying out
+a forward RR removal.  The application will retry against the same
+server or others as appropriate.
+
+DHCP_DDNS_FORWARD_REPLACE_BAD_DNSCLIENT_STATUS
+==============================================
+
+.. code-block:: text
+
+    DHCP_DDNS Request ID %1: received an unknown DNSClient status: %2, while replacing forward address mapping for FQDN %3 to DNS server %4
+
+This is an error message issued when DNSClient returns an unrecognized status
+while DHCP_DDNS was replacing a forward address mapping.  The request will be
+aborted.  This is most likely a programmatic issue and should be reported.
+
+DHCP_DDNS_FORWARD_REPLACE_BUILD_FAILURE
+=======================================
+
+.. code-block:: text
+
+    DNS Request ID %1: update message to replace a forward DNS entry could not be constructed from this request: %2, reason: %3
+
+This is an error message issued when an error occurs attempting to construct
+the server bound packet requesting a forward address replacement.  This is
+due to invalid data contained in the NameChangeRequest. The request will be
+aborted.  This is most likely a configuration issue.
+
+DHCP_DDNS_FORWARD_REPLACE_IO_ERROR
+==================================
+
+.. code-block:: text
+
+    DHCP_DDNS Request ID %1: encountered an IO error sending a forward mapping replace for FQDN %2 to DNS server %3
+
+This is an error message issued when a communication error occurs while
+DHCP_DDNS is carrying out a forward mapping replace.  The application will
+retry against the same server or others as appropriate.
+
+DHCP_DDNS_FORWARD_REPLACE_REJECTED
+==================================
+
+.. code-block:: text
+
+    DNS Request ID %1: Server, %2, rejected a DNS update request to replace the address mapping for FQDN, %3, with an RCODE: %4
+
+This is an error message issued when an update was rejected by the DNS server
+it was sent to for the reason given by the RCODE. The rcode values are defined
+in RFC 2136.
+
+DHCP_DDNS_FORWARD_REPLACE_RESP_CORRUPT
+======================================
+
+.. code-block:: text
+
+    DHCP_DDNS Request ID %1: received a corrupt response from the DNS server, %2, while replacing forward address mapping for FQDN, %3
+
+This is an error message issued when the response received by DHCP_DDNS, to a
+update request to replace a forward address mapping,  is mangled or malformed.
+The application will retry against the same server or others as appropriate.
+
+DHCP_DDNS_FORWARD_REPLACE_TIMEOUT
+=================================
+
+.. code-block:: text
+
+    DHCP_DDNS Request ID %1: timed out waiting for a response to forward mapping replace for FQDN %2 to DNS server %3
+
+This is an error message issued when no response is received from the DNS
+server before exceeding dns-server-timeout while DHCP_DDNS is carrying out
+a forward mapping replace.  The application will retry against the same
+server or others as appropriate.
+
+DHCP_DDNS_FWD_REQUEST_IGNORED
+=============================
+
+.. code-block:: text
+
+    Request ID %1: Forward updates are disabled, the forward portion of request will be ignored: %2
+
+Logged at debug log level 55.
+This is a debug message issued when forward DNS updates are disabled and
+DHCP_DDNS receives an update request containing a forward DNS update. The
+forward update will not performed.
+
+DHCP_DDNS_INVALID_NCR
+=====================
+
+.. code-block:: text
+
+    application received an invalid DNS update request: %1
+
+This is an error message that indicates that an invalid request to update
+a DNS entry was received by the application.  Either the format or the content
+of the request is incorrect. The request will be ignored.
+
+DHCP_DDNS_INVALID_RESPONSE
+==========================
+
+.. code-block:: text
+
+    received response to DNS Update message is malformed: %1
+
+Logged at debug log level 50.
+This is a debug message issued when the DHCP-DDNS application encountered an
+error while decoding a response to DNS Update message. Typically, this error
+will be encountered when a response message is malformed.
+
+DHCP_DDNS_LISTENING_ON_ALL_INTERFACES
+=====================================
+
+.. code-block:: text
+
+    the DHCP-DDNS server has been configured to listen on %1. This is an insecure configuration supported for testing purposes only
+
+This is a warning message issued when the DHCP-DDNS server is configured to
+listen at either `0.0.0.0` or `::`. It is possible for a malicious attacker to send
+bogus NameChangeRequests to it and change entries in the DNS. For this reason,
+listening on all interfaces should only be used when deploying in containers
+or for testing purposes. A future version of Kea will disable this ability by
+default.
+
+DHCP_DDNS_NCR_FLUSH_IO_ERROR
+============================
+
+.. code-block:: text
+
+    DHCP-DDNS Last send before stopping did not complete successfully: %1
+
+This is an error message that indicates the DHCP-DDNS client was unable to
+complete the last send prior to exiting send mode.  This is a programmatic
+error, highly unlikely to occur, and should not impair the application's ability
+to process requests.
+
+DHCP_DDNS_NCR_LISTEN_CLOSE_ERROR
+================================
+
+.. code-block:: text
+
+    application encountered an error while closing the listener used to receive NameChangeRequests : %1
+
+This is an error message that indicates the application was unable to close the
+listener connection used to receive NameChangeRequests.  Closure may occur
+during the course of error recovery or during normal shutdown procedure.  In
+either case the error is unlikely to impair the application's ability to
+process requests but it should be reported for analysis.
+
+DHCP_DDNS_NCR_RECV_NEXT_ERROR
+=============================
+
+.. code-block:: text
+
+    application could not initiate the next read following a request receive.
+
+This is an error message indicating that NameChangeRequest listener could not
+start another read after receiving a request.  While possible, this is highly
+unlikely and is probably a programmatic error.  The application should recover
+on its own.
+
+DHCP_DDNS_NCR_SEND_CLOSE_ERROR
+==============================
+
+.. code-block:: text
+
+    DHCP-DDNS client encountered an error while closing the sender connection used to send NameChangeRequests: %1
+
+This is an error message that indicates the DHCP-DDNS client was unable to
+close the connection used to send NameChangeRequests.  Closure may occur during
+the course of error recovery or during normal shutdown procedure.  In either
+case the error is unlikely to impair the client's ability to send requests but
+it should be reported for analysis.
+
+DHCP_DDNS_NCR_SEND_NEXT_ERROR
+=============================
+
+.. code-block:: text
+
+    DHCP-DDNS client could not initiate the next request send following send completion: %1
+
+This is an error message indicating that NameChangeRequest sender could not
+start another send after completing the send of the previous request.  While
+possible, this is highly unlikely and is probably a programmatic error.  The
+application should recover on its own.
+
+DHCP_DDNS_NCR_UDP_CLEAR_READY_ERROR
+===================================
+
+.. code-block:: text
+
+    NCR UDP watch socket failed to clear: %1
+
+This is an error message that indicates the application was unable to reset the
+UDP NCR sender ready status after completing a send.  This is programmatic error
+that should be reported.  The application may or may not continue to operate
+correctly.
+
+DHCP_DDNS_NCR_UDP_RECV_CANCELED
+===============================
+
+.. code-block:: text
+
+    UDP socket receive was canceled while listening for DNS Update requests
+
+Logged at debug log level 40.
+This is a debug  message indicating that the listening on a UDP socket
+for DNS update requests has been canceled.  This is a normal part of
+suspending listening operations.
+
+DHCP_DDNS_NCR_UDP_RECV_ERROR
+============================
+
+.. code-block:: text
+
+    UDP socket receive error while listening for DNS Update requests: %1
+
+This is an error message indicating that an I/O error occurred while listening
+over a UDP socket for DNS update requests. This could indicate a network
+connectivity or system resource issue.
+
+DHCP_DDNS_NCR_UDP_SEND_CANCELED
+===============================
+
+.. code-block:: text
+
+    UDP socket send was canceled while sending a DNS Update request to DHCP_DDNS: %1
+
+This is an informational message indicating that sending requests via UDP
+socket to DHCP_DDNS has been interrupted. This is a normal part of suspending
+send operations.
+
+DHCP_DDNS_NCR_UDP_SEND_ERROR
+============================
+
+.. code-block:: text
+
+    UDP socket send error while sending a DNS Update request: %1
+
+This is an error message indicating that an IO error occurred while sending a
+DNS update request to DHCP_DDNS over a UDP socket.  This could indicate a
+network connectivity or system resource issue.
+
+DHCP_DDNS_NOT_ON_LOOPBACK
+=========================
+
+.. code-block:: text
+
+    the DHCP-DDNS server has been configured to listen on %1 which is not the local loopback.  This is an insecure configuration supported for testing purposes only
+
+This is a warning message issued when the DHCP-DDNS server is configured to
+listen at an address other than the loopback address (127.0.0.1 or ::1). It is
+possible for a malicious attacker to send bogus NameChangeRequests to it and
+change entries in the DNS. For this reason, addresses other than the IPv4 or
+IPv6 loopback addresses should only be used for testing purposes. A future
+version of Kea will implement authentication to guard against such attacks.
+
+DHCP_DDNS_NO_ELIGIBLE_JOBS
+==========================
+
+.. code-block:: text
+
+    although there are queued requests, there are pending transactions for each, Queue count: %1  Transaction count: %2
+
+Logged at debug log level 55.
+This is a debug message issued when all of the queued requests represent clients
+for which there is an update already in progress.  This may occur under
+normal operations but should be temporary situation.
+
+DHCP_DDNS_NO_FWD_MATCH_ERROR
+============================
+
+.. code-block:: text
+
+    Request ID %1: the configured list of forward DDNS domains does not contain a match for: %2  The request has been discarded.
+
+This is an error message that indicates that DHCP_DDNS received a request to
+update the forward DNS information for the given FQDN but for which there are
+no configured DDNS domains in the DHCP_DDNS configuration.  Either the DHCP_DDNS
+configuration needs to be updated or the source of the FQDN itself should be
+investigated.
+
+DHCP_DDNS_NO_MATCH
+==================
+
+.. code-block:: text
+
+    No DNS servers match FQDN %1
+
+This is warning message issued when there are no domains in the configuration
+which match the cited fully qualified domain name (FQDN).  The DNS Update
+request for the FQDN cannot be processed.
+
+DHCP_DDNS_NO_REV_MATCH_ERROR
+============================
+
+.. code-block:: text
+
+    Request ID %1: the configured list of reverse DDNS domains does not contain a match for: %2  The request has been discarded.
+
+This is an error message that indicates that DHCP_DDNS received a request to
+update the reverse DNS information for the given FQDN but for which there are
+no configured DDNS domains in the DHCP_DDNS configuration.  Either the DHCP_DDNS
+configuration needs to be updated or the source of the FQDN itself should be
+investigated.
+
+DHCP_DDNS_QUEUE_MGR_QUEUE_FULL
+==============================
+
+.. code-block:: text
+
+    application request queue has reached maximum number of entries %1
+
+This an error message indicating that DHCP-DDNS is receiving DNS update
+requests faster than they can be processed.  This may mean the maximum queue
+needs to be increased, the DHCP-DDNS clients are simply generating too many
+requests too quickly, or perhaps upstream DNS servers are experiencing
+load issues.
+
+DHCP_DDNS_QUEUE_MGR_QUEUE_RECEIVE
+=================================
+
+.. code-block:: text
+
+    Request ID %1: received and queued a request.
+
+Logged at debug log level 55.
+This is an informational message indicating that the NameChangeRequest listener used
+by DHCP-DDNS to receive a request has received a request and queued it for further
+processing.
+
+DHCP_DDNS_QUEUE_MGR_RECONFIGURING
+=================================
+
+.. code-block:: text
+
+    application is reconfiguring the queue manager
+
+Logged at debug log level 40.
+This is an informational message indicating that DHCP_DDNS is reconfiguring the queue manager as part of normal startup or in response to a new configuration.
+
+DHCP_DDNS_QUEUE_MGR_RECOVERING
+==============================
+
+.. code-block:: text
+
+    application is attempting to recover from a queue manager IO error
+
+This is an informational message indicating that DHCP_DDNS is attempting to
+restart the queue manager after it suffered an IO error while receiving
+requests.
+
+DHCP_DDNS_QUEUE_MGR_RECV_ERROR
+==============================
+
+.. code-block:: text
+
+    application's queue manager was notified of a request receive error by its listener.
+
+This is an error message indicating that the NameChangeRequest listener used by
+DHCP-DDNS to receive requests encountered an IO error.  There should be
+corresponding log messages from the listener layer with more details. This may
+indicate a network connectivity or system resource issue.
+
+DHCP_DDNS_QUEUE_MGR_RESUME_ERROR
+================================
+
+.. code-block:: text
+
+    application could not restart the queue manager, reason: %1
+
+This is an error message indicating that DHCP_DDNS's Queue Manager could not
+be restarted after stopping due to a full receive queue.  This means that
+the application cannot receive requests. This is most likely due to DHCP_DDNS
+configuration parameters referring to resources such as an IP address or port,
+that is no longer unavailable.  DHCP_DDNS will attempt to restart the queue
+manager if given a new configuration.
+
+DHCP_DDNS_QUEUE_MGR_RESUMING
+============================
+
+.. code-block:: text
+
+    application is resuming listening for requests now that the request queue size has reached %1 of a maximum %2 allowed
+
+This is an informational message indicating that DHCP_DDNS, which had stopped
+accepting new requests, has processed enough entries from the receive queue to
+resume accepting requests.
+
+DHCP_DDNS_QUEUE_MGR_STARTED
+===========================
+
+.. code-block:: text
+
+    application's queue manager has begun listening for requests.
+
+Logged at debug log level 0.
+This is a debug message indicating that DHCP_DDNS's Queue Manager has
+successfully started and is now listening for NameChangeRequests.
+
+DHCP_DDNS_QUEUE_MGR_START_ERROR
+===============================
+
+.. code-block:: text
+
+    application could not start the queue manager, reason: %1
+
+This is an error message indicating that DHCP_DDNS's Queue Manager could not
+be started.  This means that the application cannot receive requests. This is
+most likely due to DHCP_DDNS configuration parameters referring to resources
+such as an IP address or port, that are unavailable.  DHCP_DDNS will attempt to
+restart the queue manager if given a new configuration.
+
+DHCP_DDNS_QUEUE_MGR_STOPPED
+===========================
+
+.. code-block:: text
+
+    application's queue manager has stopped listening for requests.
+
+Logged at debug log level 40.
+This is a debug message indicating that DHCP_DDNS's Queue Manager has
+stopped listening for NameChangeRequests.  This may be because of normal event
+such as reconfiguration or as a result of an error.  There should be log
+messages preceding this one to indicate why it has stopped.
+
+DHCP_DDNS_QUEUE_MGR_STOPPING
+============================
+
+.. code-block:: text
+
+    application is stopping the queue manager for %1
+
+Logged at debug log level 0.
+This is an informational message indicating that DHCP_DDNS is stopping the
+queue manager either to reconfigure it or as part of application shutdown.
+
+DHCP_DDNS_QUEUE_MGR_STOP_ERROR
+==============================
+
+.. code-block:: text
+
+    application encountered an error stopping the queue manager: %1
+
+This is an error message indicating that DHCP_DDNS encountered an error while
+trying to stop the queue manager.  This error is unlikely to occur or to
+impair the application's ability to function but it should be reported for
+analysis.
+
+DHCP_DDNS_QUEUE_MGR_UNEXPECTED_HANDLER_ERROR
+============================================
+
+.. code-block:: text
+
+    application's queue manager request receive handler experienced an unexpected exception %1:
+
+This is an error message indicating that an unexpected error occurred within the
+DHCP_DDNS's Queue Manager request receive completion handler. This is most
+likely a programmatic issue that should be reported.  The application may
+recover on its own.
+
+DHCP_DDNS_QUEUE_MGR_UNEXPECTED_STOP
+===================================
+
+.. code-block:: text
+
+    application's queue manager receive was
+
+aborted unexpectedly while queue manager state is: %1
+This is an error message indicating that DHCP_DDNS's Queue Manager request
+receive was unexpected interrupted.  Normally, the read is receive is only
+interrupted as a normal part of stopping the queue manager.  This is most
+likely a programmatic issue that should be reported.
+
+DHCP_DDNS_REMOVE_FAILED
+=======================
+
+.. code-block:: text
+
+    DHCP_DDNS Request ID %1: Transaction outcome: %2
+
+This is an error message issued after DHCP_DDNS attempts to submit DNS mapping
+entry removals have failed.  The precise reason for the failure should be
+documented in preceding log entries.
+
+DHCP_DDNS_REMOVE_SUCCEEDED
+==========================
+
+.. code-block:: text
+
+    DHCP_DDNS Request ID %1: successfully removed the DNS mapping addition for this request: %2
+
+This is an informational message issued after DHCP_DDNS has submitted DNS
+mapping removals which were received and accepted by an appropriate DNS server.
+
+DHCP_DDNS_REQUEST_DROPPED
+=========================
+
+.. code-block:: text
+
+    Request ID %1: Request contains no enabled update requests and will be dropped: %2
+
+Logged at debug log level 55.
+This is a debug message issued when DHCP_DDNS receives a request which does not
+contain updates in a direction that is enabled.  In other words, if only forward
+updates are enabled and request is received that asks only for reverse updates
+then the request is dropped.
+
+DHCP_DDNS_REVERSE_REMOVE_BAD_DNSCLIENT_STATUS
+=============================================
+
+.. code-block:: text
+
+    DHCP_DDNS Request ID %1: received an unknown DNSClient status: %2, while removing reverse address mapping for FQDN %3 to DNS server %4
+
+This is an error message issued when DNSClient returns an unrecognized status
+while DHCP_DDNS was removing a reverse address mapping.  The request will be
+aborted.  This is most likely a programmatic issue and should be reported.
+
+DHCP_DDNS_REVERSE_REMOVE_BUILD_FAILURE
+======================================
+
+.. code-block:: text
+
+    DNS Request ID %1: update message to remove a reverse DNS entry could not be constructed from this request: %2,  reason: %3
+
+This is an error message issued when an error occurs attempting to construct
+the server bound packet requesting a reverse PTR removal.  This is
+due to invalid data contained in the NameChangeRequest. The request will be
+aborted.  This is most likely a configuration issue.
+
+DHCP_DDNS_REVERSE_REMOVE_IO_ERROR
+=================================
+
+.. code-block:: text
+
+    DHCP_DDNS Request ID %1: encountered an IO error sending a reverse mapping remove for FQDN %2 to DNS server %3
+
+This is an error message issued when a communication error occurs while
+DHCP_DDNS is carrying out a reverse mapping remove.  The application will
+retry against the same server or others as appropriate.
+
+DHCP_DDNS_REVERSE_REMOVE_REJECTED
+=================================
+
+.. code-block:: text
+
+    DNS Request ID %1: Server, %2, rejected a DNS update request to remove the reverse mapping for FQDN, %3, with an RCODE: %4
+
+This is an error message issued when an update was rejected by the DNS server
+it was sent to for the reason given by the RCODE. The rcode values are defined
+in RFC 2136.
+
+DHCP_DDNS_REVERSE_REMOVE_RESP_CORRUPT
+=====================================
+
+.. code-block:: text
+
+    DHCP_DDNS Request ID %1: received a corrupt response from the DNS server, %2, while removing reverse address mapping for FQDN, %3
+
+This is an error message issued when the response received by DHCP_DDNS, to a
+update request to remove a reverse address,  is mangled or malformed.
+The application will retry against the same server or others as appropriate.
+
+DHCP_DDNS_REVERSE_REMOVE_TIMEOUT
+================================
+
+.. code-block:: text
+
+    DHCP_DDNS Request ID %1: timed out waiting for a response to reverse mapping remove for FQDN %2 to DNS server %3
+
+This is an error message issued when no response is received from the DNS
+server before exceeding dns-server-timeout while DHCP_DDNS is carrying out
+a reverse mapping remove. The application will retry against the same
+server or others as appropriate.
+
+DHCP_DDNS_REVERSE_REPLACE_BAD_DNSCLIENT_STATUS
+==============================================
+
+.. code-block:: text
+
+    DHCP_DDNS Request ID %1: received an unknown DNSClient status: %2, while replacing reverse address mapping for FQDN %3 to DNS server %4
+
+This is an error message issued when DNSClient returns an unrecognized status
+while DHCP_DDNS was replacing a reverse address mapping.  The request will be
+aborted.  This is most likely a programmatic issue and should be reported.
+
+DHCP_DDNS_REVERSE_REPLACE_BUILD_FAILURE
+=======================================
+
+.. code-block:: text
+
+    DNS Request ID %1: update message to replace a reverse DNS entry could not be constructed from this request: %2, reason: %3
+
+This is an error message issued when an error occurs attempting to construct
+the server bound packet requesting a reverse PTR replacement.  This is
+due to invalid data contained in the NameChangeRequest. The request will be
+aborted.  This is most likely a configuration issue.
+
+DHCP_DDNS_REVERSE_REPLACE_IO_ERROR
+==================================
+
+.. code-block:: text
+
+    DHCP_DDNS Request ID %1: encountered an IO error sending a reverse mapping replacement for FQDN %2 to DNS server %3
+
+This is an error message issued when a communication error occurs while
+DHCP_DDNS is carrying out a reverse mapping replacement.  The application will
+retry against the same server or others as appropriate.
+
+DHCP_DDNS_REVERSE_REPLACE_REJECTED
+==================================
+
+.. code-block:: text
+
+    DNS Request ID %1: Server, %2, rejected a DNS update request to replace the reverse mapping for FQDN, %3, with an RCODE: %4
+
+This is an error message issued when an update was rejected by the DNS server
+it was sent to for the reason given by the RCODE. The rcode values are defined
+in RFC 2136.
+
+DHCP_DDNS_REVERSE_REPLACE_RESP_CORRUPT
+======================================
+
+.. code-block:: text
+
+    DHCP_DDNS Request ID %1: received a corrupt response from the DNS server, %2, while replacing reverse address mapping for FQDN, %3
+
+This is an error message issued when the response received by DHCP_DDNS, to a
+update request to replace a reverse address,  is mangled or malformed.
+The application will retry against the same server or others as appropriate.
+
+DHCP_DDNS_REVERSE_REPLACE_TIMEOUT
+=================================
+
+.. code-block:: text
+
+    DHCP_DDNS Request ID %1: timed out waiting for a response to reverse mapping replacement for FQDN %2 to DNS server %3
+
+This is an error message issued when no response is received from the DNS
+server before exceeding dns-server-timeout while DHCP_DDNS is carrying out
+a reverse mapping replacement.  The application will retry against the same
+server or others as appropriate.
+
+DHCP_DDNS_REV_REQUEST_IGNORED
+=============================
+
+.. code-block:: text
+
+    Request ID %1: Reverse updates are disabled, the reverse portion of request will be ignored: %2
+
+Logged at debug log level 55.
+This is a debug message issued when reverse DNS updates are disabled and
+DHCP_DDNS receives an update request containing a reverse DNS update.  The
+reverse update will not performed.
+
+DHCP_DDNS_RUN_EXIT
+==================
+
+.. code-block:: text
+
+    application is exiting the event loop
+
+Logged at debug log level 0.
+This is a debug message issued when the DHCP-DDNS server exits its
+event lo
+
+DHCP_DDNS_SHUTDOWN_COMMAND
+==========================
+
+.. code-block:: text
+
+    application received shutdown command with args: %1
+
+Logged at debug log level 0.
+This is a debug message issued when the application has been instructed
+to shut down by the controller.
+
+DHCP_DDNS_STARTED
+=================
+
+.. code-block:: text
+
+    Kea DHCP-DDNS server version %1 started
+
+This informational message indicates that the DHCP-DDNS server has
+processed all configuration information and is ready to begin processing.
+The version is also printed.
+
+DHCP_DDNS_STARTING_TRANSACTION
+==============================
+
+.. code-block:: text
+
+    Request ID %1:
+
+Logged at debug log level 50.
+This is a debug message issued when DHCP-DDNS has begun a transaction for
+a given request.
+
+DHCP_DDNS_STATE_MODEL_UNEXPECTED_ERROR
+======================================
+
+.. code-block:: text
+
+    Request ID %1: application encountered an unexpected error while carrying out a NameChangeRequest: %2
+
+This is error message issued when the application fails to process a
+NameChangeRequest correctly. Some or all of the DNS updates requested as part
+of this update did not succeed. This is a programmatic error and should be
+reported.
+
+DHCP_DDNS_TRANS_SEND_ERROR
+==========================
+
+.. code-block:: text
+
+    Request ID %1: application encountered an unexpected error while attempting to send a DNS update: %2
+
+This is error message issued when the application is able to construct an update
+message but the attempt to send it suffered an unexpected error. This is most
+likely a programmatic error, rather than a communications issue. Some or all
+of the DNS updates requested as part of this request did not succeed.
+
+DHCP_DDNS_UDP_SENDER_WATCH_SOCKET_CLOSE_ERROR
+=============================================
+
+.. code-block:: text
+
+    watch socket failed to close: %1
+
+This is an error message that indicates the application was unable to close
+the inbound or outbound side of a NCR sender's watch socket. While technically
+possible the error is highly unlikely to occur and should not impair the
+application's ability to process requests.
+
+DHCP_DDNS_UNCAUGHT_NCR_RECV_HANDLER_ERROR
+=========================================
+
+.. code-block:: text
+
+    unexpected exception thrown from the application receive completion handler: %1
+
+This is an error message that indicates that an exception was thrown but not
+caught in the application's request receive completion handler.  This is a
+programmatic error that needs to be reported.  Dependent upon the nature of
+the error the application may or may not continue operating normally.
+
+DHCP_DDNS_UPDATE_REQUEST_SENT
+=============================
+
+.. code-block:: text
+
+    Request ID %1: %2 to server: %3
+
+Logged at debug log level 50.
+This is a debug message issued when DHCP_DDNS sends a DNS request to a DNS
+server.
+
+****
+EVAL
+****
+
+EVAL_DEBUG_AND
+==============
+
+.. code-block:: text
+
+    %1: Popping %2 and %3 pushing %4
+
+Logged at debug log level 55.
+This debug message indicates that two values are popped from
+the value stack.  Then are then combined via logical and and
+the result is pushed onto the value stack.
+
+EVAL_DEBUG_CONCAT
+=================
+
+.. code-block:: text
+
+    %1: Popping %2 and %3 pushing %4
+
+Logged at debug log level 55.
+This debug message indicates that the two strings are being popped off
+of the stack.  They are then concatenated and the resulting string is
+pushed onto the stack.  The strings are displayed in hex.
+
+EVAL_DEBUG_EQUAL
+================
+
+.. code-block:: text
+
+    %1: Popping %2 and %3 pushing result %4
+
+Logged at debug log level 55.
+This debug message indicates that the two strings are being popped off
+of the value stack and the result of comparing them is being pushed onto
+the value stack.  The strings are displayed in hex.
+
+EVAL_DEBUG_HEXSTRING
+====================
+
+.. code-block:: text
+
+    %1: Pushing hex string %2
+
+Logged at debug log level 55.
+This debug message indicates that the given binary string is being pushed
+onto the value stack.  The string is displayed in hex.
+
+EVAL_DEBUG_IFELSE_FALSE
+=======================
+
+.. code-block:: text
+
+    %1: Popping %2 (false) and %3, leaving %4
+
+Logged at debug log level 55.
+This debug message indicates that the condition is false so
+the iftrue branch value is removed and the ifelse branch value
+is left on the value stack.
+
+EVAL_DEBUG_IFELSE_TRUE
+======================
+
+.. code-block:: text
+
+    %1: Popping %2 (true) and %3, leaving %4
+
+Logged at debug log level 55.
+This debug message indicates that the condition is true so
+the ifelse branch value is removed and the iftrue branch value
+is left on the value stack.
+
+EVAL_DEBUG_INT16TOTEXT
+======================
+
+.. code-block:: text
+
+    %1: Pushing Int16 %2
+
+Logged at debug log level 55.
+This debug message indicates that the given address string representation is
+being pushed onto the value stack.  This represents a 16 bit integer.
+
+EVAL_DEBUG_INT32TOTEXT
+======================
+
+.. code-block:: text
+
+    %1: Pushing Int32 %2
+
+Logged at debug log level 55.
+This debug message indicates that the given address string representation is
+being pushed onto the value stack.  This represents a 32 bit integer.
+
+EVAL_DEBUG_INT8TOTEXT
+=====================
+
+.. code-block:: text
+
+    %1: Pushing Int8 %2
+
+Logged at debug log level 55.
+This debug message indicates that the given address string representation is
+being pushed onto the value stack.  This represents an 8 bit integer.
+
+EVAL_DEBUG_IPADDRESS
+====================
+
+.. code-block:: text
+
+    %1: Pushing IPAddress %2
+
+Logged at debug log level 55.
+This debug message indicates that the given binary string is being pushed
+onto the value stack.  This represents either an IPv4 or IPv6 address.
+The string is displayed in hex.
+
+EVAL_DEBUG_IPADDRESSTOTEXT
+==========================
+
+.. code-block:: text
+
+    %1: Pushing IPAddress %2
+
+Logged at debug log level 55.
+This debug message indicates that the given address string representation is
+being pushed onto the value stack.  This represents either an IPv4 or IPv6
+address.
+
+EVAL_DEBUG_LCASE
+================
+
+.. code-block:: text
+
+    %1: Popping string %2 and pushing converted value to lower case %3
+
+Logged at debug log level 55.
+This debug message indicates that the given string representation is being
+converted to lower case and pushed onto the value stack.
+
+EVAL_DEBUG_MATCH
+================
+
+.. code-block:: text
+
+    Matching '%1' on %2, result %3
+
+Logged at debug log level 55.
+This debug message indicates that the given regular expression was matched
+with the popped value. The result was pushed onto the value stack.
+
+EVAL_DEBUG_MATCH_ERROR
+======================
+
+.. code-block:: text
+
+    Matching '%1' on %2 raised an error: %3
+
+This error message indicates that an error occurred while evaluating the given
+regular expression against the popped value.
+
+EVAL_DEBUG_MEMBER
+=================
+
+.. code-block:: text
+
+    %1: Checking membership of '%2', pushing result %3
+
+Logged at debug log level 55.
+This debug message indicates that the membership of the packet for
+the client class was checked.
+
+EVAL_DEBUG_NOT
+==============
+
+.. code-block:: text
+
+    %1: Popping %2 pushing %3
+
+Logged at debug log level 55.
+This debug message indicates that the first value is popped from
+the value stack, negated and then pushed onto the value stack.
+The string is displayed in text.
+
+EVAL_DEBUG_OPTION
+=================
+
+.. code-block:: text
+
+    %1: Pushing option %2 with value %3
+
+Logged at debug log level 55.
+This debug message indicates that the given string representing the
+value of the requested option is being pushed onto the value stack.
+The string may be the text or binary value of the string based on the
+representation type requested (.text or .hex) or "true" or "false" if
+the requested type is .exists.  The option code may be for either an
+option or a sub-option as requested in the classification statement.
+
+EVAL_DEBUG_OR
+=============
+
+.. code-block:: text
+
+    %1: Popping %2 and %3 pushing %4
+
+Logged at debug log level 55.
+This debug message indicates that two values are popped from
+the value stack.  Then are then combined via logical or and
+the result is pushed onto the value stack. The string is displayed
+in text.
+
+EVAL_DEBUG_PKT
+==============
+
+.. code-block:: text
+
+    %1: Pushing PKT meta data %2 with value %3
+
+Logged at debug log level 55.
+This debug message indicates that the given binary string representing
+the value of the requested meta data is being pushed onto the value stack.
+The string is displayed in hex at the exception of interface name.
+
+EVAL_DEBUG_PKT4
+===============
+
+.. code-block:: text
+
+    %1: Pushing PKT4 field %2 with value %3
+
+Logged at debug log level 55.
+This debug message indicates that the given binary string representing
+the value of the requested field is being pushed onto the value stack.
+The string is displayed in hex.
+
+EVAL_DEBUG_PKT6
+===============
+
+.. code-block:: text
+
+    %1: Pushing PKT6 field %2 with value %3
+
+Logged at debug log level 55.
+This debug message indicates that the given binary string representing
+the value of the requested field is being pushed onto the value stack.
+The string is displayed in hex.
+
+EVAL_DEBUG_RELAY6
+=================
+
+.. code-block:: text
+
+    %1: Pushing PKT6 relay field %2 nest %3 with value %4
+
+Logged at debug log level 55.
+This debug message indicates that the given binary string representing
+the value of the requested field is being pushed onto the value stack.
+The string is displayed in hex.
+
+EVAL_DEBUG_RELAY6_RANGE
+=======================
+
+.. code-block:: text
+
+    %1: Pushing PKT6 relay field %2 nest %3 with value %4
+
+Logged at debug log level 55.
+This debug message is generated if the nest field is out of range.  The
+empty string will always be the value pushed onto the stack.
+
+EVAL_DEBUG_SPLIT
+================
+
+.. code-block:: text
+
+    %1: Popping field %2, delimiters %3, string %4, pushing result %5
+
+Logged at debug log level 55.
+This debug message indicates that three values are being popped from the stack
+and a result is being pushed onto the stack. The values being popped are the
+field, delimiter and string. The result is the extracted field which is pushed
+onto the stack. The strings are displayed in hex.
+
+EVAL_DEBUG_SPLIT_DELIM_EMPTY
+============================
+
+.. code-block:: text
+
+    %1: Popping field %2, delimiters %3, string %4, pushing result %5
+
+Logged at debug log level 55.
+This debug message indicates that the delimiter popped from the stack was empty
+and so the result will be the entire string. The field, delimiter and string
+are still popped from the stack and the result is still pushed.
+
+EVAL_DEBUG_SPLIT_EMPTY
+======================
+
+.. code-block:: text
+
+    %1: Popping field %2, delimiters %3, string %4, pushing result %5
+
+Logged at debug log level 55.
+This debug message indicates that the string popped from the stack was empty
+and so the result will also be empty. The field, delimiter and string are
+still popped from the stack and the result is still pushed.
+
+EVAL_DEBUG_SPLIT_FIELD_OUT_OF_RANGE
+===================================
+
+.. code-block:: text
+
+    %1: Popping field %2, delimiters %3, string %4, pushing result %5
+
+Logged at debug log level 55.
+This debug message indicates that the field is either less than one or larger
+than the number of fields in the string popped from the stack. The result will
+be empty. The field, delimiter and string are still popped from the stack and
+the result is still pushed.
+
+EVAL_DEBUG_STRING
+=================
+
+.. code-block:: text
+
+    %1: Pushing text string %2
+
+Logged at debug log level 55.
+This debug message indicates that the given text string is being pushed
+onto the value stack.  The string is displayed in text.
+
+EVAL_DEBUG_SUBSTRING
+====================
+
+.. code-block:: text
+
+    %1: Popping length %2, start %3, string %4 pushing result %5
+
+Logged at debug log level 55.
+This debug message indicates that three values are being popped from
+the value stack and a result is being pushed onto the value stack.  The
+values being popped are the starting point and length of a substring to
+extract from the given string.  The resulting string is pushed onto
+the stack.  The strings are displayed in hex.
+
+EVAL_DEBUG_SUBSTRING_EMPTY
+==========================
+
+.. code-block:: text
+
+    %1: Popping length %2, start %3, string %4 pushing result %5
+
+Logged at debug log level 55.
+This debug message indicates that the string popped from the stack was empty
+and so the result will also be empty.  The start, length and string are
+still popped from the stack and the result is still pushed.
+
+EVAL_DEBUG_SUBSTRING_RANGE
+==========================
+
+.. code-block:: text
+
+    %1: Popping length %2, start %3, string %4 pushing result %5
+
+Logged at debug log level 55.
+This debug message indicates that the value of start is outside of the
+string and an empty result will be pushed onto the stack.  The start,
+length and string are still popped from the stack and the result is
+still pushed.  The strings are displayed in hex.
+
+EVAL_DEBUG_SUB_OPTION
+=====================
+
+.. code-block:: text
+
+    %1: Pushing option %2 sub-option %3 with value %4
+
+This debug message indicates that the given string representing the
+value of the requested sub-option of the requested parent option is
+being pushed onto the value stack. The string may be the text or
+binary value of the string based on the representation type requested
+(.text or .hex) or "true" or "false" if the requested type is .exists.
+The codes are the parent option and the sub-option codes as requested
+in the classification statement.
+
+EVAL_DEBUG_SUB_OPTION_NO_OPTION
+===============================
+
+.. code-block:: text
+
+    %1: Requested option %2 sub-option %3, but the parent option is not present, pushing result %4
+
+This debug message indicates that the parent option was not found.
+The codes are the parent option and the sub-option codes as requested
+in the classification statement.
+
+EVAL_DEBUG_TOHEXSTRING
+======================
+
+.. code-block:: text
+
+    %1: Popping binary value %2 and separator %3, pushing result %4
+
+Logged at debug log level 55.
+This debug message indicates that two values are being popped from
+the value stack and a result is being pushed onto the value stack.
+The values being popped are the binary value to convert and the separator.
+The binary value is converted to its hexadecimal string representation
+and pushed onto the stack. The binary value is displayed in hex.
+
+EVAL_DEBUG_UCASE
+================
+
+.. code-block:: text
+
+    %1: Popping string %2 and pushing converted value to upper case %3
+
+Logged at debug log level 55.
+This debug message indicates that the given string representation is being
+converted to upper case and pushed onto the value stack.
+
+EVAL_DEBUG_UINT16TOTEXT
+=======================
+
+.. code-block:: text
+
+    %1: Pushing UInt16 %2
+
+Logged at debug log level 55.
+This debug message indicates that the given address string representation is
+being pushed onto the value stack.  This represents a 16 bit unsigned integer.
+
+EVAL_DEBUG_UINT32TOTEXT
+=======================
+
+.. code-block:: text
+
+    %1: Pushing UInt32 %2
+
+Logged at debug log level 55.
+This debug message indicates that the given address string representation is
+being pushed onto the value stack.  This represents a 32 bit unsigned integer.
+
+EVAL_DEBUG_UINT8TOTEXT
+======================
+
+.. code-block:: text
+
+    %1: Pushing UInt8 %2
+
+Logged at debug log level 55.
+This debug message indicates that the given address string representation is
+being pushed onto the value stack.  This represents an 8 bit unsigned integer.
+
+EVAL_DEBUG_VENDOR_CLASS_DATA
+============================
+
+.. code-block:: text
+
+    %1: Data %2 (out of %3 received) in vendor class found, pushing result '%4'
+
+Logged at debug log level 55.
+This debug message indicates that vendor class option was found and passed
+enterprise-id checks and has sufficient number of data chunks. The total number
+of chunks and value pushed are reported as debugging aid.
+
+EVAL_DEBUG_VENDOR_CLASS_DATA_NOT_FOUND
+======================================
+
+.. code-block:: text
+
+    %1: Requested data index %2, but option with enterprise-id %3 has only %4 data tuple(s), pushing result '%5'
+
+Logged at debug log level 55.
+This debug message indicates that vendor class option was found and passed
+enterprise-id checks, but does not have sufficient number of data chunks.
+Note that the index starts at 0, so there has to be at least (index + 1)
+data chunks.
+
+EVAL_DEBUG_VENDOR_CLASS_ENTERPRISE_ID
+=====================================
+
+.. code-block:: text
+
+    %1: Pushing enterprise-id %2 as result 0x%3
+
+Logged at debug log level 55.
+This debug message indicates that the expression has been evaluated and vendor
+class option was found and its enterprise-id is being reported.
+
+EVAL_DEBUG_VENDOR_CLASS_ENTERPRISE_ID_MISMATCH
+==============================================
+
+.. code-block:: text
+
+    %1: Was looking for %2, option had %3, pushing result '%4'
+
+Logged at debug log level 55.
+This debug message indicates that the expression has been evaluated
+and vendor class option was found, but has different enterprise-id than specified
+in the expression.
+
+EVAL_DEBUG_VENDOR_CLASS_EXISTS
+==============================
+
+.. code-block:: text
+
+    %1: Option with enterprise-id %2 found, pushing result '%3'
+
+Logged at debug log level 55.
+This debug message indicates that the expression has been evaluated and vendor
+class option was found.
+
+EVAL_DEBUG_VENDOR_CLASS_NO_OPTION
+=================================
+
+.. code-block:: text
+
+    %1: Option with code %2 missing, pushing result '%3'
+
+Logged at debug log level 55.
+This debug message indicates that the expression has been evaluated
+and vendor class option was not found.
+
+EVAL_DEBUG_VENDOR_ENTERPRISE_ID
+===============================
+
+.. code-block:: text
+
+    %1: Pushing enterprise-id %2 as result 0x%3
+
+Logged at debug log level 55.
+This debug message indicates that the expression has been evaluated and vendor
+option was found and its enterprise-id is being reported.
+
+EVAL_DEBUG_VENDOR_ENTERPRISE_ID_MISMATCH
+========================================
+
+.. code-block:: text
+
+    %1: Was looking for %2, option had %3, pushing result '%4'
+
+Logged at debug log level 55.
+This debug message indicates that the expression has been evaluated
+and vendor option was found, but has different enterprise-id than specified
+in the expression.
+
+EVAL_DEBUG_VENDOR_EXISTS
+========================
+
+.. code-block:: text
+
+    %1: Option with enterprise-id %2 found, pushing result '%3'
+
+Logged at debug log level 55.
+This debug message indicates that the expression has been evaluated and vendor
+option was found.
+
+****
+FLEX
+****
+
+FLEX_ID_EXPRESSION_EMPTY
+========================
+
+.. code-block:: text
+
+    Specified identifier-expression is empty
+
+This warning message is printed when the flex-id library is being loaded,
+but the expression used to generate the identifier is empty. The library
+will load, but will not generate any identifiers. Please make sure that
+the identifier-expression parameter is specified.
+
+FLEX_ID_EXPRESSION_EVALUATED
+============================
+
+.. code-block:: text
+
+    Expression evaluated for packet to "%1" (size: %2)
+
+Logged at debug log level 40.
+This debug message is printed every time a packet evaluation is successful.
+This means that the identifier expression has been generated. Note that
+depending on the expression and content of the incoming packet, the
+expression may be evaluated to an empty string.
+
+FLEX_ID_EXPRESSION_EVALUATED_NP
+===============================
+
+.. code-block:: text
+
+    Expression evaluated for packet to 0x%1 (size: %2)
+
+This debug message is printed every time a packet evaluation is successful.
+This means that the identifier expression has been generated. As it is
+not printable it is converted to hexadecimal.
+
+FLEX_ID_EXPRESSION_HEX
+======================
+
+.. code-block:: text
+
+    evaluated expression in hexadecimal form "%1"
+
+Logged at debug log level 40.
+This debug message provides a hexadecimal representation of the evaluated
+expression. This is useful for debugging purposes because further logs use
+hexadecimal format for logging.
+
+FLEX_ID_EXPRESSION_INVALID_JSON_TYPE
+====================================
+
+.. code-block:: text
+
+    The identifier-expression is %1, but expected JSON string
+
+This error message is printed when the flex-id library is being loaded,
+but the expression used to generate the identifier is malformed. It has
+a different JSON type (e.g. is a map) rather than expected string.
+
+FLEX_ID_EXPRESSION_NOT_DEFINED
+==============================
+
+.. code-block:: text
+
+    Expression (identifier-expression) is not defined.
+
+This warning message is printed when the flex-id library is loaded, but the
+expression used to generate the identifier is not specified. The library
+will load, but will not generate any identifiers. Please make sure that
+the identifier-expression parameter is specified for your library.
+
+FLEX_ID_EXPRESSION_PARSE_FAILED
+===============================
+
+.. code-block:: text
+
+    The identifier-expression is [%1], but fails to parse with error: %2
+
+This error message is printed when the flex-id library is being loaded,
+but the expression used to generate the identifier is malformed. It failed
+to parse.
+
+FLEX_ID_IGNORE_IAID_APPLIED_ON_NA
+=================================
+
+.. code-block:: text
+
+    the ignore-iaid has changed IAID (%1) to 0 for the IA_NA option.
+
+Logged at debug log level 40.
+This DEBUG message is printed when the flex-id library did apply the ignore-iaid
+flag and changed IAID to 0 because the received packet contains exactly one
+IA_NA.
+
+FLEX_ID_IGNORE_IAID_APPLIED_ON_PD
+=================================
+
+.. code-block:: text
+
+    the ignore-iaid has changed IAID (%1) to 0 for the IA_PD option.
+
+Logged at debug log level 40.
+This DEBUG message is printed when the flex-id library did apply the ignore-iaid
+flag and changed IAID to 0 because the received packet contains exactly one
+IA_PD.
+
+FLEX_ID_IGNORE_IAID_ENABLED
+===========================
+
+.. code-block:: text
+
+    the ignore-iaid is set. It only has an effect on clients with at most one IA_NA and one IA_PD.
+
+This WARNING message is printed when the flex-id library is being loaded,
+and the ignore-iaid parameter is set. This flag will enable the server to drop
+packets which contain more than one IA_NA and one IA_PD.
+
+FLEX_ID_IGNORE_IAID_JSON_TYPE
+=============================
+
+.. code-block:: text
+
+    the ignore-iaid is %1 but expected boolean value
+
+This error message is printed when the flex-id library is being loaded,
+but the ignore-iaid parameter is malformed, i.e. it has a different
+type than expected. It is expected to be a boolean value.
+
+FLEX_ID_IGNORE_IAID_NOT_APPLIED_ON_NA
+=====================================
+
+.. code-block:: text
+
+    the ignore-iaid was not applied on the packet because it contains more than one IA_NA.
+
+Logged at debug log level 40.
+This WARNING message is printed when the flex-id library did not apply the
+ignore-iaid flag because the received packet contains more than one IA_NA.
+
+FLEX_ID_IGNORE_IAID_NOT_APPLIED_ON_PD
+=====================================
+
+.. code-block:: text
+
+    the ignore-iaid was not applied on the packet because it contains more than one IA_PD.
+
+Logged at debug log level 40.
+This WARNING message is printed when the flex-id library did not apply the
+ignore-iaid flag because the received packet contains more than one IA_PD.
+
+FLEX_ID_LOAD_ERROR
+==================
+
+.. code-block:: text
+
+    An error occurred loading the library %1
+
+This error message will be printed when an error is encountered during
+loading of the library. Details of the problem are printed as parameter
+to this message.
+
+FLEX_ID_REPLACE_CLIENT_ID_JSON_TYPE
+===================================
+
+.. code-block:: text
+
+    the replace-client-id is %1 but expected boolean value
+
+This error message is printed when the flex-id library is being loaded,
+but the replace-client-id parameter is malformed, i.e. it has a different
+type than expected. It is expected to be a boolean value.
+
+FLEX_ID_RESTORE_CLIENT_ID
+=========================
+
+.. code-block:: text
+
+    restoring original client identifier '%1' in the response
+
+Logged at debug log level 40.
+This debug message is issued when the original (client supplied) client identifier
+is restored into the server's response.
+
+FLEX_ID_RESTORE_DUID
+====================
+
+.. code-block:: text
+
+    restoring original DUID "%1" in the response
+
+Logged at debug log level 40.
+This debug message is issued when the original (client supplied) client identifier
+is restored into the server"s response.
+
+FLEX_ID_UNLOAD
+==============
+
+.. code-block:: text
+
+    Flex-id library has been unloaded.
+
+This informational message signifies that the flexible-identifier library has been
+unloaded.
+
+FLEX_ID_USED_AS_CLIENT_ID
+=========================
+
+.. code-block:: text
+
+    using flexible identifier "%1" as client identifier
+
+Logged at debug log level 40.
+This debug message is issued to indicate that the library is removing client
+supplied client identifier from the received message and is inserting flexible
+identifier based client identifier instead. The server will use this new client
+identifier for processing the packet. The original client identifier  will be
+restored in the pkt4_send callout and sent back to the client.
+
+FLEX_OPTION_LOAD_ERROR
+======================
+
+.. code-block:: text
+
+    loading Flex Option hooks library failed: %1
+
+This error message indicates an error during loading the Flex Option
+hooks library. The details of the error are provided as argument of
+the log message.
+
+FLEX_OPTION_PROCESS_ADD
+=======================
+
+.. code-block:: text
+
+    Added the option code %1 with value %2
+
+Logged at debug log level 40.
+This debug message is printed when an option was added into the response
+packet. The option code and the value (between quotes if printable, in
+hexadecimal if not) are provided.
+
+FLEX_OPTION_PROCESS_CLIENT_CLASS
+================================
+
+.. code-block:: text
+
+    Skip processing of the option code %1 for class '%2'
+
+Logged at debug log level 40.
+This debug message is printed when the processing for an option is skipped
+because the query does not belongs to the client class. The option code and
+the client class name are provided.
+
+FLEX_OPTION_PROCESS_ERROR
+=========================
+
+.. code-block:: text
+
+    An error occurred processing query %1: %2
+
+This error message indicates an error during processing of a query
+by the Flex Option hooks library. The client identification information
+from the query and the details of the error are provided as arguments
+of the log message.
+
+FLEX_OPTION_PROCESS_REMOVE
+==========================
+
+.. code-block:: text
+
+    Removed option code %1
+
+Logged at debug log level 40.
+This debug message is printed when an option was removed from the response
+packet. The option code is provided.
+
+FLEX_OPTION_PROCESS_SUB_ADD
+===========================
+
+.. code-block:: text
+
+    Added the sub-option code %1 in option code %2 with value %3
+
+Logged at debug log level 40.
+This debug message is printed when an sub-option was added into the response
+packet. The sub-option and container option codes, and the value
+(between quotes if printable, in hexadecimal if not) are provided.
+
+FLEX_OPTION_PROCESS_SUB_CLIENT_CLASS
+====================================
+
+.. code-block:: text
+
+    Skip processing of the sub-option code %1 in option code %2 for class '%3'
+
+Logged at debug log level 40.
+This debug message is printed when the processing for a sub-option is skipped
+because the query does not belongs to the client class. The sub-option and
+container option codes, and the client class name are provided.
+
+FLEX_OPTION_PROCESS_SUB_REMOVE
+==============================
+
+.. code-block:: text
+
+    Removed sub-option code %1 in option code %2
+
+Logged at debug log level 40.
+This debug message is printed when a sub-option was removed from the response
+packet. The sub-option and container option codes are provided.
+
+FLEX_OPTION_PROCESS_SUB_SUPERSEDE
+=================================
+
+.. code-block:: text
+
+    Supersedes the sub-option code %1 in option code %2 with value %3
+
+Logged at debug log level 40.
+This debug message is printed when a sub-option was superseded into the
+response packet. The sub-option and container option codes, and the value
+(between quotes if printable, in hexadecimal if not) are provided.
+
+FLEX_OPTION_PROCESS_SUPERSEDE
+=============================
+
+.. code-block:: text
+
+    Supersedes the option code %1 with value %2
+
+Logged at debug log level 40.
+This debug message is printed when an option was superseded into the response
+packet. The option code and the value (between quotes if printable, in
+hexadecimal if not) are provided.
+
+FLEX_OPTION_PROCESS_VENDOR_ID_MISMATCH
+======================================
+
+.. code-block:: text
+
+    Skip processing of vendor option code %1 with vendor id %2 not matching wanted %3
+
+Logged at debug log level 40.
+This debug message is printed when a sub-option of a vendor option is
+processed but vendor ids do not match. The code of the vendor option
+and the two vendor ids are provided.
+
+****
+FUZZ
+****
+
+FUZZ_DATA_READ
+==============
+
+.. code-block:: text
+
+    read %1 byte(s) from AFL via stdin
+
+Logged at debug log level 50.
+A debug message output to indicate how much data has been received from
+the fuzzer via stdin
+
+FUZZ_INIT_COMPLETE
+==================
+
+.. code-block:: text
+
+    fuzz initialization complete: interface %1, address %2, port %3, max loops %4
+
+An informational message output when the fuzzing initialization function has
+completed successfully. The parameters listed are those which must be/can be
+set via environment variables.
+
+FUZZ_INIT_FAIL
+==============
+
+.. code-block:: text
+
+    fuzz initialization failure, reason: %1
+
+An error message reported if the fuzzing initialization failed.  The reason
+for the failure is given in the message.
+
+FUZZ_READ_FAIL
+==============
+
+.. code-block:: text
+
+    error reading input from fuzzer: %1
+
+This error is reported if the read of data from the fuzzer (which is
+received over stdin) fails, or if a read returns zero bytes.  If this
+occurs, the thread will sleep for a short period before retrying the read.
+The message includes the reason for the failure.
+
+FUZZ_SEND
+=========
+
+.. code-block:: text
+
+    sent %1 byte(s) to the socket connected to the Kea interface
+
+Logged at debug log level 50.
+A debug message stating that the sendto() call in the main fuzzing function
+has successfully completed and reporting the number of bytes sent.  This
+call sends data received from AFL to the port on which Kea is listening.
+
+FUZZ_SEND_ERROR
+===============
+
+.. code-block:: text
+
+    failed to send data to Kea input socket: %1
+
+This error will be reported if the sendto() call in the fuzzing thread (which
+sends data received from AFL to the socket on which Kea is listening) fails.
+The reason for the failure is given in the message.  The fuzzing code will
+attempt to continue from this, but it may cause the fuzzing process to fail.
+
+FUZZ_SHORT_SEND
+===============
+
+.. code-block:: text
+
+    expected to send %1 bytes to Kea input socket but only sent %2
+
+A warning message that is output if the sendto() call (used to send data
+from the fuzzing thread to the main Kea processing) did not send as much
+data as that read from AFL.  This may indicate a problem in the underlying
+communications between the fuzzing thread and the main Kea processing.
+
+***
+GSS
+***
+
+GSS_TSIG_COMMAND_PROCESSED_FAILED
+=================================
+
+.. code-block:: text
+
+    command_processed callout failed: %1.
+
+This error message is issued when the callout for the command_processed
+callout point failed. The argument contains a reason for the error.
+
+GSS_TSIG_LOAD_FAILED
+====================
+
+.. code-block:: text
+
+    GSS-TSIG hooks library failed to load: %1.
+
+This error message indicates that an error occurred attempting to
+load the GSS-TSIG hooks library. The argument details the error.
+
+GSS_TSIG_LOAD_OK
+================
+
+.. code-block:: text
+
+    GSS-TSIG hooks library loaded successfully.
+
+This info message indicates that the GSS-TSIG hooks library has
+been loaded successfully.
+
+GSS_TSIG_MANAGER_STARTED
+========================
+
+.. code-block:: text
+
+    hooks library GSS-TSIG key periodic manager started.
+
+Logged at debug log level 40.
+This debug message is issued when the GSS-TSIG key periodic manager has started.
+
+GSS_TSIG_MANAGER_STOPPED
+========================
+
+.. code-block:: text
+
+    hooks library GSS-TSIG key periodic manager stopped.
+
+Logged at debug log level 40.
+This debug message is issued when the GSS-TSIG key periodic manager has stopped.
+
+GSS_TSIG_MANAGER_STOP_ERROR
+===========================
+
+.. code-block:: text
+
+    manager stop error: %1
+
+This error message is issued when the GSS-TSIG key periodic manager has stopped
+but an error is detected. The error message in the argument gives details about
+the problem.
+
+GSS_TSIG_MANAGER_STOP_GENERAL_ERROR
+===================================
+
+.. code-block:: text
+
+    manager stop general error
+
+This error message is issued when the GSS-TSIG key periodic manager has stopped
+but a general error is detected.
+
+GSS_TSIG_NEW_KEY
+================
+
+.. code-block:: text
+
+    new GSS-TSIG key '%1' was created.
+
+Logged at debug log level 40.
+This info message indicates that the GSS-TSIG hooks library has
+created a new GSS-TSIG key. The name of the new key is displayed.
+
+GSS_TSIG_NEW_KEY_SETUP_FAILED
+=============================
+
+.. code-block:: text
+
+    new GSS-TSIG key '%1' setup failed: %2.
+
+This warning message is issued when the setup of a new GSS-TSIG key failed.
+The name of the new key and the error are displayed.
+
+GSS_TSIG_NEW_KEY_SETUP_SUCCEED
+==============================
+
+.. code-block:: text
+
+    new GSS-TSIG key '%1' setup succeed.
+
+Logged at debug log level 40.
+This debug message is issued when the setup of a new GSS-TSIG key
+successfully finished. The name of the new key is displayed.
+
+GSS_TSIG_OLD_KEY_REMOVED
+========================
+
+.. code-block:: text
+
+    %1 old GSS-TSIG keys were removed
+
+Logged at debug log level 40.
+This debug message is issued when some old keys (older than 2 times the maximum
+TKEY lifetime) were removed. The number of removed keys is displayed.
+
+GSS_TSIG_UNLOAD_OK
+==================
+
+.. code-block:: text
+
+    GSS-TSIG hooks library unloaded successfully.
+
+This info message indicates that the GSS-TSIG hooks library has
+been unloaded successfully.
+
+GSS_TSIG_VERIFIED
+=================
+
+.. code-block:: text
+
+    GSS-TSIG verify successed.
+
+Logged at debug log level 40.
+A debug message issued when GSS-TSIG verification succeeded.
+
+GSS_TSIG_VERIFY_FAILED
+======================
+
+.. code-block:: text
+
+    GSS-TSIG verify failed: %1.
+
+This info message indicates that GSS-TSIG verification failed.
+The argument details the error.
+
+**
+HA
+**
+
+HA_BUFFER4_RECEIVE_FAILED
+=========================
+
+.. code-block:: text
+
+    buffer4_receive callout failed: %1
+
+This error message is issued when the callout for the buffer4_receive hook
+point failed.  This may occur as a result of an internal server error.
+The argument contains a reason for the error.
+
+HA_BUFFER4_RECEIVE_NOT_FOR_US
+=============================
+
+.. code-block:: text
+
+    %1: dropping query to be processed by another server
+
+Logged at debug log level 40.
+This debug message is issued when the received DHCPv4 query is dropped
+by this server because it should be served by another server. This
+is the case when the remote server was designated to process the packet
+as a result of load balancing or because it is a primary server in the
+hot standby configuration. The argument provides client identification
+information retrieved from the query.
+
+HA_BUFFER4_RECEIVE_PACKET_OPTIONS_SKIPPED
+=========================================
+
+.. code-block:: text
+
+    an error unpacking an option, caused subsequent options to be skipped: %1
+
+Logged at debug log level 40.
+A debug message issued when an option failed to unpack correctly, making it
+impossible to unpack the remaining options in the DHCPv4 query. The server
+will still attempt to service the packet. The sole argument provides a
+reason for unpacking error.
+
+HA_BUFFER4_RECEIVE_UNPACK_FAILED
+================================
+
+.. code-block:: text
+
+    failed to parse query from %1 to %2, received over interface %3, reason: %4
+
+Logged at debug log level 40.
+This debug message is issued when received DHCPv4 query is malformed and
+can't be parsed by the buffer4_receive callout. The query will be
+dropped by the server. The first three arguments specify source IP address,
+destination IP address and the interface. The last argument provides a
+reason for failure.
+
+HA_BUFFER6_RECEIVE_FAILED
+=========================
+
+.. code-block:: text
+
+    buffer6_receive callout failed: %1
+
+This error message is issued when the callout for the buffer6_receive hook
+point failed. This may occur as a result of an internal server error.
+The argument contains a reason for the error.
+
+HA_BUFFER6_RECEIVE_NOT_FOR_US
+=============================
+
+.. code-block:: text
+
+    %1: dropping query to be processed by another server
+
+Logged at debug log level 40.
+This debug message is issued when the received DHCPv6 query is dropped
+by this server because it should be served by another server. This
+is the case when the remote server was designated to process the packet
+as a result of load balancing or because it is a primary server in the
+hot standby configuration. The argument provides client identification
+information retrieved from the query.
+
+HA_BUFFER6_RECEIVE_PACKET_OPTIONS_SKIPPED
+=========================================
+
+.. code-block:: text
+
+    an error unpacking an option, caused subsequent options to be skipped: %1
+
+Logged at debug log level 40.
+A debug message issued when an option failed to unpack correctly, making it
+impossible to unpack the remaining options in the DHCPv6 query. The server
+will still attempt to service the packet. The sole argument provides a
+reason for unpacking error.
+
+HA_BUFFER6_RECEIVE_UNPACK_FAILED
+================================
+
+.. code-block:: text
+
+    failed to parse query from %1 to %2, received over interface %3, reason: %4
+
+Logged at debug log level 40.
+This debug message is issued when received DHCPv6 query is malformed and
+can't be parsed by the buffer6_receive callout. The query will be
+dropped by the server. The first three arguments specify source IP address,
+destination IP address and the interface. The last argument provides a
+reason for failure.
+
+HA_COMMAND_PROCESSED_FAILED
+===========================
+
+.. code-block:: text
+
+    command_processed callout failed: %1
+
+This error message is issued when the callout for the command_processed hook
+point failed. The argument contains a reason for the error.
+
+HA_COMMUNICATION_INTERRUPTED
+============================
+
+.. code-block:: text
+
+    %1: communication with %2 is interrupted
+
+This warning message is issued by the server which discovered that the
+communication to the active partner has been interrupted for a time
+period longer than the configured heartbeat-delay time. At this stage
+the server starts the failover procedure by monitoring the DHCP traffic
+sent to the partner and checking whether the partner server responds to
+this traffic. If the max-unacked-clients value is set to 0 such
+verification is disabled in which case the server will transition to
+the partner-down state.
+
+HA_COMMUNICATION_INTERRUPTED_CLIENT4
+====================================
+
+.. code-block:: text
+
+    %1: new client %2 attempting to get a lease from the partner
+
+This informational message is issued when the surviving server observes
+a DHCP packet sent to the partner with which the communication is interrupted.
+The client whose packet is observed is not yet considered "unacked" because
+the secs field value does not exceed the configured threshold specified
+with max-ack-delay.
+
+HA_COMMUNICATION_INTERRUPTED_CLIENT4_UNACKED
+============================================
+
+.. code-block:: text
+
+    %1: partner server failed to respond to %2, %3 clients unacked so far, %4 clients left before transitioning to the partner-down state
+
+This informational message is issued when the surviving server determines
+that its partner failed to respond to the DHCP query and that this client
+is considered to not be served by the partner. The surviving server counts
+such clients and if the number of such clients exceeds the max-unacked-clients
+threshold, the server will transition to the partner-down state. The first
+argument specifies the relationship name. The second argument contains client
+identification information. The third argument specifies the number of
+clients to which the server has failed to respond. The forth argument specifies
+the number of additional clients which, if not provisioned, will cause the
+server to transition to the partner-down state.
+
+HA_COMMUNICATION_INTERRUPTED_CLIENT6
+====================================
+
+.. code-block:: text
+
+    %1: new client %2 attempting to get a lease from the partner
+
+This informational message is issued when the surviving server observes
+a DHCP packet sent to the partner with which the communication is interrupted.
+The client whose packet is observed is not yet considered "unacked" because
+the elapsed time option value does not exceed the configured threshold
+specified with max-ack-delay. The sole argument specifies client
+identification information.
+
+HA_COMMUNICATION_INTERRUPTED_CLIENT6_UNACKED
+============================================
+
+.. code-block:: text
+
+    %1: partner server failed to respond to %2, %3 clients unacked so far, %4 clients left before transitioning to the partner-down state
+
+This informational message is issued when the surviving server determines
+that its partner failed to respond to the DHCP query and that this client
+is considered to not be served by the partner. The surviving server counts
+such clients and if the number of such clients exceeds the max-unacked-clients
+threshold, the server will transition to the partner-down state. The first
+argument specifies the relationship name. The second argument contains client
+identification information. The third argument specifies the number of clients
+to which the server has failed to respond. The forth argument specifies the
+number of additional clients which, if not provisioned, will cause the server
+to transition to the partner-down state.
+
+HA_CONFIGURATION_FAILED
+=======================
+
+.. code-block:: text
+
+    failed to configure High Availability hooks library: %1
+
+This error message is issued when there is an error configuring the HA hooks
+library. The argument provides the detailed error message.
+
+HA_CONFIGURATION_SUCCESSFUL
+===========================
+
+.. code-block:: text
+
+    HA hook library has been successfully configured
+
+This informational message is issued when the HA hook library configuration
+parser successfully parses and validates the new configuration.
+
+HA_CONFIG_AUTO_FAILOVER_DISABLED
+================================
+
+.. code-block:: text
+
+    %1: auto-failover disabled
+
+This warning message is issued to indicate that the 'auto-failover' parameter
+was administratively disabled for the specified server. The server will not
+automatically start serving partner's scope when the partner failure is detected.
+The server administrator will need to enable this scope manually by
+sending appropriate ha-scopes command.
+
+HA_CONFIG_DHCP_MT_DISABLED
+==========================
+
+.. code-block:: text
+
+    %1: HA multi-threading has been disabled, it cannot be enabled when Kea global multi-threading is disabled
+
+This informational message is issued when HA configuration has enabled
+multi-threading while Kea global configuration has multi-threading disabled.
+
+HA_CONFIG_DHCP_MT_DISABLED_AND_KEA_MT_ENABLED
+=============================================
+
+.. code-block:: text
+
+    %1: HA multi-threading is disabled while Kea global multi-threading is enabled which most likely cause performance degradation.
+
+This warning message is issued when HA configuration has disabled
+multi-threading while Kea global configuration has multi-threading enabled.
+This will likely cause performance degradation.
+
+HA_CONFIG_LEASE_SYNCING_DISABLED
+================================
+
+.. code-block:: text
+
+    %1: lease database synchronization between HA servers is disabled
+
+This warning message is issued when the lease database synchronization is
+administratively disabled. This is valid configuration if the leases are
+replicated between lease databases via some other mechanism, e.g. SQL
+database replication.
+
+HA_CONFIG_LEASE_SYNCING_DISABLED_REMINDER
+=========================================
+
+.. code-block:: text
+
+    %1: bypassing SYNCING state because lease database synchronization is administratively disabled
+
+This informational message is issued as a reminder that lease database
+synchronization is administratively disabled and therefore the server
+transitions directly from the "waiting" to "ready" state.
+
+HA_CONFIG_LEASE_UPDATES_AND_SYNCING_DIFFER
+==========================================
+
+.. code-block:: text
+
+    %1: unusual configuration where "send-lease-updates": %2 and "sync-leases": %3
+
+This warning message is issued when the configuration values of the
+send-lease-updates and sync-leases parameters differ. This may be a
+valid configuration but is unusual. Normally, if the lease database
+with replication is in use, both values are set to false. If a lease
+database without replication is in use (e.g. memfile), both values
+are set to true. Providing different values for those parameters means
+that an administrator either wants the server to not synchronize
+leases upon startup but later send lease updates to the partner, or
+the lease database should be synchronized upon startup, but no lease
+updates are later sent as a result of leases allocation.
+
+HA_CONFIG_LEASE_UPDATES_DISABLED
+================================
+
+.. code-block:: text
+
+    %1: lease updates will not be generated
+
+This warning message is issued when the lease updates are administratively
+disabled. This is valid configuration if the leases are replicated to the
+partner's database via some other mechanism, e.g. SQL database replication.
+
+HA_CONFIG_LEASE_UPDATES_DISABLED_REMINDER
+=========================================
+
+.. code-block:: text
+
+    %1: lease updates are administratively disabled and will not be generated while in %2 state
+
+This informational message is issued as a reminder that the lease updates
+are administratively disabled and will not be issued in the HA state to
+which the server has transitioned. The sole argument specifies the state
+into which the server has transitioned.
+
+HA_CONFIG_SYSTEM_MT_UNSUPPORTED
+===============================
+
+.. code-block:: text
+
+    %1: HA multi-threading has been disabled, auto-detection of thread support reports 0
+
+This informational message is issued when HA multi-threading configuration has
+specified auto-detection for the number of threads to use and the system
+reports the number of concurrent threads as 0. If you know your system can
+support multiple threads, then you may override this condition by specifying
+explicit values for http-listener-threads and http-client-threads.
+
+HA_CONTINUE_HANDLER_FAILED
+==========================
+
+.. code-block:: text
+
+    ha-continue command failed: %1
+
+This error message is issued to indicate that the ha-continue command handler
+failed while processing the command. The argument provides the reason for
+failure.
+
+HA_DEINIT_OK
+============
+
+.. code-block:: text
+
+    unloading High Availability hooks library successful
+
+This informational message indicates that the High Availability hooks library
+has been unloaded successfully.
+
+HA_DHCP4_START_SERVICE_FAILED
+=============================
+
+.. code-block:: text
+
+    failed to start DHCPv4 HA services in dhcp4_srv_configured callout: %1
+
+This error message is issued when an attempt to start High Availability services
+for the DHCPv4 server failed in the dhcp4_srv_configured callout. This
+is internal server error and a bug report should be created.
+
+HA_DHCP6_START_SERVICE_FAILED
+=============================
+
+.. code-block:: text
+
+    failed to start DHCPv6 HA services in dhcp6_srv_configured callout: %1
+
+This error message is issued when an attempt to start High Availability services
+for the DHCPv6 server failed in the dhcp6_srv_configured callout. This
+is internal server error and a bug report should be created.
+
+HA_DHCP_DISABLE_COMMUNICATIONS_FAILED
+=====================================
+
+.. code-block:: text
+
+    %1: failed to send request to disable DHCP service of %2: %3
+
+This warning message indicates that there was a problem in communication with a
+HA peer while sending the dhcp-disable command. The first argument specifies
+the local server's name. The second argument provides the remote server's name.
+The third argument provides a reason for failure.
+
+HA_DHCP_DISABLE_FAILED
+======================
+
+.. code-block:: text
+
+    %1: failed to disable DHCP service of %2: %3
+
+This warning message indicates that a peer returned an error status code
+in response to a dhcp-disable command. The first argument provides the
+local server's name. The second argument provides the remote server's name.
+The third argument provides a reason for failure.
+
+HA_DHCP_ENABLE_COMMUNICATIONS_FAILED
+====================================
+
+.. code-block:: text
+
+    %1: failed to send request to enable DHCP service of %2: %3
+
+This warning message indicates that there was a problem in communication with a
+HA peer while sending the dhcp-enable command. The first argument provides the
+local server's name. The second argument provides the remote server's name. The
+third argument provides a reason for failure.
+
+HA_DHCP_ENABLE_FAILED
+=====================
+
+.. code-block:: text
+
+    %1: failed to enable DHCP service of %2: %3
+
+This warning message indicates that a peer returned an error status code
+in response to a dhcp-enable command. The first argument provides the
+local server's name. The second argument provides the remote server's name.
+The third argument provides a reason for failure.
+
+HA_HEARTBEAT_COMMUNICATIONS_FAILED
+==================================
+
+.. code-block:: text
+
+    %1: failed to send heartbeat to %2: %3
+
+This warning message indicates that there was a problem in communication with a
+HA peer while sending a heartbeat. This is a first sign that the peer may be
+down. The server will keep trying to send heartbeats until it considers that
+communication is interrupted.
+
+HA_HEARTBEAT_FAILED
+===================
+
+.. code-block:: text
+
+    %1: heartbeat to %2 failed: %3
+
+This warning message indicates that a peer returned an error status code
+in response to a heartbeat. This is the sign that the peer may not function
+properly. The server will keep trying to send heartbeats until it considers
+that communication is interrupted.
+
+HA_HEARTBEAT_HANDLER_FAILED
+===========================
+
+.. code-block:: text
+
+    heartbeat command failed: %1
+
+This error message is issued to indicate that the heartbeat command handler
+failed while processing the command. The argument provides the reason for
+failure.
+
+HA_HIGH_CLOCK_SKEW
+==================
+
+.. code-block:: text
+
+    %1: %2, please synchronize clocks!
+
+This warning message is issued when the clock skew between the active servers
+exceeds 30 seconds. The HA service continues to operate but may not function
+properly, especially for low lease lifetimes. The administrator should
+should synchronize the clocks, e.g. using NTP. If the clock skew exceeds
+60 seconds, the HA service will terminate.
+
+HA_HIGH_CLOCK_SKEW_CAUSED_TERMINATION
+=====================================
+
+.. code-block:: text
+
+    %1: %2, causing HA service to terminate
+
+This warning message is issued when the clock skew between the active servers
+exceeds 60 seconds. The HA service stops. The servers will continue to respond
+to the DHCP queries but won't exchange lease updates or send heartbeats.
+The administrator is required to synchronize the clocks and then restart the
+servers to resume the HA service.
+
+HA_INIT_OK
+==========
+
+.. code-block:: text
+
+    loading High Availability hooks library successful
+
+This informational message indicates that the High Availability hooks library
+has been loaded successfully. Enjoy!
+
+HA_INVALID_PARTNER_STATE_COMMUNICATION_RECOVERY
+===============================================
+
+.. code-block:: text
+
+    %1: partner is in the communication-recovery state unexpectedly
+
+This warning message is issued when a partner is in the communication-recovery
+state, and this server is not running in the load balancing mode. The server
+may only transition to the communication-recovery state when it runs in the
+load balancing mode. The HA mode of both servers must be the same.
+
+HA_INVALID_PARTNER_STATE_HOT_STANDBY
+====================================
+
+.. code-block:: text
+
+    %1: partner is in the hot-standby state unexpectedly
+
+This warning message is issued when a partner is in the hot-standby state,
+and this server is not running in the hot standby mode. The server may only
+transition to the hot-standby state when it runs in the hot standby mode.
+The HA mode of both servers must be the same.
+
+HA_INVALID_PARTNER_STATE_LOAD_BALANCING
+=======================================
+
+.. code-block:: text
+
+    %1: partner is in the load-balancing state unexpectedly
+
+This warning message is issued when a partner is in the load-balancing state,
+and this server is not running in the load balancing mode. The server may only
+transition to the load-balancing state when it runs in the load balancing mode.
+The HA mode of both servers must be the same.
+
+HA_LEASE4_SERVER_DECLINE_FAILED
+===============================
+
+.. code-block:: text
+
+    lease4_server_decline callout failed: %1
+
+This error message is issued when the callout for the lease4_server_decline hook
+point failed. This includes unexpected errors like wrong arguments provided to
+the callout by the DHCP server (unlikely internal server error).
+The argument contains a reason for the error.
+
+HA_LEASES4_COMMITTED_FAILED
+===========================
+
+.. code-block:: text
+
+    leases4_committed callout failed: %1
+
+This error message is issued when the callout for the leases4_committed hook
+point failed. This includes unexpected errors like wrong arguments provided to
+the callout by the DHCP server (unlikely internal server error).
+The argument contains a reason for the error.
+
+HA_LEASES4_COMMITTED_NOTHING_TO_UPDATE
+======================================
+
+.. code-block:: text
+
+    %1: leases4_committed callout was invoked without any leases
+
+Logged at debug log level 40.
+This debug message is issued when the "leases4_committed" callout returns
+because there are neither new leases nor deleted leases for which updates
+should be sent. The sole argument specifies the details of the client
+which sent the packet.
+
+HA_LEASES4_COMMITTED_NO_RELATIONSHIP
+====================================
+
+.. code-block:: text
+
+    %1: HA relationship not found: %2
+
+This error message is issued when the relationship for the server name provided
+by the earlier callouts was not found in the HA configuration. This error is
+highly unlikely and rather indicates some programming error. The first argument
+is the client identification information. The second argument holds a more
+detailed error message.
+
+HA_LEASES6_COMMITTED_FAILED
+===========================
+
+.. code-block:: text
+
+    leases6_committed callout failed: %1
+
+This error message is issued when the callout for the leases6_committed hook
+point failed. This includes unexpected errors like wrong arguments provided to
+the callout by the DHCP server (unlikely internal server error).
+The argument contains a reason for the error.
+
+HA_LEASES6_COMMITTED_NOTHING_TO_UPDATE
+======================================
+
+.. code-block:: text
+
+    %1: leases6_committed callout was invoked without any leases
+
+Logged at debug log level 40.
+This debug message is issued when the "leases6_committed" callout returns
+because there are neither new leases nor deleted leases for which updates
+should be sent. The sole argument specifies the details of the client
+which sent the packet.
+
+HA_LEASES6_COMMITTED_NO_RELATIONSHIP
+====================================
+
+.. code-block:: text
+
+    %1: HA relationship not found: %2
+
+This error message is issued when the relationship for the server name provided
+by the earlier callouts was not found in the HA configuration. This error is
+highly unlikely and rather indicates some programming error. The first argument
+is the client identification information. The second argument holds a more
+detailed error message.
+
+HA_LEASES_BACKLOG_COMMUNICATIONS_FAILED
+=======================================
+
+.. code-block:: text
+
+    %1: failed to communicate with %2 while sending lease updates backlog: %3
+
+This error message is issued to indicate that there was a communication error
+with a partner server while sending outstanding lease updates after resuming
+connection. The third argument contains a reason for the error.
+
+HA_LEASES_BACKLOG_FAILED
+========================
+
+.. code-block:: text
+
+    %1: failed to send lease updates backlog to %2: %3
+
+This error message is issued to indicate that sending lease updates backlog
+to a partner server failed. The lease updates backlog is sent to the partner
+after resuming temporarily broken communication with the partner. If this
+operation fails the server will transition to the waiting state to initiate
+full lease database synchronization.
+
+HA_LEASES_BACKLOG_NOTHING_TO_SEND
+=================================
+
+.. code-block:: text
+
+    %1: no leases in backlog after communication recovery
+
+This informational message is issued when there are no outstanding leases to
+be sent after communication recovery with a partner. This means that the
+communication interruption was short enough that no DHCP clients obtained
+any leases from the server while it was in the communication-recovery state.
+The server may now transition to the load-balancing state.
+
+HA_LEASES_BACKLOG_START
+=======================
+
+.. code-block:: text
+
+    %1: starting to send %2 outstanding lease updates to %3
+
+This informational message is issued when the server starts to send outstanding
+lease updates to the partner after resuming communications. The first argument
+specifies the local server's name. The second argument specifies the number of
+lease updates to be sent. The name of the partner is specified with the third
+argument.
+
+HA_LEASES_BACKLOG_SUCCESS
+=========================
+
+.. code-block:: text
+
+    %1: sending lease updates backlog to %2 successful in %3
+
+This informational message is issued when server successfully completes
+sending lease updates backlog to the partner. The first argument specifies the
+local server's name. The second argument specifies the name of the remote server.
+The third argument specifies the duration of
+this operation.
+
+HA_LEASES_SYNC_APPLIED_LEASES
+=============================
+
+.. code-block:: text
+
+    %1: applied %2 leases received from the partner in the local lease database
+
+This informational message outputs the number of leases received from the
+partner during the database synchronization and applied in the local database.
+A typical case when only some leases are applied is when the server has
+multiple relationships and some of the received leases belong to another
+relationship. The first argument specifies this server name. The second
+argument specifies the number of applied leases.
+
+HA_LEASES_SYNC_COMMUNICATIONS_FAILED
+====================================
+
+.. code-block:: text
+
+    %1: failed to communicate with %2 while syncing leases: %3
+
+This error message is issued to indicate that there was a communication error
+with a partner server while trying to fetch leases from its lease database.
+The argument contains a reason for the error.
+
+HA_LEASES_SYNC_FAILED
+=====================
+
+.. code-block:: text
+
+    %1: failed to synchronize leases with %2: %3
+
+This error message is issued to indicate that there was a problem while
+parsing a response from the server from which leases have been fetched for
+local database synchronization. The third argument contains a reason for
+the error.
+
+HA_LEASES_SYNC_LEASE_PAGE_RECEIVED
+==================================
+
+.. code-block:: text
+
+    %1: received %2 leases from %3
+
+This informational message is issued during lease database synchronization
+to indicate that a bulk of leases have been received. The first argument
+specifies the local server's name. The second argument holds the count of
+leases received. The third argument specifies the partner server name.
+
+HA_LEASE_SYNC_FAILED
+====================
+
+.. code-block:: text
+
+    %1: synchronization failed for lease: %2, reason: %3
+
+This warning message is issued when creating or updating a lease in the
+local lease database fails. The lease information in the JSON format is
+provided as a first argument. The third argument provides a reason for
+the failure.
+
+HA_LEASE_SYNC_STALE_LEASE4_SKIP
+===============================
+
+.. code-block:: text
+
+    %1: skipping stale lease %2 in subnet %3
+
+Logged at debug log level 40.
+This debug message is issued during lease database synchronization, when
+fetched IPv4 lease instance appears to be older than the instance in the
+local database. The newer instance is left in the database and the fetched
+lease is dropped. The remote server will still hold the older lease instance
+until it synchronizes its database with this server. The first argument
+specifies the local server's name. The second argument specifies leased
+address. The third argument specifies a subnet to which the lease belongs.
+
+HA_LEASE_SYNC_STALE_LEASE6_SKIP
+===============================
+
+.. code-block:: text
+
+    %1: skipping stale lease %2 in subnet %3
+
+Logged at debug log level 40.
+This debug message is issued during lease database synchronization, when
+fetched IPv6 lease instance appears to be older than the instance in the
+local database. The newer instance is left in the database and the fetched
+lease is dropped. The remote server will still hold the older lease instance
+until it synchronizes its database with this server. The first argument
+specifies the local server's name. The second argument specifies leased
+address. The second argument specifies a subnet to which the lease belongs.
+
+HA_LEASE_UPDATES_DISABLED
+=========================
+
+.. code-block:: text
+
+    %1: lease updates will not be sent to the partner while in %2 state
+
+This informational message is issued to indicate that lease updates will
+not be sent to the partner while the server is in the current state. The
+second argument specifies the server's current state name. The lease updates
+are still sent to the backup servers if they are configured but any
+possible errors in communication with the backup servers are ignored.
+
+HA_LEASE_UPDATES_ENABLED
+========================
+
+.. code-block:: text
+
+    %1: lease updates will be sent to the partner while in %2 state
+
+This informational message is issued to indicate that lease updates will
+be sent to the partner while the server is in the current state. The
+second specifies the server's current state name.
+
+HA_LEASE_UPDATE_COMMUNICATIONS_FAILED
+=====================================
+
+.. code-block:: text
+
+    %1: failed to send lease update %2 to %3: %4
+
+This warning message indicates that there was a problem in communication with a
+HA peer while processing a DHCP client query and sending lease update. The
+client's DHCP message will be dropped.
+
+HA_LEASE_UPDATE_CONFLICT
+========================
+
+.. code-block:: text
+
+    %1: lease update %2 sent to %3 returned conflict status code: %4
+
+This warning message indicates that the partner returned a conflict status code
+in response to a lease update. The client's DHCP message will be dropped.
+If the server is configured to track conflicting lease updates, it may
+eventually transition to the terminated state when the configured threshold
+is exceeded.
+
+HA_LEASE_UPDATE_CREATE_UPDATE_FAILED_ON_PEER
+============================================
+
+.. code-block:: text
+
+    %1: failed to create or update the lease having type %2 for address %3, reason: %4
+
+This informational message is issued when one of the leases failed to be
+created or updated on the HA peer while processing the lease updates sent
+from this server. This may indicate an issue with communication between
+the peer and its lease database.
+
+HA_LEASE_UPDATE_DELETE_FAILED_ON_PEER
+=====================================
+
+.. code-block:: text
+
+    %1: failed to delete the lease having type %2 for address %3, reason: %4
+
+This informational message is issued when one of the leases failed to delete
+on the HA peer while processing lease updates sent from this server. Typically,
+the lease fails to delete when it doesn't exist in the peer's database.
+
+HA_LEASE_UPDATE_FAILED
+======================
+
+.. code-block:: text
+
+    %1: lease update %2 sent to %3 failed: %4
+
+This warning message indicates that a peer returned an error status code
+in response to a lease update. The client's DHCP message will be dropped.
+
+HA_LEASE_UPDATE_REJECTS_CAUSED_TERMINATION
+==========================================
+
+.. code-block:: text
+
+    %1: too many rejected lease updates cause the HA service to terminate
+
+This error message is issued when the HA service terminates because the
+number of lease updates for which a conflict status code was returned
+by the partner exceeds the limit set with max-rejected-lease-updates
+configuration parameter.
+
+HA_LOAD_BALANCING_DUID_MISSING
+==============================
+
+.. code-block:: text
+
+    %1: load balancing failed for the DHCPv6 message (transaction id: %2) because DUID is missing
+
+Logged at debug log level 40.
+This debug message is issued when the HA hook library was unable to load
+balance an incoming DHCPv6 query because neither client identifier nor
+HW address was included in the query. The query will be dropped. The
+sole argument contains transaction id.
+
+HA_LOAD_BALANCING_IDENTIFIER_MISSING
+====================================
+
+.. code-block:: text
+
+    %1: load balancing failed for the DHCPv4 message (transaction id: %2) because HW address and client identifier are missing
+
+Logged at debug log level 40.
+This debug message is issued when the HA hook library was unable to load
+balance an incoming DHCPv4 query because neither client identifier nor
+HW address was included in the query. The query will be dropped. The
+sole argument contains transaction id.
+
+HA_LOCAL_DHCP_DISABLE
+=====================
+
+.. code-block:: text
+
+    local DHCP service is disabled while the %1 is in the %2 state
+
+This informational message is issued to indicate that the local DHCP service
+is disabled because the server remains in a state in which the server
+should not respond to DHCP clients, e.g. the server hasn't synchronized
+its lease database. The first argument specifies server name. The second
+argument specifies server's state.
+
+HA_LOCAL_DHCP_ENABLE
+====================
+
+.. code-block:: text
+
+    local DHCP service is enabled while the %1 is in the %2 state
+
+This informational message is issued to indicate that the local DHCP service
+is enabled because the server remains in a state in which it should
+respond to the DHCP clients. The first argument specifies server name.
+The second argument specifies server's state.
+
+HA_MAINTENANCE_CANCEL_HANDLER_FAILED
+====================================
+
+.. code-block:: text
+
+    ha-maintenance-cancel command failed: %1
+
+This error message is issued to indicate that the ha-maintenance-cancel command
+handler failed while processing the command. The argument provides the reason for
+failure.
+
+HA_MAINTENANCE_NOTIFY_CANCEL_COMMUNICATIONS_FAILED
+==================================================
+
+.. code-block:: text
+
+    %1: failed to send ha-maintenance-notify to %2 in attempt to cancel its maintenance: %3
+
+This warning message indicates that there was a problem in communication with a
+HA peer while sending the ha-maintenance-notify command with the cancel flag
+set to true. The first argument provides the local server's name. The second
+argument provides the remote server's name. The third argument provides a reason
+for failure.
+
+HA_MAINTENANCE_NOTIFY_CANCEL_FAILED
+===================================
+
+.. code-block:: text
+
+    %1: error returned while processing ha-maintenance-notify by %2 in attempt to cancel its maintenance: %3
+
+This warning message indicates that a peer returned an error status code
+in response to a ha-maintenance-notify command with the cancel flag set to
+true. The first argument provides the local server's name. The second argument
+provides the remote server's name. The third argument provides a reason for
+failure.
+
+HA_MAINTENANCE_NOTIFY_COMMUNICATIONS_FAILED
+===========================================
+
+.. code-block:: text
+
+    %1: failed to send ha-maintenance-notify to %2: %3
+
+This warning message indicates that there was a problem in communication with a
+HA peer while sending the ha-maintenance-notify command. The first argument provides
+the local server's name. The second argument provides the remote server's name.
+The third argument provides a reason for failure.
+
+HA_MAINTENANCE_NOTIFY_FAILED
+============================
+
+.. code-block:: text
+
+    %1: error returned while processing ha-maintenance-notify by %2: %3
+
+This warning message indicates that a peer returned an error status code
+in response to a ha-maintenance-notify command.  The first argument provides the
+remote server's name. The second argument provides a reason for failure.
+
+HA_MAINTENANCE_NOTIFY_HANDLER_FAILED
+====================================
+
+.. code-block:: text
+
+    ha-maintenance-notify command failed: %1
+
+This error message is issued to indicate that the ha-maintenance-notify command
+handler failed while processing the command. The argument provides the reason for
+failure.
+
+HA_MAINTENANCE_SHUTDOWN_SAFE
+============================
+
+.. code-block:: text
+
+    %1: the server can now be shutdown for maintenance as the partner has taken over the DHCP traffic
+
+This informational message is displayed after the server transitions to the
+in-maintenance state. This server no longer responds to any DHCP queries and its
+partner - in partner-in-maintenance state - has taken over the DHCP traffic.
+When the server in-maintenance state is shut down, the partner moves to
+the partner-down state immediately.
+
+HA_MAINTENANCE_STARTED
+======================
+
+.. code-block:: text
+
+    %1: the server is now in the partner-in-maintenance state and the partner is in-maintenance state
+
+This informational message is displayed when the server receiving the
+ha-maintenance-start command transitions to the partner-in-maintenance
+state. The server does it after sending the ha-maintenance-notify to
+its partner to put the partner in the in-maintenance state. From now on,
+the server in the partner-in-maintenance state will be responding to all
+queries and the partner will respond to no queries. The partner may be
+safely shut down for maintenance in which case this server will
+automatically transition from the partner-in-maintenance state to the
+partner-down state.
+
+HA_MAINTENANCE_STARTED_IN_PARTNER_DOWN
+======================================
+
+.. code-block:: text
+
+    %1: the server is now in the partner-down mode as a result of requested maintenance
+
+This informational message is displayed when the server receiving the
+ha-maintenance-start command transitions to the partner-down state
+because it was unable to communicate with the partner while receiving
+the command. It is assumed that in such situation the partner is
+already offline for the maintenance. Note that in this case the
+normal failover procedure does not take place. The server does not wait
+for a heartbeat to fail several times, nor it monitors the DHCP traffic
+for not responded queries. In the maintenance case the server transitions
+to the partner-down state when it first encounters a communication
+problem with the partner.
+
+HA_MAINTENANCE_START_HANDLER_FAILED
+===================================
+
+.. code-block:: text
+
+    ha-maintenance-start command failed: %1
+
+This error message is issued to indicate that the ha-maintenance-start command
+handler failed while processing the command. The argument provides the reason for
+failure.
+
+HA_MISSING_CONFIGURATION
+========================
+
+.. code-block:: text
+
+    high-availability parameter not specified for High Availability hooks library
+
+This error message is issued to indicate that the configuration for the
+High Availability hooks library hasn't been specified. The 'high-availability'
+parameter must be specified for the hooks library to load properly.
+
+HA_PAUSE_CLIENT_LISTENER_FAILED
+===============================
+
+.. code-block:: text
+
+    %1: pausing multi-threaded HTTP processing failed: %2
+
+This error message is emitted when attempting to pause HA's HTTP client and
+listener threads. This error is highly unlikely and indicates a programmatic
+issue that should be reported as a defect.
+
+HA_PAUSE_CLIENT_LISTENER_ILLEGAL
+================================
+
+.. code-block:: text
+
+    %1: pausing multi-threaded HTTP processing failed: %2
+
+This error message is emitted when attempting to pause HA's HTTP client or
+listener thread pools from a worker thread. This error indicates that a command
+run on the listener threads is trying to use a critical section which would
+result in a dead-lock.
+
+HA_RESET_COMMUNICATIONS_FAILED
+==============================
+
+.. code-block:: text
+
+    %1: failed to send ha-reset command to %2: %3
+
+This warning message indicates a problem with communication with a HA peer
+while sending the ha-reset command. The first argument specifies the local
+server name. The second argument specifies a remote server name. The third
+argument specifies a reason for failure.
+
+HA_RESET_FAILED
+===============
+
+.. code-block:: text
+
+    %1: failed to reset HA state machine of %2: %3
+
+This warning message indicates that a peer returned an error status code
+in response to the ha-reset command. The first argument specifies a local
+server name. The second argument specifies a remote server name. The third
+argument specifies a reason for failure.
+
+HA_RESET_HANDLER_FAILED
+=======================
+
+.. code-block:: text
+
+    ha-reset command failed: %1
+
+This error message is issued to indicate that the ha-reset command handler
+failed while processing the command. The argument provides the reason for
+failure.
+
+HA_RESUME_CLIENT_LISTENER_FAILED
+================================
+
+.. code-block:: text
+
+    %1: resuming multi-threaded HTTP processing failed: %2
+
+This error message is emitted when attempting to resume HA's HTTP client and
+listener threads. This error is highly unlikely and indicates a programmatic
+issue that should be reported as a defect.
+
+HA_SCOPES_HANDLER_FAILED
+========================
+
+.. code-block:: text
+
+    ha-scopes command failed: %1
+
+This error message is issued to indicate that the ha-scopes command handler
+failed while processing the command. The argument provides reason for
+the failure.
+
+HA_SERVICE_STARTED
+==================
+
+.. code-block:: text
+
+    %1: started high availability service in %2 mode as %3 server
+
+This informational message is issued when the HA service is started as a result
+of server startup or reconfiguration. The first argument specifies a local server
+name. The second argument provides the HA mode. The third argument specifies the
+role of this server instance in this configuration.
+
+HA_STATE_MACHINE_CONTINUED
+==========================
+
+.. code-block:: text
+
+    %1: state machine is un-paused
+
+This informational message is issued when the HA state machine is un-paused.
+This unlocks the server from the current state. It may transition to any
+other state if it needs to do so, e.g. 'partner-down' if its partner appears
+to be offline. The server may also remain in the current state if the HA
+setup state warrants such behavior.
+
+HA_STATE_MACHINE_PAUSED
+=======================
+
+.. code-block:: text
+
+    %1: state machine paused in state %2
+
+This informational message is issued when the HA state machine is paused.
+HA state machine may be paused in certain states specified in the HA hooks library
+configuration. When the state machine is paused, the server remains in the given
+state until it is explicitly unpaused (via the ha-continue command). If the state
+machine is paused, the server operates normally but cannot transition to any
+other state.
+
+HA_STATE_TRANSITION
+===================
+
+.. code-block:: text
+
+    %1: server transitions from %2 to %3 state, partner state is %4
+
+This informational message is issued when the server transitions to a new
+state as a result of some interaction (or lack of thereof) with its partner.
+The arguments specify local server name, initial server state, new server state
+and the partner's state.
+
+HA_STATE_TRANSITION_PASSIVE_BACKUP
+==================================
+
+.. code-block:: text
+
+    %1: server transitions from %2 to %3 state
+
+This informational message is issued when the server in passive-backup
+mode transitions to a new state. The arguments specify local server name, initial
+server state and a new server state.
+
+HA_SUBNET4_SELECT_FAILED
+========================
+
+.. code-block:: text
+
+    subnet4_select callout failed: %1
+
+This error message is issued when the callout for the subnet4_select hook
+point failed. This may occur as a result of an internal server error.
+The argument contains a reason for the error.
+
+HA_SUBNET4_SELECT_INVALID_HA_SERVER_NAME
+========================================
+
+.. code-block:: text
+
+    %1: invalid ha-server-name value for subnet %2
+
+This error message is issued when the received DHCPv4 query is dropped
+by this server because the specified ha-server-name value in the subnet's
+user-context has non-string type or is empty. It is a server's misconifguration.
+The first argument is the client identification information. The second argument
+is a subnet prefix.
+
+HA_SUBNET4_SELECT_NOT_FOR_US
+============================
+
+.. code-block:: text
+
+    %1: dropping query in relationship %2 to be processed by another server
+
+Logged at debug log level 40.
+This debug message is issued when the received DHCPv4 query is dropped
+by this server because it should be served by another server. This
+is the case when a remote primary server is operational. The first argument
+is the client identification information. The second argument is the
+relationship name.
+
+HA_SUBNET4_SELECT_NO_RELATIONSHIP_FOR_SUBNET
+============================================
+
+.. code-block:: text
+
+    %1: HA relationship not found for %2
+
+This error message is issued when the received DHCPv4 query is dropped
+by this server because the server could not find a relationship matching
+the specified ha-server-name for a subnet. The server name matches no
+relationship specified in the HA configuration. A typical reason for it
+is a typo. The first argument is the client identification information.
+The second argument is the relationship name.
+
+HA_SUBNET4_SELECT_NO_RELATIONSHIP_SELECTOR_FOR_SUBNET
+=====================================================
+
+.. code-block:: text
+
+    %1: unable to determine HA relationship because selected subnet %2 lacks the ha-server-name
+
+This error message is issued when the received DHCPv4 query is dropped
+by this server because it was unable to determine the HA relationship to
+which the received query belongs. If there are multiple relationships,
+it is required to specify ha-server-name value in the user-context at the subnet
+or shared network level for each subnet and/or shared network. The server
+uses them as a relationship selector. If these selectors are unspecified
+for any of the subnets it is a configuration error. The first argument is
+the client identification information. The second argument is a subnet
+prefix.
+
+HA_SUBNET4_SELECT_NO_SUBNET_SELECTED
+====================================
+
+.. code-block:: text
+
+    %1: unable to determine HA relationship because no subnet has been selected for the client
+
+Logged at debug log level 40.
+This debug message is issued when the received DHCPv4 query is dropped
+by this server because it could not select a subnet for this client.
+Selecting the subnet is required to find a suitable HA relationship.
+This message is not emitted when the server has only one relationship.
+The argument is the client identification information.
+
+HA_SUBNET6_SELECT_FAILED
+========================
+
+.. code-block:: text
+
+    subnet6_select callout failed: %1
+
+This error message is issued when the callout for the subnet6_select hook
+point failed. This may occur as a result of an internal server error.
+The argument contains a reason for the error.
+
+HA_SUBNET6_SELECT_INVALID_HA_SERVER_NAME
+========================================
+
+.. code-block:: text
+
+    %1: invalid ha-server-name value for subnet %2
+
+This error message is issued when the received DHCPv6 query is dropped
+by this server because the specified ha-server-name value in the subnet's
+user-context has non-string type or is empty. It is a server's misconifguration.
+The first argument is the client identification information. The second argument
+is a subnet prefix.
+
+HA_SUBNET6_SELECT_NOT_FOR_US
+============================
+
+.. code-block:: text
+
+    %1: dropping query in relationship %2 to be processed by another server
+
+Logged at debug log level 40.
+This debug message is issued when the received DHCPv6 query is dropped
+by this server because it should be served by another server. This
+is the case when a remote primary server is operational. The first argument
+is the client identification information. The second argument is the
+relationship name.
+
+HA_SUBNET6_SELECT_NO_RELATIONSHIP_FOR_SUBNET
+============================================
+
+.. code-block:: text
+
+    %1: HA relationship not found for %2
+
+This error message is issued when the received DHCPv6 query is dropped
+by this server because the server could not find a relationship matching
+the specified ha-server-name for a subnet. The server name matches no
+relationship specified in the HA configuration. A typical reason for it
+is a typo.  The first argument is the client identification information.
+The second argument is the relationship name.
+
+HA_SUBNET6_SELECT_NO_RELATIONSHIP_SELECTOR_FOR_SUBNET
+=====================================================
+
+.. code-block:: text
+
+    %1: unable to determine HA relationship because selected subnet %2 lacks the ha-server-name
+
+This error message is issued when the received DHCPv6 query is dropped
+by this server because it was unable to determine the HA relationship to
+which the received query belongs. If there are multiple relationships,
+it is required to specify ha-server-name value in the user-context at the subnet
+or shared network level for each subnet and/or shared network. The server
+uses them as a relationship selector. If these selectors are unspecified
+for any of the subnets it is a configuration error. The first argument is
+the client identification information. The second argument is a subnet
+prefix.
+
+HA_SUBNET6_SELECT_NO_SUBNET_SELECTED
+====================================
+
+.. code-block:: text
+
+    %1: unable to determine HA relationship because no subnet has been selected for the client
+
+Logged at debug log level 40.
+This debug message is issued when the received DHCPv6 query is dropped
+by this server because it could not select a subnet for this client.
+Selecting the subnet is required to find a suitable HA relationship.
+This message is not emitted when the server has only one relationship.
+The argument is the client identification information.
+
+HA_SYNC_COMPLETE_NOTIFY_COMMUNICATIONS_FAILED
+=============================================
+
+.. code-block:: text
+
+    %1: failed to send ha-sync-complete-notify to %2: %3
+
+This warning message indicates that there was a problem in communication with an
+HA peer while sending the ha-sync-complete-notify command. The first argument
+provides a local server's name. The second argument provides the remote server's
+name. The third argument provides a reason for failure.
+
+HA_SYNC_COMPLETE_NOTIFY_FAILED
+==============================
+
+.. code-block:: text
+
+    %1: error processing ha-sync-complete-notify command on %2: %3
+
+This warning message indicates that a peer returned an error status code
+in response to the ha-sync-complete-notify command. The first argument provides
+a local server's name. The second argument provides the remote server's name. The
+third argument provides a reason for failure.
+
+HA_SYNC_COMPLETE_NOTIFY_HANDLER_FAILED
+======================================
+
+.. code-block:: text
+
+    ha-sync-complete-notify command failed: %1
+
+This error message is issued to indicate that the ha-sync-complete-notify command
+handler failed while processing the command. The argument provides the reason for
+failure.
+
+HA_SYNC_FAILED
+==============
+
+.. code-block:: text
+
+    %1: lease database synchronization with %2 failed: %3
+
+This error message is issued to indicate that the lease database synchronization
+failed. The first argument provides the local server's name.  The second argument
+provides the partner server's name. The third argument provides a reason for the
+failure.
+
+HA_SYNC_HANDLER_FAILED
+======================
+
+.. code-block:: text
+
+    ha-sync command failed: %1
+
+This error message is issued to indicate that the ha-sync command handler
+failed while processing the command. The argument provides the reason for
+failure.
+
+HA_SYNC_START
+=============
+
+.. code-block:: text
+
+    %1: starting lease database synchronization with %2
+
+This informational message is issued when the server starts lease database
+synchronization with a partner. The arguments specify the local and remote
+server names.
+
+HA_SYNC_SUCCESSFUL
+==================
+
+.. code-block:: text
+
+    %1: lease database synchronization with %2 completed successfully in %3
+
+This informational message is issued when the server successfully completed
+lease database synchronization with the partner. The first argument specifies
+local server name. The second argument specifies the name of the partner server.
+The third argument specifies the duration of the synchronization.
+
+HA_TERMINATED
+=============
+
+.. code-block:: text
+
+    HA %1: service terminated due to an unrecoverable condition. Check previous error message(s), address the problem and restart!
+
+This error message is issued to indicate that the HA service has been stopped
+due to an unacceptable condition (e.g. too large of a clock skew). The exact
+cause should appear in a previous error message.  Address the condition
+reported then restart the servers to resume service.
+
+HA_TERMINATED_PARTNER_DID_NOT_RESTART
+=====================================
+
+.. code-block:: text
+
+    %1: service is terminating because the terminated partner was not restarted within %2 minutes
+
+This warning message is issued to indicate that the HA service is terminating
+because partner server is in the terminated state and was not restarted within
+an expected time frame. The terminated servers should be restarted after correcting
+the problem that caused the termination. They can be restarted sequentially but the
+duration between the restarts should not be too long. If it is long it may mean that
+the restart of one of the servers was unintentional (e.g., power outage). If the
+restarted server remains in the waiting state it cannot serve DHCP clients. Moving
+to the terminated state at least allows for responding to the DHCP traffic.
+
+*****
+HOOKS
+*****
+
+HOOKS_ALL_CALLOUTS_DEREGISTERED
+===============================
+
+.. code-block:: text
+
+    hook library at index %1 removed all callouts on hook %2
+
+Logged at debug log level 55.
+A debug message issued when all callouts on the specified hook registered
+by the library with the given index were removed.  This is similar to
+the HOOKS_CALLOUTS_REMOVED message (and the two are likely to be seen
+together), but is issued at a lower-level in the hook framework.
+
+HOOKS_CALLOUTS_BEGIN
+====================
+
+.. code-block:: text
+
+    begin all callouts for hook %1
+
+Logged at debug log level 45.
+This debug message is issued when callout manager begins to invoke callouts
+for the hook. The argument specifies the hook name.
+
+HOOKS_CALLOUTS_COMPLETE
+=======================
+
+.. code-block:: text
+
+    completed callouts for hook %1 (total callouts duration: %2)
+
+Logged at debug log level 45.
+This debug message is issued when callout manager has completed execution
+of all callouts for the particular hook. The arguments specify the hook
+name and total execution time for all callouts in milliseconds.
+
+HOOKS_CALLOUTS_REMOVED
+======================
+
+.. code-block:: text
+
+    callouts removed from hook %1 for library %2
+
+Logged at debug log level 45.
+This is a debug message issued during library unloading.  It notes that
+one of more callouts registered by that library have been removed from
+the specified hook.  This is similar to the HOOKS_DEREGISTER_ALL_CALLOUTS
+message (and the two are likely to be seen together), but is issued at a
+higher-level in the hook framework.
+
+HOOKS_CALLOUT_CALLED
+====================
+
+.. code-block:: text
+
+    hooks library with index %1 has called a callout on hook %2 that has address %3 (callout duration: %4)
+
+Logged at debug log level 55.
+Only output at a high debugging level, this message indicates that
+a callout on the named hook registered by the library with the given
+index (in the list of loaded libraries) has been called and returned a
+success state.  The address of the callout is given in the message.
+The message includes the callout execution time in milliseconds.
+
+HOOKS_CALLOUT_DEREGISTERED
+==========================
+
+.. code-block:: text
+
+    hook library at index %1 deregistered a callout on hook %2
+
+Logged at debug log level 55.
+A debug message issued when all instances of a particular callouts on
+the hook identified in the message that were registered by the library
+with the given index have been removed.
+
+HOOKS_CALLOUT_ERROR
+===================
+
+.. code-block:: text
+
+    error returned by callout on hook %1 registered by library with index %2 (callout address %3) (callout duration %4)
+
+If a callout returns an error status when called, this error message
+is issued.  It identifies the hook to which the callout is attached, the
+index of the library (in the list of loaded libraries) that registered
+it and the address of the callout.  The error is otherwise ignored.
+The error message includes the callout execution time in milliseconds.
+
+HOOKS_CALLOUT_EXCEPTION
+=======================
+
+.. code-block:: text
+
+    exception thrown by callout on hook %1 registered by library with index %2 (callout address %3): %4 (callout duration: %5)
+
+If a callout throws an exception when called, this error message is
+issued.  It identifies the hook to which the callout is attached, the
+index of the library (in the list of loaded libraries) that registered
+it and the address of the callout.  The error is otherwise ignored.
+The error message includes the callout execution time in milliseconds.
+
+HOOKS_CALLOUT_REGISTRATION
+==========================
+
+.. code-block:: text
+
+    hooks library with index %1 registering callout for hook '%2'
+
+Logged at debug log level 45.
+This is a debug message, output when a library (whose index in the list
+of libraries (being) loaded is given) registers a callout.
+
+HOOKS_CLOSE_ERROR
+=================
+
+.. code-block:: text
+
+    failed to close hook library %1: %2
+
+Kea has failed to close the named hook library for the stated reason.
+Although this is an error, this should not affect the running system
+other than as a loss of resources.  If this error persists, you should
+restart Kea.
+
+HOOKS_HOOK_LIST_RESET
+=====================
+
+.. code-block:: text
+
+    the list of hooks has been reset
+
+This is a message indicating that the list of hooks has been reset.
+While this is usual when running the Kea test suite, it should not be
+seen when running Kea in a production environment.  If this appears,
+please report a bug through the usual channels.
+
+HOOKS_INCORRECT_VERSION
+=======================
+
+.. code-block:: text
+
+    hook library %1 is at version %2, require version %3
+
+Kea has detected that the named hook library has been built against
+a version of Kea that is incompatible with the version of Kea
+running on your system.  It has not loaded the library.
+This is most likely due to the installation of a new version of Kea
+without rebuilding the hook library.  A rebuild and re-install of the
+library should fix the problem in most cases.
+
+HOOKS_LIBRARY_CLOSED
+====================
+
+.. code-block:: text
+
+    hooks library %1 successfully closed
+
+This information message is issued when a user-supplied hooks library
+has been successfully closed.
+
+HOOKS_LIBRARY_LOADED
+====================
+
+.. code-block:: text
+
+    hooks library %1 successfully loaded
+
+This information message is issued when a user-supplied hooks library
+has been successfully loaded.
+
+HOOKS_LIBRARY_LOADING
+=====================
+
+.. code-block:: text
+
+    loading hooks library %1
+
+Logged at debug log level 40.
+This is a debug message output just before the specified library is loaded.
+If the action is successfully, it will be followed by the
+HOOKS_LIBRARY_LOADED informational message.
+
+HOOKS_LIBRARY_MULTI_THREADING_COMPATIBLE
+========================================
+
+.. code-block:: text
+
+    hooks library %1 reports its multi-threading compatibility as %2
+
+Logged at debug log level 45.
+A debug message issued when the "multi_threading_compatible" function was
+called. The returned value (0 means not compatible, others compatible)
+is displayed.
+
+HOOKS_LIBRARY_MULTI_THREADING_NOT_COMPATIBLE
+============================================
+
+.. code-block:: text
+
+    hooks library %1 is not compatible with multi-threading
+
+When multi-threading is enabled and the library is not compatible (either
+because the "multi_threading_compatible" function returned 0 or was not
+implemented) this error message is issued. The library must be removed
+from the configuration or the multi-threading disabled.
+
+HOOKS_LIBRARY_UNLOADED
+======================
+
+.. code-block:: text
+
+    hooks library %1 successfully unloaded
+
+This information message is issued when a user-supplied hooks library
+has been successfully unloaded.
+
+HOOKS_LIBRARY_UNLOADING
+=======================
+
+.. code-block:: text
+
+    unloading library %1
+
+Logged at debug log level 40.
+This is a debug message called when the specified library is
+being unloaded.  If all is successful, it will be followed by the
+HOOKS_LIBRARY_UNLOADED informational message.
+
+HOOKS_LIBRARY_VERSION
+=====================
+
+.. code-block:: text
+
+    hooks library %1 reports its version as %2
+
+Logged at debug log level 45.
+A debug  message issued when the version check on the hooks library
+has succeeded.
+
+HOOKS_LOAD_ERROR
+================
+
+.. code-block:: text
+
+    'load' function in hook library %1 returned error %2
+
+A "load" function was found in the library named in the message and
+was called.  The function returned a non-zero status (also given in
+the message) which was interpreted as an error.  The library has been
+unloaded and no callouts from it will be installed.
+
+HOOKS_LOAD_EXCEPTION
+====================
+
+.. code-block:: text
+
+    'load' function in hook library %1 threw an exception
+
+A "load" function was found in the library named in the message and
+was called.  The function threw an exception (an error indication)
+during execution, which is an error condition.  The library has been
+unloaded and no callouts from it will be installed.
+
+HOOKS_LOAD_FRAMEWORK_EXCEPTION
+==============================
+
+.. code-block:: text
+
+    'load' function in hook library %1 threw an exception: reason %2
+
+A "load" function was found in the library named in the message and
+was called.  Either the hooks framework or the function threw an
+exception (an error indication) during execution, which is an error
+condition; the cause of the exception is recorded in the message.
+The library has been unloaded and no callouts from it will be
+installed.
+
+HOOKS_LOAD_SUCCESS
+==================
+
+.. code-block:: text
+
+    'load' function in hook library %1 returned success
+
+Logged at debug log level 40.
+This is a debug message issued when the "load" function has been found
+in a hook library and has been successfully called.
+
+HOOKS_MULTI_THREADING_COMPATIBLE_EXCEPTION
+==========================================
+
+.. code-block:: text
+
+    'multi_threading_compatible' function in hook library %1 threw an exception
+
+This error message is issued if the multi_threading_compatible()
+function in the specified hooks library was called and generated an
+exception.  The library is considered unusable and will not be loaded.
+
+HOOKS_NO_LOAD
+=============
+
+.. code-block:: text
+
+    no 'load' function found in hook library %1
+
+Logged at debug log level 40.
+This is a debug message saying that the specified library was loaded
+but no function called "load" was found in it.  Providing the library
+contained some "standard" functions (i.e. functions with the names of
+the hooks for the given server), this is not an issue.
+
+HOOKS_NO_UNLOAD
+===============
+
+.. code-block:: text
+
+    no 'unload' function found in hook library %1
+
+Logged at debug log level 40.
+This is a debug message issued when the library is being unloaded.
+It merely states that the library did not contain an "unload" function.
+
+HOOKS_NO_VERSION
+================
+
+.. code-block:: text
+
+    no 'version' function found in hook library %1
+
+The shared library named in the message was found and successfully loaded,
+but Kea did not find a function named "version" in it.  This function
+is required and should return the version of Kea against which the
+library was built.  The value is used to check that the library was built
+against a compatible version of Kea.  The library has not been loaded.
+
+HOOKS_OPEN_ERROR
+================
+
+.. code-block:: text
+
+    failed to open hook library %1: %2
+
+Kea failed to open the specified hook library for the stated
+reason. The library has not been loaded.  Kea will continue to
+function, but without the services offered by the library.
+
+HOOKS_STD_CALLOUT_REGISTERED
+============================
+
+.. code-block:: text
+
+    hooks library %1 registered standard callout for hook %2 at address %3
+
+Logged at debug log level 45.
+This is a debug message, output when the library loading function has
+located a standard callout (a callout with the same name as a hook point)
+and registered it.  The address of the callout is indicated.
+
+HOOKS_UNLOAD_ERROR
+==================
+
+.. code-block:: text
+
+    'unload' function in hook library %1 returned error %2
+
+During the unloading of a library, an "unload" function was found.
+It was called, but returned an error (non-zero) status, resulting in
+the issuing of this message.  The unload process continued after this
+message and the library has been unloaded.
+
+HOOKS_UNLOAD_EXCEPTION
+======================
+
+.. code-block:: text
+
+    'unload' function in hook library %1 threw an exception
+
+During the unloading of a library, an "unload" function was found.  It was
+called, but in the process generated an exception (an error indication).
+The unload process continued after this message and the library has
+been unloaded.
+
+HOOKS_UNLOAD_FRAMEWORK_EXCEPTION
+================================
+
+.. code-block:: text
+
+    'unload' function in hook library %1 threw an exception, reason %2
+
+During the unloading of a library, an "unload" function was found.
+It was called, but in the process either it or the hooks framework
+generated an exception (an error indication); the cause of the error
+is recorded in the message.  The unload process continued after
+this message and the library has been unloaded.
+
+HOOKS_UNLOAD_SUCCESS
+====================
+
+.. code-block:: text
+
+    'unload' function in hook library %1 returned success
+
+Logged at debug log level 40.
+This is a debug message issued when an "unload" function has been found
+in a hook library during the unload process, called, and returned success.
+
+*****
+HOSTS
+*****
+
+HOSTS_BACKENDS_REGISTERED
+=========================
+
+.. code-block:: text
+
+    the following host backend types are available: %1
+
+This informational message lists all possible host backends that could
+be used in hosts-database[s].
+
+HOSTS_BACKEND_DEREGISTER
+========================
+
+.. code-block:: text
+
+    deregistered host backend type: %1
+
+Logged at debug log level 40.
+This debug message is issued when a backend factory was deregistered.
+It is no longer possible to use host backend of this type.
+
+HOSTS_BACKEND_REGISTER
+======================
+
+.. code-block:: text
+
+    registered host backend type: %1
+
+Logged at debug log level 40.
+This debug message is issued when a backend factory was successfully
+registered. It is now possible to use host backend of this type.
+
+HOSTS_CFG_ADD_HOST
+==================
+
+.. code-block:: text
+
+    add the host for reservations: %1
+
+Logged at debug log level 40.
+This debug message is issued when new host (with reservations) is added to
+the server's configuration. The argument describes the host and its
+reservations in detail.
+
+HOSTS_CFG_CACHE_HOST_DATA_SOURCE
+================================
+
+.. code-block:: text
+
+    get host cache data source: %1
+
+This informational message is issued when a host cache data source is
+detected by the host manager.
+
+HOSTS_CFG_CLOSE_HOST_DATA_SOURCE
+================================
+
+.. code-block:: text
+
+    Closing host data source: %1
+
+Logged at debug log level 40.
+This is a normal message being printed when the server closes host data
+source connection.
+
+HOSTS_CFG_DEL
+=============
+
+.. code-block:: text
+
+    deleted %1 host(s) having %2 IPv6 reservation(s) for subnet id %3 and address %4
+
+Logged at debug log level 40.
+This debug message is issued when reservations are deleted for the specified
+subnet and address. The first argument specifies how many hosts have been
+deleted. The second argument specifies how many reservations have been deleted.
+The third argument is the subnet identifier. The fourth argument is the IP
+address.
+
+HOSTS_CFG_DEL4
+==============
+
+.. code-block:: text
+
+    deleted %1 host(s) for subnet id %2 and identifier %3
+
+Logged at debug log level 40.
+This debug message is issued when IPv4 reservations are deleted for the specified
+subnet and identifier. The first argument specifies how many hosts have been
+deleted. The second argument is the subnet identifier. The third argument is
+the identifier.
+
+HOSTS_CFG_DEL6
+==============
+
+.. code-block:: text
+
+    deleted %1 host(s) having %2 IPv6 reservation(s) for subnet id %3 and identifier %4
+
+Logged at debug log level 40.
+This debug message is issued when IPv6 reservations are deleted for the
+specified subnet and identifier. The first argument specifies how many hosts
+have been deleted. The second argument specifies how many reservations have
+been deleted. The third argument is the subnet identifier. The fourth argument
+is the identifier.
+
+HOSTS_CFG_DEL_ALL_SUBNET4
+=========================
+
+.. code-block:: text
+
+    deleted all %1 host(s) for subnet id %2
+
+Logged at debug log level 40.
+This debug message is issued when all IPv4 reservations are deleted for
+the specified subnet. The first argument specifies how many reservations
+have been deleted. The second argument is the subnet identifier.
+
+HOSTS_CFG_DEL_ALL_SUBNET6
+=========================
+
+.. code-block:: text
+
+    deleted all %1 host(s) having %2 IPv6 reservation(s) for subnet id %3
+
+Logged at debug log level 40.
+This debug message is issued when all IPv6 reservations are deleted for
+the specified subnet. The first argument specifies how many hosts
+have been deleted. The second argument specifies how many IPv6
+(addresses and prefixes) reservations have been deleted. The third argument is
+the subnet identifier.
+
+HOSTS_CFG_GET_ALL
+=================
+
+.. code-block:: text
+
+    get all hosts with reservations
+
+Logged at debug log level 45.
+This debug message is issued when starting to retrieve all hosts.
+
+HOSTS_CFG_GET_ALL_ADDRESS4
+==========================
+
+.. code-block:: text
+
+    get all hosts with reservations for IPv4 address %1
+
+Logged at debug log level 45.
+This debug message is issued when starting to retrieve all hosts, holding the
+reservation for the specific IPv4 address, from the configuration. The
+argument specifies the IPv4 address used to search the hosts.
+
+HOSTS_CFG_GET_ALL_ADDRESS4_COUNT
+================================
+
+.. code-block:: text
+
+    using address %1, found %2 host(s)
+
+Logged at debug log level 45.
+This debug message logs the number of hosts found using the specified
+IPv4 address. The arguments specify the IPv4 address used and the number
+of hosts found respectively.
+
+HOSTS_CFG_GET_ALL_ADDRESS4_HOST
+===============================
+
+.. code-block:: text
+
+    using address %1 found host: %2
+
+Logged at debug log level 55.
+This debug message is issued when found host with the reservation
+for the specified IPv4 address. The arguments specify the IPv4 address
+and the detailed description of the host found.
+
+HOSTS_CFG_GET_ALL_ADDRESS6
+==========================
+
+.. code-block:: text
+
+    get all hosts with reservations for IPv6 address %1
+
+Logged at debug log level 45.
+This debug message is issued when starting to retrieve all hosts, holding the
+reservation for the specific IPv6 address, from the configuration.
+The argument specifies the IPv6 address used to search the hosts.
+
+HOSTS_CFG_GET_ALL_ADDRESS6_COUNT
+================================
+
+.. code-block:: text
+
+    using address %1, found %2 host(s)
+
+Logged at debug log level 45.
+This debug message logs the number of hosts found using the specified
+IPv6 address. The arguments specify the IPv6 address used and the number
+of hosts found respectively.
+
+HOSTS_CFG_GET_ALL_ADDRESS6_HOST
+===============================
+
+.. code-block:: text
+
+    using address %1 found host: %2
+
+Logged at debug log level 55.
+This debug message is issued when found host with the reservation
+for the specified IPv6 address. The arguments specify the IPv6 address
+and the detailed description of the host found.
+
+HOSTS_CFG_GET_ALL_COUNT
+=======================
+
+.. code-block:: text
+
+    found %1 host(s)
+
+Logged at debug log level 45.
+This debug message include the details of the host found. The argument
+specifies the number of hosts found.
+
+HOSTS_CFG_GET_ALL_HOST
+======================
+
+.. code-block:: text
+
+    found host: %1
+
+Logged at debug log level 45.
+This debug message includes the details of the host found. The argument
+specifies found host details.
+
+HOSTS_CFG_GET_ALL_HOSTNAME
+==========================
+
+.. code-block:: text
+
+    get all hosts with reservations for hostname %1
+
+Logged at debug log level 45.
+This debug message is issued when starting to retrieve all hosts with
+the specific hostname. The argument specifies hostname.
+
+HOSTS_CFG_GET_ALL_HOSTNAME_COUNT
+================================
+
+.. code-block:: text
+
+    using hostname %1, found %2 host(s)
+
+Logged at debug log level 45.
+This debug message include the details of the host found using the
+hostname. The arguments specify hostname and the number of hosts found
+respectively.
+
+HOSTS_CFG_GET_ALL_HOSTNAME_HOST
+===============================
+
+.. code-block:: text
+
+    using hostname %1, found host: %2
+
+Logged at debug log level 55.
+This debug message includes the details of the host found using the hostname.
+The arguments specify hostname and found host details respectively.
+
+HOSTS_CFG_GET_ALL_HOSTNAME_SUBNET_ID4
+=====================================
+
+.. code-block:: text
+
+    get all hosts with reservations for hostname %1 and IPv4 subnet %2
+
+Logged at debug log level 45.
+This debug message is issued when starting to retrieve all hosts with
+the specific hostname connected to the specific DHCPv4 subnet. The argument
+specifies hostname and subnet id.
+
+HOSTS_CFG_GET_ALL_HOSTNAME_SUBNET_ID4_COUNT
+===========================================
+
+.. code-block:: text
+
+    using hostname %1 and IPv4 subnet %2, found %3 host(s)
+
+Logged at debug log level 45.
+This debug message include the details of the host found using the
+hostname and the DHCPv4 subnet id. The arguments specify hostname,
+subnet id and the number of hosts found respectively.
+
+HOSTS_CFG_GET_ALL_HOSTNAME_SUBNET_ID4_HOST
+==========================================
+
+.. code-block:: text
+
+    using hostname %1 and IPv4 subnet %2, found host: %3
+
+Logged at debug log level 55.
+This debug message includes the details of the host found using the
+hostname and the DHCPv4 subnet id. The arguments specify hostname,
+subnet id and found host details respectively.
+
+HOSTS_CFG_GET_ALL_HOSTNAME_SUBNET_ID6
+=====================================
+
+.. code-block:: text
+
+    get all hosts with reservations for hostname %1 and IPv6 subnet %2
+
+Logged at debug log level 45.
+This debug message is issued when starting to retrieve all hosts with
+the specific hostname connected to the specific DHCPv6 subnet. The argument
+specifies hostname and subnet id.
+
+HOSTS_CFG_GET_ALL_HOSTNAME_SUBNET_ID6_COUNT
+===========================================
+
+.. code-block:: text
+
+    using hostname %1 and IPv6 subnet %2, found %3 host(s)
+
+Logged at debug log level 45.
+This debug message include the details of the host found using the
+hostname and the DHCPv6 subnet id. The arguments specify hostname,
+subnet id and the number of hosts found respectively.
+
+HOSTS_CFG_GET_ALL_HOSTNAME_SUBNET_ID6_HOST
+==========================================
+
+.. code-block:: text
+
+    using hostname %1 and IPv6 subnet %2, found host: %3
+
+Logged at debug log level 55.
+This debug message includes the details of the host found using the
+hostname and the DHCPv6 subnet id. The arguments specify hostname,
+subnet id and found host details respectively.
+
+HOSTS_CFG_GET_ALL_IDENTIFIER
+============================
+
+.. code-block:: text
+
+    get all hosts with reservations using identifier: %1
+
+Logged at debug log level 45.
+This debug message is issued when starting to retrieve reservations for all hosts
+identified by HW address or DUID. The argument holds both the identifier
+type and the value.
+
+HOSTS_CFG_GET_ALL_IDENTIFIER_COUNT
+==================================
+
+.. code-block:: text
+
+    using identifier %1, found %2 host(s)
+
+Logged at debug log level 45.
+This debug message logs the number of hosts found using the specified
+identifier. The arguments specify the identifier used and the number
+of hosts found respectively.
+
+HOSTS_CFG_GET_ALL_IDENTIFIER_HOST
+=================================
+
+.. code-block:: text
+
+    using identifier: %1, found host: %2
+
+Logged at debug log level 55.
+This debug message is issued when found host identified by the specific
+identifier. The arguments specify the identifier and the detailed
+description of the host found.
+
+HOSTS_CFG_GET_ALL_SUBNET_ID4
+============================
+
+.. code-block:: text
+
+    get all hosts with reservations for IPv4 subnet %1
+
+Logged at debug log level 45.
+This debug message is issued when starting to retrieve all hosts connected to
+the specific DHCPv4 subnet. The argument specifies subnet id.
+
+HOSTS_CFG_GET_ALL_SUBNET_ID4_COUNT
+==================================
+
+.. code-block:: text
+
+    using IPv4 subnet %1, found %2 host(s)
+
+Logged at debug log level 45.
+This debug message include the details of the host found using the DHCPv4
+subnet id. The arguments specify subnet id and the number of hosts found
+respectively.
+
+HOSTS_CFG_GET_ALL_SUBNET_ID4_HOST
+=================================
+
+.. code-block:: text
+
+    using IPv4 subnet %1, found host: %2
+
+Logged at debug log level 55.
+This debug message includes the details of the host found using the DHCPv4
+subnet id. The arguments specify subnet id and found host details respectively.
+
+HOSTS_CFG_GET_ALL_SUBNET_ID6
+============================
+
+.. code-block:: text
+
+    get all hosts with reservations for IPv6 subnet %1
+
+Logged at debug log level 45.
+This debug message is issued when starting to retrieve all hosts connected to
+the specific DHCPv6 subnet. The argument specifies subnet id.
+
+HOSTS_CFG_GET_ALL_SUBNET_ID6_COUNT
+==================================
+
+.. code-block:: text
+
+    using IPv6 subnet %1, found %2 host(s)
+
+Logged at debug log level 45.
+This debug message include the details of the host found using the DHCPv6
+subnet id. The arguments specify subnet id and the number of hosts found
+respectively.
+
+HOSTS_CFG_GET_ALL_SUBNET_ID6_HOST
+=================================
+
+.. code-block:: text
+
+    using IPv6 subnet %1, found host: %2
+
+Logged at debug log level 55.
+This debug message includes the details of the host found using the DHCPv6
+subnet id. The arguments specify subnet id and found host details respectively.
+
+HOSTS_CFG_GET_ALL_SUBNET_ID_ADDRESS4
+====================================
+
+.. code-block:: text
+
+    get all hosts with reservations for subnet id %1 and IPv4 address %2
+
+Logged at debug log level 45.
+This debug message is issued when starting to retrieve all hosts having
+the reservation for the given IPv4 address within the given subnet. The
+first argument specifies subnet identifier. The second argument specifies
+the IPv4 address for which the reservation is to be returned.
+
+HOSTS_CFG_GET_ALL_SUBNET_ID_ADDRESS4_COUNT
+==========================================
+
+.. code-block:: text
+
+    using IPv4 subnet %1 and IPv4 address %2, found %3 host(s)
+
+Logged at debug log level 45.
+This debug message logs the number of hosts found having the reservation
+for the specified IPv4 address within the specified subnet. The first
+argument specifies the subnet identifier. The second argument specifies
+the reserved IPv4 address. The third argument specifies the number of
+hosts found.
+
+HOSTS_CFG_GET_ALL_SUBNET_ID_ADDRESS4_HOST
+=========================================
+
+.. code-block:: text
+
+    using IPv4 subnet %1 and IPv4 address %2, found host: %3
+
+Logged at debug log level 55.
+This debug message is issued when found host having the reservation for
+the specified IPv4 address in the specified subnet.  The first argument
+specifies the subnet identifier. The second argument specifies the reserved
+IPv4 address. The third argument specifies host details.
+
+HOSTS_CFG_GET_ALL_SUBNET_ID_ADDRESS6
+====================================
+
+.. code-block:: text
+
+    get all hosts with reservations for subnet id %1 and IPv6 address %2
+
+Logged at debug log level 45.
+This debug message is issued when starting to retrieve all hosts connected to
+the specific subnet and having the specific IPv6 address reserved.
+The arguments specify subnet id and IPv6 address respectively.
+
+HOSTS_CFG_GET_ALL_SUBNET_ID_ADDRESS6_COUNT
+==========================================
+
+.. code-block:: text
+
+    using subnet id %1 and address %2, found %3 host(s)
+
+Logged at debug log level 45.
+This debug message include the details of the host found using the
+subnet id and address. The arguments specify subnet id, address and
+the number of hosts found respectively.
+
+HOSTS_CFG_GET_ALL_SUBNET_ID_ADDRESS6_HOST
+=========================================
+
+.. code-block:: text
+
+    using subnet id %1 and address %2, found host: %3
+
+Logged at debug log level 55.
+This debug message includes the details of the host found using the
+subnet id and address. The arguments specify subnet id, address and
+the number of hosts found respectively.
+found host details respectively.
+
+HOSTS_CFG_GET_ONE_PREFIX
+========================
+
+.. code-block:: text
+
+    get one host with reservation for prefix %1/%2
+
+Logged at debug log level 40.
+This debug message is issued when starting to retrieve a host having a
+reservation for a specified prefix. The arguments specify a prefix and
+prefix length.
+
+HOSTS_CFG_GET_ONE_PREFIX_HOST
+=============================
+
+.. code-block:: text
+
+    using prefix %1/%2, found host: %3
+
+Logged at debug log level 55.
+This debug message includes the details of the host found using the
+specific prefix/prefix length. The arguments specify prefix, prefix
+length and host details respectively.
+
+HOSTS_CFG_GET_ONE_PREFIX_NULL
+=============================
+
+.. code-block:: text
+
+    host not found using prefix %1/%2
+
+Logged at debug log level 55.
+This debug message is issued when no host was found for a specified
+prefix and prefix length.
+
+HOSTS_CFG_GET_ONE_SUBNET_ID_ADDRESS4
+====================================
+
+.. code-block:: text
+
+    get one host with reservation for subnet id %1 and IPv4 address %2
+
+Logged at debug log level 45.
+This debug message is issued when starting to retrieve a host connected to the
+specific subnet and having the specific IPv4 address reserved. The
+arguments specify subnet id and IPv4 address respectively.
+
+HOSTS_CFG_GET_ONE_SUBNET_ID_ADDRESS4_HOST
+=========================================
+
+.. code-block:: text
+
+    using subnet id %1 and address %2, found host: %3
+
+Logged at debug log level 45.
+This debug message logs the details of the host found using the
+subnet id and IPv4 address.
+
+HOSTS_CFG_GET_ONE_SUBNET_ID_ADDRESS4_NULL
+=========================================
+
+.. code-block:: text
+
+    host not found using subnet id %1 and address %2
+
+Logged at debug log level 45.
+This debug message is issued when no host was found for the specified
+subnet id and IPv4 address.
+
+HOSTS_CFG_GET_ONE_SUBNET_ID_ADDRESS6
+====================================
+
+.. code-block:: text
+
+    get one host with reservation for subnet id %1 and having IPv6 address %2
+
+Logged at debug log level 45.
+This debug message is issued when starting to retrieve a host connected to the
+specific subnet and having the specific IPv6 address reserved. The
+arguments specify subnet id and IPv6 address respectively.
+
+HOSTS_CFG_GET_ONE_SUBNET_ID_ADDRESS6_HOST
+=========================================
+
+.. code-block:: text
+
+    using subnet id %1 and address %2, found host: %3
+
+Logged at debug log level 45.
+This debug message logs the details of the host found using the
+subnet id and IPv6 address.
+
+HOSTS_CFG_GET_ONE_SUBNET_ID_ADDRESS6_NULL
+=========================================
+
+.. code-block:: text
+
+    host not found using subnet id %1 and address %2
+
+Logged at debug log level 45.
+This debug message is issued when no host was found using the specified
+subnet if and IPv6 address.
+
+HOSTS_CFG_GET_ONE_SUBNET_ID_IDENTIFIER
+======================================
+
+.. code-block:: text
+
+    get one host with %1 reservation for subnet id %2, identified by %3
+
+Logged at debug log level 45.
+This debug message is issued when starting to retrieve a host holding
+IPv4 or IPv6 reservations, which is connected to a specific subnet and
+is identified by a specific unique identifier. The first argument
+identifies if the IPv4 or IPv6 reservation is desired.
+
+HOSTS_CFG_GET_ONE_SUBNET_ID_IDENTIFIER_HOST
+===========================================
+
+.. code-block:: text
+
+    using subnet id %1 and identifier %2, found host: %3
+
+Logged at debug log level 45.
+This debug message includes the details of a host found using a
+subnet id and specific host identifier.
+
+HOSTS_CFG_GET_ONE_SUBNET_ID_IDENTIFIER_NULL
+===========================================
+
+.. code-block:: text
+
+    host not found using subnet id %1 and identifier %2
+
+Logged at debug log level 45.
+This debug message is issued when no host was found using the specified
+subnet id and host identifier.
+
+HOSTS_CFG_UPDATE_ADD
+====================
+
+.. code-block:: text
+
+    add the host for reservations: %1
+
+Logged at debug log level 40.
+This debug message is issued when a new host (with reservations) is
+added to the server's configuration during an update. The argument
+describes the host and its reservations in detail.
+
+HOSTS_CFG_UPDATE_DEL4
+=====================
+
+.. code-block:: text
+
+    deleted %1 host(s) for subnet id %2 and identifier %3
+
+Logged at debug log level 40.
+This debug message is issued when IPv4 reservations are deleted for
+the specified subnet and identifier during an update. The first
+argument specifies how many hosts have been deleted. The second
+argument is the subnet identifier. The third argument is the
+identifier.
+
+HOSTS_CFG_UPDATE_DEL6
+=====================
+
+.. code-block:: text
+
+    deleted %1 host(s) having %2 IPv6 reservation(s) for subnet id %3 and identifier %4
+
+Logged at debug log level 40.
+This debug message is issued when IPv6 reservations are deleted for
+the specified subnet and identifier during an update. The first
+argument specifies how many hosts have been deleted. The second
+argument specifies how many reservations have been deleted. The third
+argument is the subnet identifier. The fourth argument is the
+identifier.
+
+HOSTS_MGR_ALTERNATE_GET4_SUBNET_ID_ADDRESS4
+===========================================
+
+.. code-block:: text
+
+    trying alternate sources for host using subnet id %1 and address %2
+
+Logged at debug log level 40.
+This debug message is issued when the Host Manager doesn't find the
+host connected to the specific subnet and having the reservation for
+the specific IPv4 address, and it is starting to search for this host
+in alternate host data sources.
+
+HOSTS_MGR_ALTERNATE_GET4_SUBNET_ID_IDENTIFIER
+=============================================
+
+.. code-block:: text
+
+    get one host with IPv4 reservation for subnet id %1, identified by %2
+
+Logged at debug log level 45.
+This debug message is issued when starting to retrieve a host holding
+IPv4 reservation, which is connected to a specific subnet and
+is identified by a specific unique identifier.
+
+HOSTS_MGR_ALTERNATE_GET4_SUBNET_ID_IDENTIFIER_HOST
+==================================================
+
+.. code-block:: text
+
+    using subnet id %1 and identifier %2, found in %3 host: %4
+
+Logged at debug log level 45.
+This debug message includes the details of a host returned by an
+alternate hosts data source using a subnet id and specific host
+identifier.
+
+HOSTS_MGR_ALTERNATE_GET4_SUBNET_ID_IDENTIFIER_NULL
+==================================================
+
+.. code-block:: text
+
+    host not found using subnet id %1 and identifier %2
+
+Logged at debug log level 45.
+This debug message is issued when no host was found using the specified
+subnet id and host identifier.
+
+HOSTS_MGR_ALTERNATE_GET6_PREFIX
+===============================
+
+.. code-block:: text
+
+    trying alternate sources for host using prefix %1/%2
+
+Logged at debug log level 40.
+This debug message is issued when the Host Manager doesn't find the
+host connected to the specific subnet and having the reservation for
+the specified prefix, and it is starting to search for this host in
+alternate host data sources.
+
+HOSTS_MGR_ALTERNATE_GET6_SUBNET_ID_ADDRESS6
+===========================================
+
+.. code-block:: text
+
+    trying alternate sources for host using subnet id %1 and IPv6 address %2
+
+Logged at debug log level 40.
+This debug message is issued when the Host Manager doesn't find the
+host connected to the specific subnet and having the reservation for
+the specified IPv6 address, and it is starting to search for this
+host in alternate host data sources.
+
+HOSTS_MGR_ALTERNATE_GET6_SUBNET_ID_IDENTIFIER
+=============================================
+
+.. code-block:: text
+
+    get one host with IPv6 reservation for subnet id %1, identified by %2
+
+Logged at debug log level 45.
+This debug message is issued when starting to retrieve a host holding
+IPv4 reservation, which is connected to a specific subnet and
+is identified by a specific unique identifier.
+
+HOSTS_MGR_ALTERNATE_GET6_SUBNET_ID_IDENTIFIER_HOST
+==================================================
+
+.. code-block:: text
+
+    using subnet id %1 and identifier %2, found in %3 host: %4
+
+Logged at debug log level 45.
+This debug message includes the details of a host returned by an
+alternate host data source using a subnet id and specific host
+identifier.
+
+HOSTS_MGR_ALTERNATE_GET6_SUBNET_ID_IDENTIFIER_NULL
+==================================================
+
+.. code-block:: text
+
+    host not found using subnet id %1 and identifier %2
+
+Logged at debug log level 45.
+This debug message is issued when no host was found using the specified
+subnet id and host identifier.
+
+HOSTS_MGR_ALTERNATE_GET_ALL_SUBNET_ID_ADDRESS4
+==============================================
+
+.. code-block:: text
+
+    trying alternate sources for hosts using subnet id %1 and address %2
+
+Logged at debug log level 40.
+This debug message is issued when the Host Manager is starting to search
+for hosts in alternate host data sources by subnet ID and IPv4 address.
+
+HOSTS_MGR_ALTERNATE_GET_ALL_SUBNET_ID_ADDRESS6
+==============================================
+
+.. code-block:: text
+
+    trying alternate sources for hosts using subnet id %1 and address %2
+
+Logged at debug log level 40.
+This debug message is issued when the Host Manager is starting to search
+for hosts in alternate host data sources by subnet ID and IPv6 address.
+
+****
+HOST
+****
+
+HOST_CACHE_ADD
+==============
+
+.. code-block:: text
+
+    add host: %1
+
+Logged at debug log level 45.
+This debug message logs the details of the added host cache entry.
+
+HOST_CACHE_ADD_DUPLICATE
+========================
+
+.. code-block:: text
+
+    duplicate host: %1
+
+Logged at debug log level 45.
+The add operation failed because the entry conflicts with an already
+existing one. The details of the add operation argument are logged.
+
+HOST_CACHE_COMMAND_CLEAR
+========================
+
+.. code-block:: text
+
+    cache-clear command successful
+
+The cache-clear command has been successful.
+
+HOST_CACHE_COMMAND_CLEAR_FAILED
+===============================
+
+.. code-block:: text
+
+    cache-clear command failed (reason: %1)
+
+The cache-clear command has failed. The reason is logged.
+
+HOST_CACHE_COMMAND_FLUSH
+========================
+
+.. code-block:: text
+
+    cache-flush command successful
+
+The cache-flush command has been successful.
+
+HOST_CACHE_COMMAND_FLUSH_FAILED
+===============================
+
+.. code-block:: text
+
+    cache-flush command failed (parameters: %1, reason: %2)
+
+The cache-flush command has failed. Both the reason as well as the
+parameters passed are logged.
+
+HOST_CACHE_COMMAND_GET
+======================
+
+.. code-block:: text
+
+    cache-get command successful (returned: %1)
+
+The cache-get command has been successful. The number of returned entries
+is logged.
+
+HOST_CACHE_COMMAND_GET_BY_ID
+============================
+
+.. code-block:: text
+
+    cache-get-by-id command successful (returned: %1)
+
+The cache-get-by-id command has been successful. The number of returned entries
+is logged.
+
+HOST_CACHE_COMMAND_GET_BY_ID_FAILED
+===================================
+
+.. code-block:: text
+
+    cache-get-by-id command failed (reason: %1)
+
+The cache-get-by-id command has failed. The reason is logged.
+
+HOST_CACHE_COMMAND_GET_FAILED
+=============================
+
+.. code-block:: text
+
+    cache-get command failed (reason: %1)
+
+The cache-get command has failed. The reason is logged.
+
+HOST_CACHE_COMMAND_INSERT
+=========================
+
+.. code-block:: text
+
+    cache-insert command successful (inserted: %1, overwritten: %2)
+
+The cache-insert command has been successful. The number of inserted entries
+and the number of entries overwritten by more recent entries are logged.
+
+HOST_CACHE_COMMAND_INSERT_FAILED
+================================
+
+.. code-block:: text
+
+    cache-insert command failed (parameters: %1, reason: %2)
+
+The cache-insert command has failed. Both the reason as well as the
+parameters passed are logged.
+
+HOST_CACHE_COMMAND_LOAD
+=======================
+
+.. code-block:: text
+
+    cache-load command successful (loaded: %1, overwritten: %2)
+
+The cache-load command has been successful. The number of loaded entries
+and the number of entries overwritten by more recent entries are logged.
+
+HOST_CACHE_COMMAND_LOAD_FAILED
+==============================
+
+.. code-block:: text
+
+    cache-load command failed (parameters: %1, reason: %2)
+
+The cache-load command has failed. Both the reason as well as the
+parameters passed are logged.
+
+HOST_CACHE_COMMAND_REMOVE
+=========================
+
+.. code-block:: text
+
+    cache-remove command successful (parameters: %1)
+
+The cache-remove command has been successful. Parameters of the host
+deleted are logged.
+
+HOST_CACHE_COMMAND_REMOVE_FAILED
+================================
+
+.. code-block:: text
+
+    cache-remove command failed (parameters: %1, reason: %2)
+
+The cache-remove command has failed. Both the reason as well as the
+parameters passed are logged.
+
+HOST_CACHE_COMMAND_SIZE
+=======================
+
+.. code-block:: text
+
+    cache-clear command successful: %1
+
+The cache-size command has been successful and returned the number of
+entries in the host cache.
+
+HOST_CACHE_COMMAND_SIZE_FAILED
+==============================
+
+.. code-block:: text
+
+    cache-size command failed (reason: %1)
+
+The cache-size command has failed. The reason is logged.
+
+HOST_CACHE_COMMAND_WRITE
+========================
+
+.. code-block:: text
+
+    cache-write command successful (dumped: %1)
+
+The cache-write command has been successful. The number of dumped entries
+is logged.
+
+HOST_CACHE_COMMAND_WRITE_FAILED
+===============================
+
+.. code-block:: text
+
+    cache-write command failed (parameters: %1, reason: %2)
+
+The cache-write command has failed. Both the reason as well as the
+parameters passed are logged.
+
+HOST_CACHE_CONFIGURATION_FAILED
+===============================
+
+.. code-block:: text
+
+    failed to configure Host Cache hooks library: %1
+
+This error message is issued when there is an error configuring the Host
+Cache hooks library. The argument provides the detailed error message.
+
+HOST_CACHE_DEINIT_OK
+====================
+
+.. code-block:: text
+
+    unloading Host Cache hooks library successful
+
+This informational message indicates that the Host Cache hooks library
+has been unloaded successfully.
+
+HOST_CACHE_DEL_SUBNET_ID_ADDRESS4
+=================================
+
+.. code-block:: text
+
+    using subnet id %1 and address %2, delete host: %3
+
+Logged at debug log level 45.
+This debug message logs the details of the host cache entry deleted using
+the subnet id and IPv4 address.
+
+HOST_CACHE_DEL_SUBNET_ID_ADDRESS6
+=================================
+
+.. code-block:: text
+
+    using subnet id %1 and address %2, delete host: %3
+
+Logged at debug log level 45.
+This debug message logs the details of the host cache entry deleted using
+the subnet id and IPv6 address.
+
+HOST_CACHE_DEL_SUBNET_ID_IDENTIFIER4
+====================================
+
+.. code-block:: text
+
+    using subnet id %1 and identifier %2, delete host: %3
+
+Logged at debug log level 45.
+This debug message logs the details of the host cache entry deleted using a
+subnet id and specific host identifier.
+
+HOST_CACHE_DEL_SUBNET_ID_IDENTIFIER6
+====================================
+
+.. code-block:: text
+
+    using subnet id %1 and identifier %2, delete host: %3
+
+Logged at debug log level 45.
+This debug message logs the details of the host cache entry deleted using a
+subnet id and specific host identifier.
+
+HOST_CACHE_GET_ONE_PREFIX
+=========================
+
+.. code-block:: text
+
+    get one host with reservation for prefix %1/%2
+
+Logged at debug log level 45.
+This debug message is issued when starting to retrieve a host cache entry
+having a reservation for a specified prefix. The arguments specify a prefix
+and prefix length.
+
+HOST_CACHE_GET_ONE_PREFIX_HOST
+==============================
+
+.. code-block:: text
+
+    using prefix %1/%2, found host: %3
+
+Logged at debug log level 45.
+This debug message includes the details of the host cache entry found
+using the specific prefix/prefix length. The arguments specify prefix,
+prefix length and host details respectively.
+
+HOST_CACHE_GET_ONE_SUBNET_ID_ADDRESS4
+=====================================
+
+.. code-block:: text
+
+    get one host with reservation for subnet id %1 and IPv4 address %2
+
+Logged at debug log level 45.
+This debug message is issued when starting to retrieve a host cache entry
+connected to the specific subnet and having the specific IPv4 address reserved.
+The arguments specify subnet id and IPv4 address respectively.
+
+HOST_CACHE_GET_ONE_SUBNET_ID_ADDRESS4_HOST
+==========================================
+
+.. code-block:: text
+
+    using subnet id %1 and address %2, found host: %3
+
+Logged at debug log level 45.
+This debug message logs the details of the host cache entry found using the
+subnet id and IPv4 address.
+
+HOST_CACHE_GET_ONE_SUBNET_ID_ADDRESS6
+=====================================
+
+.. code-block:: text
+
+    get one host with reservation for subnet id %1 and including IPv6 address %2
+
+Logged at debug log level 45.
+This debug message is issued when starting to retrieve a host cache entry
+connected to the specific subnet and having the specific IPv6 address
+reserved. The arguments specify subnet id and IPv6 address respectively.
+
+HOST_CACHE_GET_ONE_SUBNET_ID_ADDRESS6_HOST
+==========================================
+
+.. code-block:: text
+
+    using subnet id %1 and address %2, found host: %3
+
+Logged at debug log level 45.
+This debug message logs the details of the host cache entry found using
+the subnet id and IPv6 address.
+
+HOST_CACHE_GET_ONE_SUBNET_ID_IDENTIFIER
+=======================================
+
+.. code-block:: text
+
+    get one host with %1 reservation for subnet id %2, identified by %3
+
+Logged at debug log level 45.
+This debug message is issued when starting to retrieve a host cache entry
+holding IPv4 or IPv6 reservations, which is connected to a specific subnet
+and is identified by a specific unique identifier. The first argument
+identifies if the IPv4 or IPv6 reservation is desired.
+
+HOST_CACHE_GET_ONE_SUBNET_ID_IDENTIFIER_HOST
+============================================
+
+.. code-block:: text
+
+    using subnet id %1 and identifier %2, found host: %3
+
+Logged at debug log level 45.
+This debug message includes the details of a host cache entry found using a
+subnet id and specific host identifier.
+
+HOST_CMDS_DEINIT_OK
+===================
+
+.. code-block:: text
+
+    unloading Host Commands hooks library successful
+
+This info message indicates that the Host Commands hooks library has been
+removed successfully.
+
+HOST_CMDS_INIT_FAILED
+=====================
+
+.. code-block:: text
+
+    loading Host Commands hooks library failed: %1
+
+This error message indicates an error during loading the Host Commands
+hooks library. The details of the error are provided as argument of
+the log message.
+
+HOST_CMDS_INIT_OK
+=================
+
+.. code-block:: text
+
+    loading Host Commands hooks library successful
+
+This info message indicates that the Host Commands hooks library has been
+loaded successfully. Enjoy!
+
+HOST_CMDS_RESERV_ADD
+====================
+
+.. code-block:: text
+
+    reservation-add command called (parameters: %1)
+
+The reservation-add command has been called. Parameters passed are logged.
+
+HOST_CMDS_RESERV_ADD_FAILED
+===========================
+
+.. code-block:: text
+
+    reservation-add command failed (parameters: %1, reason: %2)
+
+The reservation-add command has failed. Both the reason as well as the
+parameters passed are logged.
+
+HOST_CMDS_RESERV_ADD_SUCCESS
+============================
+
+.. code-block:: text
+
+    reservation-add command success (parameters: %1)
+
+The reservation-add command has been successful. Parameters passed are logged.
+
+HOST_CMDS_RESERV_DEL
+====================
+
+.. code-block:: text
+
+    reservation-del command called (parameters: %1)
+
+The reservation-del command has been called. Parameters passed are logged.
+
+HOST_CMDS_RESERV_DEL_FAILED
+===========================
+
+.. code-block:: text
+
+    reservation-del command failed (parameters: %1, reason: %2)
+
+The reservation-del command has failed. Both the reason as well as the
+parameters passed are logged.
+
+HOST_CMDS_RESERV_DEL_SUCCESS
+============================
+
+.. code-block:: text
+
+    reservation-del command success (parameters: %1)
+
+The reservation-del command has been successful. Parameters passed are logged.
+
+HOST_CMDS_RESERV_GET
+====================
+
+.. code-block:: text
+
+    reservation-get command called (parameters: %1)
+
+The reservation-get command has been called. Parameters passed are logged.
+
+HOST_CMDS_RESERV_GET_ALL
+========================
+
+.. code-block:: text
+
+    reservation-get-all command called (parameters: %1)
+
+The reservation-get-all command has been called. Parameters passed are logged.
+
+HOST_CMDS_RESERV_GET_ALL_FAILED
+===============================
+
+.. code-block:: text
+
+    reservation-get-all command failed (parameters: %1, reason: %2)
+
+The reservation-get-all command has failed. Both the reason as well as the
+parameters passed are logged.
+
+HOST_CMDS_RESERV_GET_ALL_SUCCESS
+================================
+
+.. code-block:: text
+
+    reservation-get-all command success (parameters: %1)
+
+The reservation-get-all command has been successful. Parameters passed are logged.
+
+HOST_CMDS_RESERV_GET_BY_ADDRESS
+===============================
+
+.. code-block:: text
+
+    reservation-get-by-address command called (parameters: %1)
+
+The reservation-get-by-address command has been called. Parameters passed are logged.
+
+HOST_CMDS_RESERV_GET_BY_ADDRESS_FAILED
+======================================
+
+.. code-block:: text
+
+    reservation-get-by-address command failed (parameters: %1, reason: %2)
+
+The reservation-get-by-address command has failed. Both the reason as well as the
+parameters passed are logged.
+
+HOST_CMDS_RESERV_GET_BY_ADDRESS_SUCCESS
+=======================================
+
+.. code-block:: text
+
+    reservation-get-by-address command success (parameters: %1)
+
+The reservation-get-by-address command has been successful. Parameters passed are logged.
+
+HOST_CMDS_RESERV_GET_BY_HOSTNAME
+================================
+
+.. code-block:: text
+
+    reservation-get-by-hostname command called (parameters: %1)
+
+The reservation-get-by-hostname command has been called. Parameters passed are logged.
+
+HOST_CMDS_RESERV_GET_BY_HOSTNAME_FAILED
+=======================================
+
+.. code-block:: text
+
+    reservation-get-by-hostname command failed (parameters: %1, reason: %2)
+
+The reservation-get-by-hostname command has failed. Both the reason as well as the
+parameters passed are logged.
+
+HOST_CMDS_RESERV_GET_BY_HOSTNAME_SUCCESS
+========================================
+
+.. code-block:: text
+
+    reservation-get-by-hostname command success (parameters: %1)
+
+The reservation-get-by-hostname command has been successful. Parameters passed are logged.
+
+HOST_CMDS_RESERV_GET_BY_ID
+==========================
+
+.. code-block:: text
+
+    reservation-get-by-id command called (parameters: %1)
+
+The reservation-get-by-id command has been called. Parameters passed are logged.
+
+HOST_CMDS_RESERV_GET_BY_ID_FAILED
+=================================
+
+.. code-block:: text
+
+    reservation-get-by-id command failed (parameters: %1, reason: %2)
+
+The reservation-get-by-id command has failed. Both the reason as well as the
+parameters passed are logged.
+
+HOST_CMDS_RESERV_GET_BY_ID_SUCCESS
+==================================
+
+.. code-block:: text
+
+    reservation-get-by-id command success (parameters: %1)
+
+The reservation-get-by-id command has been successful. Parameters passed are logged.
+
+HOST_CMDS_RESERV_GET_FAILED
+===========================
+
+.. code-block:: text
+
+    reservation-get command failed (parameters: %1, reason: %2)
+
+The reservation-add command has failed. Both the reason as well as the
+parameters passed are logged.
+
+HOST_CMDS_RESERV_GET_PAGE
+=========================
+
+.. code-block:: text
+
+    reservation-get-page command called (parameters: %1)
+
+The reservation-get-page command has been called. Parameters passed are logged.
+
+HOST_CMDS_RESERV_GET_PAGE_FAILED
+================================
+
+.. code-block:: text
+
+    reservation-get-page command failed (parameters: %1, reason: %2)
+
+The reservation-get-page command has failed. Both the reason as well as the
+parameters passed are logged.
+
+HOST_CMDS_RESERV_GET_PAGE_SUCCESS
+=================================
+
+.. code-block:: text
+
+    reservation-get-page command success (parameters: %1)
+
+The reservation-get-page command has been successful. Parameters passed are logged.
+
+HOST_CMDS_RESERV_GET_SUCCESS
+============================
+
+.. code-block:: text
+
+    reservation-get command success (parameters: %1)
+
+The reservation-get command has been successful. Parameters passed are logged.
+
+HOST_CMDS_RESERV_UPDATE
+=======================
+
+.. code-block:: text
+
+    reservation-update command called (parameters: %1)
+
+The reservation-update command has been called. Parameters passed are logged.
+
+HOST_CMDS_RESERV_UPDATE_FAILED
+==============================
+
+.. code-block:: text
+
+    reservation-update command failed (parameters: %1, reason: %2)
+
+The reservation-update command has failed. Both the reason as well as the
+parameters passed are logged.
+
+*****
+HTTPS
+*****
+
+HTTPS_REQUEST_RECEIVE_START
+===========================
+
+.. code-block:: text
+
+    start receiving request from %1
+
+Logged at debug log level 50.
+This debug message is issued when the server starts receiving new request
+over the established connection. The argument specifies the address
+of the remote endpoint.
+
+****
+HTTP
+****
+
+HTTP_BAD_CLIENT_REQUEST_RECEIVED
+================================
+
+.. code-block:: text
+
+    bad request received from %1: %2
+
+Logged at debug log level 40.
+This debug message is issued when an HTTP client sends malformed request to
+the server. This includes HTTP requests using unexpected content types,
+including malformed JSON etc. The first argument specifies an address of
+the remote endpoint which sent the request. The second argument provides
+a detailed error message.
+
+HTTP_BAD_CLIENT_REQUEST_RECEIVED_DETAILS
+========================================
+
+.. code-block:: text
+
+    detailed information about bad request received from %1:\n%2
+
+Logged at debug log level 45.
+This debug message is issued when an HTTP client sends malformed request to
+the server. It includes detailed information about the received request
+rejected by the server. The first argument specifies an address of
+the remote endpoint which sent the request. The second argument provides
+a request in the textual format. The request is truncated by the logger
+if it is too large to be printed.
+
+HTTP_BAD_SERVER_RESPONSE_RECEIVED
+=================================
+
+.. code-block:: text
+
+    bad response received when communicating with %1: %2
+
+Logged at debug log level 40.
+This debug message is issued when an HTTP client fails to receive a response
+from the server or when this response is malformed. The first argument
+specifies the server URL. The second argument provides a detailed error
+message.
+
+HTTP_BAD_SERVER_RESPONSE_RECEIVED_DETAILS
+=========================================
+
+.. code-block:: text
+
+    detailed information about bad response received from %1:\n%2
+
+Logged at debug log level 45.
+This debug message is issued when an HTTP client receives malformed response
+from the server. The first argument specifies an URL of the server. The
+second argument provides a response in the textual format. The request is
+truncated by the logger if it is too large to be printed.
+
+HTTP_CLIENT_MT_STARTED
+======================
+
+.. code-block:: text
+
+    HttpClient has been started in multi-threaded mode running %1 threads
+
+Logged at debug log level 40.
+This debug message is issued when a multi-threaded HTTP client instance has
+been created.  The argument specifies the maximum number of threads.
+
+HTTP_CLIENT_QUEUE_SIZE_GROWING
+==============================
+
+.. code-block:: text
+
+    queue for URL: %1, now has %2 entries and may be growing too quickly
+
+This warning message is issued when the queue of pending requests for the
+given URL appears to be growing more quickly than the requests can be handled.
+It will be emitted periodically as long as the queue size continues to grow.
+This may occur with a surge of client traffic creating a momentary backlog
+which then subsides as the surge subsides.  If it happens continually then
+it most likely indicates a deployment configuration that cannot sustain the
+client load.
+
+HTTP_CLIENT_REQUEST_AUTHORIZED
+==============================
+
+.. code-block:: text
+
+    received HTTP request authorized for '%1'
+
+This information message is issued when the server receives with a matching
+authentication header. The argument provides the user id.
+
+HTTP_CLIENT_REQUEST_BAD_AUTH_HEADER
+===================================
+
+.. code-block:: text
+
+    received HTTP request with malformed authentication header: %1
+
+This information message is issued when the server receives a request with
+a malformed authentication header. The argument explains the problem.
+
+HTTP_CLIENT_REQUEST_NOT_AUTHORIZED
+==================================
+
+.. code-block:: text
+
+    received HTTP request with not matching authentication header
+
+This information message is issued when the server receives a request with
+authentication header carrying not recognized credential: the user
+provided incorrect user id and/or password.
+
+HTTP_CLIENT_REQUEST_RECEIVED
+============================
+
+.. code-block:: text
+
+    received HTTP request from %1
+
+Logged at debug log level 40.
+This debug message is issued when the server finished receiving a HTTP
+request from the remote endpoint. The address of the remote endpoint is
+specified as an argument.
+
+HTTP_CLIENT_REQUEST_RECEIVED_DETAILS
+====================================
+
+.. code-block:: text
+
+    detailed information about well-formed request received from %1:\n%2
+
+Logged at debug log level 45.
+This debug message is issued when the HTTP server receives a well-formed
+request. It includes detailed information about the received request. The
+first argument specifies an address of the remote endpoint which sent the
+request. The second argument provides the request in the textual format.
+The request is truncated by the logger if it is too large to be printed.
+
+HTTP_CLIENT_REQUEST_SEND
+========================
+
+.. code-block:: text
+
+    sending HTTP request %1 to %2
+
+Logged at debug log level 50.
+This debug message is issued when the client is starting to send a HTTP
+request to a server. The first argument holds basic information
+about the request (HTTP version number and status code). The second
+argument specifies a URL of the server.
+
+HTTP_CLIENT_REQUEST_SEND_DETAILS
+================================
+
+.. code-block:: text
+
+    detailed information about request sent to %1:\n%2
+
+Logged at debug log level 55.
+This debug message is issued right before the client sends an HTTP request
+to the server. It includes detailed information about the request. The
+first argument specifies an URL of the server to which the request is
+being sent. The second argument provides the request in the textual form.
+The request is truncated by the logger if it is too large to be printed.
+
+HTTP_CLIENT_REQUEST_TIMEOUT_OCCURRED
+====================================
+
+.. code-block:: text
+
+    HTTP request timeout occurred when communicating with %1
+
+Logged at debug log level 50.
+This debug message is issued when the HTTP request timeout has occurred and
+the server is going to send a response with Http Request timeout status
+code.
+
+HTTP_COMMAND_MGR_IGNORED_TLS_SETUP_CHANGES
+==========================================
+
+.. code-block:: text
+
+    ignore a change in TLS setup of the http control socket
+
+The warning message is issued when the HTTP/HTTPS control socket was
+reconfigured with a different TLS setup but keeping the address and port.
+These changes are ignored because they can't be applied without opening a new
+socket which will conflicts with the existing one.
+
+HTTP_COMMAND_MGR_SERVICE_STARTED
+================================
+
+.. code-block:: text
+
+    started %1 service bound to address %2 port %3
+
+This informational message indicates that the server has started
+HTTP/HTTPS service on the specified address and port for receiving
+control commands.
+
+HTTP_CONNECTION_CLOSE_CALLBACK_FAILED
+=====================================
+
+.. code-block:: text
+
+    Connection close callback threw an exception
+
+This is an error message emitted when the close connection callback
+registered on the connection failed unexpectedly.  This is a programmatic
+error that should be submitted as a bug.
+
+HTTP_CONNECTION_HANDSHAKE_FAILED
+================================
+
+.. code-block:: text
+
+    TLS handshake with %1 failed with %2
+
+This information message is issued when the TLS handshake failed at the
+server side. The client address and the error message are displayed.
+
+HTTP_CONNECTION_HANDSHAKE_START
+===============================
+
+.. code-block:: text
+
+    start TLS handshake with %1 with timeout %2
+
+Logged at debug log level 50.
+This debug message is issued when the server starts the TLS handshake
+with the remote endpoint. The first argument specifies the address
+of the remote endpoint. The second argument specifies request timeout in
+seconds.
+
+HTTP_CONNECTION_SHUTDOWN
+========================
+
+.. code-block:: text
+
+    shutting down HTTP connection from %1
+
+Logged at debug log level 40.
+This debug message is issued when one of the HTTP connections is shut down.
+The connection can be stopped as a result of an error or after the
+successful message exchange with a client.
+
+HTTP_CONNECTION_SHUTDOWN_FAILED
+===============================
+
+.. code-block:: text
+
+    shutting down HTTP connection failed
+
+This error message is issued when an error occurred during shutting down
+a HTTP connection with a client.
+
+HTTP_CONNECTION_STOP
+====================
+
+.. code-block:: text
+
+    stopping HTTP connection from %1
+
+Logged at debug log level 40.
+This debug message is issued when one of the HTTP connections is stopped.
+The connection can be stopped as a result of an error or after the
+successful message exchange with a client.
+
+HTTP_CONNECTION_STOP_FAILED
+===========================
+
+.. code-block:: text
+
+    stopping HTTP connection failed
+
+This error message is issued when an error occurred during closing a
+HTTP connection with a client.
+
+HTTP_DATA_RECEIVED
+==================
+
+.. code-block:: text
+
+    received %1 bytes from %2
+
+Logged at debug log level 55.
+This debug message is issued when the server receives a chunk of data from
+the remote endpoint. This may include the whole request or only a part
+of the request. The first argument specifies the amount of received data.
+The second argument specifies an address of the remote endpoint which
+produced the data.
+
+HTTP_IDLE_CONNECTION_TIMEOUT_OCCURRED
+=====================================
+
+.. code-block:: text
+
+    closing persistent connection with %1 as a result of a timeout
+
+Logged at debug log level 50.
+This debug message is issued when the persistent HTTP connection is being
+closed as a result of being idle.
+
+HTTP_PREMATURE_CONNECTION_TIMEOUT_OCCURRED
+==========================================
+
+.. code-block:: text
+
+    premature connection timeout occurred: in transaction ? %1, transid: %2, current_transid: %3
+
+This warning message is issued when unexpected timeout occurred during the
+transaction. This is proven to occur when the system clock is moved manually
+or as a result of synchronization with a time server. Any ongoing transactions
+will be interrupted. New transactions should be conducted normally.
+
+HTTP_REQUEST_RECEIVE_START
+==========================
+
+.. code-block:: text
+
+    start receiving request from %1 with timeout %2
+
+Logged at debug log level 50.
+This debug message is issued when the server starts receiving new request
+over the established connection. The first argument specifies the address
+of the remote endpoint. The second argument specifies request timeout in
+seconds.
+
+HTTP_SERVER_RESPONSE_RECEIVED
+=============================
+
+.. code-block:: text
+
+    received HTTP response from %1
+
+Logged at debug log level 40.
+This debug message is issued when the client finished receiving an HTTP
+response from the server. The URL of the server is specified as an argument.
+
+HTTP_SERVER_RESPONSE_RECEIVED_DETAILS
+=====================================
+
+.. code-block:: text
+
+    detailed information about well-formed response received from %1:\n%2
+
+Logged at debug log level 45.
+This debug message is issued when the HTTP client receives a well-formed
+response from the server. It includes detailed information about the
+received response. The first argument specifies a URL of the server which
+sent the response. The second argument provides the response in the textual
+format. The response is truncated by the logger if it is too large to
+be printed.
+
+HTTP_SERVER_RESPONSE_SEND
+=========================
+
+.. code-block:: text
+
+    sending HTTP response %1 to %2
+
+Logged at debug log level 40.
+This debug message is issued when the server is starting to send a HTTP
+response to a remote endpoint. The first argument holds basic information
+about the response (HTTP version number and status code). The second
+argument specifies an address of the remote endpoint.
+
+***
+KEY
+***
+
+KEY_LOOKUP_DISABLED
+===================
+
+.. code-block:: text
+
+    hooks library lookup for a key: GSS-TSIG is not enabled for the current DNS server.
+
+Logged at debug log level 40.
+This debug message is issued when the lookup for a GSS-TSIG key was performed
+for a DNS server where GSS-TSIG is not enabled.
+
+KEY_LOOKUP_FOUND
+================
+
+.. code-block:: text
+
+    hooks library lookup for a key: return GSS-TSIG key '%1'.
+
+Logged at debug log level 40.
+This debug message is issued when the lookup for a GSS-TSIG key returned
+an usable key for protecting the DNS update. The key name is displayed.
+
+KEY_LOOKUP_NONE
+===============
+
+.. code-block:: text
+
+    hooks library lookup for a key: found no usable key.
+
+Logged at debug log level 40.
+This debug message is issued when the lookup for a GSS-TSIG key failed
+to find an usable key.
+
+KEY_PROCESSING_FAILED
+=====================
+
+.. code-block:: text
+
+    The GSS-TKEY processing for server %1 failed because of an error: %2
+
+This error message is issued when the key processing for a specific server has
+failed. The first argument specifies the server identifier and the second
+argument gives more information about the error.
+
+KEY_PROCESSING_FAILED_UNSPECIFIED_ERROR
+=======================================
+
+.. code-block:: text
+
+    The GSS-TKEY processing for server %1 failed because of an unspecified error
+
+This error message is issued when the key processing for a specific server has
+failed. The first argument specifies the server identifier.
+
+*****
+LEASE
+*****
+
+LEASE_CMDS_ADD4
+===============
+
+.. code-block:: text
+
+    lease4-add command successful (address: %1)
+
+Logged at debug log level 20.
+The lease4-add command has been successful. Lease IPv4 address
+is logged.
+
+LEASE_CMDS_ADD4_CONFLICT
+========================
+
+.. code-block:: text
+
+    lease4-add command failed due to conflict (parameters: %1, reason: %2)
+
+The received lease4-add is well-formed and contains valid parameters but the
+lease could not be created because it is in conflict with the server state
+or configuration. The reason for a conflict is logged in the message.
+
+LEASE_CMDS_ADD4_FAILED
+======================
+
+.. code-block:: text
+
+    lease4-add command failed (parameters: %1, reason: %2)
+
+The lease4-add command has failed. Both the reason as well as the
+parameters passed are logged.
+
+LEASE_CMDS_ADD6
+===============
+
+.. code-block:: text
+
+    lease6-add command successful (address: %1)
+
+Logged at debug log level 20.
+The lease6-add command has been successful. Lease IPv6 address
+is logged.
+
+LEASE_CMDS_ADD6_CONFLICT
+========================
+
+.. code-block:: text
+
+    lease6-add command failed due to conflict (parameters: %1, reason: %2)
+
+The received lease6-add is well-formed and contains valid parameters but the
+lease could not be created because it is in conflict with the server state
+or configuration. The reason for a conflict is logged in the message.
+
+LEASE_CMDS_ADD6_FAILED
+======================
+
+.. code-block:: text
+
+    lease6-add command failed (parameters: %1, reason: %2)
+
+The lease6-add command has failed. Both the reason as well as the
+parameters passed are logged.
+
+LEASE_CMDS_BULK_APPLY6
+======================
+
+.. code-block:: text
+
+    lease6-bulk-apply command successful (applied addresses count: %1)
+
+Logged at debug log level 20.
+The lease6-bulk-apply command has been successful. The number of applied
+addresses is logged.
+
+LEASE_CMDS_BULK_APPLY6_FAILED
+=============================
+
+.. code-block:: text
+
+    lease6-bulk-apply command failed (parameters: %1, reason: %2)
+
+The lease6-bulk-apply command has failed. Both the reason as well
+as the parameters passed are logged.
+
+LEASE_CMDS_DEINIT_OK
+====================
+
+.. code-block:: text
+
+    unloading Lease Commands hooks library successful
+
+This info message indicates that the Lease Commands hooks library has been
+removed successfully.
+
+LEASE_CMDS_DEL4
+===============
+
+.. code-block:: text
+
+    lease4-del command successful (address: %1)
+
+Logged at debug log level 20.
+The attempt to delete an IPv4 lease (lease4-del command) has been successful.
+Lease IPv4 address is logged.
+
+LEASE_CMDS_DEL4_FAILED
+======================
+
+.. code-block:: text
+
+    lease4-del command failed (parameters: %1, reason: %2)
+
+The attempt to delete an IPv4 lease (lease4-del command) has failed. Both the
+reason as well as the parameters passed are logged.
+
+LEASE_CMDS_DEL6
+===============
+
+.. code-block:: text
+
+    lease4-del command successful (address: %1)
+
+Logged at debug log level 20.
+The attempt to delete an IPv4 lease (lease4-del command) has been successful.
+Lease IPv6 address is logged.
+
+LEASE_CMDS_DEL6_FAILED
+======================
+
+.. code-block:: text
+
+    lease6-del command failed (parameters: %1, reason: %2)
+
+The attempt to delete an IPv6 lease (lease4-del command) has failed. Both the
+reason as well as the parameters passed are logged.
+
+LEASE_CMDS_GET4_FAILED
+======================
+
+.. code-block:: text
+
+    lease4-get command failed (parameters: %1, reason: %2)
+
+The lease4-get command has failed. Both the reason as well as the
+parameters passed are logged.
+
+LEASE_CMDS_GET6_FAILED
+======================
+
+.. code-block:: text
+
+    lease6-get command failed (parameters: %1, reason: %2)
+
+The lease4-get command has failed. Both the reason as well as the
+parameters passed are logged.
+
+LEASE_CMDS_INIT_OK
+==================
+
+.. code-block:: text
+
+    loading Lease Commands hooks library successful
+
+This info message indicates that the Lease Commands hooks library has been
+loaded successfully. Enjoy!
+
+LEASE_CMDS_RESEND_DDNS4
+=======================
+
+.. code-block:: text
+
+    lease4-resend-ddns command successful: %1
+
+A request to update DNS for the requested IPv4 lease has been
+successfully queued for transmission to kea-dhcp-ddns.
+
+LEASE_CMDS_RESEND_DDNS4_FAILED
+==============================
+
+.. code-block:: text
+
+    lease4-resend-ddns command failed: %1
+
+A request to update DNS for the requested IPv4 lease has failed.  The
+reason for the failure is logged.
+
+LEASE_CMDS_RESEND_DDNS6
+=======================
+
+.. code-block:: text
+
+    lease6-resend-ddns command successful: %1
+
+A request to update DNS for the requested IPv6 lease has been
+successfully queued for transmission to kea-dhcp-ddns.
+
+LEASE_CMDS_RESEND_DDNS6_FAILED
+==============================
+
+.. code-block:: text
+
+    lease6-resend-ddns command failed: %1
+
+A request to update DNS for the requested IPv6 lease has failed.  The
+reason for the failure is logged.
+
+LEASE_CMDS_UPDATE4
+==================
+
+.. code-block:: text
+
+    lease4-update command successful (address: %1)
+
+Logged at debug log level 20.
+The lease4-update command has been successful. Lease IPv4 address
+is logged.
+
+LEASE_CMDS_UPDATE4_CONFLICT
+===========================
+
+.. code-block:: text
+
+    lease4-update command failed due to conflict (parameters: %1, reason: %2)
+
+The received lease4-update is well-formed and contains valid parameters
+but the lease could not be created because it is in conflict with the
+server state or configuration. The reason for a conflict is logged in
+the message.
+
+LEASE_CMDS_UPDATE4_FAILED
+=========================
+
+.. code-block:: text
+
+    lease4-update command failed (parameters: %1, reason: %2)
+
+The lease4-update command has failed. Both the reason as well as the
+parameters passed are logged.
+
+LEASE_CMDS_UPDATE6
+==================
+
+.. code-block:: text
+
+    lease6-update command successful (address: %1)
+
+Logged at debug log level 20.
+The lease6-update command has been successful. Lease IPv6 address
+is logged.
+
+LEASE_CMDS_UPDATE6_CONFLICT
+===========================
+
+.. code-block:: text
+
+    lease6-update command failed due to conflict (parameters: %1, reason: %2)
+
+The received lease6-update is well-formed and contains valid parameters
+but the lease could not be created because it is in conflict with the
+server state or configuration. The reason for a conflict is logged in
+the message.
+
+LEASE_CMDS_UPDATE6_FAILED
+=========================
+
+.. code-block:: text
+
+    lease6-add command failed (parameters: %1, reason: %2)
+
+The lease6-update command has failed. Both the reason as well as the
+parameters passed are logged.
+
+LEASE_CMDS_WIPE4
+================
+
+.. code-block:: text
+
+    lease4-wipe command successful (parameters: %1)
+
+The lease4-wipe command has been successful. Parameters of the command
+are logged.
+
+LEASE_CMDS_WIPE4_DEPRECATED
+===========================
+
+.. code-block:: text
+
+    lease4-wipe command is deprecated and it will be removed in the future.
+
+The lease4-wipe command is deprecated and it will be removed in the future.
+
+LEASE_CMDS_WIPE4_FAILED
+=======================
+
+.. code-block:: text
+
+    lease4-wipe command failed (parameters: %1, reason: %2)
+
+The lease4-wipe command has failed. Both the reason as well as the
+parameters passed are logged.
+
+LEASE_CMDS_WIPE6
+================
+
+.. code-block:: text
+
+    lease6-wipe command successful (parameters: %1)
+
+The lease6-wipe command has been successful. Parameters of the command
+are logged.
+
+LEASE_CMDS_WIPE6_DEPRECATED
+===========================
+
+.. code-block:: text
+
+    lease6-wipe command is deprecated and it will be removed in the future.
+
+The lease6-wipe command is deprecated and it will be removed in the future.
+
+LEASE_QUERY_LOAD_FAILED
+=======================
+
+.. code-block:: text
+
+    Lease Query hooks library failed to load: %1
+
+This error message indicates that an error occurred attempting to
+load the Lease Query hooks library. The argument details the error.
+
+LEASE_QUERY_LOAD_OK
+===================
+
+.. code-block:: text
+
+    Lease Query hooks library loaded successfully.
+
+This info message indicates that the Lease Query hooks library has
+been loaded successfully.
+
+*****
+LEGAL
+*****
+
+LEGAL_LOG_COMMAND_NO_LEGAL_STORE
+================================
+
+.. code-block:: text
+
+    LegalStore instance is null
+
+This is an error message issued when the Legal Log library attempted to
+write a control command entry to the legal store and the store instance
+has not been created.  This is a programmatic error and should not occur.
+
+LEGAL_LOG_COMMAND_WRITE_ERROR
+=============================
+
+.. code-block:: text
+
+    Could not write command entry to the legal store: %1
+
+This is an error message issued when the Legal Log library attempted to
+write a control command entry to the legal store and the write failed.
+The message content should provide an detailed explanation.
+error.
+
+LEGAL_LOG_DB_OPEN_CONNECTION_WITH_RETRY_FAILED
+==============================================
+
+.. code-block:: text
+
+    Failed to connect to database: %1 with error: %2
+
+This is an informational message issued when the the server failed to connect to
+the store database. The operation started a retry to connect procedure.
+The database access string with password redacted is logged, along with the
+error and details for the reconnect procedure.
+
+LEGAL_LOG_INVALID_ACCESS
+========================
+
+.. code-block:: text
+
+    invalid database access string: %1
+
+This is logged when an attempt has been made to parse a database access string
+and the attempt ended in error.  The access string in question - which
+should be of the form 'keyword=value keyword=value...' is included in
+the message.
+
+LEGAL_LOG_LEASE4_NO_LEGAL_STORE
+===============================
+
+.. code-block:: text
+
+    LegalStore instance is null
+
+This is an error message issued when the Legal Log library attempted to
+write a IPv4 lease entry to the legal store and the store instance
+has not been created.  This is a programmatic error and should not occur.
+
+LEGAL_LOG_LEASE4_WRITE_ERROR
+============================
+
+.. code-block:: text
+
+    Could not write to the legal store: %1
+
+This is an error message issued when the Legal Log library attempted to
+write a IPv4 lease entry to the legal store and the write failed.
+The message content should include the physical store name and the nature of the
+error.
+
+LEGAL_LOG_LEASE6_NO_LEGAL_STORE
+===============================
+
+.. code-block:: text
+
+    LegalStore instance is null
+
+This is an error message issued when the Legal Log library attempted to
+write a IPv6 lease entry to the legal store and the store instance has not been
+created.  This is a programmatic error and should not occur.
+
+LEGAL_LOG_LEASE6_WRITE_ERROR
+============================
+
+.. code-block:: text
+
+    Could not write to the legal store: %1
+
+This is an error message issued when the Legal Log library attempted to
+write a IPv6 lease entry to the legal store and the write failed.
+The message content should include the physical store name and the nature of the
+error.
+
+LEGAL_LOG_LOAD_ERROR
+====================
+
+.. code-block:: text
+
+    LEGAL LOGGING DISABLED! An error occurred loading the library: %1
+
+This is an error message issued when the DHCP Legal Log library could not
+be loaded.  The exact cause should be explained in the log message. No existing
+stores will be altered, nor any legal logging entries emitted.
+
+LEGAL_LOG_MYSQL_COMMIT
+======================
+
+.. code-block:: text
+
+    committing to MySQL database
+
+The code has issued a commit call.  All outstanding transactions will be
+committed to the database.  Note that depending on the MySQL settings,
+the committal may not include a write to disk.
+
+LEGAL_LOG_MYSQL_DB
+==================
+
+.. code-block:: text
+
+    opening MySQL log database: %1
+
+This informational message is logged when a legal log hook library is
+about to open a MySQL log database.  The parameters of the
+connection including database name and username needed to access it
+(but not the password if any) are logged.
+
+LEGAL_LOG_MYSQL_DB_RECONNECT_ATTEMPT_FAILED
+===========================================
+
+.. code-block:: text
+
+    database reconnect failed: %1
+
+An error message issued when an attempt to reconnect has failed.
+
+LEGAL_LOG_MYSQL_DB_RECONNECT_ATTEMPT_SCHEDULE
+=============================================
+
+.. code-block:: text
+
+    scheduling attempt %1 of %2 in %3 milliseconds
+
+An info message issued when the server is scheduling the next attempt to reconnect
+to the database.  This occurs when the server has lost database connectivity and
+is attempting to reconnect automatically.
+
+LEGAL_LOG_MYSQL_DB_RECONNECT_FAILED
+===================================
+
+.. code-block:: text
+
+    maximum number of database reconnect attempts: %1, has been exhausted without success
+
+An error message issued when the server failed to reconnect.  Loss of connectivity
+is typically a network or database server issue.
+
+LEGAL_LOG_MYSQL_FATAL_ERROR
+===========================
+
+.. code-block:: text
+
+    Unrecoverable MySQL error occurred: %1 for <%2>, reason: %3 (error code: %4).
+
+An error message indicating that communication with the MySQL database server
+has been lost.  When this occurs the server exits immediately with a non-zero
+exit code.  This is most likely due to a network issue.
+
+LEGAL_LOG_MYSQL_GET_VERSION
+===========================
+
+.. code-block:: text
+
+    obtaining schema version information
+
+Logged at debug log level 50.
+A debug message issued when the server is about to obtain schema version
+information from the MySQL database.
+
+LEGAL_LOG_MYSQL_INSERT_LOG
+==========================
+
+.. code-block:: text
+
+    Adding a log entry to the database: %1
+
+Logged at debug log level 50.
+An informational message logged when a log entry is inserted.
+
+LEGAL_LOG_MYSQL_NO_TLS
+======================
+
+.. code-block:: text
+
+    TLS was required but is not used
+
+This error message is issued when TLS for the connection was required but
+TLS is not used.
+
+LEGAL_LOG_MYSQL_ROLLBACK
+========================
+
+.. code-block:: text
+
+    rolling back MySQL database
+
+The code has issued a rollback call.  All outstanding transaction will
+be rolled back and not committed to the database.
+
+LEGAL_LOG_MYSQL_START_TRANSACTION
+=================================
+
+.. code-block:: text
+
+    starting new MySQL transaction
+
+A debug message issued when a new MySQL transaction is being started.
+This message is typically not issued when inserting data into a
+single table because the server doesn't explicitly start
+transactions in this case. This message is issued when data is
+inserted into multiple tables with multiple INSERT statements
+and there may be a need to rollback the whole transaction if
+any of these INSERT statements fail.
+
+LEGAL_LOG_MYSQL_TLS_CIPHER
+==========================
+
+.. code-block:: text
+
+    TLS cipher: %1
+
+Logged at debug log level 50.
+A debug message issued when a new MySQL connected is created with TLS.
+The TLS cipher name is logged.
+
+LEGAL_LOG_PGSQL_COMMIT
+======================
+
+.. code-block:: text
+
+    committing to PostgreSQL database
+
+The code has issued a commit call.  All outstanding transactions will be
+committed to the database.  Note that depending on the PostgreSQL settings,
+the committal may not include a write to disk.
+
+LEGAL_LOG_PGSQL_DB
+==================
+
+.. code-block:: text
+
+    opening PostgreSQL log database: %1
+
+This informational message is logged when a legal log hook library is
+about to open a PostgreSQL log database.  The parameters of the
+connection including database name and username needed to access it
+(but not the password if any) are logged.
+
+LEGAL_LOG_PGSQL_DB_RECONNECT_ATTEMPT_FAILED
+===========================================
+
+.. code-block:: text
+
+    database reconnect failed: %1
+
+An error message issued when an attempt to reconnect has failed.
+
+LEGAL_LOG_PGSQL_DB_RECONNECT_ATTEMPT_SCHEDULE
+=============================================
+
+.. code-block:: text
+
+    scheduling attempt %1 of %2 in %3 milliseconds
+
+An info message issued when the server is scheduling the next attempt to reconnect
+to the database.  This occurs when the server has lost database connectivity and
+is attempting to reconnect automatically.
+
+LEGAL_LOG_PGSQL_DB_RECONNECT_FAILED
+===================================
+
+.. code-block:: text
+
+    maximum number of database reconnect attempts: %1, has been exhausted without success
+
+An error message issued when the server failed to reconnect.  Loss of connectivity
+is typically a network or database server issue.
+
+LEGAL_LOG_PGSQL_DEALLOC_ERROR
+=============================
+
+.. code-block:: text
+
+    An error occurred deallocating SQL statements while closing the PostgreSQL log database: %1
+
+This is an error message issued when a legal log hook library experienced
+and error freeing database SQL resources as part of closing its connection to
+the PostgreSQL database.  The connection is closed as part of normal server
+shutdown.  This error is most likely a programmatic issue that is highly
+unlikely to occur or negatively impact server operation.
+
+LEGAL_LOG_PGSQL_FATAL_ERROR
+===========================
+
+.. code-block:: text
+
+    Unrecoverable PostgreSQL error occurred: Statement: <%1>, reason: %2 (error code: %3).
+
+An error message indicating that communication with the MySQL database server
+has been lost.  When this occurs the server exits immediately with a non-zero
+exit code.  This is most likely due to a network issue.
+
+LEGAL_LOG_PGSQL_GET_VERSION
+===========================
+
+.. code-block:: text
+
+    obtaining schema version information
+
+Logged at debug log level 50.
+A debug message issued when the server is about to obtain schema version
+information from the PostgreSQL database.
+
+LEGAL_LOG_PGSQL_INSERT_LOG
+==========================
+
+.. code-block:: text
+
+    Adding a log entry to the database: %1
+
+Logged at debug log level 50.
+An informational message logged when a log entry is inserted.
+
+LEGAL_LOG_PGSQL_NO_TLS_SUPPORT
+==============================
+
+.. code-block:: text
+
+    Attempt to configure TLS (unsupported for PostgreSQL): %1
+
+This error message is printed when TLS support was required in the Kea
+configuration: Kea was built with this feature disabled for PostgreSQL.
+The parameters of the connection are logged.
+
+LEGAL_LOG_PGSQL_ROLLBACK
+========================
+
+.. code-block:: text
+
+    rolling back PostgreSQL database
+
+The code has issued a rollback call.  All outstanding transaction will
+be rolled back and not committed to the database.
+
+LEGAL_LOG_PGSQL_START_TRANSACTION
+=================================
+
+.. code-block:: text
+
+    starting a new PostgreSQL transaction
+
+A debug message issued when a new PostgreSQL transaction is being started.
+This message is typically not issued when inserting data into a
+single table because the server doesn't explicitly start
+transactions in this case. This message is issued when data is
+inserted into multiple tables with multiple INSERT statements
+and there may be a need to rollback the whole transaction if
+any of these INSERT statements fail.
+
+LEGAL_LOG_PGSQL_TLS_SUPPORT
+===========================
+
+.. code-block:: text
+
+    Attempt to configure TLS: %1
+
+This informational message is printed when TLS support was required in
+the Kea configuration: The TLS support in PostgreSQL will be initialized but
+its configuration is fully managed outside the C API.
+The parameters of the connection are logged.
+
+LEGAL_LOG_STORE_CLOSED
+======================
+
+.. code-block:: text
+
+    Legal store closed: %1
+
+This is an informational message issued when the Legal Log library
+has successfully closed the legal store.
+
+LEGAL_LOG_STORE_CLOSE_ERROR
+===========================
+
+.. code-block:: text
+
+    An error occurred closing the store: %1, error: %2
+
+This is an error message issued when the legal log library experienced an
+error attempting to close a legal store.  This is highly unlikely to occur and
+should not affect the store content or subsequent legal store operations.
+
+LEGAL_LOG_STORE_OPENED
+======================
+
+.. code-block:: text
+
+    Legal store opened: %1
+
+This is an informational message issued when the Legal Log library
+has successfully opened the legal store.
+
+***
+LFC
+***
+
+LFC_FAIL_PID_CREATE
+===================
+
+.. code-block:: text
+
+    : %1
+
+This message is issued if LFC detected a failure when trying
+to create the PID file.  It includes a more specific error string.
+
+LFC_FAIL_PID_DEL
+================
+
+.. code-block:: text
+
+    : %1
+
+This message is issued if LFC detected a failure when trying
+to delete the PID file.  It includes a more specific error string.
+
+LFC_FAIL_PROCESS
+================
+
+.. code-block:: text
+
+    : %1
+
+This message is issued if LFC detected a failure when trying
+to process the files.  It includes a more specific error string.
+
+LFC_FAIL_ROTATE
+===============
+
+.. code-block:: text
+
+    : %1
+
+This message is issued if LFC detected a failure when trying
+to rotate the files.  It includes a more specific error string.
+
+LFC_PROCESSING
+==============
+
+.. code-block:: text
+
+    Previous file: %1, copy file: %2
+
+This message is issued just before LFC starts processing the
+lease files.
+
+LFC_READ_STATS
+==============
+
+.. code-block:: text
+
+    Leases: %1, attempts: %2, errors: %3.
+
+This message prints out the number of leases that were read, the
+number of attempts to read leases and the number of errors
+encountered while reading.
+
+LFC_ROTATING
+============
+
+.. code-block:: text
+
+    LFC rotating files
+
+This message is issued just before LFC starts rotating the
+lease files - removing the old and replacing them with the new.
+
+LFC_RUNNING
+===========
+
+.. code-block:: text
+
+    LFC instance already running
+
+This message is issued if LFC detects that a previous copy of LFC
+may still be running via the PID check.
+
+LFC_START
+=========
+
+.. code-block:: text
+
+    Starting lease file cleanup
+
+This message is issued as the LFC process starts.
+
+LFC_TERMINATE
+=============
+
+.. code-block:: text
+
+    LFC finished processing
+
+This message is issued when the LFC process completes.  It does not
+indicate that the process was successful only that it has finished.
+
+******
+LIMITS
+******
+
+LIMITS_CONFIGURATION_LEASE_BACKEND_NOT_AVAILABLE
+================================================
+
+.. code-block:: text
+
+    Lease backend not available. Could not check JSON support in the database. Continuing without checking...
+
+Warning message logged to notify that limits might not work if the recovering database does not have JSON support.
+
+LIMITS_CONFIGURATION_LEASE_BACKEND_SHOULD_HAVE_BEEN_AVAILABLE
+=============================================================
+
+.. code-block:: text
+
+    Lease backend not available when configuration shows it should have been. This is likely a programmatic error. Continuing...
+
+Error message logged to notify about an unexpected situation where the lease backend was expected to be available, but it was not. Runtime errors might occur.
+
+LIMITS_CONFIGURED_ADDRESS_LIMIT_BY_CLIENT_CLASS
+===============================================
+
+.. code-block:: text
+
+    New lease limit of %1 addresses for client class %2 has been configured.
+
+Logged at debug log level 40.
+Debug message logged to notify about the successful configuration of an address limit per client class
+
+LIMITS_CONFIGURED_ADDRESS_LIMIT_BY_SUBNET
+=========================================
+
+.. code-block:: text
+
+    New lease limit of %1 addresses for subnet with ID %2 has been configured.
+
+Logged at debug log level 40.
+Debug message logged to notify about the successful configuration of an address limit per subnet
+
+LIMITS_CONFIGURED_PREFIX_LIMIT_BY_CLIENT_CLASS
+==============================================
+
+.. code-block:: text
+
+    New lease limit of %1 prefixes for client class %2 has been configured.
+
+Logged at debug log level 40.
+Debug message logged to notify about the successful configuration of a prefix limit per client class
+
+LIMITS_CONFIGURED_PREFIX_LIMIT_BY_SUBNET
+========================================
+
+.. code-block:: text
+
+    New lease limit of %1 prefixes for subnet with ID %2 has been configured.
+
+Logged at debug log level 40.
+Debug message logged to notify about the successful configuration of a prefix limit per subnet
+
+LIMITS_CONFIGURED_RATE_LIMIT_BY_CLIENT_CLASS
+============================================
+
+.. code-block:: text
+
+    New rate limit of %1 for client class %2 has been configured.
+
+Logged at debug log level 40.
+Debug message logged to notify about the successful configuration of a rate limit per client class
+
+LIMITS_CONFIGURED_RATE_LIMIT_BY_SUBNET
+======================================
+
+.. code-block:: text
+
+    New rate limit of %1 for subnet with ID %2 has been configured.
+
+Logged at debug log level 40.
+Debug message logged to notify about the successful configuration of a rate limit per subnet
+
+LIMITS_LEASE_LIMIT_EXCEEDED
+===========================
+
+.. code-block:: text
+
+    Lease was not allocated due to exceeding %1.
+
+Logged at debug log level 40.
+Debug message logged to indicate that the current number of leased addresses or
+prefixes for a client class or a subnet is exceeding the limit.
+
+LIMITS_LEASE_WITHIN_LIMITS
+==========================
+
+.. code-block:: text
+
+    Lease with address %1 is within limits.
+
+Logged at debug log level 40.
+Debug message logged to indicate that the current number of leased addresses or
+prefixes for a client class or a subnet is exceeding the limit.
+
+LIMITS_PACKET_WIIH_SUBNET_ID_RATE_NO_SUBNET
+===========================================
+
+.. code-block:: text
+
+    Packet is not being rate limited due to no subnet specified.
+
+Logged at debug log level 55.
+Debug message logged to indicate that the current packet's subnet rate limit, if any, is not being
+checked due to the subnet not being set in the callout handle. This can happen e.g. if the subnet
+had been deleted after it was selected for the currently processed packet.
+
+LIMITS_PACKET_WITH_CLIENT_CLASSES_RATE_LIMIT_DROPPED
+====================================================
+
+.. code-block:: text
+
+    Packet assigned to client classes %1 is being dropped for exceeding the rate limit of %2 for client class %3.
+
+Logged at debug log level 40.
+Debug message logged to indicate that the current packet has exceeded one of the rate limits
+configured under at least one client class
+
+LIMITS_PACKET_WITH_CLIENT_CLASSES_RATE_LIMIT_HONORED
+====================================================
+
+.. code-block:: text
+
+    Packet assigned to client classes %1 is being honored.
+
+Logged at debug log level 55.
+Debug message logged to indicate that the current packet has not exceeded any of the rate limits
+configured under any client class
+
+LIMITS_PACKET_WITH_SUBNET_ID_RATE_LIMIT_DROPPED
+===============================================
+
+.. code-block:: text
+
+    Packet assigned to subnet with ID %1 is being dropped for exceeding the rate limit of %2.
+
+Logged at debug log level 40.
+Debug message logged to indicate that the current packet has exceeded the limit configured under
+the assigned subnet ID, if any is configured
+
+*******
+LOGIMPL
+*******
+
+LOGIMPL_ABOVE_MAX_DEBUG
+=======================
+
+.. code-block:: text
+
+    debug level of %1 is too high and will be set to the maximum of %2
+
+A message from the interface to the underlying logger implementation reporting
+that the debug level (as set by an internally-created string DEBUGn, where n
+is an integer, e.g. DEBUG22) is above the maximum allowed value and has
+been reduced to that value.  The appearance of this message may indicate
+a programming error - please submit a bug report.
+
+LOGIMPL_BAD_DEBUG_STRING
+========================
+
+.. code-block:: text
+
+    debug string '%1' has invalid format
+
+A message from the interface to the underlying logger implementation
+reporting that an internally-created string used to set the debug level
+is not of the correct format (it should be of the form DEBUGn, where n
+is an integer, e.g. DEBUG22).  The appearance of this message indicates
+a programming error - please submit a bug report.
+
+***
+LOG
+***
+
+LOG_BAD_DESTINATION
+===================
+
+.. code-block:: text
+
+    unrecognized log destination: %1
+
+This error message is printed when a logger destination value was given that was not recognized. The
+destination should be one of "console", "file", or "syslog".
+
+LOG_BAD_SEVERITY
+================
+
+.. code-block:: text
+
+    unrecognized log severity: %1
+
+This error message is printed when a logger severity value was given that was not recognized. The severity
+should be one of "DEBUG", "INFO", "WARN", "ERROR", "FATAL" or "NONE".
+
+LOG_BAD_STREAM
+==============
+
+.. code-block:: text
+
+    bad log console output stream: %1
+
+Logging has been configured so that output is written to the terminal
+(console) but the stream on which it is to be written is not recognized.
+Allowed values are "stdout" and "stderr".
+
+LOG_DUPLICATE_MESSAGE_ID
+========================
+
+.. code-block:: text
+
+    duplicate message ID (%1) in compiled code
+
+During start-up, Kea detected that the given message identification
+had been defined multiple times in the Kea code.  This indicates a
+programming error; please submit a bug report.
+
+LOG_DUPLICATE_NAMESPACE
+=======================
+
+.. code-block:: text
+
+    line %1: duplicate $NAMESPACE directive found
+
+When reading a message file, more than one $NAMESPACE directive was found.
+(This directive is used to set a C++ namespace when generating header
+files during software development.)  Such a condition is regarded as an
+error and the read will be abandoned.
+
+LOG_INPUT_OPEN_FAIL
+===================
+
+.. code-block:: text
+
+    unable to open message file %1 for input: %2
+
+The program was not able to open the specified input message file for
+the reason given.
+
+LOG_INVALID_MESSAGE_ID
+======================
+
+.. code-block:: text
+
+    line %1: invalid message identification '%2'
+
+An invalid message identification (ID) has been found during the read of
+a message file.  Message IDs should comprise only alphanumeric characters
+and the underscore, and should not start with a digit.
+
+LOG_NAMESPACE_EXTRA_ARGS
+========================
+
+.. code-block:: text
+
+    line %1: $NAMESPACE directive has too many arguments
+
+The $NAMESPACE directive in a message file takes a single argument, a
+namespace in which all the generated symbol names are placed.  This error
+is generated when the compiler finds a $NAMESPACE directive with more
+than one argument.
+
+LOG_NAMESPACE_INVALID_ARG
+=========================
+
+.. code-block:: text
+
+    line %1: $NAMESPACE directive has an invalid argument ('%2')
+
+The $NAMESPACE argument in a message file should be a valid C++ namespace.
+This message is output if the simple check on the syntax of the string
+carried out by the reader fails.
+
+LOG_NAMESPACE_NO_ARGS
+=====================
+
+.. code-block:: text
+
+    line %1: no arguments were given to the $NAMESPACE directive
+
+The $NAMESPACE directive in a message file takes a single argument,
+a C++ namespace in which all the generated symbol names are placed.
+This error is generated when the compiler finds a $NAMESPACE directive
+with no arguments.
+
+LOG_NO_MESSAGE_ID
+=================
+
+.. code-block:: text
+
+    line %1: message definition line found without a message ID
+
+Within a message file, message are defined by lines starting with a "%".
+The rest of the line should comprise the message ID and text describing
+the message.  This error indicates the message compiler found a line in
+the message file comprising just the "%" and nothing else.
+
+LOG_NO_MESSAGE_TEXT
+===================
+
+.. code-block:: text
+
+    line %1: line found containing a message ID ('%2') and no text
+
+Within a message file, message are defined by lines starting with a "%".
+The rest of the line should comprise the message ID and text describing
+the message.  This error indicates the message compiler found a line
+in the message file comprising just the "%" and message identification,
+but no text.
+
+LOG_NO_SUCH_MESSAGE
+===================
+
+.. code-block:: text
+
+    could not replace message text for '%1': no such message
+
+During start-up a local message file was read.  A line with the listed
+message identification was found in the file, but the identification is
+not one contained in the compiled-in message dictionary.  This message
+may appear a number of times in the file, once for every such unknown
+message identification.
+There are several reasons why this message may appear:
+- The message ID has been misspelled in the local message file.
+- The program outputting the message may not use that particular message
+(e.g. it originates in a module not used by the program).
+- The local file was written for an earlier version of the Kea software
+and the later version no longer generates that message.
+Whatever the reason, there is no impact on the operation of Kea.
+
+LOG_OPEN_OUTPUT_FAIL
+====================
+
+.. code-block:: text
+
+    unable to open %1 for output: %2
+
+Originating within the logging code, the program was not able to open
+the specified output file for the reason given.
+
+LOG_PREFIX_EXTRA_ARGS
+=====================
+
+.. code-block:: text
+
+    line %1: $PREFIX directive has too many arguments
+
+Within a message file, the $PREFIX directive takes a single argument,
+a prefix to be added to the symbol names when a C++ file is created.
+This error is generated when the compiler finds a $PREFIX directive with
+more than one argument.
+Note: the $PREFIX directive is deprecated and will be removed in a future
+version of Kea.
+
+LOG_PREFIX_INVALID_ARG
+======================
+
+.. code-block:: text
+
+    line %1: $PREFIX directive has an invalid argument ('%2')
+
+Within a message file, the $PREFIX directive takes a single argument,
+a prefix to be added to the symbol names when a C++ file is created.
+As such, it must adhere to restrictions on C++ symbol names (e.g. may
+only contain alphanumeric characters or underscores, and may nor start
+with a digit).  A $PREFIX directive was found with an argument (given
+in the message) that violates those restrictions.
+Note: the $PREFIX directive is deprecated and will be removed in a future
+version of Kea.
+
+LOG_READING_LOCAL_FILE
+======================
+
+.. code-block:: text
+
+    reading local message file %1
+
+This is an informational message output by Kea when it starts to read
+a local message file.  (A local message file may replace the text of
+one or more messages; the ID of the message will not be changed though.)
+
+LOG_READ_ERROR
+==============
+
+.. code-block:: text
+
+    error reading from message file %1: %2
+
+The specified error was encountered reading from the named message file.
+
+LOG_UNRECOGNIZED_DIRECTIVE
+==========================
+
+.. code-block:: text
+
+    line %1: unrecognized directive '%2'
+
+Within a message file, a line starting with a dollar symbol was found
+(indicating the presence of a directive) but the first word on the line
+(shown in the message) was not recognized.
+
+**
+MT
+**
+
+MT_TCP_LISTENER_MGR_STARTED
+===========================
+
+.. code-block:: text
+
+    MtTcpListenerMgr started with %1 threads, listening on %2:%3, use TLS: %4
+
+Logged at debug log level 40.
+This debug messages is issued when an MtTcpListenerMgr has been started to
+accept connections.  Arguments detail the number of threads that the listener
+is using, the address and port at which it is listening, and if TLS is used
+or not.
+
+MT_TCP_LISTENER_MGR_STOPPED
+===========================
+
+.. code-block:: text
+
+    MtTcpListenerMgr for %1:%2 stopped.
+
+Logged at debug log level 40.
+This debug messages is issued when the MtTcpListenerMgr, listening
+at the given address and port, has completed shutdown.
+
+MT_TCP_LISTENER_MGR_STOPPING
+============================
+
+.. code-block:: text
+
+    Stopping MtTcpListenerMgr for %1:%2
+
+Logged at debug log level 40.
+This debug messages is issued when the MtTcpListenerMgr, listening
+at the given address and port, has begun to shutdown.
+
+*****
+MYSQL
+*****
+
+MYSQL_CB_CREATE_UPDATE_BY_POOL_OPTION4
+======================================
+
+.. code-block:: text
+
+    create or update option pool start: %1 pool end: %2
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to create or update option by pool
+
+MYSQL_CB_CREATE_UPDATE_BY_POOL_OPTION6
+======================================
+
+.. code-block:: text
+
+    create or update option pool start: %1 pool end: %2
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to create or update option by pool
+
+MYSQL_CB_CREATE_UPDATE_BY_PREFIX_OPTION6
+========================================
+
+.. code-block:: text
+
+    create or update option prefix: %1 prefix len: %2
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to create or update option by prefix
+
+MYSQL_CB_CREATE_UPDATE_BY_SUBNET_ID_OPTION4
+===========================================
+
+.. code-block:: text
+
+    create or update option by subnet id: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to create or update option by subnet id
+
+MYSQL_CB_CREATE_UPDATE_BY_SUBNET_ID_OPTION6
+===========================================
+
+.. code-block:: text
+
+    create or update option by subnet id: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to create or update option by subnet id
+
+MYSQL_CB_CREATE_UPDATE_CLIENT_CLASS4
+====================================
+
+.. code-block:: text
+
+    create or update client class: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to create or update client class
+
+MYSQL_CB_CREATE_UPDATE_CLIENT_CLASS6
+====================================
+
+.. code-block:: text
+
+    create or update client class: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to create or update client class
+
+MYSQL_CB_CREATE_UPDATE_GLOBAL_PARAMETER4
+========================================
+
+.. code-block:: text
+
+    create or update global parameter: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to create or update global parameter
+
+MYSQL_CB_CREATE_UPDATE_GLOBAL_PARAMETER6
+========================================
+
+.. code-block:: text
+
+    create or update global parameter: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to create or update global parameter
+
+MYSQL_CB_CREATE_UPDATE_OPTION4
+==============================
+
+.. code-block:: text
+
+    create or update option
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to create or update option
+
+MYSQL_CB_CREATE_UPDATE_OPTION6
+==============================
+
+.. code-block:: text
+
+    create or update option
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to create or update option
+
+MYSQL_CB_CREATE_UPDATE_OPTION_DEF4
+==================================
+
+.. code-block:: text
+
+    create or update option definition: %1 code: %2
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to create or update option definition
+
+MYSQL_CB_CREATE_UPDATE_OPTION_DEF6
+==================================
+
+.. code-block:: text
+
+    create or update option definition: %1 code: %2
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to create or update option definition
+
+MYSQL_CB_CREATE_UPDATE_SERVER4
+==============================
+
+.. code-block:: text
+
+    create or update server: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to create or update a DHCPv4
+server information.
+
+MYSQL_CB_CREATE_UPDATE_SERVER6
+==============================
+
+.. code-block:: text
+
+    create or update server: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to create or update a DHCPv6
+server information.
+
+MYSQL_CB_CREATE_UPDATE_SHARED_NETWORK4
+======================================
+
+.. code-block:: text
+
+    create or update shared network: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to create or update shared network
+
+MYSQL_CB_CREATE_UPDATE_SHARED_NETWORK6
+======================================
+
+.. code-block:: text
+
+    create or update shared network: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to create or update shared network
+
+MYSQL_CB_CREATE_UPDATE_SHARED_NETWORK_OPTION4
+=============================================
+
+.. code-block:: text
+
+    create or update shared network: %1 option
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to create or update shared network option
+
+MYSQL_CB_CREATE_UPDATE_SHARED_NETWORK_OPTION6
+=============================================
+
+.. code-block:: text
+
+    create or update shared network: %1 option
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to create or update shared network option
+
+MYSQL_CB_CREATE_UPDATE_SUBNET4
+==============================
+
+.. code-block:: text
+
+    create or update subnet: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to create or update subnet
+
+MYSQL_CB_CREATE_UPDATE_SUBNET6
+==============================
+
+.. code-block:: text
+
+    create or update subnet: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to create or update subnet
+
+MYSQL_CB_DEINIT_OK
+==================
+
+.. code-block:: text
+
+    unloading MYSQL CB hooks library successful
+
+This informational message indicates that the MySQL Configuration Backend hooks
+library has been unloaded successfully.
+
+MYSQL_CB_DELETE_ALL_CLIENT_CLASSES4
+===================================
+
+.. code-block:: text
+
+    delete all client classes
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to delete all client classes
+
+MYSQL_CB_DELETE_ALL_CLIENT_CLASSES4_RESULT
+==========================================
+
+.. code-block:: text
+
+    deleted: %1 entries
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to delete all client classes
+
+MYSQL_CB_DELETE_ALL_CLIENT_CLASSES6
+===================================
+
+.. code-block:: text
+
+    delete all client classes
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to delete all client classes
+
+MYSQL_CB_DELETE_ALL_CLIENT_CLASSES6_RESULT
+==========================================
+
+.. code-block:: text
+
+    deleted: %1 entries
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to delete all client classes
+
+MYSQL_CB_DELETE_ALL_GLOBAL_PARAMETERS4
+======================================
+
+.. code-block:: text
+
+    delete all global parameters
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to delete all global parameters
+
+MYSQL_CB_DELETE_ALL_GLOBAL_PARAMETERS4_RESULT
+=============================================
+
+.. code-block:: text
+
+    deleted: %1 entries
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to delete all global parameters
+
+MYSQL_CB_DELETE_ALL_GLOBAL_PARAMETERS6
+======================================
+
+.. code-block:: text
+
+    delete all global parameters
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to delete all global parameters
+
+MYSQL_CB_DELETE_ALL_GLOBAL_PARAMETERS6_RESULT
+=============================================
+
+.. code-block:: text
+
+    deleted: %1 entries
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to delete all global parameters
+
+MYSQL_CB_DELETE_ALL_OPTION_DEFS4
+================================
+
+.. code-block:: text
+
+    delete all option definitions
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to delete all option definitions
+
+MYSQL_CB_DELETE_ALL_OPTION_DEFS4_RESULT
+=======================================
+
+.. code-block:: text
+
+    deleted: %1 entries
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to delete all option definitions
+
+MYSQL_CB_DELETE_ALL_OPTION_DEFS6
+================================
+
+.. code-block:: text
+
+    delete all option definitions
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to delete all option definitions
+
+MYSQL_CB_DELETE_ALL_OPTION_DEFS6_RESULT
+=======================================
+
+.. code-block:: text
+
+    deleted: %1 entries
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to delete all option definitions
+
+MYSQL_CB_DELETE_ALL_SERVERS4
+============================
+
+.. code-block:: text
+
+    delete all DHCPv4 servers
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to delete all servers.
+
+MYSQL_CB_DELETE_ALL_SERVERS4_RESULT
+===================================
+
+.. code-block:: text
+
+    deleted: %1 entries
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to delete all servers.
+
+MYSQL_CB_DELETE_ALL_SERVERS6
+============================
+
+.. code-block:: text
+
+    delete all DHCPv6 servers
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to delete all servers.
+
+MYSQL_CB_DELETE_ALL_SERVERS6_RESULT
+===================================
+
+.. code-block:: text
+
+    deleted: %1 entries
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to delete all servers.
+
+MYSQL_CB_DELETE_ALL_SHARED_NETWORKS4
+====================================
+
+.. code-block:: text
+
+    delete all shared networks
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to delete all shared networks
+
+MYSQL_CB_DELETE_ALL_SHARED_NETWORKS4_RESULT
+===========================================
+
+.. code-block:: text
+
+    deleted: %1 entries
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to delete all shared networks
+
+MYSQL_CB_DELETE_ALL_SHARED_NETWORKS6
+====================================
+
+.. code-block:: text
+
+    delete all shared networks
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to delete all shared networks
+
+MYSQL_CB_DELETE_ALL_SHARED_NETWORKS6_RESULT
+===========================================
+
+.. code-block:: text
+
+    deleted: %1 entries
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to delete all shared networks
+
+MYSQL_CB_DELETE_ALL_SUBNETS4
+============================
+
+.. code-block:: text
+
+    delete all subnets
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to delete all subnets
+
+MYSQL_CB_DELETE_ALL_SUBNETS4_RESULT
+===================================
+
+.. code-block:: text
+
+    deleted: %1 entries
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to delete all subnets
+
+MYSQL_CB_DELETE_ALL_SUBNETS6
+============================
+
+.. code-block:: text
+
+    delete all subnets
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to delete all subnets
+
+MYSQL_CB_DELETE_ALL_SUBNETS6_RESULT
+===================================
+
+.. code-block:: text
+
+    deleted: %1 entries
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to delete all subnets
+
+MYSQL_CB_DELETE_BY_POOL_OPTION4
+===============================
+
+.. code-block:: text
+
+    delete pool start: %1 pool end: %2 option code: %3 space: %4
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to delete option by pool
+
+MYSQL_CB_DELETE_BY_POOL_OPTION4_RESULT
+======================================
+
+.. code-block:: text
+
+    deleted: %1 entries
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to delete option by pool
+
+MYSQL_CB_DELETE_BY_POOL_OPTION6
+===============================
+
+.. code-block:: text
+
+    delete pool start: %1 pool end: %2 option code: %3 space: %4
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to delete option by pool
+
+MYSQL_CB_DELETE_BY_POOL_OPTION6_RESULT
+======================================
+
+.. code-block:: text
+
+    deleted: %1 entries
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to delete option by pool
+
+MYSQL_CB_DELETE_BY_POOL_PREFIX_OPTION6
+======================================
+
+.. code-block:: text
+
+    delete prefix: %1 prefix len: %2 option code: %3 space: %4
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to delete option by prefix
+
+MYSQL_CB_DELETE_BY_POOL_PREFIX_OPTION6_RESULT
+=============================================
+
+.. code-block:: text
+
+    deleted: %1 entries
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to delete option by prefix
+
+MYSQL_CB_DELETE_BY_PREFIX_SUBNET4
+=================================
+
+.. code-block:: text
+
+    delete subnet by prefix: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to delete subnet by prefix
+
+MYSQL_CB_DELETE_BY_PREFIX_SUBNET4_RESULT
+========================================
+
+.. code-block:: text
+
+    deleted: %1 entries
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to delete subnet by prefix
+
+MYSQL_CB_DELETE_BY_PREFIX_SUBNET6
+=================================
+
+.. code-block:: text
+
+    delete subnet by prefix: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to delete subnet by prefix
+
+MYSQL_CB_DELETE_BY_PREFIX_SUBNET6_RESULT
+========================================
+
+.. code-block:: text
+
+    deleted: %1 entries
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to delete subnet by prefix
+
+MYSQL_CB_DELETE_BY_SUBNET_ID_OPTION4
+====================================
+
+.. code-block:: text
+
+    delete by subnet id: %1 option code: %2 space: %3
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to delete option by subnet id
+
+MYSQL_CB_DELETE_BY_SUBNET_ID_OPTION4_RESULT
+===========================================
+
+.. code-block:: text
+
+    deleted: %1 entries
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to delete option by subnet id
+
+MYSQL_CB_DELETE_BY_SUBNET_ID_OPTION6
+====================================
+
+.. code-block:: text
+
+    delete by subnet id: %1 option code: %2 space: %3
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to delete option by subnet id
+
+MYSQL_CB_DELETE_BY_SUBNET_ID_OPTION6_RESULT
+===========================================
+
+.. code-block:: text
+
+    deleted: %1 entries
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to delete option by subnet id
+
+MYSQL_CB_DELETE_BY_SUBNET_ID_SUBNET4
+====================================
+
+.. code-block:: text
+
+    delete subnet by subnet id: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to delete subnet by subnet id
+
+MYSQL_CB_DELETE_BY_SUBNET_ID_SUBNET4_RESULT
+===========================================
+
+.. code-block:: text
+
+    deleted: %1 entries
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to delete subnet by subnet id
+
+MYSQL_CB_DELETE_BY_SUBNET_ID_SUBNET6
+====================================
+
+.. code-block:: text
+
+    delete subnet by subnet id: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to delete subnet by subnet id
+
+MYSQL_CB_DELETE_BY_SUBNET_ID_SUBNET6_RESULT
+===========================================
+
+.. code-block:: text
+
+    deleted: %1 entries
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to delete subnet by subnet id
+
+MYSQL_CB_DELETE_CLIENT_CLASS4
+=============================
+
+.. code-block:: text
+
+    delete client class: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to delete client class
+
+MYSQL_CB_DELETE_CLIENT_CLASS4_RESULT
+====================================
+
+.. code-block:: text
+
+    deleted: %1 entries
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to delete client class
+
+MYSQL_CB_DELETE_CLIENT_CLASS6
+=============================
+
+.. code-block:: text
+
+    delete client class: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to delete client class
+
+MYSQL_CB_DELETE_CLIENT_CLASS6_RESULT
+====================================
+
+.. code-block:: text
+
+    deleted: %1 entries
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to delete client class
+
+MYSQL_CB_DELETE_GLOBAL_PARAMETER4
+=================================
+
+.. code-block:: text
+
+    delete global parameter: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to delete global parameter
+
+MYSQL_CB_DELETE_GLOBAL_PARAMETER4_RESULT
+========================================
+
+.. code-block:: text
+
+    deleted: %1 entries
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to delete global parameter
+
+MYSQL_CB_DELETE_GLOBAL_PARAMETER6
+=================================
+
+.. code-block:: text
+
+    delete global parameter: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to delete global parameter
+
+MYSQL_CB_DELETE_GLOBAL_PARAMETER6_RESULT
+========================================
+
+.. code-block:: text
+
+    deleted: %1 entries
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to delete global parameter
+
+MYSQL_CB_DELETE_OPTION4
+=======================
+
+.. code-block:: text
+
+    delete option code: %1 space: %2
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to delete option
+
+MYSQL_CB_DELETE_OPTION4_RESULT
+==============================
+
+.. code-block:: text
+
+    deleted: %1 entries
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to delete option
+
+MYSQL_CB_DELETE_OPTION6
+=======================
+
+.. code-block:: text
+
+    delete option code: %1 space: %2
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to delete option
+
+MYSQL_CB_DELETE_OPTION6_RESULT
+==============================
+
+.. code-block:: text
+
+    deleted: %1 entries
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to delete option
+
+MYSQL_CB_DELETE_OPTION_DEF4
+===========================
+
+.. code-block:: text
+
+    delete option definition code: %1 space: %2
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to delete option definition
+
+MYSQL_CB_DELETE_OPTION_DEF4_RESULT
+==================================
+
+.. code-block:: text
+
+    deleted: %1 entries
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to delete option definition
+
+MYSQL_CB_DELETE_OPTION_DEF6
+===========================
+
+.. code-block:: text
+
+    delete option definition code: %1 space: %2
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to delete option definition
+
+MYSQL_CB_DELETE_OPTION_DEF6_RESULT
+==================================
+
+.. code-block:: text
+
+    deleted: %1 entries
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to delete option definition
+
+MYSQL_CB_DELETE_SERVER4
+=======================
+
+.. code-block:: text
+
+    delete DHCPv4 server: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to delete a server.
+
+MYSQL_CB_DELETE_SERVER4_RESULT
+==============================
+
+.. code-block:: text
+
+    deleted: %1 entries
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to delete a server.
+
+MYSQL_CB_DELETE_SERVER6
+=======================
+
+.. code-block:: text
+
+    delete DHCPv6 server: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to delete a server.
+
+MYSQL_CB_DELETE_SERVER6_RESULT
+==============================
+
+.. code-block:: text
+
+    deleted: %1 entries
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to delete a server.
+
+MYSQL_CB_DELETE_SHARED_NETWORK4
+===============================
+
+.. code-block:: text
+
+    delete shared network: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to delete shared network
+
+MYSQL_CB_DELETE_SHARED_NETWORK4_RESULT
+======================================
+
+.. code-block:: text
+
+    deleted: %1 entries
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to delete shared network
+
+MYSQL_CB_DELETE_SHARED_NETWORK6
+===============================
+
+.. code-block:: text
+
+    delete shared network: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to delete shared network
+
+MYSQL_CB_DELETE_SHARED_NETWORK6_RESULT
+======================================
+
+.. code-block:: text
+
+    deleted: %1 entries
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to delete shared network
+
+MYSQL_CB_DELETE_SHARED_NETWORK_OPTION4
+======================================
+
+.. code-block:: text
+
+    delete shared network: %1 option code: %2 space: %3
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to delete shared network option
+
+MYSQL_CB_DELETE_SHARED_NETWORK_OPTION4_RESULT
+=============================================
+
+.. code-block:: text
+
+    deleted: %1 entries
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to delete shared network option
+
+MYSQL_CB_DELETE_SHARED_NETWORK_OPTION6
+======================================
+
+.. code-block:: text
+
+    delete shared network: %1 option code: %2 space: %3
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to delete shared network option
+
+MYSQL_CB_DELETE_SHARED_NETWORK_OPTION6_RESULT
+=============================================
+
+.. code-block:: text
+
+    deleted: %1 entries
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to delete shared network option
+
+MYSQL_CB_DELETE_SHARED_NETWORK_SUBNETS4
+=======================================
+
+.. code-block:: text
+
+    delete shared network: %1 subnets
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to delete shared network subnets
+
+MYSQL_CB_DELETE_SHARED_NETWORK_SUBNETS4_RESULT
+==============================================
+
+.. code-block:: text
+
+    deleted: %1 entries
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to delete shared network subnets
+
+MYSQL_CB_DELETE_SHARED_NETWORK_SUBNETS6
+=======================================
+
+.. code-block:: text
+
+    delete shared network: %1 subnets
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to delete shared network subnets
+
+MYSQL_CB_DELETE_SHARED_NETWORK_SUBNETS6_RESULT
+==============================================
+
+.. code-block:: text
+
+    deleted: %1 entries
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to delete shared network subnets
+
+MYSQL_CB_GET_ALL_CLIENT_CLASSES4
+================================
+
+.. code-block:: text
+
+    retrieving all client classes
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve all client classes
+
+MYSQL_CB_GET_ALL_CLIENT_CLASSES4_RESULT
+=======================================
+
+.. code-block:: text
+
+    retrieving: %1 elements
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to retrieve all client classes
+
+MYSQL_CB_GET_ALL_CLIENT_CLASSES6
+================================
+
+.. code-block:: text
+
+    retrieving all client classes
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve all client classes
+
+MYSQL_CB_GET_ALL_CLIENT_CLASSES6_RESULT
+=======================================
+
+.. code-block:: text
+
+    retrieving: %1 elements
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to retrieve all client classes
+
+MYSQL_CB_GET_ALL_GLOBAL_PARAMETERS4
+===================================
+
+.. code-block:: text
+
+    retrieving all global parameters
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve all global parameters
+
+MYSQL_CB_GET_ALL_GLOBAL_PARAMETERS4_RESULT
+==========================================
+
+.. code-block:: text
+
+    retrieving: %1 elements
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to retrieve all global parameters
+
+MYSQL_CB_GET_ALL_GLOBAL_PARAMETERS6
+===================================
+
+.. code-block:: text
+
+    retrieving all global parameters
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve all global parameters
+
+MYSQL_CB_GET_ALL_GLOBAL_PARAMETERS6_RESULT
+==========================================
+
+.. code-block:: text
+
+    retrieving: %1 elements
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to retrieve all global parameters
+
+MYSQL_CB_GET_ALL_OPTIONS4
+=========================
+
+.. code-block:: text
+
+    retrieving all options
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve all options
+
+MYSQL_CB_GET_ALL_OPTIONS4_RESULT
+================================
+
+.. code-block:: text
+
+    retrieving: %1 elements
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to retrieve all options
+
+MYSQL_CB_GET_ALL_OPTIONS6
+=========================
+
+.. code-block:: text
+
+    retrieving all options
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve all options
+
+MYSQL_CB_GET_ALL_OPTIONS6_RESULT
+================================
+
+.. code-block:: text
+
+    retrieving: %1 elements
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to retrieve all options
+
+MYSQL_CB_GET_ALL_OPTION_DEFS4
+=============================
+
+.. code-block:: text
+
+    retrieving all option definitions
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve all option definitions
+
+MYSQL_CB_GET_ALL_OPTION_DEFS4_RESULT
+====================================
+
+.. code-block:: text
+
+    retrieving: %1 elements
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to retrieve all option definitions
+
+MYSQL_CB_GET_ALL_OPTION_DEFS6
+=============================
+
+.. code-block:: text
+
+    retrieving all option definitions
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve all option definitions
+
+MYSQL_CB_GET_ALL_OPTION_DEFS6_RESULT
+====================================
+
+.. code-block:: text
+
+    retrieving: %1 elements
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to retrieve all option definitions
+
+MYSQL_CB_GET_ALL_SERVERS4
+=========================
+
+.. code-block:: text
+
+    retrieving all servers
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve all DHCPv4
+servers
+
+MYSQL_CB_GET_ALL_SERVERS4_RESULT
+================================
+
+.. code-block:: text
+
+    retrieving: %1 elements
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to retrieve all DHCPv4
+servers
+
+MYSQL_CB_GET_ALL_SERVERS6
+=========================
+
+.. code-block:: text
+
+    retrieving all DHCPv6 servers
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve all DHCPv6
+servers
+
+MYSQL_CB_GET_ALL_SERVERS6_RESULT
+================================
+
+.. code-block:: text
+
+    retrieving: %1 elements
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to retrieve all DHCPv6
+servers
+
+MYSQL_CB_GET_ALL_SHARED_NETWORKS4
+=================================
+
+.. code-block:: text
+
+    retrieving all shared networks
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve all shared networks
+
+MYSQL_CB_GET_ALL_SHARED_NETWORKS4_RESULT
+========================================
+
+.. code-block:: text
+
+    retrieving: %1 elements
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to retrieve all shared networks
+
+MYSQL_CB_GET_ALL_SHARED_NETWORKS6
+=================================
+
+.. code-block:: text
+
+    retrieving all shared networks
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve all shared networks
+
+MYSQL_CB_GET_ALL_SHARED_NETWORKS6_RESULT
+========================================
+
+.. code-block:: text
+
+    retrieving: %1 elements
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to retrieve all shared networks
+
+MYSQL_CB_GET_ALL_SUBNETS4
+=========================
+
+.. code-block:: text
+
+    retrieving all subnets
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve all subnets
+
+MYSQL_CB_GET_ALL_SUBNETS4_RESULT
+================================
+
+.. code-block:: text
+
+    retrieving: %1 elements
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to retrieve all subnets
+
+MYSQL_CB_GET_ALL_SUBNETS6
+=========================
+
+.. code-block:: text
+
+    retrieving all subnets
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve all subnets
+
+MYSQL_CB_GET_ALL_SUBNETS6_RESULT
+================================
+
+.. code-block:: text
+
+    retrieving: %1 elements
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to retrieve all subnets
+
+MYSQL_CB_GET_CLIENT_CLASS4
+==========================
+
+.. code-block:: text
+
+    retrieving client class: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve a client class
+
+MYSQL_CB_GET_CLIENT_CLASS6
+==========================
+
+.. code-block:: text
+
+    retrieving client class: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve a client class
+
+MYSQL_CB_GET_GLOBAL_PARAMETER4
+==============================
+
+.. code-block:: text
+
+    retrieving global parameter: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve global parameter
+
+MYSQL_CB_GET_GLOBAL_PARAMETER6
+==============================
+
+.. code-block:: text
+
+    retrieving global parameter: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve global parameter
+
+MYSQL_CB_GET_HOST4
+==================
+
+.. code-block:: text
+
+    get host
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve host
+
+MYSQL_CB_GET_HOST6
+==================
+
+.. code-block:: text
+
+    get host
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve host
+
+MYSQL_CB_GET_MODIFIED_CLIENT_CLASSES4
+=====================================
+
+.. code-block:: text
+
+    retrieving modified client classes from: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve modified client classes from specified time
+
+MYSQL_CB_GET_MODIFIED_CLIENT_CLASSES4_RESULT
+============================================
+
+.. code-block:: text
+
+    retrieving: %1 elements
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to retrieve modified client classes from specified time
+
+MYSQL_CB_GET_MODIFIED_CLIENT_CLASSES6
+=====================================
+
+.. code-block:: text
+
+    retrieving modified client classes from: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve modified client classes from specified time
+
+MYSQL_CB_GET_MODIFIED_CLIENT_CLASSES6_RESULT
+============================================
+
+.. code-block:: text
+
+    retrieving: %1 elements
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to retrieve modified client classes from specified time
+
+MYSQL_CB_GET_MODIFIED_GLOBAL_PARAMETERS4
+========================================
+
+.. code-block:: text
+
+    retrieving modified global parameters from: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve modified global parameters from specified time
+
+MYSQL_CB_GET_MODIFIED_GLOBAL_PARAMETERS4_RESULT
+===============================================
+
+.. code-block:: text
+
+    retrieving: %1 elements
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to retrieve modified global parameters from specified time
+
+MYSQL_CB_GET_MODIFIED_GLOBAL_PARAMETERS6
+========================================
+
+.. code-block:: text
+
+    retrieving modified global parameters from: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve modified global parameters from specified time
+
+MYSQL_CB_GET_MODIFIED_GLOBAL_PARAMETERS6_RESULT
+===============================================
+
+.. code-block:: text
+
+    retrieving: %1 elements
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to retrieve modified global parameters from specified time
+
+MYSQL_CB_GET_MODIFIED_OPTIONS4
+==============================
+
+.. code-block:: text
+
+    retrieving modified options from: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve modified options from specified time
+
+MYSQL_CB_GET_MODIFIED_OPTIONS4_RESULT
+=====================================
+
+.. code-block:: text
+
+    retrieving: %1 elements
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to retrieve modified options from specified time
+
+MYSQL_CB_GET_MODIFIED_OPTIONS6
+==============================
+
+.. code-block:: text
+
+    retrieving modified options from: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve modified options from specified time
+
+MYSQL_CB_GET_MODIFIED_OPTIONS6_RESULT
+=====================================
+
+.. code-block:: text
+
+    retrieving: %1 elements
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to retrieve modified options from specified time
+
+MYSQL_CB_GET_MODIFIED_OPTION_DEFS4
+==================================
+
+.. code-block:: text
+
+    retrieving modified option definitions from: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve modified option definitions from specified time
+
+MYSQL_CB_GET_MODIFIED_OPTION_DEFS4_RESULT
+=========================================
+
+.. code-block:: text
+
+    retrieving: %1 elements
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to retrieve modified option definitions from specified time
+
+MYSQL_CB_GET_MODIFIED_OPTION_DEFS6
+==================================
+
+.. code-block:: text
+
+    retrieving modified option definitions from: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve modified option definitions from specified time
+
+MYSQL_CB_GET_MODIFIED_OPTION_DEFS6_RESULT
+=========================================
+
+.. code-block:: text
+
+    retrieving: %1 elements
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to retrieve modified option definitions from specified time
+
+MYSQL_CB_GET_MODIFIED_SHARED_NETWORKS4
+======================================
+
+.. code-block:: text
+
+    retrieving modified shared networks from: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve modified shared networks from specified time
+
+MYSQL_CB_GET_MODIFIED_SHARED_NETWORKS4_RESULT
+=============================================
+
+.. code-block:: text
+
+    retrieving: %1 elements
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to retrieve modified shared networks from specified time
+
+MYSQL_CB_GET_MODIFIED_SHARED_NETWORKS6
+======================================
+
+.. code-block:: text
+
+    retrieving modified shared networks from: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve modified shared networks from specified time
+
+MYSQL_CB_GET_MODIFIED_SHARED_NETWORKS6_RESULT
+=============================================
+
+.. code-block:: text
+
+    retrieving: %1 elements
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to retrieve modified shared networks from specified time
+
+MYSQL_CB_GET_MODIFIED_SUBNETS4
+==============================
+
+.. code-block:: text
+
+    retrieving modified subnets from: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve modified subnets from specified time
+
+MYSQL_CB_GET_MODIFIED_SUBNETS4_RESULT
+=====================================
+
+.. code-block:: text
+
+    retrieving: %1 elements
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to retrieve modified subnets from specified time
+
+MYSQL_CB_GET_MODIFIED_SUBNETS6
+==============================
+
+.. code-block:: text
+
+    retrieving modified subnets from: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve modified subnets from specified time
+
+MYSQL_CB_GET_MODIFIED_SUBNETS6_RESULT
+=====================================
+
+.. code-block:: text
+
+    retrieving: %1 elements
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to retrieve modified subnets from specified time
+
+MYSQL_CB_GET_OPTION4
+====================
+
+.. code-block:: text
+
+    retrieving option code: %1 space: %2
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve option
+
+MYSQL_CB_GET_OPTION6
+====================
+
+.. code-block:: text
+
+    retrieving option code: %1 space: %2
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve option
+
+MYSQL_CB_GET_OPTION_DEF4
+========================
+
+.. code-block:: text
+
+    retrieving option definition code: %1 space: %2
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve option definition
+
+MYSQL_CB_GET_OPTION_DEF6
+========================
+
+.. code-block:: text
+
+    retrieving option definition code: %1 space: %2
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve option definition
+
+MYSQL_CB_GET_PORT4
+==================
+
+.. code-block:: text
+
+    get port
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve port
+
+MYSQL_CB_GET_PORT6
+==================
+
+.. code-block:: text
+
+    get port
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve port
+
+MYSQL_CB_GET_RECENT_AUDIT_ENTRIES4
+==================================
+
+.. code-block:: text
+
+    retrieving audit entries from: %1 %2
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve audit entries from specified time and id.
+
+MYSQL_CB_GET_RECENT_AUDIT_ENTRIES4_RESULT
+=========================================
+
+.. code-block:: text
+
+    retrieving: %1 elements
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to retrieve audit entries from specified time
+
+MYSQL_CB_GET_RECENT_AUDIT_ENTRIES6
+==================================
+
+.. code-block:: text
+
+    retrieving audit entries from: %1 %2
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve audit entries from specified time and id
+
+MYSQL_CB_GET_RECENT_AUDIT_ENTRIES6_RESULT
+=========================================
+
+.. code-block:: text
+
+    retrieving: %1 elements
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to retrieve audit entries from specified time
+
+MYSQL_CB_GET_SERVER4
+====================
+
+.. code-block:: text
+
+    retrieving DHCPv4 server: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve a DHCPv4 server information.
+
+MYSQL_CB_GET_SERVER6
+====================
+
+.. code-block:: text
+
+    retrieving DHCPv6 server: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve a DHCPv6 server information.
+
+MYSQL_CB_GET_SHARED_NETWORK4
+============================
+
+.. code-block:: text
+
+    retrieving shared network: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve shared network
+
+MYSQL_CB_GET_SHARED_NETWORK6
+============================
+
+.. code-block:: text
+
+    retrieving shared network: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve shared network
+
+MYSQL_CB_GET_SHARED_NETWORK_SUBNETS4
+====================================
+
+.. code-block:: text
+
+    retrieving shared network: %1 subnets
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve shared network subnets
+
+MYSQL_CB_GET_SHARED_NETWORK_SUBNETS4_RESULT
+===========================================
+
+.. code-block:: text
+
+    retrieving: %1 elements
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to retrieve shared network subnets
+
+MYSQL_CB_GET_SHARED_NETWORK_SUBNETS6
+====================================
+
+.. code-block:: text
+
+    retrieving shared network: %1 subnets
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve shared network subnets
+
+MYSQL_CB_GET_SHARED_NETWORK_SUBNETS6_RESULT
+===========================================
+
+.. code-block:: text
+
+    retrieving: %1 elements
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to retrieve shared network subnets
+
+MYSQL_CB_GET_SUBNET4_BY_PREFIX
+==============================
+
+.. code-block:: text
+
+    retrieving subnet by prefix: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve subnet by prefix
+
+MYSQL_CB_GET_SUBNET4_BY_SUBNET_ID
+=================================
+
+.. code-block:: text
+
+    retrieving subnet by subnet id: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve subnet by subnet id
+
+MYSQL_CB_GET_SUBNET6_BY_PREFIX
+==============================
+
+.. code-block:: text
+
+    retrieving subnet by prefix: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve subnet by prefix
+
+MYSQL_CB_GET_SUBNET6_BY_SUBNET_ID
+=================================
+
+.. code-block:: text
+
+    retrieving subnet by subnet id: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve subnet by subnet id
+
+MYSQL_CB_GET_TYPE4
+==================
+
+.. code-block:: text
+
+    get type
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve type
+
+MYSQL_CB_GET_TYPE6
+==================
+
+.. code-block:: text
+
+    get type
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve type
+
+MYSQL_CB_INIT_OK
+================
+
+.. code-block:: text
+
+    loading MYSQL CB hooks library successful
+
+This informational message indicates that the MySQL Configuration Backend hooks
+library has been loaded successfully. Enjoy!
+
+MYSQL_CB_NO_TLS
+===============
+
+.. code-block:: text
+
+    TLS was required but is not used
+
+This error message is issued when TLS for the connection was required but
+TLS is not used.
+
+MYSQL_CB_RECONNECT_ATTEMPT_FAILED4
+==================================
+
+.. code-block:: text
+
+    database reconnect failed: %1
+
+Error message issued when an attempt to reconnect has failed.
+
+MYSQL_CB_RECONNECT_ATTEMPT_FAILED6
+==================================
+
+.. code-block:: text
+
+    database reconnect failed: %1
+
+Error message issued when an attempt to reconnect has failed.
+
+MYSQL_CB_RECONNECT_ATTEMPT_SCHEDULE4
+====================================
+
+.. code-block:: text
+
+    scheduling attempt %1 of %2 in %3 milliseconds
+
+Info message issued when the server is scheduling the next attempt to reconnect
+to the database.  This occurs when the server has lost database connectivity and
+is attempting to reconnect automatically.
+
+MYSQL_CB_RECONNECT_ATTEMPT_SCHEDULE6
+====================================
+
+.. code-block:: text
+
+    scheduling attempt %1 of %2 in %3 milliseconds
+
+Info message issued when the server is scheduling the next attempt to reconnect
+to the database.  This occurs when the server has lost database connectivity and
+is attempting to reconnect automatically.
+
+MYSQL_CB_RECONNECT_FAILED4
+==========================
+
+.. code-block:: text
+
+    maximum number of database reconnect attempts: %1, has been exhausted without success
+
+Error message issued when the server failed to reconnect.  Loss of connectivity
+is typically a network or database server issue.
+
+MYSQL_CB_RECONNECT_FAILED6
+==========================
+
+.. code-block:: text
+
+    maximum number of database reconnect attempts: %1, has been exhausted without success
+
+Error message issued when the server failed to reconnect.  Loss of connectivity
+is typically a network or database server issue.
+
+MYSQL_CB_REGISTER_BACKEND_TYPE4
+===============================
+
+.. code-block:: text
+
+    register backend
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to register backend
+
+MYSQL_CB_REGISTER_BACKEND_TYPE6
+===============================
+
+.. code-block:: text
+
+    register backend
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to register backend
+
+MYSQL_CB_TLS_CIPHER
+===================
+
+.. code-block:: text
+
+    TLS cipher: %1
+
+Logged at debug log level 40.
+A debug message issued when a new MySQL connected is created with TLS.
+The TLS cipher name is logged.
+
+MYSQL_CB_UNREGISTER_BACKEND_TYPE4
+=================================
+
+.. code-block:: text
+
+    unregister backend
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to unregister backend
+
+*******
+NETCONF
+*******
+
+NETCONF_BOOT_UPDATE_COMPLETED
+=============================
+
+.. code-block:: text
+
+    Boot-update configuration completed for server %1
+
+This informational message is issued when the initial configuration
+was retrieved using NETCONF and successfully applied to Kea server.
+
+NETCONF_CONFIG_CHANGED_DETAIL
+=============================
+
+.. code-block:: text
+
+    YANG configuration changed: %1
+
+Logged at debug log level 55.
+This debug message indicates a YANG configuration change. The format
+is the change operation (created, modified, deleted or moved) followed
+by xpaths and values of old and new nodes.
+
+NETCONF_CONFIG_CHANGE_EVENT
+===========================
+
+.. code-block:: text
+
+    Received YANG configuration change %1 event
+
+This informational message is issued when kea-netconf receives a YANG
+configuration change event. The type of event is printed.
+
+NETCONF_CONFIG_CHECK_FAIL
+=========================
+
+.. code-block:: text
+
+    NETCONF configuration check failed: %1
+
+This error message indicates that kea-netconf had failed configuration
+check. Details are provided. Additional details may be available
+in earlier log entries, possibly on lower levels.
+
+NETCONF_CONFIG_FAIL
+===================
+
+.. code-block:: text
+
+    NETCONF configuration failed: %1
+
+This error message indicates that kea-netconf had failed configuration
+attempt. Details are provided. Additional details may be available
+in earlier log entries, possibly on lower levels.
+
+NETCONF_CONFIG_SYNTAX_WARNING
+=============================
+
+.. code-block:: text
+
+    NETCONF configuration syntax warning: %1
+
+This warning message indicates that the NETCONF configuration had a minor
+syntax error. The error was displayed and the configuration parsing resumed.
+
+NETCONF_FAILED
+==============
+
+.. code-block:: text
+
+    application experienced a fatal error: %1
+
+This is a fatal error message issued when kea-netconf
+got an unrecoverable error from within the event loop.
+
+NETCONF_GET_CONFIG
+==================
+
+.. code-block:: text
+
+    got configuration from %1 server: %2
+
+Logged at debug log level 55.
+This debug message indicates that kea-netconf got the configuration from a
+Kea server. The server name and the retrieved configuration are printed.
+
+NETCONF_GET_CONFIG_FAILED
+=========================
+
+.. code-block:: text
+
+    getting configuration from %1 server failed: %2
+
+The error message indicates that kea-netconf got an error getting the
+configuration from a Kea server. Make sure that the server is up and
+running, has appropriate control socket defined and that the controls
+socket configuration on the server matches that of kea-netconf. The
+name of the server and the error are printed.
+
+NETCONF_GET_CONFIG_STARTED
+==========================
+
+.. code-block:: text
+
+    getting configuration from %1 server
+
+This informational message indicates that kea-netconf is trying to get the
+configuration from a Kea server.
+
+NETCONF_MODULE_CHANGE_INTERNAL_ERROR
+====================================
+
+.. code-block:: text
+
+    an internal error occurred while processing changes for module %1: %2
+
+The error message indicates that kea-netconf got an error while sysrepo was processing modules changes.
+This usually follows a config validation failure, and can be recovered from.
+The name of the module and the internal error message are printed.
+
+NETCONF_MODULE_MISSING_ERR
+==========================
+
+.. code-block:: text
+
+    Missing essential module %1 in sysrepo
+
+This fatal error message indicates that a module required by Netconf
+configuration is not available in the sysrepo repository.  The name of
+the module is printed.
+
+NETCONF_MODULE_MISSING_WARN
+===========================
+
+.. code-block:: text
+
+    Missing module %1 in sysrepo
+
+This warning message indicates that a module used by Kea is not
+available in the sysrepo repository. The name of the module is printed.
+
+NETCONF_MODULE_REVISION_ERR
+===========================
+
+.. code-block:: text
+
+    Essential module %1 does NOT have the right revision: expected %2, got %3
+
+This fatal error message indicates that a module required by Netconf
+configuration is not at the right revision in the sysrepo repository.
+The name, expected and available revisions of the module are printed.
+
+NETCONF_MODULE_REVISION_WARN
+============================
+
+.. code-block:: text
+
+    Module %1 does NOT have the right revision: expected %2, got %3
+
+This warning message indicates that a module used by Kea is not at the
+right revision in the sysrepo repository. The name, expected and
+available revisions of the module are printed.
+
+NETCONF_NOTIFICATION_INTERNAL_ERROR
+===================================
+
+.. code-block:: text
+
+    an internal error occurred while sending an event notification for module %1: %2
+
+The error message indicates that kea-netconf got an error while sysrepo was sending an event notification.
+This error is not fatal and can be recovered from.
+The name of the module and the internal error message are printed.
+
+NETCONF_NOTIFICATION_RECEIVED
+=============================
+
+.. code-block:: text
+
+    Received notification of type %1 for module %2: '%3'
+
+This informational message logs any YANG notification that has been signaled
+by the server, sent to kea-netconf which then was forwarded to subscribed
+clients. To achieve this, kea-netconf subscribes itself as a client to all
+notifications for the configured module.
+
+NETCONF_NOT_SUBSCRIBED_TO_NOTIFICATIONS
+=======================================
+
+.. code-block:: text
+
+    subscribing to notifications for %1 server with %2 module failed: %3
+
+The warning message indicates that kea-netconf got an error subscribing to
+notifications for a Kea server. The most probable cause is probably that the
+model that kea-netconf subscribed to does not have any notification nodes, but
+there may be other more unexpected causes as well.
+The server name, module name and the error are printed.
+
+NETCONF_RUN_EXIT
+================
+
+.. code-block:: text
+
+    application is exiting the event loop
+
+Logged at debug log level 0.
+This is a debug message issued when kea-netconf exits its
+event loop. This is a normal step during kea-netconf shutdown.
+
+NETCONF_SET_CONFIG
+==================
+
+.. code-block:: text
+
+    set configuration to %1 server: %2
+
+Logged at debug log level 55.
+This debug message indicates that kea-netconf set the configuration to a
+Kea server. The server name and the applied configuration are printed.
+
+NETCONF_SET_CONFIG_FAILED
+=========================
+
+.. code-block:: text
+
+    setting configuration to %1 server failed: %2
+
+The error message indicates that kea-netconf got an error setting the
+configuration to a Kea server. Make sure that the server is up and
+running, has appropriate control socket defined and that the controls
+socket configuration on the server matches that of kea-netconf. The
+name of the server and the error are printed.
+
+NETCONF_SET_CONFIG_STARTED
+==========================
+
+.. code-block:: text
+
+    setting configuration to %1 server
+
+This informational message indicates that kea-netconf is trying to set the
+configuration to a Kea server.
+
+NETCONF_STARTED
+===============
+
+.. code-block:: text
+
+    kea-netconf (version %1) started
+
+This informational message indicates that kea-netconf has processed
+all configuration information and is ready to begin processing.
+The version is also printed.
+
+NETCONF_SUBSCRIBE_CONFIG
+========================
+
+.. code-block:: text
+
+    subscribing configuration changes for %1 server with %2 module
+
+This information message indicates that kea-netconf is trying to subscribe
+configuration changes for a Kea server. The names of the server and
+the module are printed.
+
+NETCONF_SUBSCRIBE_CONFIG_FAILED
+===============================
+
+.. code-block:: text
+
+    subscribe configuration changes for %1 server with %2 module failed: %3
+
+The error message indicates that kea-netconf got an error subscribing
+configuration changes for a Kea server. The names of the server and
+the module, and the error are printed.
+
+NETCONF_SUBSCRIBE_NOTIFICATIONS
+===============================
+
+.. code-block:: text
+
+    subscribing to notifications for %1 server with %2 module
+
+This information message indicates that kea-netconf is trying to subscribe to
+notifications for a Kea server. The server name and module name are printed.
+
+NETCONF_UPDATE_CONFIG
+=====================
+
+.. code-block:: text
+
+    updating configuration with %1 server: %2
+
+Logged at debug log level 55.
+This debug message indicates that kea-netconf update the configuration
+of a Kea server. The server name and the updated configuration are
+printed.
+
+NETCONF_UPDATE_CONFIG_COMPLETED
+===============================
+
+.. code-block:: text
+
+    completed updating configuration for %1 server
+
+This informational message indicates that kea-netconf updated with success the
+configuration of a Kea server.
+
+NETCONF_UPDATE_CONFIG_FAILED
+============================
+
+.. code-block:: text
+
+    updating configuration with %1 server: %2
+
+The error message indicates that kea-netconf got an error updating the
+configuration of a Kea server. This includes a configuration rejected
+by a Kea server when it tried to apply it. The name of the server and
+the error are printed.
+
+NETCONF_UPDATE_CONFIG_STARTED
+=============================
+
+.. code-block:: text
+
+    started updating configuration for %1 server
+
+This informational message indicates that kea-netconf is trying to update the
+configuration of a Kea server.
+
+NETCONF_VALIDATE_CONFIG
+=======================
+
+.. code-block:: text
+
+    validating configuration with %1 server: %2
+
+Logged at debug log level 55.
+This debug message indicates that kea-netconf is validating the configuration
+with a Kea server. The server name and the validated configuration are
+printed.
+
+NETCONF_VALIDATE_CONFIG_COMPLETED
+=================================
+
+.. code-block:: text
+
+    completed validating configuration for %1 server
+
+This informational message indicates that kea-netconf validated with success the
+configuration with a Kea server.
+
+NETCONF_VALIDATE_CONFIG_FAILED
+==============================
+
+.. code-block:: text
+
+    validating configuration with %1 server got an error: %2
+
+The error message indicates that kea-netconf got an error validating the
+configuration with a Kea server. This message is produced when
+exception is thrown during an attempt to validate received
+configuration. Additional explanation may be provided as a
+parameter. You may also take a look at earlier log messages.  The name
+of the server and the error are printed.
+
+NETCONF_VALIDATE_CONFIG_REJECTED
+================================
+
+.. code-block:: text
+
+    validating configuration with %1 server was rejected: %2
+
+The warning message indicates that kea-netconf got an error validating the
+configuration with a Kea server. This message is printed when the
+configuration was rejected during normal processing. Additional
+explanation may be provided as a parameter. You may also take a look
+at earlier log messages.  The name of the server and the error are
+printed.
+
+*******
+PERFMON
+*******
+
+PERFMON_ALARM_CLEARED
+=====================
+
+.. code-block:: text
+
+    Alarm for %1 has been cleared, reported mean duration %2 is now below low-water-ms: %3
+
+This info message is emitted when the reported mean duration for
+an alarm that has been triggered has fallen below the value of its
+low-water-ms parameter. The arguments detail the alarm's key and
+the most recently reported mean.
+
+PERFMON_ALARM_TRIGGERED
+=======================
+
+.. code-block:: text
+
+    Alarm for %1 has been triggered since %2, reported mean duration %3 exceeds high-water-ms: %4
+
+This warning message is emitted when the reported mean duration for
+an alarm exceeds its high-water-ms value.  As long as the reported
+averges remain above the low-water-ms value, the alarm will remain
+triggered and this message will be repeated every alarm-report-secs.
+Arguments detail the alarm's key, the time the alarm was first
+triggered, the most recent reported mean, and the high-water-ms
+value.
+
+PERFMON_CMDS_CONTROL_ERROR
+==========================
+
+.. code-block:: text
+
+    perfmon-control command processing failed: %1
+
+This error message is issued when the PerfMon hook library encounters an
+error processing a perfmon-control command.  The argument explains the
+command error.
+
+PERFMON_CMDS_CONTROL_OK
+=======================
+
+.. code-block:: text
+
+    perfmon-control command success: active monitoring: %1, stats-mgr-reporting: %2
+
+This info log is issued when perfmon-control command has successfully
+enabled/disabled active monitoring and/or statistics mgr reporting.
+Arguments reflect the current state of both.
+
+PERFMON_CMDS_GET_ALL_DURATIONS_ERROR
+====================================
+
+.. code-block:: text
+
+    perfmon-get-all-durations command processing failed: %1
+
+This error message is issued when the PerfMon hook library encounters an
+error processing a perfmon-get-all-durations command.  The argument explains the
+command error.
+
+PERFMON_CMDS_GET_ALL_DURATIONS_OK
+=================================
+
+.. code-block:: text
+
+    perfmon-get-all-durations returning %1 durations
+
+This info log is issued when perfmon-get-all-durations command has
+completed successfully.  The argument contains the number of
+durations returned.
+
+PERFMON_DEINIT_OK
+=================
+
+.. code-block:: text
+
+    unloading PerfMon hooks library successful
+
+This info message indicates that the PerfMon hooks library has been
+removed successfully.
+
+PERFMON_DHCP4_PKT_EVENTS
+========================
+
+.. code-block:: text
+
+    query: %1 events=[%2]
+
+Logged at debug log level 50.
+This debug message is emitted after an inbound DHCPv4 query has been
+processed, the arguments are the query label and the dump of the
+query's packet event stack.
+
+PERFMON_DHCP4_PKT_PROCESS_ERROR
+===============================
+
+.. code-block:: text
+
+    Packet event stack was not processed for query %1, reason %2
+
+Logged at debug log level 50.
+This debug message is emitted when the query's event stack could not
+be processed. This is most likely a programmatic error and should be
+reported.  The arguments identify the query and the reason it could
+not be processed.  These errors should not affect server's normal
+operations.
+
+PERFMON_DHCP4_SOCKET_RECEIVED_TIME_SUPPORT
+==========================================
+
+.. code-block:: text
+
+    Kernel supports socket received time? %1
+
+Logged at debug log level 40.
+This debug message is emitted after a (re)configuration and indicates
+whether or not the packet filter being used by kea-dhcp4 can supply
+the timestamp a packet was received by the kernel for recording
+SOCKET_RECEIVED events. If it does not, perfmon will still function but
+will not have data available to determine kernel buffer wait times.
+
+PERFMON_DHCP6_PKT_EVENTS
+========================
+
+.. code-block:: text
+
+    query: %1 events=[%2]
+
+Logged at debug log level 50.
+The debug message is emitted after an inbound DHCPv6 query has been
+processed, the arguments are the query label and the dump of the
+query's packet event stack.
+
+PERFMON_DHCP6_PKT_PROCESS_ERROR
+===============================
+
+.. code-block:: text
+
+    Packet event stack was not processed for query %1, reason %2
+
+Logged at debug log level 50.
+This debug message is emitted when the query's event stack could not
+be processed. This is most likely a programmatic error and should be
+reported.  The arguments identify the query and the reason it could
+not be processed.  These errors should not affect server's normal
+operations.
+
+PERFMON_DHCP6_SOCKET_RECEIVED_TIME_SUPPORT
+==========================================
+
+.. code-block:: text
+
+    Kernel supports socket received time? %1
+
+Logged at debug log level 40.
+This debug message is emitted after a (re)configuration and indicates
+whether or not the packet filter being used by kea-dhcp6 can supply
+the timestamp a packet was received by the kernel for recording
+SOCKET_RECEIVED events. If it does not, perfmon will still function but
+will not have data available to determine kernel buffer wait times.
+
+PERFMON_INIT_FAILED
+===================
+
+.. code-block:: text
+
+    loading PerfMon hooks library failed: %1
+
+This error message indicates an error during loading the PerfMon
+hooks library. The details of the error are provided as argument of
+the log message.
+
+*****
+PGSQL
+*****
+
+PGSQL_CB_CREATE_UPDATE_BY_POOL_OPTION4
+======================================
+
+.. code-block:: text
+
+    create or update option pool start: %1 pool end: %2
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to create or update option by pool
+
+PGSQL_CB_CREATE_UPDATE_BY_POOL_OPTION6
+======================================
+
+.. code-block:: text
+
+    create or update option pool start: %1 pool end: %2
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to create or update option by pool
+
+PGSQL_CB_CREATE_UPDATE_BY_PREFIX_OPTION6
+========================================
+
+.. code-block:: text
+
+    create or update option prefix: %1 prefix len: %2
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to create or update option by prefix
+
+PGSQL_CB_CREATE_UPDATE_BY_SUBNET_ID_OPTION4
+===========================================
+
+.. code-block:: text
+
+    create or update option by subnet id: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to create or update option by subnet id
+
+PGSQL_CB_CREATE_UPDATE_BY_SUBNET_ID_OPTION6
+===========================================
+
+.. code-block:: text
+
+    create or update option by subnet id: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to create or update option by subnet id
+
+PGSQL_CB_CREATE_UPDATE_CLIENT_CLASS4
+====================================
+
+.. code-block:: text
+
+    create or update client class: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to create or update client class
+
+PGSQL_CB_CREATE_UPDATE_CLIENT_CLASS6
+====================================
+
+.. code-block:: text
+
+    create or update client class: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to create or update client class
+
+PGSQL_CB_CREATE_UPDATE_GLOBAL_PARAMETER4
+========================================
+
+.. code-block:: text
+
+    create or update global parameter: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to create or update global parameter
+
+PGSQL_CB_CREATE_UPDATE_GLOBAL_PARAMETER6
+========================================
+
+.. code-block:: text
+
+    create or update global parameter: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to create or update global parameter
+
+PGSQL_CB_CREATE_UPDATE_OPTION4
+==============================
+
+.. code-block:: text
+
+    create or update option
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to create or update option
+
+PGSQL_CB_CREATE_UPDATE_OPTION6
+==============================
+
+.. code-block:: text
+
+    create or update option
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to create or update option
+
+PGSQL_CB_CREATE_UPDATE_OPTION_DEF4
+==================================
+
+.. code-block:: text
+
+    create or update option definition: %1 code: %2
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to create or update option definition
+
+PGSQL_CB_CREATE_UPDATE_OPTION_DEF6
+==================================
+
+.. code-block:: text
+
+    create or update option definition: %1 code: %2
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to create or update option definition
+
+PGSQL_CB_CREATE_UPDATE_SERVER4
+==============================
+
+.. code-block:: text
+
+    create or update server: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to create or update a DHCPv4
+server information.
+
+PGSQL_CB_CREATE_UPDATE_SERVER6
+==============================
+
+.. code-block:: text
+
+    create or update server: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to create or update a DHCPv6
+server information.
+
+PGSQL_CB_CREATE_UPDATE_SHARED_NETWORK4
+======================================
+
+.. code-block:: text
+
+    create or update shared network: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to create or update shared network
+
+PGSQL_CB_CREATE_UPDATE_SHARED_NETWORK6
+======================================
+
+.. code-block:: text
+
+    create or update shared network: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to create or update shared network
+
+PGSQL_CB_CREATE_UPDATE_SHARED_NETWORK_OPTION4
+=============================================
+
+.. code-block:: text
+
+    create or update shared network: %1 option
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to create or update shared network option
+
+PGSQL_CB_CREATE_UPDATE_SHARED_NETWORK_OPTION6
+=============================================
+
+.. code-block:: text
+
+    create or update shared network: %1 option
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to create or update shared network option
+
+PGSQL_CB_CREATE_UPDATE_SUBNET4
+==============================
+
+.. code-block:: text
+
+    create or update subnet: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to create or update subnet
+
+PGSQL_CB_CREATE_UPDATE_SUBNET6
+==============================
+
+.. code-block:: text
+
+    create or update subnet: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to create or update subnet
+
+PGSQL_CB_DEINIT_OK
+==================
+
+.. code-block:: text
+
+    unloading Postgres CB hooks library successful
+
+This informational message indicates that the Postgres Configuration Backend hooks
+library has been unloaded successfully.
+
+PGSQL_CB_DELETE_ALL_CLIENT_CLASSES4
+===================================
+
+.. code-block:: text
+
+    delete all client classes
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to delete all client classes
+
+PGSQL_CB_DELETE_ALL_CLIENT_CLASSES4_RESULT
+==========================================
+
+.. code-block:: text
+
+    deleted: %1 entries
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to delete all client classes
+
+PGSQL_CB_DELETE_ALL_CLIENT_CLASSES6
+===================================
+
+.. code-block:: text
+
+    delete all client classes
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to delete all client classes
+
+PGSQL_CB_DELETE_ALL_CLIENT_CLASSES6_RESULT
+==========================================
+
+.. code-block:: text
+
+    deleted: %1 entries
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to delete all client classes
+
+PGSQL_CB_DELETE_ALL_GLOBAL_PARAMETERS4
+======================================
+
+.. code-block:: text
+
+    delete all global parameters
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to delete all global parameters
+
+PGSQL_CB_DELETE_ALL_GLOBAL_PARAMETERS4_RESULT
+=============================================
+
+.. code-block:: text
+
+    deleted: %1 entries
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to delete all global parameters
+
+PGSQL_CB_DELETE_ALL_GLOBAL_PARAMETERS6
+======================================
+
+.. code-block:: text
+
+    delete all global parameters
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to delete all global parameters
+
+PGSQL_CB_DELETE_ALL_GLOBAL_PARAMETERS6_RESULT
+=============================================
+
+.. code-block:: text
+
+    deleted: %1 entries
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to delete all global parameters
+
+PGSQL_CB_DELETE_ALL_OPTION_DEFS4
+================================
+
+.. code-block:: text
+
+    delete all option definitions
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to delete all option definitions
+
+PGSQL_CB_DELETE_ALL_OPTION_DEFS4_RESULT
+=======================================
+
+.. code-block:: text
+
+    deleted: %1 entries
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to delete all option definitions
+
+PGSQL_CB_DELETE_ALL_OPTION_DEFS6
+================================
+
+.. code-block:: text
+
+    delete all option definitions
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to delete all option definitions
+
+PGSQL_CB_DELETE_ALL_OPTION_DEFS6_RESULT
+=======================================
+
+.. code-block:: text
+
+    deleted: %1 entries
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to delete all option definitions
+
+PGSQL_CB_DELETE_ALL_SERVERS4
+============================
+
+.. code-block:: text
+
+    delete all DHCPv4 servers
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to delete all servers.
+
+PGSQL_CB_DELETE_ALL_SERVERS4_RESULT
+===================================
+
+.. code-block:: text
+
+    deleted: %1 entries
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to delete all servers.
+
+PGSQL_CB_DELETE_ALL_SERVERS6
+============================
+
+.. code-block:: text
+
+    delete all DHCPv6 servers
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to delete all servers.
+
+PGSQL_CB_DELETE_ALL_SERVERS6_RESULT
+===================================
+
+.. code-block:: text
+
+    deleted: %1 entries
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to delete all servers.
+
+PGSQL_CB_DELETE_ALL_SHARED_NETWORKS4
+====================================
+
+.. code-block:: text
+
+    delete all shared networks
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to delete all shared networks
+
+PGSQL_CB_DELETE_ALL_SHARED_NETWORKS4_RESULT
+===========================================
+
+.. code-block:: text
+
+    deleted: %1 entries
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to delete all shared networks
+
+PGSQL_CB_DELETE_ALL_SHARED_NETWORKS6
+====================================
+
+.. code-block:: text
+
+    delete all shared networks
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to delete all shared networks
+
+PGSQL_CB_DELETE_ALL_SHARED_NETWORKS6_RESULT
+===========================================
+
+.. code-block:: text
+
+    deleted: %1 entries
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to delete all shared networks
+
+PGSQL_CB_DELETE_ALL_SUBNETS4
+============================
+
+.. code-block:: text
+
+    delete all subnets
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to delete all subnets
+
+PGSQL_CB_DELETE_ALL_SUBNETS4_RESULT
+===================================
+
+.. code-block:: text
+
+    deleted: %1 entries
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to delete all subnets
+
+PGSQL_CB_DELETE_ALL_SUBNETS6
+============================
+
+.. code-block:: text
+
+    delete all subnets
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to delete all subnets
+
+PGSQL_CB_DELETE_ALL_SUBNETS6_RESULT
+===================================
+
+.. code-block:: text
+
+    deleted: %1 entries
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to delete all subnets
+
+PGSQL_CB_DELETE_BY_POOL_OPTION4
+===============================
+
+.. code-block:: text
+
+    delete pool start: %1 pool end: %2 option code: %3 space: %4
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to delete option by pool
+
+PGSQL_CB_DELETE_BY_POOL_OPTION4_RESULT
+======================================
+
+.. code-block:: text
+
+    deleted: %1 entries
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to delete option by pool
+
+PGSQL_CB_DELETE_BY_POOL_OPTION6
+===============================
+
+.. code-block:: text
+
+    delete pool start: %1 pool end: %2 option code: %3 space: %4
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to delete option by pool
+
+PGSQL_CB_DELETE_BY_POOL_OPTION6_RESULT
+======================================
+
+.. code-block:: text
+
+    deleted: %1 entries
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to delete option by pool
+
+PGSQL_CB_DELETE_BY_POOL_PREFIX_OPTION6
+======================================
+
+.. code-block:: text
+
+    delete prefix: %1 prefix len: %2 option code: %3 space: %4
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to delete option by prefix
+
+PGSQL_CB_DELETE_BY_POOL_PREFIX_OPTION6_RESULT
+=============================================
+
+.. code-block:: text
+
+    deleted: %1 entries
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to delete option by prefix
+
+PGSQL_CB_DELETE_BY_PREFIX_SUBNET4
+=================================
+
+.. code-block:: text
+
+    delete subnet by prefix: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to delete subnet by prefix
+
+PGSQL_CB_DELETE_BY_PREFIX_SUBNET4_RESULT
+========================================
+
+.. code-block:: text
+
+    deleted: %1 entries
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to delete subnet by prefix
+
+PGSQL_CB_DELETE_BY_PREFIX_SUBNET6
+=================================
+
+.. code-block:: text
+
+    delete subnet by prefix: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to delete subnet by prefix
+
+PGSQL_CB_DELETE_BY_PREFIX_SUBNET6_RESULT
+========================================
+
+.. code-block:: text
+
+    deleted: %1 entries
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to delete subnet by prefix
+
+PGSQL_CB_DELETE_BY_SUBNET_ID_OPTION4
+====================================
+
+.. code-block:: text
+
+    delete by subnet id: %1 option code: %2 space: %3
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to delete option by subnet id
+
+PGSQL_CB_DELETE_BY_SUBNET_ID_OPTION4_RESULT
+===========================================
+
+.. code-block:: text
+
+    deleted: %1 entries
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to delete option by subnet id
+
+PGSQL_CB_DELETE_BY_SUBNET_ID_OPTION6
+====================================
+
+.. code-block:: text
+
+    delete by subnet id: %1 option code: %2 space: %3
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to delete option by subnet id
+
+PGSQL_CB_DELETE_BY_SUBNET_ID_OPTION6_RESULT
+===========================================
+
+.. code-block:: text
+
+    deleted: %1 entries
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to delete option by subnet id
+
+PGSQL_CB_DELETE_BY_SUBNET_ID_SUBNET4
+====================================
+
+.. code-block:: text
+
+    delete subnet by subnet id: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to delete subnet by subnet id
+
+PGSQL_CB_DELETE_BY_SUBNET_ID_SUBNET4_RESULT
+===========================================
+
+.. code-block:: text
+
+    deleted: %1 entries
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to delete subnet by subnet id
+
+PGSQL_CB_DELETE_BY_SUBNET_ID_SUBNET6
+====================================
+
+.. code-block:: text
+
+    delete subnet by subnet id: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to delete subnet by subnet id
+
+PGSQL_CB_DELETE_BY_SUBNET_ID_SUBNET6_RESULT
+===========================================
+
+.. code-block:: text
+
+    deleted: %1 entries
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to delete subnet by subnet id
+
+PGSQL_CB_DELETE_CLIENT_CLASS4
+=============================
+
+.. code-block:: text
+
+    delete client class: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to delete client class
+
+PGSQL_CB_DELETE_CLIENT_CLASS4_RESULT
+====================================
+
+.. code-block:: text
+
+    deleted: %1 entries
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to delete client class
+
+PGSQL_CB_DELETE_CLIENT_CLASS6
+=============================
+
+.. code-block:: text
+
+    delete client class: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to delete client class
+
+PGSQL_CB_DELETE_CLIENT_CLASS6_RESULT
+====================================
+
+.. code-block:: text
+
+    deleted: %1 entries
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to delete client class
+
+PGSQL_CB_DELETE_GLOBAL_PARAMETER4
+=================================
+
+.. code-block:: text
+
+    delete global parameter: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to delete global parameter
+
+PGSQL_CB_DELETE_GLOBAL_PARAMETER4_RESULT
+========================================
+
+.. code-block:: text
+
+    deleted: %1 entries
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to delete global parameter
+
+PGSQL_CB_DELETE_GLOBAL_PARAMETER6
+=================================
+
+.. code-block:: text
+
+    delete global parameter: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to delete global parameter
+
+PGSQL_CB_DELETE_GLOBAL_PARAMETER6_RESULT
+========================================
+
+.. code-block:: text
+
+    deleted: %1 entries
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to delete global parameter
+
+PGSQL_CB_DELETE_OPTION4
+=======================
+
+.. code-block:: text
+
+    delete option code: %1 space: %2
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to delete option
+
+PGSQL_CB_DELETE_OPTION4_RESULT
+==============================
+
+.. code-block:: text
+
+    deleted: %1 entries
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to delete option
+
+PGSQL_CB_DELETE_OPTION6
+=======================
+
+.. code-block:: text
+
+    delete option code: %1 space: %2
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to delete option
+
+PGSQL_CB_DELETE_OPTION6_RESULT
+==============================
+
+.. code-block:: text
+
+    deleted: %1 entries
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to delete option
+
+PGSQL_CB_DELETE_OPTION_DEF4
+===========================
+
+.. code-block:: text
+
+    delete option definition code: %1 space: %2
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to delete option definition
+
+PGSQL_CB_DELETE_OPTION_DEF4_RESULT
+==================================
+
+.. code-block:: text
+
+    deleted: %1 entries
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to delete option definition
+
+PGSQL_CB_DELETE_OPTION_DEF6
+===========================
+
+.. code-block:: text
+
+    delete option definition code: %1 space: %2
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to delete option definition
+
+PGSQL_CB_DELETE_OPTION_DEF6_RESULT
+==================================
+
+.. code-block:: text
+
+    deleted: %1 entries
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to delete option definition
+
+PGSQL_CB_DELETE_SERVER4
+=======================
+
+.. code-block:: text
+
+    delete DHCPv4 server: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to delete a server.
+
+PGSQL_CB_DELETE_SERVER4_RESULT
+==============================
+
+.. code-block:: text
+
+    deleted: %1 entries
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to delete a server.
+
+PGSQL_CB_DELETE_SERVER6
+=======================
+
+.. code-block:: text
+
+    delete DHCPv6 server: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to delete a server.
+
+PGSQL_CB_DELETE_SERVER6_RESULT
+==============================
+
+.. code-block:: text
+
+    deleted: %1 entries
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to delete a server.
+
+PGSQL_CB_DELETE_SHARED_NETWORK4
+===============================
+
+.. code-block:: text
+
+    delete shared network: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to delete shared network
+
+PGSQL_CB_DELETE_SHARED_NETWORK4_RESULT
+======================================
+
+.. code-block:: text
+
+    deleted: %1 entries
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to delete shared network
+
+PGSQL_CB_DELETE_SHARED_NETWORK6
+===============================
+
+.. code-block:: text
+
+    delete shared network: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to delete shared network
+
+PGSQL_CB_DELETE_SHARED_NETWORK6_RESULT
+======================================
+
+.. code-block:: text
+
+    deleted: %1 entries
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to delete shared network
+
+PGSQL_CB_DELETE_SHARED_NETWORK_OPTION4
+======================================
+
+.. code-block:: text
+
+    delete shared network: %1 option code: %2 space: %3
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to delete shared network option
+
+PGSQL_CB_DELETE_SHARED_NETWORK_OPTION4_RESULT
+=============================================
+
+.. code-block:: text
+
+    deleted: %1 entries
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to delete shared network option
+
+PGSQL_CB_DELETE_SHARED_NETWORK_OPTION6
+======================================
+
+.. code-block:: text
+
+    delete shared network: %1 option code: %2 space: %3
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to delete shared network option
+
+PGSQL_CB_DELETE_SHARED_NETWORK_OPTION6_RESULT
+=============================================
+
+.. code-block:: text
+
+    deleted: %1 entries
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to delete shared network option
+
+PGSQL_CB_DELETE_SHARED_NETWORK_SUBNETS4
+=======================================
+
+.. code-block:: text
+
+    delete shared network: %1 subnets
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to delete shared network subnets
+
+PGSQL_CB_DELETE_SHARED_NETWORK_SUBNETS4_RESULT
+==============================================
+
+.. code-block:: text
+
+    deleted: %1 entries
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to delete shared network subnets
+
+PGSQL_CB_DELETE_SHARED_NETWORK_SUBNETS6
+=======================================
+
+.. code-block:: text
+
+    delete shared network: %1 subnets
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to delete shared network subnets
+
+PGSQL_CB_DELETE_SHARED_NETWORK_SUBNETS6_RESULT
+==============================================
+
+.. code-block:: text
+
+    deleted: %1 entries
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to delete shared network subnets
+
+PGSQL_CB_GET_ALL_CLIENT_CLASSES4
+================================
+
+.. code-block:: text
+
+    retrieving all client classes
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve all client classes
+
+PGSQL_CB_GET_ALL_CLIENT_CLASSES4_RESULT
+=======================================
+
+.. code-block:: text
+
+    retrieving: %1 elements
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to retrieve all client classes
+
+PGSQL_CB_GET_ALL_CLIENT_CLASSES6
+================================
+
+.. code-block:: text
+
+    retrieving all client classes
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve all client classes
+
+PGSQL_CB_GET_ALL_CLIENT_CLASSES6_RESULT
+=======================================
+
+.. code-block:: text
+
+    retrieving: %1 elements
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to retrieve all client classes
+
+PGSQL_CB_GET_ALL_GLOBAL_PARAMETERS4
+===================================
+
+.. code-block:: text
+
+    retrieving all global parameters
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve all global parameters
+
+PGSQL_CB_GET_ALL_GLOBAL_PARAMETERS4_RESULT
+==========================================
+
+.. code-block:: text
+
+    retrieving: %1 elements
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to retrieve all global parameters
+
+PGSQL_CB_GET_ALL_GLOBAL_PARAMETERS6
+===================================
+
+.. code-block:: text
+
+    retrieving all global parameters
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve all global parameters
+
+PGSQL_CB_GET_ALL_GLOBAL_PARAMETERS6_RESULT
+==========================================
+
+.. code-block:: text
+
+    retrieving: %1 elements
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to retrieve all global parameters
+
+PGSQL_CB_GET_ALL_OPTIONS4
+=========================
+
+.. code-block:: text
+
+    retrieving all options
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve all options
+
+PGSQL_CB_GET_ALL_OPTIONS4_RESULT
+================================
+
+.. code-block:: text
+
+    retrieving: %1 elements
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to retrieve all options
+
+PGSQL_CB_GET_ALL_OPTIONS6
+=========================
+
+.. code-block:: text
+
+    retrieving all options
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve all options
+
+PGSQL_CB_GET_ALL_OPTIONS6_RESULT
+================================
+
+.. code-block:: text
+
+    retrieving: %1 elements
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to retrieve all options
+
+PGSQL_CB_GET_ALL_OPTION_DEFS4
+=============================
+
+.. code-block:: text
+
+    retrieving all option definitions
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve all option definitions
+
+PGSQL_CB_GET_ALL_OPTION_DEFS4_RESULT
+====================================
+
+.. code-block:: text
+
+    retrieving: %1 elements
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to retrieve all option definitions
+
+PGSQL_CB_GET_ALL_OPTION_DEFS6
+=============================
+
+.. code-block:: text
+
+    retrieving all option definitions
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve all option definitions
+
+PGSQL_CB_GET_ALL_OPTION_DEFS6_RESULT
+====================================
+
+.. code-block:: text
+
+    retrieving: %1 elements
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to retrieve all option definitions
+
+PGSQL_CB_GET_ALL_SERVERS4
+=========================
+
+.. code-block:: text
+
+    retrieving all servers
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve all DHCPv4
+servers
+
+PGSQL_CB_GET_ALL_SERVERS4_RESULT
+================================
+
+.. code-block:: text
+
+    retrieving: %1 elements
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to retrieve all DHCPv4
+servers
+
+PGSQL_CB_GET_ALL_SERVERS6
+=========================
+
+.. code-block:: text
+
+    retrieving all DHCPv6 servers
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve all DHCPv6
+servers
+
+PGSQL_CB_GET_ALL_SERVERS6_RESULT
+================================
+
+.. code-block:: text
+
+    retrieving: %1 elements
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to retrieve all DHCPv6
+servers
+
+PGSQL_CB_GET_ALL_SHARED_NETWORKS4
+=================================
+
+.. code-block:: text
+
+    retrieving all shared networks
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve all shared networks
+
+PGSQL_CB_GET_ALL_SHARED_NETWORKS4_RESULT
+========================================
+
+.. code-block:: text
+
+    retrieving: %1 elements
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to retrieve all shared networks
+
+PGSQL_CB_GET_ALL_SHARED_NETWORKS6
+=================================
+
+.. code-block:: text
+
+    retrieving all shared networks
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve all shared networks
+
+PGSQL_CB_GET_ALL_SHARED_NETWORKS6_RESULT
+========================================
+
+.. code-block:: text
+
+    retrieving: %1 elements
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to retrieve all shared networks
+
+PGSQL_CB_GET_ALL_SUBNETS4
+=========================
+
+.. code-block:: text
+
+    retrieving all subnets
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve all subnets
+
+PGSQL_CB_GET_ALL_SUBNETS4_RESULT
+================================
+
+.. code-block:: text
+
+    retrieving: %1 elements
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to retrieve all subnets
+
+PGSQL_CB_GET_ALL_SUBNETS6
+=========================
+
+.. code-block:: text
+
+    retrieving all subnets
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve all subnets
+
+PGSQL_CB_GET_ALL_SUBNETS6_RESULT
+================================
+
+.. code-block:: text
+
+    retrieving: %1 elements
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to retrieve all subnets
+
+PGSQL_CB_GET_CLIENT_CLASS4
+==========================
+
+.. code-block:: text
+
+    retrieving client class: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve a client class
+
+PGSQL_CB_GET_CLIENT_CLASS6
+==========================
+
+.. code-block:: text
+
+    retrieving client class: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve a client class
+
+PGSQL_CB_GET_GLOBAL_PARAMETER4
+==============================
+
+.. code-block:: text
+
+    retrieving global parameter: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve global parameter
+
+PGSQL_CB_GET_GLOBAL_PARAMETER6
+==============================
+
+.. code-block:: text
+
+    retrieving global parameter: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve global parameter
+
+PGSQL_CB_GET_HOST4
+==================
+
+.. code-block:: text
+
+    get host
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve host
+
+PGSQL_CB_GET_HOST6
+==================
+
+.. code-block:: text
+
+    get host
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve host
+
+PGSQL_CB_GET_MODIFIED_CLIENT_CLASSES4
+=====================================
+
+.. code-block:: text
+
+    retrieving modified client classes from: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve modified client classes from specified time
+
+PGSQL_CB_GET_MODIFIED_CLIENT_CLASSES4_RESULT
+============================================
+
+.. code-block:: text
+
+    retrieving: %1 elements
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to retrieve modified client classes from specified time
+
+PGSQL_CB_GET_MODIFIED_CLIENT_CLASSES6
+=====================================
+
+.. code-block:: text
+
+    retrieving modified client classes from: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve modified client classes from specified time
+
+PGSQL_CB_GET_MODIFIED_CLIENT_CLASSES6_RESULT
+============================================
+
+.. code-block:: text
+
+    retrieving: %1 elements
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to retrieve modified client classes from specified time
+
+PGSQL_CB_GET_MODIFIED_GLOBAL_PARAMETERS4
+========================================
+
+.. code-block:: text
+
+    retrieving modified global parameters from: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve modified global parameters from specified time
+
+PGSQL_CB_GET_MODIFIED_GLOBAL_PARAMETERS4_RESULT
+===============================================
+
+.. code-block:: text
+
+    retrieving: %1 elements
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to retrieve modified global parameters from specified time
+
+PGSQL_CB_GET_MODIFIED_GLOBAL_PARAMETERS6
+========================================
+
+.. code-block:: text
+
+    retrieving modified global parameters from: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve modified global parameters from specified time
+
+PGSQL_CB_GET_MODIFIED_GLOBAL_PARAMETERS6_RESULT
+===============================================
+
+.. code-block:: text
+
+    retrieving: %1 elements
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to retrieve modified global parameters from specified time
+
+PGSQL_CB_GET_MODIFIED_OPTIONS4
+==============================
+
+.. code-block:: text
+
+    retrieving modified options from: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve modified options from specified time
+
+PGSQL_CB_GET_MODIFIED_OPTIONS4_RESULT
+=====================================
+
+.. code-block:: text
+
+    retrieving: %1 elements
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to retrieve modified options from specified time
+
+PGSQL_CB_GET_MODIFIED_OPTIONS6
+==============================
+
+.. code-block:: text
+
+    retrieving modified options from: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve modified options from specified time
+
+PGSQL_CB_GET_MODIFIED_OPTIONS6_RESULT
+=====================================
+
+.. code-block:: text
+
+    retrieving: %1 elements
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to retrieve modified options from specified time
+
+PGSQL_CB_GET_MODIFIED_OPTION_DEFS4
+==================================
+
+.. code-block:: text
+
+    retrieving modified option definitions from: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve modified option definitions from specified time
+
+PGSQL_CB_GET_MODIFIED_OPTION_DEFS4_RESULT
+=========================================
+
+.. code-block:: text
+
+    retrieving: %1 elements
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to retrieve modified option definitions from specified time
+
+PGSQL_CB_GET_MODIFIED_OPTION_DEFS6
+==================================
+
+.. code-block:: text
+
+    retrieving modified option definitions from: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve modified option definitions from specified time
+
+PGSQL_CB_GET_MODIFIED_OPTION_DEFS6_RESULT
+=========================================
+
+.. code-block:: text
+
+    retrieving: %1 elements
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to retrieve modified option definitions from specified time
+
+PGSQL_CB_GET_MODIFIED_SHARED_NETWORKS4
+======================================
+
+.. code-block:: text
+
+    retrieving modified shared networks from: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve modified shared networks from specified time
+
+PGSQL_CB_GET_MODIFIED_SHARED_NETWORKS4_RESULT
+=============================================
+
+.. code-block:: text
+
+    retrieving: %1 elements
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to retrieve modified shared networks from specified time
+
+PGSQL_CB_GET_MODIFIED_SHARED_NETWORKS6
+======================================
+
+.. code-block:: text
+
+    retrieving modified shared networks from: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve modified shared networks from specified time
+
+PGSQL_CB_GET_MODIFIED_SHARED_NETWORKS6_RESULT
+=============================================
+
+.. code-block:: text
+
+    retrieving: %1 elements
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to retrieve modified shared networks from specified time
+
+PGSQL_CB_GET_MODIFIED_SUBNETS4
+==============================
+
+.. code-block:: text
+
+    retrieving modified subnets from: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve modified subnets from specified time
+
+PGSQL_CB_GET_MODIFIED_SUBNETS4_RESULT
+=====================================
+
+.. code-block:: text
+
+    retrieving: %1 elements
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to retrieve modified subnets from specified time
+
+PGSQL_CB_GET_MODIFIED_SUBNETS6
+==============================
+
+.. code-block:: text
+
+    retrieving modified subnets from: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve modified subnets from specified time
+
+PGSQL_CB_GET_MODIFIED_SUBNETS6_RESULT
+=====================================
+
+.. code-block:: text
+
+    retrieving: %1 elements
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to retrieve modified subnets from specified time
+
+PGSQL_CB_GET_OPTION4
+====================
+
+.. code-block:: text
+
+    retrieving option code: %1 space: %2
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve option
+
+PGSQL_CB_GET_OPTION6
+====================
+
+.. code-block:: text
+
+    retrieving option code: %1 space: %2
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve option
+
+PGSQL_CB_GET_OPTION_DEF4
+========================
+
+.. code-block:: text
+
+    retrieving option definition code: %1 space: %2
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve option definition
+
+PGSQL_CB_GET_OPTION_DEF6
+========================
+
+.. code-block:: text
+
+    retrieving option definition code: %1 space: %2
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve option definition
+
+PGSQL_CB_GET_PORT4
+==================
+
+.. code-block:: text
+
+    get port
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve port
+
+PGSQL_CB_GET_PORT6
+==================
+
+.. code-block:: text
+
+    get port
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve port
+
+PGSQL_CB_GET_RECENT_AUDIT_ENTRIES4
+==================================
+
+.. code-block:: text
+
+    retrieving audit entries from: %1 %2
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve audit entries from specified time and id.
+
+PGSQL_CB_GET_RECENT_AUDIT_ENTRIES4_RESULT
+=========================================
+
+.. code-block:: text
+
+    retrieving: %1 elements
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to retrieve audit entries from specified time
+
+PGSQL_CB_GET_RECENT_AUDIT_ENTRIES6
+==================================
+
+.. code-block:: text
+
+    retrieving audit entries from: %1 %2
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve audit entries from specified time and id
+
+PGSQL_CB_GET_RECENT_AUDIT_ENTRIES6_RESULT
+=========================================
+
+.. code-block:: text
+
+    retrieving: %1 elements
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to retrieve audit entries from specified time
+
+PGSQL_CB_GET_SERVER4
+====================
+
+.. code-block:: text
+
+    retrieving DHCPv4 server: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve a DHCPv4 server information.
+
+PGSQL_CB_GET_SERVER6
+====================
+
+.. code-block:: text
+
+    retrieving DHCPv6 server: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve a DHCPv6 server information.
+
+PGSQL_CB_GET_SHARED_NETWORK4
+============================
+
+.. code-block:: text
+
+    retrieving shared network: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve shared network
+
+PGSQL_CB_GET_SHARED_NETWORK6
+============================
+
+.. code-block:: text
+
+    retrieving shared network: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve shared network
+
+PGSQL_CB_GET_SHARED_NETWORK_SUBNETS4
+====================================
+
+.. code-block:: text
+
+    retrieving shared network: %1 subnets
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve shared network subnets
+
+PGSQL_CB_GET_SHARED_NETWORK_SUBNETS4_RESULT
+===========================================
+
+.. code-block:: text
+
+    retrieving: %1 elements
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to retrieve shared network subnets
+
+PGSQL_CB_GET_SHARED_NETWORK_SUBNETS6
+====================================
+
+.. code-block:: text
+
+    retrieving shared network: %1 subnets
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve shared network subnets
+
+PGSQL_CB_GET_SHARED_NETWORK_SUBNETS6_RESULT
+===========================================
+
+.. code-block:: text
+
+    retrieving: %1 elements
+
+Logged at debug log level 40.
+Debug message indicating the result of an action to retrieve shared network subnets
+
+PGSQL_CB_GET_SUBNET4_BY_PREFIX
+==============================
+
+.. code-block:: text
+
+    retrieving subnet by prefix: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve subnet by prefix
+
+PGSQL_CB_GET_SUBNET4_BY_SUBNET_ID
+=================================
+
+.. code-block:: text
+
+    retrieving subnet by subnet id: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve subnet by subnet id
+
+PGSQL_CB_GET_SUBNET6_BY_PREFIX
+==============================
+
+.. code-block:: text
+
+    retrieving subnet by prefix: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve subnet by prefix
+
+PGSQL_CB_GET_SUBNET6_BY_SUBNET_ID
+=================================
+
+.. code-block:: text
+
+    retrieving subnet by subnet id: %1
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve subnet by subnet id
+
+PGSQL_CB_GET_TYPE4
+==================
+
+.. code-block:: text
+
+    get type
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve type
+
+PGSQL_CB_GET_TYPE6
+==================
+
+.. code-block:: text
+
+    get type
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to retrieve type
+
+PGSQL_CB_INIT_OK
+================
+
+.. code-block:: text
+
+    loading Postgres CB hooks library successful
+
+This informational message indicates that the Postgres Configuration Backend hooks
+library has been loaded successfully. Enjoy!
+
+PGSQL_CB_NO_TLS_SUPPORT
+=======================
+
+.. code-block:: text
+
+    Attempt to configure TLS (unsupported for PostgreSQL): %1
+
+This error message is printed when TLS support was required in the Kea
+configuration: Kea was built with this feature disabled for PostgreSQL.
+The parameters of the connection are logged.
+
+PGSQL_CB_RECONNECT_ATTEMPT_FAILED4
+==================================
+
+.. code-block:: text
+
+    database reconnect failed: %1
+
+Error message issued when an attempt to reconnect has failed.
+
+PGSQL_CB_RECONNECT_ATTEMPT_FAILED6
+==================================
+
+.. code-block:: text
+
+    database reconnect failed: %1
+
+Error message issued when an attempt to reconnect has failed.
+
+PGSQL_CB_RECONNECT_ATTEMPT_SCHEDULE4
+====================================
+
+.. code-block:: text
+
+    scheduling attempt %1 of %2 in %3 milliseconds
+
+Info message issued when the server is scheduling the next attempt to reconnect
+to the database.  This occurs when the server has lost database connectivity and
+is attempting to reconnect automatically.
+
+PGSQL_CB_RECONNECT_ATTEMPT_SCHEDULE6
+====================================
+
+.. code-block:: text
+
+    scheduling attempt %1 of %2 in %3 milliseconds
+
+Info message issued when the server is scheduling the next attempt to reconnect
+to the database.  This occurs when the server has lost database connectivity and
+is attempting to reconnect automatically.
+
+PGSQL_CB_RECONNECT_FAILED4
+==========================
+
+.. code-block:: text
+
+    maximum number of database reconnect attempts: %1, has been exhausted without success
+
+Error message issued when the server failed to reconnect.  Loss of connectivity
+is typically a network or database server issue.
+
+PGSQL_CB_RECONNECT_FAILED6
+==========================
+
+.. code-block:: text
+
+    maximum number of database reconnect attempts: %1, has been exhausted without success
+
+Error message issued when the server failed to reconnect.  Loss of connectivity
+is typically a network or database server issue.
+
+PGSQL_CB_REGISTER_BACKEND_TYPE4
+===============================
+
+.. code-block:: text
+
+    register backend
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to register backend
+
+PGSQL_CB_REGISTER_BACKEND_TYPE6
+===============================
+
+.. code-block:: text
+
+    register backend
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to register backend
+
+PGSQL_CB_TLS_SUPPORT
+====================
+
+.. code-block:: text
+
+    Attempt to configure TLS: %1
+
+This informational message is printed when TLS support was required in
+the Kea configuration: The TLS support in PostgreSQL will be initialized but
+its configuration is fully managed outside the C API.
+The parameters of the connection are logged.
+
+PGSQL_CB_UNREGISTER_BACKEND_TYPE4
+=================================
+
+.. code-block:: text
+
+    unregister backend
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to unregister backend
+
+****
+PING
+****
+
+PING_CHECK_CB4_UPDATE_FAILED
+============================
+
+.. code-block:: text
+
+    A subnet ping-check parameters failed to parse after being updated %1
+
+This error message is emitted when an error occurs trying to parse a subnet
+ping-check parameters after the subnet was updated via configuration backend.
+This implies one or more of the parameters is invalid and must be corrected.
+
+PING_CHECK_CHANNEL_ECHO_REPLY_RECEIVED
+======================================
+
+.. code-block:: text
+
+    from address %1, id %2, sequence %3
+
+Logged at debug log level 50.
+This debug message is issued when an ECHO REPLY has been received on
+the ping channel's ICMP socket.
+
+PING_CHECK_CHANNEL_ECHO_REQUEST_SENT
+====================================
+
+.. code-block:: text
+
+    to address %1, id %2, sequence %3
+
+Logged at debug log level 50.
+This debug message is issued when an ECHO REQUEST has been written to the
+ping channel's ICMP socket.
+
+PING_CHECK_CHANNEL_MALFORMED_PACKET_RECEIVED
+============================================
+
+.. code-block:: text
+
+    error occurred unpacking message %1, discarding it
+
+Logged at debug log level 40.
+This debug message is emitted when an ICMP packet has been received
+that could not be unpacked.
+
+PING_CHECK_CHANNEL_NETWORK_WRITE_ERROR
+======================================
+
+.. code-block:: text
+
+    occurred trying to ping %1, error %2
+
+This error message occurs when an asynchronous write on the ICMP socket
+failed trying to send on the ping target's network.  This may mean an interface
+is down or there is a configuration error. The lease address to ping and the
+type of the error are provided in the arguments.
+
+PING_CHECK_CHANNEL_SOCKET_CLOSED
+================================
+
+.. code-block:: text
+
+    ICMP socket has been closed.
+
+Logged at debug log level 40.
+This debug message is emitted when the ICMP socket for carrying out
+ping checks has been closed.
+
+PING_CHECK_CHANNEL_SOCKET_CLOSE_ERROR
+=====================================
+
+.. code-block:: text
+
+    an attempt to close the ICMP socket failed %1
+
+This error message is emitted when an unexpected error occurred
+while closing the ping check ICMP socket.  The error detail is
+provided as an argument of the log message.
+
+PING_CHECK_CHANNEL_SOCKET_OPENED
+================================
+
+.. code-block:: text
+
+    ICMP socket been opened successfully.
+
+Logged at debug log level 40.
+This debug message is emitted when the ICMP socket for carrying out
+ping checks has been successfully opened.
+
+PING_CHECK_CHANNEL_SOCKET_READ_FAILED
+=====================================
+
+.. code-block:: text
+
+    socket read completed with an error %1
+
+This error message occurs when an asynchronous read on the ICMP socket
+failed. The details of the error are provided as an argument of the log
+message.
+
+PING_CHECK_CHANNEL_SOCKET_WRITE_FAILED
+======================================
+
+.. code-block:: text
+
+    socket write completed with an error %1
+
+This error message occurs when an asynchronous write on the ICMP socket
+failed. The details of the error are provided as an argument of the log
+message.
+
+PING_CHECK_CHANNEL_STOP
+=======================
+
+.. code-block:: text
+
+    channel is stopping operations.
+
+Logged at debug log level 40.
+This debug message indicates that the channel is stopping operations and
+closing the ICMP socket. The reason for stopping should be apparent in
+preceding log messages.
+
+PING_CHECK_CHANNEL_WATCH_SOCKET_CLEAR_ERROR
+===========================================
+
+.. code-block:: text
+
+    an attempt to clear the WatchSocket associated with
+
+the single-threaded ping-channel failed %1
+This error message is emitted when an unexpected error occurred
+while clearing the ready marker of the WatchSocket associated with
+the ping check channel.  This can only occur when running in
+single-threaded mode.  The error detail is provided as an argument
+of the log message.
+
+PING_CHECK_CHANNEL_WATCH_SOCKET_CLOSE_ERROR
+===========================================
+
+.. code-block:: text
+
+    an attempt to close the WatchSocket associated with
+
+the single-threaded ping-channel failed %1
+This error message is emitted when an unexpected error occurred
+while closing the WatchSocket associated with the ping check channel.
+This can only occur when running in single-threaded mode.
+The error detail is provided as an argument of the log message.
+
+PING_CHECK_DHCP4_SRV_CONFIGURED_FAILED
+======================================
+
+.. code-block:: text
+
+    dhcp4_srv_configured callout failed %1
+
+This error message indicates an error during the Ping Check hook
+library dhcp4_srv_configured callout.  The details of the error are
+provided as argument of the log message.
+
+PING_CHECK_DUPLICATE_CHECK
+==========================
+
+.. code-block:: text
+
+    Ping check already in progress for %1, initiated by %2
+
+Logged at debug log level 40.
+This debug message is emitted when a duplicate request to test an address
+is received. When this occurs the duplicate test will be skipped and
+the associated DHCPOFFER will be dropped.
+
+PING_CHECK_LEASE4_OFFER_FAILED
+==============================
+
+.. code-block:: text
+
+    lease4_offer callout failed for query %1, lease address %2, reason %3
+
+This error message indicates an error during the Ping Check hook
+library lease4_offer callout.  The details of the error are
+provided as argument of the log message.
+
+PING_CHECK_LOAD_ERROR
+=====================
+
+.. code-block:: text
+
+    loading Ping Check hooks library failed %1
+
+This error message indicates an error during loading the Ping Check
+hooks library. The details of the error are provided as argument of
+the log message.
+
+PING_CHECK_LOAD_OK
+==================
+
+.. code-block:: text
+
+    Ping Check hooks library loaded successfully.
+
+This info message indicates that the Ping Check hooks library has
+been loaded successfully.
+
+PING_CHECK_MGR_CHANNEL_DOWN
+===========================
+
+.. code-block:: text
+
+    Ping Channel has shutdown, ping checking will be skipped
+
+This error message is emitted when the underlying ICMP channel
+has stopped due to an unrecoverable error. DHCP service may continue
+to function but without performing ping checks. Prior log messages should
+provide details.
+
+PING_CHECK_MGR_LEASE_FREE_TO_USE
+================================
+
+.. code-block:: text
+
+    address %1 is free to use for %2
+
+Logged at debug log level 40.
+This debug message is emitted when ping check has deemed an
+address is free to use. The log arguments detail the lease address
+checked and the query which initiated the check.
+
+PING_CHECK_MGR_NEXT_ECHO_SCHEDULED
+==================================
+
+.. code-block:: text
+
+    for %1, scheduling ECHO_REQUEST %2 of %3
+
+Logged at debug log level 50.
+This debug message is emitted when the minimum number of ECHO REQUESTs
+is greater than 1 and the next ECHO REQUEST for a given lease address has
+been scheduled.
+
+PING_CHECK_MGR_RECEIVED_ECHO_REPLY
+==================================
+
+.. code-block:: text
+
+    from %1, id %2, sequence %3
+
+Logged at debug log level 40.
+This debug message is emitted when an ECHO REPLY message has been received.
+The log argument details the source IP address, id, and sequence number of
+the ECHO REPLY.
+
+PING_CHECK_MGR_RECEIVED_UNEXPECTED_ECHO_REPLY
+=============================================
+
+.. code-block:: text
+
+    from %1, id %2, sequence %3 received after reply-timeout expired
+
+Logged at debug log level 50.
+This debug message is emitted when an ECHO REPLY has been received after the
+reply-timeout has expired and is no longer of interest.  This may be an errant
+ECHO REPLY or it may indicate that the reply-timeout value is too short.  The
+log argument details the source IP address, id, and sequence number of the reply.
+
+PING_CHECK_MGR_RECEIVED_UNEXPECTED_UNREACHABLE_MSG
+==================================================
+
+.. code-block:: text
+
+    for %1, id %2, sequence %3 received after reply-timeout expired
+
+Logged at debug log level 50.
+This debug message is emitted when an UNREACHABLE message has been received
+after the reply-timeout has expired and is no longer of interest.  This may
+be an errant message or it may indicate that the reply-timeout value is
+too short.
+
+PING_CHECK_MGR_RECEIVED_UNREACHABLE_MSG
+=======================================
+
+.. code-block:: text
+
+    for %1, id %2, sequence %3
+
+Logged at debug log level 50.
+This debug message is emitted when an UNREACHABLE message has been received.
+The log argument details the target IP address, id, and sequence number from
+the embedded ECHO REQUEST.
+
+PING_CHECK_MGR_REPLY_RECEIVED_ERROR
+===================================
+
+.. code-block:: text
+
+    an error occurred processing an ICMP reply message %1
+
+This debug message is emitted when an error occurred while processing an inbound
+ICMP message. The log argument describes the specific error.
+
+PING_CHECK_MGR_REPLY_TIMEOUT_EXPIRED
+====================================
+
+.. code-block:: text
+
+    for %1, ECHO REQUEST %2 of %3, reply-timeout %4
+
+Logged at debug log level 50.
+This debug message is emitted when no reply is received to an
+ECHO REQUEST before the configured timeout value, `reply-timeout`
+was reached.  The log arguments provides details.
+
+PING_CHECK_MGR_SEND_COMPLETED_ERROR
+===================================
+
+.. code-block:: text
+
+    an error occurred in the send completion callback %1
+
+This error message is emitted when an unexpected error occurred after the completion of
+a successful write to the PingChannel socket.  The log argument describes the
+specific error.
+
+PING_CHECK_MGR_STARTED
+======================
+
+.. code-block:: text
+
+    ping channel operations are running, number of threads %1
+
+This message is emitted when the ping check channel has been opened
+and is ready to process requests.  The log argument includes the number of
+threads in the channel's thread pool.
+
+PING_CHECK_MGR_STARTED_SINGLE_THREADED
+======================================
+
+.. code-block:: text
+
+    single-threaded ping channel operations are running
+
+This message is emitted when the ping check channel has been opened
+and is ready to process requests in single-threaded mode.
+
+PING_CHECK_MGR_START_PING_CHECK
+===============================
+
+.. code-block:: text
+
+    for %1, initiated by %2
+
+Logged at debug log level 40.
+This debug message is emitted when a ping check for an address
+has been initiated.  The log arguments detail the lease address to
+ping and the query which initiated the check.
+
+PING_CHECK_MGR_STOPPED
+======================
+
+.. code-block:: text
+
+    channel operations have stopped
+
+This message is emitted when the ping check channel operations
+have been stopped.
+
+PING_CHECK_MGR_STOPPING
+=======================
+
+.. code-block:: text
+
+    ping channel operations are stopping
+
+Logged at debug log level 40.
+This debug message is emitted when the ping check channel is stopping
+operations, typically due to configuration event or server shutdown.
+
+PING_CHECK_MGR_SUBNET_CONFIG_FAILED
+===================================
+
+.. code-block:: text
+
+    user-context for subnet id %1, contains invalid ping-check %2
+
+This error message indicates that a subnet was updated via subnet commands
+and its 'user-context' contains invalid 'ping-check' configuration.  The
+server will log the error once and then use global ping-check parameters
+for the subnet until the configuration is corrected.
+
+PING_CHECK_PAUSE_FAILED
+=======================
+
+.. code-block:: text
+
+    Pausing ping channel operations failed %1
+
+This error message is emitted when an unexpected error occurred while
+attempting to pause the ping channel's thread pool. This error is highly
+unlikely and indicates a programmatic issue that should be reported as
+defect.
+
+PING_CHECK_PAUSE_ILLEGAL
+========================
+
+.. code-block:: text
+
+    Pausing ping channel operations not allowed %1
+
+This error message is emitted when attempting to pause the ping channel's
+thread pool. This indicates that a channel thread attempted to use a critical
+section which would result in a dead-lock. This error is highly unlikely
+and indicates a programmatic issue that should be reported as a defect.
+
+PING_CHECK_PAUSE_PERMISSIONS_FAILED
+===================================
+
+.. code-block:: text
+
+    Permissions check for ping-channel pause failed %1
+
+This error message is emitted when an unexpected error occurred while
+validating an attempt to pause the ping channel's thread pool. This error
+is highly unlikely and indicates a programmatic issue that should be
+reported as a defect.
+
+PING_CHECK_RESUME_FAILED
+========================
+
+.. code-block:: text
+
+    Resuming ping channel operations failed %1
+
+This error message is emitted when an unexpected error occurred while
+attempting to resume operation of the ping channel's thread pool. This
+error is highly unlikely and indicates a programmatic issue that should
+be reported as defect.
+
+PING_CHECK_UNEXPECTED_READ_ERROR
+================================
+
+.. code-block:: text
+
+    could not start next socket read %1
+
+This error message occurs when initiating an asynchronous read on the ICMP
+socket failed in an unexpected fashion. The details of the error are provided
+as an argument of the log message.
+
+PING_CHECK_UNEXPECTED_WRITE_ERROR
+=================================
+
+.. code-block:: text
+
+    could not start next socket write %1
+
+This error message occurs when initiating an asynchronous write on the ICMP
+socket failed in an unexpected fashion. The details of the error are provided
+as an argument of the log message.
+
+******
+RADIUS
+******
+
+RADIUS_ACCESS_BUILD_FAILED
+==========================
+
+.. code-block:: text
+
+    building Access-Request failed: %1 for incoming message %2
+
+This error message is issued when an error was raised during building of
+Access-Request.
+
+RADIUS_ACCESS_CACHE_GET
+=======================
+
+.. code-block:: text
+
+    host %1 with attributes %2 was retrieved from the cache
+
+Logged at debug log level 40.
+This debug message is issued when a host is retrieved from the host cache.
+
+RADIUS_ACCESS_CACHE_INSERT
+==========================
+
+.. code-block:: text
+
+    host %1 with attributes %2 was inserted into the cache
+
+Logged at debug log level 40.
+This debug message is issued when a new host is inserted into the host cache.
+
+RADIUS_ACCESS_CONFLICT
+======================
+
+.. code-block:: text
+
+    query %1 triggers a conflict for %2
+
+Logged at debug log level 40.
+This debug message is issued when a query triggers a conflict with a pending
+access request for the same identifier.
+
+RADIUS_ACCESS_DROP_PARKED_QUERY
+===============================
+
+.. code-block:: text
+
+    access request terminate callback decided to drop the parked query %1
+
+Logged at debug log level 40.
+This debug message is issued when an access request terminates with the
+decision to drop the parked query.
+
+RADIUS_ACCESS_ERROR
+===================
+
+.. code-block:: text
+
+    Access-Request failed with %1 (%2)
+
+This error message is issued when no valid Access-Accept or Access-Reject
+message was received. The return code and name are logged.
+
+RADIUS_ACCESS_GET_IDENTIFIER
+============================
+
+.. code-block:: text
+
+    identifier %1 of type %2 and User-Name %3 were set from incoming message %4
+
+Logged at debug log level 40.
+This debug message is issued when the host identifier and User-Name attribute were set from an incoming message.
+
+RADIUS_ACCESS_GET_IDENTIFIER_FAILED
+===================================
+
+.. code-block:: text
+
+    no identifier of type %1 can be set from incoming message %2, reason: %3
+
+This error message is issued when it was not possible to build the host
+identifier from the incoming message.
+
+RADIUS_ACCESS_HOST_BACKEND_ERROR
+================================
+
+.. code-block:: text
+
+    Configuring access failed during host backend '%1' setup, reason: %2
+
+This error message is issued when access/authentication is enabled
+in the configuration but something in host backend setup went wrong.
+The name of the host backend and the reason are logged.
+
+RADIUS_ACCESS_MAX_PENDING_REQUESTS
+==================================
+
+.. code-block:: text
+
+    query '%1' with identifier '%2' was dropped for too many pending access requests
+
+Logged at debug log level 40.
+This debug message is issued when the number of pending access requests is
+over the configured limit. The query and its identifier are displayed.
+
+RADIUS_ACCESS_NO_HOST_CACHE
+===========================
+
+.. code-block:: text
+
+    Configuring access failed: host cache library not loaded.
+
+This error message is issued when access/authentication is enabled
+in the configuration but no host cache was found. The Radius hook requires
+Host Cache hook to be loaded to store (cache) parameters received from
+exchanges with RADIUS server.
+
+RADIUS_ACCESS_ORPHAN
+====================
+
+.. code-block:: text
+
+    orphan pending access request for %1
+
+This error message is issued when an access request terminates without
+the corresponding pending request for the identifier.
+
+RADIUS_ACCESS_RESUME_PARKED_QUERY
+=================================
+
+.. code-block:: text
+
+    access request terminate callback resumes processing of parked query %1 in %2
+
+Logged at debug log level 40.
+This debug message is issued when access request terminate callback resumes the processing of a parked query after the subnet select callout point.
+
+RADIUS_ACCESS_SUBNET_RESELECT
+=============================
+
+.. code-block:: text
+
+    subnet was reselected from 'ID %1' to 'ID %2'
+
+Logged at debug log level 40.
+This debug message is issued when access/authentication triggered a subnet
+reselect. The original and new subnet IDs are logged.
+
+RADIUS_ACCESS_TERMINATE_ERROR
+=============================
+
+.. code-block:: text
+
+    access request terminate callback got an error: %1
+
+This error message is issued when an access request terminates with an
+unexpected internal error.
+
+RADIUS_ACCOUNTING_ASYNC
+=======================
+
+.. code-block:: text
+
+    Asynchronous send Accounting-Request for NAS port %1 with %2
+
+Logged at debug log level 40.
+This debug message is issued when starting to send an
+Accounting-Request message to accounting servers. The NAS port and
+message attributes are logged.
+
+RADIUS_ACCOUNTING_ASYNC_FAILED
+==============================
+
+.. code-block:: text
+
+    Asynchronous Accounting-Request failed: return code %1 (%2)
+
+Logged at debug log level 40.
+This debug message is issued when no valid Accounting-Response
+message was received.
+
+RADIUS_ACCOUNTING_ASYNC_SUCCEED
+===============================
+
+.. code-block:: text
+
+    received valid Accounting-Response (asynchronously)
+
+Logged at debug log level 40.
+This debug message indicates that a valid Accounting-Response
+was received.
+
+RADIUS_ACCOUNTING_ERROR
+=======================
+
+.. code-block:: text
+
+    Accounting-Request failed for %1 on event %2 (%3) failed with %4 (%5)
+
+This error message is issued when accounting communication failed.
+The session Id, the event code and name, and return code and name are logged.
+
+RADIUS_ACCOUNTING_HISTORY_UPDATE_FAILED
+=======================================
+
+.. code-block:: text
+
+    failed to insert a record for %1 in the history container
+
+This error message is issued when it was not possible to insert a
+record in the create timestamp aka history container. This should
+break the session, i.e. it will not be possible for instance to match
+start and stop status messages.
+
+RADIUS_ACCOUNTING_NO_HISTORY
+============================
+
+.. code-block:: text
+
+    failed to find the date the lease for %1 was created
+
+Logged at debug log level 40.
+This debug message is issued when an address was not found in create
+timestamp aka history container. This should lead to a accounting
+session without a start status message.
+
+RADIUS_ACCOUNTING_SYNC
+======================
+
+.. code-block:: text
+
+    Synchronous send Accounting-Request for NAS port %1 with %2
+
+Logged at debug log level 40.
+This debug message is issued when starting to send an
+Accounting-Request message to accounting servers. The NAS port and
+message attributes are logged.
+
+RADIUS_ACCOUNTING_SYNC_FAILED
+=============================
+
+.. code-block:: text
+
+    Synchronous Accounting-Request failed: return code %1 (%2)
+
+Logged at debug log level 40.
+This debug message is issued when no valid Accounting-Response
+message was received.
+
+RADIUS_ACCOUNTING_SYNC_SUCCEED
+==============================
+
+.. code-block:: text
+
+    received valid Accounting-Response (synchronously)
+
+Logged at debug log level 40.
+This debug message indicates that a valid Accounting-Response
+was received.
+
+RADIUS_AUTHENTICATION_ASYNC
+===========================
+
+.. code-block:: text
+
+    send Access-Request for NAS port %1 with %2
+
+Logged at debug log level 40.
+This debug message is issued when starting to send an Access-Request
+message to access servers. The NAS port and message attributes are logged.
+
+RADIUS_AUTHENTICATION_ASYNC_ACCEPTED
+====================================
+
+.. code-block:: text
+
+    received valid Access-Accept with %1
+
+Logged at debug log level 40.
+This debug message indicates that a valid Access-Accept
+message was received. Attributes from the message are logged.
+
+RADIUS_AUTHENTICATION_ASYNC_FAILED
+==================================
+
+.. code-block:: text
+
+    Access-Request failed: return code %1 (%2)
+
+Logged at debug log level 40.
+This debug message is issued when no correct Access-Accept or
+Access-Reject message was received.
+
+RADIUS_AUTHENTICATION_ASYNC_REJECTED
+====================================
+
+.. code-block:: text
+
+    received valid Access-Reject with %1
+
+Logged at debug log level 40.
+This debug message indicates that a valid Access-Reject
+message was received. Attributes from the message are logged.
+
+RADIUS_AUTHENTICATION_SYNC
+==========================
+
+.. code-block:: text
+
+    send Access-Request for NAS port %1 with %2
+
+Logged at debug log level 40.
+This debug message is issued when starting to send an Access-Request
+message to access servers. The NAS port and message attributes are logged.
+
+RADIUS_AUTHENTICATION_SYNC_ACCEPTED
+===================================
+
+.. code-block:: text
+
+    received valid Access-Accept with %1
+
+Logged at debug log level 40.
+This debug message indicates that a valid Access-Accept
+message was received. Attributes from the message are logged.
+
+RADIUS_AUTHENTICATION_SYNC_FAILED
+=================================
+
+.. code-block:: text
+
+    Access-Request failed: return code %1 (%2)
+
+Logged at debug log level 40.
+This debug message is issued when no correct Access-Accept or
+Access-Reject message was received.
+
+RADIUS_AUTHENTICATION_SYNC_REJECTED
+===================================
+
+.. code-block:: text
+
+    received valid Access-Reject with %1
+
+Logged at debug log level 40.
+This debug message indicates that a valid Access-Reject
+message was received. Attributes from the message are logged.
+
+RADIUS_BACKEND_GET4
+===================
+
+.. code-block:: text
+
+    spurious lookup for IPv4 subnet %1 and id %2 of type %3
+
+Logged at debug log level 40.
+This debug message is issued when the radius host backend is unexpectedly
+called for looking for an IPv4 entry. Details of the lookup are logged.
+
+RADIUS_BACKEND_GET6
+===================
+
+.. code-block:: text
+
+    spurious lookup for IPv6 subnet %1 and id %2 of type %3
+
+Logged at debug log level 40.
+This debug message is issued when the radius host backend is unexpectedly
+called for looking for an IPv6 entry. Details of the lookup are logged.
+
+RADIUS_CLEANUP_EXCEPTION
+========================
+
+.. code-block:: text
+
+    Exception on RADIUS cleanup: %1
+
+This warning message is issued when there is an exception thrown when destroying
+an object in the RADIUS hook library. The exception is not allowed to continue
+propagating to not obfuscate another exception, so it is logged. It generally
+means a programmatic error and should be reported to ISC, but could also be
+harmless. The argument provides the detailed error message.
+
+RADIUS_CONFIGURATION_FAILED
+===========================
+
+.. code-block:: text
+
+    failed to configure Radius hooks library: %1
+
+This error message is issued when there is an error configuring the Radius
+hooks library. The argument provides the detailed error message.
+
+RADIUS_DECODE_MESSAGE
+=====================
+
+.. code-block:: text
+
+    Decoded message '%1' (%2) id %3 length %4 with %5 attributes.
+
+Logged at debug log level 40.
+This debug message is issued when a message is decoded. The message type name
+and value, the identifier, the length and the number of attributes are
+displayed.
+
+RADIUS_DEINIT_OK
+================
+
+.. code-block:: text
+
+    unloading Radius hooks library successful
+
+This informational message indicates that the Radius hooks library
+has been unloaded successfully.
+
+RADIUS_ENCODE_MESSAGE
+=====================
+
+.. code-block:: text
+
+    Encoded message '%1' (%2) id %3 length %4 with %5 attributes.
+
+Logged at debug log level 40.
+This debug message is issued when a message is encoded. The message type name
+and value, the identifier, the length and the number of attributes are
+displayed.
+
+RADIUS_EXCHANGE_FAILED
+======================
+
+.. code-block:: text
+
+    Exchange %1 failed: %2
+
+This error message is issued when an exchange terminates with an error.
+The exchange identifier and the error message are displayed.
+
+RADIUS_EXCHANGE_OPEN_FAILED
+===========================
+
+.. code-block:: text
+
+    Open socket for exchange %1 failed: %2
+
+This error message is issued when an exchange failed to open a new socket.
+The exchange identifier and the error message are displayed.
+
+RADIUS_EXCHANGE_RECEIVED
+========================
+
+.. code-block:: text
+
+    Exchange %1 received %2 bytes.
+
+Logged at debug log level 40.
+This debug message is issued when an exchange received a response.
+The exchange identifier and the response size are displayed.
+
+RADIUS_EXCHANGE_RECEIVED_ACCESS_ACCEPT
+======================================
+
+.. code-block:: text
+
+    Exchange %1 received an Access-Accept.
+
+Logged at debug log level 40.
+This debug message is issued when an exchange received an Access-Accept
+response. The exchange identifier is displayed.
+
+RADIUS_EXCHANGE_RECEIVED_ACCESS_REJECT
+======================================
+
+.. code-block:: text
+
+    Exchange %1 received an Access-Reject.
+
+Logged at debug log level 40.
+This debug message is issued when an exchange received an Access-Reject
+response. The exchange identifier is displayed.
+
+RADIUS_EXCHANGE_RECEIVED_ACCOUNTING_RESPONSE
+============================================
+
+.. code-block:: text
+
+    Exchange %1 received an Accounting-Response.
+
+Logged at debug log level 40.
+This debug message is issued when an exchange received an Accounting-Response
+response. The exchange identifier is displayed.
+
+RADIUS_EXCHANGE_RECEIVED_BAD_RESPONSE
+=====================================
+
+.. code-block:: text
+
+    Exchange %1 received a bad response: %2
+
+This error message is issued when an exchange received a bad response.
+The exchange identifier and the error message are displayed.
+
+RADIUS_EXCHANGE_RECEIVED_MISMATCH
+=================================
+
+.. code-block:: text
+
+    Exchange %1: received response with identifier %2 when %3 was expected.
+
+This error message is issued when the sent request and the received response
+have different identifiers. The exchange identifier and the two RADIUS message
+identifiers are displayed.
+
+RADIUS_EXCHANGE_RECEIVED_RESPONSE
+=================================
+
+.. code-block:: text
+
+    Exchange %1 received response: %2
+
+Logged at debug log level 40.
+This debug message is issued at the end of the reception routine.
+The exchange identifier and the error code are displayed.
+
+RADIUS_EXCHANGE_RECEIVED_UNEXPECTED
+===================================
+
+.. code-block:: text
+
+    Exchange %1: sent %2, received unexpected %3
+
+This error message is issued when the sent request and the received response
+do not match. The exchange identifier and the two RADIUS message codes are
+displayed.
+
+RADIUS_EXCHANGE_RECEIVE_FAILED
+==============================
+
+.. code-block:: text
+
+    Receive for exchange %1 failed: %2
+
+This error message is issued when an exchange failed to receive a message.
+The exchange identifier and the error message are displayed.
+
+RADIUS_EXCHANGE_SEND_FAILED
+===========================
+
+.. code-block:: text
+
+    Send for exchange %1 failed: %2
+
+This error message is issued when an exchange failed to send a message.
+The exchange identifier and the error message are displayed.
+
+RADIUS_EXCHANGE_SEND_NEW
+========================
+
+.. code-block:: text
+
+    Exchange %1 sends %2 bytes to new server[%3] %4 on port %5
+
+Logged at debug log level 40.
+This debug message is issued when an exchange sends a message to a new server.
+The exchange identifier, message size, server index, address and port
+are displayed.
+
+RADIUS_EXCHANGE_SEND_RETRY
+==========================
+
+.. code-block:: text
+
+    Exchange %1 sends %2 bytes for the %3 try.
+
+Logged at debug log level 40.
+This debug message is issued when an exchange sends a message to a new server.
+The exchange identifier, message size and retry counter are displayed.
+
+RADIUS_EXCHANGE_SENT
+====================
+
+.. code-block:: text
+
+    Exchange %1 sent %2 bytes.
+
+Logged at debug log level 40.
+This debug message is issued when an exchange sent a request and is ready
+to receive the response. The exchange identifier and request size are
+displayed.
+
+RADIUS_EXCHANGE_START
+=====================
+
+.. code-block:: text
+
+    Start exchange %1
+
+Logged at debug log level 40.
+This debug message is issued when an exchange starts. The exchange identifier
+is displayed.
+
+RADIUS_EXCHANGE_SYNC_RETURN
+===========================
+
+.. code-block:: text
+
+    Synchronous exchange %1 returns with %2
+
+Logged at debug log level 40.
+This debug message is issued when a synchronous exchange returns.
+The exchange identifier and the error/return code are displayed.
+
+RADIUS_EXCHANGE_TERMINATE
+=========================
+
+.. code-block:: text
+
+    Exchange %1 terminates with %2
+
+Logged at debug log level 40.
+This debug message is issued when an exchange terminates with success.
+The exchange identifier and the return code are displayed.
+
+RADIUS_EXCHANGE_TIMEOUT
+=======================
+
+.. code-block:: text
+
+    Exchange %1 timeout
+
+This error message is issued when an exchange failed on timeout.
+The exchange identifier is displayed.
+
+RADIUS_HOOK_FAILED
+==================
+
+.. code-block:: text
+
+    processing for hook %1 failed: %2
+
+This error message is issued when processing at a standard hook point failed.
+The reason of the failure is displayed.
+
+RADIUS_INIT_OK
+==============
+
+.. code-block:: text
+
+    loading Radius hooks library successful
+
+This informational message indicates that the Radius hooks library has been
+loaded successfully. Enjoy!
+
+RADIUS_INTEGER_ATTRIBUTE_FROM_BYTES_FAILED
+==========================================
+
+.. code-block:: text
+
+    Creating an integer attribute %1 '%2' failed: %3
+
+This error message is issued when an integer attribute can't be
+created. Attribute type, name and error message are displayed.
+
+RADIUS_INTEGER_ATTRIBUTE_FROM_TEXT_FAILED
+=========================================
+
+.. code-block:: text
+
+    Creating an integer attribute %1 '%2' from %3 failed.
+
+This error message is issued when an integer attribute can't be
+created. Attribute type, name and bad submitted value are displayed.
+
+RADIUS_IPADDR_ATTRIBUTE_FROM_BYTES_FAILED
+=========================================
+
+.. code-block:: text
+
+    Creating an IP address attribute %1 '%2' failed: %3
+
+This error message is issued when an IP address attribute can't be
+created. Attribute type, name and error message are displayed.
+
+RADIUS_IPADDR_ATTRIBUTE_FROM_TEXT_FAILED
+========================================
+
+.. code-block:: text
+
+    Creating an IP address attribute %1 '%2' from %3 failed.
+
+This error message is issued when an IP address attribute can't be
+created. Attribute type, name and bad submitted value are displayed.
+
+RADIUS_IPV6ADDR_ATTRIBUTE_FROM_BYTES_FAILED
+===========================================
+
+.. code-block:: text
+
+    Creating an IPv6 address attribute %1 '%2' failed: %3
+
+This error message is issued when an IPv6 address attribute can't be
+created. Attribute type, name and error message are displayed.
+
+RADIUS_IPV6ADDR_ATTRIBUTE_FROM_TEXT_FAILED
+==========================================
+
+.. code-block:: text
+
+    Creating an IPv6 address attribute %1 '%2' from %3 failed.
+
+This error message is issued when an IPv6 address attribute can't be
+created. Attribute type, name and bad submitted value are displayed.
+
+RADIUS_IPV6PREFIX_ATTRIBUTE_FROM_BYTES_FAILED
+=============================================
+
+.. code-block:: text
+
+    Creating an IPv6 prefix attribute %1 '%2' failed: %3
+
+This error message is issued when an IPv6 prefix attribute can't be
+created. Attribute type, name and error message are displayed.
+
+RADIUS_IPV6PREFIX_ATTRIBUTE_FROM_TEXT_FAILED
+============================================
+
+.. code-block:: text
+
+    Creating an IPv6 prefix attribute %1 '%2' from %3 failed.
+
+This error message is issued when an IPv6 prefix attribute can't be
+created. Attribute type, name and bad submitted value are displayed.
+
+RADIUS_PAUSE_FAILED
+===================
+
+.. code-block:: text
+
+    Pausing the RADIUS thread pool failed: %1
+
+This error message is emitted when an unexpected error occurred while validating
+an attempt to pause the thread pool. This error is highly unlikely and indicates
+a programmatic issue that should be reported as a defect.
+
+RADIUS_PAUSE_ILLEGAL
+====================
+
+.. code-block:: text
+
+    Pausing the RADIUS thread pool not allowed: %1
+
+This error message is emitted when attempting to pause the thread pool.
+This indicates that a thread attempted to use a critical section which would
+result in a dead-lock. This error is highly unlikely and indicates a
+programmatic issue that should be reported as a defect.
+
+RADIUS_PAUSE_PERMISSIONS_FAILED
+===============================
+
+.. code-block:: text
+
+    Checking for permissions to pause the RADIUS thread pool failed: %1
+
+This error message is emitted when an unexpected error occurred while validating
+an attempt to pause the thread pool. This error is highly unlikely and indicates
+a programmatic issue that should be reported as a defect.
+
+RADIUS_REPLY_MESSAGE_ATTRIBUTE
+==============================
+
+.. code-block:: text
+
+    Message %1 on exchange %2 has a Reply-Message attribute with value '%3'.
+
+This informational message is issued when a Reply-Message attribute
+is found in a message received from the RADIUS server. One log
+message is printed per attribute. A log message can contain multiple
+attributes, so there can be multiple log messages per RADIUS message.
+It displays the message identifier, the exchange identifier and the
+value of the Reply-Message attribute.
+
+RADIUS_RESUME_FAILED
+====================
+
+.. code-block:: text
+
+    Resuming ithe RADIUS thread pool failed: %1
+
+This error message is emitted when an unexpected error occurred while attempting
+to resume the thread pool. This error is highly unlikely and indicates a
+programmatic issue that should be reported as defect.
+
+RADIUS_SERVER_CONFIGURED
+========================
+
+.. code-block:: text
+
+    configured an %1 server: %2
+
+This informational message is issued when a RADIUS server is
+configured. The kind of the server (access or accounting) and
+configuration details are logged with the secret replaced by stars.
+
+RADIUS_SESSION_HISTORY_APPEND_FAILED
+====================================
+
+.. code-block:: text
+
+    appending of a new record for %1 to the session history file failed: %2
+
+This warning message is issued when appending a new record to the session
+history file failed. The address of the new record and the reason of
+the failure are displayed.
+
+RADIUS_SESSION_HISTORY_LOADED
+=============================
+
+.. code-block:: text
+
+    loading of the session history file succeeded: read %1 records including %2 active records
+
+This informational message is issued when loading of the session history file
+completed with success. Numbers of loaded and active records are displayed.
+
+RADIUS_SESSION_HISTORY_LOAD_FAILED
+==================================
+
+.. code-block:: text
+
+    loading of the session history file
+
+failed: loaded %1, skipped %2 and active %3 records.
+This error message is issued when loading of the session history file did
+not completed with success. Numbers of loaded, skipped and active records
+displayed.
+
+RADIUS_SESSION_HISTORY_OPENED
+=============================
+
+.. code-block:: text
+
+    opening of the session history file %1 succeeded
+
+This informational message is issued when opening of the CSV file providing
+session history persistence succeeded. The name of the file is displayed.
+
+RADIUS_SESSION_HISTORY_OPEN_FAILED
+==================================
+
+.. code-block:: text
+
+    opening of the session history file %1 failed: %2
+
+This error message is issued when opening of the CSV file providing
+session history persistence failed. The name of the file and the
+reason of the failure are displayed.
+
+RADIUS_SESSION_HISTORY_STORED
+=============================
+
+.. code-block:: text
+
+    Storing to the session history file succeeded: stored %1 records
+
+This informational message is issued when writing to a new session history
+file completed with success. The number of stored records is displayed.
+
+RADIUS_SESSION_HISTORY_STORE_FAILED
+===================================
+
+.. code-block:: text
+
+    Writing to the session history file %1 failed: %2 (stored %3 over %4 records)
+
+This error message is issued when writing to a new session history file
+failed. The name of the file, the reason of the failure, the number
+of stored records before the failure and the expected number of records
+are displayed.
+
+****
+RBAC
+****
+
+RBAC_AUTH_ERROR
+===============
+
+.. code-block:: text
+
+    Error in auth callout: %1.
+
+This error messages indicates that an error has been raised in auth callout
+by the RBAC hooks library. The argument details the error.
+
+RBAC_AUTH_RESPONSE
+==================
+
+.. code-block:: text
+
+    RBAC hooks library has returned response: %1.
+
+This info message indicates that the RBAC hooks library has returned
+a response in auth callout. The response is summarized.
+
+RBAC_CONFIGURED_ACLS
+====================
+
+.. code-block:: text
+
+    RBAC hooks library has configured %1 named ACLs.
+
+Logged at debug log level 40.
+This debug message indicates that some named access control lists
+have been configured. The count is displayed.
+
+RBAC_CONFIGURED_COMMANDS
+========================
+
+.. code-block:: text
+
+    RBAC hooks library has configured %1 extra commands.
+
+Logged at debug log level 40.
+This debug message indicates that some extra commands have been configured.
+The count is displayed.
+
+RBAC_CONFIGURED_ROLES
+=====================
+
+.. code-block:: text
+
+    hooks library has configured %1 roles.
+
+Logged at debug log level 40.
+This debug message indicates that some roles have been configured. The count
+is displayed.
+
+RBAC_LOAD_FAILED
+================
+
+.. code-block:: text
+
+    RBAC hooks library failed to load: %1.
+
+This error message indicates that an error occurred attempting to
+load the RBAC hooks library. The argument details the error.
+
+RBAC_LOAD_OK
+============
+
+.. code-block:: text
+
+    RBAC hooks library loaded successfully.
+
+This info message indicates that the RBAC hooks library has
+been loaded successfully.
+
+RBAC_READ_API_FILES
+===================
+
+.. code-block:: text
+
+    RBAC hooks library read API files from '%1' getting %2 commands, %3 access types and %4 hooks.
+
+This info message indicates that the RBAC hooks library has read API files
+from the configured directory. The name of the directory and some statistics
+are displayed.
+
+RBAC_TRACE_AUTH_ACCEPT
+======================
+
+.. code-block:: text
+
+    Role configuration '%1' for role '%2' has accepted command '%3'.
+
+Logged at debug log level 40.
+The command has been accepted in auth callout. The role configuration name,
+the role name and the command are displayed.
+
+RBAC_TRACE_AUTH_BAD_BODY_TYPE
+=============================
+
+.. code-block:: text
+
+    Bad body type in JSON request in auth callout.
+
+Logged at debug log level 40.
+The auth callout has been called with a bad body type in the JSON request.
+The RBAC hooks library immediately returns. This is an error condition.
+
+RBAC_TRACE_AUTH_BAD_COMMAND_TYPE
+================================
+
+.. code-block:: text
+
+    Bad command type in JSON request in auth callout.
+
+Logged at debug log level 40.
+The auth callout has been called with a bad command type in the JSON request.
+The RBAC hooks library immediately returns. This is an error condition.
+
+RBAC_TRACE_AUTH_COMMAND
+=======================
+
+.. code-block:: text
+
+    Command '%1' in auth callout.
+
+Logged at debug log level 40.
+The auth callout has been called with the displayed command.
+
+RBAC_TRACE_AUTH_DISABLED
+========================
+
+.. code-block:: text
+
+    RBAC hooks library is disabled in auth callout.
+
+Logged at debug log level 40.
+The auth callout has been called with the RBAC hooks library disabled
+i.e. with no role assigned.
+
+RBAC_TRACE_AUTH_EMPTY_BODY
+==========================
+
+.. code-block:: text
+
+    Empty body in JSON request in auth callout.
+
+Logged at debug log level 40.
+The auth callout has been called with an empty body in the JSON request.
+The RBAC hooks library immediately returns. This is an error condition.
+
+RBAC_TRACE_AUTH_NO_COMMAND
+==========================
+
+.. code-block:: text
+
+    No command entry in JSON request in auth callout.
+
+Logged at debug log level 40.
+The auth callout has been called without a command entry in the JSON request.
+The RBAC hooks library immediately returns. This is an error condition.
+
+RBAC_TRACE_AUTH_NO_JSON
+=======================
+
+.. code-block:: text
+
+    No JSON request in auth callout.
+
+Logged at debug log level 40.
+The auth callout has been called with a non JSON request. The RBAC hooks
+library immediately returns. This is an error condition.
+
+RBAC_TRACE_AUTH_NO_REQUEST
+==========================
+
+.. code-block:: text
+
+    No request in auth callout.
+
+Logged at debug log level 40.
+The auth callout has been called without a request. The RBAC hooks library
+immediately returns. This is an error condition.
+
+RBAC_TRACE_AUTH_NO_TLS_REJECT
+=============================
+
+.. code-block:: text
+
+    Non TLS request has been rejected.
+
+Logged at debug log level 40.
+The non TLS request has been rejected in auth callout.
+
+RBAC_TRACE_AUTH_REJECT
+======================
+
+.. code-block:: text
+
+    Role configuration '%1' for role '%2' has rejected command '%3'.
+
+Logged at debug log level 40.
+The command has been rejected in auth callout. The role configuration name,
+the role name and the command are displayed.
+
+RBAC_TRACE_AUTH_RESPONSE
+========================
+
+.. code-block:: text
+
+    Response in auth callout: %1.
+
+Logged at debug log level 40.
+The auth callout has been called with a response. The RBAC hooks library
+immediately returns. The response is summarized.
+
+RBAC_TRACE_AUTH_ROLE
+====================
+
+.. code-block:: text
+
+    Assigned role '%1' in auth callout.
+
+Logged at debug log level 40.
+The displayed role has been assigned in the auth callout.
+
+RBAC_TRACE_RESPONSE_BAD_BODY_TYPE
+=================================
+
+.. code-block:: text
+
+    Bad body type in JSON response in response callout.
+
+Logged at debug log level 40.
+The response callout has been called with a bad body type in the JSON response
+which is likely an error response. The RBAC hooks library immediately returns.
+
+RBAC_TRACE_RESPONSE_CONTEXT
+===========================
+
+.. code-block:: text
+
+    Retrieved command '%1' and role config '%2' in response callout.
+
+Logged at debug log level 40.
+The command and the role config have been retrieved from the request context.
+They are displayed.
+
+RBAC_TRACE_RESPONSE_DISABLED
+============================
+
+.. code-block:: text
+
+    RBAC hooks library is disabled in response callout.
+
+Logged at debug log level 40.
+The response callout has been called with the RBAC hooks library disabled
+i.e. with no role assigned.
+
+RBAC_TRACE_RESPONSE_EMPTY_BODY
+==============================
+
+.. code-block:: text
+
+    Empty body in JSON response in response callout.
+
+Logged at debug log level 40.
+The response callout has been called with an empty body in the JSON response.
+The RBAC hooks library immediately returns. This is an error condition.
+
+RBAC_TRACE_RESPONSE_EMPTY_BODY_LIST
+===================================
+
+.. code-block:: text
+
+    Empty list in JSON response in response callout.
+
+Logged at debug log level 40.
+The response callout has been called with an empty body list in the JSON
+response. The RBAC hooks library immediately returns. This is an error
+condition.
+
+RBAC_TRACE_RESPONSE_MODIFIED
+============================
+
+.. code-block:: text
+
+    The response has been modified by a response filter in response callout.
+
+Logged at debug log level 40.
+A response filter has modified the HTTP response in response callout.
+
+RBAC_TRACE_RESPONSE_NO_ARGUMENTS
+================================
+
+.. code-block:: text
+
+    No request or response in response callout.
+
+Logged at debug log level 40.
+The response callout has been called without request or response. The RBAC
+hooks library immediately returns. This is an error condition.
+
+***
+RUN
+***
+
+RUN_SCRIPT_LOAD
+===============
+
+.. code-block:: text
+
+    Run Script hooks library has been loaded
+
+This info message indicates that the Run Script hooks library has been loaded.
+
+RUN_SCRIPT_LOAD_ERROR
+=====================
+
+.. code-block:: text
+
+    Run Script hooks library failed: %1
+
+This error message indicates an error during loading the Run Script hooks
+library. The details of the error are provided as argument of the log message.
+
+*****
+START
+*****
+
+START_REKEY_TIMER
+=================
+
+.. code-block:: text
+
+    started timer handling rekey for server %1 in %2 seconds.
+
+Logged at debug log level 40.
+This debug message is issued when starting the rekey timer to handle new keys
+for this server when at least one key is currently available. The first argument
+specifies the server identifier and the second argument specifies the time
+interval when the next key processing will be attempted.
+
+START_RETRY_TIMER
+=================
+
+.. code-block:: text
+
+    started timer handling retry for server %1 in %2 seconds.
+
+Logged at debug log level 40.
+This debug message is issued when starting the retry timer to handle new keys
+for this server when there is no key currently available. The first argument
+specifies the server identifier and the second argument specifies the time
+interval when the next key processing will be attempted.
+
+****
+STAT
+****
+
+STAT_CMDS_DEINIT_OK
+===================
+
+.. code-block:: text
+
+    unloading Stat Commands hooks library successful
+
+This info message indicates that the Stat Commands hooks library has been
+removed successfully.
+
+STAT_CMDS_INIT_OK
+=================
+
+.. code-block:: text
+
+    loading Stat Commands hooks library successful
+
+This info message indicates that the Stat Commands hooks library has been
+loaded successfully. Enjoy!
+
+STAT_CMDS_LEASE4_FAILED
+=======================
+
+.. code-block:: text
+
+    stat-lease4-get command failed: reason: %1
+
+The stat-lease4-get command has failed. The reason for failure is logged.
+
+STAT_CMDS_LEASE4_GET
+====================
+
+.. code-block:: text
+
+    stat-lease4-get command successful, parameters: %1 rows found: %2
+
+The stat-lease4-get command has been successful. The log will contain
+the parameters supplied and the number of rows found.
+
+STAT_CMDS_LEASE4_GET_FAILED
+===========================
+
+.. code-block:: text
+
+    stat-lease4-get command failed: parameters: %1, reason: %2
+
+The stat-lease4-get command has failed. Both the parameters supplied and
+the reason for failure are logged.
+
+STAT_CMDS_LEASE4_GET_INVALID
+============================
+
+.. code-block:: text
+
+    stat-lease4-get command is malformed or invalid, reason: %1
+
+The stat-lease4-get command was either malformed or contained invalid
+parameters.  A detailed explanation should be logged.
+
+STAT_CMDS_LEASE4_GET_NO_SUBNETS
+===============================
+
+.. code-block:: text
+
+    stat-lease4-get, parameters: %1, %2"
+
+The parameters submitted with stat-lease4-get were valid but excluded all
+known subnets.  The parameters supplied along with an explanation should
+be logged.
+
+STAT_CMDS_LEASE4_ORPHANED_STATS
+===============================
+
+.. code-block:: text
+
+    stat-lease4-get command omitted statistics for one or more non-existent subnets
+
+Logged at debug log level 40.
+During processing the stat-lease4-get found statistics for subnet IDs for
+non-existent subnets. These values were omitted from the command response
+returned to the user. This may occur when subnets have been removed from
+the configuration in a manner that did not also remove the statistics. While
+the existence of such statistics is not harmful, steps should be considered
+to remove them.  For memfile lease storage, the problem should disappear
+upon configuration reload or server restart. For database lease storage the
+issue is more complicated and as of Kea 2.0.0 we do not yet have a clean
+solution.
+
+STAT_CMDS_LEASE6_FAILED
+=======================
+
+.. code-block:: text
+
+    stat-lease6-get command failed: reason: %1
+
+The stat-lease6-get command has failed. The reason for failure is logged.
+
+STAT_CMDS_LEASE6_GET
+====================
+
+.. code-block:: text
+
+    stat-lease6-get command successful, parameters: %1 rows found: %2
+
+The stat-lease6-get command has been successful. The log will contain
+the parameters supplied and the number of rows found.
+
+STAT_CMDS_LEASE6_GET_FAILED
+===========================
+
+.. code-block:: text
+
+    stat-lease6-get command failed: parameters: %1, reason: %2
+
+The stat-lease6-get command has failed. Both the parameters supplied and
+the reason for failure are logged.
+
+STAT_CMDS_LEASE6_GET_INVALID
+============================
+
+.. code-block:: text
+
+    stat-lease6-get command is malformed or invalid, reason: %1
+
+The stat-lease6-get command was either malformed or contained invalid
+parameters.  A detailed explanation should be logged.
+
+STAT_CMDS_LEASE6_GET_NO_SUBNETS
+===============================
+
+.. code-block:: text
+
+    stat-lease6-get, parameters: %1, %2"
+
+The parameters submitted with stat-lease6-get were valid but excluded all
+known subnets.  The parameters supplied along with an explanation should
+be logged.
+
+******
+SUBNET
+******
+
+SUBNET_CMDS_DEINIT_OK
+=====================
+
+.. code-block:: text
+
+    unloading Subnet Commands hooks library successful
+
+This informational message indicates that the Host Commands hooks library has
+been unloaded successfully.
+
+SUBNET_CMDS_INIT_FAILED
+=======================
+
+.. code-block:: text
+
+    loading Subnet Commands hooks library failed: %1
+
+This error message indicates an error during loading the Subnet Commands
+hooks library. The details of the error are provided as argument of
+the log message.
+
+SUBNET_CMDS_INIT_OK
+===================
+
+.. code-block:: text
+
+    loading Subnet Commands hooks library successful
+
+This informational message indicates that the Host Commands hooks library has
+been loaded successfully. Enjoy!
+
+SUBNET_CMDS_NETWORK4_ADD_FAILED
+===============================
+
+.. code-block:: text
+
+    failed to add new IPv4 network: %1
+
+This error message is issued when the Subnet Commands hooks library fails
+to add a new IPv4 network to the server configuration. The reason for failure
+is provided within the error message. The error message will be returned to
+the controlling client with the error status code.
+
+SUBNET_CMDS_NETWORK4_DEL_FAILED
+===============================
+
+.. code-block:: text
+
+    failed to delete IPv4 network: %1
+
+This error message is issued when the Subnet Commands hooks library fails
+to delete an IPv4 network. The reason for failure is provided within the
+error message. The error message will be returned to the controlling
+client with the error status code.
+
+SUBNET_CMDS_NETWORK4_GET_FAILED
+===============================
+
+.. code-block:: text
+
+    failed to return an IPv4 network: %1
+
+This error message is issued when the server fails to return an IPv4
+network in response to 'network4-get' command. The argument details the
+reason for failure. The error message will be returned to the controlling
+client with the error status code. This error may occur when the received
+command has invalid structure, has not allowed parameters or lacks required
+parameters. It will also be returned when the command syntax is correct
+but no network was found.
+
+SUBNET_CMDS_NETWORK4_LIST_FAILED
+================================
+
+.. code-block:: text
+
+    failed to return a list of IPv4 networks: %1
+
+This error message is issued when the Subnet Commands hooks library fails
+to return a list of IPv4 networks requested with 'network4-list' command. The
+reason for failure is provided within the error message. The error message
+will be returned to the controlling client with the error status code.
+
+SUBNET_CMDS_NETWORK4_SUBNET_ADD_FAILED
+======================================
+
+.. code-block:: text
+
+    failed to add existing IPv4 subnet to a shared network: %1
+
+This error message is issued when the Subnet Commands hooks library fails
+to add existing IPv4 subnet to existing shared network. The reason for failure
+is provided within the error message. The error message will be returned to
+the controlling client with the error status code.
+
+SUBNET_CMDS_NETWORK4_SUBNET_DEL_FAILED
+======================================
+
+.. code-block:: text
+
+    failed to remove a IPv4 subnet from a shared network: %1
+
+This error message is issued when the Subnet Commands hooks library fails
+to remove existing IPv4 subnet to existing shared network. The reason for failure
+is provided within the error message. The error message will be returned to
+the controlling client with the error status code.
+
+SUBNET_CMDS_NETWORK6_ADD_FAILED
+===============================
+
+.. code-block:: text
+
+    failed to add new IPv6 network: %1
+
+This error message is issued when the Subnet Commands hooks library fails
+to add a new IPv6 network to the server configuration. The reason for failure
+is provided within the error message. The error message will be returned to
+the controlling client with the error status code.
+
+SUBNET_CMDS_NETWORK6_DEL_FAILED
+===============================
+
+.. code-block:: text
+
+    failed to delete IPv6 network: %1
+
+This error message is issued when the Subnet Commands hooks library fails
+to delete an IPv6 network. The reason for failure is provided within the
+error message. The error message will be returned to the controlling
+client with the error status code.
+
+SUBNET_CMDS_NETWORK6_GET_FAILED
+===============================
+
+.. code-block:: text
+
+    failed to return an IPv6 network: %1
+
+This error message is issued when the server fails to return an IPv6
+network in response to 'network4-get' command. The argument details the
+reason for failure. The error message will be returned to the controlling
+client with the error status code. This error may occur when the received
+command has invalid structure, has not allowed parameters or lacks required
+parameters. It will also be returned when the command syntax is correct
+but no network was found.
+
+SUBNET_CMDS_NETWORK6_LIST_FAILED
+================================
+
+.. code-block:: text
+
+    failed to return a list of IPv6 networks: %1
+
+This error message is issued when the Subnet Commands hooks library fails
+to return a list of IPv4 networks requested with 'network6-list' command. The
+reason for failure is provided within the error message. The error message
+will be returned to the controlling client with the error status code.
+
+SUBNET_CMDS_NETWORK6_SUBNET_ADD_FAILED
+======================================
+
+.. code-block:: text
+
+    failed to add existing IPv6 subnet to a shared network: %1
+
+This error message is issued when the Subnet Commands hooks library fails
+to add existing IPv6 subnet to existing shared network. The reason for failure
+is provided within the error message. The error message will be returned to
+the controlling client with the error status code.
+
+SUBNET_CMDS_NETWORK6_SUBNET_DEL_FAILED
+======================================
+
+.. code-block:: text
+
+    failed to remove a IPv6 subnet from a shared network: %1
+
+This error message is issued when the Subnet Commands hooks library fails
+to remove existing IPv6 subnet to existing shared network. The reason for failure
+is provided within the error message. The error message will be returned to
+the controlling client with the error status code.
+
+SUBNET_CMDS_NETWORK_ADD
+=======================
+
+.. code-block:: text
+
+    successfully added shared network %1
+
+This informational message is issued when the Subnet Commands hooks library
+successfully adds a shared network as a result of receiving a 'network4-add'
+or 'network6-add' command'. The argument represents the name of added shared
+network.
+
+SUBNET_CMDS_NETWORK_DEL
+=======================
+
+.. code-block:: text
+
+    successfully deleted shared network %1
+
+This informational message is issued when the Subnet Commands hooks library
+successfully deletes a shared network as a result of receiving a 'network4-del'
+or 'network6-del' command'. The argument represents the name of deleted shared
+network.
+
+SUBNET_CMDS_NETWORK_GET
+=======================
+
+.. code-block:: text
+
+    successfully retrieved shared network %1
+
+This informational message is issued when the Subnet Commands hooks library
+successfully retrieves a shared network as a result of receiving a 'network4-get'
+or 'network6-get' command'. The argument represents the name of retrieved shared
+network.
+
+SUBNET_CMDS_NETWORK_GET_EMPTY
+=============================
+
+.. code-block:: text
+
+    specified shared network is not found: %1
+
+This informational message is issued when the Subnet Commands hooks library
+found no matching shared network as a result of receiving a 'network4-get' or
+'network6-get' command'.
+
+SUBNET_CMDS_NETWORK_LIST
+========================
+
+.. code-block:: text
+
+    successfully retrieved list of %1 %2 shared networks
+
+This informational message is issued when the Subnet Commands hooks library
+successfully retrieves a list of shared networks as a result of receiving 'network4-list'
+or 'network6-list' command. The first argument specifies a number of networks
+retrieved. The second parameter specifies a protocol type: 'IPv4' or 'IPv6'.
+
+SUBNET_CMDS_NETWORK_LIST_EMPTY
+==============================
+
+.. code-block:: text
+
+    no %1 shared networks listed
+
+This informational message is issued when the Subnet Commands hooks library
+successfully processes the 'network4-list' or 'network6-list' command but
+no shared network has been found. This indicates that the server configuration
+contains no shared networks of the specific type. The argument specifies a protocol
+type: 'IPv4' or 'IPv6'.
+
+SUBNET_CMDS_NETWORK_SUBNET_ADD
+==============================
+
+.. code-block:: text
+
+    %1 subnet %2 (id %3) added to shared network %4
+
+This informational message indicates that specified subnet (address family
+given in parameter 1, details in parameters 2 and 3) is now part of a shared
+network. This is a successful result of either network4-subnet-add or
+network6-subnet-add commands.
+
+SUBNET_CMDS_NETWORK_SUBNET_DEL
+==============================
+
+.. code-block:: text
+
+    %1 subnet %2 (id %3) removed from shared network %4
+
+This informational message indicates that specified subnets (address family
+given in parameter 1, details in parameters 2 and 3) is no longer part of a shared
+network. The subnet remains in configuration, but is a stand alone subnet.
+This is a successful result of either network4-subnet-del or network6-subnet-del commands.
+
+SUBNET_CMDS_SUBNET4_ADD_FAILED
+==============================
+
+.. code-block:: text
+
+    failed to add new IPv4 subnet: %1
+
+This error message is issued when the Subnet Commands hooks library fails
+to add a new IPv4 subnet to the server configuration. The reason for failure
+is provided within the error message. The error message will be returned to
+the controlling client with the error status code.
+
+SUBNET_CMDS_SUBNET4_DELTA_ADD_FAILED
+====================================
+
+.. code-block:: text
+
+    failed to update IPv4 subnet: %1
+
+This error message is issued when the Subnet Commands hooks library fails
+to update by adding a delta in a IPv4 subnet to the server configuration. The
+reason for failure is provided within the error message. The error message will
+be returned to the controlling client with the error status code.
+
+SUBNET_CMDS_SUBNET4_DELTA_DEL_FAILED
+====================================
+
+.. code-block:: text
+
+    failed to update IPv4 subnet: %1
+
+This error message is issued when the Subnet Commands hooks library fails
+to update by removing a delta in a IPv4 subnet to the server configuration. The
+reason for failure is provided within the error message. The error message will
+be returned to the controlling client with the error status code.
+
+SUBNET_CMDS_SUBNET4_DEL_FAILED
+==============================
+
+.. code-block:: text
+
+    failed to delete IPv4 subnet: %1
+
+This error message is issued when the Subnet Commands hooks library fails
+to delete an IPv4 subnet. The reason for failure is provided within the
+error message. The error message will be returned to the controlling
+client with the error status code.
+
+SUBNET_CMDS_SUBNET4_GET_FAILED
+==============================
+
+.. code-block:: text
+
+    failed to return an IPv4 subnet: %1
+
+This error message is issued when the server fails to return an IPv4
+subnet in response to 'subnet4-get' command. The argument details the
+reason for failure. The error message will be returned to the controlling
+client with the error status code. This error may occur when the received
+command has invalid structure, has not allowed parameters or lacks required
+parameters. It will also be returned when the command syntax is correct
+but no subnet was found.
+
+SUBNET_CMDS_SUBNET4_LIST_FAILED
+===============================
+
+.. code-block:: text
+
+    failed to return a list of IPv4 subnets: %1
+
+This error message is issued when the Subnet Commands hooks library fails
+to return a list of IPv4 subnets requested with 'subnet4-list' command. The
+reason for failure is provided within the error message. The error message
+will be returned to the controlling client with the error status code.
+
+SUBNET_CMDS_SUBNET4_UPDATE_FAILED
+=================================
+
+.. code-block:: text
+
+    failed to update IPv4 subnet: %1
+
+This error message is issued when the Subnet Commands hooks library fails
+to update a IPv4 subnet to the server configuration. The reason for failure
+is provided within the error message. The error message will be returned to
+the controlling client with the error status code.
+
+SUBNET_CMDS_SUBNET6_ADD_FAILED
+==============================
+
+.. code-block:: text
+
+    failed to add new IPv6 subnet: %1
+
+This error message is issued when the Subnet Commands hooks library fails
+to add a new IPv6 subnet to the server configuration. The reason for failure
+is provided within the error message. The error message will be returned to
+the controlling client with the error status code.
+
+SUBNET_CMDS_SUBNET6_DELTA_ADD_FAILED
+====================================
+
+.. code-block:: text
+
+    failed to update IPv6 subnet: %1
+
+This error message is issued when the Subnet Commands hooks library fails
+to update by adding a delta in a IPv6 subnet to the server configuration. The
+reason for failure is provided within the error message. The error message will
+be returned to the controlling client with the error status code.
+
+SUBNET_CMDS_SUBNET6_DELTA_DEL_FAILED
+====================================
+
+.. code-block:: text
+
+    failed to update IPv6 subnet: %1
+
+This error message is issued when the Subnet Commands hooks library fails
+to update by removing a delta in a IPv6 subnet to the server configuration. The
+reason for failure is provided within the error message. The error message will
+be returned to the controlling client with the error status code.
+
+SUBNET_CMDS_SUBNET6_DEL_FAILED
+==============================
+
+.. code-block:: text
+
+    failed to delete IPv6 subnet: %1
+
+This error message is issued when the Subnet Commands hooks library fails
+to delete an IPv6 subnet. The reason for failure is provided within the
+error message. The error message will be returned to the controlling
+client with the error status code.
+
+SUBNET_CMDS_SUBNET6_GET_FAILED
+==============================
+
+.. code-block:: text
+
+    failed to return an IPv6 subnet: %1
+
+This error message is issued when the server fails to return an IPv6
+subnet in response to 'subnet4-get' command. The argument details the
+reason for failure. The error message will be returned to the controlling
+client with the error status code. This error may occur when the received
+command has invalid structure, has not allowed parameters or lacks required
+parameters. It will also be returned when the command syntax is correct
+but no subnet was found.
+
+SUBNET_CMDS_SUBNET6_LIST_FAILED
+===============================
+
+.. code-block:: text
+
+    failed to return a list of IPv6 subnets: %1
+
+This error message is issued when the Subnet Commands hooks library fails
+to return a list of IPv4 subnets requested with 'subnet6-list' command. The
+reason for failure is provided within the error message. The error message
+will be returned to the controlling client with the error status code.
+
+SUBNET_CMDS_SUBNET6_UPDATE_FAILED
+=================================
+
+.. code-block:: text
+
+    failed to update IPv6 subnet: %1
+
+This error message is issued when the Subnet Commands hooks library fails
+to update a IPv6 subnet to the server configuration. The reason for failure
+is provided within the error message. The error message will be returned to
+the controlling client with the error status code.
+
+SUBNET_CMDS_SUBNET_ADD
+======================
+
+.. code-block:: text
+
+    successfully added subnet %1 having id %2
+
+This informational message is issued when the Subnet Commands hooks library
+successfully adds a subnet as a result of receiving a 'subnet4-add'
+or 'subnet6-add' command'. The first parameter specifies an added subnet
+prefix. The second parameter specifies a subnet identifier.
+
+SUBNET_CMDS_SUBNET_DEL
+======================
+
+.. code-block:: text
+
+    successfully deleted subnet %1 having id %2
+
+This informational message is issued when the Subnet Commands hooks library
+successfully deletes a subnet as a result of receiving a 'subnet4-del'
+or 'subnet6-del' command'. The first parameter specifies a deleted subnet
+prefix. The second parameter specifies a subnet identifier.
+
+SUBNET_CMDS_SUBNET_GET
+======================
+
+.. code-block:: text
+
+    successfully retrieved subnet %1 having id %2
+
+This informational message is issued when the Subnet Commands hooks library
+successfully retrieves a subnet as a result of receiving a 'subnet4-get'
+or 'subnet6-get' command'. The first parameter specifies a retrieved subnet
+prefix. The second parameter specifies a subnet identifier.
+
+SUBNET_CMDS_SUBNET_GET_EMPTY
+============================
+
+.. code-block:: text
+
+    specified subnet is not found: %1
+
+This informational message is issued when the Subnet Commands hooks library
+found no a matching subnet as a result of receiving a 'subnet4-get' or
+'subnet6-get' command'.
+
+SUBNET_CMDS_SUBNET_LIST
+=======================
+
+.. code-block:: text
+
+    successfully retrieved list of %1 %2 subnets
+
+This informational message is issued when the Subnet Commands hooks library
+successfully retrieves a list of subnets as a result of receiving 'subnet4-list'
+or 'subnet6-list' command. The first argument specifies a number of subnets
+retrieved. The second parameter specifies a protocol type: 'IPv4' or 'IPv6'.
+
+SUBNET_CMDS_SUBNET_LIST_EMPTY
+=============================
+
+.. code-block:: text
+
+    no %1 subnets listed
+
+This informational message is issued when the Subnet Commands hooks library
+successfully processes the 'subnet4-list' or 'subnet6-list' command but
+no subnets have been found. This indicates that the server configuration
+contains no subnets of the specific type. This is not an error condition
+but it is unusual case for the DHCP service. The argument specifies a type
+of the subnets being listed, i.e. 'IPv4' or 'IPv6'.
+
+***
+TCP
+***
+
+TCP_CLIENT_REQUEST_RECEIVED
+===========================
+
+.. code-block:: text
+
+    received TCP request from %1
+
+Logged at debug log level 40.
+This debug message is issued when the server finished receiving a TCP
+request from the remote endpoint. The address of the remote endpoint is
+specified as an argument.
+
+TCP_CONNECTION_REJECTED_BY_FILTER
+=================================
+
+.. code-block:: text
+
+    connection from %1 has been denied by the connection filter.
+
+Logged at debug log level 50.
+This debug message is issued when the server's connection filter rejects
+a new connection based on the client's ip address.
+
+TCP_CONNECTION_SHUTDOWN
+=======================
+
+.. code-block:: text
+
+    shutting down TCP connection from %1
+
+Logged at debug log level 40.
+This debug message is issued when one of the TCP connections is shut down.
+The connection can be stopped as a result of an error or after the
+successful message exchange with a client.
+
+TCP_CONNECTION_SHUTDOWN_FAILED
+==============================
+
+.. code-block:: text
+
+    shutting down TCP connection failed
+
+This error message is issued when an error occurred during shutting down
+a TCP connection with a client.
+
+TCP_CONNECTION_STOP
+===================
+
+.. code-block:: text
+
+    stopping TCP connection from %1
+
+Logged at debug log level 40.
+This debug message is issued when one of the TCP connections is stopped.
+The connection can be stopped as a result of an error or after the
+successful message exchange with a client.
+
+TCP_CONNECTION_STOP_FAILED
+==========================
+
+.. code-block:: text
+
+    stopping TCP connection failed
+
+This error message is issued when an error occurred during closing a
+TCP connection with a client.
+
+TCP_DATA_RECEIVED
+=================
+
+.. code-block:: text
+
+    received %1 bytes from %2
+
+Logged at debug log level 55.
+This debug message is issued when the server receives a chunk of data from
+the remote endpoint. This may include the whole request or only a part
+of the request. The first argument specifies the amount of received data.
+The second argument specifies an address of the remote endpoint which
+produced the data.
+
+TCP_DATA_SENT
+=============
+
+.. code-block:: text
+
+    send %1 bytes to %2
+
+Logged at debug log level 55.
+This debug message is issued when the server sends a chunk of data to
+the remote endpoint. This may include the whole response or only a part
+of the response. The first argument specifies the amount of sent data.
+The second argument specifies an address of the remote endpoint.
+
+TCP_IDLE_CONNECTION_TIMEOUT_OCCURRED
+====================================
+
+.. code-block:: text
+
+    closing connection with %1 as a result of a timeout
+
+Logged at debug log level 50.
+This debug message is issued when the TCP connection is being closed as a
+result of being idle.
+
+TCP_REQUEST_RECEIVED_FAILED
+===========================
+
+.. code-block:: text
+
+    An unexpected error occurred processing a request from %1, error: %2
+
+This error message is issued when an unexpected error occurred while the
+server attempted to process a received request. The first argument specifies
+the address of the remote endpoint. The second argument describes the nature
+error.
+
+TCP_REQUEST_RECEIVE_START
+=========================
+
+.. code-block:: text
+
+    start receiving request from %1 with timeout %2
+
+Logged at debug log level 50.
+This debug message is issued when the server starts receiving new request
+over the established connection. The first argument specifies the address
+of the remote endpoint. The second argument specifies request timeout in
+seconds.
+
+TCP_SERVER_RESPONSE_SEND
+========================
+
+.. code-block:: text
+
+    sending TCP response to %1
+
+Logged at debug log level 40.
+This debug message is issued when the server is starting to send a TCP
+response to a remote endpoint. The argument specifies an address of
+the remote endpoint.
+
+****
+TKEY
+****
+
+TKEY_EXCHANGE_ANSWER_CLASS
+==========================
+
+.. code-block:: text
+
+    GSS-TKEY exchange received a response with answer class: %1.
+
+Logged at debug log level 40.
+This debug message indicates that GSS-TKEY exchange received a response with
+specified answer class.
+
+TKEY_EXCHANGE_FAILED_TO_VERIFY
+==============================
+
+.. code-block:: text
+
+    GSS-TKEY exchange failed because the response failed to verify.
+
+This error message indicated that GSS-TKEY exchange failed because the response
+failed to verify.
+
+TKEY_EXCHANGE_FAIL_EMPTY_IN_TOKEN
+=================================
+
+.. code-block:: text
+
+    GSS-TKEY exchange failed because input token is empty.
+
+This error message indicated that GSS-TKEY exchange failed because input token
+is empty.
+
+TKEY_EXCHANGE_FAIL_EMPTY_OUT_TOKEN
+==================================
+
+.. code-block:: text
+
+    GSS-TKEY exchange failed because output token is empty.
+
+This error message indicated that GSS-TKEY exchange failed because output token
+is empty.
+
+TKEY_EXCHANGE_FAIL_EMPTY_RESPONSE
+=================================
+
+.. code-block:: text
+
+    GSS-TKEY exchange failed because the response is empty.
+
+This error message indicated that GSS-TKEY exchange failed because the response
+is empty.
+
+TKEY_EXCHANGE_FAIL_IO_ERROR
+===========================
+
+.. code-block:: text
+
+    GSS-TKEY exchange failed because of the IO error: %1.
+
+This error message indicated that GSS-TKEY exchange failed because of an IO error.
+The argument details the IO error.
+
+TKEY_EXCHANGE_FAIL_IO_STOPPED
+=============================
+
+.. code-block:: text
+
+    GSS-TKEY exchange failed because the IO service was stopped.
+
+This error message indicated that GSS-TKEY exchange failed because the IO
+service was stopped.
+
+TKEY_EXCHANGE_FAIL_IO_TIMEOUT
+=============================
+
+.. code-block:: text
+
+    GSS-TKEY exchange failed because of IO timeout.
+
+This error message indicated that GSS-TKEY exchange failed because of IO
+timeout.
+
+TKEY_EXCHANGE_FAIL_NOT_SIGNED
+=============================
+
+.. code-block:: text
+
+    GSS-TKEY exchange failed because the response is not signed.
+
+This error message indicated that GSS-TKEY exchange failed because the response
+is not signed.
+
+TKEY_EXCHANGE_FAIL_NO_RDATA
+===========================
+
+.. code-block:: text
+
+    GSS-TKEY exchange failed because the response contains no rdata.
+
+This error message indicated that GSS-TKEY exchange failed because the response
+contains no rdata.
+
+TKEY_EXCHANGE_FAIL_NO_RESPONSE_ANSWER
+=====================================
+
+.. code-block:: text
+
+    GSS-TKEY exchange failed because the response contains no answer.
+
+This error message indicated that GSS-TKEY exchange failed because the response
+contains no answer.
+
+TKEY_EXCHANGE_FAIL_NULL_RESPONSE
+================================
+
+.. code-block:: text
+
+    GSS-TKEY exchange failed because the response is null.
+
+This error message indicated that GSS-TKEY exchange failed because the response
+is null.
+
+TKEY_EXCHANGE_FAIL_RESPONSE_ERROR
+=================================
+
+.. code-block:: text
+
+    GSS-TKEY exchange failed because the response contains an error: %1.
+
+This error message indicated that GSS-TKEY exchange failed because the response
+contains an error. The argument details the reponse error.
+
+TKEY_EXCHANGE_FAIL_TKEY_ERROR
+=============================
+
+.. code-block:: text
+
+    GSS-TKEY exchange failed because the response contains TKEY error: %1.
+
+This error message indicated that GSS-TKEY exchange failed because the response
+contains TKEY error. The argument details the TKEY error.
+
+TKEY_EXCHANGE_FAIL_TO_INIT
+==========================
+
+.. code-block:: text
+
+    GSS-TKEY exchange failed to initialize because of the error: %1.
+
+This error message indicated that GSS-TKEY exchange failed in the
+initialization phase, for instance because the server principal does not
+exist. The argument details the error.
+
+TKEY_EXCHANGE_FAIL_WRONG_RESPONSE_ANSWER_COUNT
+==============================================
+
+.. code-block:: text
+
+    GSS-TKEY exchange failed because the response contains invalid number of RRs: %1.
+
+This error message indicated that GSS-TKEY exchange failed because the response
+contains invalid number of RRs. The argument contains the wrong number of RRs.
+
+TKEY_EXCHANGE_FAIL_WRONG_RESPONSE_ANSWER_TYPE
+=============================================
+
+.. code-block:: text
+
+    GSS-TKEY exchange failed because the response contains wrong answer type: %1.
+
+This error message indicated that GSS-TKEY exchange failed because the response
+contains wrong answer type. The argument contains the wrong answer type.
+
+TKEY_EXCHANGE_FAIL_WRONG_RESPONSE_OPCODE
+========================================
+
+.. code-block:: text
+
+    GSS-TKEY exchange failed because the response contains invalid opcode: %1.
+
+This error message indicated that GSS-TKEY exchange failed because the response
+contains invalid opcode. The argument contains the wrong opcode.
+
+TKEY_EXCHANGE_NOT_A_RESPONSE
+============================
+
+.. code-block:: text
+
+    GSS-TKEY exchange received a non response type.
+
+Logged at debug log level 40.
+This debug message indicates that GSS-TKEY exchange received a non response
+type.
+
+TKEY_EXCHANGE_OUT_TOKEN_NOT_EMPTY
+=================================
+
+.. code-block:: text
+
+    GSS-TKEY exchange output token is not empty.
+
+Logged at debug log level 40.
+This debug message indicates that GSS-TKEY exchange output token is not empty.
+
+TKEY_EXCHANGE_RDATA_COUNT
+=========================
+
+.. code-block:: text
+
+    GSS-TKEY exchange received a response with rdata count: %1.
+
+Logged at debug log level 40.
+This debug message indicates that GSS-TKEY exchange received a response with
+specified rdata count.
+
+TKEY_EXCHANGE_RECEIVE_MESSAGE
+=============================
+
+.. code-block:: text
+
+    GSS-TKEY exchange receives a message of size: %1.
+
+Logged at debug log level 40.
+This debug message indicates that GSS-TKEY exchange receives a message of
+specified size.
+
+TKEY_EXCHANGE_RESPONSE_TTL
+==========================
+
+.. code-block:: text
+
+    GSS-TKEY exchange received a response with TTL of: %1 seconds.
+
+Logged at debug log level 40.
+This debug message indicates that GSS-TKEY exchange received a response with
+specified TTL.
+
+TKEY_EXCHANGE_SEND_MESSAGE
+==========================
+
+.. code-block:: text
+
+    GSS-TKEY exchange sends a message of size: %1.
+
+Logged at debug log level 40.
+This debug message indicates that GSS-TKEY exchange sends a message of specified
+size.
+
+TKEY_EXCHANGE_VALID
+===================
+
+.. code-block:: text
+
+    GSS-TKEY exchange retrieved a TKEY valid for: %1 seconds.
+
+Logged at debug log level 40.
+This debug message indicates that GSS-TKEY exchange retrieved a TKEY valid for
+the specified time period expressed in seconds.
+
+***
+TLS
+***
+
+TLS_CONNECTION_HANDSHAKE_FAILED
+===============================
+
+.. code-block:: text
+
+    TLS handshake with %1 failed with %2
+
+This information message is issued when the TLS handshake failed at the
+server side. The client address and the error message are displayed.
+
+TLS_CONNECTION_HANDSHAKE_START
+==============================
+
+.. code-block:: text
+
+    start TLS handshake with %1 with timeout %2
+
+Logged at debug log level 50.
+This debug message is issued when the server starts the TLS handshake
+with the remote endpoint. The first argument specifies the address
+of the remote endpoint. The second argument specifies request timeout in
+seconds.
+
+TLS_REQUEST_RECEIVE_START
+=========================
+
+.. code-block:: text
+
+    start receiving request from %1 with timeout %2
+
+Logged at debug log level 50.
+This debug message is issued when the server starts receiving new request
+over the established connection. The first argument specifies the address
+of the remote endpoint. The second argument specifies request timeout in
+seconds.
+
+****
+USER
+****
+
+USER_CHK_HOOK_LOAD_ERROR
+========================
+
+.. code-block:: text
+
+    DHCP UserCheckHook could not be loaded: %1
+
+This is an error message issued when the DHCP UserCheckHook could not be loaded.
+The exact cause should be explained in the log message.  User subnet selection
+will revert to default processing.
+
+USER_CHK_HOOK_UNLOAD_ERROR
+==========================
+
+.. code-block:: text
+
+    DHCP UserCheckHook an error occurred unloading the library: %1
+
+This is an error message issued when an error occurs while unloading the
+UserCheckHook library.  This is unlikely to occur and normal operations of the
+library will likely resume when it is next loaded.
+
+USER_CHK_SUBNET4_SELECT_ERROR
+=============================
+
+.. code-block:: text
+
+    DHCP UserCheckHook an unexpected error occurred in subnet4_select callout: %1
+
+This is an error message issued when the DHCP UserCheckHook subnet4_select hook
+encounters an unexpected error.  The message should contain a more detailed
+explanation.
+
+USER_CHK_SUBNET4_SELECT_REGISTRY_NULL
+=====================================
+
+.. code-block:: text
+
+    DHCP UserCheckHook UserRegistry has not been created.
+
+This is an error message issued when the DHCP UserCheckHook subnet4_select hook
+has been invoked but the UserRegistry has not been created.  This is a
+programmatic error and should not occur.
+
+USER_CHK_SUBNET6_SELECT_ERROR
+=============================
+
+.. code-block:: text
+
+    DHCP UserCheckHook an unexpected error occurred in subnet6_select callout: %1
+
+This is an error message issued when the DHCP UserCheckHook subnet6_select hook
+encounters an unexpected error.  The message should contain a more detailed
+explanation.
+
+.. _kea-debug-messages:
+
+*******************************
+Kea Debug Messages By Log Level
+*******************************
+
+.. include:: debug-messages.rst

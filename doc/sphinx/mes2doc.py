@@ -20,8 +20,9 @@
 # If no output file is specified, output is written to stdout.
 # The produced format is ReStructuredText.
 
-import re
 import argparse
+import pathlib
+import re
 
 
 def parse_args():
@@ -36,8 +37,12 @@ def parse_args():
 def read_input_files(files):
     messages = {}
     for f in files:
+        if '/premium/' in f and not pathlib.Path(f).is_file():
+            # Premium can be missing which is fine for daily development, and CI tasks.
+            print(f'Ignoring non-existing file {f}')
+            continue
         with open(f, encoding='utf-8') as fp:
-            print("Processing %s" % f)
+            print(f'Processing {f}')
             msg_descr = None
             msg_id = None
             msg_text = None
