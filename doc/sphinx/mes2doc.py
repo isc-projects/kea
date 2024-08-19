@@ -21,14 +21,16 @@
 # The produced format is ReStructuredText.
 
 import argparse
+import os
 import pathlib
 import re
+import sys
 
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Convert set of *.mes files to .rst documentation format')
     parser.add_argument('-o', '--output', help='Output file name (default to stdout).')
-    parser.add_argument('files', help='Input .mes files.', nargs='+')
+    parser.add_argument('files', help='Input .mes files.', nargs='?')
 
     args = parser.parse_args()
     return args
@@ -116,7 +118,7 @@ used to indicate a placeholder for data that is provided by the Kea code during 
         rst += '=' * len(msg_id) + '\n'
         rst += '\n'
 
-        rst += '.. code-block::\n'
+        rst += '.. code-block:: text\n'
         rst += '\n'
         rst += '    ' + msg_text + '\n'
         rst += '\n'
@@ -152,7 +154,14 @@ def generate(in_files, out_file):
 
 def main():
     args = parse_args()
-    generate(args.files, args.output)
+    if args.files is None:
+        parent_dir = os.path.dirname(os.path.realpath(os.path.abspath(sys.argv[0])))
+        mes_files = sorted(pathlib.Path(f'{parent_dir}/../..').glob('**/*.mes'))
+        # Convert from Path to str.
+        mes_files = [str(i) for i in mes_files]
+    else:
+        mes_files = args.files
+    generate(mes_files, args.output)
 
 
 if __name__ == '__main__':

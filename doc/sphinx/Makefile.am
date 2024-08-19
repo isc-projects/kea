@@ -75,8 +75,8 @@ mes-files.txt:
 
 # this rule is only used for development purposes and is not used in official
 # build process as kea-messages.rst is always generated via sphinx's conf.py
-$(srcdir)/kea-messages.rst: $(mes_files) mes2doc.py
-	$(PYTHON) $(srcdir)/mes2doc.py -o $@ $(mes_files)
+$(srcdir)/kea-messages.rst: mes2doc.py
+	$(PYTHON) $(srcdir)/mes2doc.py -o $@
 
 # build the list of api files
 api-files.txt: $(top_srcdir)/src/share/api/api_files.mk
@@ -87,8 +87,8 @@ EXTRA_DIST += mes-files.txt api-files.txt
 
 # this rule is only used for development purposes and is not used in official
 # build process as api.rst is always generated via sphinx's conf.py
-$(srcdir)/api.rst: $(api_files) api-files.txt api2doc.py
-	$(PYTHON) $(srcdir)/api2doc.py -o $@ $(api_files)
+$(srcdir)/api.rst: api2doc.py
+	$(PYTHON) $(srcdir)/api2doc.py -o $@
 
 $(srcdir)/arm/platforms.rst:
 	rm -f $(srcdir)/arm/platforms.rst

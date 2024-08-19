@@ -10,16 +10,18 @@
 # - reads *.json files (each file describes a single command)
 # - produces .rst file suitable for Sphinx as output
 
-import os
-import json
 import argparse
 import collections
+import json
+import os
+import pathlib
+import sys
 
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Convert set of *.json files to .rst documentation format')
     parser.add_argument('-o', '--output', help='Output file name (default to stdout).')
-    parser.add_argument('files', help='Input API .json files.', nargs='+')
+    parser.add_argument('files', help='Input API .json files.', nargs='?')
 
     args = parser.parse_args()
     return args
@@ -205,7 +207,14 @@ def generate(in_files, out_file):
 
 def main():
     args = parse_args()
-    generate(args.files, args.output)
+    if args.files is None:
+        parent_dir = os.path.dirname(os.path.realpath(os.path.abspath(sys.argv[0])))
+        mes_files = sorted(pathlib.Path(f'{parent_dir}/../..').glob('src/share/api/*.json'))
+        # Convert from Path to str.
+        mes_files = [str(i) for i in mes_files]
+    else:
+        mes_files = args.files
+    generate(mes_files, args.output)
 
 
 if __name__ == '__main__':
