@@ -4884,29 +4884,19 @@ void Dhcpv4Srv::requiredClassify(Dhcpv4Exchange& ex) {
         // true (match) or raise an exception (error)
         try {
             bool status = evaluateBool(*expr_ptr, *query);
+            LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, DHCP4_REQUIRED_CLASS_EVAL_RESULT)
+                .arg(query->getLabel())
+                .arg(cclass)
+                .arg(status ? "true" : "false");
             if (status) {
-                LOG_INFO(dhcp4_logger, EVAL_RESULT)
-                    .arg(query->getLabel())
-                    .arg(cclass)
-                    .arg("true");
                 // Matching: add the class
                 query->addClass(cclass);
-            } else {
-                LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, EVAL_RESULT)
-                    .arg(query->getLabel())
-                    .arg(cclass)
-                    .arg("false");
             }
         } catch (const Exception& ex) {
-            LOG_ERROR(dhcp4_logger, EVAL_RESULT)
+            LOG_ERROR(dhcp4_logger, DHCP4_REQUIRED_CLASS_EVAL_ERROR)
                 .arg(query->getLabel())
                 .arg(cclass)
                 .arg(ex.what());
-        } catch (...) {
-            LOG_ERROR(dhcp4_logger, EVAL_RESULT)
-                .arg(query->getLabel())
-                .arg(cclass)
-                .arg("get exception?");
         }
     }
 }

@@ -978,6 +978,17 @@ about the address that the client would like to have allocated.
 If there is no hint, the argument should provide the text indicating
 that the hint hasn't been sent.
 
+% DHCP4_REQUIRED_CLASS_EVAL_ERROR %1: Expression '%2' evaluated to %3
+This error message indicates that there a problem was encountered while
+evaluating an expression of a client class that was marked as required.
+A description of the problem is printed.
+
+% DHCP4_REQUIRED_CLASS_EVAL_RESULT %1: Expression '%2' evaluated to %3
+Logged at debug log level 50.
+This debug message indicates that the expression of a client class has been
+successfully evaluated. The client class name and the result value of the
+evaluation are printed.
+
 % DHCP4_RESERVATIONS_LOOKUP_FIRST_ENABLED Multi-threading is enabled and host reservations lookup is always performed first.
 This is a message informing that host reservations lookup is performed before
 lease lookup when multi-threading is enabled overwriting configured value.

@@ -148,6 +148,8 @@ extern const isc::log::MessageID DHCP6_RELEASE_PD_EXPIRED;
 extern const isc::log::MessageID DHCP6_RELEASE_PD_FAIL;
 extern const isc::log::MessageID DHCP6_RELEASE_PD_FAIL_WRONG_DUID;
 extern const isc::log::MessageID DHCP6_RELEASE_PD_FAIL_WRONG_IAID;
+extern const isc::log::MessageID DHCP6_REQUIRED_CLASS_EVAL_ERROR;
+extern const isc::log::MessageID DHCP6_REQUIRED_CLASS_EVAL_RESULT;
 extern const isc::log::MessageID DHCP6_REQUIRED_OPTIONS_CHECK_FAIL;
 extern const isc::log::MessageID DHCP6_RESERVATIONS_LOOKUP_FIRST_ENABLED;
 extern const isc::log::MessageID DHCP6_RESPONSE_DATA;

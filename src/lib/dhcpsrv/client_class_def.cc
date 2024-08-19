@@ -146,29 +146,19 @@ ClientClassDef::test(PktPtr pkt, const ExpressionPtr& expr_ptr) {
     // true (match) or raise an exception (error)
     try {
         bool status = evaluateBool(*expr_ptr, *pkt);
+        LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_EVAL_RESULT)
+            .arg(pkt->getLabel())
+            .arg(getName())
+            .arg(status ? "true" : "false");
         if (status) {
-            LOG_INFO(dhcpsrv_logger, EVAL_RESULT)
-                .arg(pkt->getLabel())
-                .arg(getName())
-                .arg("true");
             // Matching: add the class
             pkt->addClass(getName());
-        } else {
-            LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, EVAL_RESULT)
-                .arg(pkt->getLabel())
-                .arg(getName())
-                .arg("false");
         }
     } catch (const Exception& ex) {
-        LOG_ERROR(dhcpsrv_logger, EVAL_RESULT)
+        LOG_ERROR(dhcpsrv_logger, DHCPSRV_EVAL_ERROR)
             .arg(pkt->getLabel())
             .arg(getName())
             .arg(ex.what());
-    } catch (...) {
-        LOG_ERROR(dhcpsrv_logger, EVAL_RESULT)
-            .arg(pkt->getLabel())
-            .arg(getName())
-            .arg("get exception?");
     }
 }
 
@@ -187,7 +177,7 @@ TemplateClientClassDef::test(PktPtr pkt, const ExpressionPtr& expr_ptr) {
     try {
         std::string subclass = evaluateString(*expr_ptr, *pkt);
         if (!subclass.empty()) {
-            LOG_INFO(dhcpsrv_logger, EVAL_RESULT)
+            LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_TEMPLATE_EVAL_RESULT)
                 .arg(pkt->getLabel())
                 .arg(getName())
                 .arg(subclass);
@@ -199,15 +189,10 @@ TemplateClientClassDef::test(PktPtr pkt, const ExpressionPtr& expr_ptr) {
             pkt->addSubClass(getName(), value);
         }
     } catch (const Exception& ex) {
-        LOG_ERROR(dhcpsrv_logger, EVAL_RESULT)
+        LOG_ERROR(dhcpsrv_logger, DHCPSRV_TEMPLATE_EVAL_ERROR)
             .arg(pkt->getLabel())
             .arg(getName())
             .arg(ex.what());
-    } catch (...) {
-        LOG_ERROR(dhcpsrv_logger, EVAL_RESULT)
-            .arg(pkt->getLabel())
-            .arg(getName())
-            .arg("get exception?");
     }
 }
 

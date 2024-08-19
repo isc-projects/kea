@@ -1,4 +1,4 @@
-// File created from config_messages.mes
+// File created from ../../../src/lib/config/config_messages.mes
 
 #ifndef CONFIG_MESSAGES_H
 #define CONFIG_MESSAGES_H

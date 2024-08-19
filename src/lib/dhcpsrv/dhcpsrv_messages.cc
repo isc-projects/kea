@@ -56,6 +56,8 @@ extern const isc::log::MessageID DHCPSRV_DHCP_DDNS_NCR_SENT = "DHCPSRV_DHCP_DDNS
 extern const isc::log::MessageID DHCPSRV_DHCP_DDNS_SENDER_STARTED = "DHCPSRV_DHCP_DDNS_SENDER_STARTED";
 extern const isc::log::MessageID DHCPSRV_DHCP_DDNS_SENDER_STOPPED = "DHCPSRV_DHCP_DDNS_SENDER_STOPPED";
 extern const isc::log::MessageID DHCPSRV_DHCP_DDNS_SUSPEND_UPDATES = "DHCPSRV_DHCP_DDNS_SUSPEND_UPDATES";
+extern const isc::log::MessageID DHCPSRV_EVAL_ERROR = "DHCPSRV_EVAL_ERROR";
+extern const isc::log::MessageID DHCPSRV_EVAL_RESULT = "DHCPSRV_EVAL_RESULT";
 extern const isc::log::MessageID DHCPSRV_HOOK_LEASE4_RECOVER_SKIP = "DHCPSRV_HOOK_LEASE4_RECOVER_SKIP";
 extern const isc::log::MessageID DHCPSRV_HOOK_LEASE4_RENEW_SKIP = "DHCPSRV_HOOK_LEASE4_RENEW_SKIP";
 extern const isc::log::MessageID DHCPSRV_HOOK_LEASE4_SELECT_SKIP = "DHCPSRV_HOOK_LEASE4_SELECT_SKIP";
@@ -258,6 +260,8 @@ extern const isc::log::MessageID DHCPSRV_SUBNET4_SELECT_NO_USABLE_ADDRESS = "DHC
 extern const isc::log::MessageID DHCPSRV_SUBNET6_SELECT_BY_ADDRESS_NO_MATCH = "DHCPSRV_SUBNET6_SELECT_BY_ADDRESS_NO_MATCH";
 extern const isc::log::MessageID DHCPSRV_SUBNET6_SELECT_BY_INTERFACE_ID_NO_MATCH = "DHCPSRV_SUBNET6_SELECT_BY_INTERFACE_ID_NO_MATCH";
 extern const isc::log::MessageID DHCPSRV_SUBNET6_SELECT_BY_INTERFACE_NO_MATCH = "DHCPSRV_SUBNET6_SELECT_BY_INTERFACE_NO_MATCH";
+extern const isc::log::MessageID DHCPSRV_TEMPLATE_EVAL_ERROR = "DHCPSRV_TEMPLATE_EVAL_ERROR";
+extern const isc::log::MessageID DHCPSRV_TEMPLATE_EVAL_RESULT = "DHCPSRV_TEMPLATE_EVAL_RESULT";
 extern const isc::log::MessageID DHCPSRV_TIMERMGR_CALLBACK_FAILED = "DHCPSRV_TIMERMGR_CALLBACK_FAILED";
 extern const isc::log::MessageID DHCPSRV_TIMERMGR_REGISTER_TIMER = "DHCPSRV_TIMERMGR_REGISTER_TIMER";
 extern const isc::log::MessageID DHCPSRV_TIMERMGR_RUN_TIMER_OPERATION = "DHCPSRV_TIMERMGR_RUN_TIMER_OPERATION";
@@ -322,6 +326,8 @@ const char* values[] = {
     "DHCPSRV_DHCP_DDNS_SENDER_STARTED", "NameChangeRequest sender has been started: %1",
     "DHCPSRV_DHCP_DDNS_SENDER_STOPPED", "NameChangeRequest sender has been stopped.",
     "DHCPSRV_DHCP_DDNS_SUSPEND_UPDATES", "DHCP_DDNS updates are being suspended.",
+    "DHCPSRV_EVAL_ERROR", "%1: Expression '%2' evaluated to %3",
+    "DHCPSRV_EVAL_RESULT", "%1: Expression '%2' evaluated to %3",
     "DHCPSRV_HOOK_LEASE4_RECOVER_SKIP", "DHCPv4 lease %1 was not recovered from the declined state because a callout set the skip status.",
     "DHCPSRV_HOOK_LEASE4_RENEW_SKIP", "DHCPv4 lease was not renewed because a callout set the skip flag.",
     "DHCPSRV_HOOK_LEASE4_SELECT_SKIP", "Lease4 creation was skipped, because of callout skip flag.",
@@ -524,6 +530,8 @@ const char* values[] = {
     "DHCPSRV_SUBNET6_SELECT_BY_ADDRESS_NO_MATCH", "No subnet matches address: %1",
     "DHCPSRV_SUBNET6_SELECT_BY_INTERFACE_ID_NO_MATCH", "No subnet matches interface id: %1",
     "DHCPSRV_SUBNET6_SELECT_BY_INTERFACE_NO_MATCH", "No subnet matches interface: %1",
+    "DHCPSRV_TEMPLATE_EVAL_ERROR", "%1: Expression '%2' evaluated to %3",
+    "DHCPSRV_TEMPLATE_EVAL_RESULT", "%1: Expression '%2' evaluated to %3",
     "DHCPSRV_TIMERMGR_CALLBACK_FAILED", "running handler for timer %1 caused exception: %2",
     "DHCPSRV_TIMERMGR_REGISTER_TIMER", "registering timer: %1, using interval: %2 ms",
     "DHCPSRV_TIMERMGR_RUN_TIMER_OPERATION", "running operation for timer: %1",

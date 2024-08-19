@@ -147,6 +147,8 @@ extern const isc::log::MessageID DHCP6_RELEASE_PD_EXPIRED = "DHCP6_RELEASE_PD_EX
 extern const isc::log::MessageID DHCP6_RELEASE_PD_FAIL = "DHCP6_RELEASE_PD_FAIL";
 extern const isc::log::MessageID DHCP6_RELEASE_PD_FAIL_WRONG_DUID = "DHCP6_RELEASE_PD_FAIL_WRONG_DUID";
 extern const isc::log::MessageID DHCP6_RELEASE_PD_FAIL_WRONG_IAID = "DHCP6_RELEASE_PD_FAIL_WRONG_IAID";
+extern const isc::log::MessageID DHCP6_REQUIRED_CLASS_EVAL_ERROR = "DHCP6_REQUIRED_CLASS_EVAL_ERROR";
+extern const isc::log::MessageID DHCP6_REQUIRED_CLASS_EVAL_RESULT = "DHCP6_REQUIRED_CLASS_EVAL_RESULT";
 extern const isc::log::MessageID DHCP6_REQUIRED_OPTIONS_CHECK_FAIL = "DHCP6_REQUIRED_OPTIONS_CHECK_FAIL";
 extern const isc::log::MessageID DHCP6_RESERVATIONS_LOOKUP_FIRST_ENABLED = "DHCP6_RESERVATIONS_LOOKUP_FIRST_ENABLED";
 extern const isc::log::MessageID DHCP6_RESPONSE_DATA = "DHCP6_RESPONSE_DATA";
@@ -312,6 +314,8 @@ const char* values[] = {
     "DHCP6_RELEASE_PD_FAIL", "%1: failed to release prefix %2/%3 for iaid=%4",
     "DHCP6_RELEASE_PD_FAIL_WRONG_DUID", "%1: client tried to release prefix %2/%3, but it belongs to another client (duid=%4)",
     "DHCP6_RELEASE_PD_FAIL_WRONG_IAID", "%1: client tried to release prefix %2/%3, but it used wrong IAID (expected %4, but got %5)",
+    "DHCP6_REQUIRED_CLASS_EVAL_ERROR", "%1: Expression '%2' evaluated to %3",
+    "DHCP6_REQUIRED_CLASS_EVAL_RESULT", "%1: Expression '%2' evaluated to %3",
     "DHCP6_REQUIRED_OPTIONS_CHECK_FAIL", "%1: %2 message received from %3 failed the following check: %4",
     "DHCP6_RESERVATIONS_LOOKUP_FIRST_ENABLED", "Multi-threading is enabled and host reservations lookup is always performed first.",
     "DHCP6_RESPONSE_DATA", "%1: responding with packet %2 (type %3), packet details: %4",

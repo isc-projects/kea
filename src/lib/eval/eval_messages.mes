@@ -369,9 +369,3 @@ option was found.
 Logged at debug log level 55.
 This debug message indicates that the expression has been evaluated
 and vendor option was not found.
-
-% EVAL_RESULT %1: Expression %2 evaluated to %3
-Logged at debug log level 50.
-This debug message indicates that the expression has been evaluated
-to said value. This message is mostly useful during debugging of the
-client classification expressions.
