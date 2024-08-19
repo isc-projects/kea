@@ -67,8 +67,11 @@ all: html mans text
 endif
 
 # build the list of message files
-mes-files.txt: mes_files.mk
-	@sed 's;mes_files .*)/;;' $< > $@
+mes_files.mk: mes-files.txt
+	@sed 's;^;mes_files += $$(top_srcdir)/;g' $< > $@
+
+mes-files.txt:
+	@find ../.. -type f -name '*.mes' | sort -V | sed 's#^../../##g' > $@
 
 # this rule is only used for development purposes and is not used in official
 # build process as kea-messages.rst is always generated via sphinx's conf.py

@@ -15,7 +15,7 @@
 # Invocation:
 # The code is invoked using the command line:
 #
-# system_messages.py [-o <output-file>] <files>
+# mes2doc.py [-o <output-file>] <files>
 #
 # If no output file is specified, output is written to stdout.
 # The produced format is ReStructuredText.
@@ -45,6 +45,9 @@ def read_input_files(files):
                 line = line.strip()
 
                 if not line or line.startswith('#'):
+                    pass
+
+                elif line.startswith('//'):
                     pass
 
                 elif line.startswith('$'):
@@ -83,7 +86,7 @@ Links to the most up-to-date version of this document (in PDF, HTML,
 and plain text formats), along with other useful information about
 Kea, can be found in ISC's `Knowledgebase <https://kea.readthedocs.io>`_.
 
-Please note that in the messages below, the percent sign ("%") followed by a number is
+Please note that in the messages below, the percent sign (``%``) followed by a number is
 used to indicate a placeholder for data that is provided by the Kea code during its operation.
 
 
@@ -99,14 +102,21 @@ used to indicate a placeholder for data that is provided by the Kea code during 
 
         if section != prev_section:
             prev_section = section
+            rst += '*' * len(section) + '\n'
             rst += section + '\n'
-            rst += '~' * len(section) + '\n\n'
+            rst += '*' * len(section) + '\n'
+            rst += '\n'
 
-        rst += '**' + msg_id + '**\n\n'
+        rst += msg_id + '\n'
+        rst += '=' * len(msg_id) + '\n'
+        rst += '\n'
 
-        rst += msg_text + '\n\n'
+        rst += '.. code-block::\n'
+        rst += '\n'
+        rst += '    ' + msg_text + '\n'
+        rst += '\n'
 
-        rst += ''.join(['  ' + line + '\n' for line in msg_descr])
+        rst += ''.join([line + '\n' for line in msg_descr])
         rst += '\n'
 
     return rst
