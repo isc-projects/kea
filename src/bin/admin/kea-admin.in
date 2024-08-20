@@ -373,9 +373,17 @@ mysql_upgrade() {
     for script in ${upgrade_scripts}
     do
         echo "Processing $script file..."
-        "${script}" -N -B --host="${db_host}" ${db_port_full_parameter-} \
-        --database="${db_name}" --user="${db_user}" \
-        --password="${db_password}" ${extra_arguments}
+        run_command \
+          "${script}" -N -B --host="${db_host}" ${db_port_full_parameter-} \
+          --database="${db_name}" --user="${db_user}" \
+          --password="${db_password}" ${extra_arguments}
+        if test "${EXIT_CODE}" != 0; then
+            if test -n "${OUTPUT}"; then
+                printf '%s\n' "${OUTPUT}"
+            fi
+            log_error "Could not execute script: ${script}"
+            exit "${EXIT_CODE}"
+        fi
     done
 
     version=$(checked_mysql_version)
@@ -422,9 +430,17 @@ pgsql_upgrade() {
     for script in ${upgrade_scripts}
     do
         echo "Processing $script file..."
-        "${script}" --set ON_ERROR_STOP=1 -A -t \
-        -h "${db_host}" ${db_port_full_parameter-} -q -U "${db_user}" \
-        -d "${db_name}" ${extra_arguments}
+        run_command \
+          "${script}" --set ON_ERROR_STOP=1 -A -t \
+          -h "${db_host}" ${db_port_full_parameter-} -q -U "${db_user}" \
+          -d "${db_name}" ${extra_arguments}
+        if test "${EXIT_CODE}" != 0; then
+            if test -n "${OUTPUT}"; then
+                printf '%s\n' "${OUTPUT}"
+            fi
+            log_error "Could not execute script: ${script}"
+            exit "${EXIT_CODE}"
+        fi
     done
 
     version=$(checked_pgsql_version)
