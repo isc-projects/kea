@@ -432,7 +432,7 @@ HttpConnection::acceptorCallback(const boost::system::error_code& ec) {
         }
 
         if (use_external_) {
-            auto& iface_mgr = IfaceMgr::instance ();
+            auto& iface_mgr = IfaceMgr::instance();
             if (tcp_socket_) {
                 iface_mgr.addExternalSocket(tcp_socket_->getNative(), 0);
             }
