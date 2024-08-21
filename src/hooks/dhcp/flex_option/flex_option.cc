@@ -60,7 +60,7 @@ parseAction(ConstElementPtr option,
         try {
             EvalContext eval_ctx(universe);
             eval_ctx.parseString(expr_text, parser_type);
-            ExpressionPtr expr(new Expression(eval_ctx.expression));
+            ExpressionPtr expr(new Expression(eval_ctx.expression_));
             opt_cfg->setExpr(expr);
         } catch (const std::exception& ex) {
             isc_throw(BadValue, "can't parse " << name << " expression ["

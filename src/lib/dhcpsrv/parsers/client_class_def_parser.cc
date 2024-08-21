@@ -60,7 +60,7 @@ ExpressionParser::parse(ExpressionPtr& expression,
                              check_defined);
         eval_ctx.parseString(value, parser_type);
         expression.reset(new Expression());
-        *expression = eval_ctx.expression;
+        *expression = eval_ctx.expression_;
     } catch (const std::exception& ex) {
         // Append position if there is a failure.
         isc_throw(DhcpConfigError,

@@ -137,6 +137,7 @@ public:
     ///
     /// @param pkt (ignored)
     /// @param values (represented string will be pushed here)
+    /// @return 0 which means evaluate next token if any.
     virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 
 protected:
@@ -162,6 +163,7 @@ public:
     ///
     /// @param pkt (ignored)
     /// @param values (represented string will be pushed here)
+    /// @return 0 which means evaluate next token if any.
     virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 
 protected:
@@ -182,6 +184,7 @@ public:
     ///
     /// @param pkt (ignored)
     /// @param values (represented string will be pushed here)
+    /// @return 0 which means evaluate next token if any.
     virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 };
 
@@ -199,6 +202,7 @@ public:
     ///
     /// @param pkt (ignored)
     /// @param values (represented string will be pushed here)
+    /// @return 0 which means evaluate next token if any.
     virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 };
 
@@ -247,6 +251,7 @@ public:
     ///
     /// @param pkt (ignored)
     /// @param values (represented IP address will be pushed here)
+    /// @return 0 which means evaluate next token if any.
     virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 
 protected:
@@ -268,6 +273,7 @@ public:
     ///
     /// @param pkt (ignored)
     /// @param values (represented IP address as a string will be pushed here)
+    /// @return 0 which means evaluate next token if any.
     virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 };
 
@@ -286,6 +292,7 @@ public:
     /// @param pkt (ignored)
     /// @param values (represented 8 bit integer as a string will be pushed
     /// here)
+    /// @return 0 which means evaluate next token if any.
     virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 };
 
@@ -304,6 +311,7 @@ public:
     /// @param pkt (ignored)
     /// @param values (represented 16 bit integer as a string will be pushed
     /// here)
+    /// @return 0 which means evaluate next token if any.
     virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 };
 
@@ -322,6 +330,7 @@ public:
     /// @param pkt (ignored)
     /// @param values (represented 32 bit integer as a string will be pushed
     /// here)
+    /// @return 0 which means evaluate next token if any.
     virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 };
 
@@ -340,6 +349,7 @@ public:
     /// @param pkt (ignored)
     /// @param values (represented 8 bit unsigned integer as a string will be
     /// pushed here)
+    /// @return 0 which means evaluate next token if any.
     virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 };
 
@@ -358,6 +368,7 @@ public:
     /// @param pkt (ignored)
     /// @param values (represented 16 bit unsigned integer as a string will be
     /// pushed here)
+    /// @return 0 which means evaluate next token if any.
     virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 };
 
@@ -376,6 +387,7 @@ public:
     /// @param pkt (ignored)
     /// @param values (represented 32 bit unsigned integer as a string will be
     /// pushed here)
+    /// @return 0 which means evaluate next token if any.
     virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 };
 
@@ -422,6 +434,7 @@ public:
     ///
     /// @param pkt specified option will be extracted from this packet (if present)
     /// @param values value of the option will be pushed here (or "")
+    /// @return 0 which means evaluate next token if any.
     virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 
     /// @brief Returns option-code
@@ -574,6 +587,7 @@ public:
     ///
     /// @param pkt - metadata will be extracted from here
     /// @param values - stack of values (1 result will be pushed)
+    /// @return 0 which means evaluate next token if any.
     virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 
     /// @brief Returns metadata type
@@ -631,6 +645,7 @@ public:
     ///
     /// @param pkt - fields will be extracted from here
     /// @param values - stack of values (1 result will be pushed)
+    /// @return 0 which means evaluate next token if any.
     virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 
     /// @brief Returns field type
@@ -677,6 +692,7 @@ public:
     ///
     /// @param pkt - packet from which to extract the fields
     /// @param values - stack of values, 1 result will be pushed
+    /// @return 0 which means evaluate next token if any.
     virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 
     /// @brief Returns field type
@@ -731,6 +747,7 @@ public:
     ///
     /// @param pkt fields will be extracted from here
     /// @param values - stack of values (1 result will be pushed)
+    /// @return 0 which means evaluate next token if any.
     virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 
     /// @brief Returns nest-level
@@ -781,6 +798,7 @@ public:
     /// @param pkt (unused)
     /// @param values - stack of values (2 arguments will be popped, 1 result
     ///        will be pushed)
+    /// @return 0 which means evaluate next token if any.
     virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 };
 
@@ -838,6 +856,7 @@ public:
     /// @param pkt (unused)
     /// @param values - stack of values (3 arguments will be popped, 1 result
     ///        will be pushed)
+    /// @return 0 which means evaluate next token if any.
     virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 };
 
@@ -882,6 +901,7 @@ public:
     /// @param pkt (unused)
     /// @param values - stack of values (3 arguments will be popped, 1 result
     ///        will be pushed)
+    /// @return 0 which means evaluate next token if any.
     virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 };
 
@@ -906,6 +926,7 @@ public:
     /// @param pkt (unused)
     /// @param values - stack of values (2 arguments will be popped, 1 result
     ///        will be pushed)
+    /// @return 0 which means evaluate next token if any.
     virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 };
 
@@ -937,6 +958,7 @@ public:
     ///
     /// @param pkt (unused)
     /// @param values - stack of values (two items are removed)
+    /// @return 0 which means evaluate next token if any.
     virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 };
 
@@ -976,6 +998,7 @@ public:
     /// @param pkt (unused)
     /// @param values - stack of values (2 arguments will be popped, 1 result
     ///        will be pushed)
+    /// @return 0 which means evaluate next token if any.
     virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 };
 
@@ -1001,6 +1024,7 @@ public:
     ///
     /// @param pkt (unused)
     /// @param values - stack of values (logical top value negated)
+    /// @return 0 which means evaluate next token if any.
     virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 };
 
@@ -1028,6 +1052,7 @@ public:
     /// @param pkt (unused)
     /// @param values - stack of values (2 arguments will be popped, 1 result
     ///        will be pushed)
+    /// @return 0 which means evaluate next token if any.
     virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 };
 
@@ -1055,6 +1080,7 @@ public:
     /// @param pkt (unused)
     /// @param values - stack of values (2 arguments will be popped, 1 result
     ///        will be pushed)
+    /// @return 0 which means evaluate next token if any.
     virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 };
 
@@ -1075,6 +1101,7 @@ public:
     ///
     /// @param pkt the class name will be check from this packet's client classes
     /// @param values true (if found) or false (if not found) will be pushed here
+    /// @return 0 which means evaluate next token if any.
     virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 
     /// @brief Returns client class name
@@ -1174,6 +1201,7 @@ public:
     ///
     /// @param pkt - vendor options will be searched for here.
     /// @param values - the evaluated value will be pushed here.
+    /// @return 0 which means evaluate next token if any.
     virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 
 protected:
@@ -1270,6 +1298,7 @@ protected:
     ///
     /// @param pkt - vendor options will be searched for here.
     /// @param values - the evaluated value will be pushed here.
+    /// @return 0 which means evaluate next token if any.
     virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 
     /// @brief Data chunk index.
@@ -1321,6 +1350,7 @@ public:
     ///
     /// @param pkt specified parent option will be extracted from this packet
     /// @param values value of the sub-option will be pushed here (or "")
+    /// @return 0 which means evaluate next token if any.
     virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 
     /// @brief Returns sub-option-code
@@ -1363,6 +1393,7 @@ public:
     /// @param pkt (unused)
     /// @param values - stack of values (1 popped, 1 pushed)
     /// @throw EvalBadStack if there is no value on the stack
+    /// @return 0 which means evaluate next token if any.
     virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 
     /// @brief Returns regular expression.
@@ -1406,6 +1437,7 @@ public:
     ///
     /// @param pkt (unused)
     /// @param values - stack of values (unused)
+    /// @return 0 which means evaluate next token if any.
     virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 
 protected:
@@ -1435,6 +1467,7 @@ public:
     ///
     /// @param pkt (unused)
     /// @param values - stack of values (unused)
+    /// @return next label.
     virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 
 protected:
@@ -1461,6 +1494,7 @@ public:
     /// @throw EvalBadStack if there are less than 1 value on stack
     /// @throw EvalTypeError if the top value on the stack is not either
     ///        "true" or "false"
+    /// @return next label or 0 when means evaluate next token if any.
     virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 };
 
@@ -1484,6 +1518,7 @@ public:
     /// @throw EvalBadStack if there are less than 1 value on stack
     /// @throw EvalTypeError if the top value on the stack is not either
     ///        "true" or "false"
+    /// @return next label or 0 when means evaluate next token if any.
     virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 };
 
@@ -1509,6 +1544,7 @@ public:
     /// @throw EvalBadStack if there are less than 1 value on stack
     /// @throw EvalTypeError if the top value on the stack is not either
     ///        "true" or "false"
+    /// @return next label or 0 when means evaluate next token if any.
     virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 };
 
