@@ -545,7 +545,7 @@ public:
         ASSERT_TRUE(client->isConnectionAlive());
 
         // Run IO service for 1000ms. The idle time is set to 500ms, so
-        // the connection should be closed by the server while we  wait here.
+        // the connection should be closed by the server while we wait here.
         runIOService(1000);
 
         // Make sure the connection has been closed.

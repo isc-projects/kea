@@ -50,6 +50,7 @@ libhttp_unittests_SOURCES += http_client_unittests.cc
 libhttp_unittests_SOURCES += http_server_test.h
 libhttp_unittests_SOURCES += http_server_unittests.cc
 if HAVE_OPENSSL
+libhttp_unittests_SOURCES += tls_response_creator_test.h
 libhttp_unittests_SOURCES += tls_server_unittests.cc
 libhttp_unittests_SOURCES += tls_client_unittests.cc
 endif

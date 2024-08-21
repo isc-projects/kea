@@ -78,7 +78,6 @@ TEST_F(HttpsListenerTest, listen) {
     testListen();
 }
 
-
 // This test verifies that persistent HTTP connection can be established when
 // "Connection: Keep-Alive" header value is specified.
 TEST_F(HttpsListenerTest, keepAlive) {

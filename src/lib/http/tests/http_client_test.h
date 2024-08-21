@@ -859,13 +859,13 @@ public:
                     io_service_->stop();
                 }
 
-                // We should have 1 connect.
+                // We should have 2 connects.
                 EXPECT_EQ(2, monitor.connect_cnt_);
                 // We should have 2 handshakes when TLS is enabled.
                 if (client_context_) {
                     EXPECT_EQ(2, monitor.handshake_cnt_);
                 }
-                // We should have 0 closes
+                // We should have 1 close.
                 EXPECT_EQ(1, monitor.close_cnt_);
                 // We should have a valid fd.
                 ASSERT_GT(monitor.registered_fd_, -1);
