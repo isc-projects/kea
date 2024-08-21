@@ -40,7 +40,7 @@ Here is a summary of the steps in processing a response:
 
 .. note::
 
-    Since Kea 1.7.x the RBAC is no longer limited to teh Control Agent:
+    Since Kea 2.7.2 the RBAC is no longer limited to the Control Agent:
     it can be used by any other server supporting HTTP/HTTPS control
     sockets e.g. DHCPv4, DHCPv6 and DDNS servers.
 
