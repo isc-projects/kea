@@ -1,3 +1,9 @@
+2275.	[func]		andrei
+	When running with High-Availibility (HA) enabled, the status-get
+	command now includes in its response the system time for each HA
+	node and the clock skew in seconds between active peers.
+	(Gitlab #3513)
+
 2274.	[doc, func, build]		andrei
 	The events that logged EVAL_RESULT now log a different message
 	for each triggering event. As a result, the message was split
@@ -34,6 +40,7 @@
 	mysql db-upgrade, pgsql db-upgrade, pgsql lease-dump.
 	pgsql db-upgrade now properly reports an upgrade failure instead
 	of attempting to upgrade to subsequent schema versions.
+	(Gitlab #2882)
 
 2269.	[func]		tmark
 	Extended kea-dhcp4 and kea-dhcp6 lenient option parsing
