@@ -2106,21 +2106,24 @@ the HA status of two ``load-balancing`` servers:
                        "local": {
                            "role": "primary",
                            "scopes": [ "server1" ],
+                           "server-name": "server1",
                            "state": "load-balancing",
-                           "server-name": "server1"
+                           "system-time": "2024-01-01 12:00:00"
                        },
                        "remote": {
                            "age": 10,
-                           "in-touch": true,
-                           "role": "secondary",
-                           "last-scopes": [ "server2" ],
-                           "last-state": "load-balancing",
+                           "analyzed-packets": 8,
+                           "clock-skew": 0,
                            "communication-interrupted": true,
                            "connecting-clients": 2,
+                           "in-touch": true,
+                           "last-scopes": [ "server2" ],
+                           "last-state": "load-balancing",
+                           "role": "secondary",
+                           "server-name": "server2",
+                           "system-time": "2024-01-01 12:00:00",
                            "unacked-clients": 1,
-                           "unacked-clients-left": 2,
-                           "analyzed-packets": 8,
-                           "server-name": "server2"
+                           "unacked-clients-left": 2
                        }
                    }
                }
@@ -2166,6 +2169,11 @@ to be in the ``communication-interrupted`` state. At this point, the local
 server may start monitoring the DHCP traffic directed to the partner to see if
 the partner is responding to this traffic. More about the failover procedure can
 be found in :ref:`ha-load-balancing-config`.
+
+The ``system-time`` parameters hold the UTC time in ``%Y-%m-%d %H:%M:%S`` format
+for each active node: local, and remote, respectively. The ``clock-skew``
+parameter is available in the ``remote`` map and holds the difference in seconds
+between the two times.
 
 The ``connecting-clients``, ``unacked-clients``, ``unacked-clients-left``, and
 ``analyzed-packets`` parameters were introduced along with the

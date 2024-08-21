@@ -535,12 +535,15 @@ CommunicationState::logFormatClockSkewInternal() const {
 
     // Note HttpTime resolution is only to seconds, so we use fractional
     // precision of zero when logging.
-    os << "my time: " << util::ptimeToText(my_time_at_skew_, 0)
-       << ", partner's time: " << util::ptimeToText(partner_time_at_skew_, 0)
+    os << "my time: " << ptimeToText(my_time_at_skew_, 0)
+       << ", partner's time: " << ptimeToText(partner_time_at_skew_, 0)
        << ", partner's clock is ";
 
-    // If negative clock skew, the partner's time is behind our time.
-    if (clock_skew_.is_negative()) {
+    if (clock_skew_.total_seconds() == 0) {
+        // Most common case.
+        os << "synchroninzed";
+    } else if (clock_skew_.is_negative()) {
+        // Partner's time is behind our time.
         os << clock_skew_.invert_sign().total_seconds() << "s behind";
     } else {
         // Partner's time is ahead of ours.
@@ -584,6 +587,8 @@ CommunicationState::getReport() const {
     }
     report->set("unacked-clients-left", Element::create(unacked_clients_left));
     report->set("analyzed-packets", Element::create(static_cast<long long>(getAnalyzedMessagesCount())));
+    report->set("system-time", Element::create(ptimeToText(getPartnerTimeAtSkew(), 0)));
+    report->set("clock-skew", Element::create(clock_skew_.total_seconds()));
 
     return (report);
 }
@@ -649,6 +654,24 @@ void
 CommunicationState::setPartnerUnsentUpdateCountInternal(uint64_t unsent_update_count) {
     partner_unsent_update_count_.first = partner_unsent_update_count_.second;
     partner_unsent_update_count_.second = unsent_update_count;
+}
+
+boost::posix_time::ptime
+CommunicationState::getMyTimeAtSkew() const {
+    if (my_time_at_skew_.is_not_a_date_time()) {
+        // Return current time.
+        return boost::posix_time::microsec_clock::universal_time();
+    }
+    return my_time_at_skew_;
+}
+
+boost::posix_time::ptime
+CommunicationState::getPartnerTimeAtSkew() const {
+    if (partner_time_at_skew_.is_not_a_date_time()) {
+        // Return current time.
+        return boost::posix_time::microsec_clock::universal_time();
+    }
+    return partner_time_at_skew_;
 }
 
 CommunicationState4::CommunicationState4(const IOServicePtr& io_service,

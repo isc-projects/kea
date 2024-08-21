@@ -698,6 +698,23 @@ private:
     /// the partner.
     void setPartnerUnsentUpdateCountInternal(uint64_t unsent_update_count);
 
+public:
+    /// @brief Retrieves the time of the local node when skew was last calculated.
+    ///
+    /// Used in reporting to the user, which is why being lenient with corner cases is important.
+    /// That is why if the time was not initialized yet, it is approximated to the current time.
+    ///
+    /// @return my time at skew
+    boost::posix_time::ptime getMyTimeAtSkew() const;
+
+    /// @brief Retrieves the time of the partner node when skew was last calculated.
+    ///
+    /// Used in reporting to the user, which is why being lenient with corner cases is important.
+    /// That is why if the time was not initialized yet, it is approximated to the current time.
+    ///
+    /// @return partner's time at skew
+    boost::posix_time::ptime getPartnerTimeAtSkew() const;
+
 protected:
     /// @brief Pointer to the common IO service instance.
     asiolink::IOServicePtr io_service_;

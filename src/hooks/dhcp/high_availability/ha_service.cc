@@ -22,6 +22,7 @@
 #include <http/date_time.h>
 #include <http/response_json.h>
 #include <http/post_request_json.h>
+#include <util/boost_time_utils.h>
 #include <util/multi_threading_mgr.h>
 #include <util/stopwatch.h>
 #include <boost/pointer_cast.hpp>
@@ -1693,6 +1694,7 @@ HAService::processStatusGet() const {
     }
     local->set("scopes", list);
     local->set("server-name", Element::create(config_->getThisServerName()));
+    local->set("system-time", Element::create(ptimeToText(communication_state_->getMyTimeAtSkew(), 0)));
     ha_servers->set("local", local);
 
     // Do not include remote server information if this is a backup server or
@@ -3283,7 +3285,7 @@ HAService::clientCloseHandler(int tcp_native_fd) {
     if (tcp_native_fd >= 0) {
         IfaceMgr::instance().deleteExternalSocket(tcp_native_fd);
     }
-};
+}
 
 size_t
 HAService::pendingRequestSize() {
