@@ -845,7 +845,7 @@ namespace isc { namespace eval {
 #line 155 "parser.yy"
                 {
                     TokenPtr neg(new TokenNot());
-                    ctx.expression.push_back(neg);
+                    ctx.expression_.push_back(neg);
                 }
 #line 851 "parser.cc"
     break;
@@ -853,10 +853,10 @@ namespace isc { namespace eval {
   case 7: // $@1: %empty
 #line 160 "parser.yy"
                 {
-                    unsigned target = ++ctx.label;
-                    ctx.labels.push_back(target);
+                    unsigned target = ++ctx.label_;
+                    ctx.labels_.push_back(target);
                     TokenPtr pobf(new TokenPopOrBranchFalse(target));
-                    ctx.expression.push_back(pobf);
+                    ctx.expression_.push_back(pobf);
                 }
 #line 862 "parser.cc"
     break;
@@ -864,10 +864,10 @@ namespace isc { namespace eval {
   case 8: // bool_expr: bool_expr "and" $@1 bool_expr
 #line 165 "parser.yy"
                             {
-                    unsigned target = ctx.labels.back();
-                    ctx.labels.pop_back();
+                    unsigned target = ctx.labels_.back();
+                    ctx.labels_.pop_back();
                     TokenPtr lab(new TokenLabel(target));
-                    ctx.expression.push_back(lab);
+                    ctx.expression_.push_back(lab);
                 }
 #line 873 "parser.cc"
     break;
@@ -876,7 +876,7 @@ namespace isc { namespace eval {
 #line 172 "parser.yy"
                 {
                     TokenPtr neg(new TokenAnd());
-                    ctx.expression.push_back(neg);
+                    ctx.expression_.push_back(neg);
                 }
 #line 882 "parser.cc"
     break;
@@ -884,10 +884,10 @@ namespace isc { namespace eval {
   case 10: // $@2: %empty
 #line 177 "parser.yy"
                 {
-                    unsigned target = ++ctx.label;
-                    ctx.labels.push_back(target);
+                    unsigned target = ++ctx.label_;
+                    ctx.labels_.push_back(target);
                     TokenPtr pobt(new TokenPopOrBranchTrue(target));
-                    ctx.expression.push_back(pobt);
+                    ctx.expression_.push_back(pobt);
                 }
 #line 893 "parser.cc"
     break;
@@ -895,10 +895,10 @@ namespace isc { namespace eval {
   case 11: // bool_expr: bool_expr "or" $@2 bool_expr
 #line 182 "parser.yy"
                             {
-                    unsigned target = ctx.labels.back();
-                    ctx.labels.pop_back();
+                    unsigned target = ctx.labels_.back();
+                    ctx.labels_.pop_back();
                     TokenPtr lab(new TokenLabel(target));
-                    ctx.expression.push_back(lab);
+                    ctx.expression_.push_back(lab);
                 }
 #line 904 "parser.cc"
     break;
@@ -907,7 +907,7 @@ namespace isc { namespace eval {
 #line 189 "parser.yy"
                 {
                     TokenPtr neg(new TokenOr());
-                    ctx.expression.push_back(neg);
+                    ctx.expression_.push_back(neg);
                 }
 #line 913 "parser.cc"
     break;
@@ -916,7 +916,7 @@ namespace isc { namespace eval {
 #line 194 "parser.yy"
                 {
                     TokenPtr eq(new TokenEqual());
-                    ctx.expression.push_back(eq);
+                    ctx.expression_.push_back(eq);
                 }
 #line 922 "parser.cc"
     break;
@@ -925,7 +925,7 @@ namespace isc { namespace eval {
 #line 199 "parser.yy"
                 {
                     TokenPtr opt(new TokenOption(yystack_[3].value.as < uint16_t > (), TokenOption::EXISTS));
-                    ctx.expression.push_back(opt);
+                    ctx.expression_.push_back(opt);
                 }
 #line 931 "parser.cc"
     break;
@@ -934,7 +934,7 @@ namespace isc { namespace eval {
 #line 204 "parser.yy"
                 {
                     TokenPtr opt(new TokenSubOption(yystack_[8].value.as < uint16_t > (), yystack_[3].value.as < uint16_t > (), TokenOption::EXISTS));
-                    ctx.expression.push_back(opt);
+                    ctx.expression_.push_back(opt);
                 }
 #line 940 "parser.cc"
     break;
@@ -946,7 +946,7 @@ namespace isc { namespace eval {
                    case Option::V4:
                    {
                        TokenPtr opt(new TokenRelay4Option(yystack_[3].value.as < uint16_t > (), TokenOption::EXISTS));
-                       ctx.expression.push_back(opt);
+                       ctx.expression_.push_back(opt);
                        break;
                    }
                    case Option::V6:
@@ -970,7 +970,7 @@ namespace isc { namespace eval {
                     case Option::V6:
                     {
                         TokenPtr opt(new TokenRelay6Option(yystack_[8].value.as < int8_t > (), yystack_[3].value.as < uint16_t > (), TokenOption::EXISTS));
-                        ctx.expression.push_back(opt);
+                        ctx.expression_.push_back(opt);
                         break;
                     }
                     case Option::V4:
@@ -989,7 +989,7 @@ namespace isc { namespace eval {
                   // This token will find option 124 (DHCPv4) or 16 (DHCPv6),
                   // and will check if enterprise-id equals specified value.
                   TokenPtr exist(new TokenVendorClass(ctx.getUniverse(), yystack_[3].value.as < uint32_t > (), TokenOption::EXISTS));
-                  ctx.expression.push_back(exist);
+                  ctx.expression_.push_back(exist);
               }
 #line 995 "parser.cc"
     break;
@@ -1002,7 +1002,7 @@ namespace isc { namespace eval {
                   // This token will find option 125 (DHCPv4) or 17 (DHCPv6),
                   // and will check if enterprise-id equals specified value.
                   TokenPtr exist(new TokenVendor(ctx.getUniverse(), yystack_[3].value.as < uint32_t > (), TokenOption::EXISTS));
-                  ctx.expression.push_back(exist);
+                  ctx.expression_.push_back(exist);
               }
 #line 1008 "parser.cc"
     break;
@@ -1016,7 +1016,7 @@ namespace isc { namespace eval {
                   // exists, has specified enterprise-id and if has
                   // specified suboption.
                   TokenPtr exist(new TokenVendor(ctx.getUniverse(), yystack_[8].value.as < uint32_t > (), TokenOption::EXISTS, yystack_[3].value.as < uint16_t > ()));
-                  ctx.expression.push_back(exist);
+                  ctx.expression_.push_back(exist);
                }
 #line 1022 "parser.cc"
     break;
@@ -1035,7 +1035,7 @@ namespace isc { namespace eval {
                       error(yystack_[1].location, "Not defined client class '" + cc + "'");
                   }
                   TokenPtr member(new TokenMember(cc));
-                  ctx.expression.push_back(member);
+                  ctx.expression_.push_back(member);
               }
 #line 1041 "parser.cc"
     break;
@@ -1048,7 +1048,7 @@ namespace isc { namespace eval {
                   // This token will check if the regular expression matches
                   // the string expression.
                   TokenPtr match(new TokenMatch(yystack_[3].value.as < std::string > ()));
-                  ctx.expression.push_back(match);
+                  ctx.expression_.push_back(match);
               }
 #line 1054 "parser.cc"
     break;
@@ -1057,7 +1057,7 @@ namespace isc { namespace eval {
 #line 297 "parser.yy"
                   {
                       TokenPtr str(new TokenString(yystack_[0].value.as < std::string > ()));
-                      ctx.expression.push_back(str);
+                      ctx.expression_.push_back(str);
                   }
 #line 1063 "parser.cc"
     break;
@@ -1066,7 +1066,7 @@ namespace isc { namespace eval {
 #line 302 "parser.yy"
                   {
                       TokenPtr hex(new TokenHexString(yystack_[0].value.as < std::string > ()));
-                      ctx.expression.push_back(hex);
+                      ctx.expression_.push_back(hex);
                   }
 #line 1072 "parser.cc"
     break;
@@ -1075,7 +1075,7 @@ namespace isc { namespace eval {
 #line 307 "parser.yy"
                   {
                       TokenPtr ip(new TokenIpAddress(yystack_[0].value.as < std::string > ()));
-                      ctx.expression.push_back(ip);
+                      ctx.expression_.push_back(ip);
                   }
 #line 1081 "parser.cc"
     break;
@@ -1084,7 +1084,7 @@ namespace isc { namespace eval {
 #line 312 "parser.yy"
                   {
                       TokenPtr opt(new TokenOption(yystack_[3].value.as < uint16_t > (), yystack_[0].value.as < TokenOption::RepresentationType > ()));
-                      ctx.expression.push_back(opt);
+                      ctx.expression_.push_back(opt);
                   }
 #line 1090 "parser.cc"
     break;
@@ -1093,7 +1093,7 @@ namespace isc { namespace eval {
 #line 317 "parser.yy"
                   {
                       TokenPtr opt(new TokenSubOption(yystack_[8].value.as < uint16_t > (), yystack_[3].value.as < uint16_t > (), yystack_[0].value.as < TokenOption::RepresentationType > ()));
-                      ctx.expression.push_back(opt);
+                      ctx.expression_.push_back(opt);
                   }
 #line 1099 "parser.cc"
     break;
@@ -1105,7 +1105,7 @@ namespace isc { namespace eval {
                      case Option::V4:
                      {
                          TokenPtr opt(new TokenRelay4Option(yystack_[3].value.as < uint16_t > (), yystack_[0].value.as < TokenOption::RepresentationType > ()));
-                         ctx.expression.push_back(opt);
+                         ctx.expression_.push_back(opt);
                          break;
                      }
                      case Option::V6:
@@ -1129,7 +1129,7 @@ namespace isc { namespace eval {
                      case Option::V6:
                      {
                          TokenPtr opt(new TokenRelay6Option(yystack_[8].value.as < int8_t > (), yystack_[3].value.as < uint16_t > (), yystack_[0].value.as < TokenOption::RepresentationType > ()));
-                         ctx.expression.push_back(opt);
+                         ctx.expression_.push_back(opt);
                          break;
                      }
                      case Option::V4:
@@ -1144,7 +1144,7 @@ namespace isc { namespace eval {
 #line 358 "parser.yy"
                   {
                       TokenPtr pkt_metadata(new TokenPkt(yystack_[0].value.as < TokenPkt::MetadataType > ()));
-                      ctx.expression.push_back(pkt_metadata);
+                      ctx.expression_.push_back(pkt_metadata);
                   }
 #line 1150 "parser.cc"
     break;
@@ -1156,7 +1156,7 @@ namespace isc { namespace eval {
                      case Option::V4:
                      {
                          TokenPtr pkt4_field(new TokenPkt4(yystack_[0].value.as < TokenPkt4::FieldType > ()));
-                         ctx.expression.push_back(pkt4_field);
+                         ctx.expression_.push_back(pkt4_field);
                          break;
                      }
                      case Option::V6:
@@ -1174,7 +1174,7 @@ namespace isc { namespace eval {
                      case Option::V6:
                      {
                          TokenPtr pkt6_field(new TokenPkt6(yystack_[0].value.as < TokenPkt6::FieldType > ()));
-                         ctx.expression.push_back(pkt6_field);
+                         ctx.expression_.push_back(pkt6_field);
                          break;
                      }
                      case Option::V4:
@@ -1192,7 +1192,7 @@ namespace isc { namespace eval {
                      case Option::V6:
                      {
                          TokenPtr relay6field(new TokenRelay6Field(yystack_[3].value.as < int8_t > (), yystack_[0].value.as < TokenRelay6Field::FieldType > ()));
-                         ctx.expression.push_back(relay6field);
+                         ctx.expression_.push_back(relay6field);
                          break;
                      }
                      case Option::V4:
@@ -1207,7 +1207,7 @@ namespace isc { namespace eval {
 #line 406 "parser.yy"
                   {
                       TokenPtr sub(new TokenSubstring());
-                      ctx.expression.push_back(sub);
+                      ctx.expression_.push_back(sub);
                   }
 #line 1213 "parser.cc"
     break;
@@ -1216,7 +1216,7 @@ namespace isc { namespace eval {
 #line 411 "parser.yy"
                   {
                       TokenPtr split(new TokenSplit());
-                      ctx.expression.push_back(split);
+                      ctx.expression_.push_back(split);
                   }
 #line 1222 "parser.cc"
     break;
@@ -1225,7 +1225,7 @@ namespace isc { namespace eval {
 #line 416 "parser.yy"
                   {
                       TokenPtr conc(new TokenConcat());
-                      ctx.expression.push_back(conc);
+                      ctx.expression_.push_back(conc);
                   }
 #line 1231 "parser.cc"
     break;
@@ -1234,7 +1234,7 @@ namespace isc { namespace eval {
 #line 421 "parser.yy"
                   {
                       TokenPtr conc(new TokenConcat());
-                      ctx.expression.push_back(conc);
+                      ctx.expression_.push_back(conc);
                   }
 #line 1240 "parser.cc"
     break;
@@ -1243,7 +1243,7 @@ namespace isc { namespace eval {
 #line 426 "parser.yy"
                   {
                       TokenPtr lcase(new TokenLowerCase());
-                      ctx.expression.push_back(lcase);
+                      ctx.expression_.push_back(lcase);
                   }
 #line 1249 "parser.cc"
     break;
@@ -1252,7 +1252,7 @@ namespace isc { namespace eval {
 #line 431 "parser.yy"
                   {
                       TokenPtr ucase(new TokenUpperCase());
-                      ctx.expression.push_back(ucase);
+                      ctx.expression_.push_back(ucase);
                   }
 #line 1258 "parser.cc"
     break;
@@ -1260,10 +1260,10 @@ namespace isc { namespace eval {
   case 40: // $@3: %empty
 #line 436 "parser.yy"
                   {
-                      unsigned target = ++ctx.label;
-                      ctx.labels.push_back(target);
+                      unsigned target = ++ctx.label_;
+                      ctx.labels_.push_back(target);
                       TokenPtr pabf(new TokenPopAndBranchFalse(target));
-                      ctx.expression.push_back(pabf);
+                      ctx.expression_.push_back(pabf);
                   }
 #line 1269 "parser.cc"
     break;
@@ -1271,14 +1271,14 @@ namespace isc { namespace eval {
   case 41: // $@4: %empty
 #line 441 "parser.yy"
                                     {
-                      unsigned target = ctx.labels.back();
-                      ctx.labels.pop_back();
-                      unsigned target2 = ++ctx.label;
-                      ctx.labels.push_back(target2);
+                      unsigned target = ctx.labels_.back();
+                      ctx.labels_.pop_back();
+                      unsigned target2 = ++ctx.label_;
+                      ctx.labels_.push_back(target2);
                       TokenPtr branch(new TokenBranch(target2));
-                      ctx.expression.push_back(branch);
+                      ctx.expression_.push_back(branch);
                       TokenPtr lab(new TokenLabel(target));
-                      ctx.expression.push_back(lab);
+                      ctx.expression_.push_back(lab);
                   }
 #line 1284 "parser.cc"
     break;
@@ -1286,10 +1286,10 @@ namespace isc { namespace eval {
   case 42: // string_expr: "ifelse" "(" bool_expr "," $@3 string_expr "," $@4 string_expr ")"
 #line 450 "parser.yy"
                                     {
-                      unsigned target = ctx.labels.back();
-                      ctx.labels.pop_back();
+                      unsigned target = ctx.labels_.back();
+                      ctx.labels_.pop_back();
                       TokenPtr lab(new TokenLabel(target));
-                      ctx.expression.push_back(lab);
+                      ctx.expression_.push_back(lab);
                   }
 #line 1295 "parser.cc"
     break;
@@ -1298,7 +1298,7 @@ namespace isc { namespace eval {
 #line 457 "parser.yy"
                   {
                       TokenPtr cond(new TokenIfElse());
-                      ctx.expression.push_back(cond);
+                      ctx.expression_.push_back(cond);
                   }
 #line 1304 "parser.cc"
     break;
@@ -1307,7 +1307,7 @@ namespace isc { namespace eval {
 #line 462 "parser.yy"
                   {
                       TokenPtr tohex(new TokenToHexString());
-                      ctx.expression.push_back(tohex);
+                      ctx.expression_.push_back(tohex);
                   }
 #line 1313 "parser.cc"
     break;
@@ -1316,7 +1316,7 @@ namespace isc { namespace eval {
 #line 467 "parser.yy"
                   {
                       TokenPtr addrtotext(new TokenIpAddressToText());
-                      ctx.expression.push_back(addrtotext);
+                      ctx.expression_.push_back(addrtotext);
                   }
 #line 1322 "parser.cc"
     break;
@@ -1325,7 +1325,7 @@ namespace isc { namespace eval {
 #line 472 "parser.yy"
                   {
                       TokenPtr int8totext(new TokenInt8ToText());
-                      ctx.expression.push_back(int8totext);
+                      ctx.expression_.push_back(int8totext);
                   }
 #line 1331 "parser.cc"
     break;
@@ -1334,7 +1334,7 @@ namespace isc { namespace eval {
 #line 477 "parser.yy"
                   {
                       TokenPtr int16totext(new TokenInt16ToText());
-                      ctx.expression.push_back(int16totext);
+                      ctx.expression_.push_back(int16totext);
                   }
 #line 1340 "parser.cc"
     break;
@@ -1343,7 +1343,7 @@ namespace isc { namespace eval {
 #line 482 "parser.yy"
                   {
                       TokenPtr int32totext(new TokenInt32ToText());
-                      ctx.expression.push_back(int32totext);
+                      ctx.expression_.push_back(int32totext);
                   }
 #line 1349 "parser.cc"
     break;
@@ -1352,7 +1352,7 @@ namespace isc { namespace eval {
 #line 487 "parser.yy"
                   {
                       TokenPtr uint8totext(new TokenUInt8ToText());
-                      ctx.expression.push_back(uint8totext);
+                      ctx.expression_.push_back(uint8totext);
                   }
 #line 1358 "parser.cc"
     break;
@@ -1361,7 +1361,7 @@ namespace isc { namespace eval {
 #line 492 "parser.yy"
                   {
                       TokenPtr uint16totext(new TokenUInt16ToText());
-                      ctx.expression.push_back(uint16totext);
+                      ctx.expression_.push_back(uint16totext);
                   }
 #line 1367 "parser.cc"
     break;
@@ -1370,7 +1370,7 @@ namespace isc { namespace eval {
 #line 497 "parser.yy"
                   {
                       TokenPtr uint32totext(new TokenUInt32ToText());
-                      ctx.expression.push_back(uint32totext);
+                      ctx.expression_.push_back(uint32totext);
                   }
 #line 1376 "parser.cc"
     break;
@@ -1383,7 +1383,7 @@ namespace isc { namespace eval {
                     // This token will return enterprise-id number of
                     // received vendor option.
                     TokenPtr vendor(new TokenVendor(ctx.getUniverse(), 0, TokenVendor::ENTERPRISE_ID));
-                    ctx.expression.push_back(vendor);
+                    ctx.expression_.push_back(vendor);
                 }
 #line 1389 "parser.cc"
     break;
@@ -1397,7 +1397,7 @@ namespace isc { namespace eval {
                     // received vendor class option.
                     TokenPtr vendor(new TokenVendorClass(ctx.getUniverse(), 0,
                                                          TokenVendor::ENTERPRISE_ID));
-                    ctx.expression.push_back(vendor);
+                    ctx.expression_.push_back(vendor);
                 }
 #line 1403 "parser.cc"
     break;
@@ -1410,7 +1410,7 @@ namespace isc { namespace eval {
                     // for specified suboption and finally will return
                     // its content.
                     TokenPtr opt(new TokenVendor(ctx.getUniverse(), yystack_[8].value.as < uint32_t > (), yystack_[0].value.as < TokenOption::RepresentationType > (), yystack_[3].value.as < uint16_t > ()));
-                    ctx.expression.push_back(opt);
+                    ctx.expression_.push_back(opt);
                 }
 #line 1416 "parser.cc"
     break;
@@ -1427,7 +1427,7 @@ namespace isc { namespace eval {
                     // is requested.
                     TokenPtr vendor_class(new TokenVendorClass(ctx.getUniverse(), yystack_[3].value.as < uint32_t > (),
                                                                TokenVendor::DATA, 0));
-                    ctx.expression.push_back(vendor_class);
+                    ctx.expression_.push_back(vendor_class);
                 }
 #line 1433 "parser.cc"
     break;
@@ -1444,7 +1444,7 @@ namespace isc { namespace eval {
                     uint8_t index = ctx.convertUint8(yystack_[1].value.as < std::string > (), yystack_[1].location);
                     TokenPtr vendor_class(new TokenVendorClass(ctx.getUniverse(), yystack_[6].value.as < uint32_t > (),
                                                                TokenVendor::DATA, index));
-                    ctx.expression.push_back(vendor_class);
+                    ctx.expression_.push_back(vendor_class);
                 }
 #line 1450 "parser.cc"
     break;
@@ -1453,7 +1453,7 @@ namespace isc { namespace eval {
 #line 556 "parser.yy"
                 {
                     TokenPtr integer(new TokenInteger(yystack_[0].value.as < uint32_t > ()));
-                    ctx.expression.push_back(integer);
+                    ctx.expression_.push_back(integer);
                 }
 #line 1459 "parser.cc"
     break;
@@ -1670,7 +1670,7 @@ namespace isc { namespace eval {
 #line 691 "parser.yy"
                 {
                     TokenPtr str(new TokenString(yystack_[0].value.as < std::string > ()));
-                    ctx.expression.push_back(str);
+                    ctx.expression_.push_back(str);
                 }
 #line 1676 "parser.cc"
     break;
@@ -1679,7 +1679,7 @@ namespace isc { namespace eval {
 #line 698 "parser.yy"
                  {
                      TokenPtr str(new TokenString(yystack_[0].value.as < std::string > ()));
-                     ctx.expression.push_back(str);
+                     ctx.expression_.push_back(str);
                  }
 #line 1685 "parser.cc"
     break;
@@ -1688,7 +1688,7 @@ namespace isc { namespace eval {
 #line 703 "parser.yy"
                  {
                      TokenPtr str(new TokenString("all"));
-                     ctx.expression.push_back(str);
+                     ctx.expression_.push_back(str);
                  }
 #line 1694 "parser.cc"
     break;
@@ -1697,7 +1697,7 @@ namespace isc { namespace eval {
 #line 710 "parser.yy"
                  {
                      TokenPtr str(new TokenString(yystack_[0].value.as < std::string > ()));
-                     ctx.expression.push_back(str);
+                     ctx.expression_.push_back(str);
                  }
 #line 1703 "parser.cc"
     break;

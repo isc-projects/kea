@@ -315,11 +315,11 @@ public:
 
         switch (u) {
         case Option::V4:
-            ASSERT_NO_THROW(result = evaluateBool(eval.expression, *pkt4_))
+            ASSERT_NO_THROW(result = evaluateBool(eval.expression_, *pkt4_))
                 << " for expression " << expr;
             break;
         case Option::V6:
-            ASSERT_NO_THROW(result = evaluateBool(eval.expression, *pkt6_))
+            ASSERT_NO_THROW(result = evaluateBool(eval.expression_, *pkt6_))
                 << " for expression " << expr;
             break;
         }
@@ -348,11 +348,11 @@ public:
 
         switch (u) {
         case Option::V4:
-            ASSERT_NO_THROW(result = evaluateString(eval.expression, *pkt4_))
+            ASSERT_NO_THROW(result = evaluateString(eval.expression_, *pkt4_))
                 << " for expression " << expr;
             break;
         case Option::V6:
-            ASSERT_NO_THROW(result = evaluateString(eval.expression, *pkt6_))
+            ASSERT_NO_THROW(result = evaluateString(eval.expression_, *pkt6_))
                 << " for expression " << expr;
             break;
         }

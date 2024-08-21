@@ -65,13 +65,13 @@ public:
     static bool acceptAll(const ClientClass& client_class);
 
     /// @brief Parsed expression (output tokens are stored here)
-    isc::dhcp::Expression expression;
+    isc::dhcp::Expression expression_;
 
     /// @brief Label counter.
-    unsigned label;
+    unsigned label_;
 
     /// @brief Label stack.
-    std::vector<unsigned> labels;
+    std::vector<unsigned> labels_;
 
     /// @brief Method called before scanning starts on a string.
     ///

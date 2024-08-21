@@ -154,56 +154,56 @@ bool_expr : "(" bool_expr ")"
           | NOT bool_expr
                 {
                     TokenPtr neg(new TokenNot());
-                    ctx.expression.push_back(neg);
+                    ctx.expression_.push_back(neg);
                 }
           | bool_expr AND
                 {
-                    unsigned target = ++ctx.label;
-                    ctx.labels.push_back(target);
+                    unsigned target = ++ctx.label_;
+                    ctx.labels_.push_back(target);
                     TokenPtr pobf(new TokenPopOrBranchFalse(target));
-                    ctx.expression.push_back(pobf);
+                    ctx.expression_.push_back(pobf);
                 } bool_expr {
-                    unsigned target = ctx.labels.back();
-                    ctx.labels.pop_back();
+                    unsigned target = ctx.labels_.back();
+                    ctx.labels_.pop_back();
                     TokenPtr lab(new TokenLabel(target));
-                    ctx.expression.push_back(lab);
+                    ctx.expression_.push_back(lab);
                 }
           | bool_expr SAND bool_expr
                 {
                     TokenPtr neg(new TokenAnd());
-                    ctx.expression.push_back(neg);
+                    ctx.expression_.push_back(neg);
                 }
           | bool_expr OR
                 {
-                    unsigned target = ++ctx.label;
-                    ctx.labels.push_back(target);
+                    unsigned target = ++ctx.label_;
+                    ctx.labels_.push_back(target);
                     TokenPtr pobt(new TokenPopOrBranchTrue(target));
-                    ctx.expression.push_back(pobt);
+                    ctx.expression_.push_back(pobt);
                 } bool_expr {
-                    unsigned target = ctx.labels.back();
-                    ctx.labels.pop_back();
+                    unsigned target = ctx.labels_.back();
+                    ctx.labels_.pop_back();
                     TokenPtr lab(new TokenLabel(target));
-                    ctx.expression.push_back(lab);
+                    ctx.expression_.push_back(lab);
                 }
           | bool_expr SOR bool_expr
                 {
                     TokenPtr neg(new TokenOr());
-                    ctx.expression.push_back(neg);
+                    ctx.expression_.push_back(neg);
                 }
           | string_expr EQUAL string_expr
                 {
                     TokenPtr eq(new TokenEqual());
-                    ctx.expression.push_back(eq);
+                    ctx.expression_.push_back(eq);
                 }
           | OPTION "[" option_code "]" "." EXISTS
                 {
                     TokenPtr opt(new TokenOption($3, TokenOption::EXISTS));
-                    ctx.expression.push_back(opt);
+                    ctx.expression_.push_back(opt);
                 }
           | OPTION "[" option_code "]" "." OPTION "[" sub_option_code "]" "." EXISTS
                 {
                     TokenPtr opt(new TokenSubOption($3, $8, TokenOption::EXISTS));
-                    ctx.expression.push_back(opt);
+                    ctx.expression_.push_back(opt);
                 }
           | RELAY4 "[" sub_option_code "]" "." EXISTS
                 {
@@ -211,7 +211,7 @@ bool_expr : "(" bool_expr ")"
                    case Option::V4:
                    {
                        TokenPtr opt(new TokenRelay4Option($3, TokenOption::EXISTS));
-                       ctx.expression.push_back(opt);
+                       ctx.expression_.push_back(opt);
                        break;
                    }
                    case Option::V6:
@@ -231,7 +231,7 @@ bool_expr : "(" bool_expr ")"
                     case Option::V6:
                     {
                         TokenPtr opt(new TokenRelay6Option($3, $8, TokenOption::EXISTS));
-                        ctx.expression.push_back(opt);
+                        ctx.expression_.push_back(opt);
                         break;
                     }
                     case Option::V4:
@@ -246,7 +246,7 @@ bool_expr : "(" bool_expr ")"
                   // This token will find option 124 (DHCPv4) or 16 (DHCPv6),
                   // and will check if enterprise-id equals specified value.
                   TokenPtr exist(new TokenVendorClass(ctx.getUniverse(), $3, TokenOption::EXISTS));
-                  ctx.expression.push_back(exist);
+                  ctx.expression_.push_back(exist);
               }
           | VENDOR "[" enterprise_id "]" "." EXISTS
               {
@@ -255,7 +255,7 @@ bool_expr : "(" bool_expr ")"
                   // This token will find option 125 (DHCPv4) or 17 (DHCPv6),
                   // and will check if enterprise-id equals specified value.
                   TokenPtr exist(new TokenVendor(ctx.getUniverse(), $3, TokenOption::EXISTS));
-                  ctx.expression.push_back(exist);
+                  ctx.expression_.push_back(exist);
               }
           | VENDOR "[" enterprise_id "]" "." OPTION "[" sub_option_code "]" "." EXISTS
               {
@@ -265,7 +265,7 @@ bool_expr : "(" bool_expr ")"
                   // exists, has specified enterprise-id and if has
                   // specified suboption.
                   TokenPtr exist(new TokenVendor(ctx.getUniverse(), $3, TokenOption::EXISTS, $8));
-                  ctx.expression.push_back(exist);
+                  ctx.expression_.push_back(exist);
                }
           | MEMBER "(" STRING ")"
               {
@@ -280,7 +280,7 @@ bool_expr : "(" bool_expr ")"
                       error(@3, "Not defined client class '" + cc + "'");
                   }
                   TokenPtr member(new TokenMember(cc));
-                  ctx.expression.push_back(member);
+                  ctx.expression_.push_back(member);
               }
           | MATCH "(" STRING "," string_expr ")"
               {
@@ -289,34 +289,34 @@ bool_expr : "(" bool_expr ")"
                   // This token will check if the regular expression matches
                   // the string expression.
                   TokenPtr match(new TokenMatch($3));
-                  ctx.expression.push_back(match);
+                  ctx.expression_.push_back(match);
               }
           ;
 
 string_expr : STRING
                   {
                       TokenPtr str(new TokenString($1));
-                      ctx.expression.push_back(str);
+                      ctx.expression_.push_back(str);
                   }
             | HEXSTRING
                   {
                       TokenPtr hex(new TokenHexString($1));
-                      ctx.expression.push_back(hex);
+                      ctx.expression_.push_back(hex);
                   }
             | IP_ADDRESS
                   {
                       TokenPtr ip(new TokenIpAddress($1));
-                      ctx.expression.push_back(ip);
+                      ctx.expression_.push_back(ip);
                   }
             | OPTION "[" option_code "]" "." option_repr_type
                   {
                       TokenPtr opt(new TokenOption($3, $6));
-                      ctx.expression.push_back(opt);
+                      ctx.expression_.push_back(opt);
                   }
             | OPTION "[" option_code "]" "." OPTION "[" sub_option_code "]" "." option_repr_type
                   {
                       TokenPtr opt(new TokenSubOption($3, $8, $11));
-                      ctx.expression.push_back(opt);
+                      ctx.expression_.push_back(opt);
                   }
             | RELAY4 "[" sub_option_code "]" "." option_repr_type
                   {
@@ -324,7 +324,7 @@ string_expr : STRING
                      case Option::V4:
                      {
                          TokenPtr opt(new TokenRelay4Option($3, $6));
-                         ctx.expression.push_back(opt);
+                         ctx.expression_.push_back(opt);
                          break;
                      }
                      case Option::V6:
@@ -345,7 +345,7 @@ string_expr : STRING
                      case Option::V6:
                      {
                          TokenPtr opt(new TokenRelay6Option($3, $8, $11));
-                         ctx.expression.push_back(opt);
+                         ctx.expression_.push_back(opt);
                          break;
                      }
                      case Option::V4:
@@ -357,7 +357,7 @@ string_expr : STRING
             | PKT "." pkt_metadata
                   {
                       TokenPtr pkt_metadata(new TokenPkt($3));
-                      ctx.expression.push_back(pkt_metadata);
+                      ctx.expression_.push_back(pkt_metadata);
                   }
             | PKT4 "." pkt4_field
                   {
@@ -365,7 +365,7 @@ string_expr : STRING
                      case Option::V4:
                      {
                          TokenPtr pkt4_field(new TokenPkt4($3));
-                         ctx.expression.push_back(pkt4_field);
+                         ctx.expression_.push_back(pkt4_field);
                          break;
                      }
                      case Option::V6:
@@ -379,7 +379,7 @@ string_expr : STRING
                      case Option::V6:
                      {
                          TokenPtr pkt6_field(new TokenPkt6($3));
-                         ctx.expression.push_back(pkt6_field);
+                         ctx.expression_.push_back(pkt6_field);
                          break;
                      }
                      case Option::V4:
@@ -393,7 +393,7 @@ string_expr : STRING
                      case Option::V6:
                      {
                          TokenPtr relay6field(new TokenRelay6Field($3, $6));
-                         ctx.expression.push_back(relay6field);
+                         ctx.expression_.push_back(relay6field);
                          break;
                      }
                      case Option::V4:
@@ -405,98 +405,98 @@ string_expr : STRING
             | SUBSTRING "(" string_expr "," start_expr "," length_expr ")"
                   {
                       TokenPtr sub(new TokenSubstring());
-                      ctx.expression.push_back(sub);
+                      ctx.expression_.push_back(sub);
                   }
             | SPLIT "(" string_expr "," string_expr "," int_expr ")"
                   {
                       TokenPtr split(new TokenSplit());
-                      ctx.expression.push_back(split);
+                      ctx.expression_.push_back(split);
                   }
             | CONCAT "(" string_expr "," string_expr ")"
                   {
                       TokenPtr conc(new TokenConcat());
-                      ctx.expression.push_back(conc);
+                      ctx.expression_.push_back(conc);
                   }
             | string_expr PLUS string_expr
                   {
                       TokenPtr conc(new TokenConcat());
-                      ctx.expression.push_back(conc);
+                      ctx.expression_.push_back(conc);
                   }
             | LCASE "(" string_expr ")"
                   {
                       TokenPtr lcase(new TokenLowerCase());
-                      ctx.expression.push_back(lcase);
+                      ctx.expression_.push_back(lcase);
                   }
             | UCASE "(" string_expr ")"
                   {
                       TokenPtr ucase(new TokenUpperCase());
-                      ctx.expression.push_back(ucase);
+                      ctx.expression_.push_back(ucase);
                   }
             | IFELSE "(" bool_expr ","
                   {
-                      unsigned target = ++ctx.label;
-                      ctx.labels.push_back(target);
+                      unsigned target = ++ctx.label_;
+                      ctx.labels_.push_back(target);
                       TokenPtr pabf(new TokenPopAndBranchFalse(target));
-                      ctx.expression.push_back(pabf);
+                      ctx.expression_.push_back(pabf);
                   } string_expr "," {
-                      unsigned target = ctx.labels.back();
-                      ctx.labels.pop_back();
-                      unsigned target2 = ++ctx.label;
-                      ctx.labels.push_back(target2);
+                      unsigned target = ctx.labels_.back();
+                      ctx.labels_.pop_back();
+                      unsigned target2 = ++ctx.label_;
+                      ctx.labels_.push_back(target2);
                       TokenPtr branch(new TokenBranch(target2));
-                      ctx.expression.push_back(branch);
+                      ctx.expression_.push_back(branch);
                       TokenPtr lab(new TokenLabel(target));
-                      ctx.expression.push_back(lab);
+                      ctx.expression_.push_back(lab);
                   } string_expr ")" {
-                      unsigned target = ctx.labels.back();
-                      ctx.labels.pop_back();
+                      unsigned target = ctx.labels_.back();
+                      ctx.labels_.pop_back();
                       TokenPtr lab(new TokenLabel(target));
-                      ctx.expression.push_back(lab);
+                      ctx.expression_.push_back(lab);
                   }
             | SIFELSE "(" bool_expr "," string_expr "," string_expr ")"
                   {
                       TokenPtr cond(new TokenIfElse());
-                      ctx.expression.push_back(cond);
+                      ctx.expression_.push_back(cond);
                   }
             | TOHEXSTRING "(" string_expr "," string_expr ")"
                   {
                       TokenPtr tohex(new TokenToHexString());
-                      ctx.expression.push_back(tohex);
+                      ctx.expression_.push_back(tohex);
                   }
             | ADDRTOTEXT "(" string_expr ")"
                   {
                       TokenPtr addrtotext(new TokenIpAddressToText());
-                      ctx.expression.push_back(addrtotext);
+                      ctx.expression_.push_back(addrtotext);
                   }
             | INT8TOTEXT "(" string_expr ")"
                   {
                       TokenPtr int8totext(new TokenInt8ToText());
-                      ctx.expression.push_back(int8totext);
+                      ctx.expression_.push_back(int8totext);
                   }
             | INT16TOTEXT "(" string_expr ")"
                   {
                       TokenPtr int16totext(new TokenInt16ToText());
-                      ctx.expression.push_back(int16totext);
+                      ctx.expression_.push_back(int16totext);
                   }
             | INT32TOTEXT "(" string_expr ")"
                   {
                       TokenPtr int32totext(new TokenInt32ToText());
-                      ctx.expression.push_back(int32totext);
+                      ctx.expression_.push_back(int32totext);
                   }
             | UINT8TOTEXT "(" string_expr ")"
                   {
                       TokenPtr uint8totext(new TokenUInt8ToText());
-                      ctx.expression.push_back(uint8totext);
+                      ctx.expression_.push_back(uint8totext);
                   }
             | UINT16TOTEXT "(" string_expr ")"
                   {
                       TokenPtr uint16totext(new TokenUInt16ToText());
-                      ctx.expression.push_back(uint16totext);
+                      ctx.expression_.push_back(uint16totext);
                   }
             | UINT32TOTEXT "(" string_expr ")"
                   {
                       TokenPtr uint32totext(new TokenUInt32ToText());
-                      ctx.expression.push_back(uint32totext);
+                      ctx.expression_.push_back(uint32totext);
                   }
             | VENDOR "." ENTERPRISE
                 {
@@ -505,7 +505,7 @@ string_expr : STRING
                     // This token will return enterprise-id number of
                     // received vendor option.
                     TokenPtr vendor(new TokenVendor(ctx.getUniverse(), 0, TokenVendor::ENTERPRISE_ID));
-                    ctx.expression.push_back(vendor);
+                    ctx.expression_.push_back(vendor);
                 }
             | VENDOR_CLASS "." ENTERPRISE
                 {
@@ -515,7 +515,7 @@ string_expr : STRING
                     // received vendor class option.
                     TokenPtr vendor(new TokenVendorClass(ctx.getUniverse(), 0,
                                                          TokenVendor::ENTERPRISE_ID));
-                    ctx.expression.push_back(vendor);
+                    ctx.expression_.push_back(vendor);
                 }
             | VENDOR "[" enterprise_id "]" "." OPTION "[" sub_option_code "]" "." option_repr_type
                 {
@@ -524,7 +524,7 @@ string_expr : STRING
                     // for specified suboption and finally will return
                     // its content.
                     TokenPtr opt(new TokenVendor(ctx.getUniverse(), $3, $11, $8));
-                    ctx.expression.push_back(opt);
+                    ctx.expression_.push_back(opt);
                 }
             | VENDOR_CLASS "[" enterprise_id "]" "." DATA
                 {
@@ -537,7 +537,7 @@ string_expr : STRING
                     // is requested.
                     TokenPtr vendor_class(new TokenVendorClass(ctx.getUniverse(), $3,
                                                                TokenVendor::DATA, 0));
-                    ctx.expression.push_back(vendor_class);
+                    ctx.expression_.push_back(vendor_class);
                 }
             | VENDOR_CLASS "[" enterprise_id "]" "." DATA "[" INTEGER "]"
                 {
@@ -550,12 +550,12 @@ string_expr : STRING
                     uint8_t index = ctx.convertUint8($8, @8);
                     TokenPtr vendor_class(new TokenVendorClass(ctx.getUniverse(), $3,
                                                                TokenVendor::DATA, index));
-                    ctx.expression.push_back(vendor_class);
+                    ctx.expression_.push_back(vendor_class);
                 }
             | integer_expr
                 {
                     TokenPtr integer(new TokenInteger($1));
-                    ctx.expression.push_back(integer);
+                    ctx.expression_.push_back(integer);
                 }
             | "(" string_expr ")"
             ;
@@ -690,26 +690,26 @@ relay6_field : PEERADDR
 start_expr : INTEGER
                 {
                     TokenPtr str(new TokenString($1));
-                    ctx.expression.push_back(str);
+                    ctx.expression_.push_back(str);
                 }
            ;
 
 length_expr : INTEGER
                  {
                      TokenPtr str(new TokenString($1));
-                     ctx.expression.push_back(str);
+                     ctx.expression_.push_back(str);
                  }
             | ALL
                  {
                      TokenPtr str(new TokenString("all"));
-                     ctx.expression.push_back(str);
+                     ctx.expression_.push_back(str);
                  }
             ;
 
 int_expr : INTEGER
                  {
                      TokenPtr str(new TokenString($1));
-                     ctx.expression.push_back(str);
+                     ctx.expression_.push_back(str);
                  }
             ;
 
