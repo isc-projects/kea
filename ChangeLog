@@ -1,3 +1,8 @@
+2272.	[perf]		fdupont
+	Implementation of "and", "or" and "ifelse" expressions
+	was changed to evaluate sub-expressions only when needed.
+	(Gitlab #3502)
+
 2271.	[func]		fdupont
 	Extended the control-socket entry taking a map
 	specifying a UNIX/LOCAL control socket for DHCPv4,
