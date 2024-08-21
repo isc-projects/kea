@@ -7377,7 +7377,7 @@ configuration file can be used:
 ::
 
    "Dhcp6": {
-       "control-socket": [
+       "control-sockets": [
            {
                "socket-type": "unix",
                "socket-name": "/path/to/the/unix/socket"
@@ -7459,7 +7459,7 @@ as described in :ref:`command-stats`.
 HTTP/HTTPS Control Socket
 -------------------------
 
-The ``socket-type`` must be ``http`` or ``https`` (whe the type is ``https``
+The ``socket-type`` must be ``http`` or ``https`` (when the type is ``https``
 TLS is required). The ``socket-address`` (default ``::1``) and
 ``socket-port`` (default 8000) specify an IP address and port to which
 the HTTP service will be bound.
@@ -7485,7 +7485,7 @@ but the client is not authorized.
 When the ``clients`` authentication list is configured and not empty,
 basic HTTP authentication is required. Each element of the list
 specifies a user ID and a password. The user ID is mandatory, must
-be not empty, and must not contain the colon (:) character. The
+not be empty, and must not contain the colon (:) character. The
 password is optional; when it is not specified an empty password
 is used.
 
@@ -7517,20 +7517,20 @@ to detect configuration errors as soon as possible.
        "control-sockets": [
            {
                "socket-type": "https",
-               "socket-name": "2010:30:40::50",
+               "socket-address": "2010:30:40::50",
                "socket-port": 8005,
                "trust-anchor": "/path/to/the/ca-cert.pem",
                "cert-file": "/path/to/the/agent-cert.pem",
                "key-file": "/path/to/the/agent-key.pem",
                "cert-required": true,
                "authentication": {
-               "type": "basic",
-               "realm": "kea-control-agent",
-               "clients": [
-                   {
-                       "user": "admin",
-                       "password": "1234"
-                   } ]
+                  "type": "basic",
+                  "realm": "kea-control-agent",
+                  "clients": [
+                      {
+                          "user": "admin",
+                          "password": "1234"
+                      } ]
                }
            }
        ],

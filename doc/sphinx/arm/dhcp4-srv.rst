@@ -7564,10 +7564,12 @@ The management API allows the issuing of specific management commands,
 such as statistics retrieval, reconfiguration, or shutdown. For more
 details, see :ref:`ctrl-channel`. By default there are no sockets
 open; to instruct Kea to open a socket, the following entry in the
-configuration file can be used: ::
+configuration file can be used:
+
+::
 
    "Dhcp4": {
-       "control-socket": [
+       "control-sockets": [
            {
                "socket-type": "unix",
                "socket-name": "/path/to/the/unix/socket"
@@ -7649,7 +7651,7 @@ as described in :ref:`command-stats`.
 HTTP/HTTPS Control Socket
 -------------------------
 
-The ``socket-type`` must be ``http`` or ``https`` (whe the type is ``https``
+The ``socket-type`` must be ``http`` or ``https`` (when the type is ``https``
 TLS is required). The ``socket-address`` (default ``127.0.0.1``) and
 ``socket-port`` (default 8000) specify an IP address and port to which
 the HTTP service will be bound.
@@ -7675,7 +7677,7 @@ but the client is not authorized.
 When the ``clients`` authentication list is configured and not empty,
 basic HTTP authentication is required. Each element of the list
 specifies a user ID and a password. The user ID is mandatory, must
-be not empty, and must not contain the colon (:) character. The
+not be empty, and must not contain the colon (:) character. The
 password is optional; when it is not specified an empty password
 is used.
 
@@ -7707,7 +7709,7 @@ to detect configuration errors as soon as possible.
        "control-sockets": [
            {
                "socket-type": "https",
-               "socket-name": "10.20.30.40",
+               "socket-address": "10.20.30.40",
                "socket-port": 8004,
                "trust-anchor": "/path/to/the/ca-cert.pem",
                "cert-file": "/path/to/the/agent-cert.pem",

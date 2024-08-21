@@ -1,4 +1,4 @@
-2271.	[func]		func
+2271.	[func]		fdupont
 	Extended the control-socket entry taking a map
 	specifying a UNIX/LOCAL control socket for DHCPv4,
 	DHCPv6 and DHCP-DDNS servers to a control-sockets

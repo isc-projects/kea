@@ -169,7 +169,7 @@ authorized.
 When the ``clients`` authentication list is configured and not empty,
 basic HTTP authentication is required. Each element of the list
 specifies a user ID and a password. The user ID is mandatory, must
-be not empty, and must not contain the colon (:) character. The
+not be empty, and must not contain the colon (:) character. The
 password is optional; when it is not specified an empty password
 is used.
 
