@@ -15,6 +15,8 @@
 #include <dhcp/dhcp6.h>
 #include <exceptions/exceptions.h>
 #include <http/date_time.h>
+#include <testutils/gtest_utils.h>
+#include <testutils/test_to_element.h>
 #include <util/multi_threading_mgr.h>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
@@ -30,6 +32,7 @@ using namespace isc::dhcp;
 using namespace isc::ha;
 using namespace isc::ha::test;
 using namespace isc::http;
+using namespace isc::test;
 using namespace isc::util;
 
 using namespace boost::posix_time;
@@ -760,8 +763,13 @@ CommunicationStateTest::getReportTest() {
     ASSERT_NO_THROW(state_.analyzeMessage(createMessage4(DHCPDISCOVER, 1, 0, 15)));
 
     // Get the report.
-    auto report = state_.getReport();
+    ElementPtr report;
+    ASSERT_NO_THROW_LOG(report = state_.getReport());
     ASSERT_TRUE(report);
+
+    // Check that system-time exists and that format is parsable by ptime.
+    // Do not check exact value because it can be time-sensitive.
+    checkThatTimeIsParsable(report);
 
     // Compare with the expected output.
     std::string expected = "{"
@@ -773,16 +781,22 @@ CommunicationStateTest::getReportTest() {
         "    \"connecting-clients\": 2,"
         "    \"unacked-clients\": 1,"
         "    \"unacked-clients-left\": 10,"
-        "    \"analyzed-packets\": 2"
+        "    \"analyzed-packets\": 2,"
+        "    \"clock-skew\": 0"
         "}";
-    EXPECT_TRUE(isEquivalent(Element::fromJSON(expected), report));
+    expectEqWithDiff(Element::fromJSON(expected), report);
 }
 
 // Tests unusual values used to create the report.
 void
 CommunicationStateTest::getReportDefaultValuesTest() {
-    auto report = state_.getReport();
+    ElementPtr report;
+    ASSERT_NO_THROW_LOG(report = state_.getReport());
     ASSERT_TRUE(report);
+
+    // Check that system-time exists and that format is parsable by ptime.
+    // Do not check exact value because it can be time-sensitive.
+    checkThatTimeIsParsable(report);
 
     // Compare with the expected output.
     std::string expected = "{"
@@ -794,9 +808,10 @@ CommunicationStateTest::getReportDefaultValuesTest() {
         "    \"connecting-clients\": 0,"
         "    \"unacked-clients\": 0,"
         "    \"unacked-clients-left\": 0,"
-        "    \"analyzed-packets\": 0"
+        "    \"analyzed-packets\": 0,"
+        "    \"clock-skew\": 0"
         "}";
-    EXPECT_TRUE(isEquivalent(Element::fromJSON(expected), report));
+    expectEqWithDiff(Element::fromJSON(expected), report);
 }
 
 void

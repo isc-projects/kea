@@ -39,6 +39,7 @@
 #include <http/response_json.h>
 #include <util/multi_threading_mgr.h>
 #include <testutils/gtest_utils.h>
+#include <testutils/test_to_element.h>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/pointer_cast.hpp>
@@ -59,6 +60,7 @@ using namespace isc::ha;
 using namespace isc::ha::test;
 using namespace isc::hooks;
 using namespace isc::http;
+using namespace isc::test;
 using namespace isc::util;
 
 /// @file The tests herein were created prior to HA+MT but are very valuable
@@ -2632,6 +2634,14 @@ TEST_F(HAServiceTest, hotStandbyScopeSelectionThisPrimary) {
     // Check the reported info about servers.
     ConstElementPtr ha_servers = service.processStatusGet();
     ASSERT_TRUE(ha_servers);
+
+    // Check that system-time exists and that format is parsable by ptime.
+    // Do not check exact value because it can be time-sensitive.
+    ElementPtr local(boost::const_pointer_cast<Element>(ha_servers->get("local")));
+    ElementPtr remote(boost::const_pointer_cast<Element>(ha_servers->get("remote")));
+    checkThatTimeIsParsable(local);
+    checkThatTimeIsParsable(remote);
+
     std::string expected = "{"
         "    \"local\": {"
         "        \"role\": \"primary\","
@@ -2650,10 +2660,11 @@ TEST_F(HAServiceTest, hotStandbyScopeSelectionThisPrimary) {
         "        \"connecting-clients\": 0,"
         "        \"unacked-clients\": 0,"
         "        \"unacked-clients-left\": 0,"
-        "        \"analyzed-packets\": 0"
+        "        \"analyzed-packets\": 0,"
+        "        \"clock-skew\": 0"
         "    }"
         "}";
-    EXPECT_TRUE(isEquivalent(Element::fromJSON(expected), ha_servers));
+    expectEqWithDiff(Element::fromJSON(expected), ha_servers);
 
     // Set the test size - 65535 queries.
     const unsigned queries_num = 65535;
@@ -2683,6 +2694,13 @@ TEST_F(HAServiceTest, hotStandbyScopeSelectionThisStandby) {
     ConstElementPtr ha_servers = service.processStatusGet();
     ASSERT_TRUE(ha_servers);
 
+    // Check that system-time exists and that format is parsable by ptime.
+    // Do not check exact value because it can be time-sensitive.
+    ElementPtr local(boost::const_pointer_cast<Element>(ha_servers->get("local")));
+    ElementPtr remote(boost::const_pointer_cast<Element>(ha_servers->get("remote")));
+    checkThatTimeIsParsable(local);
+    checkThatTimeIsParsable(remote);
+
     std::string expected = "{"
         "    \"local\": {"
         "        \"role\": \"standby\","
@@ -2701,10 +2719,11 @@ TEST_F(HAServiceTest, hotStandbyScopeSelectionThisStandby) {
         "        \"connecting-clients\": 0,"
         "        \"unacked-clients\": 0,"
         "        \"unacked-clients-left\": 0,"
-        "        \"analyzed-packets\": 0"
+        "        \"analyzed-packets\": 0,"
+        "        \"clock-skew\": 0"
         "    }"
         "}";
-    EXPECT_TRUE(isEquivalent(Element::fromJSON(expected), ha_servers));
+    expectEqWithDiff(Element::fromJSON(expected), ha_servers);
 
     // Set the test size - 65535 queries.
     const unsigned queries_num = 65535;
@@ -6563,6 +6582,13 @@ TEST_F(HAServiceStateMachineTest, waitingParterDownLoadBalancingPartnerDown) {
     std::ostringstream s;
     s << age_value;
 
+    // Check that system-time exists and that format is parsable by ptime.
+    // Do not check exact value because it can be time-sensitive.
+    ElementPtr mutable_local(boost::const_pointer_cast<Element>(ha_servers->get("local")));
+    ElementPtr mutable_remote(boost::const_pointer_cast<Element>(ha_servers->get("remote")));
+    checkThatTimeIsParsable(mutable_local);
+    checkThatTimeIsParsable(mutable_remote);
+
     std::string expected = "{"
         "    \"local\": {"
         "        \"role\": \"primary\","
@@ -6581,10 +6607,11 @@ TEST_F(HAServiceStateMachineTest, waitingParterDownLoadBalancingPartnerDown) {
         "        \"connecting-clients\": 0,"
         "        \"unacked-clients\": 0,"
         "        \"unacked-clients-left\": 0,"
-        "        \"analyzed-packets\": 0"
+        "        \"analyzed-packets\": 0,"
+        "        \"clock-skew\": 0"
         "    }"
         "}";
-    EXPECT_TRUE(isEquivalent(Element::fromJSON(expected), ha_servers));
+    expectEqWithDiff(Element::fromJSON(expected), ha_servers);
 
     // Crash the partner and see whether our server can return to the partner
     // down state.

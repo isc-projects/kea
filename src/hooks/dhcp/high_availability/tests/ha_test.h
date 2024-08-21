@@ -129,6 +129,16 @@ protected:
     void signalServiceRunning(bool& running, std::mutex& mutex,
                               std::condition_variable& condvar);
 
+    /// @brief Check that a map element pointer representing the reported status
+    /// of an HA node contains  string element pointer indexed by the
+    /// "system-time" key that can be parsed in a ptime object.
+    ///
+    /// Also removes the "system-time" element for the purpose of holistically
+    /// comparing the node without worrying about time-sensitive information.
+    ///
+    /// @brief param the node element pointer
+    void checkThatTimeIsParsable(isc::data::ElementPtr node);
+
 public:
 
     /// @brief Handler for timeout during runIOService invocation.

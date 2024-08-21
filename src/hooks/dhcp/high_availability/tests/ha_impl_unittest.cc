@@ -21,8 +21,12 @@
 #include <hooks/hooks_manager.h>
 #include <stats/stats_mgr.h>
 #include <testutils/gtest_utils.h>
+#include <testutils/test_to_element.h>
+
 #include <boost/pointer_cast.hpp>
+
 #include <gtest/gtest.h>
+
 #include <string>
 
 using namespace isc::asiolink;
@@ -33,6 +37,7 @@ using namespace isc::ha;
 using namespace isc::ha::test;
 using namespace isc::hooks;
 using namespace isc::stats;
+using namespace isc::test;
 
 namespace {
 
@@ -1797,6 +1802,16 @@ TEST_F(HAImplTest, statusGet) {
     callout_handle->getArgument("response", got);
     ASSERT_TRUE(got);
 
+    // Check that system-time exists and that format is parsable by ptime.
+    // Do not check exact value because it can be time-sensitive.
+    ConstElementPtr ha_servers(
+        got->get("arguments")->get("high-availability")->get(0)->get("ha-servers"));
+    EXPECT_TRUE(ha_servers);
+    ElementPtr local(boost::const_pointer_cast<Element>(ha_servers->get("local")));
+    ElementPtr remote(boost::const_pointer_cast<Element>(ha_servers->get("remote")));
+    checkThatTimeIsParsable(local);
+    checkThatTimeIsParsable(remote);
+
     std::string expected =
         "{"
         "    \"arguments\": {"
@@ -1821,7 +1836,8 @@ TEST_F(HAImplTest, statusGet) {
         "                        \"connecting-clients\": 0,"
         "                        \"unacked-clients\": 0,"
         "                        \"unacked-clients-left\": 0,"
-        "                        \"analyzed-packets\": 0"
+        "                        \"analyzed-packets\": 0,"
+        "                        \"clock-skew\": 0"
         "                    }"
         "                }"
         "            }"
@@ -1830,7 +1846,7 @@ TEST_F(HAImplTest, statusGet) {
         "    },"
         "    \"result\": 0"
         "}";
-    EXPECT_TRUE(isEquivalent(got, Element::fromJSON(expected)));
+    expectEqWithDiff(Element::fromJSON(expected), got);
 }
 
 // Tests status-get command processed handler for backup server.
@@ -1860,6 +1876,14 @@ TEST_F(HAImplTest, statusGetBackupServer) {
     callout_handle->getArgument("response", got);
     ASSERT_TRUE(got);
 
+    // Check that system-time exists and that format is parsable by ptime.
+    // Do not check exact value because it can be time-sensitive.
+    ConstElementPtr ha_servers(
+        got->get("arguments")->get("high-availability")->get(0)->get("ha-servers"));
+    EXPECT_TRUE(ha_servers);
+    ElementPtr local(boost::const_pointer_cast<Element>(ha_servers->get("local")));
+    checkThatTimeIsParsable(local);
+
     std::string expected =
         "{"
         "    \"arguments\": {"
@@ -1880,7 +1904,7 @@ TEST_F(HAImplTest, statusGetBackupServer) {
         "    },"
         "    \"result\": 0"
         "}";
-    EXPECT_TRUE(isEquivalent(got, Element::fromJSON(expected)));
+    expectEqWithDiff(Element::fromJSON(expected), got);
 }
 
 // Tests status-get command processed handler for primary server being in the
@@ -1910,6 +1934,14 @@ TEST_F(HAImplTest, statusGetPassiveBackup) {
     callout_handle->getArgument("response", got);
     ASSERT_TRUE(got);
 
+    // Check that system-time exists and that format is parsable by ptime.
+    // Do not check exact value because it can be time-sensitive.
+    ConstElementPtr ha_servers(
+        got->get("arguments")->get("high-availability")->get(0)->get("ha-servers"));
+    EXPECT_TRUE(ha_servers);
+    ElementPtr local(boost::const_pointer_cast<Element>(ha_servers->get("local")));
+    checkThatTimeIsParsable(local);
+
     std::string expected =
         "{"
         "    \"arguments\": {"
@@ -1930,7 +1962,7 @@ TEST_F(HAImplTest, statusGetPassiveBackup) {
         "    },"
         "    \"result\": 0"
         "}";
-    EXPECT_TRUE(isEquivalent(got, Element::fromJSON(expected)));
+    expectEqWithDiff(Element::fromJSON(expected), got);
 }
 
 // Tests status-get command processed handler for standby server in the
@@ -1960,6 +1992,18 @@ TEST_F(HAImplTest, statusGetHubAndSpoke) {
     callout_handle->getArgument("response", got);
     ASSERT_TRUE(got);
 
+    // Check that system-time exists and that format is parsable by ptime.
+    // Do not check exact value because it can be time-sensitive.
+    for (int i = 0; i < 2; ++i) {
+        ConstElementPtr ha_servers(
+            got->get("arguments")->get("high-availability")->get(i)->get("ha-servers"));
+        EXPECT_TRUE(ha_servers);
+        ElementPtr local(boost::const_pointer_cast<Element>(ha_servers->get("local")));
+        ElementPtr remote(boost::const_pointer_cast<Element>(ha_servers->get("remote")));
+        checkThatTimeIsParsable(local);
+        checkThatTimeIsParsable(remote);
+    }
+
     std::string expected =
         "{"
         "    \"arguments\": {"
@@ -1976,6 +2020,7 @@ TEST_F(HAImplTest, statusGetHubAndSpoke) {
         "                    \"remote\": {"
         "                        \"age\": 0,"
         "                        \"analyzed-packets\": 0,"
+        "                        \"clock-skew\": 0,"
         "                        \"communication-interrupted\": false,"
         "                        \"connecting-clients\": 0,"
         "                        \"in-touch\": false,"
@@ -2000,6 +2045,7 @@ TEST_F(HAImplTest, statusGetHubAndSpoke) {
         "                    \"remote\": {"
         "                        \"age\": 0,"
         "                        \"analyzed-packets\": 0,"
+        "                        \"clock-skew\": 0,"
         "                        \"communication-interrupted\": false,"
         "                        \"connecting-clients\": 0,"
         "                        \"in-touch\": false,"
@@ -2017,7 +2063,7 @@ TEST_F(HAImplTest, statusGetHubAndSpoke) {
         "    },"
         "    \"result\": 0"
         "}";
-    EXPECT_TRUE(isEquivalent(got, Element::fromJSON(expected)));
+    expectEqWithDiff(Element::fromJSON(expected), got);
 }
 
 // Test ha-maintenance-notify command handler with server name.

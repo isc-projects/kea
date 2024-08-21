@@ -22,13 +22,14 @@
 #include <hooks/hooks_manager.h>
 #include <util/range_utilities.h>
 #include <functional>
-#include <utility>
 #include <vector>
 
 using namespace isc::asiolink;
 using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::hooks;
+
+using namespace std;
 
 namespace {
 
@@ -144,6 +145,33 @@ HATest::signalServiceRunning(bool& running, std::mutex& mutex,
     std::lock_guard<std::mutex> lock(mutex);
     running = true;
     condvar.notify_one();
+}
+
+
+void
+HATest::checkThatTimeIsParsable(ElementPtr node) {
+    ConstElementPtr system_time(node->get("system-time"));
+    EXPECT_TRUE(system_time);
+
+    // Is freed automatically by std::locale. See [localization.locales.locale#6] and
+    // [localization.locales.locale.facet#2] in the C++ standard.
+    boost::posix_time::time_input_facet* facet(
+        new boost::posix_time::time_input_facet("%Y-%m-%d %H:%M:%S"));
+
+    stringstream ss;
+    ss.imbue(std::locale(std::locale(), facet));
+    EXPECT_EQ(system_time->getType(), Element::string);
+    ss << system_time->stringValue();
+    boost::posix_time::ptime t;
+    ss >> t;
+
+    // Reset stringstream.
+    ss = stringstream();
+
+    ss << t;
+    EXPECT_NE(ss.str(), "not-a-date-time");
+
+    node->remove("system-time");
 }
 
 void
