@@ -985,13 +985,13 @@ expected IAID and IAID found respectively.
 
 % DHCP6_REQUIRED_CLASS_EVAL_ERROR %1: Expression '%2' evaluated to %3
 This error message indicates that there a problem was encountered while
-evaluating an expression of a client class that was marked as required.
+evaluating an expression of a required client class that was marked as required.
 A description of the problem is printed.
 
 % DHCP6_REQUIRED_CLASS_EVAL_RESULT %1: Expression '%2' evaluated to %3
 Logged at debug log level 50.
-This debug message indicates that the expression of a client class has been
-successfully evaluated. The client class name and the result value of the
+This debug message indicates that the expression of a required client class has
+been successfully evaluated. The client class name and the result value of the
 evaluation are printed.
 
 % DHCP6_REQUIRED_OPTIONS_CHECK_FAIL %1: %2 message received from %3 failed the following check: %4

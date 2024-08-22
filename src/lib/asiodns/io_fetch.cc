@@ -46,7 +46,7 @@ namespace asiodns {
 
 const int DBG_IMPORTANT = DBGLVL_TRACE_BASIC;
 const int DBG_COMMON = DBGLVL_TRACE_DETAIL;
-const int DBG_ALL = DBGLVL_TRACE_ALL;
+const int DBG_VERBOSE = DBGLVL_TRACE_TECHNICAL;
 
 /// @brief IOFetch Data
 ///
@@ -316,7 +316,7 @@ IOFetch::stop(Result result) {
                 break;
 
             case SUCCESS:
-                LOG_DEBUG(logger, DBG_ALL, ASIODNS_FETCH_COMPLETED).
+                LOG_DEBUG(logger, DBG_VERBOSE, ASIODNS_FETCH_COMPLETED).
                     arg(data_->remote_rcv->getAddress().toText()).
                     arg(data_->remote_rcv->getPort());
                 break;

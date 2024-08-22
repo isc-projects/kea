@@ -20,7 +20,8 @@ extern const int DBGLVL_TRACE_BASIC = 40;
 extern const int DBGLVL_TRACE_BASIC_DATA = 45;
 extern const int DBGLVL_TRACE_DETAIL = 50;
 extern const int DBGLVL_TRACE_DETAIL_DATA = 55;
-extern const int DBGLVL_TRACE_ALL = 70;
+extern const int DBGLVL_TRACE_TECHNICAL = 70;
+extern const int DBGLVL_TRACE_TECHNICAL_DATA = 90;
 
 }  // namespace log
 }  // namespace isc

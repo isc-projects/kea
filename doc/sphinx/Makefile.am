@@ -61,9 +61,9 @@ api_files =
 include $(top_srcdir)/src/share/api/api_files.mk
 
 if HAVE_PDFLATEX
-all: html mans pdf text
+all: kea-messages.rst html mans pdf text
 else
-all: html mans text
+all: kea-messages.rst html mans text
 endif
 
 # build the list of message files
@@ -73,8 +73,7 @@ mes_files.mk: mes-files.txt
 mes-files.txt:
 	@find ../.. -type f -name '*.mes' | sort -V | sed 's#^../../##g' > $@
 
-# this rule is only used for development purposes and is not used in official
-# build process as kea-messages.rst is always generated via sphinx's conf.py
+# Used in official build process. kea-messages.rst is generated via mes2doc.py.
 $(srcdir)/kea-messages.rst: mes2doc.py
 	$(PYTHON) $(srcdir)/mes2doc.py -o $@
 

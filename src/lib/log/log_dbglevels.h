@@ -77,8 +77,11 @@ extern const int DBGLVL_TRACE_DETAIL;
 /// @brief Trace data associated with detailed operations.
 extern const int DBGLVL_TRACE_DETAIL_DATA;
 
-/// @brief The highest level of debug logging.
-extern const int DBGLVL_TRACE_ALL;
+/// @brief Trace technical operations.
+extern const int DBGLVL_TRACE_TECHNICAL;
+
+/// @brief Trace data associated with technical operations.
+extern const int DBGLVL_TRACE_TECHNICAL_DATA;
 
 }  // log namespace
 }  // isc namespace
