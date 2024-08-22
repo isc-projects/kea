@@ -426,6 +426,15 @@ def execute(cmd, timeout=60, cwd=None, env=None, raise_error=True, dry_run=False
     return exitcode
 
 
+def wait_for_process_to_exit(process_name):
+    for _ in range(100):
+        exit_code = execute(f'sudo pidof {process_name}', raise_error=False)
+        if exit_code != 0:
+            # Process exited or there was no process to begin with.
+            break
+        time.sleep(1)
+
+
 def _append_to_file(file_name, line):
     with open(file_name, encoding='utf-8', mode='a') as f:
         f.write(line + '\n')
@@ -1371,7 +1380,9 @@ ssl_key = {cert_dir}/kea-client.key
         execute('sudo sed -i "/^skip-networking$/d" /etc/my.cnf.d/mariadb-server.cnf')
         execute('sudo rc-update add mariadb')
         execute('sudo rc-service mariadb stop')
+        wait_for_process_to_exit('start-stop-daemon')  # mysqld_safe
         execute('sudo rc-service mariadb setup')
+        wait_for_process_to_exit('start-stop-daemon')  # mysqld_safe
         execute('sudo rc-service mariadb restart')
 
     cmd = "echo 'DROP DATABASE IF EXISTS keatest;' | sudo mysql -u root"
