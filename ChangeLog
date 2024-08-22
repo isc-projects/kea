@@ -1,3 +1,8 @@
+2276.	[build]		razvan
+	The library version numbers have been bumped up for the Kea 2.7.2
+	development release.
+	(Gitlab #3549)
+
 2275.	[func]		andrei
 	When running with High-Availibility (HA) enabled, the status-get
 	command now includes in its response the system time for each HA
