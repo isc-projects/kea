@@ -949,6 +949,7 @@ TEST_F(LibDhcpTest, unpackEmptyOption6) {
     ASSERT_TRUE(option_empty);
     EXPECT_EQ(1024, option_empty->getType());
     EXPECT_EQ(4, option_empty->len());
+    EXPECT_TRUE(option_empty->getEncapsulatedSpace().empty());
 }
 
 // This test verifies that the following option structure can be parsed:
@@ -2120,6 +2121,7 @@ TEST_F(LibDhcpTest, unpackEmptyOption4) {
     ASSERT_TRUE(option_empty);
     EXPECT_EQ(254, option_empty->getType());
     EXPECT_EQ(2, option_empty->len());
+    EXPECT_TRUE(option_empty->getEncapsulatedSpace().empty());
 }
 
 // This test verifies that the following option structure can be parsed:
@@ -2375,7 +2377,7 @@ TEST_F(LibDhcpTest, option43Pad) {
 }
 
 // Verifies that option 255 (END) is handled as END in option 43 (so when
-//flexible pad end flag is true) only when option 255 (END) is not defined.
+// flexible pad end flag is true) only when option 255 (END) is not defined.
 TEST_F(LibDhcpTest, option43End) {
     string space = "my-option43-space";
 
