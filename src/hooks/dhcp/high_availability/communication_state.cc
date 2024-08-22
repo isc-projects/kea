@@ -587,8 +587,13 @@ CommunicationState::getReport() const {
     }
     report->set("unacked-clients-left", Element::create(unacked_clients_left));
     report->set("analyzed-packets", Element::create(static_cast<long long>(getAnalyzedMessagesCount())));
-    report->set("system-time", Element::create(ptimeToText(getPartnerTimeAtSkew(), 0)));
-    report->set("clock-skew", Element::create(clock_skew_.total_seconds()));
+    if (partner_time_at_skew_.is_not_a_date_time()) {
+        report->set("system-time", Element::create());
+        report->set("clock-skew", Element::create());
+    } else {
+        report->set("system-time", Element::create(ptimeToText(partner_time_at_skew_, 0)));
+        report->set("clock-skew", Element::create(clock_skew_.total_seconds()));
+    }
 
     return (report);
 }
@@ -658,19 +663,11 @@ CommunicationState::setPartnerUnsentUpdateCountInternal(uint64_t unsent_update_c
 
 boost::posix_time::ptime
 CommunicationState::getMyTimeAtSkew() const {
-    if (my_time_at_skew_.is_not_a_date_time()) {
-        // Return current time.
-        return boost::posix_time::microsec_clock::universal_time();
-    }
     return my_time_at_skew_;
 }
 
 boost::posix_time::ptime
 CommunicationState::getPartnerTimeAtSkew() const {
-    if (partner_time_at_skew_.is_not_a_date_time()) {
-        // Return current time.
-        return boost::posix_time::microsec_clock::universal_time();
-    }
     return partner_time_at_skew_;
 }
 

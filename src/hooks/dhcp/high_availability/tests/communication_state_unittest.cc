@@ -38,6 +38,8 @@ using namespace isc::util;
 using namespace boost::posix_time;
 using namespace boost::gregorian;
 
+using namespace std;
+
 
 namespace {
 
@@ -128,6 +130,9 @@ public:
 
     /// @brief Tests unusual values used to create the report.
     void getReportDefaultValuesTest();
+
+    /// @brief Tests the report when clock is skewed.
+    void getReportWithClockSkewTest();
 
     /// @brief Tests that unsent updates count can be incremented and fetched.
     void getUnsentUpdateCountTest();
@@ -769,7 +774,7 @@ CommunicationStateTest::getReportTest() {
 
     // Check that system-time exists and that format is parsable by ptime.
     // Do not check exact value because it can be time-sensitive.
-    checkThatTimeIsParsable(report);
+    checkThatTimeIsParsable(report, /* null_expected = */ true);
 
     // Compare with the expected output.
     std::string expected = "{"
@@ -782,7 +787,7 @@ CommunicationStateTest::getReportTest() {
         "    \"unacked-clients\": 1,"
         "    \"unacked-clients-left\": 10,"
         "    \"analyzed-packets\": 2,"
-        "    \"clock-skew\": 0"
+        "    \"clock-skew\": null"
         "}";
     expectEqWithDiff(Element::fromJSON(expected), report);
 }
@@ -796,7 +801,7 @@ CommunicationStateTest::getReportDefaultValuesTest() {
 
     // Check that system-time exists and that format is parsable by ptime.
     // Do not check exact value because it can be time-sensitive.
-    checkThatTimeIsParsable(report);
+    checkThatTimeIsParsable(report, /* null_expected = */ true);
 
     // Compare with the expected output.
     std::string expected = "{"
@@ -809,8 +814,44 @@ CommunicationStateTest::getReportDefaultValuesTest() {
         "    \"unacked-clients\": 0,"
         "    \"unacked-clients-left\": 0,"
         "    \"analyzed-packets\": 0,"
-        "    \"clock-skew\": 0"
+        "    \"clock-skew\": null"
         "}";
+    expectEqWithDiff(Element::fromJSON(expected), report);
+}
+
+// Tests that the communication state report is correct when clock is skewed.
+void
+CommunicationStateTest::getReportWithClockSkewTest() {
+    auto const now(microsec_clock::universal_time());
+    // RFC 1123 format
+    // Is freed automatically by std::locale. See [localization.locales.locale#6] and
+    // [localization.locales.locale.facet#2] in the C++ standard.
+    time_facet* facet(new time_facet("%a, %d %b %Y %H:%M:%S GMT"));
+    stringstream ss;
+    ss.imbue(std::locale(std::locale(), facet));
+    ss << now + seconds(2);
+    state_.setPartnerTime(ss.str());
+    ElementPtr report;
+    ASSERT_NO_THROW_LOG(report = state_.getReport());
+    ASSERT_TRUE(report);
+
+    // Check that system-time exists and that format is parsable by ptime.
+    // Do not check exact value because it can be time-sensitive.
+    checkThatTimeIsParsable(report, /* null_expected = */ false);
+
+    // Compare with the expected output.
+    std::string expected = R"({
+        "age": 0,
+        "in-touch": false,
+        "last-scopes": [ ],
+        "last-state": "",
+        "communication-interrupted": false,
+        "connecting-clients": 0,
+        "unacked-clients": 0,
+        "unacked-clients-left": 0,
+        "analyzed-packets": 0,
+        "clock-skew": 2
+    })";
     expectEqWithDiff(Element::fromJSON(expected), report);
 }
 
@@ -1219,6 +1260,15 @@ TEST_F(CommunicationStateTest, getReportDefaultValuesTest) {
 TEST_F(CommunicationStateTest, getReportDefaultValuesTestMultiThreading) {
     MultiThreadingMgr::instance().setMode(true);
     getReportDefaultValuesTest();
+}
+
+TEST_F(CommunicationStateTest, getReportWithClockSkewTest) {
+    getReportWithClockSkewTest();
+}
+
+TEST_F(CommunicationStateTest, getReportWithClockSkewTestMultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    getReportWithClockSkewTest();
 }
 
 TEST_F(CommunicationStateTest, getUnsentUpdateCountTest) {

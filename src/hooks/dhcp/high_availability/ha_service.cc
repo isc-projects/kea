@@ -1694,7 +1694,12 @@ HAService::processStatusGet() const {
     }
     local->set("scopes", list);
     local->set("server-name", Element::create(config_->getThisServerName()));
-    local->set("system-time", Element::create(ptimeToText(communication_state_->getMyTimeAtSkew(), 0)));
+    auto const my_time(communication_state_->getMyTimeAtSkew());
+    if (my_time.is_not_a_date_time()) {
+        local->set("system-time", Element::create());
+    } else {
+        local->set("system-time", Element::create(ptimeToText(my_time, 0)));
+    }
     ha_servers->set("local", local);
 
     // Do not include remote server information if this is a backup server or

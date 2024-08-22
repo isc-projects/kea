@@ -130,14 +130,15 @@ protected:
                               std::condition_variable& condvar);
 
     /// @brief Check that a map element pointer representing the reported status
-    /// of an HA node contains  string element pointer indexed by the
+    /// of an HA node contains a string element pointer indexed by the
     /// "system-time" key that can be parsed in a ptime object.
     ///
     /// Also removes the "system-time" element for the purpose of holistically
     /// comparing the node without worrying about time-sensitive information.
     ///
-    /// @brief param the node element pointer
-    void checkThatTimeIsParsable(isc::data::ElementPtr node);
+    /// @param node the node element pointer
+    /// @param null_expected whether null is expected as the system-time value
+    void checkThatTimeIsParsable(isc::data::ElementPtr const& node, bool const null_expected);
 
 public:
 

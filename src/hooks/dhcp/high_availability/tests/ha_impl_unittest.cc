@@ -1809,8 +1809,8 @@ TEST_F(HAImplTest, statusGet) {
     EXPECT_TRUE(ha_servers);
     ElementPtr local(boost::const_pointer_cast<Element>(ha_servers->get("local")));
     ElementPtr remote(boost::const_pointer_cast<Element>(ha_servers->get("remote")));
-    checkThatTimeIsParsable(local);
-    checkThatTimeIsParsable(remote);
+    checkThatTimeIsParsable(local, /* null_expected = */ true);
+    checkThatTimeIsParsable(remote, /* null_expected = */ true);
 
     std::string expected =
         "{"
@@ -1837,7 +1837,7 @@ TEST_F(HAImplTest, statusGet) {
         "                        \"unacked-clients\": 0,"
         "                        \"unacked-clients-left\": 0,"
         "                        \"analyzed-packets\": 0,"
-        "                        \"clock-skew\": 0"
+        "                        \"clock-skew\": null"
         "                    }"
         "                }"
         "            }"
@@ -1882,7 +1882,7 @@ TEST_F(HAImplTest, statusGetBackupServer) {
         got->get("arguments")->get("high-availability")->get(0)->get("ha-servers"));
     EXPECT_TRUE(ha_servers);
     ElementPtr local(boost::const_pointer_cast<Element>(ha_servers->get("local")));
-    checkThatTimeIsParsable(local);
+    checkThatTimeIsParsable(local, /* null_expected = */ true);
 
     std::string expected =
         "{"
@@ -1940,7 +1940,7 @@ TEST_F(HAImplTest, statusGetPassiveBackup) {
         got->get("arguments")->get("high-availability")->get(0)->get("ha-servers"));
     EXPECT_TRUE(ha_servers);
     ElementPtr local(boost::const_pointer_cast<Element>(ha_servers->get("local")));
-    checkThatTimeIsParsable(local);
+    checkThatTimeIsParsable(local, /* null_expected = */ true);
 
     std::string expected =
         "{"
@@ -2000,8 +2000,8 @@ TEST_F(HAImplTest, statusGetHubAndSpoke) {
         EXPECT_TRUE(ha_servers);
         ElementPtr local(boost::const_pointer_cast<Element>(ha_servers->get("local")));
         ElementPtr remote(boost::const_pointer_cast<Element>(ha_servers->get("remote")));
-        checkThatTimeIsParsable(local);
-        checkThatTimeIsParsable(remote);
+        checkThatTimeIsParsable(local, /* null_expected = */ true);
+        checkThatTimeIsParsable(remote, /* null_expected = */ true);
     }
 
     std::string expected =
@@ -2020,7 +2020,7 @@ TEST_F(HAImplTest, statusGetHubAndSpoke) {
         "                    \"remote\": {"
         "                        \"age\": 0,"
         "                        \"analyzed-packets\": 0,"
-        "                        \"clock-skew\": 0,"
+        "                        \"clock-skew\": null,"
         "                        \"communication-interrupted\": false,"
         "                        \"connecting-clients\": 0,"
         "                        \"in-touch\": false,"
@@ -2045,7 +2045,7 @@ TEST_F(HAImplTest, statusGetHubAndSpoke) {
         "                    \"remote\": {"
         "                        \"age\": 0,"
         "                        \"analyzed-packets\": 0,"
-        "                        \"clock-skew\": 0,"
+        "                        \"clock-skew\": null,"
         "                        \"communication-interrupted\": false,"
         "                        \"connecting-clients\": 0,"
         "                        \"in-touch\": false,"

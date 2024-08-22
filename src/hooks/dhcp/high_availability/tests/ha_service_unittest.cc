@@ -2639,8 +2639,8 @@ TEST_F(HAServiceTest, hotStandbyScopeSelectionThisPrimary) {
     // Do not check exact value because it can be time-sensitive.
     ElementPtr local(boost::const_pointer_cast<Element>(ha_servers->get("local")));
     ElementPtr remote(boost::const_pointer_cast<Element>(ha_servers->get("remote")));
-    checkThatTimeIsParsable(local);
-    checkThatTimeIsParsable(remote);
+    checkThatTimeIsParsable(local, /* null_expected = */ true);
+    checkThatTimeIsParsable(remote, /* null_expected = */ true);
 
     std::string expected = "{"
         "    \"local\": {"
@@ -2661,7 +2661,7 @@ TEST_F(HAServiceTest, hotStandbyScopeSelectionThisPrimary) {
         "        \"unacked-clients\": 0,"
         "        \"unacked-clients-left\": 0,"
         "        \"analyzed-packets\": 0,"
-        "        \"clock-skew\": 0"
+        "        \"clock-skew\": null"
         "    }"
         "}";
     expectEqWithDiff(Element::fromJSON(expected), ha_servers);
@@ -2698,8 +2698,8 @@ TEST_F(HAServiceTest, hotStandbyScopeSelectionThisStandby) {
     // Do not check exact value because it can be time-sensitive.
     ElementPtr local(boost::const_pointer_cast<Element>(ha_servers->get("local")));
     ElementPtr remote(boost::const_pointer_cast<Element>(ha_servers->get("remote")));
-    checkThatTimeIsParsable(local);
-    checkThatTimeIsParsable(remote);
+    checkThatTimeIsParsable(local, /* null_expected = */ true);
+    checkThatTimeIsParsable(remote, /* null_expected = */ true);
 
     std::string expected = "{"
         "    \"local\": {"
@@ -2720,7 +2720,7 @@ TEST_F(HAServiceTest, hotStandbyScopeSelectionThisStandby) {
         "        \"unacked-clients\": 0,"
         "        \"unacked-clients-left\": 0,"
         "        \"analyzed-packets\": 0,"
-        "        \"clock-skew\": 0"
+        "        \"clock-skew\": null"
         "    }"
         "}";
     expectEqWithDiff(Element::fromJSON(expected), ha_servers);
@@ -6500,7 +6500,7 @@ public:
 //    is available and it is doing load balancing.
 // 10. I stay in the partner-down state to force the partner to transition
 //     to the waiting state and synchronize its database.
-TEST_F(HAServiceStateMachineTest, waitingParterDownLoadBalancingPartnerDown) {
+TEST_F(HAServiceStateMachineTest, waitingPartnerDownLoadBalancingPartnerDown) {
     HAConfigPtr config_storage = createValidConfiguration();
     // Disable syncing leases to avoid transitions via the syncing state.
     // In this state it is necessary to perform synchronous tasks.
@@ -6586,8 +6586,8 @@ TEST_F(HAServiceStateMachineTest, waitingParterDownLoadBalancingPartnerDown) {
     // Do not check exact value because it can be time-sensitive.
     ElementPtr mutable_local(boost::const_pointer_cast<Element>(ha_servers->get("local")));
     ElementPtr mutable_remote(boost::const_pointer_cast<Element>(ha_servers->get("remote")));
-    checkThatTimeIsParsable(mutable_local);
-    checkThatTimeIsParsable(mutable_remote);
+    checkThatTimeIsParsable(mutable_local, /* null_expected = */ false);
+    checkThatTimeIsParsable(mutable_remote, /* null_expected = */ false);
 
     std::string expected = "{"
         "    \"local\": {"
@@ -6685,7 +6685,7 @@ TEST_F(HAServiceStateMachineTest, waitingParterDownLoadBalancingPartnerDown) {
 // 10. The partner unexpectedly shows up in the hot-standby mode. I stay in
 //    the partner-down state to force the partner to transition to the waiting
 //    state and synchronize its database.
-TEST_F(HAServiceStateMachineTest, waitingParterDownHotStandbyPartnerDown) {
+TEST_F(HAServiceStateMachineTest, waitingPartnerDownHotStandbyPartnerDown) {
     HAConfigPtr valid_config = createValidConfiguration(HAConfig::HOT_STANDBY);
 
     // Turn it into hot-standby configuration.

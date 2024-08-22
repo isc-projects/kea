@@ -2170,10 +2170,14 @@ server may start monitoring the DHCP traffic directed to the partner to see if
 the partner is responding to this traffic. More about the failover procedure can
 be found in :ref:`ha-load-balancing-config`.
 
-The ``system-time`` parameters hold the UTC time in ``%Y-%m-%d %H:%M:%S`` format
+The ``system-time`` parameter holds the UTC time when skew between local and
+partner node was last calculated. It is displayed in ``%Y-%m-%d %H:%M:%S`` format
 for each active node: local, and remote, respectively. The ``clock-skew``
 parameter is available in the ``remote`` map and holds the difference in seconds
-between the two times.
+between the two times. Local time is subtracted from the partner's time.
+A positive value means that the partner is ahead, while a negative value means
+that the partner is behind. Both ``system-time`` and ``clock-skew`` parameters
+can be null if the clock skew was not calculated yet.
 
 The ``connecting-clients``, ``unacked-clients``, ``unacked-clients-left``, and
 ``analyzed-packets`` parameters were introduced along with the

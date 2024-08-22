@@ -149,7 +149,7 @@ HATest::signalServiceRunning(bool& running, std::mutex& mutex,
 
 
 void
-HATest::checkThatTimeIsParsable(ElementPtr node) {
+HATest::checkThatTimeIsParsable(ElementPtr const& node, bool const null_expected) {
     ConstElementPtr system_time(node->get("system-time"));
     EXPECT_TRUE(system_time);
 
@@ -160,16 +160,20 @@ HATest::checkThatTimeIsParsable(ElementPtr node) {
 
     stringstream ss;
     ss.imbue(std::locale(std::locale(), facet));
-    EXPECT_EQ(system_time->getType(), Element::string);
-    ss << system_time->stringValue();
-    boost::posix_time::ptime t;
-    ss >> t;
+    if (null_expected) {
+        EXPECT_EQ(system_time->getType(), Element::null);
+    } else {
+        EXPECT_EQ(system_time->getType(), Element::string);
+        ss << system_time->stringValue();
+        boost::posix_time::ptime t;
+        ss >> t;
 
-    // Reset stringstream.
-    ss = stringstream();
+        // Reset stringstream.
+        ss = stringstream();
 
-    ss << t;
-    EXPECT_NE(ss.str(), "not-a-date-time");
+        ss << t;
+        EXPECT_NE(ss.str(), "not-a-date-time");
+    }
 
     node->remove("system-time");
 }
