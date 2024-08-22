@@ -22,6 +22,9 @@ rst_arm_sources =
 rst_arm_sources += index.rst
 rst_arm_sources += manpages.rst
 rst_arm_sources += umls.rst
+rst_arm_sources += debug-messages.rst
+rst_arm_sources += kea-messages.rst
+
 include arm/rst_arm_sources.mk
 
 EXTRA_DIST += arm/rst_arm_sources.mk
@@ -61,9 +64,9 @@ api_files =
 include $(top_srcdir)/src/share/api/api_files.mk
 
 if HAVE_PDFLATEX
-all: debug-messages.rst kea-messages.rst html mans pdf text
+all: debug-messages.rst kea-messages.rst html mans pdf singlehtml text
 else
-all: debug-messages.rst kea-messages.rst html mans text
+all: debug-messages.rst kea-messages.rst html mans singlehtml text
 endif
 
 # build the list of message files
@@ -84,6 +87,9 @@ $(srcdir)/kea-messages.rst: mes2doc.py
 # build the list of api files
 api-files.txt: $(top_srcdir)/src/share/api/api_files.mk
 	@sed 's;api_files .*)/;;' $< > $@
+
+EXTRA_DIST += debug-messages.rst
+EXTRA_DIST += kea-messages.rst
 
 # some tools do not use this makefile but still need generate files.
 EXTRA_DIST += mes-files.txt api-files.txt

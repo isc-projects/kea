@@ -180,11 +180,8 @@ install-exec-hook:
 	mkdir -p $(DESTDIR)${localstatedir}/lib/${PACKAGE_NAME}
 	mkdir -p $(DESTDIR)${runstatedir}/${PACKAGE_NAME}
 
-EXTRA_DIST  = tools/path_replacer.sh
-EXTRA_DIST += tools/mk_cfgrpt.sh
-
 #### include external sources in the distributed tarball:
-EXTRA_DIST += ext/coroutine/coroutine.hpp
+EXTRA_DIST = ext/coroutine/coroutine.hpp
 
 CLEANFILES = $(abs_top_builddir)/logger_lockfile
 
