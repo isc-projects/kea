@@ -54,10 +54,12 @@ def check_duplicate_occurences(occurences):
 
 
 def check_unlogged_messages(messages, autofix):
-    all_source_files = set(pathlib.Path('.').glob('**/*.cc')) \
-        - set(pathlib.Path('.').glob('**/*messages.cc')) \
-        | set(pathlib.Path('.').glob('**/*.h')) \
-        - set(pathlib.Path('.').glob('**/*messages.h'))
+    parent_dir = os.path.dirname(os.path.realpath(os.path.abspath(sys.argv[0])))
+    root_dir = f'{parent_dir}/..'
+    all_source_files = set(pathlib.Path(root_dir).glob('**/*.cc')) \
+        - set(pathlib.Path(root_dir).glob('**/*messages.cc')) \
+        | set(pathlib.Path(root_dir).glob('**/*.h')) \
+        - set(pathlib.Path(root_dir).glob('**/*messages.h'))
     all_source_code = ''
     for file in all_source_files:
         with open(file, 'r', encoding='utf-8') as f:
@@ -216,6 +218,8 @@ def main():
                                      formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument('-a', '--autofix', action='store_true',
                         help='Autofix unused messages and debug log levels in docs.')
+    parser.add_argument('-g', '--generate-debug-messages-page', action='store_true',
+                        help='Generate the debug-messages.rst file included in the ARM.')
     args = parser.parse_args()
 
     # Initializations
@@ -229,7 +233,9 @@ def main():
     log_pattern = re.compile(r'\b(LOG_DEBUG|LOG_ERROR|LOG_FATAL|LOG_INFO|LOG_WARN)\(')
 
     # Process .mes files.
-    mes_files = sorted(pathlib.Path('.').glob('**/*.mes'))
+    parent_dir = os.path.dirname(os.path.realpath(os.path.abspath(sys.argv[0])))
+    root_dir = f'{parent_dir}/..'
+    mes_files = sorted(pathlib.Path(root_dir).glob('**/*.mes'))
     for mes_file in mes_files:
         with open(mes_file, 'r', encoding='utf-8') as f:
             current_message_id = None
@@ -265,8 +271,8 @@ def main():
                     }
 
     # Process .cc and .h files.
-    cc_files = sorted(pathlib.Path('.').glob('**/*.cc'))
-    h_files = sorted(pathlib.Path('.').glob('**/*.h'))
+    cc_files = sorted(pathlib.Path(root_dir).glob('**/*.cc'))
+    h_files = sorted(pathlib.Path(root_dir).glob('**/*.h'))
     cpp_files = cc_files + h_files
     for cpp_file in cpp_files:
         # Skip test files.
@@ -327,6 +333,11 @@ def main():
     for level in debug_levels:
         debug_levels[level] = int(debug_levels[level])
 
+    if args.autofix or args.generate_debug_messages_page:
+        generate_page_with_messages_printed_on_each_debug_level(messages, debug_levels)
+        if args.generate_debug_messages_page:
+            return
+
     # Get number of occurences for each message id.
     for line in log_lines:
         pos = 1
@@ -353,9 +364,6 @@ def main():
 
     # 7. Checks that the placeholder ids are consecutive, starting with 1, and unique in the same message definition.
     failure |= check_placeholder_ids(messages)
-
-    if args.autofix:
-        generate_page_with_messages_printed_on_each_debug_level(messages, debug_levels)
 
     if failure:
         sys.exit(1)

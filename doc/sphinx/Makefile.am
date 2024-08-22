@@ -61,9 +61,9 @@ api_files =
 include $(top_srcdir)/src/share/api/api_files.mk
 
 if HAVE_PDFLATEX
-all: kea-messages.rst html mans pdf text
+all: debug-messages.rst kea-messages.rst html mans pdf text
 else
-all: kea-messages.rst html mans text
+all: debug-messages.rst kea-messages.rst html mans text
 endif
 
 # build the list of message files
@@ -72,6 +72,10 @@ mes_files.mk: mes-files.txt
 
 mes-files.txt:
 	@find ../.. -type f -name '*.mes' | sort -V | sed 's#^../../##g' > $@
+
+# Used in official build process. debug-messages.rst is generated via ./tools/check-messages.py -g.
+$(srcdir)/debug-messages.rst: $(srcdir)/../../tools/check-messages.py
+	$(PYTHON) $< --generate-debug-messages-page
 
 # Used in official build process. kea-messages.rst is generated via mes2doc.py.
 $(srcdir)/kea-messages.rst: mes2doc.py
@@ -222,7 +226,7 @@ update-python-dependencies: ./src/requirements.in
 clean-local:
 	rm -rf $(sphinxbuilddir)
 	rm -f $(srcdir)/mes-files.txt $(srcdir)/api-files.txt
-	rm -f $(srcdir)/kea-messages.rst $(srcdir)/api.rst
+	rm -f $(srcdir)/debug-messages.rst $(srcdir)/kea-messages.rst $(srcdir)/api.rst
 	rm -f $(srcdir)/arm/platforms.rst
 
 .PHONY: all pdf html mans update-python-dependencies uml uml-to-png uml-to-svg format-svgs uml-to-txt
