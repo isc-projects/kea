@@ -10,8 +10,8 @@
 # used.
 set -eu
 
-# Test suite for D2
-test_suite="d2"
+# Test suite for Dhcp6
+test_suite="dhcp6"
 
 # Include common test library.
 # shellcheck source=src/lib/testutils/dhcp_test_lib.sh.in
@@ -20,7 +20,10 @@ test_suite="d2"
 # Path to the temporary configuration file.
 CFG_FILE="@abs_top_builddir@/src/bin/shell/tests/test_config.json"
 
-# Path to the D2 Server log file.
+# Path to the Kea lease file.
+LEASE_FILE="@abs_top_builddir@/src/bin/shell/tests/test_leases.csv"
+
+# Path to the Dhcp6 Server log file.
 LOG_FILE="@abs_top_builddir@/src/bin/shell/tests/test.log"
 
 # Path to the test certificate authority directory.
@@ -28,7 +31,7 @@ TEST_CA_DIR="@abs_top_srcdir@/src/lib/asiolink/testutils/ca"
 
 # Configuration without TLS.
 CONFIG_NONE="{
-    \"DhcpDdns\":
+    \"Dhcp6\":
     {
         \"control-sockets\": [
         {
@@ -37,9 +40,37 @@ CONFIG_NONE="{
             \"socket-port\": 8443
         }
         ],
+        \"interfaces-config\": {
+           \"interfaces\": [ ]
+        },
+        \"server-id\": {
+          \"type\": \"LLT\",
+          \"persist\": false
+        },
+        \"preferred-lifetime\": 3000,
+        \"valid-lifetime\": 4000,
+        \"renew-timer\": 1000,
+        \"rebind-timer\": 2000,
+        \"lease-database\":
+        {
+            \"type\": \"memfile\",
+            \"name\": \"$LEASE_FILE\",
+            \"persist\": true,
+            \"lfc-interval\": 0
+        },
+        \"subnet6\": [
+        {
+            \"id\": 1,
+            \"subnet\": \"2001:db8:1::/64\",
+            \"pools\": [ { \"pool\": \"2001:db8:1::10-2001:db8:1::100\" } ]
+        } ],
+        \"ddns-qualifying-suffix\": \"\",
+        \"dhcp-ddns\": {
+            \"enable-updates\": true
+        },
         \"loggers\": [
         {
-            \"name\": \"kea-dhcp-ddns\",
+            \"name\": \"kea-dhcp6\",
             \"output-options\": [
                 {
                     \"output\": \"${LOG_FILE}\"
@@ -53,7 +84,7 @@ CONFIG_NONE="{
 
 # Configuration without mutual authentication i.e. only channel protection.
 CONFIG_NOCR="{
-    \"DhcpDdns\":
+    \"Dhcp6\":
     {
         \"control-sockets\": [
         {
@@ -66,9 +97,37 @@ CONFIG_NOCR="{
             \"cert-required\": false
         }
         ],
+        \"interfaces-config\": {
+           \"interfaces\": [ ]
+        },
+        \"server-id\": {
+          \"type\": \"LLT\",
+          \"persist\": false
+        },
+        \"preferred-lifetime\": 3000,
+        \"valid-lifetime\": 4000,
+        \"renew-timer\": 1000,
+        \"rebind-timer\": 2000,
+        \"lease-database\":
+        {
+            \"type\": \"memfile\",
+            \"name\": \"$LEASE_FILE\",
+            \"persist\": true,
+            \"lfc-interval\": 0
+        },
+        \"subnet6\": [
+        {
+            \"id\": 1,
+            \"subnet\": \"2001:db8:1::/64\",
+            \"pools\": [ { \"pool\": \"2001:db8:1::10-2001:db8:1::100\" } ]
+        } ],
+        \"ddns-qualifying-suffix\": \"\",
+        \"dhcp-ddns\": {
+            \"enable-updates\": true
+        },
         \"loggers\": [
         {
-            \"name\": \"kea-dhcp-ddns\",
+            \"name\": \"kea-dhcp6\",
             \"output-options\": [
                 {
                     \"output\": \"${LOG_FILE}\"
@@ -82,7 +141,7 @@ CONFIG_NOCR="{
 
 # Configuration with mutual authentication.
 CONFIG="{
-    \"DhcpDdns\":
+    \"Dhcp6\":
     {
         \"control-sockets\": [
         {
@@ -95,9 +154,37 @@ CONFIG="{
             \"cert-required\": true
         }
         ],
+        \"interfaces-config\": {
+           \"interfaces\": [ ]
+        },
+        \"server-id\": {
+          \"type\": \"LLT\",
+          \"persist\": false
+        },
+        \"preferred-lifetime\": 3000,
+        \"valid-lifetime\": 4000,
+        \"renew-timer\": 1000,
+        \"rebind-timer\": 2000,
+        \"lease-database\":
+        {
+            \"type\": \"memfile\",
+            \"name\": \"$LEASE_FILE\",
+            \"persist\": true,
+            \"lfc-interval\": 0
+        },
+        \"subnet6\": [
+        {
+            \"id\": 1,
+            \"subnet\": \"2001:db8:1::/64\",
+            \"pools\": [ { \"pool\": \"2001:db8:1::10-2001:db8:1::100\" } ]
+        } ],
+        \"ddns-qualifying-suffix\": \"\",
+        \"dhcp-ddns\": {
+            \"enable-updates\": true
+        },
         \"loggers\": [
         {
-            \"name\": \"kea-dhcp-ddns\",
+            \"name\": \"kea-dhcp6\",
             \"output-options\": [
                 {
                     \"output\": \"${LOG_FILE}\"
@@ -109,11 +196,11 @@ CONFIG="{
     }
 }"
 
-# In these tests we need to use two binaries: D2 Server and Kea shell.
+# In these tests we need to use two binaries: Dhcp6 Server and Kea shell.
 # Using bin and bin_path would be confusing, so we omit defining bin
 # and bin_path on purpose.
-d2_bin="kea-dhcp-ddns"
-d2_bin_path="@abs_top_builddir@/src/bin/d2"
+dhcp6_bin="kea-dhcp6"
+dhcp6_bin_path="@abs_top_builddir@/src/bin/dhcp6"
 
 shell_bin="kea-shell"
 shell_bin_path="@abs_top_builddir@/src/bin/shell"
@@ -126,7 +213,7 @@ list_commands_test() {
     local arguments="${3}"
     local expected_response="${4}"
 
-    # Setup phase: start D2.
+    # Setup phase: start Dhcp6.
 
     # Log the start of the test and print test name.
     test_start "${test_suite}-${test_name}"
@@ -134,24 +221,24 @@ list_commands_test() {
     # Create correct configuration file.
     create_config "${config}"
 
-    # Instruct D2 Server to log to the specific file.
+    # Instruct Dhcp6 Server to log to the specific file.
     set_logger
 
-    # Start D2 Server
-    start_kea ${d2_bin_path}/${d2_bin}
+    # Start Dhcp6 Server
+    start_kea ${dhcp6_bin_path}/${dhcp6_bin}
 
-    # Wait up to 20s for D2 Server to start.
+    # Wait up to 20s for Dhcp6 Server to start.
     wait_for_kea 20
     if [ "${_WAIT_FOR_KEA}" -eq 0 ]; then
-        printf "ERROR: timeout waiting for D2 Server to start.\n"
+        printf "ERROR: timeout waiting for Dhcp6 Server to start.\n"
         clean_exit 1
     fi
 
     # Check if it is still running. It could have terminated (e.g. as a result
     # of configuration failure).
-    get_pid ${d2_bin}
+    get_pid ${dhcp6_bin}
     if [ "${_GET_PIDS_NUM}" -ne 1 ]; then
-        printf "ERROR: expected one D2 Server process to be started. \
+        printf "ERROR: expected one Dhcp6 Server process to be started. \
  Found %d processes started.\n" "${_GET_PIDS_NUM}"
         clean_exit 1
     fi
@@ -209,20 +296,20 @@ list_commands_test() {
     fi
     # Main test phase ends.
 
-    # Cleanup phase: shutdown D2 Server
+    # Cleanup phase: shutdown Dhcp6 Server
 
-    # Send SIGTERM signal to D2 Server
-    send_signal 15 ${d2_bin}
+    # Send SIGTERM signal to Dhcp6 Server
+    send_signal 15 ${dhcp6_bin}
 
     # Now wait for process to log that it is exiting.
-    wait_for_message 10 "DCTL_SHUTDOWN" 1
+    wait_for_message 10 "DHCP6_SHUTDOWN" 1
     if [ "${_WAIT_FOR_MESSAGE}" -eq 0 ]; then
-        printf "ERROR: D2 Server did not log shutdown.\n"
+        printf "ERROR: Dhcp6 Server did not log shutdown.\n"
         clean_exit 1
     fi
 
     # Make sure the server is down.
-    wait_for_server_down 5 ${d2_bin}
+    wait_for_server_down 5 ${dhcp6_bin}
     assert_eq 1 "${_WAIT_FOR_SERVER_DOWN}" \
         "Expected wait_for_server_down return %d, returned %d"
 
@@ -230,10 +317,10 @@ list_commands_test() {
 }
 
 list_commands_test "NoTLS" "${CONFIG_NONE}" "" \
-"[ { \"arguments\": [ \"build-report\", \"config-get\", \"config-hash-get\", \"config-reload\", \"config-set\", \"config-test\", \"config-write\", \"list-commands\", \"shutdown\", \"statistic-get\", \"statistic-get-all\", \"statistic-reset\", \"statistic-reset-all\", \"status-get\", \"version-get\" ], \"result\": 0 } ]"
+"[ { \"arguments\": [ \"build-report\", \"config-backend-pull\", \"config-get\", \"config-hash-get\", \"config-reload\", \"config-set\", \"config-test\", \"config-write\", \"dhcp-disable\", \"dhcp-enable\", \"leases-reclaim\", \"list-commands\", \"server-tag-get\", \"shutdown\", \"statistic-get\", \"statistic-get-all\", \"statistic-remove\", \"statistic-remove-all\", \"statistic-reset\", \"statistic-reset-all\", \"statistic-sample-age-set\", \"statistic-sample-age-set-all\", \"statistic-sample-count-set\", \"statistic-sample-count-set-all\", \"status-get\", \"version-get\" ], \"result\": 0 } ]"
 list_commands_test "Encrypted" "${CONFIG_NOCR}" \
 "--ca ${TEST_CA_DIR}/kea-ca.crt" \
-"[ { \"arguments\": [ \"build-report\", \"config-get\", \"config-hash-get\", \"config-reload\", \"config-set\", \"config-test\", \"config-write\", \"list-commands\", \"shutdown\", \"statistic-get\", \"statistic-get-all\", \"statistic-reset\", \"statistic-reset-all\", \"status-get\", \"version-get\" ], \"result\": 0 } ]"
+"[ { \"arguments\": [ \"build-report\", \"config-backend-pull\", \"config-get\", \"config-hash-get\", \"config-reload\", \"config-set\", \"config-test\", \"config-write\", \"dhcp-disable\", \"dhcp-enable\", \"leases-reclaim\", \"list-commands\", \"server-tag-get\", \"shutdown\", \"statistic-get\", \"statistic-get-all\", \"statistic-remove\", \"statistic-remove-all\", \"statistic-reset\", \"statistic-reset-all\", \"statistic-sample-age-set\", \"statistic-sample-age-set-all\", \"statistic-sample-count-set\", \"statistic-sample-count-set-all\", \"status-get\", \"version-get\" ], \"result\": 0 } ]"
 list_commands_test "Authenticated" "${CONFIG}" \
 "--ca ${TEST_CA_DIR}/kea-ca.crt --cert ${TEST_CA_DIR}/kea-client.crt --key ${TEST_CA_DIR}/kea-client.key" \
-"[ { \"arguments\": [ \"build-report\", \"config-get\", \"config-hash-get\", \"config-reload\", \"config-set\", \"config-test\", \"config-write\", \"list-commands\", \"shutdown\", \"statistic-get\", \"statistic-get-all\", \"statistic-reset\", \"statistic-reset-all\", \"status-get\", \"version-get\" ], \"result\": 0 } ]"
+"[ { \"arguments\": [ \"build-report\", \"config-backend-pull\", \"config-get\", \"config-hash-get\", \"config-reload\", \"config-set\", \"config-test\", \"config-write\", \"dhcp-disable\", \"dhcp-enable\", \"leases-reclaim\", \"list-commands\", \"server-tag-get\", \"shutdown\", \"statistic-get\", \"statistic-get-all\", \"statistic-remove\", \"statistic-remove-all\", \"statistic-reset\", \"statistic-reset-all\", \"statistic-sample-age-set\", \"statistic-sample-age-set-all\", \"statistic-sample-count-set\", \"statistic-sample-count-set-all\", \"status-get\", \"version-get\" ], \"result\": 0 } ]"

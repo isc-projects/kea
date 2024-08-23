@@ -10,6 +10,9 @@
 # used.
 set -eu
 
+# Test suite for D2
+test_suite="d2"
+
 # Path to the temporary configuration file.
 # shellcheck disable=SC2034
 # SC2034: ... appears unused. Verify use (or export if used externally).
@@ -93,7 +96,7 @@ shell_command_test() {
     # Setup phase: start D2.
 
     # Log the start of the test and print test name.
-    test_start "${test_name}"
+    test_start "${test_suite}-${test_name}"
 
     # Create new configuration file.
     create_config "${CONFIG}"

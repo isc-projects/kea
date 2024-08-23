@@ -10,8 +10,8 @@
 # used.
 set -eu
 
-# Test suite for CA
-test_suite="ca"
+# Test suite for Dhcp4
+test_suite="dhcp4"
 
 # Path to the temporary configuration file.
 # shellcheck disable=SC2034
@@ -19,30 +19,61 @@ test_suite="ca"
 # reason: used in dhcp_test_lib.sh.in
 CFG_FILE="@abs_top_builddir@/src/bin/shell/tests/test_config.json"
 
-# Path to the Control Agent log file.
+# Path to the Kea lease file.
+LEASE_FILE="@abs_top_builddir@/src/bin/shell/tests/test_leases.csv"
+
+# Path to the Dhcp4 Server log file.
 LOG_FILE="@abs_top_builddir@/src/bin/shell/tests/test.log"
 
-# Control Agent configuration to be stored in the configuration file.
+# Dhcp4 Server configuration to be stored in the configuration file.
 # todo: use actual configuration once we support it.
 CONFIG="{
-    \"Control-agent\":
+    \"Dhcp4\":
     {
-        \"http-host\": \"127.0.0.1\",
-        \"http-port\": 8081,
-        \"authentication\":
+        \"control-sockets\": [
         {
-            \"type\": \"basic\",
-            \"realm\": \"ISC.ORG\",
-            \"clients\": [
+            \"socket-type\": \"http\",
+            \"socket-address\": \"127.0.0.1\",
+            \"socket-port\": 8081,
+            \"authentication\":
+            {
+                \"type\": \"basic\",
+                \"realm\": \"ISC.ORG\",
+                \"clients\": [
                 {
                     \"user\": \"pet\",
                     \"password\": \"meow\"
                 }
-            ]
+                ]
+            }
+        }
+        ],
+        \"interfaces-config\": {
+           \"interfaces\": [ ]
+        },
+        \"valid-lifetime\": 4000,
+        \"renew-timer\": 1000,
+        \"rebind-timer\": 2000,
+        \"lease-database\":
+        {
+            \"type\": \"memfile\",
+            \"name\": \"$LEASE_FILE\",
+            \"persist\": true,
+            \"lfc-interval\": 0
+        },
+        \"subnet4\": [
+        {
+            \"id\": 1,
+            \"subnet\": \"10.0.0.0/8\",
+            \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ]
+        } ],
+        \"ddns-qualifying-suffix\": \"\",
+        \"dhcp-ddns\": {
+            \"enable-updates\": true
         },
         \"loggers\": [
         {
-            \"name\": \"kea-ctrl-agent\",
+            \"name\": \"kea-dhcp4\",
             \"output-options\": [
                 {
                     \"output\": \"$LOG_FILE\"
@@ -54,11 +85,11 @@ CONFIG="{
     }
 }"
 
-# In these tests we need to use two binaries: Control Agent and Kea shell.
+# In these tests we need to use two binaries: Dhcp4 Server and Kea shell.
 # Using bin and bin_path would be confusing, so we omit defining bin
 # and bin_path on purpose.
-ca_bin="kea-ctrl-agent"
-ca_bin_path="@abs_top_builddir@/src/bin/agent"
+dhcp4_bin="kea-dhcp4"
+dhcp4_bin_path="@abs_top_builddir@/src/bin/dhcp4"
 
 shell_bin="kea-shell"
 shell_bin_path="@abs_top_builddir@/src/bin/shell"
@@ -79,7 +110,7 @@ run_kea_shell() {
         ${auth} "${cmd}" > "${tmpfile_path}/shell-stdout.txt"
 }
 
-# This test verifies that Control Agent is shut down gracefully when it
+# This test verifies that Dhcp4 Server is shut down gracefully when it
 # receives a SIGINT or SIGTERM signal.
 shell_command_test() {
     test_name=${1}  # Test name
@@ -88,7 +119,7 @@ shell_command_test() {
     exp_result=${4} # Expected result
     exp_rsp=${5}    # Expected response
 
-    # Setup phase: start CA.
+    # Setup phase: start Dhcp4.
 
     # Log the start of the test and print test name.
     test_start "${test_suite}-${test_name}"
@@ -96,22 +127,22 @@ shell_command_test() {
     # Create new configuration file.
     create_config "${CONFIG}"
 
-    # Instruct Control Agent to log to the specific file.
+    # Instruct Dhcp4 Server to log to the specific file.
     set_logger
-    # Start Control Agent.
-    start_kea ${ca_bin_path}/${ca_bin}
-    # Wait up to 20s for Control Agent to start.
+    # Start Dhcp4 Server.
+    start_kea ${dhcp4_bin_path}/${dhcp4_bin}
+    # Wait up to 20s for Dhcp4 Server to start.
     wait_for_kea 20
     if [ "${_WAIT_FOR_KEA}" -eq 0 ]; then
-        printf "ERROR: timeout waiting for Control Agent to start.\n"
+        printf "ERROR: timeout waiting for Dhcp4 Server to start.\n"
         clean_exit 1
     fi
 
     # Check if it is still running. It could have terminated (e.g. as a result
     # of configuration failure).
-    get_pid ${ca_bin}
+    get_pid ${dhcp4_bin}
     if [ "${_GET_PIDS_NUM}" -ne 1 ]; then
-        printf "ERROR: expected one Control Agent process to be started.\
+        printf "ERROR: expected one Dhcp4 Server process to be started.\
  Found %d processes started.\n" "${_GET_PIDS_NUM}"
         clean_exit 1
     fi
@@ -168,19 +199,19 @@ shell_command_test() {
     fi
     # Main test phase ends.
 
-    # Cleanup phase: shutdown CA
-    # Send SIGTERM signal to Control Agent
-    send_signal 15 ${ca_bin}
+    # Cleanup phase: shutdown Dhcp4
+    # Send SIGTERM signal to Dhcp4 Server
+    send_signal 15 ${dhcp4_bin}
 
     # Now wait for process to log that it is exiting.
-    wait_for_message 10 "DCTL_SHUTDOWN" 1
+    wait_for_message 10 "DHCP4_SHUTDOWN" 1
     if [ "${_WAIT_FOR_MESSAGE}" -eq 0 ]; then
-        printf "ERROR: Control Agent did not log shutdown.\n"
+        printf "ERROR: Dhcp4 Server did not log shutdown.\n"
         clean_exit 1
     fi
 
     # Make sure the server is down.
-    wait_for_server_down 5 ${ca_bin}
+    wait_for_server_down 5 ${dhcp4_bin}
     assert_eq 1 "${_WAIT_FOR_SERVER_DOWN}" \
         "Expected wait_for_server_down return %d, returned %d"
 
@@ -194,4 +225,4 @@ shell_command_test "shell.bad-auth" \
     "Failed to run: HTTP Error 401: Unauthorized"
 shell_command_test "shell.authorized" \
     "--auth-user pet --auth-password meow" "list-commands" "" \
-    "[ { \"arguments\": [ \"build-report\", \"config-get\", \"config-hash-get\", \"config-reload\", \"config-set\", \"config-test\", \"config-write\", \"list-commands\", \"shutdown\", \"status-get\", \"version-get\" ], \"result\": 0 } ]"
+    "[ { \"arguments\": [ \"build-report\", \"config-backend-pull\", \"config-get\", \"config-hash-get\", \"config-reload\", \"config-set\", \"config-test\", \"config-write\", \"dhcp-disable\", \"dhcp-enable\", \"leases-reclaim\", \"list-commands\", \"server-tag-get\", \"shutdown\", \"statistic-get\", \"statistic-get-all\", \"statistic-remove\", \"statistic-remove-all\", \"statistic-reset\", \"statistic-reset-all\", \"statistic-sample-age-set\", \"statistic-sample-age-set-all\", \"statistic-sample-count-set\", \"statistic-sample-count-set-all\", \"status-get\", \"version-get\" ], \"result\": 0 } ]"
