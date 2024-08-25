@@ -52,8 +52,8 @@ Kea 2.7.2 (development) released on August 28, 2024
 2273.	[func]*		fdupont
 	The RBAC (role-based access control) hook library was
 	extended to support the new HTTP/HTTPS control socket
-	of Kea servers. Note its name changed too from
-	"libca_rbac.so" to "libdhcp_rbac.so".
+	of Kea servers. Its name changed to "libdhcp_rbac.so".
+	"libca_rbac.so" is now a symbolic link to it.
 	(Gitlab #3483)
 
 2272.	[perf]		fdupont
