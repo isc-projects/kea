@@ -42,6 +42,9 @@ AC_PROG_CXX
 # Check for preprocessors.
 AC_PROG_CXXCPP
 
+# Check for ln -s.
+AC_PROG_LN_S
+
 # Check for exact Kea version.
 AC_MSG_CHECKING(whether this is a tarball or git source or package preparation)
 # KEA_PKG_VERSION_IN_CONFIGURE and KEA_PKG_TYPE_IN_CONFIGURE names may be weird

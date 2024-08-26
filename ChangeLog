@@ -1,3 +1,6 @@
+2277.	[build]		andrei
+	"libca_rbac.so" is now a symbolic link to "libdhcp_rbac.so".
+
 2276.	[build]		razvan
 	The library version numbers have been bumped up for the Kea 2.7.2
 	development release.
