@@ -5526,7 +5526,7 @@ DHCP4_REQUIRED_CLASS_EVAL_ERROR
     %1: Expression '%2' evaluated to %3
 
 This error message indicates that there a problem was encountered while
-evaluating an expression of a client class that was marked as required.
+evaluating an expression of a required client class that was marked as required.
 A description of the problem is printed.
 
 DHCP4_REQUIRED_CLASS_EVAL_RESULT
@@ -5537,8 +5537,8 @@ DHCP4_REQUIRED_CLASS_EVAL_RESULT
     %1: Expression '%2' evaluated to %3
 
 Logged at debug log level 50.
-This debug message indicates that the expression of a client class has been
-successfully evaluated. The client class name and the result value of the
+This debug message indicates that the expression of a required client class has
+been successfully evaluated. The client class name and the result value of the
 evaluation are printed.
 
 DHCP4_RESERVATIONS_LOOKUP_FIRST_ENABLED
@@ -7809,7 +7809,7 @@ DHCP6_REQUIRED_CLASS_EVAL_ERROR
     %1: Expression '%2' evaluated to %3
 
 This error message indicates that there a problem was encountered while
-evaluating an expression of a client class that was marked as required.
+evaluating an expression of a required client class that was marked as required.
 A description of the problem is printed.
 
 DHCP6_REQUIRED_CLASS_EVAL_RESULT
@@ -7820,8 +7820,8 @@ DHCP6_REQUIRED_CLASS_EVAL_RESULT
     %1: Expression '%2' evaluated to %3
 
 Logged at debug log level 50.
-This debug message indicates that the expression of a client class has been
-successfully evaluated. The client class name and the result value of the
+This debug message indicates that the expression of a required client class has
+been successfully evaluated. The client class name and the result value of the
 evaluation are printed.
 
 DHCP6_REQUIRED_OPTIONS_CHECK_FAIL
@@ -12186,6 +12186,17 @@ This debug message indicates that two values are popped from
 the value stack.  Then are then combined via logical and and
 the result is pushed onto the value stack.
 
+EVAL_DEBUG_BRANCH
+=================
+
+.. code-block:: text
+
+    Branching to %1
+
+Logged at debug log level 55.
+This debug message indicates that an unconditional branch is performed
+to the displayed target.
+
 EVAL_DEBUG_CONCAT
 =================
 
@@ -12420,6 +12431,39 @@ Logged at debug log level 55.
 This debug message indicates that the given binary string representing
 the value of the requested field is being pushed onto the value stack.
 The string is displayed in hex.
+
+EVAL_DEBUG_POP_AND_BRANCH_FALSE
+===============================
+
+.. code-block:: text
+
+    Value is false: branching to %1
+
+Logged at debug log level 55.
+This debug message indicates that a branch on false condition is performed
+to the displayed target.
+
+EVAL_DEBUG_POP_OR_BRANCH_FALSE
+==============================
+
+.. code-block:: text
+
+    Value is false: keeping it and branching to %1
+
+Logged at debug log level 55.
+This debug message indicates that a branch on false condition is performed
+to the displayed target.
+
+EVAL_DEBUG_POP_OR_BRANCH_TRUE
+=============================
+
+.. code-block:: text
+
+    Value is true: keeping it and branching to %1
+
+Logged at debug log level 55.
+This debug message indicates that a branch on true condition is performed
+to the displayed target.
 
 EVAL_DEBUG_RELAY6
 =================
@@ -16966,6 +17010,39 @@ HTTP_CONNECTION_STOP_FAILED
 
 This error message is issued when an error occurred during closing a
 HTTP connection with a client.
+
+HTTP_CONNECTION_WATCH_SOCKET_CLEAR_ERROR
+========================================
+
+.. code-block:: text
+
+    clearing connection watch socket failed: %1
+
+This error message is issued when an error occurred during clearing the
+watch socket associated with a HTTP connection with a client. The error
+is displayed.
+
+HTTP_CONNECTION_WATCH_SOCKET_CLOSE_ERROR
+========================================
+
+.. code-block:: text
+
+    closing connection watch socket failed: %1
+
+This error message is issued when an error occurred during closing the
+watch socket associated with a HTTP connection with a client. The error
+is displayed.
+
+HTTP_CONNECTION_WATCH_SOCKET_MARK_READY_ERROR
+=============================================
+
+.. code-block:: text
+
+    marking ready connection watch socket failed: %1
+
+This error message is issued when an error occurred during marking as ready
+the watch socket associated with a HTTP connection with a client. The error
+is displayed.
 
 HTTP_DATA_RECEIVED
 ==================
@@ -24160,26 +24237,6 @@ are displayed.
 RBAC
 ****
 
-RBAC_AUTH_ERROR
-===============
-
-.. code-block:: text
-
-    Error in auth callout: %1.
-
-This error messages indicates that an error has been raised in auth callout
-by the RBAC hooks library. The argument details the error.
-
-RBAC_AUTH_RESPONSE
-==================
-
-.. code-block:: text
-
-    RBAC hooks library has returned response: %1.
-
-This info message indicates that the RBAC hooks library has returned
-a response in auth callout. The response is summarized.
-
 RBAC_CONFIGURED_ACLS
 ====================
 
@@ -24213,6 +24270,26 @@ Logged at debug log level 40.
 This debug message indicates that some roles have been configured. The count
 is displayed.
 
+RBAC_HTTP_AUTH_ERROR
+====================
+
+.. code-block:: text
+
+    Error in http_auth callout: %1.
+
+This error messages indicates that an error has been raised in
+http_auth callout by the RBAC hooks library. The argument details the error.
+
+RBAC_HTTP_AUTH_RESPONSE
+=======================
+
+.. code-block:: text
+
+    RBAC hooks library has returned response: %1.
+
+This info message indicates that the RBAC hooks library has returned
+a response in http_auth callout. The response is summarized.
+
 RBAC_LOAD_FAILED
 ================
 
@@ -24244,221 +24321,225 @@ This info message indicates that the RBAC hooks library has read API files
 from the configured directory. The name of the directory and some statistics
 are displayed.
 
-RBAC_TRACE_AUTH_ACCEPT
-======================
+RBAC_TRACE_HTTP_AUTH_ACCEPT
+===========================
 
 .. code-block:: text
 
     Role configuration '%1' for role '%2' has accepted command '%3'.
 
 Logged at debug log level 40.
-The command has been accepted in auth callout. The role configuration name,
-the role name and the command are displayed.
+The command has been accepted in http_auth callout. The role
+configuration name, the role name and the command are displayed.
 
-RBAC_TRACE_AUTH_BAD_BODY_TYPE
+RBAC_TRACE_HTTP_AUTH_BAD_BODY_TYPE
+==================================
+
+.. code-block:: text
+
+    Bad body type in JSON request in http_auth callout.
+
+Logged at debug log level 40.
+The http_auth callout has been called with a bad body type in the JSON request.
+The RBAC hooks library immediately returns. This is an error condition.
+
+RBAC_TRACE_HTTP_AUTH_BAD_COMMAND_TYPE
+=====================================
+
+.. code-block:: text
+
+    Bad command type in JSON request in http_auth callout.
+
+Logged at debug log level 40.
+The http_auth callout has been called with a bad command type in the
+JSON request. The RBAC hooks library immediately returns. This is an
+error condition.
+
+RBAC_TRACE_HTTP_AUTH_COMMAND
+============================
+
+.. code-block:: text
+
+    Command '%1' in http_auth callout.
+
+Logged at debug log level 40.
+The http_auth callout has been called with the displayed command.
+
+RBAC_TRACE_HTTP_AUTH_DISABLED
 =============================
 
 .. code-block:: text
 
-    Bad body type in JSON request in auth callout.
+    RBAC hooks library is disabled in http_auth callout.
 
 Logged at debug log level 40.
-The auth callout has been called with a bad body type in the JSON request.
-The RBAC hooks library immediately returns. This is an error condition.
-
-RBAC_TRACE_AUTH_BAD_COMMAND_TYPE
-================================
-
-.. code-block:: text
-
-    Bad command type in JSON request in auth callout.
-
-Logged at debug log level 40.
-The auth callout has been called with a bad command type in the JSON request.
-The RBAC hooks library immediately returns. This is an error condition.
-
-RBAC_TRACE_AUTH_COMMAND
-=======================
-
-.. code-block:: text
-
-    Command '%1' in auth callout.
-
-Logged at debug log level 40.
-The auth callout has been called with the displayed command.
-
-RBAC_TRACE_AUTH_DISABLED
-========================
-
-.. code-block:: text
-
-    RBAC hooks library is disabled in auth callout.
-
-Logged at debug log level 40.
-The auth callout has been called with the RBAC hooks library disabled
+The http_auth callout has been called with the RBAC hooks library disabled
 i.e. with no role assigned.
 
-RBAC_TRACE_AUTH_EMPTY_BODY
-==========================
+RBAC_TRACE_HTTP_AUTH_EMPTY_BODY
+===============================
 
 .. code-block:: text
 
-    Empty body in JSON request in auth callout.
+    Empty body in JSON request in http_auth callout.
 
 Logged at debug log level 40.
-The auth callout has been called with an empty body in the JSON request.
+The http_auth callout has been called with an empty body in the JSON request.
 The RBAC hooks library immediately returns. This is an error condition.
 
-RBAC_TRACE_AUTH_NO_COMMAND
-==========================
+RBAC_TRACE_HTTP_AUTH_NO_COMMAND
+===============================
 
 .. code-block:: text
 
-    No command entry in JSON request in auth callout.
+    No command entry in JSON request in http_auth callout.
 
 Logged at debug log level 40.
-The auth callout has been called without a command entry in the JSON request.
-The RBAC hooks library immediately returns. This is an error condition.
+The http_auth callout has been called without a command entry in the
+JSON request. The RBAC hooks library immediately returns. This is an
+error condition.
 
-RBAC_TRACE_AUTH_NO_JSON
-=======================
+RBAC_TRACE_HTTP_AUTH_NO_JSON
+============================
 
 .. code-block:: text
 
-    No JSON request in auth callout.
+    No JSON request in http_auth callout.
 
 Logged at debug log level 40.
-The auth callout has been called with a non JSON request. The RBAC hooks
+The http_auth callout has been called with a non JSON request. The RBAC hooks
 library immediately returns. This is an error condition.
 
-RBAC_TRACE_AUTH_NO_REQUEST
-==========================
+RBAC_TRACE_HTTP_AUTH_NO_REQUEST
+===============================
 
 .. code-block:: text
 
-    No request in auth callout.
+    No request in http_auth callout.
 
 Logged at debug log level 40.
-The auth callout has been called without a request. The RBAC hooks library
+The http_auth callout has been called without a request. The RBAC hooks library
 immediately returns. This is an error condition.
 
-RBAC_TRACE_AUTH_NO_TLS_REJECT
-=============================
+RBAC_TRACE_HTTP_AUTH_NO_TLS_REJECT
+==================================
 
 .. code-block:: text
 
     Non TLS request has been rejected.
 
 Logged at debug log level 40.
-The non TLS request has been rejected in auth callout.
+The non TLS request has been rejected in http_auth callout.
 
-RBAC_TRACE_AUTH_REJECT
-======================
+RBAC_TRACE_HTTP_AUTH_REJECT
+===========================
 
 .. code-block:: text
 
     Role configuration '%1' for role '%2' has rejected command '%3'.
 
 Logged at debug log level 40.
-The command has been rejected in auth callout. The role configuration name,
-the role name and the command are displayed.
+The command has been rejected in http_auth callout. The role
+configuration name, the role name and the command are displayed.
 
-RBAC_TRACE_AUTH_RESPONSE
-========================
+RBAC_TRACE_HTTP_AUTH_RESPONSE
+=============================
 
 .. code-block:: text
 
-    Response in auth callout: %1.
+    Response in http_auth callout: %1.
 
 Logged at debug log level 40.
-The auth callout has been called with a response. The RBAC hooks library
+The http_auth callout has been called with a response. The RBAC hooks library
 immediately returns. The response is summarized.
 
-RBAC_TRACE_AUTH_ROLE
-====================
+RBAC_TRACE_HTTP_AUTH_ROLE
+=========================
 
 .. code-block:: text
 
-    Assigned role '%1' in auth callout.
+    Assigned role '%1' in http_auth callout.
 
 Logged at debug log level 40.
-The displayed role has been assigned in the auth callout.
+The displayed role has been assigned in the http_auth callout.
 
-RBAC_TRACE_RESPONSE_BAD_BODY_TYPE
-=================================
+RBAC_TRACE_HTTP_RESPONSE_BAD_BODY_TYPE
+======================================
 
 .. code-block:: text
 
-    Bad body type in JSON response in response callout.
+    Bad body type in JSON response in http_response callout.
 
 Logged at debug log level 40.
-The response callout has been called with a bad body type in the JSON response
-which is likely an error response. The RBAC hooks library immediately returns.
+The http_response callout has been called with a bad body type in the
+JSON response which is likely an error response. The RBAC hooks
+library immediately returns.
 
-RBAC_TRACE_RESPONSE_CONTEXT
-===========================
+RBAC_TRACE_HTTP_RESPONSE_CONTEXT
+================================
 
 .. code-block:: text
 
-    Retrieved command '%1' and role config '%2' in response callout.
+    Retrieved command '%1' and role config '%2' in http_response callout.
 
 Logged at debug log level 40.
 The command and the role config have been retrieved from the request context.
 They are displayed.
 
-RBAC_TRACE_RESPONSE_DISABLED
-============================
+RBAC_TRACE_HTTP_RESPONSE_DISABLED
+=================================
 
 .. code-block:: text
 
-    RBAC hooks library is disabled in response callout.
+    RBAC hooks library is disabled in http_response callout.
 
 Logged at debug log level 40.
-The response callout has been called with the RBAC hooks library disabled
+The http_response callout has been called with the RBAC hooks library disabled
 i.e. with no role assigned.
 
-RBAC_TRACE_RESPONSE_EMPTY_BODY
-==============================
-
-.. code-block:: text
-
-    Empty body in JSON response in response callout.
-
-Logged at debug log level 40.
-The response callout has been called with an empty body in the JSON response.
-The RBAC hooks library immediately returns. This is an error condition.
-
-RBAC_TRACE_RESPONSE_EMPTY_BODY_LIST
+RBAC_TRACE_HTTP_RESPONSE_EMPTY_BODY
 ===================================
 
 .. code-block:: text
 
-    Empty list in JSON response in response callout.
+    Empty body in JSON response in http_response callout.
 
 Logged at debug log level 40.
-The response callout has been called with an empty body list in the JSON
+The http_response callout has been called with an empty body in the
+JSON response. The RBAC hooks library immediately returns. This is an
+error condition.
+
+RBAC_TRACE_HTTP_RESPONSE_EMPTY_BODY_LIST
+========================================
+
+.. code-block:: text
+
+    Empty list in JSON response in http_response callout.
+
+Logged at debug log level 40.
+The http_response callout has been called with an empty body list in the JSON
 response. The RBAC hooks library immediately returns. This is an error
 condition.
 
-RBAC_TRACE_RESPONSE_MODIFIED
-============================
+RBAC_TRACE_HTTP_RESPONSE_MODIFIED
+=================================
 
 .. code-block:: text
 
-    The response has been modified by a response filter in response callout.
+    The response has been modified by a response filter in http_response callout.
 
 Logged at debug log level 40.
-A response filter has modified the HTTP response in response callout.
+A response filter has modified the HTTP response in http_response callout.
 
-RBAC_TRACE_RESPONSE_NO_ARGUMENTS
-================================
+RBAC_TRACE_HTTP_RESPONSE_NO_ARGUMENTS
+=====================================
 
 .. code-block:: text
 
-    No request or response in response callout.
+    No request or response in http_response callout.
 
 Logged at debug log level 40.
-The response callout has been called without request or response. The RBAC
+The http_response callout has been called without request or response. The RBAC
 hooks library immediately returns. This is an error condition.
 
 ***

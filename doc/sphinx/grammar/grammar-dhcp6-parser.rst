@@ -116,6 +116,7 @@ This grammar is generated from ``dhcp6_parser.yy``. See :ref:`dhcp6` for more de
                  | server_id
                  | dhcp4o6_port
                  | control_socket
+                 | control_sockets
                  | dhcp_queue_control
                  | dhcp_ddns
                  | user_context
@@ -911,19 +912,96 @@ This grammar is generated from ``dhcp6_parser.yy``. See :ref:`dhcp6` for more de
 
      control_socket ::= "control-socket" ":" "{" control_socket_params "}"
 
+     control_sockets ::= "control-sockets" ":" "[" control_socket_list "]"
+
+     control_socket_list ::= 
+                        | not_empty_control_socket_list
+
+     not_empty_control_socket_list ::= control_socket_entry
+                                  | not_empty_control_socket_list "," control_socket_entry
+                                  | not_empty_control_socket_list ","
+
+     control_socket_entry ::= "{" control_socket_params "}"
+
      control_socket_params ::= control_socket_param
                           | control_socket_params "," control_socket_param
                           | control_socket_params ","
 
-     control_socket_param ::= socket_type
-                         | socket_name
+     control_socket_param ::= control_socket_type
+                         | control_socket_name
+                         | control_socket_address
+                         | control_socket_port
+                         | authentication
+                         | trust_anchor
+                         | cert_file
+                         | key_file
+                         | cert_required
                          | user_context
                          | comment
                          | unknown_map_entry
 
-     socket_type ::= "socket-type" ":" STRING
+     control_socket_type ::= "socket-type" ":" control_socket_type_value
 
-     socket_name ::= "socket-name" ":" STRING
+     control_socket_type_value ::= "unix"
+                              | "http"
+                              | "https"
+
+     control_socket_name ::= "socket-name" ":" STRING
+
+     control_socket_address ::= "socket-address" ":" STRING
+
+     control_socket_port ::= "socket-port" ":" INTEGER
+
+     cert_required ::= "cert-required" ":" BOOLEAN
+
+     authentication ::= "authentication" ":" "{" auth_params "}"
+
+     auth_params ::= auth_param
+                | auth_params "," auth_param
+                | auth_params ","
+
+     auth_param ::= auth_type
+               | realm
+               | directory
+               | clients
+               | comment
+               | user_context
+               | unknown_map_entry
+
+     auth_type ::= "type" ":" auth_type_value
+
+     auth_type_value ::= "basic"
+
+     realm ::= "realm" ":" STRING
+
+     directory ::= "directory" ":" STRING
+
+     clients ::= "clients" ":" "[" clients_list "]"
+
+     clients_list ::= 
+                 | not_empty_clients_list
+
+     not_empty_clients_list ::= basic_auth
+                           | not_empty_clients_list "," basic_auth
+                           | not_empty_clients_list ","
+
+     basic_auth ::= "{" clients_params "}"
+
+     clients_params ::= clients_param
+                   | clients_params "," clients_param
+                   | clients_params ","
+
+     clients_param ::= user
+                  | user_file
+                  | password
+                  | password_file
+                  | user_context
+                  | comment
+                  | unknown_map_entry
+
+     user_file ::= "user-file" ":" STRING
+
+     password_file ::= "password-file" ":" STRING
 
      dhcp_queue_control ::= "dhcp-queue-control" ":" "{" queue_control_params "}"
 

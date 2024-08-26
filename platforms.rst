@@ -19,7 +19,7 @@ systems. Kea-|release| builds have been tested on:
 
 * Alpine — 3.16, 3.17, 3.18, 3.19, 3.20
 * Debian — 10, 11, 12
-* Fedora — 36, 38, 39, 40
+* Fedora — 36, 39, 40
 * FreeBSD — 13
 * RHEL — 8, 9
 * Ubuntu — 20.04, 22.04, 24.04
@@ -53,7 +53,7 @@ These include platforms past their respective EOL dates, such as:
 * Alpine — 3.10, 3.11, 3.12, 3.13, 3.14, 3.15 (EOL 01 Nov 2023)
 * CentOS — 6 (EOL 30 November 2020), 7 (EOL 30 June 2024), 8 (EOL 31 December 2021)
 * Debian — 8, 9 (EOL 30 June 2022)
-* Fedora — 31, 32, 33, 34, 35, 37 (EOL 05 December 2023)
+* Fedora — 31, 32, 33, 34, 35, 37, 38 (EOL 21 May 2024)
 * FreeBSD — 10, 11, 12
 * macOS — 10.13, 10.14, 10.15 (EOL 12 September 2022)
 * Ubuntu — 14.04, 16.04, 18.04. 18.10, 19.04, 19.10, 21.04 (EOL 20 January 2022)

@@ -59,7 +59,6 @@ extern const isc::log::MessageID EVAL_DEBUG_VENDOR_ENTERPRISE_ID = "EVAL_DEBUG_V
 extern const isc::log::MessageID EVAL_DEBUG_VENDOR_ENTERPRISE_ID_MISMATCH = "EVAL_DEBUG_VENDOR_ENTERPRISE_ID_MISMATCH";
 extern const isc::log::MessageID EVAL_DEBUG_VENDOR_EXISTS = "EVAL_DEBUG_VENDOR_EXISTS";
 extern const isc::log::MessageID EVAL_DEBUG_VENDOR_NO_OPTION = "EVAL_DEBUG_VENDOR_NO_OPTION";
-extern const isc::log::MessageID EVAL_RESULT = "EVAL_RESULT";
 
 } // namespace dhcp
 } // namespace isc
@@ -119,7 +118,6 @@ const char* values[] = {
     "EVAL_DEBUG_VENDOR_ENTERPRISE_ID_MISMATCH", "%1: Was looking for %2, option had %3, pushing result '%4'",
     "EVAL_DEBUG_VENDOR_EXISTS", "%1: Option with enterprise-id %2 found, pushing result '%3'",
     "EVAL_DEBUG_VENDOR_NO_OPTION", "%1: Option with code %2 missing, pushing result '%3'",
-    "EVAL_RESULT", "%1: Expression %2 evaluated to %3",
     NULL
 };
 

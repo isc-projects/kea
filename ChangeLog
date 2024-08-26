@@ -1,5 +1,8 @@
+Kea 2.7.2 (development) released on August 28, 2024
+
 2277.	[build]		andrei
 	"libca_rbac.so" is now a symbolic link to "libdhcp_rbac.so".
+	(Gitlab #3550)
 
 2276.	[build]		razvan
 	The library version numbers have been bumped up for the Kea 2.7.2
@@ -7,7 +10,7 @@
 	(Gitlab #3549)
 
 2275.	[func]		andrei
-	When running with High-Availibility (HA) enabled, the status-get
+	When running with High-Availability (HA) enabled, the status-get
 	command now includes in its response the system time for each HA
 	node and the clock skew in seconds between active peers.
 	(Gitlab #3513)

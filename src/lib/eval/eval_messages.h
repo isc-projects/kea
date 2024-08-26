@@ -60,7 +60,6 @@ extern const isc::log::MessageID EVAL_DEBUG_VENDOR_ENTERPRISE_ID;
 extern const isc::log::MessageID EVAL_DEBUG_VENDOR_ENTERPRISE_ID_MISMATCH;
 extern const isc::log::MessageID EVAL_DEBUG_VENDOR_EXISTS;
 extern const isc::log::MessageID EVAL_DEBUG_VENDOR_NO_OPTION;
-extern const isc::log::MessageID EVAL_RESULT;
 
 } // namespace dhcp
 } // namespace isc

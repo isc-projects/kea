@@ -15,6 +15,7 @@ the value stack.  Then are then combined via logical and and
 the result is pushed onto the value stack.
 
 # For use with TokenBranch
+
 % EVAL_DEBUG_BRANCH Branching to %1
 Logged at debug log level 55.
 This debug message indicates that an unconditional branch is performed
@@ -129,25 +130,6 @@ the value stack, negated and then pushed onto the value stack.
 The string is displayed in text.
 
 # For use with TokenPopAndBranchFalse
-% EVAL_DEBUG_POP_AND_BRANCH_FALSE Value is false: branching to %1
-Logged at debug log level 55.
-This debug message indicates that a branch on false condition is performed
-to the displayed target.
-
-# For use with TokenPopOrBranchFalse
-% EVAL_DEBUG_POP_OR_BRANCH_FALSE Value is false: keeping it and branching to %1
-Logged at debug log level 55.
-This debug message indicates that a branch on false condition is performed
-to the displayed target.
-
-# For use with TokenPopOrBranchTrue
-% EVAL_DEBUG_POP_OR_BRANCH_TRUE Value is true: keeping it and branching to %1
-Logged at debug log level 55.
-This debug message indicates that a branch on true condition is performed
-to the displayed target.
-
-# For use with TokenOption based classes.  These include TokenOption,
-# TokenRelay4Option and TokenRelay6Option.
 
 % EVAL_DEBUG_OPTION %1: Pushing option %2 with value %3
 Logged at debug log level 55.
@@ -192,6 +174,28 @@ the value of the requested field is being pushed onto the value stack.
 The string is displayed in hex.
 
 # For use with TokenRelay6Field
+
+% EVAL_DEBUG_POP_AND_BRANCH_FALSE Value is false: branching to %1
+Logged at debug log level 55.
+This debug message indicates that a branch on false condition is performed
+to the displayed target.
+
+# For use with TokenPopOrBranchFalse
+
+% EVAL_DEBUG_POP_OR_BRANCH_FALSE Value is false: keeping it and branching to %1
+Logged at debug log level 55.
+This debug message indicates that a branch on false condition is performed
+to the displayed target.
+
+# For use with TokenPopOrBranchTrue
+
+% EVAL_DEBUG_POP_OR_BRANCH_TRUE Value is true: keeping it and branching to %1
+Logged at debug log level 55.
+This debug message indicates that a branch on true condition is performed
+to the displayed target.
+
+# For use with TokenOption based classes.  These include TokenOption,
+# TokenRelay4Option and TokenRelay6Option.
 
 % EVAL_DEBUG_RELAY6 %1: Pushing PKT6 relay field %2 nest %3 with value %4
 Logged at debug log level 55.
