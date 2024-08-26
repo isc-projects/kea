@@ -524,6 +524,7 @@ processDhcp6Config(isc::data::ConstElementPtr config_set) {
             ControlSocketsParser parser;
             parser.parse(*srv_config, control_sockets);
         }
+
         ConstElementPtr multi_threading = mutable_cfg->get("multi-threading");
         if (multi_threading) {
             parameter_name = "multi-threading";
@@ -864,6 +865,10 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_COMMAND, DHCP6_CONFIG_START)
         .arg(server.redactConfig(config_set)->str());
 
+    if (check_only) {
+        MultiThreadingMgr::instance().setTestMode(true);
+    }
+
     auto answer = processDhcp6Config(config_set);
 
     int status_code = CONTROL_RESULT_SUCCESS;
@@ -967,7 +972,7 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
     // configuration. This will add created subnets and option values into
     // the server's configuration.
     // This operation should be exception safe but let's make sure.
-    if (status_code == CONTROL_RESULT_SUCCESS && (!check_only || extra_checks)) {
+    if (status_code == CONTROL_RESULT_SUCCESS && !check_only) {
         try {
 
             // Setup the command channel.
