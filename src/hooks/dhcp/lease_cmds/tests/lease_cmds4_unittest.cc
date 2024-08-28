@@ -3519,12 +3519,12 @@ TEST_F(Lease4CmdsTest, lease4AddDeclinedLeasesMultiThreading) {
 }
 
 TEST_F(Lease4CmdsTest, lease4AddReleasedLeases) {
-    testLease4AddDeclinedLeases();
+    testLease4AddReleasedLeases();
 }
 
 TEST_F(Lease4CmdsTest, lease4AddReleasedLeasesMultiThreading) {
     MultiThreadingTest mt(true);
-    testLease4AddDeclinedLeases();
+    testLease4AddReleasedLeases();
 }
 
 TEST_F(Lease4CmdsTest, lease4AddExisting) {

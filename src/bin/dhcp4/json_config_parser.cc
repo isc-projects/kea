@@ -25,6 +25,7 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/config_backend_dhcp4_mgr.h>
 #include <dhcpsrv/db_type.h>
+#include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/parsers/client_class_def_parser.h>
 #include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <dhcpsrv/parsers/expiration_config_parser.h>
@@ -340,9 +341,6 @@ processDhcp4Config(isc::data::ConstElementPtr config_set) {
     // Let's set empty container in case a user hasn't specified any configuration
     // for option definitions. This is equivalent to committing empty container.
     LibDHCP::setRuntimeOptionDefs(OptionDefSpaceContainer());
-
-    // Print the list of known backends.
-    HostDataSourceFactory::printRegistered();
 
     // Answer will hold the result.
     ConstElementPtr answer;
@@ -902,8 +900,15 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
         }
     }
 
+    // Print the list of known backends.
+    LeaseMgrFactory::printRegistered();
+
+    // Print the list of known backends.
+    HostDataSourceFactory::printRegistered();
+
     // Moved from the commit block to add the config backend indication.
     if (status_code == CONTROL_RESULT_SUCCESS && (!check_only || extra_checks)) {
+
         try {
             // If there are config backends, fetch and merge into staging config
             server.getCBControl()->databaseConfigFetch(srv_config,

@@ -860,6 +860,8 @@ TEST_F(AllocEngine6Test, requestReuseReleasedLease6) {
                                cumulative, subnet_->getID()));
     glbl_cumulative += 1;
     EXPECT_TRUE(testStatistics("cumulative-assigned-nas", glbl_cumulative));
+    EXPECT_FALSE(testStatistics("cumulative-assigned-nas",
+                                other_cumulative, other_subnetid, false));
     EXPECT_TRUE(testStatistics("reclaimed-leases", 1));
     EXPECT_TRUE(testStatistics("reclaimed-leases", 0, subnet_->getID()));
     EXPECT_TRUE(testStatistics("reclaimed-leases", 1, other_subnetid));

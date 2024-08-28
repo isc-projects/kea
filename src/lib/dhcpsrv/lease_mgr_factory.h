@@ -103,14 +103,61 @@ public:
     /// @return True if the lease manager instance exists, false otherwise.
     static bool haveInstance();
 
+    /// @brief Type of lease mgr factory
+    ///
+    /// A factory takes a parameter map and returns a pointer to a lease mgr.
+    /// In case of failure it must throw and not return NULL.
+    typedef std::function<TrackingLeaseMgrPtr (const db::DatabaseConnection::ParameterMap&)> Factory;
+
+    /// @brief Register a lease mgr factory
+    ///
+    /// Associate the factory to a database type in the map.
+    /// The no_log is to avoid logging before the logger is initialized
+    /// as when called at global object initialization.
+    ///
+    /// @param db_type database type
+    /// @param factory lease mgr factory
+    /// @param no_log do not log (default false)
+    /// @return true if the factory was successfully added to the map, false
+    /// if it already exists.
+    static bool registerFactory(const std::string& db_type,
+                                const Factory& factory, bool no_log = false);
+
+    /// @brief Deregister a lease mgr factory
+    ///
+    /// Disassociate the factory to a database type in the map.
+    /// The no_log is to avoid logging during global object deinitialization.
+    ///
+    /// @param db_type database type
+    /// @param no_log do not log (default false)
+    /// @return true if the factory was successfully removed from the map,
+    /// false if it was not found.
+    static bool deregisterFactory(const std::string& db_type,
+                                  bool no_log = false);
+
+    /// @brief Check if a lease mgr factory was registered
+    ///
+    /// @param db_type database type
+    /// @return true if a factory was registered for db_type, false if not.
+    static bool registeredFactory(const std::string& db_type);
+
+    /// @brief Prints out all registered backends.
+    ///
+    /// We need a dedicated method for this, because we sometimes can't log
+    /// the backend type when doing early initialization for backends
+    /// initialized statically.
+    static void printRegistered();
+
 private:
     /// @brief Hold pointer to lease manager
     ///
     /// Holds a pointer to the singleton lease manager.  The singleton
     /// is encapsulated in this method to avoid a "static initialization
     /// fiasco" if defined in an external static variable.
-    static boost::scoped_ptr<TrackingLeaseMgr>& getLeaseMgrPtr();
+    static TrackingLeaseMgrPtr& getLeaseMgrPtr();
 
+    /// @brief Factory map
+    static std::map<std::string, Factory> map_;
 };
 
 } // end of isc::dhcp namespace

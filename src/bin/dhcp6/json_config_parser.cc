@@ -24,6 +24,7 @@
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/db_type.h>
+#include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/parsers/client_class_def_parser.h>
 #include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <dhcpsrv/parsers/duid_config_parser.h>
@@ -442,9 +443,6 @@ processDhcp6Config(isc::data::ConstElementPtr config_set) {
     // Let's set empty container in case a user hasn't specified any configuration
     // for option definitions. This is equivalent to committing empty container.
     LibDHCP::setRuntimeOptionDefs(OptionDefSpaceContainer());
-
-    // Print the list of known backends.
-    HostDataSourceFactory::printRegistered();
 
     // Answer will hold the result.
     ConstElementPtr answer;
@@ -1037,6 +1035,12 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
             status_code = CONTROL_RESULT_ERROR;
         }
     }
+
+    // Print the list of known backends.
+    LeaseMgrFactory::printRegistered();
+
+    // Print the list of known backends.
+    HostDataSourceFactory::printRegistered();
 
     // Moved from the commit block to add the config backend indication.
     if (status_code == CONTROL_RESULT_SUCCESS && (!check_only || extra_checks)) {

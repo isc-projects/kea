@@ -828,7 +828,7 @@ Dhcpv4SrvTest::configure(const std::string& config,
     ConstElementPtr json;
     try {
         json = parseJSON(config);
-    } catch (const std::exception& ex){
+    } catch (const std::exception& ex) {
         // Fatal failure on parsing error
         FAIL() << "parsing failure:"
                << "config:" << config << std::endl

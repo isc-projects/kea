@@ -184,6 +184,7 @@ using namespace isc::dhcp;
 
 namespace {
 
+// Code will be moved to appropriate hook library.
 #ifdef HAVE_MYSQL
 struct MySqlHostDataSourceInit {
     // Constructor registers
@@ -209,6 +210,7 @@ struct MySqlHostDataSourceInit {
 MySqlHostDataSourceInit mysql_init_;
 #endif
 
+// Code will be moved to appropriate hook library.
 #ifdef HAVE_PGSQL
 struct PgSqlHostDataSourceInit {
     // Constructor registers

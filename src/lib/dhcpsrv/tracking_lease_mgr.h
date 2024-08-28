@@ -302,6 +302,9 @@ protected:
     std::unordered_set<asiolink::IOAddress, asiolink::IOAddress::Hash> locked_leases_;
 };
 
+/// @brief TrackingLeaseMgr pointer
+typedef boost::shared_ptr<TrackingLeaseMgr> TrackingLeaseMgrPtr;
+
 } // end of namespace isc::dhcp
 } // end of namespace isc
 

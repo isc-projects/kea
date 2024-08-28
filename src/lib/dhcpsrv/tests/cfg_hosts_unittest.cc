@@ -724,7 +724,6 @@ CfgHostsTest::testDelete2ForIPv6() {
     // Add a host with two addresses.
     IOAddress address1("2001:db8:1::1");
     IOAddress address2("2001:db8:2::2");
-    size_t host_count = 10;
     SubnetID subnet_id(42);
 
     HostPtr host = HostPtr(new Host(duids_[0]->toText(), "duid",
@@ -759,7 +758,6 @@ CfgHostsTest::testDeleteBothForIPv6() {
     // Add a host with two addresses.
     IOAddress address1("2001:db8:1::1");
     IOAddress address2("2001:db8:2::");
-    size_t host_count = 10;
     SubnetID subnet_id(42);
 
     HostPtr host = HostPtr(new Host(duids_[0]->toText(), "duid",

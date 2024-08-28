@@ -51,7 +51,7 @@ BaseServerTest::~BaseServerTest() {
     // Revert to original data directory.
     CfgMgr::instance().setDataDir(original_datadir_);
 
-    // Revert to unit test logging in case the test reconfigured logging.
+    // Revert to unit test logging, in case the test reconfigured it.
     isc::log::initLogger();
 }
 
@@ -606,7 +606,6 @@ Dhcpv6SrvTest::testReleaseBasic(Lease::Type type, const IOAddress& existing,
 
     ObservationPtr stat = StatsMgr::instance().getObservation(name);
     ASSERT_TRUE(stat);
-    uint64_t before = stat->getInteger().first;
 
     // Let's create a RELEASE
     Pkt6Ptr rel = createMessage(DHCPV6_RELEASE, type, release_addr, prefix_len,

@@ -69,6 +69,9 @@ extern const isc::log::MessageID DHCPSRV_LEASE4_EXTENDED_INFO_SANITY_FAIL = "DHC
 extern const isc::log::MessageID DHCPSRV_LEASE4_EXTENDED_INFO_UPGRADED = "DHCPSRV_LEASE4_EXTENDED_INFO_UPGRADED";
 extern const isc::log::MessageID DHCPSRV_LEASE6_EXTENDED_INFO_SANITY_FAIL = "DHCPSRV_LEASE6_EXTENDED_INFO_SANITY_FAIL";
 extern const isc::log::MessageID DHCPSRV_LEASE6_EXTENDED_INFO_UPGRADED = "DHCPSRV_LEASE6_EXTENDED_INFO_UPGRADED";
+extern const isc::log::MessageID DHCPSRV_LEASE_MGR_BACKENDS_REGISTERED = "DHCPSRV_LEASE_MGR_BACKENDS_REGISTERED";
+extern const isc::log::MessageID DHCPSRV_LEASE_MGR_BACKEND_DEREGISTER = "DHCPSRV_LEASE_MGR_BACKEND_DEREGISTER";
+extern const isc::log::MessageID DHCPSRV_LEASE_MGR_BACKEND_REGISTER = "DHCPSRV_LEASE_MGR_BACKEND_REGISTER";
 extern const isc::log::MessageID DHCPSRV_LEASE_MGR_CALLBACK_EXCEPTION = "DHCPSRV_LEASE_MGR_CALLBACK_EXCEPTION";
 extern const isc::log::MessageID DHCPSRV_LEASE_MGR_CALLBACK_UNKNOWN_EXCEPTION = "DHCPSRV_LEASE_MGR_CALLBACK_UNKNOWN_EXCEPTION";
 extern const isc::log::MessageID DHCPSRV_LEASE_MGR_DB_OPEN_CONNECTION_WITH_RETRY_FAILED = "DHCPSRV_LEASE_MGR_DB_OPEN_CONNECTION_WITH_RETRY_FAILED";
@@ -339,6 +342,9 @@ const char* values[] = {
     "DHCPSRV_LEASE4_EXTENDED_INFO_UPGRADED", "extended info for lease %1 was upgraded",
     "DHCPSRV_LEASE6_EXTENDED_INFO_SANITY_FAIL", "extended info for lease %1 failed checks (%2)",
     "DHCPSRV_LEASE6_EXTENDED_INFO_UPGRADED", "extended info for lease %1 was upgraded",
+    "DHCPSRV_LEASE_MGR_BACKENDS_REGISTERED", "the following lease backend types are available: %1",
+    "DHCPSRV_LEASE_MGR_BACKEND_DEREGISTER", "deregistered lease backend type: %1",
+    "DHCPSRV_LEASE_MGR_BACKEND_REGISTER", "registered lease backend type: %1",
     "DHCPSRV_LEASE_MGR_CALLBACK_EXCEPTION", "exception occurred in a lease manager callback for callback type %1, subnet id %2, and lease %3: %4",
     "DHCPSRV_LEASE_MGR_CALLBACK_UNKNOWN_EXCEPTION", "unknown exception occurred in a lease manager callback for callback type %1, subnet id %2, and lease %3",
     "DHCPSRV_LEASE_MGR_DB_OPEN_CONNECTION_WITH_RETRY_FAILED", "Failed to connect to database: %1 with error: %2",

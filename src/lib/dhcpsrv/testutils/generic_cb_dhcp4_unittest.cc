@@ -4296,6 +4296,11 @@ GenericConfigBackendDHCPv4Test::createUpdateClientClass4OptionsTest() {
     ASSERT_NO_THROW_LOG(client_class = cbptr_->getClientClass4(ServerSelector::ALL(), class1->getName()));
     ASSERT_TRUE(client_class);
 
+    // Verify lifetime values.
+    EXPECT_EQ(30, client_class->getValid().getMin());
+    EXPECT_EQ(60, client_class->getValid().get());
+    EXPECT_EQ(90, client_class->getValid().getMax());
+
     // Validate options belonging to the class.
     ASSERT_TRUE(client_class->getCfgOption());
     OptionDescriptor returned_opt_boot_file_name =
@@ -4340,6 +4345,11 @@ GenericConfigBackendDHCPv4Test::createUpdateClientClass4OptionsTest() {
     ASSERT_NO_THROW_LOG(cbptr_->createUpdateClientClass4(ServerSelector::ALL(), class1, ""));
     ASSERT_NO_THROW_LOG(client_class = cbptr_->getClientClass4(ServerSelector::ALL(), class1->getName()));
     ASSERT_TRUE(client_class);
+
+    // Re-check lifetime values. This ensure bindings line up.
+    EXPECT_EQ(30, client_class->getValid().getMin());
+    EXPECT_EQ(60, client_class->getValid().get());
+    EXPECT_EQ(90, client_class->getValid().getMax());
 
     // Ensure that the first option definition is gone.
     ASSERT_TRUE(client_class->getCfgOptionDef());
