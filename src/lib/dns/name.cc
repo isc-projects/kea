@@ -347,7 +347,7 @@ Name::Name(const char* namedata, size_t data_len, const Name* origin,
         // Drop the last character of the data (the \0) and append a copy of
         // the origin's data
         ndata_.erase(ndata_.end() - 1);
-        ndata_.insert(ndata.end(), origin->ndata_.begin(), origin->ndata_.end());
+        ndata_.insert(ndata_.end(), origin->ndata_.begin(), origin->ndata_.end());
 
         // Do a similar thing with offsets. However, we need to move them
         // so they point after the prefix we parsed before.
@@ -662,7 +662,8 @@ Name::split(const unsigned int first, const unsigned int n) const {
     // original name, and append the trailing dot explicitly.
     //
     retname.ndata_.reserve(retname.offsets_.back() + 1);
-    retname.ndata_.assign(ndata_.data() + offsets_[first], ndata_.data() + retname.offsets_.back());
+    auto it = ndata_.data() + offsets_[first];
+    retname.ndata_.assign(it, it + retname.offsets_.back());
     retname.ndata_.push_back(0);
 
     retname.length_ = retname.ndata_.size();
