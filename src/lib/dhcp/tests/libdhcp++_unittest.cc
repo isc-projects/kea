@@ -3261,7 +3261,7 @@ TEST_F(LibDhcpTest, stdOptionDefs6) {
     std::vector<uint8_t> opaque_tuple_buf(opaque_tuple_data,
                                           opaque_tuple_data + sizeof(opaque_tuple_data));
 
-    LibDhcpTest::testStdOptionDefs6(D60_V6_SZTP_REDIRECT,
+    LibDhcpTest::testStdOptionDefs6(D6O_V6_SZTP_REDIRECT,
                                     opaque_tuple_buf.begin(),
                                     opaque_tuple_buf.end(),
                                     typeid(OptionOpaqueDataTuples));
@@ -3730,6 +3730,123 @@ TEST_F(LibDhcpTest, unpackOptions6LenientFqdn) {
     auto elapsed = boost::dynamic_pointer_cast<OptionInt<uint16_t>>(opt->second);
     ASSERT_TRUE(elapsed);
     EXPECT_EQ(77, elapsed->getValue());
+}
+
+// RFC 5908 v6 NTP server option and suboptions.
+TEST_F(LibDhcpTest, v6NtpServer) {
+    // A NTP server option with the 3 suboptions.
+    std::vector<uint8_t> bin {
+        0, 56, 0, 53,    // ntp-server
+        0, 1, 0, 16,    // ntp-server-address
+        0x20, 0x01, 0xd, 0xb8, 0, 0, 0, 0, // 2001:db8::abcd
+        0, 0, 0, 0, 0, 0, 0xab, 0xcd,
+        0, 2, 0, 16,    // ntp-server-multicast
+        0xff, 0x02, 0, 0, 0, 0, 0, 0, // ff02::101
+        0, 0, 0, 0, 0, 0, 0x01, 0x01,
+        0, 3, 0, 9,     // ntp-server-fqdn
+        3, 0x66, 0x6f, 0x6f, // foo.bar.
+        3, 0x62, 0x61, 0x72, 0
+    };
+
+    // List of parsed options will be stored here.
+    isc::dhcp::OptionCollection options;
+
+    OptionBuffer buf(bin);
+
+    size_t parsed = 0;
+
+    EXPECT_NO_THROW(parsed = LibDHCP::unpackOptions6(buf, DHCP6_OPTION_SPACE,
+                                                     options));
+    EXPECT_EQ(bin.size(), parsed);
+
+    // We expect to have exactly one option with 3 suboptions.
+    EXPECT_EQ(1, options.size());
+    auto opt = options.find(D6O_NTP_SERVER);
+    ASSERT_FALSE(opt == options.end());
+
+    // Get the option.
+    OptionCustomPtr option =
+        boost::dynamic_pointer_cast<OptionCustom>(opt->second);
+    ASSERT_TRUE(option);
+    EXPECT_EQ(D6O_NTP_SERVER, option->getType());
+    EXPECT_EQ(57, option->len());
+    EXPECT_EQ(53, option->getData().size());
+
+    // Check the address suboption.
+    ASSERT_TRUE(option->getOption(NTP_SUBOPTION_SRV_ADDR));
+    OptionCustomPtr addr =
+        boost::dynamic_pointer_cast<OptionCustom>(option->getOption(NTP_SUBOPTION_SRV_ADDR));
+    ASSERT_TRUE(addr);
+    EXPECT_EQ("type=00001, len=00016: 2001:db8::abcd (ipv6-address)",
+              addr->toText());
+
+    // Check the multicast suboption.
+    ASSERT_TRUE(option->getOption(NTP_SUBOPTION_MC_ADDR));
+    OptionCustomPtr multicast =
+        boost::dynamic_pointer_cast<OptionCustom>(option->getOption(NTP_SUBOPTION_MC_ADDR));
+    ASSERT_TRUE(multicast);
+    EXPECT_EQ("type=00002, len=00016: ff02::101 (ipv6-address)",
+              multicast->toText());
+
+    // Check the fqdn suboption.
+    ASSERT_TRUE(option->getOption(NTP_SUBOPTION_SRV_FQDN));
+    OptionCustomPtr fqdn =
+        boost::dynamic_pointer_cast<OptionCustom>(option->getOption(NTP_SUBOPTION_SRV_FQDN));
+    ASSERT_TRUE(fqdn);
+    EXPECT_EQ("type=00003, len=00009: \"foo.bar.\" (fqdn)",
+              fqdn->toText());
+
+    // Build back the NTP server option.
+    OptionDefinitionPtr opt_def =
+        LibDHCP::getOptionDef(DHCP6_OPTION_SPACE, D6O_NTP_SERVER);
+    ASSERT_TRUE(opt_def);
+    ASSERT_NO_THROW(option.reset(new OptionCustom(*opt_def, Option::V6)));
+    ASSERT_TRUE(option);
+
+    // Add address.
+    OptionDefinitionPtr addr_def =
+        LibDHCP::getOptionDef(V6_NTP_SERVER_SPACE, NTP_SUBOPTION_SRV_ADDR);
+    ASSERT_TRUE(addr_def);
+    OptionBuffer addr_buf = {
+        0x20, 0x01, 0xd, 0xb8, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0xab, 0xcd
+    };
+    ASSERT_NO_THROW(addr.reset(new OptionCustom(*addr_def, Option::V6,
+                                                addr_buf)));
+    ASSERT_TRUE(addr);
+    option->addOption(addr);
+
+    // Add multicast.
+    OptionDefinitionPtr multicast_def =
+        LibDHCP::getOptionDef(V6_NTP_SERVER_SPACE, NTP_SUBOPTION_MC_ADDR);
+    ASSERT_TRUE(multicast_def);
+    OptionBuffer multicast_buf = {
+        0xff, 0x02, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0x01, 0x01
+    };
+    ASSERT_NO_THROW(multicast.reset(new OptionCustom(*multicast_def,
+                                                     Option::V6,
+                                                     multicast_buf)));
+    ASSERT_TRUE(multicast);
+    option->addOption(multicast);
+
+    // Add fqdn.
+    OptionDefinitionPtr fqdn_def =
+        LibDHCP::getOptionDef(V6_NTP_SERVER_SPACE, NTP_SUBOPTION_SRV_FQDN);
+    ASSERT_TRUE(fqdn_def);
+    OptionBuffer fqdn_buf = {
+        3, 0x66, 0x6f, 0x6f, 3, 0x62, 0x61, 0x72, 0
+    };
+    ASSERT_NO_THROW(fqdn.reset(new OptionCustom(*fqdn_def, Option::V6,
+                                                fqdn_buf)));
+    ASSERT_TRUE(fqdn);
+    option->addOption(fqdn);
+
+    // Pack output.
+    isc::util::OutputBuffer outbuf(0);
+    ASSERT_NO_THROW(option->pack(outbuf, true));
+    ASSERT_EQ(bin.size(), outbuf.getLength());
+    EXPECT_TRUE(memcmp(&bin[0], outbuf.getData(), bin.size()) == 0);
 }
 
 }  // namespace
