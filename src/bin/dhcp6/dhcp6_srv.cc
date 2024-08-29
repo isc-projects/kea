@@ -1384,6 +1384,7 @@ Dhcpv6Srv::processPacketPktSend(hooks::CalloutHandlePtr& callout_handle,
 
     if (!skip_pack) {
         try {
+            LibDHCP::splitNtpServerOptions6(rsp->options_);
             rsp->pack();
         } catch (const std::exception& e) {
             LOG_ERROR(options6_logger, DHCP6_PACK_FAIL)

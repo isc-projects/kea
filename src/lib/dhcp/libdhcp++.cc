@@ -16,6 +16,7 @@
 #include <dhcp/option_definition.h>
 #include <dhcp/option_int_array.h>
 #include <dhcp/option_vendor_class.h>
+#include <dhcp/option_custom.h>
 #include <dhcp/std_option_defs.h>
 #include <dhcp/docsis3_option_defs.h>
 #include <exceptions/exceptions.h>
@@ -1252,6 +1253,25 @@ LibDHCP::packOptions6(OutputBuffer& buf, const OptionCollection& options) {
 }
 
 void
+LibDHCP::splitNtpServerOptions6(OptionCollection& options) {
+    pair<OptionCollection::const_iterator, OptionCollection::const_iterator>
+        range = options.equal_range(D6O_NTP_SERVER);
+    if (range.first == range.second) {
+        return;
+    }
+    auto ntp_servers = OptionCollection(range.first, range.second);
+    static_cast<void>(options.erase(range.first, range.second));
+    auto def = D6O_NTP_SERVER_DEF();
+    for (auto opt : ntp_servers) {
+        for (auto sub : opt.second->getOptions()) {
+            auto new_option(new OptionCustom(def, Option::V6));
+            new_option->addOption(sub.second);
+            options.insert(make_pair(D6O_NTP_SERVER, new_option));
+        }
+    }
+}
+
+void
 LibDHCP::OptionFactoryRegister(Option::Universe u, uint16_t opt_type,
                                Option::Factory* factory) {
     switch (u) {
@@ -1311,6 +1331,7 @@ LibDHCP::initOptionDefs() {
     static_cast<void>(LibDHCP::D6O_LQ_QUERY_DEF());
     static_cast<void>(LibDHCP::D6O_CLIENT_DATA_DEF());
     static_cast<void>(LibDHCP::D6O_LQ_RELAY_DATA_DEF());
+    static_cast<void>(LibDHCP::D6O_NTP_SERVER_DEF());
     static_cast<void>(LibDHCP::D6O_BOOTFILE_URL_DEF());
     static_cast<void>(LibDHCP::D6O_RSOO_DEF());
 
@@ -1581,6 +1602,24 @@ LibDHCP::D6O_LQ_RELAY_DATA_DEF() {
         isc_throw_assert(def->getType() == OPT_RECORD_TYPE);
         isc_throw_assert(!def->getArrayType());
         isc_throw_assert(def->getEncapsulatedSpace().empty());
+        isc_throw_assert(def->getOptionSpaceName() == DHCP6_OPTION_SPACE);
+        check_once = false;
+    }
+    return (*def);
+}
+
+const OptionDefinition&
+LibDHCP::D6O_NTP_SERVER_DEF() {
+    static OptionDefinitionPtr def =
+        LibDHCP::getOptionDef(DHCP6_OPTION_SPACE, D6O_NTP_SERVER);
+    static bool check_once(true);
+    if (check_once) {
+        isc_throw_assert(def);
+        isc_throw_assert(def->getName() == "ntp-server");
+        isc_throw_assert(def->getCode() == D6O_NTP_SERVER);
+        isc_throw_assert(def->getType() == OPT_EMPTY_TYPE);
+        isc_throw_assert(!def->getArrayType());
+        isc_throw_assert(def->getEncapsulatedSpace() == V6_NTP_SERVER_SPACE);
         isc_throw_assert(def->getOptionSpaceName() == DHCP6_OPTION_SPACE);
         check_once = false;
     }

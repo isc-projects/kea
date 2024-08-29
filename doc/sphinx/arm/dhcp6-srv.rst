@@ -1736,6 +1736,8 @@ types are given in :ref:`dhcp-types`.
    +--------------------------+-----------------+-----------------+-----------------+
    | relay-id                 | 53              | binary          | false           |
    +--------------------------+-----------------+-----------------+-----------------+
+   | ntp-server               | 56              | empty           | false           |
+   +--------------------------+-----------------+-----------------+-----------------+
    | v6-access-domain         | 57              | fqdn            | false           |
    +--------------------------+-----------------+-----------------+-----------------+
    | sip-ua-cs-list           | 58              | fqdn            | true            |
@@ -2190,6 +2192,15 @@ Further examples are provided in Kea sources in the ``all-options.json`` file
 in the ``doc/examples/kea6`` directory. The DHCPv4 option is nearly identical, and is described
 in :ref:`dnr4-options`.
 
+.. _ntp-server-suboptions:
+
+NTP Server Suboptions
+---------------------
+
+NTP server option is a contaier of suboptions: ntp-server-address (1), ntp-server-multicast (2)
+carrying an IPv6 address, and ntp-server-fqdn (3) carrying a FQDN in wire format defined
+in the "v6-ntp-server-suboptions" option space. Each option instance carries one and only one
+suboption as required by `RFC 5908 <https://tools.ietf.org/html/rfc5908>`__.
 
 .. _dhcp6-custom-options:
 
@@ -7750,6 +7761,10 @@ The following standards are currently supported in Kea:
    The server functionality (TCP connection, new message types and options, new
    query types) is supported. This requires the leasequery hook. See
    :ref:`hooks-lease-query` for details.
+
+-  *Network Time Protocol (NTP) Server Option for DHCPv6*:
+   `RFC 5908 <https://tools.ietf.org/html/rfc5908>`__: The NTP server option and its
+   suboptions are supported. See :ref:`ntp-server-suboptions` for details.
 
 -  *DHCPv6 Options for Network Boot*: `RFC 5970 <https://tools.ietf.org/html/rfc5970>`__:
    The network boot options are supported.

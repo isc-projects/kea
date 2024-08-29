@@ -3797,10 +3797,8 @@ TEST_F(LibDhcpTest, v6NtpServer) {
               fqdn->toText());
 
     // Build back the NTP server option.
-    OptionDefinitionPtr opt_def =
-        LibDHCP::getOptionDef(DHCP6_OPTION_SPACE, D6O_NTP_SERVER);
-    ASSERT_TRUE(opt_def);
-    ASSERT_NO_THROW(option.reset(new OptionCustom(*opt_def, Option::V6)));
+    auto opt_def = LibDHCP::D6O_NTP_SERVER_DEF();
+    ASSERT_NO_THROW(option.reset(new OptionCustom(opt_def, Option::V6)));
     ASSERT_TRUE(option);
 
     // Add address.
@@ -3847,6 +3845,51 @@ TEST_F(LibDhcpTest, v6NtpServer) {
     ASSERT_NO_THROW(option->pack(outbuf, true));
     ASSERT_EQ(bin.size(), outbuf.getLength());
     EXPECT_TRUE(memcmp(&bin[0], outbuf.getData(), bin.size()) == 0);
+}
+
+// Check splitNtpServerOptions6.
+TEST_F(LibDhcpTest, splitNtpServerOptions6) {
+    OptionCollection col;
+    auto def = LibDHCP::D6O_NTP_SERVER_DEF();
+    OptionCustomPtr opt1(new OptionCustom(def, Option::V6));
+    OptionCustomPtr opt2(new OptionCustom(def, Option::V6));
+    OptionCustomPtr opt3(new OptionCustom(def, Option::V6));
+
+    // Fill first option with three addresses.
+    OptionDefinitionPtr addr_def =
+        LibDHCP::getOptionDef(V6_NTP_SERVER_SPACE, NTP_SUBOPTION_SRV_ADDR);
+    ASSERT_TRUE(addr_def);
+    OptionCustomPtr addr1(new OptionCustom(*addr_def, Option::V6));
+    OptionCustomPtr addr2(new OptionCustom(*addr_def, Option::V6));
+    OptionCustomPtr addr3(new OptionCustom(*addr_def, Option::V6));
+    EXPECT_NO_THROW(addr1->writeAddress(IOAddress("2001:db8::abcd")));
+    opt1->addOption(addr1);
+    EXPECT_NO_THROW(addr2->writeAddress(IOAddress("2001:db8::bcde")));
+    opt1->addOption(addr2);
+    EXPECT_NO_THROW(addr3->writeAddress(IOAddress("2001:db8::cdef")));
+    opt1->addOption(addr3);
+    col.insert(make_pair(D6O_NTP_SERVER, opt1));
+
+    // Leave second option empty.
+    col.insert(make_pair(D6O_NTP_SERVER, opt2));
+
+    // Fill third option with a FQDN.
+    OptionDefinitionPtr fqdn_def =
+        LibDHCP::getOptionDef(V6_NTP_SERVER_SPACE, NTP_SUBOPTION_SRV_FQDN);
+    ASSERT_TRUE(fqdn_def);
+    OptionCustomPtr fqdn(new OptionCustom(*fqdn_def, Option::V6));
+    EXPECT_NO_THROW(fqdn->writeFqdn("foo.bar."));
+    opt3->addOption(fqdn);
+    col.insert(make_pair(D6O_NTP_SERVER, opt3));
+
+    // Insert another option.
+    OptionPtr opts(new OptionString(Option::V6, D6O_BOOTFILE_URL, "foobar"));
+    col.insert(make_pair(D6O_BOOTFILE_URL, opts));
+
+    // Split them: expect 5 options (opt1 -> 3, opt2 -> 0, opt3 -> 1 and opts).
+    ASSERT_EQ(4, col.size());
+    ASSERT_NO_THROW(LibDHCP::splitNtpServerOptions6(col));
+    EXPECT_EQ(5, col.size());
 }
 
 }  // namespace

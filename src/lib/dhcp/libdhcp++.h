@@ -256,6 +256,13 @@ public:
     static void packOptions6(isc::util::OutputBuffer& buf,
                              const isc::dhcp::OptionCollection& options);
 
+    /// @brief Split NTP server option to one suboption per instance.
+    ///
+    /// See RFC 5908 for the requirement.
+    /// @param options The option container which needs to be updated with split
+    /// options.
+    static void splitNtpServerOptions6(isc::dhcp::OptionCollection& options);
+
     /// @brief Parses provided buffer as DHCPv6 options and creates
     /// Option objects.
     ///
@@ -447,6 +454,9 @@ public:
 
     /// @brief Get definition of D6O_LQ_RELAY_DATA option.
     static const OptionDefinition& D6O_LQ_RELAY_DATA_DEF();
+
+    /// @brief Get definition of D6O_NTP_SERVER option.
+    static const OptionDefinition& D6O_NTP_SERVER_DEF();
 
     /// @brief Get definition of D6O_BOOTFILE_URL option.
     static const OptionDefinition& D6O_BOOTFILE_URL_DEF();
