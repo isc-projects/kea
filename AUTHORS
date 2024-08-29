@@ -265,3 +265,6 @@ We have received the following contributions:
 
  - Kevin P. Fleming
    2023-02: Fixed several examples in DHCPv6 section of the ARM.
+
+ - Dimitry Andric
+   2024-08: Added support for libc++ 19 and later.
