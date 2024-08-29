@@ -3890,6 +3890,22 @@ TEST_F(LibDhcpTest, splitNtpServerOptions6) {
     ASSERT_EQ(4, col.size());
     ASSERT_NO_THROW(LibDHCP::splitNtpServerOptions6(col));
     EXPECT_EQ(5, col.size());
+
+    // Expected output.
+    string expected = "type=00056, len=00020:,\noptions:\n";
+    expected += "  type=00001, len=00016: 2001:db8::abcd (ipv6-address)\n";
+    expected += "type=00056, len=00020:,\noptions:\n";
+    expected += "  type=00001, len=00016: 2001:db8::bcde (ipv6-address)\n";
+    expected += "type=00056, len=00020:,\noptions:\n";
+    expected += "  type=00001, len=00016: 2001:db8::cdef (ipv6-address)\n";
+    expected += "type=00056, len=00013:,\noptions:\n";
+    expected += "  type=00003, len=00009: \"foo.bar.\" (fqdn)\n";
+    expected += "type=00059, len=00006: \"foobar\" (string)\n";
+    ostringstream output;
+    for (auto opt : col) {
+        output << opt.second->toText() << endl;
+    }
+    EXPECT_EQ(expected, output.str());
 }
 
 }  // namespace
