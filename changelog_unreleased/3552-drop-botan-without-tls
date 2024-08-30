@@ -1,0 +1,5 @@
+[build]*		fdupont
+	Made the Botan boost TLS support mandatory.
+	(Gitlab #3552)
+
+
