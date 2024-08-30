@@ -1270,22 +1270,6 @@ AC_SUBST(PKGPYTHONDIR)
 AC_SUBST(PYTHON_PREFIX)
 AC_SUBST(PYTHON_EXEC_PREFIX)
 
-# Decide if TLS is supported.
-tls_support=no
-if test "x${CRYPTO_NAME}" = "xOpenSSL"; then
-  tls_support=yes
-fi
-if test "x${CRYPTO_NAME}" = "xBotan" && test "x$BOTAN_BOOST" = "xyes"; then
-  tls_support=yes
-fi
-
-# Decide if the shell TLS test can work.
-ca_tls_test=no
-if test "x$enable_shell" != "xno"; then
-  ca_tls_test="$tls_support"
-fi
-AM_CONDITIONAL(CA_TLS_TEST, test x$ca_tls_test != xno)
-
 AC_ARG_WITH([sphinx],
   [AS_HELP_STRING([--with-sphinx=PATH],[path to sphinx-build tool])],
   [sphinx_path="$withval"])
@@ -1988,7 +1972,6 @@ ${CRYPTO_NAME}:
   CRYPTO_INCLUDES: ${CRYPTO_INCLUDES}
   CRYPTO_LDFLAGS:  ${CRYPTO_LDFLAGS}
   CRYPTO_LIBS:     ${CRYPTO_LIBS}
-  TLS support:     $tls_support
 
 ${DISABLED_CRYPTO}: no
 

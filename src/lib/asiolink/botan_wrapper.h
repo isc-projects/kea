@@ -1,4 +1,4 @@
-// Copyright (C) 2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2021-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,12 +6,12 @@
 
 // Do not include this header directly: use crypto_tls.h instead.
 
-#ifndef BOTAN_BOOST_WRAPPER_H
-#define BOTAN_BOOST_WRAPPER_H
+#ifndef BOTAN_WRAPPER_H
+#define BOTAN_WRAPPER_H
 
-/// @file botan_boost_wrapper.h Botan boost ASIO wrapper.
+/// @file botan_wrapper.h Botan ASIO wrapper.
 
-#if defined(WITH_BOTAN) && defined(WITH_BOTAN_BOOST)
+#ifdef WITH_BOTAN
 
 /// The error classes do not define virtual destructors.
 /// This workaround is taken from the boost header.
@@ -27,6 +27,6 @@
 #pragma GCC diagnostic pop
 #endif
 
-#endif // WITH_BOTAN && WITH_BOTAN_BOOST
+#endif // WITH_BOTAN
 
-#endif // BOTAN_BOOST_WRAPPER_H
+#endif // BOTAN_WRAPPER_H

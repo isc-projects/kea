@@ -1419,7 +1419,6 @@ TEST_F(HAConfigTest, passiveBackupDelayedUpdatesLimit) {
         "'delayed-updates-limit' must be set to 0 in the passive backup configuration");
 }
 
-#if (defined(WITH_OPENSSL) || defined(WITH_BOTAN_BOOST))
 /// Test that TLS parameters are correctly inherited.
 TEST_F(HAConfigTest, tlsParameterInheritance) {
     const std::string ha_config =
@@ -1743,7 +1742,6 @@ TEST_F(HAConfigTest, badKeyFile) {
 #endif
     testInvalidConfig(patched, expected);
 }
-#endif // WITH_OPENSSL || WITH_BOTAN_BOOST
 
 // Test that conversion of the role names works correctly.
 TEST_F(HAConfigTest, stringToRole) {

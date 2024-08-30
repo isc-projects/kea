@@ -15,7 +15,7 @@
 #include <iostream>
 
 #include <asiolink/asio_wrapper.h>
-#include <asiolink/botan_boost_wrapper.h>
+#include <asiolink/botan_wrapper.h>
 #include <botan/asio_stream.h>
 #include <botan/certstor_flatfile.h>
 #include <botan/pkcs8.h>

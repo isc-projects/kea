@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,9 +9,8 @@
 #include <cryptolink.h>
 #include <cryptolink/crypto_hash.h>
 
-#include <boost/scoped_ptr.hpp>
-
-#include <botan/lookup.h>
+#include <botan/hash.h>
+#include <botan/exceptn.h>
 
 #include <cryptolink/botan_common.h>
 
@@ -51,12 +50,11 @@ public:
     /// @param hash_algorithm The hash algorithm
     explicit HashImpl(const HashAlgorithm hash_algorithm)
     : hash_algorithm_(hash_algorithm), hash_() {
-        Botan::HashFunction* hash;
         try {
             const std::string& name =
                 btn::getHashAlgorithmName(hash_algorithm);
-            hash = Botan::HashFunction::create(name).release();
-        } catch (const Botan::Algorithm_Not_Found&) {
+            hash_ = Botan::HashFunction::create_or_throw(name);
+        } catch (const Botan::Lookup_Error&) {
             isc_throw(isc::cryptolink::UnsupportedAlgorithm,
                       "Unknown hash algorithm: " <<
                       static_cast<int>(hash_algorithm));
@@ -64,12 +62,10 @@ public:
             isc_throw(isc::cryptolink::LibraryError,
                       "Botan error: " << exc.what());
         }
-
-        hash_.reset(hash);
     }
 
     /// @brief Destructor
-    ~HashImpl() { }
+    ~HashImpl() = default;
 
     /// @brief Returns the HashAlgorithm of the object
     HashAlgorithm getHashAlgorithm() const {
@@ -153,7 +149,7 @@ private:
     HashAlgorithm hash_algorithm_;
 
     /// @brief The protected pointer to the Botan HashFunction object
-    boost::scoped_ptr<Botan::HashFunction> hash_;
+    std::unique_ptr<Botan::HashFunction> hash_;
 };
 
 Hash::Hash(const HashAlgorithm hash_algorithm)

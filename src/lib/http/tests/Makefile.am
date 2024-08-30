@@ -54,7 +54,7 @@ libhttp_unittests_SOURCES += tls_response_creator_test.h
 libhttp_unittests_SOURCES += tls_server_unittests.cc
 libhttp_unittests_SOURCES += tls_client_unittests.cc
 endif
-if HAVE_BOTAN_BOOST
+if HAVE_BOTAN
 libhttp_unittests_SOURCES += tls_response_creator_test.h
 libhttp_unittests_SOURCES += tls_server_unittests.cc
 libhttp_unittests_SOURCES += tls_client_unittests.cc

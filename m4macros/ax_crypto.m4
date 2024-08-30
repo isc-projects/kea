@@ -40,9 +40,9 @@ AC_DEFUN([ACX_TRY_BOTAN_TOOL], [
             CPPFLAGS="$CRYPTO_INCLUDES $CPPFLAGS"
             #AC_MSG_RESULT([found])
             AC_LINK_IFELSE(
-                [AC_LANG_PROGRAM([#include <botan/lookup.h>],
+                [AC_LANG_PROGRAM([#include <botan/hash.h>],
                                  [using namespace Botan;
-                                  HashFunction *h = HashFunction::create("MD5").release();
+                                  auto h = HashFunction::create("MD5");
                                  ])],
                 [ AC_MSG_RESULT([ok])
                   $3
@@ -199,13 +199,13 @@ EOF
    # failure handler we can detect the difference between a header not existing
    # (or not even passing the pre-processor phase) and a header file resulting
    # in compilation failures.
-   AC_CHECK_HEADERS([botan/botan.h],,[
+   AC_CHECK_HEADERS([botan/build.h],,[
         CRYPTO_INCLUDES=""
         CRYPTO_LIBS=""
         CRYPTO_LDFLAGS=""
         CRYPTO_RPATH=""
         if test "x$ac_header_preproc" = "xyes"; then
-                AC_MSG_RESULT([botan/botan.h
+                AC_MSG_RESULT([botan/build.h
 was found but is unusable. The most common cause of this problem
 is attempting to use an updated C++ compiler with older C++ libraries, such as
 the version of Botan that comes with your distribution. If you have updated
@@ -226,10 +226,9 @@ then
    LIBS_SAVED="$LIBS"
    LIBS="$LIBS $CRYPTO_LIBS"
    AC_LINK_IFELSE(
-        [AC_LANG_PROGRAM([#include <botan/lookup.h>],
+        [AC_LANG_PROGRAM([#include <botan/hash.h>],
                          [using namespace Botan;
-                          HashFunction *h = HashFunction::create("MD5")
-.release();
+                          auto h = HashFunction::create("MD5");
                          ])],
         [AC_MSG_RESULT([checking for Botan library... yes])],
         [AC_MSG_RESULT([checking for Botan library... no])
@@ -391,24 +390,17 @@ then
     dnl Check Botan boost ASIO TLS
     CPPFLAGS_SAVED=$CPPFLAGS
     CPPFLAGS="$CRYPTO_INCLUDES $CPPFLAGS $BOOST_INCLUDES"
-    BOTAN_BOOST=""
     AC_CHECK_HEADERS([botan/asio_stream.h],
-        [BOTAN_BOOST="maybe"
-         AC_MSG_CHECKING([Botan boost TLS support])
+        [AC_MSG_CHECKING([Botan boost TLS support])
          AC_COMPILE_IFELSE(
              [AC_LANG_PROGRAM([#include <botan/asio_stream.h>],
                               [#ifndef BOTAN_TLS_SERVER_H_
                                #error botan/tls_server.h is not included by botan/asio_stream.h
                                #endif])],
-              [AC_MSG_RESULT(yes)
-               BOTAN_BOOST="yes"
-               AC_DEFINE([WITH_BOTAN_BOOST], [1],
-               [Define to 1 if Botan boost TLS is available])],
+              [AC_MSG_RESULT(yes)],
               [AC_MSG_RESULT(no)
-               BOTAN_BOOST="no"
-               AC_MSG_WARN([Botan is configured with boost support but is too old: only Botan >= 2.14.0 can be used for TLS support.])])],
-        [BOTAN_BOOST="no"
-         AC_MSG_WARN([Botan cannot be used for TLS support, because it was compiled without boost support, so required headers are missing.])])
+               AC_MSG_ERROR([Botan is configured with boost support but is too old: only Botan >= 2.14.0 can be used for TLS support.])])],
+        [AC_MSG_ERROR([Botan cannot be used for TLS support, because it was installed without boost support, so required headers are missing.])])
     CPPFLAGS=${CPPFLAGS_SAVED}
 fi
 if test "x${CRYPTO_NAME}" = "xOpenSSL"
@@ -454,7 +446,5 @@ then
              [AC_MSG_ERROR([Can not find a definition for stream_truncated (SSL short read) error: sorry, your boost library is too old])])])
     CPPFLAGS=${CPPFLAGS_SAVED}
 fi
-AM_CONDITIONAL(HAVE_BOTAN_BOOST,
-    test "$CRYPTO_NAME" = "Botan" && test "$BOTAN_BOOST" = "yes")
 ])
 # End of AX_TLS

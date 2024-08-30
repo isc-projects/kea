@@ -15,7 +15,6 @@
 #endif
 
 // Include different versions.
-#include <asiolink/botan_boost_tls.h>
 #include <asiolink/botan_tls.h>
 #include <asiolink/openssl_tls.h>
 
