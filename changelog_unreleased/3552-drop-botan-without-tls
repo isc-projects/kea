@@ -1,5 +1,6 @@
 [build]*		fdupont
-	Made the Botan boost TLS support mandatory.
+	Made the Botan boost TLS support mandatory. Changed
+	the configure argument to --with-botan using
+	the Botan pkg-config library name e.g. "botan-2".
 	(Gitlab #3552)
-
 
