@@ -325,9 +325,10 @@ options. Some commonly used options are:
    Define the path to find the Boost headers. Normally this is not
    necessary.
 
- - ``--with-botan-config``
-   Specify the path to the botan-config script to build with Botan for
-   cryptographic functions. It is preferable to use OpenSSL (see below).
+ - ``--with-botan``
+   Specify the name of the Botan pkg-config library e.g. ``botan-2``
+   to build with Botan for cryptographic functions. It is preferable
+   to use OpenSSL (see below).
 
  - ``--with-openssl``
    Use the OpenSSL cryptographic library instead of Botan. By default
@@ -339,7 +340,7 @@ options. Some commonly used options are:
    The default is to not build it.
 
  - ``--with-site-packages``
-   Install the kea-shell Python packages in the specified directory; this 
+   Install the kea-shell Python packages in the specified directory; this
    is only useful when :iscman:`kea-shell` is enabled, and is
    mostly helpful for Debian-related distributions. While most systems store
    Python packages in ``${prefix}/usr/lib/pythonX/site-packages``, Debian

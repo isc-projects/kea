@@ -89,58 +89,40 @@ AC_ARG_WITH([openssl],
             [use_openssl="$withval"],
             [use_openssl="auto"])
 
-botan_config="yes"
+use_botan="yes"
 if test "${use_openssl}" != "auto" -a "${use_openssl}" != "no" ; then
-   botan_config="no"
+   use_botan="no"
 fi
-AC_ARG_WITH([botan-config],
-  [AS_HELP_STRING([--with-botan-config=PATH],
-    [specify the path to the botan-config script])],
-  [botan_config="$withval"])
-distcheck_botan="--with-botan-config=$botan_config"
-if test "${botan_config}" = "no" ; then
+AC_ARG_WITH([botan],
+  [AS_HELP_STRING([--with-botan[[=PATH]]],
+  [Enables Botan, name to the pkg-config library can be specified optionally])],
+  [use_botan="$withval"])
+if test "${use_botan}" = ""; then
+    use_botan="yes"
+fi
+distcheck_botan="--with-botan=${use_botan}"
+if test "${use_botan}" = "no" ; then
     if test "${use_openssl}" = "no" ; then
        AC_MSG_ERROR([Need Botan or OpenSSL for libcryptolink])
     fi
-elif test "${botan_config}" != "yes" ; then
-    if test -x "${botan_config}" ; then
-        if test -d "${botan_config}" ; then
-            AC_MSG_ERROR([${botan_config} is a directory])
-        fi
-    else
-        AC_MSG_ERROR([--with-botan-config should point to a botan-config program and not a directory (${botan_config})])
-    fi
+elif test "${use_botan}" != "yes" ; then
+    BOTAN_VERSIONS="${use_botan}"
 else
-    BOTAN_CONFIG=""
-    AC_PATH_PROG([PKG_CONFIG], [pkg-config])
-    if test "$PKG_CONFIG" != "" ; then
-        BOTAN_VERSIONS="botan-2"
-        for version in $BOTAN_VERSIONS; do
-            ACX_TRY_BOTAN_TOOL([pkg-config], ["$version --silence-errors"],
-                               [ BOTAN_CONFIG="$PKG_CONFIG $version" ]
-                              )
-            if test "$BOTAN_CONFIG" != "" ; then
-                break
-            fi
-        done
-    fi
+    BOTAN_VERSIONS="botan-2"
 fi
 
-if test "$BOTAN_CONFIG" != ""
-then
-    CRYPTO_LIBS=`${BOTAN_CONFIG} --libs`
-    CRYPTO_INCLUDES=`${BOTAN_CONFIG} --cflags`
-
-    # We expect botan-config --libs to contain -L<path_to_libbotan>, but
-    # this is not always the case.  As a heuristics workaround we add
-    # -L`botan-config --prefix/lib` in this case (if not present already).
-    # Same for CRYPTO_INCLUDES (but using include instead of lib) below.
-    if [ ${BOTAN_CONFIG} --prefix >/dev/null 2>&1 ] ; then
-        echo ${CRYPTO_LIBS} | grep -- -L > /dev/null || \
-            CRYPTO_LIBS="-L`${BOTAN_CONFIG} --prefix`/lib ${CRYPTO_LIBS}"
-        echo ${CRYPTO_INCLUDES} | grep -- -I > /dev/null || \
-            CRYPTO_INCLUDES="-I`${BOTAN_CONFIG} --prefix`/include ${CRYPTO_INCLUDES}"
-    fi
+BOTAN_CONFIG=""
+AC_PATH_PROG([PKG_CONFIG], [pkg-config])
+if test "$PKG_CONFIG" != "" ; then
+    for version in $BOTAN_VERSIONS; do
+        ACX_TRY_BOTAN_TOOL([pkg-config], ["$version --silence-errors"],
+                           [BOTAN_CONFIG="$PKG_CONFIG $version"])
+        if test "$BOTAN_CONFIG" != "" ; then
+            CRYPTO_LIBS=`${BOTAN_CONFIG} --libs`
+            CRYPTO_INCLUDES=`${BOTAN_CONFIG} --cflags`
+            break
+        fi
+    done
 fi
 
 if test "x${CRYPTO_LIBS}" != "x"
@@ -158,14 +140,6 @@ EOF
    fi
    $RM -f conftest.cpp
    AC_MSG_RESULT([$CRYPTO_VERSION])
-
-   # botan-config script (and the way we call pkg-config) returns -L and -l
-   # as one string, but we need them in separate values
-   CRYPTO_LDFLAGS=
-   for flag in ${CRYPTO_LIBS}; do
-       CRYPTO_LDFLAGS="${CRYPTO_LDFLAGS} `echo $flag | ${SED} -ne '/^\(\-L\)/p'`"
-       CRYPTO_LIBS="${CRYPTO_LIBS} `echo $flag | ${SED} -ne '/^\(\-l\)/p'`"
-   done
 
    # # check -R, "-Wl,-R" or -rpath
    AX_ISC_RPATH
